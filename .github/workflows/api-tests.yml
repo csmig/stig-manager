@@ -22,7 +22,7 @@ jobs:
         id: build
         run: |
           pwd
-          ls -al
+          ls -al ./test/api/
           docker build -t stig-manager -f ./test/api/Dockerfile .
       -
         name: Orchestrate
