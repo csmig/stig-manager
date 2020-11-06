@@ -56,6 +56,7 @@ jobs:
         name: Install Newman
         id: newman-install
         run: |
+          export NPM_CONFIG_PREFIX=~/.npm-global
           npm install -g newman
           npm install -g newman-reporter-htmlextra
       -
