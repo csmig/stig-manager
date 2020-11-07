@@ -18,16 +18,33 @@ jobs:
         name: Check out the repo
         uses: actions/checkout@v2
       -
-        name: Build API
+        name: Setup mock Keycloak
+        id: oidc-Setup
+        run: |
+          sudo npm install -g http-server
+          http-server ./test/api/oidc &
+      -
+        name: Set up MySQL
+        id: mysql-setup
+        run: |
+          docker run --name stig-manager-db \
+          -p 3306:3306 \
+          -e MYSQL_ROOT_PASSWORD=rootpw \
+          -e MYSQL_DATABASE=stigman \
+          -e MYSQL_USER=stigman \
+          -e MYSQL_PASSWORD=stigman \
+          mysql:8
+      -
+        name: Build & run API
         id: build
         run: |
           docker build -t stig-manager .
-      -
-        name: Orchestrate
-        id: Orchestrate
-        run: |
-          cd test/api
-          docker-compose up -d
+          docker run --name stig-manager-api \
+          -p 54000:54000 \
+          -e STIGMAN_DB_HOST=localhost \
+          -e STIGMAN_DB_PORT=3306 \
+          -e STIGMAN_API_AUTHORITY=http://localhost:8080/auth/realms/stigman \
+          stig-manager
       -
         name: Wait for API
         run: until $(curl --output /dev/null --silent --fail http://localhost:64001/api/op/configuration); do printf '.'; sleep 5; done
@@ -56,7 +73,6 @@ jobs:
         run: |
           sudo npm install -g newman
           sudo npm install -g newman-reporter-htmlextra
-          sudo npm install -g http-server
       -
         name: Newman GETs
         id: run-newman-GETs
