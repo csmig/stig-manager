@@ -30,9 +30,7 @@ jobs:
           docker-compose up -d
       -
         name: Sleep for 45 seconds
-        uses: jakejarvis/wait-action@master
-        with:
-          time: '45s'
+        run: sleep 45
       -
         name: cURL Test
         id: curl
@@ -64,15 +62,9 @@ jobs:
         working-directory: ./test/api
         run: |
           newman run postman_collection.json -e postman_environment.json -d collectionRunnerData.json -n 6 --folder GETs -r cli,htmlextra --reporter-cli-no-assertions --reporter-cli-no-console
-      -
-        name: List dir
-        id: list-dir
-        if: ${{ always() }}
-        run: |
-          ls -al ./test/api/newman
       - 
         uses: actions/upload-artifact@v2
-        if: ${{ always() }}
+        if: ${{ failure() }}
         with:
           name: newman-htmlextra
           path: ./test/api/newman
