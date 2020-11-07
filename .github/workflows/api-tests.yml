@@ -91,17 +91,17 @@ jobs:
 
           curl -X GET "http://localhost:64001/api/collections?projection=owners&projection=statistics" -H "accept: application/json" -H "$TOKEN"
       -
-        name: Install Newman
+        name: Install Newman reporter
         id: newman-install
         run: |
-          sudo npm install -g newman
+          # sudo npm install -g newman
           sudo npm install -g newman-reporter-htmlextra
       -
         name: Newman GETs
         id: newman-get-run
         working-directory: ./test/api
         run: |
-          newman run postman_collection.json -e postman_environment.json -d collectionRunnerData.json -n 6 --folder GETs -r cli,htmlextra --reporter-cli-no-assertions --reporter-cli-no-console
+          newman run postman_collection.json -e postman_environment.json -d collectionRunnerData.json -n 6 --folder GETs -r cli,htmlextra --reporter-cli-no-assertions --reporter-cli-no-console --reporter-htmlextra-showOnlyFails
       - 
         name: Upload artificat
         id: artifact-upload
