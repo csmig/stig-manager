@@ -44,10 +44,12 @@ jobs:
         id: api-run
         run: |
           docker run -d --name stig-manager-api \
-          -p 64001:54000 \
-          -e STIGMAN_DB_HOST=host.docker.internal \
+          --net=host \
+          -e STIGMAN_API_PORT=64001 \
+          -e STIGMAN_DB_HOST=localhost \
           -e STIGMAN_DB_PORT=3306 \
-          -e STIGMAN_API_AUTHORITY=http://host.docker.internal:8080/auth/realms/stigman \
+          -e STIGMAN_DB_PASSWORD=stigman \
+          -e STIGMAN_API_AUTHORITY=http://localhost:8080/auth/realms/stigman \
           stig-manager
       -
         name: Wait for API
