@@ -29,8 +29,8 @@ jobs:
           cd test/api
           docker-compose up -d
       -
-        name: Sleep for 45 seconds
-        run: sleep 45
+        name: Wait for API
+        run: until $(curl --output /dev/null --silent --fail http://localhost:64001/api/op/configuration); do printf '.'; sleep 5; done
       -
         name: cURL Test
         id: curl
@@ -56,6 +56,7 @@ jobs:
         run: |
           sudo npm install -g newman
           sudo npm install -g newman-reporter-htmlextra
+          sudo npm install -g http-server
       -
         name: Newman GETs
         id: run-newman-GETs
