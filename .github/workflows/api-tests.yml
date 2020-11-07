@@ -39,7 +39,7 @@ jobs:
         id: build
         run: |
           docker build -t stig-manager .
-          docker run --name stig-manager-api \
+          docker run -d --name stig-manager-api \
           -p 54000:54000 \
           -e STIGMAN_DB_HOST=localhost \
           -e STIGMAN_DB_PORT=3306 \
