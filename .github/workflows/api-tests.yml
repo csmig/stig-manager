@@ -65,11 +65,17 @@ jobs:
         working-directory: ./test/api
         run: |
           newman run postman_collection.json -e postman_environment.json -d collectionRunnerData.json -n 6 --folder GETs -r cli,htmlextra --reporter-cli-no-assertions --reporter-cli-no-console
+      -
+        name: List dir
+        id: list-dir
+        working-directory: ./test/api
+        run: |
+          ls -al
       - 
         uses: actions/upload-artifact@v2
         with:
           name: newman-htmlextra
-          path: test/api/newman
+          path: ./test/api/newman
           
           
 
