@@ -68,9 +68,9 @@ jobs:
       -
         name: List dir
         id: list-dir
-        working-directory: ./test/api
+        if: ${{ always() }}
         run: |
-          ls -al
+          ls -al ./test/api
       - 
         uses: actions/upload-artifact@v2
         with:
