@@ -20,9 +20,9 @@ jobs:
       -
         name: Run mock IdP
         id: idp-run
+        working-directory: ./test/api/oidc
         run: |
-          sudo npm install -g http-server
-          http-server ./test/api/oidc &
+          python3 -m http.server 8080 &
       -
         name: Run MySQL
         id: mysql-run
@@ -34,23 +34,40 @@ jobs:
           -e MYSQL_USER=stigman \
           -e MYSQL_PASSWORD=stigman \
           mysql:8
+      # -
+      #   name: Build API
+      #   id: api-build
+      #   run: |
+      #     docker build -t stig-manager .
       -
-        name: Build API
-        id: api-build
+        name: Get API dependencies
+        id: api-packages
+        working-directory: ./api/source
         run: |
-          docker build -t stig-manager .
+          npm ci
+      # -
+      #   name: Run API
+      #   id: api-run
+      #   run: |
+      #     docker run -d --name stig-manager-api \
+      #     --net=host \
+      #     -e STIGMAN_API_PORT=64001 \
+      #     -e STIGMAN_DB_HOST=localhost \
+      #     -e STIGMAN_DB_PORT=3306 \
+      #     -e STIGMAN_DB_PASSWORD=stigman \
+      #     -e STIGMAN_API_AUTHORITY=http://localhost:8080/auth/realms/stigman \
+      #     stig-manager
       -
         name: Run API
         id: api-run
+        working-directory: ./api/source
         run: |
-          docker run -d --name stig-manager-api \
-          --net=host \
-          -e STIGMAN_API_PORT=64001 \
-          -e STIGMAN_DB_HOST=localhost \
-          -e STIGMAN_DB_PORT=3306 \
-          -e STIGMAN_DB_PASSWORD=stigman \
-          -e STIGMAN_API_AUTHORITY=http://localhost:8080/auth/realms/stigman \
-          stig-manager
+          STIGMAN_API_PORT=64001 \
+          STIGMAN_DB_HOST=localhost \
+          STIGMAN_DB_PORT=3306 \
+          STIGMAN_DB_PASSWORD=stigman \
+          STIGMAN_API_AUTHORITY=http://localhost:8080/auth/realms/stigman \
+          node index.js &
       -
         name: Wait for API
         run: until $(curl --output /dev/null --silent --fail http://localhost:64001/api/op/configuration); do printf '.'; sleep 5; done
