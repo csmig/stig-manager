@@ -35,15 +35,19 @@ jobs:
           -e MYSQL_PASSWORD=stigman \
           mysql:8
       -
-        name: Build & run API
+        name: Build API
         id: build
         run: |
           docker build -t stig-manager .
+      -
+        name: Run API
+        id: build
+        run: |
           docker run -d --name stig-manager-api \
           -p 64001:54000 \
-          -e STIGMAN_DB_HOST=localhost \
+          -e STIGMAN_DB_HOST=host.docker.internal \
           -e STIGMAN_DB_PORT=3306 \
-          -e STIGMAN_API_AUTHORITY=http://localhost:8080/auth/realms/stigman \
+          -e STIGMAN_API_AUTHORITY=http://host.docker.internal:8080/auth/realms/stigman \
           stig-manager
       -
         name: Wait for API
