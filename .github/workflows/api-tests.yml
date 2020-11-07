@@ -27,7 +27,7 @@ jobs:
         name: Set up MySQL
         id: mysql-setup
         run: |
-          docker run --name stig-manager-db \
+          docker run -d --name stig-manager-db \
           -p 3306:3306 \
           -e MYSQL_ROOT_PASSWORD=rootpw \
           -e MYSQL_DATABASE=stigman \
