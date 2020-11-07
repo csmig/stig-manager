@@ -106,7 +106,7 @@ jobs:
         name: Upload artificat
         id: artifact-upload
         uses: actions/upload-artifact@v2
-        if: ${{ failure() }}
+        if: ${{ always() }}
         with:
           name: newman-htmlextra
           path: ./test/api/newman
