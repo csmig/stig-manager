@@ -69,9 +69,10 @@ jobs:
         id: list-dir
         if: ${{ always() }}
         run: |
-          ls -al ./test/api
+          ls -al ./test/api/newman
       - 
         uses: actions/upload-artifact@v2
+        if: ${{ always() }}
         with:
           name: newman-htmlextra
           path: ./test/api/newman
