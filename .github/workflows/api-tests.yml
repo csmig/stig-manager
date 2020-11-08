@@ -92,7 +92,7 @@ jobs:
           curl -f -X GET "http://localhost:64001/api/stigs" -H "accept: application/json" -H "$TOKEN" -s | jq .
           echo
 
-          curl -f -X POST "http://localhost:64001/api/op/appdata?elevate=true" -H "accept: application/json" -H "$TOKEN" -H "Content-Type: multipart/form-data" -F "importFile=@test/api/appdata.json;type=application/json" -s | jq .
+          curl -f -X POST "http://localhost:64001/api/op/appdata?elevate=true" -H "accept: application/json" -H "$TOKEN" -H "Content-Type: multipart/form-data" -F "importFile=@test/api/appdata.json;type=application/json" -s
           echo
 
           curl -f -X GET "http://localhost:64001/api/collections?projection=owners&projection=statistics" -H "accept: application/json" -H "$TOKEN" -s | jq .
