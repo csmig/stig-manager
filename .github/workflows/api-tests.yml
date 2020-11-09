@@ -24,12 +24,12 @@ jobs:
         run: |
           npm ci
       # -
-      #   name: Build API
+      #   name: Build API image
       #   id: api-build
       #   run: |
       #     docker build -t stig-manager .
       -
-        name: Run mock IdP
+        name: Run mock Keycloak
         id: idp-run
         working-directory: ./test/api/mock-keycloak
         run: |
@@ -46,7 +46,7 @@ jobs:
           -e MYSQL_PASSWORD=stigman \
           mysql:8
       # -
-      #   name: Run API
+      #   name: Run API from image
       #   id: api-run
       #   run: |
       #     docker run -d --name stig-manager-api \
@@ -58,7 +58,7 @@ jobs:
       #     -e STIGMAN_API_AUTHORITY=http://localhost:8080/auth/realms/stigman \
       #     stig-manager
       -
-        name: Run API
+        name: Run API from code
         id: api-run
         working-directory: ./api/source
         run: |
