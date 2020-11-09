@@ -25026,12 +25026,6 @@
 			}
 		}
 	],
-	"variable": [
-		{
-			"id": "db1acbd1-8b50-4718-9c9c-7e1fc049eb7a",
-			"key": "baseUrl",
-			"value": "http://localhost:64001/api"
-		}
-	],
 	"protocolProfileBehavior": {}
 }
+
