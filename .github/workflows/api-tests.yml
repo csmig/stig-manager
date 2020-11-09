@@ -18,10 +18,16 @@ jobs:
         name: Check out the repo
         uses: actions/checkout@v2
       -
-        name: Build API
-        id: api-build
+        name: Get API dependencies
+        id: api-packages
+        working-directory: ./api/source
         run: |
-          docker build -t stig-manager .
+          npm ci
+      # -
+      #   name: Build API
+      #   id: api-build
+      #   run: |
+      #     docker build -t stig-manager .
       -
         name: Run mock IdP
         id: idp-run
@@ -39,35 +45,29 @@ jobs:
           -e MYSQL_USER=stigman \
           -e MYSQL_PASSWORD=stigman \
           mysql:8
-      -
-        name: Run API
-        id: api-run
-        run: |
-          docker run -d --name stig-manager-api \
-          --net=host \
-          -e STIGMAN_API_PORT=64001 \
-          -e STIGMAN_DB_HOST=localhost \
-          -e STIGMAN_DB_PORT=3306 \
-          -e STIGMAN_DB_PASSWORD=stigman \
-          -e STIGMAN_API_AUTHORITY=http://localhost:8080/auth/realms/stigman \
-          stig-manager
-      # -
-      #   name: Get API dependencies
-      #   id: api-packages
-      #   working-directory: ./api/source
-      #   run: |
-      #     npm ci
       # -
       #   name: Run API
       #   id: api-run
-      #   working-directory: ./api/source
       #   run: |
-      #     STIGMAN_API_PORT=64001 \
-      #     STIGMAN_DB_HOST=localhost \
-      #     STIGMAN_DB_PORT=3306 \
-      #     STIGMAN_DB_PASSWORD=stigman \
-      #     STIGMAN_API_AUTHORITY=http://localhost:8080/auth/realms/stigman \
-      #     node index.js &
+      #     docker run -d --name stig-manager-api \
+      #     --net=host \
+      #     -e STIGMAN_API_PORT=64001 \
+      #     -e STIGMAN_DB_HOST=localhost \
+      #     -e STIGMAN_DB_PORT=3306 \
+      #     -e STIGMAN_DB_PASSWORD=stigman \
+      #     -e STIGMAN_API_AUTHORITY=http://localhost:8080/auth/realms/stigman \
+      #     stig-manager
+      -
+        name: Run API
+        id: api-run
+        working-directory: ./api/source
+        run: |
+          STIGMAN_API_PORT=64001 \
+          STIGMAN_DB_HOST=localhost \
+          STIGMAN_DB_PORT=3306 \
+          STIGMAN_DB_PASSWORD=stigman \
+          STIGMAN_API_AUTHORITY=http://localhost:8080/auth/realms/stigman \
+          node index.js &
       -
         name: Wait for API bootstrap
         run: until $(curl --output /dev/null --silent --fail http://localhost:64001/api/op/configuration); do printf '.'; sleep 5; done
