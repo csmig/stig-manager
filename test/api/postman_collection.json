@@ -7,6 +7,162 @@
 	},
 	"item": [
 		{
+			"name": "LoadTestData",
+			"item": [
+				{
+					"name": "Import and overwrite application data",
+					"request": {
+						"auth": {
+							"type": "oauth2",
+							"oauth2": [
+								{
+									"key": "accessToken",
+									"value": "{{token.stigmanadmin}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "multipart/form-data"
+							}
+						],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "importFile",
+									"type": "file",
+									"src": "/E:/gits/github/stig-manager/test/stig-manager-appdata.json.zip"
+								}
+							],
+							"options": {
+								"formdata": {}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/op/appdata?elevate=true",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"op",
+								"appdata"
+							],
+							"query": [
+								{
+									"key": "elevate",
+									"value": "true",
+									"description": "Elevate the user context for this request if user is permitted (canAdmin)"
+								}
+							]
+						}
+					},
+					"response": [
+						{
+							"name": "unexpected error",
+							"originalRequest": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "formdata",
+									"formdata": [
+										{
+											"key": "importFile",
+											"value": "<binary>",
+											"description": {
+												"content": "",
+												"type": "text/plain"
+											},
+											"type": "text"
+										}
+									]
+								},
+								"url": {
+									"raw": "{{baseUrl}}/op/appdata?elevate=<boolean>",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"op",
+										"appdata"
+									],
+									"query": [
+										{
+											"key": "elevate",
+											"value": "<boolean>"
+										}
+									]
+								}
+							},
+							"status": "Internal Server Error",
+							"code": 500,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": "{\n \"code\": 97991014,\n \"message\": \"laboris proident\"\n}"
+						},
+						{
+							"name": "Import successful",
+							"originalRequest": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "formdata",
+									"formdata": [
+										{
+											"key": "importFile",
+											"value": "<binary>",
+											"description": {
+												"content": "",
+												"type": "text/plain"
+											},
+											"type": "text"
+										}
+									]
+								},
+								"url": {
+									"raw": "{{baseUrl}}/op/appdata?elevate=<boolean>",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"op",
+										"appdata"
+									],
+									"query": [
+										{
+											"key": "elevate",
+											"value": "<boolean>"
+										}
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": "\"consequat do irure\""
+						}
+					]
+				}
+			],
+			"protocolProfileBehavior": {}
+		},
+		{
 			"name": "GETs",
 			"item": [
 				{
@@ -13729,6 +13885,7 @@
 													"    pm.expect(jsonData).to.be.an('object');\r",
 													"});\r",
 													"\r",
+													"// START AZDO #151\r",
 													"let userKeys = [\r",
 													"    \"userId\",\r",
 													"    \"username\",\r",
@@ -13739,6 +13896,7 @@
 													"    \"collectionGrants\",\r",
 													"    \"statistics\"\r",
 													"]\r",
+													"// END AZDO #151\r",
 													"\r",
 													"let collectionGrantKeys = [\r",
 													"    \"collection\",\r",
@@ -13774,9 +13932,11 @@
 													"    pm.expect(grant.collection).to.have.all.keys(collectionKeys);\r",
 													"}\r",
 													"\r",
+													"// START AZDO #151\r",
 													"// pm.test(\"Check if object contains all required privileges keys\", function () {\r",
 													"//     pm.expect(jsonData.privileges).to.have.all.keys(privilegesKeys);\r",
 													"// });\r",
+													"// END AZDO #151\r",
 													"\r",
 													"pm.test(\"Check if object contains all required statistics keys\", function () {\r",
 													"    pm.expect(jsonData.statistics).to.have.all.keys(statisticsKeys);\r",
@@ -13978,6 +14138,7 @@
 											"    pm.expect(jsonData).to.be.an('array');\r",
 											"});\r",
 											"\r",
+											"// START AZDO #151\r",
 											"let userKeys = [\r",
 											"    \"userId\",\r",
 											"    \"username\",\r",
@@ -13988,6 +14149,7 @@
 											"    \"collectionGrants\",\r",
 											"    \"statistics\"\r",
 											"]\r",
+											"// END AZDO #151\r",
 											"\r",
 											"let collectionGrantKeys = [\r",
 											"    \"collection\",\r",
@@ -14017,12 +14179,6 @@
 											"pm.test(\"Check if each object contains expected keys/values\", function () {\r",
 											"\r",
 											"    for (let user of jsonData){\r",
-											"        // pm.expect(review).to.have.all.keys(reviewKeys);\r",
-											"\r",
-											"        // let reviewMatchString = pm.environment.get(\"reviewMatchString\");\r",
-											"        // var regex = new RegExp(reviewMatchString);\r",
-											"        // pm.expect(review.resultComment).to.match(regex);\r",
-											"\r",
 											"        pm.test(\"Check if object contains all required keys\", function () {\r",
 											"            pm.expect(user).to.have.all.keys(userKeys);\r",
 											"        });\r",
@@ -14039,9 +14195,11 @@
 											"            pm.expect(grant.collection).to.have.all.keys(collectionKeys);\r",
 											"        }\r",
 											"\r",
+											"        // START AZDO #151\r",
 											"        // pm.test(\"Check if object contains all required privileges keys\", function () {\r",
 											"        //     pm.expect(user.privileges).to.have.all.keys(privilegesKeys);\r",
 											"        // });\r",
+											"        // END AZDO #151\r",
 											"\r",
 											"        pm.test(\"Check if object contains all required statistics keys\", function () {\r",
 											"            pm.expect(user.statistics).to.have.all.keys(statisticsKeys);\r",
@@ -14491,6 +14649,7 @@
 											"    pm.expect(jsonData).to.be.an('array');\r",
 											"});\r",
 											"\r",
+											"// START AZDO #151\r",
 											"let userKeys = [\r",
 											"    \"userId\",\r",
 											"    \"username\",\r",
@@ -14501,6 +14660,7 @@
 											"    \"collectionGrants\",\r",
 											"    \"statistics\"\r",
 											"]\r",
+											"// END AZDO #151\r",
 											"\r",
 											"let collectionGrantKeys = [\r",
 											"    \"collection\",\r",
@@ -14530,12 +14690,6 @@
 											"pm.test(\"Check if each object contains expected keys/values\", function () {\r",
 											"\r",
 											"    for (let user of jsonData){\r",
-											"        // pm.expect(review).to.have.all.keys(reviewKeys);\r",
-											"\r",
-											"        // let reviewMatchString = pm.environment.get(\"reviewMatchString\");\r",
-											"        // var regex = new RegExp(reviewMatchString);\r",
-											"        // pm.expect(review.resultComment).to.match(regex);\r",
-											"\r",
 											"        pm.test(\"Check if object contains all required keys\", function () {\r",
 											"            pm.expect(user).to.have.all.keys(userKeys);\r",
 											"        });\r",
@@ -14552,9 +14706,11 @@
 											"            pm.expect(grant.collection).to.have.all.keys(collectionKeys);\r",
 											"        }\r",
 											"\r",
+											"        // START AZDO #151\r",
 											"        // pm.test(\"Check if object contains all required privileges keys\", function () {\r",
 											"        //     pm.expect(user.privileges).to.have.all.keys(privilegesKeys);\r",
 											"        // });\r",
+											"        // END AZDO #151\r",
 											"\r",
 											"        pm.test(\"Check if object contains all required statistics keys\", function () {\r",
 											"            pm.expect(user.statistics).to.have.all.keys(statisticsKeys);\r",
@@ -25028,4 +25184,3 @@
 	],
 	"protocolProfileBehavior": {}
 }
-
