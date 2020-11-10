@@ -109,7 +109,7 @@ jobs:
         working-directory: ./test/api
         run: |
           set -o pipefail
-          newman run postman_collection.json -e postman_environment.json -d collectionRunnerData.json -n 6 --folder GETs -r cli,htmlextra --reporter-cli-no-assertions --reporter-cli-no-console --reporter-htmlextra-showOnlyFails | grep -A50 '┌─────'
+          newman run postman_collection.json -e postman_environment.json -d collectionRunnerData.json -n 6 --folder GETs -r cli,htmlextra --reporter-cli-no-assertions --reporter-cli-no-console --reporter-htmlextra-showOnlyFails | grep -A18 '┌─────'
       - 
         name: Upload artificat
         id: artifact-upload
