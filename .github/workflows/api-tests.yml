@@ -1,4 +1,4 @@
-name: Postman test the API
+name: CI jobs
 on:
   workflow_dispatch:
   pull_request:
@@ -12,18 +12,12 @@ on:
 
 jobs:
   test_api:
-    name: Build production API and test
+    name: Build API image and test
     runs-on: ubuntu-latest
     steps:
       - 
         name: Check out the repo
         uses: actions/checkout@v2
-      # -
-      #   name: Get API dependencies
-      #   id: api-packages
-      #   working-directory: ./api/source
-      #   run: |
-      #     npm ci
       -
         name: Build API image
         id: api-build
@@ -58,17 +52,6 @@ jobs:
           -e STIGMAN_DB_PASSWORD=stigman \
           -e STIGMAN_API_AUTHORITY=http://localhost:8080/auth/realms/stigman \
           stig-manager
-      # -
-      #   name: Run API from code
-      #   id: api-run
-      #   working-directory: ./api/source
-      #   run: |
-      #     STIGMAN_API_PORT=64001 \
-      #     STIGMAN_DB_HOST=localhost \
-      #     STIGMAN_DB_PORT=3306 \
-      #     STIGMAN_DB_PASSWORD=stigman \
-      #     STIGMAN_API_AUTHORITY=http://localhost:8080/auth/realms/stigman \
-      #     node index.js &
       -
         name: Wait for API bootstrap
         run: until $(curl --output /dev/null --silent --fail http://localhost:64001/api/op/configuration); do printf '.'; sleep 5; done
