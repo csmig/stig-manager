@@ -384,7 +384,7 @@ async function addReview( params ) {
     var checksO = 0;
     var checksNF = 0;
     var checksNA = 0;
-    var checksNR = 0;
+    var checksOther = 0;
     store.data.each(function (item, index, totalItems) {
       switch (item.data.result) {
         case 'fail':
@@ -396,12 +396,12 @@ async function addReview( params ) {
         case 'notapplicable':
           checksNA++;
           break;
-        case '':
-          checksNR++;
+        default:
+          checksOther++;
           break;
       }
     });
-    return totalChecks + ' checks (' + checksO + ' Open, ' + checksNF + ' NF, ' + checksNA + ' NA, ' + checksNR + ' NR)';
+    return totalChecks + ' checks (' + checksO + ' Open, ' + checksNF + ' NF, ' + checksNA + ' NA, ' + checksOther + ' NR/Other )';
   };
 
   /******************************************************/
@@ -972,19 +972,7 @@ async function addReview( params ) {
 				fixed: true,
         dataIndex: 'result',
         sortable: true,
-        renderer: function (val) {
-					switch (val) {
-						case 'fail':
-							return '<div style="color:red;font-weight:bolder;text-align:center">O</div>';
-							break;
-						case 'pass':
-							return '<div style="color:green;font-weight:bolder;text-align:center">NF</div>';
-							break;
-						case 'notapplicable':
-							return '<div style="color:grey;font-weight:bolder;text-align:center">NA</div>';
-							break;
-					}
-				}
+        renderer: renderResult
       },
       // {
       //   header: 'Comment',
@@ -1536,7 +1524,6 @@ async function addReview( params ) {
         fieldLabel: 'Result<i class= "fa fa-question-circle sm-question-circle"></i>',
         labelSeparator: '',
         emptyText: 'Your result...',
-        valueNotFoundText: 'Your result...',
         disabled: true,
         name: 'result',
         hiddenName: 'result',
@@ -2216,37 +2203,34 @@ async function addReview( params ) {
     if (completedRecords.length) {
       const confirmStr = `Eligible reviews: ${completedRecords.length}<br><br>Continue with submitting?`
       Ext.Msg.confirm("Confirm", confirmStr, async function (btn) {
-        try {
-          if (btn == 'yes') {
-            Ext.getBody().mask('Submitting...')
-            const requests = []
-            for (const record of completedRecords) {
-              requests.push(
-                Ext.Ajax.requestPromise({
-                  url: `${STIGMAN.Env.apiBase}/collections/${leaf.collectionId}/reviews/${record.data.assetId}/${record.data.ruleId}`,
-                  method: 'PATCH',
-                  jsonData: {
-                    status: 'submitted'
-                  }
-                })
-              )
+        if (btn == 'yes') {
+          const results = []
+          let i, l
+          for (i = 0, l = completedRecords.length; i < l; i++) {
+            const record = completedRecords[i]
+            Ext.getBody().mask(`Updating ${i+1}/${l} Reviews`)
+            try {
+              const result = await Ext.Ajax.requestPromise({
+                url: `${STIGMAN.Env.apiBase}/collections/${leaf.collectionId}/reviews/${record.data.assetId}/${record.data.ruleId}`,
+                method: 'PATCH',
+                jsonData: {
+                  status: 'submitted'
+                }
+              })
+              results.push({
+                success: true,
+                result: result
+              })
             }
-            let results = await Promise.allSettled(requests)
-
-            for (i=0, l=completedRecords.length; i < l; i++) {
-              if (results[i].status === 'fulfilled') {
-                completedRecords[i].data.status = 'submitted'
-                completedRecords[i].commit()
-              }
+            catch (e) {
+              results.push({
+                success: false,
+                result: e
+              })
             }
           }
-        }
-        catch (e) {
-          alert(e.message)
-        }
-        finally {
           groupStore.reload()
-          Ext.getBody().unmask()
+          Ext.getBody().unmask()    
         }
       })
     } else {
