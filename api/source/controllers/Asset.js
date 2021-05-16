@@ -25,7 +25,7 @@ module.exports.createAsset = async function createAsset (req, res, next) {
         // This is MySQL specific, should abstract with an SmError
         if (err.code === 'ER_DUP_ENTRY') {
           try {
-            let response = await Asset.getAssets(body.collectionId, body.name, 'exact', null, projection, elevate, req.userObject )
+            let response = await Asset.getAssets(body.collectionId, body.name, 'exact', null, null, projection, elevate, req.userObject )
             throw (writer.respondWithCode( 400, {
               code: 400,
               message: `Duplicate name`,
@@ -185,7 +185,7 @@ module.exports.removeUsersFromAssetStig = async function removeUsersFromAssetSti
 
 module.exports.exportAssets = async function exportAssets (projection, elevate, userObject) {
   try {
-    let assets =  await Asset.getAssets(null, null, null, null, projection, elevate, userObject )
+    let assets =  await Asset.getAssets(null, null, null, null, null, projection, elevate, userObject )
     return assets
   }
   catch (err) {
@@ -199,12 +199,14 @@ module.exports.getAsset = async function getAsset (req, res, next) {
     let projection = req.swagger.params['projection'].value
     let elevate = req.swagger.params['elevate'].value
     
-    // All users are permitted to query for the asset
     // If this user has no grants permitting access to the asset, the response will be undefined
     let response = await Asset.getAsset(assetId, projection, elevate, req.userObject )
-
+    if (!response) {
+      throw (writer.respondWithCode ( 403, {message: `User has insufficient privilege to make this request.`} ) )
+    }
+    
     // If there is a response, check if the request included the stigGrants projection
-    if (response && projection && projection.includes('stigGrants')) {
+    if (projection && projection.includes('stigGrants')) {
       // Check if the stigGrants projection is forbidden
       if (!elevate) {
         const collectionGrant = req.userObject.collectionGrants.find( g => g.collection.collectionId === response.collection.collectionId )
@@ -229,6 +231,7 @@ module.exports.getAssets = async function getAssets (req, res, next) {
     let name = req.swagger.params['name'].value
     let nameMatch = req.swagger.params['name-match'].value
     let benchmarkId = req.swagger.params['benchmarkId'].value
+    let metadata = req.swagger.params['metadata'].value
     let projection = req.swagger.params['projection'].value
     let elevate = req.swagger.params['elevate'].value
     const collectionGrant = req.userObject.collectionGrants.find( g => g.collection.collectionId === collectionId )
@@ -243,7 +246,7 @@ module.exports.getAssets = async function getAssets (req, res, next) {
           }
         }
       }
-      let response = await Asset.getAssets(collectionId, name, nameMatch, benchmarkId, projection, elevate, req.userObject )
+      let response = await Asset.getAssets(collectionId, name, nameMatch, benchmarkId, metadata, projection, elevate, req.userObject )
       writer.writeJson(res, response)
     }
     else {
@@ -309,8 +312,8 @@ module.exports.getChecklistByAssetStig = async function getChecklistByAssetStig 
         }
         const j2x = new J2X(defaultOptions)
         let xml = `<?xml version="1.0" encoding="UTF-8"?>\n<!-- STIG Manager ${config.version} -->\n`
-        xml += j2x.parse(response)
-        writer.writeXml(res, xml, `${response.CHECKLIST.ASSET.HOST_NAME}-${benchmarkId}-${revisionStr}.ckl`)
+        xml += j2x.parse(response.cklJs)
+        writer.writeInlineFile(res, xml, `${response.assetName}-${benchmarkId}-${revisionStr}.ckl`, 'application/xml')
       }
     }
     else {
@@ -362,8 +365,8 @@ module.exports.getChecklistByAsset = async function getChecklistByAssetStig (req
     }
     const j2x = new J2X(parseOptions)
     let xml = `<?xml version="1.0" encoding="UTF-8"?>\n<!-- STIG Manager ${config.version} -->\n`
-    xml += j2x.parse(cklObject)
-    writer.writeXml(res, xml, `${cklObject.CHECKLIST.ASSET.HOST_NAME}.ckl`)
+    xml += j2x.parse(cklObject.cklJs)
+    writer.writeInlineFile(res, xml, `${cklObject.assetName}.ckl`, 'application/xml')
   }
   catch (err) {
     if (err.name === 'SmError') {

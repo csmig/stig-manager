@@ -38,18 +38,17 @@ exports.queryAssets = async function (inProjection = [], inPredicates = {}, elev
 
     // PROJECTIONS
     if (inProjection.includes('adminStats')) {
-      let statsJoin = 'stig_asset_map sam inner join stats_asset_stig sas on (sam.assetId=sas.assetId and sam.benchmarkId=sas.benchmarkId) WHERE sas.assetId = a.assetId'
+      joins.push('left join stats_asset_stig sas on (sa.assetId=sas.assetId and sa.benchmarkId=sas.benchmarkId)')
       columns.push(`json_object(
-        'stigCount', COUNT(distinct sa.saId),
+        'stigCount', COUNT(distinct sas.benchmarkId),
         'stigAssignedCount', COUNT(distinct usa.saId),
-        'ruleCount', (SELECT SUM(ruleCount) FROM current_rev where benchmarkId in (select distinct benchmarkId from stig_asset_map where assetId = a.assetId)),
-        'acceptedCount', (SELECT SUM(acceptedManual) + SUM(acceptedAuto) FROM ${statsJoin}),
-        'submittedCount', (SELECT SUM(submittedManual) + SUM(submittedAuto) FROM ${statsJoin}),
-        'savedCount', (SELECT SUM(savedManual) + SUM(savedAuto) FROM ${statsJoin})
+        'ruleCount', SUM(cr.ruleCount),
+        'acceptedCount', SUM(sas.acceptedManual) + SUM(sas.acceptedAuto),
+        'submittedCount', SUM(submittedManual) + SUM(submittedAuto),
+        'savedCount', SUM(savedManual) + SUM(savedAuto)
         ) as "adminStats"`)
     }
     if (inProjection.includes('stigGrants')) {
-      // A bit more complex than the Oracle query because we can't use nested json_arrayagg's
       columns.push(`(select
         CASE WHEN COUNT(byStig.stigAssetUsers) > 0 THEN json_arrayagg(byStig.stigAssetUsers) ELSE json_array() END
       from
@@ -115,16 +114,16 @@ exports.queryAssets = async function (inProjection = [], inPredicates = {}, elev
     // PREDICATES
     let predicates = {
       statements: [],
-      binds: {}
+      binds: []
     }
     if (inPredicates.assetId) {
       predicates.statements.push('a.assetId = :assetId')
       predicates.binds.assetId = inPredicates.assetId
     }
     if ( inPredicates.name ) {
-      let matchStr = '= :name'
+      let matchStr = '= ?'
       if ( inPredicates.nameMatch && inPredicates.nameMatch !== 'exact') {
-        matchStr = 'LIKE :name'
+        matchStr = 'LIKE ?'
         switch (inPredicates.nameMatch) {
           case 'startsWith':
             inPredicates.name = `${inPredicates.name}%`
@@ -138,20 +137,27 @@ exports.queryAssets = async function (inProjection = [], inPredicates = {}, elev
         }
       }
       predicates.statements.push(`a.name ${matchStr}`)
-      predicates.binds.name = `${inPredicates.name}`
+      predicates.binds.push(inPredicates.name)
     }
     if (inPredicates.collectionId) {
-      predicates.statements.push('a.collectionId = :collectionId')
-      predicates.binds.collectionId = inPredicates.collectionId
+      predicates.statements.push('a.collectionId = ?')
+      predicates.binds.push(inPredicates.collectionId)
     }
     if (inPredicates.benchmarkId) {
-      predicates.statements.push('sa.benchmarkId = :benchmarkId')
-      predicates.binds.benchmarkId = inPredicates.benchmarkId
+      predicates.statements.push('sa.benchmarkId = ?')
+      predicates.binds.push(inPredicates.benchmarkId)
+    }
+    if ( inPredicates.metadata ) {
+      for (const pair of inPredicates.metadata) {
+        const [key, value] = pair.split(':')
+        predicates.statements.push('JSON_CONTAINS(a.metadata, ?, ?)')
+        predicates.binds.push( `"${value}"`,  `$.${key}`)
+      }
     }
     if (context == dbUtils.CONTEXT_USER) {
-      predicates.statements.push('cg.userId = :userId')
+      predicates.statements.push('cg.userId = ?')
       predicates.statements.push('CASE WHEN cg.accessLevel = 1 THEN usa.userId = cg.userId ELSE TRUE END')
-      predicates.binds.userId = userObject.userId
+      predicates.binds.push(userObject.userId)
     }
 
     // CONSTRUCT MAIN QUERY
@@ -166,7 +172,7 @@ exports.queryAssets = async function (inProjection = [], inPredicates = {}, elev
     sql += ' order by a.name'
   
     connection = await dbUtils.pool.getConnection()
-    connection.config.namedPlaceholders = true
+    // connection.config.namedPlaceholders = true
     let [rows] = await connection.query(sql, predicates.binds)
     return (rows)
   }
@@ -378,7 +384,7 @@ exports.addOrUpdateAsset = async function (writeAction, assetId, body, projectio
         // INSERT into stig_asset_map
         let sqlInsertBenchmarks = `
           INSERT IGNORE INTO 
-            stigman.stig_asset_map (benchmarkId, assetId)
+            stig_asset_map (benchmarkId, assetId)
           VALUES
             ?`
         await connection.query(sqlInsertBenchmarks, [stigAssetMapBinds])
@@ -712,13 +718,17 @@ exports.cklFromAssetStigs = async function cklFromAssetStigs (assetId, benchmark
 
     // ASSET
     let [resultGetAsset] = await connection.query(sqlGetAsset, [assetId])
-    cklJs.CHECKLIST.ASSET.HOST_NAME = resultGetAsset[0].name
+    cklJs.CHECKLIST.ASSET.HOST_NAME = resultGetAsset[0].metadata.cklHostName ? resultGetAsset[0].metadata.cklHostName : resultGetAsset[0].name
     cklJs.CHECKLIST.ASSET.HOST_FQDN = resultGetAsset[0].fqdn
     cklJs.CHECKLIST.ASSET.HOST_IP = resultGetAsset[0].ip
     cklJs.CHECKLIST.ASSET.HOST_MAC = resultGetAsset[0].mac
     cklJs.CHECKLIST.ASSET.ASSET_TYPE = resultGetAsset[0].noncomputing ? 'Non-Computing' : 'Computing'
-    cklJs.CHECKLIST.ASSET.ROLE = resultGetAsset[0].metadata.role ?  resultGetAsset[0].metadata.role : 'None'
-
+    cklJs.CHECKLIST.ASSET.ROLE = resultGetAsset[0].metadata.cklRole ?? 'None'
+    cklJs.CHECKLIST.ASSET.TECH_AREA = resultGetAsset[0].metadata.cklTechArea ?? null
+    cklJs.CHECKLIST.ASSET.WEB_OR_DATABASE = resultGetAsset[0].metadata.cklHostName ?  'true' : 'false'
+    cklJs.CHECKLIST.ASSET.WEB_DB_SITE = resultGetAsset[0].metadata.cklWebDbSite ?? null
+    cklJs.CHECKLIST.ASSET.WEB_DB_INSTANCE = resultGetAsset[0].metadata.cklWebDbInstance ?? null
+    
     // CHECKLIST.STIGS.iSTIG.STIG_INFO.SI_DATA
     for (const benchmark of benchmarks) {
       const regex = /^(?<benchmarkId>\S+?)(-(?<revisionStr>V\d+R\d+(\.\d+)?))?$/
@@ -858,7 +868,7 @@ exports.cklFromAssetStigs = async function cklFromAssetStigs (assetId, benchmark
       cklJs.CHECKLIST.STIGS.iSTIG.push(iStigJs)
     }
 
-    return (cklJs)
+    return ({assetName: resultGetAsset[0].name, cklJs: cklJs})
 
   }
   catch (e) {
@@ -904,15 +914,28 @@ exports.deleteAsset = async function(assetId, projection, elevate, userObject) {
   }
 }
 
+exports.attachStigToAsset = async function (assetId, benchmarkId, elevate, userObject ) {
+  try {
+    let sqlInsert = `INSERT IGNORE INTO stig_asset_map (assetId, benchmarkId) VALUES (?, ?)`
+    await dbUtils.pool.query(sqlInsert, [assetId, benchmarkId])
+    let rows = await _this.queryStigsByAsset( {
+      assetId: assetId
+    }, elevate, userObject)
+    return (rows)
+  }
+  catch (err) {
+    throw ( writer.respondWithCode ( 500, {message: err.message,stack: err.stack} ) )
+  }
+}
+
 exports.removeStigFromAsset = async function (assetId, benchmarkId, elevate, userObject ) {
   try {
-    let rows = await _this.queryStigsByAsset( {
-      assetId: assetId,
-      benchmarkId: benchmarkId
-    }, elevate, userObject)
     let sqlDelete = `DELETE FROM stig_asset_map where assetId = ? and benchmarkId = ?`
     await dbUtils.pool.query(sqlDelete, [assetId, benchmarkId])
-    return (rows[0])
+    let rows = await _this.queryStigsByAsset( {
+      assetId: assetId
+    }, elevate, userObject)
+    return (rows)
   }
   catch (err) {
     throw ( writer.respondWithCode ( 500, {message: err.message,stack: err.stack} ) )
@@ -921,9 +944,9 @@ exports.removeStigFromAsset = async function (assetId, benchmarkId, elevate, use
 
 exports.removeStigsFromAsset = async function (assetId, elevate, userObject ) {
   try {
-    let rows = await _this.queryStigsByAsset( {assetId: assetId}, elevate, userObject)
     let sqlDelete = `DELETE FROM stig_asset_map where assetId = ?`
     await dbUtils.pool.query(sqlDelete, [assetId])
+    let rows = await _this.queryStigsByAsset( {assetId: assetId}, elevate, userObject)
     return (rows)
   }
   catch (err) {
@@ -967,13 +990,14 @@ exports.getAsset = async function(assetId, projection, elevate, userObject) {
  * dept String Selects Assets exactly matching a department string (optional)
  * returns List
  **/
-exports.getAssets = async function(collectionId, name, nameMatch, benchmarkId, projection, elevate, userObject) {
+exports.getAssets = async function(collectionId, name, nameMatch, benchmarkId, metadata, projection, elevate, userObject) {
   try {
     let rows = await _this.queryAssets(projection, {
-      collectionId: collectionId,
-      name: name,
-      nameMatch: nameMatch,
-      benchmarkId: benchmarkId
+      collectionId,
+      name,
+      nameMatch,
+      benchmarkId,
+      metadata
     }, elevate, userObject)
     return (rows)
   }
@@ -1020,8 +1044,8 @@ exports.getChecklistByAssetStig = async function(assetId, benchmarkId, revisionS
         return (rows)
       case 'ckl':
         const benchmark = revisionStr === 'latest' ? benchmarkId : `${benchmarkId}-${revisionStr}`
-        let xml = await _this.cklFromAssetStigs(assetId, [benchmark], elevate, userObject)
-        return (xml)
+        let cklObject = await _this.cklFromAssetStigs(assetId, [benchmark], elevate, userObject)
+        return (cklObject)
     }
   }
   catch (err) {
@@ -1033,8 +1057,8 @@ exports.getChecklistByAsset = async function(assetId, benchmarks, format, elevat
   try {
     switch (format) {
       case 'ckl':
-        let xml = await _this.cklFromAssetStigs(assetId, benchmarks, elevate, userObject)
-        return (xml)
+        let cklObject = await _this.cklFromAssetStigs(assetId, benchmarks, elevate, userObject)
+        return (cklObject)
     }
   }
   catch (err) {

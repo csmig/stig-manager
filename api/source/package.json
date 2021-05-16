@@ -1,6 +1,6 @@
 {
   "name": "stig-management-api",
-  "version": "1.0.0-beta.28",
+  "version": "1.0.0-beta.31",
   "description": "An API for managing evaluations of Security Technical Implementation Guide (STIG) assessments.",
   "main": "index.js",
   "scripts": {
@@ -27,7 +27,7 @@
     "js-yaml": "^3.14.0",
     "jsonwebtoken": "^8.5.1",
     "jwks-rsa": "^1.12.1",
-    "lodash": "^4.17.19",
+    "lodash": "^4.17.21",
     "morgan": "^1.10.0",
     "mysql2": "^2.1.0",
     "oas-tools": "2.1.7",
