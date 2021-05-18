@@ -34,7 +34,7 @@ let config = {
         type: process.env.STIGMAN_DB_TYPE || "mysql",
         host: process.env.STIGMAN_DB_HOST || "localhost",
         port: process.env.STIGMAN_DB_PORT || 3306,
-        service: process.env.STIGMAN_DB_SERVICE || "orclpdb1.localdomain",
+        database: process.env.STIGMAN_DB_DATABASE || "stigman",
         schema: process.env.STIGMAN_DB_SCHEMA || "stigman",
         username: process.env.STIGMAN_DB_USER || "stigman",
         password: process.env.STIGMAN_DB_PASSWORD,
