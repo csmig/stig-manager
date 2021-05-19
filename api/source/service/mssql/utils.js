@@ -1,4 +1,4 @@
-const mssql = require('mssql');
+const sql = require('mssql');
 const config = require('../../utils/config')
 const retry = require('async-retry')
 const Umzug = require('umzug')
@@ -8,16 +8,29 @@ const semverLt = require('semver/functions/lt')
 
 let _this = this
 
+module.exports.sql = sql
 module.exports.testConnection = async function () {
   try {
-    await _this.pool.connect()
-    const result = await _this.pool.request().query('SELECT @@version as version')
+    // await _this.pool.connect()
+    // const result = await _this.pool.request().query('SELECT @@version as version')
+    const result = await _this.queryPool('SELECT @@version as version')
     return result.recordset[0].version
   }
   catch (err) {
     // console.log(err.message)
     throw (err)
   }
+}
+module.exports.queryPool = async function (query, params = {}) {
+  try {
+    const request = _this.pool.request()
+    for (const [prop, value] of Object.entries(params)) {
+      request.input(prop, value)
+    }
+    const result = request.query(query)
+    return result
+  }
+  finally {}
 }
 
 function getPoolConfig() {
@@ -44,7 +57,8 @@ module.exports.initializeDatabase = async function () {
 
     // Create the connection pool
     const poolConfig = getPoolConfig()
-    _this.pool = new mssql.ConnectionPool(poolConfig)
+    // _this.pool = new sql.ConnectionPool(poolConfig)
+    _this.pool = await sql.connect(poolConfig)
 
     // Call the pool destruction methods on SIGTERM and SEGINT
     async function closePoolAndExit() {
@@ -86,7 +100,7 @@ module.exports.initializeDatabase = async function () {
       },
       storage: path.join(__dirname, './migrations/lib/umzug-mssql-storage'),
       storageOptions: {
-        pool: _this.pool
+        dbUtils: _this
       }
     })
 

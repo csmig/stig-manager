@@ -1,6 +1,7 @@
 'use strict';
 const writer = require('../../utils/writer.js')
 const dbUtils = require('./utils')
+const sql = require('mssql')
 
 let _this = this
 
@@ -361,14 +362,15 @@ exports.insertManualBenchmark = async function (b) {
   function dmlObjectFromBenchmarkData (b) {
     let dml = {
       stig: {
-        sql: "insert ignore into stig (title, benchmarkId) VALUES (:title, :benchmarkId)"
+        sql: `INSERT INTO stig (title, benchmarkId) SELECT @title, @benchmarkId 
+        WHERE NOT EXISTS (SELECT benchmarkId FROM stig WHERE benchmarkId = @benchmarkId)`
       },
       revision: {
-        sql: `insert ignore into revision (
+        sql: `INSERT INTO revision (
           revId, 
           benchmarkId, 
-          \`version\`, 
-          \`release\`, 
+          version, 
+          release, 
           benchmarkDate, 
           benchmarkDateSql, 
           status, 
@@ -378,70 +380,114 @@ exports.insertManualBenchmark = async function (b) {
           ruleCount,
           checkCount,
           fixCount
-        ) VALUES (
-          :revId, 
-          :benchmarkId, 
-          :version, 
-          :release, 
-          :benchmarkDate, 
-          STR_TO_DATE(:benchmarkDateSql, '%Y-%m-%d'),
-          :status, 
-          :statusDate, 
-          :description,
-          :groupCount,
-          :ruleCount,
-          :checkCount,
-          :fixCount
-        )`,
+        ) 
+        SELECT
+          @revId, 
+          @benchmarkId, 
+          @version, 
+          @release, 
+          @benchmarkDate, 
+          CONVERT(date, @benchmarkDate, 23),
+          @status, 
+          @statusDate, 
+          @description,
+          @groupCount,
+          @ruleCount,
+          @checkCount,
+          @fixCount
+        WHERE NOT EXISTS (SELECT revId FROM revision WHERE revId = @revId)
+        `
       },
       group: {
-        sql: `INSERT into \`group\` (
-          groupId, 
-          title, 
-          severity
-        ) VALUES ?
-        ON DUPLICATE KEY UPDATE
-          groupId = VALUES (groupId),
-          title = VALUES(title),
-          severity = CASE WHEN severity <> VALUES(severity) THEN
-            'mixed'
-          ELSE
-            VALUES(severity)
-          END`,
+        sql: `MERGE INTO [group] AS target
+        USING (SELECT * FROM OPENJSON(@json) WITH (
+          groupId nvarchar(45),
+          title nvarchar(255),
+          severity nvarchar(45)
+        )) AS source
+        ON (target.groupId = source.groupId)
+        WHEN MATCHED THEN
+          UPDATE SET
+            target.title = source.title,
+            target.severity = source.severity
+        WHEN NOT MATCHED THEN
+          INSERT (groupId, title, severity)
+          VALUES (source.groupId, source.title, source.severity);`,
         binds: []
       },
       fix: {
-        sql: "insert ignore into fix (fixId, text) VALUES ?",
+        sql: `INSERT INTO [fix] (
+          fixId,
+          text
+        ) SELECT * FROM OPENJSON(@json) WITH (
+          fixId nvarchar(255),
+          text nvarchar(max)
+        ) AS source
+        WHERE NOT EXISTS (SELECT fixId from [fix] WHERE [fix].fixId = source.fixId)`,
         binds: []
       },
       check: {
-        sql: "insert ignore into `check` (checkId, content) VALUES ?",
+        sql: `INSERT INTO [check] (
+          checkId,
+          content
+        ) SELECT * FROM OPENJSON(@json) WITH (
+          checkId nvarchar(255),
+          content nvarchar(max)
+        ) AS source
+        WHERE NOT EXISTS (SELECT checkId from [check] WHERE [check].checkId = source.checkId)`,
         binds: []
       },
       rule: {
-        sql: `
-        insert ignore into rule (
+        sql: `INSERT INTO [rule] (
           ruleId,
-          version
-          ,title
-          ,severity
-          ,weight
-          ,vulnDiscussion
-          ,falsePositives
-          ,falseNegatives
-          ,documentable
-          ,mitigations
-          ,severityOverrideGuidance
-          ,potentialImpacts
-          ,thirdPartyTools
-          ,mitigationControl
-          ,responsibility
-          ,iaControls
-        ) VALUES ?`,
+          version,
+          title,
+          severity,
+          weight,
+          vulnDiscussion,
+          falsePositives,
+          falseNegatives,
+          documentable,
+          mitigations,
+          severityOverrideGuidance,
+          potentialImpacts,
+          thirdPartyTools,
+          mitigationControl,
+          responsibility,
+          iaControls          
+        ) SELECT * FROM OPENJSON(@json) WITH (
+          ruleId nvarchar(45),
+          version nvarchar(45),
+          title nvarchar(1000),
+          severity nvarchar(45),
+          weight nvarchar(45),
+          vulnDiscussion nvarchar(max),
+          falsePositives nvarchar(max),
+          falseNegatives nvarchar(max),
+          documentable nvarchar(45),
+          mitigations nvarchar(max),
+          severityOverrideGuidance nvarchar(max),
+          potentialImpacts nvarchar(max),
+          thirdPartyTools nvarchar(max),
+          mitigationControl nvarchar(max),
+          responsibility nvarchar(255),
+          iaControls nvarchar(255)          
+        ) AS source
+        WHERE NOT EXISTS (SELECT ruleId from [rule] WHERE [rule].ruleId = source.ruleId)`,
         binds: []
       },
       revGroupMap: {
-        sql: "insert ignore into rev_group_map (revId, groupId, rules) VALUES ?",
+        sql: `INSERT INTO [rev_group_map] (
+          revId,
+          groupId,
+          rules
+        ) SELECT * FROM OPENJSON(@json) WITH (
+          revId nvarchar(255),
+          groupId nvarchar(45),
+          rules nvarchar(max)
+        ) AS source
+        WHERE NOT EXISTS (SELECT revId, groupId from [rev_group_map] 
+          WHERE [rev_group_map].revId = source.revId AND [rev_group_map].groupId = source.groupId)`,
         binds: []
       },
       revGroupRuleMap: {
@@ -527,13 +573,13 @@ exports.insertManualBenchmark = async function (b) {
     // TABLE: revision
     dml.revision.binds = revisionBinds
 
-    groups.forEach( group => {
+    for (const group of groups) {
       let {rules, ...groupBinds} = group
 
       let ruleMap = []
       let identsMap = []
       let groupSeverity
-      rules.forEach(rule => {
+      for (const rule of rules) {
         let {checks, fixes, idents, ...ruleBinds} = rule
         // Group severity calculation
         if (!groupSeverity) {
@@ -543,47 +589,23 @@ exports.insertManualBenchmark = async function (b) {
           groupSeverity = 'mixed'
         }
         // TABLE: rule
-        dml.rule.binds.push([
-          ruleBinds.ruleId,
-          ruleBinds.version,
-          ruleBinds.title,
-          ruleBinds.severity,
-          ruleBinds.weight,
-          ruleBinds.vulnDiscussion,
-          ruleBinds.falsePositives,
-          ruleBinds.falseNegatives,
-          ruleBinds.documentable,
-          ruleBinds.mitigations,
-          ruleBinds.severityOverrideGuidance,
-          ruleBinds.potentialImpacts,
-          ruleBinds.thirdPartyTools,
-          ruleBinds.mitigationControl,
-          ruleBinds.responsibility,
-          ruleBinds.iaControls          
-        ])
-        if (checks) {
-          checks.forEach(check => {
-            // TABLE: check
-            dml.check.binds.push([
-              check.checkId,
-              check.content
-            ])
-          })
+        dml.rule.binds.push(ruleBinds)
+
+          // TABLE: check
+        for (const check of checks) {
+          dml.check.binds.push(check)
         }
 
-        fixes.forEach(fix => {
+        for (const fix of fixes) {
           // TABLE: fix
-          dml.fix.binds.push([
-            fix.fixId,
-            fix.text
-          ])
-        })
+          dml.fix.binds.push(fix)
+        }
 
-        idents.forEach(ident => {
+        for (const ident of idents) {
           if (ident.system === 'http://iase.disa.mil/cci' || ident.system === 'http://cyber.mil/cci') {
             dml.ruleCciMap.binds.push([rule.ruleId, ident.ident.replace('CCI-','')])
           }
-        })
+        }
 
         // JSON for rev_group_map.rules
         ruleMap.push({
@@ -592,22 +614,22 @@ exports.insertManualBenchmark = async function (b) {
           fixes: fixes ? fixes.map(f=>f.fixId) : null,
           ccis: identsMap
         })
-  
-      }) // end rules.forEach
+
+      } //end rules.forOf
 
       // TABLE: group
-      dml.group.binds.push([
-        groupBinds.groupId, 
-        groupBinds.title,
-        groupSeverity
-      ])
+      dml.group.binds.push({
+        groupId: groupBinds.groupId,
+        title: groupBinds.title,
+        severity: groupSeverity
+      })
 
       // TABLE: rev_group_map
-      dml.revGroupMap.binds.push([
-        revisionBinds.revId,
-        group.groupId,
-        JSON.stringify(ruleMap)
-      ])
+      dml.revGroupMap.binds.push({
+        revId: revisionBinds.revId,
+        groupId: group.groupId,
+        rules: JSON.stringify(ruleMap)
+      })
 
       // TABLE: rev_group_rule_map
       dml.revGroupRuleMap.binds = { revId: revisionBinds.revId }
@@ -615,8 +637,7 @@ exports.insertManualBenchmark = async function (b) {
       dml.revGroupRuleCheckMap.binds = { revId: revisionBinds.revId }
       // TABLE: rev_group_rule_fix_map
       dml.revGroupRuleFixMap.binds = { revId: revisionBinds.revId }
-      
-    }) // end groups.forEach
+    } //end groups.forOf
 
     dml.revision.binds.groupCount = dml.group.binds.length
     dml.revision.binds.ruleCount = dml.rule.binds.length
@@ -626,7 +647,7 @@ exports.insertManualBenchmark = async function (b) {
     return dml
   }
 
-  let connection
+  let transaction
   try {
     let result, hrstart, hrend, tableOrder, dml, stats = {}
     let totalstart = process.hrtime() 
@@ -636,10 +657,9 @@ exports.insertManualBenchmark = async function (b) {
     hrend = process.hrtime(hrstart)
     stats.dmlObject = `Built in ${hrend[0]}s  ${hrend[1] / 1000000}ms`
 
-    let pp = dbUtils.pool
-    connection = await pp.getConnection()
-    connection.config.namedPlaceholders = true
-    await connection.query('START TRANSACTION')
+    transaction = new dbUtils.sql.Transaction()
+    await transaction.begin()
+    const request = new sql.Request(transaction)
 
     tableOrder = [
       'stig',
@@ -649,114 +669,110 @@ exports.insertManualBenchmark = async function (b) {
       'check',
       'fix',
       'revGroupMap',
-      'revGroupRuleMap',
-      'revGroupRuleCheckMap',
-      'revGroupRuleFixMap',
-      'ruleCciMap'
+      // 'revGroupRuleMap',
+      // 'revGroupRuleCheckMap',
+      // 'revGroupRuleFixMap',
+      // 'ruleCciMap'
     ]
 
     for (const table of tableOrder) {
       hrstart = process.hrtime()
       if (Array.isArray(dml[table].binds)) {
         if (dml[table].binds.length === 0) { continue }
-        ;[result] = await connection.query(dml[ table ].sql, [ dml[ table ].binds ])
+        const json = JSON.stringify(dml[table].binds)
+        result = await dbUtils.queryPool(dml[table].sql, { json })
       }
       else {
-        ;[result] = await connection.query(dml[ table ].sql, dml[ table ].binds)
+        result = await dbUtils.queryPool(dml[table].sql, dml[table].binds)
       }
       hrend = process.hrtime(hrstart)
       stats[table] = `${result.affectedRows} in ${hrend[0]}s  ${hrend[1] / 1000000}ms`
     }
 
-    // Update current_rev
-    let sqlDeleteCurrentRev = 'DELETE from current_rev where benchmarkId = ?'
-    let sqlUpdateCurrentRev = `INSERT INTO current_rev (
-      revId,
-      benchmarkId,
-      \`version\`, 
-      \`release\`, 
-      benchmarkDate,
-      benchmarkDateSql,
-      status,
-      statusDate,
-      description,
-      active,
-      groupCount,
-      ruleCount,
-      checkCount,
-      fixCount,
-      ovalCount)
-      SELECT 
-        revId,
-        benchmarkId,
-        \`version\`,
-        \`release\`,
-        benchmarkDate,
-        benchmarkDateSql,
-        status,
-        statusDate,
-        description,
-        active,
-        groupCount,
-        ruleCount,
-        checkCount,
-        fixCount,
-        ovalCount
-      FROM
-        v_current_rev
-      WHERE
-        v_current_rev.benchmarkId = ?`
-    hrstart = process.hrtime()
-    ;[result] = await connection.query(sqlDeleteCurrentRev, [ dml.stig.binds.benchmarkId ])
-    ;[result] = await connection.query(sqlUpdateCurrentRev, [ dml.stig.binds.benchmarkId ])
-    hrend = process.hrtime(hrstart)
-    stats['currentRev'] = `${result.affectedRows} in ${hrend[0]}s  ${hrend[1] / 1000000}ms`
+    // // Update current_rev
+    // let sqlDeleteCurrentRev = 'DELETE from current_rev where benchmarkId = ?'
+    // let sqlUpdateCurrentRev = `INSERT INTO current_rev (
+    //   revId,
+    //   benchmarkId,
+    //   \`version\`, 
+    //   \`release\`, 
+    //   benchmarkDate,
+    //   benchmarkDateSql,
+    //   status,
+    //   statusDate,
+    //   description,
+    //   active,
+    //   groupCount,
+    //   ruleCount,
+    //   checkCount,
+    //   fixCount,
+    //   ovalCount)
+    //   SELECT 
+    //     revId,
+    //     benchmarkId,
+    //     \`version\`,
+    //     \`release\`,
+    //     benchmarkDate,
+    //     benchmarkDateSql,
+    //     status,
+    //     statusDate,
+    //     description,
+    //     active,
+    //     groupCount,
+    //     ruleCount,
+    //     checkCount,
+    //     fixCount,
+    //     ovalCount
+    //   FROM
+    //     v_current_rev
+    //   WHERE
+    //     v_current_rev.benchmarkId = ?`
+    // hrstart = process.hrtime()
+    // ;[result] = await connection.query(sqlDeleteCurrentRev, [ dml.stig.binds.benchmarkId ])
+    // ;[result] = await connection.query(sqlUpdateCurrentRev, [ dml.stig.binds.benchmarkId ])
+    // hrend = process.hrtime(hrstart)
+    // stats['currentRev'] = `${result.affectedRows} in ${hrend[0]}s  ${hrend[1] / 1000000}ms`
 
-    // update current_group_rule
-    let sqlDeleteCurrentGroupRule = 'DELETE FROM current_group_rule WHERE benchmarkId = ?'
-    let sqlInsertCurrentGroupRule = `INSERT INTO current_group_rule (groupId, ruleId, benchmarkId)
-      SELECT rg.groupId,
-        rgr.ruleId,
-        cr.benchmarkId
-      from
-        current_rev cr
-        left join rev_group_map rg on rg.revId=cr.revId
-        left join rev_group_rule_map rgr on rgr.rgId=rg.rgId
-      where
-        cr.benchmarkId = ?
-      order by
-        rg.groupId,rgr.ruleId,cr.benchmarkId`
-    hrstart = process.hrtime()
-    ;[result] = await connection.query(sqlDeleteCurrentGroupRule, [ dml.stig.binds.benchmarkId ])
-    ;[result] = await connection.query(sqlInsertCurrentGroupRule, [ dml.stig.binds.benchmarkId ])
-    hrend = process.hrtime(hrstart)
-    stats['currentGroupRule'] = `${result.affectedRows} in ${hrend[0]}s  ${hrend[1] / 1000000}ms`
+    // // update current_group_rule
+    // let sqlDeleteCurrentGroupRule = 'DELETE FROM current_group_rule WHERE benchmarkId = ?'
+    // let sqlInsertCurrentGroupRule = `INSERT INTO current_group_rule (groupId, ruleId, benchmarkId)
+    //   SELECT rg.groupId,
+    //     rgr.ruleId,
+    //     cr.benchmarkId
+    //   from
+    //     current_rev cr
+    //     left join rev_group_map rg on rg.revId=cr.revId
+    //     left join rev_group_rule_map rgr on rgr.rgId=rg.rgId
+    //   where
+    //     cr.benchmarkId = ?
+    //   order by
+    //     rg.groupId,rgr.ruleId,cr.benchmarkId`
+    // hrstart = process.hrtime()
+    // ;[result] = await connection.query(sqlDeleteCurrentGroupRule, [ dml.stig.binds.benchmarkId ])
+    // ;[result] = await connection.query(sqlInsertCurrentGroupRule, [ dml.stig.binds.benchmarkId ])
+    // hrend = process.hrtime(hrstart)
+    // stats['currentGroupRule'] = `${result.affectedRows} in ${hrend[0]}s  ${hrend[1] / 1000000}ms`
 
-    // Stats
-    hrstart = process.hrtime() 
-    await dbUtils.updateStatsAssetStig( connection, {
-      benchmarkId: dml.stig.binds.benchmarkId
-    } )
-    hrend = process.hrtime(hrstart)
-    stats.stats = `${result.affectedRows} in ${hrend[0]}s  ${hrend[1] / 1000000}ms`
+    // // Stats
+    // hrstart = process.hrtime() 
+    // await dbUtils.updateStatsAssetStig( connection, {
+    //   benchmarkId: dml.stig.binds.benchmarkId
+    // } )
+    // hrend = process.hrtime(hrstart)
+    // stats.stats = `${result.affectedRows} in ${hrend[0]}s  ${hrend[1] / 1000000}ms`
       
-    hrend = process.hrtime(totalstart)
-    stats.totalTime = `Completed in ${hrend[0]}s  ${hrend[1] / 1000000}ms`
+    // hrend = process.hrtime(totalstart)
+    // stats.totalTime = `Completed in ${hrend[0]}s  ${hrend[1] / 1000000}ms`
 
     // await connection.rollback()
-    await connection.commit()
+    await transaction.commit()
     return (stats)
   }
   catch (err) {
-    if (typeof connection !== 'undefined') {
-      await connection.rollback()
+    if (typeof transaction !== 'undefined') {
+      await transaction.rollback()
     }
     throw err
-  }
-  finally {
-    if (typeof connection !== 'undefined') {
-      await connection.release()
-    }
   }
 }
 

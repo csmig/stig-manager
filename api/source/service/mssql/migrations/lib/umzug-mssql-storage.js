@@ -1,13 +1,12 @@
 module.exports = class MyStorage {
   constructor(options) {
-    this.pool = options.pool
+    this.dbUtils = options.dbUtils
     this.hasMigrationTable = false
   }
 
   async createMigrationTable () {
     try {
-      await this.pool.connect()
-      await this.pool.request().query(`IF NOT EXISTS
+      await this.dbUtils.queryPool(`IF NOT EXISTS
       (  SELECT [name]
          FROM sys.tables
          WHERE [name] = '_migrations'
@@ -29,8 +28,9 @@ module.exports = class MyStorage {
       if (!this.hasMigrationTable) {
         await this.createMigrationTable()
       }
-      await this.pool.connect()
-      await this.pool.request().query`INSERT into _migrations (name) VALUES (${migrationName})`
+      // await this.pool.connect()
+      const result = await this.dbUtils.queryPool(`INSERT into _migrations (name) VALUES (@migrationName)`,{ migrationName })
+      // await this.pool.request().query`INSERT into _migrations (name) VALUES (${migrationName})`
     }
     catch (err) {
       throw (err)
@@ -44,8 +44,8 @@ module.exports = class MyStorage {
       if (!this.hasMigrationTable) {
         await this.createMigrationTable()
       }
-      await this.pool.connect()
-      await this.pool.request().query`DELETE from _migrations WHERE name = ${migrationName}`
+      // await this.pool.connect()
+      await this.dbUtils.queryPool(`DELETE from _migrations WHERE name = @migrationName`, {migrationName})
     }
     catch (err) {
       throw (err)
@@ -61,13 +61,13 @@ module.exports = class MyStorage {
       if (!this.hasMigrationTable) {
         await this.createMigrationTable()
       }
-      await this.pool.connect()
-      let result = await this.pool.request().query('SELECT name from _migrations')
+      // await this.pool.connect()
+      let result = await this.dbUtils.queryPool('SELECT name from _migrations')
       if (!result.recordset.length) {
         return []
       }
       else {
-        return result.recordset[0].map(r => r.name)
+        return result.recordset.map(r => r.name)
       }
     }
     catch (err) {

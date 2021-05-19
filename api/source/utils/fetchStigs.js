@@ -12,7 +12,7 @@ const scapURL = 'https://public.cyber.mil/stigs/scap/'
 const stigMatchString = '<a href="(https://dl.dod.cyber.mil/wp-content/uploads/stigs/zip/.*)" target=.*'
 const scapMatchString = '<a href="(https://dl.dod.cyber.mil/wp-content/uploads/stigs/zip/.*enchmark.zip)" target=.*'
 
-// let localCompilationFile = 'E:/STIGs/test.zip'
+let localCompilationFile = '/home/csmig/dev/STIG-samples/U_AAA_Services_V1R2_SRG.zip'
 
 
 exports.fetchCompilation = async function fetchCompilation() {
@@ -65,16 +65,16 @@ exports.fetchScap = async function fetchScap() {
 }
 
 
-// exports.readCompilation = async function readCompilation() {
-//   try {
-//     let localfile = localCompilationFile
-//     let data = await fs.readFile(localfile)
-//     await processZip(data)
-//   }
-//   catch (e) {
-//     console.log(e)
-//   }
-// }
+exports.readCompilation = async function readCompilation() {
+  try {
+    let localfile = localCompilationFile
+    let data = await fs.readFile(localfile)
+    await processZip(data)
+  }
+  catch (e) {
+    console.log(e)
+  }
+}
 
 async function processZip (f) {
   try {
