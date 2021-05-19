@@ -12,8 +12,8 @@ const scapURL = 'https://public.cyber.mil/stigs/scap/'
 const stigMatchString = '<a href="(https://dl.dod.cyber.mil/wp-content/uploads/stigs/zip/.*)" target=.*'
 const scapMatchString = '<a href="(https://dl.dod.cyber.mil/wp-content/uploads/stigs/zip/.*enchmark.zip)" target=.*'
 
-let localCompilationFile = '/home/csmig/dev/STIG-samples/U_AAA_Services_V1R2_SRG.zip'
-
+let localCompilationFile = '/home/csmig/dev/STIG-samples/U_SRG-STIG_Library_2021_01v2.zip'
+// let localCompilationFile = '/home/csmig/dev/STIG-samples/U_AAA_Services_V1R2_SRG.zip'
 
 exports.fetchCompilation = async function fetchCompilation() {
   try {

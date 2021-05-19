@@ -391,6 +391,7 @@ module.exports.benchmarkFromXccdf = function (xccdfData) {
       'Aug': '08',
       'August': '08',
       'Sep': '09',
+      'Sept': '09',
       'September': '09',
       'Oct': '10',
       'October': '10',
