@@ -82,19 +82,24 @@ CREATE
 		ON [current_group_rule] (groupId ASC);
 CREATE TABLE [user_data]
 (
-	userId int NOT NULL IDENTITY(1560, 1), 
+	clusterId int NOT NULL IDENTITY(0, 1), 
+	userId uniqueidentifier DEFAULT NEWID(), 
 	username nvarchar(255) NOT NULL, 
 	created datetime2(0) NOT NULL DEFAULT getdate(), 
 	lastAccess int NULL DEFAULT NULL, 
 	lastClaims nvarchar(max) NULL DEFAULT N'{}', 
-	CONSTRAINT [PK_user_data_userId] PRIMARY KEY (userId), 
+	CONSTRAINT [PK_user_data_userId] PRIMARY KEY NONCLUSTERED (userId), 
 	CONSTRAINT user_data$INDEX_username UNIQUE (username)
 );
+CREATE 
+	UNIQUE CLUSTERED INDEX cidx_user_data
+		ON [user_data] (clusterId);
+
 CREATE TABLE [collection_grant]
 (
 	cgId int NOT NULL IDENTITY(1936, 1), 
 	collectionId int NOT NULL, 
-	userId int NOT NULL, 
+	userId uniqueidentifier NOT NULL, 
 	accessLevel int NOT NULL, 
 	CONSTRAINT [PK_collection_grant_cgId] PRIMARY KEY (cgId), 
 	CONSTRAINT collection_grant$INDEX_USER UNIQUE (userId, collectionId), 
@@ -432,7 +437,7 @@ CREATE
 CREATE TABLE [user_stig_asset_map]
 (
 	id int NOT NULL IDENTITY(645, 1), 
-	userId int NOT NULL, 
+	userId uniqueidentifier NOT NULL, 
 	saId int NOT NULL, 
 	CONSTRAINT [PK_user_stig_asset_map_id] PRIMARY KEY (id), 
 	CONSTRAINT [user_stig_asset_map$fk_user_stig_asset_map_1] FOREIGN KEY (saId) REFERENCES stig_asset_map (saId) 

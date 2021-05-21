@@ -764,7 +764,6 @@ exports.insertManualBenchmark = async function (b) {
       
     // hrend = process.hrtime(totalstart)
     // stats.totalTime = `Completed in ${hrend[0]}s  ${hrend[1] / 1000000}ms`
-
     await transaction.commit()
     return (stats)
   }
