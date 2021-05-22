@@ -8,12 +8,9 @@ const _this = this
 Generalized queries for users
 **/
 exports.queryUsers = async function (inProjection, inPredicates, elevate, userObject) {
-  let result = await dbUtils.queryPool('SELECT * from [rule] for json auto')
-
-  let connection
   try {
     let columns = [
-      'ud.userId',
+      'CAST(ud.userId as nvarchar) as userId',
       'ud.username'
     ]
     let joins = [
@@ -41,17 +38,20 @@ exports.queryUsers = async function (inProjection, inPredicates, elevate, userOb
           ),
           'accessLevel', cg.accessLevel
         )
-      ) else json_array() end as collectionGrants`)
+      ) else '[]' end as collectionGrants`)
     }
 
     if (inProjection && inProjection.includes('statistics')) {
-      columns.push(`json_object(
-          'created', ud.created,
-          'collectionGrantCount', count(cg.cgId),
-          'lastAccess', ud.lastAccess,
-          'lastClaims', ud.lastClaims
-        ) as statistics`)
+      let jsonObject = `CONCAT(
+        '{ "created": "', ud.created, '"',
+        ',"collectionGrantCount": ', count(cg.cgId),
+        ',"lastAccess": ', ud.lastAccess,
+        ',"lastClaims": ', ud.lastClaims,
+        '}'
+      )`
+      columns.push(`${jsonObject} as [statistics]`)
       groupBy.push(
+        'ud.created',
         'ud.lastAccess',
         'ud.lastClaims'
       )
@@ -63,13 +63,13 @@ exports.queryUsers = async function (inProjection, inPredicates, elevate, userOb
       binds: {}
     }
     if (inPredicates.userId) {
-      predicates.statements.push('ud.userId = :userId')
+      predicates.statements.push('ud.userId = @userId')
       predicates.binds.userId = inPredicates.userId
     }
     if ( inPredicates.username ) {
-      let matchStr = '= :username'
+      let matchStr = '= @username'
       if ( inPredicates.usernameMatch && inPredicates.usernameMatch !== 'exact') {
-        matchStr = 'LIKE :username'
+        matchStr = 'LIKE @username'
         switch (inPredicates.usernameMatch) {
           case 'startsWith':
             inPredicates.username = `${inPredicates.username}%`
@@ -97,18 +97,16 @@ exports.queryUsers = async function (inProjection, inPredicates, elevate, userOb
     sql += '\nGROUP BY ' + groupBy.join(',\n')
     sql += ' order by ud.username'
   
-    connection = await dbUtils.pool.getConnection()
-    connection.config.namedPlaceholders = true
-    let [rows] = await connection.query(sql, predicates.binds)
-    return (rows)
+    let result = await dbUtils.queryPool(sql, predicates.binds)
+    for (const record of result.recordset) {
+      if (record.statistics) {
+        record.statistics = JSON.parse(record.statistics)
+      }
+    }
+    return (result.recordset)
   }
   catch (err) {
     throw err
-  }
-  finally {
-    if (typeof connection !== 'undefined') {
-      await connection.release()
-    }
   }
 }
 

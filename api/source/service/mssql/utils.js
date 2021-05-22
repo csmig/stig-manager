@@ -21,9 +21,9 @@ module.exports.testConnection = async function () {
     throw (err)
   }
 }
-module.exports.queryPool = async function (query, params = {}) {
+module.exports.queryPool = async function (query, params = {}, transaction = null) {
   try {
-    const request = _this.pool.request()
+    const request = _this.pool.request(transaction)
     for (const [prop, value] of Object.entries(params)) {
       request.input(prop, value)
     }

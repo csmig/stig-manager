@@ -13,7 +13,7 @@ const stigMatchString = '<a href="(https://dl.dod.cyber.mil/wp-content/uploads/s
 const scapMatchString = '<a href="(https://dl.dod.cyber.mil/wp-content/uploads/stigs/zip/.*enchmark.zip)" target=.*'
 
 // let localCompilationFile = '/home/csmig/dev/STIG-samples/U_SRG-STIG_Library_2021_01v2.zip'
-let localCompilationFile = '/home/csmig/dev/STIG-samples/sample.zip'
+let localCompilationFile = '/home/csmig/dev/STIG-samples/q1demo-stigs.zip' ///home/csmig/dev/STIG-samples/q1demo-stigs.zip
 
 exports.fetchCompilation = async function fetchCompilation() {
   try {

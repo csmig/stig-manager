@@ -660,7 +660,6 @@ exports.insertManualBenchmark = async function (b) {
 
     transaction = new dbUtils.sql.Transaction()
     await transaction.begin()
-    const request = new sql.Request(transaction)
 
     tableOrder = [
       'stig',
@@ -681,10 +680,10 @@ exports.insertManualBenchmark = async function (b) {
       if (Array.isArray(dml[table].binds)) {
         if (dml[table].binds.length === 0) { continue }
         const json = JSON.stringify(dml[table].binds)
-        result = await dbUtils.queryPool(dml[table].sql, { json })
+        result = await dbUtils.queryPool(dml[table].sql, { json }, transaction)
       }
       else {
-        result = await dbUtils.queryPool(dml[table].sql, dml[table].binds)
+        result = await dbUtils.queryPool(dml[table].sql, dml[table].binds, transaction)
       }
       hrend = process.hrtime(hrstart)
       stats[table] = `${result.affectedRows} in ${hrend[0]}s  ${hrend[1] / 1000000}ms`
@@ -729,8 +728,8 @@ exports.insertManualBenchmark = async function (b) {
       WHERE
         v_current_rev.benchmarkId = @benchmarkId`
     hrstart = process.hrtime()
-    result = await dbUtils.queryPool(sqlDeleteCurrentRev, { benchmarkId: dml.stig.binds.benchmarkId })
-    result = await dbUtils.queryPool(sqlUpdateCurrentRev, { benchmarkId: dml.stig.binds.benchmarkId })
+    result = await dbUtils.queryPool(sqlDeleteCurrentRev, { benchmarkId: dml.stig.binds.benchmarkId }, transaction)
+    result = await dbUtils.queryPool(sqlUpdateCurrentRev, { benchmarkId: dml.stig.binds.benchmarkId }, transaction)
     hrend = process.hrtime(hrstart)
     stats['currentRev'] = `${result.affectedRows} in ${hrend[0]}s  ${hrend[1] / 1000000}ms`
 
@@ -749,8 +748,8 @@ exports.insertManualBenchmark = async function (b) {
       order by
         rg.groupId,rgr.ruleId,cr.benchmarkId`
     hrstart = process.hrtime()
-    result = await dbUtils.queryPool(sqlDeleteCurrentGroupRule, { benchmarkId: dml.stig.binds.benchmarkId })
-    result = await dbUtils.queryPool(sqlInsertCurrentGroupRule, { benchmarkId: dml.stig.binds.benchmarkId })
+    result = await dbUtils.queryPool(sqlDeleteCurrentGroupRule, { benchmarkId: dml.stig.binds.benchmarkId }, transaction)
+    result = await dbUtils.queryPool(sqlInsertCurrentGroupRule, { benchmarkId: dml.stig.binds.benchmarkId }, transaction)
     hrend = process.hrtime(hrstart)
     stats['currentGroupRule'] = `${result.affectedRows} in ${hrend[0]}s  ${hrend[1] / 1000000}ms`
 

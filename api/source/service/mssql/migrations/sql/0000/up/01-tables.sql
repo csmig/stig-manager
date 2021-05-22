@@ -6,7 +6,7 @@ CREATE TABLE [config]
 );
 CREATE TABLE [action]
 (
-	actionId int NOT NULL IDENTITY(4, 1), 
+	actionId int NOT NULL, 
 	api nvarchar(16) NOT NULL, 
 	en nvarchar(64) NOT NULL, 
 	CONSTRAINT [PK_action_actionId] PRIMARY KEY (actionId)
@@ -82,24 +82,25 @@ CREATE
 		ON [current_group_rule] (groupId ASC);
 CREATE TABLE [user_data]
 (
-	clusterId int NOT NULL IDENTITY(0, 1), 
-	userId uniqueidentifier DEFAULT NEWID(), 
+	userId int NOT NULL IDENTITY(0, 1), 
+	-- userId uniqueidentifier DEFAULT NEWID(), 
 	username nvarchar(255) NOT NULL, 
 	created datetime2(0) NOT NULL DEFAULT getdate(), 
 	lastAccess int NULL DEFAULT NULL, 
 	lastClaims nvarchar(max) NULL DEFAULT N'{}', 
-	CONSTRAINT [PK_user_data_userId] PRIMARY KEY NONCLUSTERED (userId), 
+	CONSTRAINT [PK_user_data_userId] PRIMARY KEY (userId), 
+	-- CONSTRAINT [PK_user_data_userId] PRIMARY KEY NONCLUSTERED (userId), 
 	CONSTRAINT user_data$INDEX_username UNIQUE (username)
 );
-CREATE 
-	UNIQUE CLUSTERED INDEX cidx_user_data
-		ON [user_data] (clusterId);
+-- CREATE 
+-- 	UNIQUE CLUSTERED INDEX cidx_user_data
+-- 		ON [user_data] (clusterId);
 
 CREATE TABLE [collection_grant]
 (
 	cgId int NOT NULL IDENTITY(1936, 1), 
 	collectionId int NOT NULL, 
-	userId uniqueidentifier NOT NULL, 
+	userId int NOT NULL, 
 	accessLevel int NOT NULL, 
 	CONSTRAINT [PK_collection_grant_cgId] PRIMARY KEY (cgId), 
 	CONSTRAINT collection_grant$INDEX_USER UNIQUE (userId, collectionId), 
@@ -171,7 +172,7 @@ CREATE TABLE [group]
 );
 CREATE TABLE [result]
 (
-	resultId int NOT NULL IDENTITY(10, 1), 
+	resultId int NOT NULL, 
 	api nvarchar(32) NOT NULL, 
 	ckl nvarchar(32) NOT NULL, 
 	abbr nvarchar(2) NOT NULL, 
@@ -381,6 +382,14 @@ CREATE
 CREATE 
 	NONCLUSTERED INDEX index3
 		ON [rule_oval_map] (benchmarkId ASC);
+CREATE TABLE [severity_cat_map]
+(
+	id int NOT NULL, 
+	severity nvarchar(45) NOT NULL, 
+	cat int NOT NULL, 
+	roman nvarchar(45) NOT NULL, 
+	CONSTRAINT [PK_severity_cat_map_id] PRIMARY KEY (id)
+);
 CREATE TABLE [stats_asset_stig]
 (
 	id int NOT NULL IDENTITY(43452, 1), 
@@ -437,7 +446,7 @@ CREATE
 CREATE TABLE [user_stig_asset_map]
 (
 	id int NOT NULL IDENTITY(645, 1), 
-	userId uniqueidentifier NOT NULL, 
+	userId int NOT NULL, 
 	saId int NOT NULL, 
 	CONSTRAINT [PK_user_stig_asset_map_id] PRIMARY KEY (id), 
 	CONSTRAINT [user_stig_asset_map$fk_user_stig_asset_map_1] FOREIGN KEY (saId) REFERENCES stig_asset_map (saId) 
