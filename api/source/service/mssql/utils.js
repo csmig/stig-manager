@@ -40,6 +40,7 @@ function getPoolConfig() {
     user: config.database.username,
     database: config.database.schema,
     trustServerCertificate: true,
+    parseJSON: true,
     pool: {
       max: parseInt(config.database.maxConnections),
       min: 1
@@ -451,5 +452,29 @@ module.exports.USER_ROLE = {
   IAWF: { id: 2, display: "IA Workforce" },
   IAO: { id: 3, display: "IA Officer" },
   Staff: { id: 4, display: "IA Staff" }
+}
+
+module.exports.jsonObject = (obj) => {
+  const appends = []
+  for (const [key, value] of Object.entries(obj)) {
+    if (typeof value == 'string') {
+      if (value.startsWith('"')) {
+        appends.push(`'"${key}": "', ${value.substring(1)}, '"'`)
+      }
+      else {
+        appends.push(`'"${key}":', ${value}`)
+      }
+    }
+  }
+  return `CONCAT( '{', ${appends.join(", ','  , ")}, '}')`
+}
+
+module.exports.jsonArrayAggD = ( item ) => {
+  if (item.startsWith('"')) {
+    return `CONCAT('["', dbo.group_concat_d(distinct ${item},'","'), '"]')`
+  }
+  else {
+    return `CONCAT('[', dbo.group_concat_d(distinct ${item},','), ']')`
+  }
 }
 

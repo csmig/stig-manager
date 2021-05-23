@@ -27,29 +27,28 @@ exports.queryUsers = async function (inProjection, inPredicates, elevate, userOb
     }
 
     if (inProjection && inProjection.includes('collectionGrants')) {
-      // joins.push('left join collection_grant cg on ud.userId = cg.userId')
       joins.push('left join collection c on cg.collectionId = c.collectionId')
-      columns.push(`case when count(cg.cgId) > 0 then 
-      json_arrayagg(
-        json_object(
-          'collection', json_object(
-            'collectionId', CAST(cg.collectionId as char),
-            'name', c.name
-          ),
-          'accessLevel', cg.accessLevel
-        )
-      ) else '[]' end as collectionGrants`)
+      const jsonObject = dbUtils.jsonObject({
+        collection: dbUtils.jsonObject({
+          collectionId: '"CAST(cg.collectionId as nvarchar)',
+          name: '"c.name'
+        }),
+        accessLevel: 'cg.accessLevel'
+      })
+      const jsonArray = dbUtils.jsonArrayAggD(jsonObject)
+      columns.push(`JSON_QUERY(case when count(cg.cgId) > 0 then 
+      ${jsonArray}
+      else '[]' end) as collectionGrants`)
     }
 
     if (inProjection && inProjection.includes('statistics')) {
-      let jsonObject = `CONCAT(
-        '{ "created": "', ud.created, '"',
-        ',"collectionGrantCount": ', count(cg.cgId),
-        ',"lastAccess": ', ud.lastAccess,
-        ',"lastClaims": ', ud.lastClaims,
-        '}'
-      )`
-      columns.push(`${jsonObject} as [statistics]`)
+      const jsonObject = dbUtils.jsonObject({
+        created: '"ud.created',
+        collectionGrantCount: 'count(cg.cgId)',
+        lastAccess: 'ud.lastAccess',
+        lastClaims: 'ud.lastClaims'
+      })
+      columns.push(`JSON_QUERY(${jsonObject}) as [statistics]`)
       groupBy.push(
         'ud.created',
         'ud.lastAccess',
@@ -96,14 +95,10 @@ exports.queryUsers = async function (inProjection, inPredicates, elevate, userOb
     }
     sql += '\nGROUP BY ' + groupBy.join(',\n')
     sql += ' order by ud.username'
+    sql += ' FOR JSON AUTO'
   
     let result = await dbUtils.queryPool(sql, predicates.binds)
-    for (const record of result.recordset) {
-      if (record.statistics) {
-        record.statistics = JSON.parse(record.statistics)
-      }
-    }
-    return (result.recordset)
+    return (result.recordset[0])
   }
   catch (err) {
     throw err
