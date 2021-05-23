@@ -167,8 +167,8 @@ async function startServer(app) {
 
     if (config.init.importStigs && inits[1]) {
       console.log(`[INIT] Importing STIGs...`)
-      // await smFetch.readCompilation()
-      await smFetch.fetchCompilation()
+      await smFetch.readCompilation()
+      // await smFetch.fetchCompilation()
     }
     if (config.init.importScap && inits[1]) {
       console.log(`[INIT] Importing SCAP...`)

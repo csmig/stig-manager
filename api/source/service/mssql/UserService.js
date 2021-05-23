@@ -8,12 +8,9 @@ const _this = this
 Generalized queries for users
 **/
 exports.queryUsers = async function (inProjection, inPredicates, elevate, userObject) {
-  let result = await dbUtils.queryPool('SELECT * from [stig] for json auto')
-
-  let connection
   try {
     let columns = [
-      'CAST(ud.userId as char) as userId',
+      'CAST(ud.userId as nvarchar) as userId',
       'ud.username'
     ]
     let joins = [
@@ -30,28 +27,30 @@ exports.queryUsers = async function (inProjection, inPredicates, elevate, userOb
     }
 
     if (inProjection && inProjection.includes('collectionGrants')) {
-      // joins.push('left join collection_grant cg on ud.userId = cg.userId')
       joins.push('left join collection c on cg.collectionId = c.collectionId')
-      columns.push(`case when count(cg.cgId) > 0 then 
-      json_arrayagg(
-        json_object(
-          'collection', json_object(
-            'collectionId', CAST(cg.collectionId as char),
-            'name', c.name
-          ),
-          'accessLevel', cg.accessLevel
-        )
-      ) else json_array() end as collectionGrants`)
+      const jsonObject = dbUtils.jsonObject({
+        collection: dbUtils.jsonObject({
+          collectionId: '"CAST(cg.collectionId as nvarchar)',
+          name: '"c.name'
+        }),
+        accessLevel: 'cg.accessLevel'
+      })
+      const jsonArray = dbUtils.jsonArrayAggD(jsonObject)
+      columns.push(`JSON_QUERY(case when count(cg.cgId) > 0 then 
+      ${jsonArray}
+      else '[]' end) as collectionGrants`)
     }
 
     if (inProjection && inProjection.includes('statistics')) {
-      columns.push(`json_object(
-          'created', ud.created,
-          'collectionGrantCount', count(cg.cgId),
-          'lastAccess', ud.lastAccess,
-          'lastClaims', ud.lastClaims
-        ) as statistics`)
+      const jsonObject = dbUtils.jsonObject({
+        created: '"ud.created',
+        collectionGrantCount: 'count(cg.cgId)',
+        lastAccess: 'ud.lastAccess',
+        lastClaims: 'ud.lastClaims'
+      })
+      columns.push(`JSON_QUERY(${jsonObject}) as [statistics]`)
       groupBy.push(
+        'ud.created',
         'ud.lastAccess',
         'ud.lastClaims'
       )
@@ -63,13 +62,13 @@ exports.queryUsers = async function (inProjection, inPredicates, elevate, userOb
       binds: {}
     }
     if (inPredicates.userId) {
-      predicates.statements.push('ud.userId = :userId')
+      predicates.statements.push('ud.userId = @userId')
       predicates.binds.userId = inPredicates.userId
     }
     if ( inPredicates.username ) {
-      let matchStr = '= :username'
+      let matchStr = '= @username'
       if ( inPredicates.usernameMatch && inPredicates.usernameMatch !== 'exact') {
-        matchStr = 'LIKE :username'
+        matchStr = 'LIKE @username'
         switch (inPredicates.usernameMatch) {
           case 'startsWith':
             inPredicates.username = `${inPredicates.username}%`
@@ -96,19 +95,13 @@ exports.queryUsers = async function (inProjection, inPredicates, elevate, userOb
     }
     sql += '\nGROUP BY ' + groupBy.join(',\n')
     sql += ' order by ud.username'
+    sql += ' FOR JSON AUTO'
   
-    connection = await dbUtils.pool.getConnection()
-    connection.config.namedPlaceholders = true
-    let [rows] = await connection.query(sql, predicates.binds)
-    return (rows)
+    let result = await dbUtils.queryPool(sql, predicates.binds)
+    return (result.recordset[0])
   }
   catch (err) {
     throw err
-  }
-  finally {
-    if (typeof connection !== 'undefined') {
-      await connection.release()
-    }
   }
 }
 
