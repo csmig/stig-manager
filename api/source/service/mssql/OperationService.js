@@ -310,7 +310,7 @@ exports.replaceAppData = async function (importOpts, appData, userObject, res ) 
 
       hrend = process.hrtime(hrstart)
       stats[table] = {}
-      stats[table].delete = `${result.affectedRows} in ${hrend[0]}s  ${hrend[1] / 1000000}ms`
+      stats[table].delete = `${result.rowsAffected[0]} in ${hrend[0]}s  ${hrend[1] / 1000000}ms`
     }
 
     // Inserts
@@ -341,7 +341,7 @@ exports.replaceAppData = async function (importOpts, appData, userObject, res ) 
           result = await dbUtils.queryPool(dml[table].sqlInsert, {json}, transaction)
         }
         hrend = process.hrtime(hrstart)
-        stats[table].insert = `${result.affectedRows} in ${hrend[0]}s  ${hrend[1] / 1000000}ms`
+        stats[table].insert = `${result.rowsAffected[0]} in ${hrend[0]}s  ${hrend[1] / 1000000}ms`
       }
     }
 
@@ -358,7 +358,7 @@ exports.replaceAppData = async function (importOpts, appData, userObject, res ) 
     await transaction.commit()
     res.write(`Commit successful\n`)
     hrend = process.hrtime(hrstart)
-    stats.commit = `${result.affectedRows} in ${hrend[0]}s  ${hrend[1] / 1000000}ms`
+    stats.commit = `${result.rowsAffected[0]} in ${hrend[0]}s  ${hrend[1] / 1000000}ms`
 
     // // Postload
     // hrstart = process.hrtime() 
@@ -366,7 +366,7 @@ exports.replaceAppData = async function (importOpts, appData, userObject, res ) 
     //   ;[result] = await connection.execute(sql)
     // }
     // hrend = process.hrtime(hrstart)
-    // stats.postload = `${result.affectedRows} in ${hrend[0]}s  ${hrend[1] / 1000000}ms`
+    // stats.postload = `${result.rowsAffected[0]} in ${hrend[0]}s  ${hrend[1] / 1000000}ms`
 
     // Total time calculation
     hrend = process.hrtime(totalstart)

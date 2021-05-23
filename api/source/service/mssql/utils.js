@@ -394,10 +394,16 @@ module.exports.updateStatsAssetStig = async function (connection, { collectionId
 
 module.exports.CONTEXT_ALL = 'all'
 module.exports.CONTEXT_USER = 'user'
-module.exports.REVIEW_RESULT_API = {
+module.exports.REVIEW_RESULT_API = { 
+  'notchecked': 1,
   'notapplicable': 2,
   'pass': 3,
-  'fail': 4
+  'fail': 4,
+  'unknown': 5,
+  'error': 6,
+  'notselected': 7,
+  'informational': 8,
+  'fixed': 9
 }
 module.exports.REVIEW_ACTION_API = {
   'remediate': 1,
