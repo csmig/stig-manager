@@ -36,9 +36,9 @@ from (
         row_number() OVER (
             PARTITION BY r.benchmarkId 
             ORDER BY 
-                casE r.status when 'draft' THEN 1 WHEN 'accepted' THEN 2 END desc,
-                (r.version + 0) desc,
-                (r.release + 0) desc 
+                CASE r.status when 'draft' THEN 1 WHEN 'accepted' THEN 2 END desc,
+                (cast(r.version as numeric)) desc,
+                (cast(r.release as numeric)) desc 
         )  AS rn 
     from 
         revision r
