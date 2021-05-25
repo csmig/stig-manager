@@ -35,7 +35,7 @@ exports.queryUsers = async function (inProjection, inPredicates, elevate, userOb
         }),
         accessLevel: 'cg.accessLevel'
       })
-      const jsonArray = dbUtils.jsonArrayAggD(jsonObject)
+      const jsonArray = dbUtils.jsonArrayAggSA(jsonObject)
       columns.push(`JSON_QUERY(case when count(cg.cgId) > 0 then 
       ${jsonArray}
       else '[]' end) as collectionGrants`)

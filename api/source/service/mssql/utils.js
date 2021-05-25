@@ -3,8 +3,6 @@ const config = require('../../utils/config')
 const retry = require('async-retry')
 const Umzug = require('umzug')
 const path = require('path')
-const fs = require("fs")
-const semverLt = require('semver/functions/lt')
 
 let _this = this
 
@@ -21,9 +19,10 @@ module.exports.testConnection = async function () {
     throw (err)
   }
 }
+
 module.exports.queryPool = async function (query, params = {}, transaction = null) {
   try {
-    const request = _this.pool.request(transaction)
+    const request = transaction ? transaction.request() : _this.pool.request()
     for (const [prop, value] of Object.entries(params)) {
       request.input(prop, value)
     }
@@ -445,4 +444,14 @@ module.exports.jsonArrayAggD = ( item ) => {
     return `CONCAT('[', dbo.group_concat_d(distinct ${item},','), ']')`
   }
 }
+
+module.exports.jsonArrayAggSA = ( item ) => {
+  if (item.startsWith('"')) {
+    return `CONCAT('["', string_agg(${item},'","'), '"]')`
+  }
+  else {
+    return `CONCAT('[', string_agg(${item},','), ']')`
+  }
+}
+
 
