@@ -8,8 +8,6 @@ const _this = this
 Generalized queries for users
 **/
 exports.queryUsers = async function (inProjection, inPredicates, elevate, userObject) {
-  let result = await dbUtils.queryPool('SELECT * from [stig] for json auto')
-
   let connection
   try {
     let columns = [
