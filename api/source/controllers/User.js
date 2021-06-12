@@ -13,14 +13,14 @@ module.exports.createUser = async function createUser (req, res, next) {
       let body = req.swagger.params['body'].value
       let projection = req.swagger.params['projection'].value
 
-      if (body.hasOwnProperty('collectionGrants') ) {
-        // Verify each grant for a valid collectionId
-        let requestedIds = body.collectionGrants.map( g => g.collectionId )
+      // Verify each grant for a valid collectionId
+      let requestedIds = body.collectionGrants.map( g => g.collectionId )
+      if (requestedIds.length > 0) {
         let availableCollections = await Collection.getCollections({}, [], elevate, req.userObject)
         let availableIds = availableCollections.map( c => c.collectionId)
         if (! requestedIds.every( id => availableIds.includes(id) ) ) {
           throw( writer.respondWithCode ( 400, {message: `One or more collectionIds are invalid.`} ) )    
-        }
+        }  
       }
       try {
         let response = await User.createUser(body, projection, elevate, req.userObject)

@@ -9,13 +9,10 @@ let _this = this
 module.exports.sql = sql
 module.exports.testConnection = async function () {
   try {
-    // await _this.pool.connect()
-    // const result = await _this.pool.request().query('SELECT @@version as version')
     const result = await _this.queryPool('SELECT @@version as version')
     return result.recordset[0].version
   }
   catch (err) {
-    // console.log(err.message)
     throw (err)
   }
 }
@@ -26,7 +23,7 @@ module.exports.queryPool = async function (query, params = {}, transaction = nul
     for (const [prop, value] of Object.entries(params)) {
       request.input(prop, value)
     }
-    const result = request.query(query)
+    const result = await request.query(query)
     return result
   }
   finally {}
@@ -57,8 +54,25 @@ module.exports.initializeDatabase = async function () {
 
     // Create the connection pool
     const poolConfig = getPoolConfig()
-    // _this.pool = new sql.ConnectionPool(poolConfig)
-    _this.pool = await sql.connect(poolConfig)
+
+    // _this.pool = await sql.connect(poolConfig)
+
+    // Preflight the pool every 5 seconds
+    console.log('[DB] Attempting preflight connection.')
+    _this.pool = await retry( async bail => {
+        return await sql.connect(poolConfig)
+      },
+      {
+        retries: 24,
+        factor: 1,
+        minTimeout: 5 * 1000,
+        maxTimeout: 5 * 1000,
+        onRetry: (error) => {
+          console.log(`[DB] ${error.message}`)
+        }
+      }
+    )
+    console.log('[DB] Preflight connection succeeded.')
 
     // Call the pool destruction methods on SIGTERM and SEGINT
     async function closePoolAndExit() {
@@ -75,18 +89,7 @@ module.exports.initializeDatabase = async function () {
     process.on('SIGTERM', closePoolAndExit)
     process.on('SIGINT', closePoolAndExit)
 
-    // Preflight the pool every 5 seconds
-    console.log('[DB] Attempting preflight connection.')
-    const detectedServerVersion = await retry(_this.testConnection, {
-      retries: 24,
-      factor: 1,
-      minTimeout: 5 * 1000,
-      maxTimeout: 5 * 1000,
-      onRetry: (error) => {
-        console.log(`[DB] ${error.message}`)
-      }
-    })
-    console.log('[DB] Preflight connection succeeded.')
+    const detectedServerVersion = await _this.testConnection()
     console.log(`[DB] ${detectedServerVersion}`)
 
 

@@ -10,9 +10,9 @@ const dbUtils = require('./utils')
 exports.getConfiguration = async function() {
   try {
     let sql = `SELECT * from config`
-    let [rows] = await dbUtils.pool.query(sql)
+    let result = await dbUtils.queryPool(sql)
     let config = {}
-    for (const row of rows) {
+    for (const row of result.recordset) {
       config[row.key] = row.value
     }
     return (config)

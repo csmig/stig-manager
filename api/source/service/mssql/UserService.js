@@ -106,58 +106,43 @@ exports.queryUsers = async function (inProjection, inPredicates, elevate, userOb
 }
 
 exports.addOrUpdateUser = async function (writeAction, userId, body, projection, elevate, userObject) {
-  let connection 
+  let transaction
   try {
     // CREATE: userId will be null
     // REPLACE/UPDATE: userId is not null
 
-    // Extract or initialize non-scalar properties to separate variables
-    let { collectionGrants, ...userFields } = body
+    // Extract properties to separate variables
+    let { collectionGrants, username } = body
 
-    // Handle userFields.privileges object
-    if (userFields.hasOwnProperty('privileges')) {
-      userFields.globalAccess = userFields.privileges.globalAccess ? 1 : 0
-      userFields.canCreateCollection = userFields.privileges.canCreateCollection ? 1 : 0
-      userFields.canAdmin = userFields.privileges.canAdmin ? 1 : 0
-      delete userFields.privileges
-    }
-    // Stringify metadata
-    if (userFields.hasOwnProperty('metadata')) {
-      userFields.metadata = JSON.stringify(userFields.metadata)
-    }
-
-    connection = await dbUtils.pool.getConnection()
-    connection.config.namedPlaceholders = true
-    await connection.query('START TRANSACTION');
+    transaction = new dbUtils.sql.Transaction()
+    await transaction.begin()
 
     // Process scalar properties
-    let binds
+    let result
     if (writeAction === dbUtils.WRITE_ACTION.CREATE) {
       // INSERT into user_data
-      binds = {...userFields}
       let sqlInsert =
         `INSERT INTO
-            user_data
-            ( username )
-          VALUES
-            (:username )`
-      let [result] = await connection.query(sqlInsert, binds)
-      userId = result.insertId
+            user_data (username)
+          OUTPUT inserted.userId 
+          VALUES (@username)`
+      result = await dbUtils.queryPool(sqlInsert, { username }, transaction)
+      userId = result.recordset?.[0]?.userId
     }
     else if (writeAction === dbUtils.WRITE_ACTION.UPDATE || writeAction === dbUtils.WRITE_ACTION.REPLACE) {
-      binds = {
+      const binds = {
         userId: userId,
-        values: userFields
+        username: username
       }
-      if (Object.keys(binds.values).length > 0) {
+      if (username) {
         let sqlUpdate =
           `UPDATE
               user_data
             SET
-              :values
+              username = @username
             WHERE
-              userid = :userId`
-        await connection.query(sqlUpdate, binds)
+              userid = @userId`
+        result = await dbUtils.queryPool(sqlUpdate, binds, transaction)
       }
     }
     else {
@@ -168,31 +153,30 @@ exports.addOrUpdateUser = async function (writeAction, userId, body, projection,
     if (collectionGrants) {
       if ( writeAction !== dbUtils.WRITE_ACTION.CREATE ) {
         // DELETE from collection_grant
-        let sqlDeleteCollGrant = 'DELETE FROM collection_grant where userId = ?'
-        await connection.query(sqlDeleteCollGrant, [userId])
+        let sqlDeleteCollGrant = 'DELETE FROM collection_grant where userId = @userId'
+        await dbUtils.queryPool(sqlDeleteCollGrant, {userId}, transaction)
       }
       if (collectionGrants.length > 0) {
-        let sqlInsertCollGrant = `
-          INSERT INTO 
-            collection_grant (userId, collectionId, accessLevel)
-          VALUES
-            ?`      
-        binds = collectionGrants.map( grant => [userId, grant.collectionId, grant.accessLevel])
-        // INSERT into collection_grant
-        await connection.query(sqlInsertCollGrant, [ binds] )
+        let cgTable = new dbUtils.sql.Table('collection_grant')
+        cgTable.create = false
+        cgTable.columns.add('userId', dbUtils.sql.Int, {nullable: false})
+        cgTable.columns.add('collectionId', dbUtils.sql.Int, {nullable: false})
+        cgTable.columns.add('accessLevel', dbUtils.sql.Int, {nullable: false})
+        for (const grant of collectionGrants) {
+          cgTable.rows.add(parseInt(userId), parseInt(grant.collectionId), grant.accessLevel)
+        }
+        let bulkResult = await transaction.request().bulk(cgTable)
+        let one = 1
       }
     }
     // Commit the changes
-    await connection.commit()
+    await transaction.commit()
   }
   catch (err) {
-    await connection.rollback()
-    throw err
-  }
-  finally {
-    if (typeof connection !== 'undefined') {
-      await connection.release()
+    if (typeof transaction !== 'undefined') {
+      await transaction.rollback()
     }
+    throw err
   }
 
   // Fetch the new or updated User for the response
