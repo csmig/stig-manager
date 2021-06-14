@@ -170,18 +170,18 @@ exports.replaceAppData = async function (importOpts, appData, userObject, res ) 
           rejectUserId,
           statusId
         ) SELECT * FROM OPENJSON(@json) WITH (
-          assetId int,
-          ruleId nvarchar(45),
-          resultId int,
-          resultComment nvarchar(max),
-          actionId int,
-          actionComment nvarchar(max),
-          userId int,
-          autoResult binary(1),
-          ts datetime2(0),
-          rejectText nvarchar(max),
-          rejectUserId int,
-          statusId int
+          assetId int '$[0]',
+          ruleId nvarchar(45) '$[1]',
+          resultId int '$[2]',
+          resultComment nvarchar(max) '$[3]',
+          actionId int '$[4]',
+          actionComment nvarchar(max) '$[5]',
+          userId int '$[6]',
+          autoResult binary(1) '$[7]',
+          ts datetime2(0) '$[8]',
+          rejectText nvarchar(max) '$[9]',
+          rejectUserId int '$[10]',
+          statusId int '$[11]'
         )`,
         insertBinds: []
       }
@@ -242,32 +242,20 @@ exports.replaceAppData = async function (importOpts, appData, userObject, res ) 
 
     // Tables: review, review_history
     for (const review of reviews) {
-      // for (const h of review.history) {
-      //   dml.reviewHistory.insertBinds.push([
-      //     review.assetId,
-      //     review.ruleId,
-      //     h.activityType,
-      //     h.columnName,
-      //     h.oldValue,
-      //     h.newValue,
-      //     h.userId,
-      //     new Date(h.ts)
-      //   ])
-      // }
-      dml.review.insertBinds.push({
-        assetId: parseInt(review.assetId),
-        ruleId: review.ruleId,
-        resultId: dbUtils.REVIEW_RESULT_API[review.result],
-        resultComment:review.resultComment,
-        actionId: review.action ? dbUtils.REVIEW_ACTION_API[review.action] : null,
-        actionComment: review.actionComment,
-        userId: parseInt(review.userId),
-        autoState: review.autoState ? 'gA==': 'AA==',
-        ts: new Date(review.ts),
-        rejectText: review.rejectText,
-        rejectUserId: parseInt(review.rejectUserId),
-        statusId: review.status ? dbUtils.REVIEW_STATUS_API[review.status] : 0
-      })
+      dml.review.insertBinds.push([
+        parseInt(review.assetId),
+        review.ruleId,
+        dbUtils.REVIEW_RESULT_API[review.result],
+        review.resultComment,
+        review.action ? dbUtils.REVIEW_ACTION_API[review.action] : null,
+        review.actionComment,
+        parseInt(review.userId),
+        review.autoState ? 'gA==': 'AA==',
+        new Date(review.ts),
+        review.rejectText,
+        parseInt(review.rejectUserId) || null,
+        review.status ? dbUtils.REVIEW_STATUS_API[review.status] : 0
+      ])
     }
 
     return dml
@@ -324,26 +312,27 @@ exports.replaceAppData = async function (importOpts, appData, userObject, res ) 
       'stigAssetMap',
       'userStigAssetMap',
       'review',
-      'reviewHistory'
+      // 'reviewHistory'
     ]
     await dbUtils.queryPool('EXEC sp_MSForEachTable "ALTER TABLE ? WITH CHECK CHECK CONSTRAINT all"', {}, transaction)
 
     for (const table of tableOrder) {
       if (dml[table].insertBinds.length > 0) {
         hrstart = process.hrtime()
-
         let i, j, bindchunk, chunk = 5000;
         for (i=0,j=dml[table].insertBinds.length; i<j; i+=chunk) {
           console.log(`table: ${table} chunk: ${i}\n`)
           res.write(`Inserting: ${table} chunk: ${i}\n`)
           bindchunk = dml[table].insertBinds.slice(i,i+chunk);
           const json = JSON.stringify(bindchunk)
-          result = await dbUtils.queryPool(dml[table].sqlInsert, {json}, transaction)
+          result = await dbUtils.queryPool(dml[table].sqlInsert, {json}, transaction) 
         }
         hrend = process.hrtime(hrstart)
         stats[table].insert = `${result.rowsAffected[0]} in ${hrend[0]}s  ${hrend[1] / 1000000}ms`
       }
     }
+
+    // resut = await transaction.request().bulk(dml.review.sqlTable)
 
     // // Stats
     // res.write('Calculating status statistics\n')
