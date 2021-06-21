@@ -932,6 +932,7 @@ paths:
         - $ref: '#/components/parameters/UserIdQuery'
         - $ref: '#/components/parameters/AssetIdQuery'
         - $ref: '#/components/parameters/BenchmarkIdQuery'
+        - $ref: '#/components/parameters/MetadataQuery'
         - $ref: '#/components/parameters/ReviewsProjectionQuery'
       responses:
         '200':
@@ -2136,7 +2137,7 @@ components:
         noncomputing:
           type: boolean
         metadata:
-          type: object
+          $ref: '#/components/schemas/Metadata'
     AssetBasic:
       type: object
       properties:
@@ -2181,7 +2182,7 @@ components:
         noncomputing:
           type: boolean
         metadata:
-          type: object
+          $ref: '#/components/schemas/Metadata'
         stigs:
           description: The benchmarkIds mapped to this Asset
           type: array
@@ -2249,7 +2250,7 @@ components:
         noncomputing:
           type: boolean
         metadata:
-          type: object
+          $ref: '#/components/schemas/Metadata'
         stigs:
           description: The benchmarkIds mapped to this Asset
           type: array
@@ -2559,7 +2560,7 @@ components:
         workflow:
           $ref: '#/components/schemas/CollectionWorkflow'
         metadata:
-          type: object
+          $ref: '#/components/schemas/Metadata'
         created:
           type: string
     CollectionBasic:
@@ -2588,7 +2589,7 @@ components:
         workflow:
           $ref: '#/components/schemas/CollectionWorkflow'
         metadata:
-          type: object
+          $ref: '#/components/schemas/Metadata'
         grants:
           type: array
           items:
@@ -2720,7 +2721,7 @@ components:
         workflow:
           $ref: '#/components/schemas/CollectionWorkflow'
         metadata:
-          type: object
+          $ref: '#/components/schemas/Metadata'
         grants:
           type: array
           items:
@@ -2857,6 +2858,10 @@ components:
             type: array
             items:
               $ref: '#/components/schemas/RuleAbbr'
+    Metadata:
+      type: object
+      additionalProperties:
+        type: string
     Review:
       type: object
       properties:
@@ -2923,6 +2928,7 @@ components:
       required:
         - result
         - resultComment
+        - status
       properties:
         result:
           $ref: '#/components/schemas/ReviewResult'
@@ -2971,7 +2977,10 @@ components:
     ReviewPut:
       type: object
       required:
+        - ruleId
         - result
+        - resultComment
+        - status
       properties:
         ruleId:
           type: string
@@ -2990,6 +2999,8 @@ components:
           nullable: true
         status:
           $ref: '#/components/schemas/ReviewStatus'
+        metadata:
+          $ref: '#/components/schemas/Metadata'
     ReviewResult:
       description: The Review result
       type: string
@@ -3025,6 +3036,8 @@ components:
                 type: string
             rule:
               $ref: '#/components/schemas/RuleAbbr'
+            metadata:
+              $ref: '#/components/schemas/Metadata'
     ReviewsProjected:
       allOf:
         - $ref: '#/components/schemas/Review'
@@ -3036,6 +3049,8 @@ components:
                 type: string
             rule:
               $ref: '#/components/schemas/RuleAbbr'
+            metadata:
+              $ref: '#/components/schemas/Metadata'
     Revision:
       type: object
       properties:
@@ -3529,6 +3544,7 @@ components:
         items:
           type: string
           enum:
+            - metadata
             - rule
             - stigs
             - history
@@ -3544,6 +3560,7 @@ components:
         items:
           type: string
           enum:
+            - metadata
             - rule
             - stigs
     ReviewResultQuery:
