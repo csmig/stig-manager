@@ -82,7 +82,7 @@ exports.getReviews = async function (inProjection = [], inPredicates = {}, userO
 
     // PROJECTIONS
     if (inProjection.includes('metadata')) {
-      columns.push(`r.metadata"`)
+      columns.push(`r.metadata`)
       groupBy.push(`r.metadata`)
     }
     if (inProjection.includes('stigs')) {
@@ -664,4 +664,94 @@ exports.checkRuleByAssetUser = async function (ruleId, assetId, userObject) {
     return rows.length > 0
   }
   finally { }
+}
+
+exports.getReviewMetadata = async function ( assetId, ruleId ) {
+    const binds = []
+    let sql = `
+      select
+        metadata 
+      from 
+        review r
+      where 
+        r.assetId = ?
+        and r.ruleId = ?`
+    binds.push(assetId, ruleId)
+    let [rows] = await dbUtils.pool.query(sql, binds)
+    return rows.length > 0 ? rows[0].metadata : {}
+}
+
+exports.patchReviewMetadata = async function ( assetId, ruleId, metadata ) {
+  const binds = []
+  let sql = `
+    update
+      review 
+    set 
+      metadata = JSON_MERGE_PATCH(metadata, ?)
+    where 
+      r.assetId = ?
+      and r.ruleId = ?`
+  binds.push(JSON.stringify(metadata), assetId, ruleId)
+  let [rows] = await dbUtils.pool.query(sql, binds)
+  return true
+}
+
+exports.putReviewMetadata = async function ( assetId, ruleId, metadata ) {
+  const binds = []
+  let sql = `
+    update
+      review
+    set 
+      metadata = ?
+    where 
+      assetId = ?
+      and ruleId = ?`
+  binds.push(JSON.stringify(metadata), assetId, ruleId)
+  let [rows] = await dbUtils.pool.query(sql, binds)
+  return true
+}
+
+exports.getReviewMetadataValue = async function ( assetId, ruleId, key ) {
+  const binds = []
+  let sql = `
+    select
+      JSON_EXTRACT(metadata, ?) as value
+    from 
+      review r
+    where 
+      r.assetId = ?
+      and r.ruleId = ?`
+  binds.push(`$.${key}`, assetId, ruleId)
+  let [rows] = await dbUtils.pool.query(sql, binds)
+  return rows.length > 0 ? rows[0].value : ""
+}
+
+exports.putReviewMetadataValue = async function ( assetId, ruleId, key, value ) {
+  const binds = []
+  let sql = `
+    update
+      review
+    set 
+      metadata = JSON_SET(metadata, ?, ?)
+    where 
+      assetId = ?
+      and ruleId = ?`
+  binds.push(`$.${key}`, value, assetId, ruleId)
+  let [rows] = await dbUtils.pool.query(sql, binds)
+  return rows.length > 0 ? rows[0].value : ""
+}
+
+exports.deleteReviewMetadataKey = async function ( assetId, ruleId, key ) {
+  const binds = []
+  let sql = `
+    update
+      review 
+    set 
+      metadata = JSON_REMOVE(metadata, ?)
+    where 
+      assetId = ?
+      and ruleId = ?`
+binds.push(`$.${key}`, assetId, ruleId)
+  let [rows] = await dbUtils.pool.query(sql, binds)
+  return rows.length > 0 ? rows[0].value : ""
 }

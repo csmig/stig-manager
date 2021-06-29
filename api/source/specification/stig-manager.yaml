@@ -1234,6 +1234,33 @@ paths:
       security:
         - oauth:
             - 'stig-manager:collection:read'
+    put:
+      tags:
+        - Review
+      summary: Set the value of the provided Review metadata key to the provided string
+      operationId: putReviewMetadataValue
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MetadataValue'
+      responses:
+        '200':
+          description: ReviewsProjected response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Metadata'
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      security:
+        - oauth:
+            - 'stig-manager:collection'
     delete:
       tags:
         - Review
