@@ -1379,6 +1379,43 @@ async function addReview( params ) {
   // END History Panel
   /******************************************************/
 
+  /******************************************************/
+  // START Metadata Panel
+  /******************************************************/
+  const metadataGrid = new SM.MetadataGrid({
+    title: 'Metadata',
+    curReview: {
+      collectionId: leaf.collectionId,
+      assetId: leaf.assetId,
+      ruleId: null
+    },
+    id: 'metadataGrid' + idAppend,
+    anchor: '100%',
+    listeners: {
+        metadatachanged: async grid => {
+            try {
+                let data = grid.getValue()
+                console.log(data)
+                let result = await Ext.Ajax.requestPromise({
+                    url: `${STIGMAN.Env.apiBase}/collections/${grid.curReview.collectionId}/reviews/${grid.curReview.assetId}/${grid.curReview.ruleId}?projection=metadata`,
+                    method: 'PATCH',
+                    jsonData: {
+                        metadata: data
+                    }
+                })
+                let collection = JSON.parse(result.response.responseText)
+                grid.setValue(collection.metadata)
+            }
+            catch (e) {
+                alert ('Metadata save failed')
+            }
+        }
+    }
+  })
+  /******************************************************/
+  // END Metadata Panel
+  /******************************************************/
+
   var resourcesPanel = new Ext.Panel({
     cls: 'sm-round-panel',
     margins: { top: SM.Margin.top, right: SM.Margin.edge, bottom: SM.Margin.adjacent, left: SM.Margin.adjacent },
@@ -1396,24 +1433,29 @@ async function addReview( params ) {
         beforerender: function (tabs) {
         }
       },
-      items: [{
-        title: 'Other Assets',
-        border: false,
-        layout: 'fit',
-        id: 'other-tab' + idAppend,
-        items: otherGrid
-      }, {
-        title: 'Feedback',
-        //layout: 'fit',
-        id: 'feedback-tab' + idAppend,
-        padding: 10,
-        autoScroll: true
-      },{
-        title: 'Log',
-        layout: 'fit',
-        id: 'history-tab' + idAppend,
-        items: historyData.grid
-      }]
+      items: [
+        {
+          title: 'Other Assets',
+          border: false,
+          layout: 'fit',
+          id: 'other-tab' + idAppend,
+          items: otherGrid
+        },
+        {
+          title: 'Feedback',
+          //layout: 'fit',
+          id: 'feedback-tab' + idAppend,
+          padding: 10,
+          autoScroll: true
+        },
+        {
+          title: 'Log',
+          layout: 'fit',
+          id: 'history-tab' + idAppend,
+          items: historyData.grid
+        },
+        metadataGrid
+      ]
     }]
   });
 

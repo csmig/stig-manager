@@ -1125,37 +1125,44 @@ async function handleGroupSelectionForAsset (groupGridRecord, collectionId, asse
 		// load others
 		Ext.getCmp('otherGrid' + idAppend).getStore().loadData(otherReviews);
 
-		// History
-		let historyReq = await Ext.Ajax.requestPromise({
+		// Log, Feedback and Metadata
+		const metadataGrid = Ext.getCmp('metadataGrid' + idAppend)
+		metadataGrid.curReview.ruleId = groupGridRecord.data.ruleId
+
+		let historyMetaReq = await Ext.Ajax.requestPromise({
 			url: `${STIGMAN.Env.apiBase}/collections/${collectionId}/reviews/${assetId}/${groupGridRecord.data.ruleId}`,
 			method: 'GET',
 			params: { 
-				projection: 'history'
+				projection: ['history', 'metadata']
 			}
 		})
-		let reviewWithHistory = Ext.util.JSON.decode(historyReq.response.responseText)
-		if (! reviewWithHistory) {
+		let reviewProjected = Ext.util.JSON.decode(historyMetaReq.response.responseText)
+		if (! reviewProjected) {
 			Ext.getCmp('historyGrid' + idAppend).getStore().removeAll()
+			Ext.getCmp('metadataGrid' + idAppend).getStore().removeAll()
 		}
-		else if (reviewWithHistory.history) {
+		if (reviewProjected.history) {
 			// append current state of review to history grid
 			let currentReview = {
-				action: reviewWithHistory.action,
-				actionComment: reviewWithHistory.actionComment,
-				autoResult: reviewWithHistory.autoResult,
-				rejectText: reviewWithHistory.rejectText,
-				result: reviewWithHistory.result,
-				resultComment: reviewWithHistory.resultComment,
-				status: reviewWithHistory.status,
-				ts: reviewWithHistory.ts,
-				userId: reviewWithHistory.userId,
-				username: reviewWithHistory.username
-			  }
-			reviewWithHistory.history.push(currentReview)
-			Ext.getCmp('historyGrid' + idAppend).getStore().loadData(reviewWithHistory.history)
+				action: reviewProjected.action,
+				actionComment: reviewProjected.actionComment,
+				autoResult: reviewProjected.autoResult,
+				rejectText: reviewProjected.rejectText,
+				result: reviewProjected.result,
+				resultComment: reviewProjected.resultComment,
+				status: reviewProjected.status,
+				ts: reviewProjected.ts,
+				userId: reviewProjected.userId,
+				username: reviewProjected.username
+			}
+			reviewProjected.history.push(currentReview)
+			Ext.getCmp('historyGrid' + idAppend).getStore().loadData(reviewProjected.history)
+		}
+		if (reviewProjected.metadata) {
+			metadataGrid.setValue(reviewProjected.metadata)
 		}
 		// Feedback
-		Ext.getCmp(`feedback-tab${idAppend}`).update(reviewWithHistory.rejectText)
+		Ext.getCmp(`feedback-tab${idAppend}`).update(reviewProjected.rejectText)
 
 		reviewForm.setReviewFormItemStates(reviewForm)
 	}
