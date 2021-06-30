@@ -689,8 +689,8 @@ exports.patchReviewMetadata = async function ( assetId, ruleId, metadata ) {
     set 
       metadata = JSON_MERGE_PATCH(metadata, ?)
     where 
-      r.assetId = ?
-      and r.ruleId = ?`
+      assetId = ?
+      and ruleId = ?`
   binds.push(JSON.stringify(metadata), assetId, ruleId)
   let [rows] = await dbUtils.pool.query(sql, binds)
   return true
