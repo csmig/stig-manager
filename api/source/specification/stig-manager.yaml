@@ -1207,7 +1207,36 @@ paths:
       security:
         - oauth:
             - 'stig-manager:collection'
-  '/collections/{collectionId}/reviews/{assetId}/{ruleId}/metadata/{key}':
+  '/collections/{collectionId}/reviews/{assetId}/{ruleId}/metadata/keys':
+    parameters:
+      - $ref: '#/components/parameters/CollectionIdPath'
+      - $ref: '#/components/parameters/AssetIdPath'
+      - $ref: '#/components/parameters/RuleIdPath'
+    get:
+      tags:
+        - Review
+      summary: Return the keys of the provided Review's metadata
+      operationId: getReviewMetadataKeys
+      responses:
+        '200':
+          description: Metadata response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/MetadataKey'
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      security:
+        - oauth:
+            - 'stig-manager:collection:read'
+
+  '/collections/{collectionId}/reviews/{assetId}/{ruleId}/metadata/keys/{key}':
     parameters:
       - $ref: '#/components/parameters/CollectionIdPath'
       - $ref: '#/components/parameters/AssetIdPath'
@@ -2997,6 +3026,8 @@ components:
       type: object
       additionalProperties:
         type: string
+    MetadataKey:
+      type: string
     MetadataValue:
       type: string
     Review:

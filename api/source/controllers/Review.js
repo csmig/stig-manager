@@ -296,6 +296,32 @@ module.exports.putReviewMetadata = async function (req, res, next) {
   }  
 }
 
+module.exports.getReviewMetadataKeys = async function (req, res, next) {
+  try {
+    let collectionId = req.swagger.params['collectionId'].value
+    let assetId = req.swagger.params['assetId'].value
+    let ruleId = req.swagger.params['ruleId'].value
+    const collectionGrant = req.userObject.collectionGrants.find( g => g.collection.collectionId === collectionId )
+    if ( collectionGrant || req.userObject.privileges.globalAccess ) {
+      const userHasRule = await Review.checkRuleByAssetUser( ruleId, assetId, req.userObject )
+      if (userHasRule) {
+        let response = await Review.getReviewMetadataKeys( assetId, ruleId, req.userObject)
+        if (!response)  throw ( writer.respondWithCode ( 404, { message: `metadata keys not found`} ) )
+        writer.writeJson(res, response )
+      }
+      else {
+        throw ( writer.respondWithCode ( 403, {message: "User has insufficient privilege to patch the review of this rule."} ) )
+      }
+    }
+    else {
+      throw (writer.respondWithCode ( 403, {message: "User has insufficient privilege to complete this request."} ) )
+    }
+  }
+  catch (err) {
+    writer.writeJson(res, err)
+  }  
+}
+
 module.exports.getReviewMetadataValue = async function (req, res, next) {
   try {
     let collectionId = req.swagger.params['collectionId'].value
