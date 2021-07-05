@@ -666,6 +666,21 @@ exports.checkRuleByAssetUser = async function (ruleId, assetId, userObject) {
   finally { }
 }
 
+exports.getReviewMetadataKeys = async function ( assetId, ruleId ) {
+  const binds = []
+  let sql = `
+    select
+      JSON_KEYS(metadata) as keyArray
+    from 
+      review r
+    where 
+      r.assetId = ?
+      and r.ruleId = ?`
+  binds.push(assetId, ruleId)
+  let [rows] = await dbUtils.pool.query(sql, binds)
+  return rows.length > 0 ? rows[0].keyArray : []
+}
+
 exports.getReviewMetadata = async function ( assetId, ruleId ) {
     const binds = []
     let sql = `
