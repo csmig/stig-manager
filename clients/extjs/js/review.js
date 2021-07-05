@@ -1454,6 +1454,12 @@ async function addReview( params ) {
           id: 'history-tab' + idAppend,
           items: historyData.grid
         },
+        {
+          title: 'Attachments',
+          layout: 'fit',
+          id: 'attachment-tab' + idAppend,
+          items: new SM.Attachments.Grid()
+        },
         metadataGrid
       ]
     }]

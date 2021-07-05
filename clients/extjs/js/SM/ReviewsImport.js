@@ -2020,7 +2020,14 @@ async function showImportResultFile(params) {
     async function parseFile(file, pb) {
         try {
             let extension = file.name.substring(file.name.lastIndexOf(".") + 1)
-            let data = await readTextFileAsync(file)
+            let metadata = await SM.Attachments.getMetadataFromFile(file)
+
+
+            let imgWindow = window.open("")
+            imgWindow.document.write(
+                `<img src='data:${metadata.attachment.type};base64,${encodeURI(metadata.data)}'></img>`
+            )
+
             let r
             if (extension === 'ckl') {
                 r = reviewsFromCkl(data, { ignoreNr: false })
