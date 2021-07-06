@@ -940,6 +940,7 @@ function getFileIcon (filename) {
 			return 'img/page_white_acrobat.png';
 			break;
 		case 'jpg':
+		case 'png':
 		case 'gif':
 		case 'bmp':
 			return 'img/page_white_camera.png';
@@ -1140,6 +1141,7 @@ async function handleGroupSelectionForAsset (groupGridRecord, collectionId, asse
 		if (! reviewProjected) {
 			Ext.getCmp('historyGrid' + idAppend).getStore().removeAll()
 			Ext.getCmp('metadataGrid' + idAppend).getStore().removeAll()
+			Ext.getCmp('attachmentsGrid' + idAppend).getStore().removeAll()
 		}
 		if (reviewProjected.history) {
 			// append current state of review to history grid
@@ -1164,6 +1166,9 @@ async function handleGroupSelectionForAsset (groupGridRecord, collectionId, asse
 		// Feedback
 		Ext.getCmp(`feedback-tab${idAppend}`).update(reviewProjected.rejectText)
 
+		// Attachments
+		Ext.getCmp('attachmentsGrid' + idAppend).ruleId = groupGridRecord.data.ruleId
+		Ext.getCmp('attachmentsGrid' + idAppend).loadArtifacts()
 		reviewForm.setReviewFormItemStates(reviewForm)
 	}
 	catch (e) {

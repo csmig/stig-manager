@@ -39,12 +39,10 @@ SM.Attachments.Grid = Ext.extend(Ext.grid.GridPanel, {
         sortable: true,
         align: 'left',
         renderer: function (value, metadata, record) {
-          //var returnStr = '<img src="' + getFileIcon(value) + '" width=12px height=12px>&nbsp;';
           var returnStr = '<img src="' + getFileIcon(value) + '" class="sm-artifact-file-icon">';
           returnStr += '<b>' + value + '</b>';
           returnStr += '<br><br><b>Type:</b> ' + record.data.type;
-          returnStr += '<br><br><b>Size:</b> ' + record.data.size;
-          returnStr += '<br><b>Description:</b> ' + record.data.description;
+          returnStr += '<br><b>Size:</b> ' + record.data.size;
           returnStr += '<br><br>';
           return returnStr;
         }
@@ -66,15 +64,63 @@ SM.Attachments.Grid = Ext.extend(Ext.grid.GridPanel, {
         fixed: true,
         dataIndex: 'none',
         renderer: function (value, metadata, record) {
-          if (attachGrid.groupGridRecord.data.statusId == 0 || attachGrid.groupGridRecord.data.statusId == 2) {
-            metadata.css = 'artifact-delete';
-            metadata.attr = 'ext:qtip="Unattach the artifact from this review"';
-          }
+          metadata.css = 'artifact-delete';
+          metadata.attr = 'ext:qtip="Unattach the artifact from this review"';
           return '';
         }
       }
     ]
+    const loadArtifacts = async function () {
+      try {
+        store.removeAll()
+        const artifactValue = await getMetadataValue('artifacts')
+        store.loadData(JSON.parse(artifactValue))
+      }
+      catch (e) {
+        console.log(e)
+      }
+    }
+    const putArtifact = async function (file) {
+      try {
+        const fields = await SM.Attachments.getMetadataFromFile(file)
+        console.log(fields)
+        store.loadData([fields.attachment], true) // append
+        await putMetadataValue(fields.attachment.digest, fields.data)
+        const records = store.getRange()
+        const data = records.map( record => record.data)
+        await putMetadataValue('artifacts', JSON.stringify(data))
+      }
+      catch (e) {
+        console.log(e)
+      }
+    }
+    const putMetadataValue = async function (key, value) {
+      let result = await Ext.Ajax.requestPromise({
+        url: `${STIGMAN.Env.apiBase}/collections/${me.collectionId}/reviews/${me.assetId}/${me.ruleId}/metadata/keys/${key}`,
+        method: 'PUT',
+        jsonData: JSON.stringify(value)
+      })
+    }
+    const getMetadataValue = async function (key) {
+      try {
+        let result = await Ext.Ajax.requestPromise({
+          url: `${STIGMAN.Env.apiBase}/collections/${me.collectionId}/reviews/${me.assetId}/${me.ruleId}/metadata/keys/${key}`,
+          method: 'GET'
+        })
+        return JSON.parse(result.response.responseText)  
+      }
+      catch (e) {
+        console.log(e)
+      }
+    }
+
+    const showImage = async function (artifactObj) {
+      console.log(artifactObj)
+      
+    }
+
     const config = {
+      loadArtifacts: loadArtifacts,
       disableSelection: true,
       layout: 'fit',
       cls: 'custom-artifacts',
@@ -91,11 +137,30 @@ SM.Attachments.Grid = Ext.extend(Ext.grid.GridPanel, {
       tbar: new Ext.Toolbar({
         items: [
           {
-            xtype: 'tbbutton',
-            text: 'Attach artifact...',
-            icon: 'img/attach-16.png',
-            handler: function (btn) {
-              attachArtifact()
+            xtype: 'fileuploadfield',
+            buttonOnly: true,
+            name: 'importFile',
+            accept: '.gif,.jpg,.jpeg,.svg,.png,.pdf',
+            webkitdirectory: false,
+            multiple: false,
+            style: 'width: 95px;',
+            buttonText: `Attach artifact...`,
+            buttonCfg: {
+                icon: "img/attach-16.png"
+            },
+            listeners: {
+                fileselected: async function (uploadField) {
+                  try {
+                    let input = uploadField.fileInput.dom
+                    const files = [...input.files]
+                    putArtifact(files[0])
+                    uploadField.reset()
+                  }
+                  catch (e) {
+                    uploadField.reset()
+                    alert(e.message)
+                  }
+                }
             }
           }
         ]
@@ -109,8 +174,7 @@ SM.Attachments.Grid = Ext.extend(Ext.grid.GridPanel, {
           var header = grid.getColumnModel().getColumnHeader(columnIndex)
           switch (header) {
             case 'download':
-              alert('Clicked download')
-              // window.location = 'pl/getArtifact.pl?artId=' + r.data.artId;
+              showImage(r.data)
               break;
             case 'delete':
               alert('Clicked delete')
@@ -126,19 +190,7 @@ SM.Attachments.Grid = Ext.extend(Ext.grid.GridPanel, {
   setContext: function ({ collectionId, assetId, ruleId }) {
     this.context = { collectionId, assetId, ruleId }
   },
-  loadArtifacts: async function () {
-    const context = this.context
-    let result = await Ext.Ajax.requestPromise({
-      url: `${STIGMAN.Env.apiBase}/collections/${context.collectionId}/reviews/${context.assetId}WORKING NHERE`,
-      method: 'GET'
-    })
-    let apiCollection = JSON.parse(result.response.responseText)
-  
-  }
 })
-
-SM.Attachments.getArtifacts = 
-
 
 SM.Attachments.getMetadataFromFile = async function (file, description) {
   const hasher = new asmCrypto.Sha256()

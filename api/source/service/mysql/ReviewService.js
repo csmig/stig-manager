@@ -736,7 +736,7 @@ exports.getReviewMetadataValue = async function ( assetId, ruleId, key ) {
     where 
       r.assetId = ?
       and r.ruleId = ?`
-  binds.push(`$.${key}`, assetId, ruleId)
+  binds.push(`$."${key}"`, assetId, ruleId)
   let [rows] = await dbUtils.pool.query(sql, binds)
   return rows.length > 0 ? rows[0].value : ""
 }
@@ -751,7 +751,7 @@ exports.putReviewMetadataValue = async function ( assetId, ruleId, key, value ) 
     where 
       assetId = ?
       and ruleId = ?`
-  binds.push(`$.${key}`, value, assetId, ruleId)
+  binds.push(`$."${key}"`, value, assetId, ruleId)
   let [rows] = await dbUtils.pool.query(sql, binds)
   return rows.length > 0 ? rows[0].value : ""
 }

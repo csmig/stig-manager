@@ -1415,6 +1415,12 @@ async function addReview( params ) {
   /******************************************************/
   // END Metadata Panel
   /******************************************************/
+  const attachmentsGrid = new SM.Attachments.Grid({
+    id: 'attachmentsGrid' + idAppend,
+    title: 'Attachments',
+    collectionId: leaf.collectionId,
+    assetId: leaf.assetId
+  })
 
   var resourcesPanel = new Ext.Panel({
     cls: 'sm-round-panel',
@@ -1428,12 +1434,13 @@ async function addReview( params ) {
       border: false,
       deferredRender: false,
       id: 'resources-tabs' + idAppend,
-      activeTab: ('undefined' !== typeof selectedResource ? selectedResource : 'other-tab' + idAppend),
+      activeTab: ('undefined' !== typeof selectedResource ? selectedResource : 'attachmentsGrid' + idAppend),
       listeners: {
         beforerender: function (tabs) {
         }
       },
       items: [
+        attachmentsGrid,
         {
           title: 'Other Assets',
           border: false,
@@ -1453,12 +1460,6 @@ async function addReview( params ) {
           layout: 'fit',
           id: 'history-tab' + idAppend,
           items: historyData.grid
-        },
-        {
-          title: 'Attachments',
-          layout: 'fit',
-          id: 'attachment-tab' + idAppend,
-          items: new SM.Attachments.Grid()
         },
         metadataGrid
       ]
