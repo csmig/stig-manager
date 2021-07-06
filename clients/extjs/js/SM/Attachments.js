@@ -41,9 +41,9 @@ SM.Attachments.Grid = Ext.extend(Ext.grid.GridPanel, {
         renderer: function (value, metadata, record) {
           var returnStr = '<img src="' + getFileIcon(value) + '" class="sm-artifact-file-icon">';
           returnStr += '<b>' + value + '</b>';
-          returnStr += '<br><br><b>Type:</b> ' + record.data.type;
+          returnStr += '<br><b>Type:</b> ' + record.data.type;
           returnStr += '<br><b>Size:</b> ' + record.data.size;
-          returnStr += '<br><br>';
+          // returnStr += '<br><br>';
           return returnStr;
         }
       },
@@ -53,8 +53,8 @@ SM.Attachments.Grid = Ext.extend(Ext.grid.GridPanel, {
         fixed: true,
         dataIndex: 'none',
         renderer: function (value, metadata, record) {
-          metadata.css = 'artifact-download';
-          metadata.attr = 'ext:qtip="Download artifact"';
+          metadata.css = 'artifact-view';
+          metadata.attr = 'ext:qtip="View artifact"';
           return '';
         }
       },
@@ -94,12 +94,30 @@ SM.Attachments.Grid = Ext.extend(Ext.grid.GridPanel, {
         console.log(e)
       }
     }
+    const removeArtifact = async function (record) {
+      try {
+        store.remove(record)
+        await deleteMetadataKey(record.data.digest)
+        const records = store.getRange()
+        const data = records.map( record => record.data)
+        await putMetadataValue('artifacts', JSON.stringify(data))
+      }
+      catch (e) {
+        console.log(e)
+      }
+    }
+
     const putMetadataValue = async function (key, value) {
-      let result = await Ext.Ajax.requestPromise({
-        url: `${STIGMAN.Env.apiBase}/collections/${me.collectionId}/reviews/${me.assetId}/${me.ruleId}/metadata/keys/${key}`,
-        method: 'PUT',
-        jsonData: JSON.stringify(value)
-      })
+      try {
+        let result = await Ext.Ajax.requestPromise({
+          url: `${STIGMAN.Env.apiBase}/collections/${me.collectionId}/reviews/${me.assetId}/${me.ruleId}/metadata/keys/${key}`,
+          method: 'PUT',
+          jsonData: JSON.stringify(value)
+        })
+      }
+      catch (e) {
+        console.log(e)
+      }
     }
     const getMetadataValue = async function (key) {
       try {
@@ -113,10 +131,41 @@ SM.Attachments.Grid = Ext.extend(Ext.grid.GridPanel, {
         console.log(e)
       }
     }
+    const deleteMetadataKey = async function (key) {
+      try {
+        let result = await Ext.Ajax.requestPromise({
+          url: `${STIGMAN.Env.apiBase}/collections/${me.collectionId}/reviews/${me.assetId}/${me.ruleId}/metadata/keys/${key}`,
+          method: 'DELETE'
+        })
+        return JSON.parse(result.response.responseText)  
+      }
+      catch (e) {
+        console.log(e)
+      }
+    }
 
     const showImage = async function (artifactObj) {
       console.log(artifactObj)
-      
+      // image panel
+      const imagePanel = new Ext.Panel()
+      const vpSize = Ext.getBody().getViewSize()
+      let height = vpSize.height * 0.75
+      let width = vpSize.width * 0.75 <= 1024 ? vpSize.width * 0.75 : 1024
+      const fpwindow = new Ext.Window({
+        title: `Image`,
+        modal: true,
+        resizable: true,
+        width: width,
+        height: height,
+        layout: 'fit',
+        plain: true,
+        bodyStyle: 'padding:5px;',
+        buttonAlign: 'center',
+        items: imagePanel
+      })
+      fpwindow.show()
+      const imageB64 = await getMetadataValue(artifactObj.digest)
+      imagePanel.update(`<img style='height: 100%; width: 100%; object-fit: contain' src='data:${artifactObj.type};base64,${encodeURI(imageB64)}'></img>`)
     }
 
     const config = {
@@ -177,8 +226,7 @@ SM.Attachments.Grid = Ext.extend(Ext.grid.GridPanel, {
               showImage(r.data)
               break;
             case 'delete':
-              alert('Clicked delete')
-              // removeMap(r);
+              removeArtifact(r)
               break;
           }
         }

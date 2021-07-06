@@ -766,7 +766,7 @@ exports.deleteReviewMetadataKey = async function ( assetId, ruleId, key ) {
     where 
       assetId = ?
       and ruleId = ?`
-binds.push(`$.${key}`, assetId, ruleId)
+binds.push(`$."${key}"`, assetId, ruleId)
   let [rows] = await dbUtils.pool.query(sql, binds)
   return rows.length > 0 ? rows[0].value : ""
 }
