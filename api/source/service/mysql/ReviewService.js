@@ -211,7 +211,7 @@ exports.getReviews = async function (inProjection = [], inPredicates = {}, userO
       for (const pair of inPredicates.metadata) {
         const [key, value] = pair.split(':')
         predicates.statements.push('JSON_CONTAINS(r.metadata, ?, ?)')
-        predicates.binds.push( `"${value}"`,  `$.${key}`)
+        predicates.binds.push( `"${value}"`,  `$."${key}"`)
       }
     }
 
@@ -736,7 +736,7 @@ exports.getReviewMetadataValue = async function ( assetId, ruleId, key ) {
     where 
       r.assetId = ?
       and r.ruleId = ?`
-  binds.push(`$.${key}`, assetId, ruleId)
+  binds.push(`$."${key}"`, assetId, ruleId)
   let [rows] = await dbUtils.pool.query(sql, binds)
   return rows.length > 0 ? rows[0].value : ""
 }
@@ -751,7 +751,7 @@ exports.putReviewMetadataValue = async function ( assetId, ruleId, key, value ) 
     where 
       assetId = ?
       and ruleId = ?`
-  binds.push(`$.${key}`, value, assetId, ruleId)
+  binds.push(`$."${key}"`, value, assetId, ruleId)
   let [rows] = await dbUtils.pool.query(sql, binds)
   return rows.length > 0 ? rows[0].value : ""
 }
@@ -766,7 +766,7 @@ exports.deleteReviewMetadataKey = async function ( assetId, ruleId, key ) {
     where 
       assetId = ?
       and ruleId = ?`
-binds.push(`$.${key}`, assetId, ruleId)
+binds.push(`$."${key}"`, assetId, ruleId)
   let [rows] = await dbUtils.pool.query(sql, binds)
   return rows.length > 0 ? rows[0].value : ""
 }
