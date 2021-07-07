@@ -10,6 +10,7 @@ SM.Attachments.Grid = Ext.extend(Ext.grid.GridPanel, {
       'type',
       'description',
       'digest',
+      'user',
       {
         name: 'date',
         type: 'date',
@@ -24,11 +25,7 @@ SM.Attachments.Grid = Ext.extend(Ext.grid.GridPanel, {
       grid: this,
       root: '',
       fields: fields,
-      idProperty: 'digest',
-      sortInfo: {
-        field: 'name',
-        direction: 'ASC'
-      }
+      idProperty: 'digest'
     })
     const columns = [
       {
@@ -41,9 +38,8 @@ SM.Attachments.Grid = Ext.extend(Ext.grid.GridPanel, {
         renderer: function (value, metadata, record) {
           var returnStr = '<img src="' + getFileIcon(value) + '" class="sm-artifact-file-icon">';
           returnStr += '<b>' + value + '</b>';
-          returnStr += '<br><b>Type:</b> ' + record.data.type;
-          returnStr += '<br><b>Size:</b> ' + record.data.size;
-          // returnStr += '<br><br>';
+          returnStr += '<br><b>Type:</b> ' + record.data.type + ' <b>Size:</b> ' + record.data.size;
+          returnStr += `<br><i>Attached ${record.data.date.format('Y-m-d')} by ${record.data.user.name}</i>`;
           return returnStr;
         }
       },
@@ -77,13 +73,37 @@ SM.Attachments.Grid = Ext.extend(Ext.grid.GridPanel, {
         store.loadData(JSON.parse(artifactValue))
       }
       catch (e) {
+        me.loadMask.hide()
         console.log(e)
+      }
+    }
+    const getMetadataValue = async function (key) {
+      try {
+        let result = await Ext.Ajax.requestPromise({
+          url: `${STIGMAN.Env.apiBase}/collections/${me.collectionId}/reviews/${me.assetId}/${me.ruleId}/metadata/keys/${key}`,
+          method: 'GET'
+        })
+        return JSON.parse(result.response.responseText)  
+      }
+      catch (e) {
+        console.log(e)
+      }
+    }
+    const onFileSelected = async function (uploadField) {
+      try {
+        let input = uploadField.fileInput.dom
+        const files = [...input.files]
+        putArtifact(files[0])
+        uploadField.reset()
+      }
+      catch (e) {
+        uploadField.reset()
+        alert(e.message)
       }
     }
     const putArtifact = async function (file) {
       try {
-        const fields = await SM.Attachments.getMetadataFromFile(file)
-        console.log(fields)
+        const fields = await getMetadataFromFile(file)
         store.loadData([fields.attachment], true) // append
         await putMetadataValue(fields.attachment.digest, fields.data)
         const records = store.getRange()
@@ -94,19 +114,29 @@ SM.Attachments.Grid = Ext.extend(Ext.grid.GridPanel, {
         console.log(e)
       }
     }
-    const removeArtifact = async function (record) {
-      try {
-        store.remove(record)
-        await deleteMetadataKey(record.data.digest)
-        const records = store.getRange()
-        const data = records.map( record => record.data)
-        await putMetadataValue('artifacts', JSON.stringify(data))
-      }
-      catch (e) {
-        console.log(e)
+    const getMetadataFromFile = async function  (file) {
+      const hasher = new asmCrypto.Sha256()
+      const dataBuffer = await readArrayBufferAsync(file)
+      const dataArray = new Uint8Array(dataBuffer)
+      const base64 = asmCrypto.bytes_to_base64(dataArray)
+      hasher.process(dataArray)
+      hasher.finish()
+      const shahex = asmCrypto.bytes_to_hex(hasher.result)
+      return {
+        attachment: {
+          name: file.name,
+          date: new Date(),
+          size: file.size,
+          type: file.type,
+          user: {
+            userId: curUser.userId,
+            name: curUser.display
+          },
+          digest: shahex
+        },
+        data: base64
       }
     }
-
     const putMetadataValue = async function (key, value) {
       try {
         let result = await Ext.Ajax.requestPromise({
@@ -119,13 +149,15 @@ SM.Attachments.Grid = Ext.extend(Ext.grid.GridPanel, {
         console.log(e)
       }
     }
-    const getMetadataValue = async function (key) {
+    const removeArtifact = async function (record) {
       try {
-        let result = await Ext.Ajax.requestPromise({
-          url: `${STIGMAN.Env.apiBase}/collections/${me.collectionId}/reviews/${me.assetId}/${me.ruleId}/metadata/keys/${key}`,
-          method: 'GET'
-        })
-        return JSON.parse(result.response.responseText)  
+        const confirm = await SM.confirmPromise('Confirm',`Remove ${record.data.name}?`)
+        if (confirm === 'yes') {
+          await deleteMetadataKey(record.data.digest)
+          store.remove(record)
+          const data = store.getRange().map( record => record.data)
+          await putMetadataValue('artifacts', JSON.stringify(data))  
+        }
       }
       catch (e) {
         console.log(e)
@@ -143,11 +175,11 @@ SM.Attachments.Grid = Ext.extend(Ext.grid.GridPanel, {
         console.log(e)
       }
     }
-
     const showImage = async function (artifactObj) {
       console.log(artifactObj)
-      // image panel
-      const imagePanel = new Ext.Panel()
+      const imagePanel = new Ext.Panel({
+        bodyStyle: 'background-color: #333;'
+      })
       const vpSize = Ext.getBody().getViewSize()
       let height = vpSize.height * 0.75
       let width = vpSize.width * 0.75 <= 1024 ? vpSize.width * 0.75 : 1024
@@ -164,12 +196,27 @@ SM.Attachments.Grid = Ext.extend(Ext.grid.GridPanel, {
         items: imagePanel
       })
       fpwindow.show()
+      // can display wait for image loading if necessary
       const imageB64 = await getMetadataValue(artifactObj.digest)
       imagePanel.update(`<img style='height: 100%; width: 100%; object-fit: contain' src='data:${artifactObj.type};base64,${encodeURI(imageB64)}'></img>`)
     }
-
+    const fileUploadField = new Ext.ux.form.FileUploadField({
+      buttonOnly: true,
+      accept: '.gif,.jpg,.jpeg,.svg,.png,.bmp',
+      webkitdirectory: false,
+      multiple: false,
+      style: 'width: 95px;',
+      buttonText: `Attach image...`,
+      buttonCfg: {
+          icon: "img/attach-16.png"
+      },
+      listeners: {
+          fileselected: onFileSelected
+      }      
+    })
     const config = {
       loadArtifacts: loadArtifacts,
+      fileUploadField: fileUploadField,
       disableSelection: true,
       layout: 'fit',
       cls: 'custom-artifacts',
@@ -185,33 +232,7 @@ SM.Attachments.Grid = Ext.extend(Ext.grid.GridPanel, {
       }),
       tbar: new Ext.Toolbar({
         items: [
-          {
-            xtype: 'fileuploadfield',
-            buttonOnly: true,
-            name: 'importFile',
-            accept: '.gif,.jpg,.jpeg,.svg,.png,.pdf',
-            webkitdirectory: false,
-            multiple: false,
-            style: 'width: 95px;',
-            buttonText: `Attach artifact...`,
-            buttonCfg: {
-                icon: "img/attach-16.png"
-            },
-            listeners: {
-                fileselected: async function (uploadField) {
-                  try {
-                    let input = uploadField.fileInput.dom
-                    const files = [...input.files]
-                    putArtifact(files[0])
-                    uploadField.reset()
-                  }
-                  catch (e) {
-                    uploadField.reset()
-                    alert(e.message)
-                  }
-                }
-            }
-          }
+          fileUploadField
         ]
       }),
       loadMask: true,
@@ -234,43 +255,17 @@ SM.Attachments.Grid = Ext.extend(Ext.grid.GridPanel, {
     }   
     Ext.apply(this, Ext.apply(this.initialConfig, config))
     SM.Attachments.Grid.superclass.initComponent.call(this)
-  },
-  setContext: function ({ collectionId, assetId, ruleId }) {
-    this.context = { collectionId, assetId, ruleId }
-  },
+  }
 })
 
-SM.Attachments.getMetadataFromFile = async function (file, description) {
-  const hasher = new asmCrypto.Sha256()
-  const dataBuffer = await readArrayBufferAsync(file)
-  const dataArray = new Uint8Array(dataBuffer)
-  const base64 = asmCrypto.bytes_to_base64(dataArray)
-  hasher.process(dataArray)
-  hasher.finish()
-  const shahex = asmCrypto.bytes_to_hex(hasher.result)
-  return {
-    attachment: {
-      name: file.name,
-      date: file.lastModifiedDate,
-      size: file.size,
-      type: file.type,
-      description: description,
-      digest: shahex
-    },
-    data: base64
-  }
-}
 
 function readBinaryStringAsync(file) {
   return new Promise((resolve, reject) => {
     let reader = new FileReader();
-
     reader.onload = () => {
       resolve(reader.result);
     }
-
     reader.onerror = reject;
-
     reader.readAsBinaryString(file)
   })
 }
@@ -278,13 +273,10 @@ function readBinaryStringAsync(file) {
 function readArrayBufferAsync(file) {
   return new Promise((resolve, reject) => {
     let reader = new FileReader();
-
     reader.onload = () => {
       resolve(reader.result);
     }
-
     reader.onerror = reject;
-
     reader.readAsArrayBuffer(file)
   })
 }
