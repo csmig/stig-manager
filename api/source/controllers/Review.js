@@ -147,7 +147,8 @@ module.exports.getReviewsByAsset = async function (req, res, next) {
         result: req.swagger.params['result'].value,
         action: req.swagger.params['action'].value,
         status: req.swagger.params['status'].value,
-        benchmarkId: req.swagger.params['benchmarkId'].value
+        benchmarkId: req.swagger.params['benchmarkId'].value,
+        metadata: req.swagger.params['metadata'].value
       }, req.userObject )
       writer.writeJson(res, response)
     }
