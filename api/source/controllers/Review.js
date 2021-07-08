@@ -119,7 +119,8 @@ module.exports.getReviewsByCollection = async function getReviewsByCollection (r
         cci: req.swagger.params['cci'].value,
         userId: req.swagger.params['userId'].value,
         assetId: req.swagger.params['assetId'].value,
-        benchmarkId: req.swagger.params['benchmarkId'].value
+        benchmarkId: req.swagger.params['benchmarkId'].value,
+        metadata: req.swagger.params['metadata'].value
       }, req.userObject)
       writer.writeJson(res, response)
     }
