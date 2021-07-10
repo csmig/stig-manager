@@ -93,7 +93,7 @@ SM.Attachments.Grid = Ext.extend(Ext.grid.GridPanel, {
       try {
         let input = uploadField.fileInput.dom
         const files = [...input.files]
-        putArtifact(files[0])
+        await putArtifact(files[0])
         uploadField.reset()
       }
       catch (e) {
@@ -101,18 +101,45 @@ SM.Attachments.Grid = Ext.extend(Ext.grid.GridPanel, {
         alert(e.message)
       }
     }
+    // const putArtifact = async function (file) {
+    //   try {
+    //     const fields = await getMetadataFromFile(file)
+    //     store.loadData([fields.attachment], true) // append
+    //     await putMetadataValue(fields.attachment.digest, fields.data)
+    //     const records = store.getRange()
+    //     const data = records.map( record => record.data)
+    //     await putMetadataValue('artifacts', JSON.stringify(data))
+    //   }
+    //   catch (e) {
+    //     console.log(e)
+    //   }
+    // }
     const putArtifact = async function (file) {
+      let result
+      let fields
       try {
-        const fields = await getMetadataFromFile(file)
-        store.loadData([fields.attachment], true) // append
-        await putMetadataValue(fields.attachment.digest, fields.data)
-        const records = store.getRange()
-        const data = records.map( record => record.data)
-        await putMetadataValue('artifacts', JSON.stringify(data))
+        fields = await getMetadataFromFile(file)
+        // store.loadData([fields.attachment], true) // append
+        await putMetadataValue(fields.attachment.digest, fields.data).then( resp =>{   
+          //Only update artifact metadata or grid if attachment was accepted 
+          if (resp.response.status == "204"){
+            store.loadData([fields.attachment], true) // append
+            const records = store.getRange()
+            const data = records.map( record => record.data)
+            putMetadataValue('artifacts', JSON.stringify(data))
+          }
+          else{
+            //don't update artifact metadata or grid if attachment was not accepted. 
+            if (resp.response.responseText = "{\"message\":\"request entity too large\"}") {
+              alert ("Attachment failed. File is too large.")
+            }
+          }
+        })
       }
       catch (e) {
+        alert ("Attachment Failed.")
         console.log(e)
-      }
+      }      
     }
     const getMetadataFromFile = async function  (file) {
       const hasher = new asmCrypto.Sha256()
@@ -144,9 +171,11 @@ SM.Attachments.Grid = Ext.extend(Ext.grid.GridPanel, {
           method: 'PUT',
           jsonData: JSON.stringify(value)
         })
+        return result
       }
       catch (e) {
         console.log(e)
+        return e
       }
     }
     const removeArtifact = async function (record) {
