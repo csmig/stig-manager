@@ -78,16 +78,11 @@ SM.Attachments.Grid = Ext.extend(Ext.grid.GridPanel, {
       }
     }
     const getMetadataValue = async function (key) {
-      try {
-        let result = await Ext.Ajax.requestPromise({
-          url: `${STIGMAN.Env.apiBase}/collections/${me.collectionId}/reviews/${me.assetId}/${me.ruleId}/metadata/keys/${key}`,
-          method: 'GET'
-        })
-        return JSON.parse(result.response.responseText)  
-      }
-      catch (e) {
-        console.log(e)
-      }
+      const result = await Ext.Ajax.requestPromise({
+        url: `${STIGMAN.Env.apiBase}/collections/${me.collectionId}/reviews/${me.assetId}/${me.ruleId}/metadata/keys/${key}`,
+        method: 'GET'
+      })
+      return JSON.parse(result.response.responseText)  
     }
     const onFileSelected = async function (uploadField) {
       try {
@@ -103,29 +98,29 @@ SM.Attachments.Grid = Ext.extend(Ext.grid.GridPanel, {
     }
 
     const putArtifact = async function (file) {
+      let fields
       try {
-        let fields = await getMetadataFromFile(file)
-        let result = await putMetadataValue(fields.attachment.digest, fields.data)
-          //Only update artifact metadata or grid if attachment was accepted 
-          if (result.response.status == "204"){
-            store.loadData([fields.attachment], true) // append
-            const records = store.getRange()
-            const data = records.map( record => record.data)
-            await putMetadataValue('artifacts', JSON.stringify(data))
-          }
-          else{
-            //don't update artifact metadata or grid if attachment was not accepted. 
-            //alert if response says request entity too large
-            const regex = /request entity too large/
-            if (result.response.responseText.match(regex)) {
-              alert ("Attachment failed. File is too large.")
-            }
-          }
+        fields = await getMetadataFromFile(file)
+        await putMetadataValue(fields.attachment.digest, fields.data)
       }
       catch (e) {
-        alert ("Attachment Failed.")
-        console.log(e)
-      }      
+        Ext.Msg.alert("Error", `Failed to save file data: ${e.message}`)
+        return
+      }
+      try {
+        store.loadData([fields.attachment], true) // append
+        const data = store.getRange().map( record => record.data )
+        await putMetadataValue('artifacts', JSON.stringify(data))
+      }
+      catch (e) {
+        try {
+          await deleteMetadataKey(fields.attachment.digest)
+        }
+        catch (e) {
+          console.log(e)
+          Ext.Msg.alert("Error", `Failed to save metadata: ${e.message}`)
+        }
+      }
     }
     const getMetadataFromFile = async function  (file) {
       const hasher = new asmCrypto.Sha256()
@@ -151,47 +146,41 @@ SM.Attachments.Grid = Ext.extend(Ext.grid.GridPanel, {
       }
     }
     const putMetadataValue = async function (key, value) {
-      try {
-        let result = await Ext.Ajax.requestPromise({
-          url: `${STIGMAN.Env.apiBase}/collections/${me.collectionId}/reviews/${me.assetId}/${me.ruleId}/metadata/keys/${key}`,
-          method: 'PUT',
-          jsonData: JSON.stringify(value)
-        })
-        return result
-      }
-      catch (e) {
-        console.log(e)
-        return e
-      }
+      const result = await Ext.Ajax.requestPromise({
+        url: `${STIGMAN.Env.apiBase}/collections/${me.collectionId}/reviews/${me.assetId}/${me.ruleId}/metadata/keys/${key}`,
+        method: 'PUT',
+        jsonData: JSON.stringify(value)
+      })
+      return result.response.responseText ? JSON.parse(result.response.responseText) : ""
     }
     const removeArtifact = async function (record) {
-      try {
-        const confirm = await SM.confirmPromise('Confirm',`Remove ${record.data.name}?`)
-        if (confirm === 'yes') {
+      const confirm = await SM.confirmPromise('Confirm',`Remove ${record.data.name}?`)
+      if (confirm === 'yes') {
+        try {
           await deleteMetadataKey(record.data.digest)
+        }
+        catch (e) {
+          Ext.Msg.alert("Error", `Failed to delete metadata key: ${e.message}`)
+          return
+        }
+        try {
           store.remove(record)
           const data = store.getRange().map( record => record.data)
           await putMetadataValue('artifacts', JSON.stringify(data))  
         }
-      }
-      catch (e) {
-        console.log(e)
+        catch (e) {
+          Ext.Msg.alert("Error", `Failed to update metadata: ${e.message}`)
+        }
       }
     }
     const deleteMetadataKey = async function (key) {
-      try {
-        let result = await Ext.Ajax.requestPromise({
-          url: `${STIGMAN.Env.apiBase}/collections/${me.collectionId}/reviews/${me.assetId}/${me.ruleId}/metadata/keys/${key}`,
-          method: 'DELETE'
-        })
-        return JSON.parse(result.response.responseText)  
-      }
-      catch (e) {
-        console.log(e)
-      }
+      let result = await Ext.Ajax.requestPromise({
+        url: `${STIGMAN.Env.apiBase}/collections/${me.collectionId}/reviews/${me.assetId}/${me.ruleId}/metadata/keys/${key}`,
+        method: 'DELETE'
+      })
+      return result.response.responseText ? JSON.parse(result.response.responseText) : ""
     }
     const showImage = async function (artifactObj) {
-      console.log(artifactObj)
       const imagePanel = new Ext.Panel({
         bodyStyle: 'background-color: #333;'
       })
@@ -211,9 +200,14 @@ SM.Attachments.Grid = Ext.extend(Ext.grid.GridPanel, {
         items: imagePanel
       })
       fpwindow.show()
-      // can display wait for image loading if necessary
-      const imageB64 = await getMetadataValue(artifactObj.digest)
-      imagePanel.update(`<img style='height: 100%; width: 100%; object-fit: contain' src='data:${artifactObj.type};base64,${encodeURI(imageB64)}'></img>`)
+      // could show a wait indicator for image loading if necessary
+      try {
+        const imageB64 = await getMetadataValue(artifactObj.digest)
+        imagePanel.update(`<img style='height: 100%; width: 100%; object-fit: contain' src='data:${artifactObj.type};base64,${encodeURI(imageB64)}'></img>`) 
+      }
+      catch (e) {
+       Ext.Msg.alert("Error", "File data not available")
+      }
     }
     const fileUploadField = new Ext.ux.form.FileUploadField({
       buttonOnly: true,
