@@ -1139,7 +1139,7 @@ paths:
       operationId: getReviewMetadata
       responses:
         '200':
-          description: ReviewsProjected response
+          description: Metadata response
           content:
             application/json:
               schema:
@@ -1166,7 +1166,7 @@ paths:
               $ref: '#/components/schemas/Metadata'
       responses:
         '200':
-          description: ReviewsProjected response
+          description: Metadata response
           content:
             application/json:
               schema:
@@ -1193,7 +1193,7 @@ paths:
               $ref: '#/components/schemas/Metadata'
       responses:
         '200':
-          description: ReviewsProjected response
+          description: Metadata response
           content:
             application/json:
               schema:
@@ -1219,7 +1219,7 @@ paths:
       operationId: getReviewMetadataKeys
       responses:
         '200':
-          description: Metadata response
+          description: MetadataKeys response
           content:
             application/json:
               schema:
@@ -1235,7 +1235,6 @@ paths:
       security:
         - oauth:
             - 'stig-manager:collection:read'
-
   '/collections/{collectionId}/reviews/{assetId}/{ruleId}/metadata/keys/{key}':
     parameters:
       - $ref: '#/components/parameters/CollectionIdPath'
@@ -1249,7 +1248,7 @@ paths:
       operationId: getReviewMetadataValue
       responses:
         '200':
-          description: Metadata response
+          description: MetadataValue response
           content:
             application/json:
               schema:
@@ -1275,12 +1274,8 @@ paths:
             schema:
               $ref: '#/components/schemas/MetadataValue'
       responses:
-        '200':
-          description: ReviewsProjected response
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Metadata'
+        '204':
+          description: Empty to avoid large response after putting key with large value
         default:
           description: unexpected error
           content:
@@ -1296,12 +1291,8 @@ paths:
       summary: Remove the provided Review metadata key
       operationId: deleteReviewMetadataKey
       responses:
-        '200':
-          description: Metadata response
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/MetadataValue'
+        '204':
+          description: Empty to avoid large response after deleteing key with large value
         default:
           description: unexpected error
           content:
