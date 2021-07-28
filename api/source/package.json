@@ -32,7 +32,6 @@
     "lodash": "^4.17.21",
     "morgan": "^1.10.0",
     "mysql2": "~2.1.0",
-    "oas-tools": "2.1.7",
     "patch-package": "^6.2.2",
     "path": "^0.12.7",
     "request": "^2.88.2",
