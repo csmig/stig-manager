@@ -12,6 +12,7 @@ let _this = this
 module.exports.version = '0.6'
 module.exports.testConnection = async function () {
   try {
+    console.log("in testConnection")
     let [result] = await _this.pool.query('SELECT VERSION() as version')
     return result[0].version
   }
@@ -67,6 +68,7 @@ module.exports.initializeDatabase = async function () {
     _this.pool = mysql.createPool(poolConfig)
     // Set common session variables
     _this.pool.on('connection', function (connection) {
+      console.log('onConnection')
       connection.query('SET SESSION group_concat_max_len=10000000')
       // connection.query('SET SESSION sql_mode=’NO_AUTO_VALUE_ON_ZERO')
     })
