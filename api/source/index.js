@@ -5,6 +5,17 @@ const http = require('http')
 const express = require('express')
 const cors = require('cors');
 const morgan = require('morgan')
+// start try to emulate oas-tools
+require('lodash-compat');
+require('fs');
+require('path');
+require('js-yaml');
+require('./configurations'),
+require("z-schema");
+require('json-schema-deref-sync');
+require('request')
+// end try to emulate oas-tools
+
 const config = require('./utils/config')
 const auth = require('./utils/auth')
 const swaggerUi = require('swagger-ui-express')

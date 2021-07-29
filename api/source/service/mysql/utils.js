@@ -91,16 +91,15 @@ module.exports.initializeDatabase = async function () {
 
     // Preflight the pool every 5 seconds
     console.log('[DB] Attempting preflight connection.')
-    await _this.testConnection()
-    // const detectedMySqlVersion = await retry(_this.testConnection, {
-    //   retries: 24,
-    //   factor: 1,
-    //   minTimeout: 5 * 1000,
-    //   maxTimeout: 5 * 1000,
-    //   onRetry: (error) => {
-    //     console.log(`[DB] ${error.message} ${error.stack}`)
-    //   }
-    // })
+    const detectedMySqlVersion = await retry(_this.testConnection, {
+      retries: 24,
+      factor: 1,
+      minTimeout: 5 * 1000,
+      maxTimeout: 5 * 1000,
+      onRetry: (error) => {
+        console.log(`[DB] ${error.message} ${error.stack}`)
+      }
+    })
     console.log('[DB] Preflight connection succeeded.')
     if ( semverLt(detectedMySqlVersion, minMySqlVersion) ) {
       console.log(`[DB] MySQL release ${detectedMySqlVersion} is too old. Update to release ${minMySqlVersion} or later.`)
