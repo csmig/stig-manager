@@ -5,7 +5,6 @@ const http = require('http')
 const express = require('express')
 const cors = require('cors');
 const morgan = require('morgan')
-const oasTools = require('oas-tools')
 const config = require('./utils/config')
 const auth = require('./utils/auth')
 const swaggerUi = require('swagger-ui-express')
