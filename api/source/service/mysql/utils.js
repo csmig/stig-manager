@@ -1,4 +1,15 @@
 const mysql = require('mysql2/promise');
+
+const mysqlConnection = require('mysql2/lib/connection')
+const origNotifyError = mysqlConnection.prototype._notifyError
+mysqlConnection.prototype._notifyError = function (err) {
+  if (this.connectTimeout) {
+    clearTimeout(this.connectTimeout);
+    this.connectTimeout = null;
+  }
+  origNotifyError.call(this, err)
+}
+
 const config = require('../../utils/config')
 const retry = require('async-retry')
 const Umzug = require('umzug')
@@ -11,21 +22,15 @@ let _this = this
 
 module.exports.version = '0.6'
 module.exports.testConnection = async function () {
-  try {
-    console.log("in testConnection")
-    let [result] = await _this.pool.query('SELECT VERSION() as version')
-    return result[0].version
-  }
-  catch (err) {
-    console.log(err.message)
-    console.log(err.stack)
-    throw (err)
-  }
+  console.log('[DB] Attempting preflight connection.')
+  let [result] = await _this.pool.query('SELECT VERSION() as version')
+  return result[0].version
 }
 
 function getPoolConfig() {
   const poolConfig = {
     connectionLimit : config.database.maxConnections,
+    // connectTimeout: 0,
     timezone: 'Z',
     host: config.database.host,
     port: config.database.port,
@@ -64,11 +69,10 @@ module.exports.initializeDatabase = async function () {
 
     // Create the connection pool
     const poolConfig = getPoolConfig()
-    console.log(poolConfig)
     _this.pool = mysql.createPool(poolConfig)
+
     // Set common session variables
     _this.pool.on('connection', function (connection) {
-      console.log('onConnection')
       connection.query('SET SESSION group_concat_max_len=10000000')
       // connection.query('SET SESSION sql_mode=’NO_AUTO_VALUE_ON_ZERO')
     })
@@ -90,14 +94,13 @@ module.exports.initializeDatabase = async function () {
     process.on('SIGINT', closePoolAndExit)
 
     // Preflight the pool every 5 seconds
-    console.log('[DB] Attempting preflight connection.')
     const detectedMySqlVersion = await retry(_this.testConnection, {
       retries: 24,
       factor: 1,
       minTimeout: 5 * 1000,
       maxTimeout: 5 * 1000,
       onRetry: (error) => {
-        console.log(`[DB] ${error.message} ${error.stack}`)
+        console.log(`[DB] Error: ${error.message} ${error.stack}`)
       }
     })
     console.log('[DB] Preflight connection succeeded.')
