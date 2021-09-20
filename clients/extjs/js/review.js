@@ -305,22 +305,28 @@ async function addReview( params ) {
     const filterFns = []
     // iterate the menu items and group the allowed values for each property
     for (const menuitem of filterMenu.items.items) {
-      if (menuitem.checked === true) {
-        if (menuitem.filter) {
+      if (menuitem.filter) {
+        if (menuitem.filter.hasOwnProperty('value') && menuitem.checked === true) {
           conditions[menuitem.filter.property].push(menuitem.filter.value)
+        }
+        if (!menuitem.filter.hasOwnProperty('value')) {
+          conditions[menuitem.filter.property] = menuitem.getValue()
         }
       }
     }
-    // create an OR function for each property
+    // create an OR function for each listCondition
     for (const condition of Object.keys(conditions)) {
-      // if (conditions[condition].length) {
         filterFns.push({
           fn: function (record) {
             const value = record.data[condition]
-            return conditions[condition].includes(value) 
+            if (Array.isArray(conditions[condition])) {
+              return conditions[condition].includes(value) 
+            }
+            else {
+              return value.includes(conditions[condition])
+            }
           }
         })  
-      // }
     }
     groupStore.filter(filterFns)
   }
@@ -1506,6 +1512,22 @@ async function addReview( params ) {
       checkchange: onCheckChange
     }
   })
+  ggHmenu.add(new Ext.form.TextField({
+    emptyText: "Search",
+    filter: { property: 'ruleId'},
+    enableKeyEvents: true,
+    listeners: {
+      keyup: onCheckChange
+    }
+  }))
+  ggHmenu.add(new Ext.form.TextField({
+    emptyText: "Search",
+    filter: { property: 'ruleTitle'},
+    enableKeyEvents: true,
+    listeners: {
+      keyup: onCheckChange
+    }
+  }))
 
   ggHmenu.on('beforeshow', function (menu) {
     const view = groupGrid.getView()
