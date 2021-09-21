@@ -564,6 +564,83 @@ async function addReview( params ) {
     text: 'CSV'
   })
 
+  const groupGridView = new Ext.grid.GridView({
+    forceFit: false,
+    emptyText: 'No checks to display',
+    // These listeners keep the grid in the same scroll position after the store is reloaded
+    holdPosition: true, // HACK to be used with override
+    listeners: {
+    },
+    deferEmptyText: false,
+    lastHide: new Date(),
+    handleHdOver : function(e, target) {
+      var header = this.findHeaderCell(target);
+      
+      if (header && !this.headersDisabled) {
+          var fly = this.fly(header);
+          
+          this.activeHdRef = target;
+          this.activeHdIndex = this.getCellIndex(header);
+          this.activeHdRegion = fly.getRegion();
+          
+          if (!this.isMenuDisabled(this.activeHdIndex, fly)) {
+              fly.addClass('x-grid3-hd-over');
+              // this.activeHdBtn = fly.child('.x-grid3-hd-btn');
+              
+              // if (this.activeHdBtn) {
+              //     this.activeHdBtn.dom.style.height = (header.firstChild.offsetHeight - 1) + 'px';
+              // }
+          }
+      }
+    },
+    // handleHdOut: function () {},
+    handleHdDown : function(e, target) {
+      e.stopEvent();
+      if (this.lastHide.getElapsed() > 100) {
+      
+        var colModel  = this.cm,
+            header    = this.findHeaderCell(target),
+            index     = this.getCellIndex(header),
+            sortable  = colModel.isSortable(index),
+            menu      = this.hmenu,
+            menuItems = menu.items,
+            menuCls   = this.headerMenuOpenCls,
+            sep;
+        
+        this.hdCtxIndex = index;
+        
+        Ext.fly(header).addClass(menuCls);
+        if (this.hideSortIcons) {
+            menuItems.get('asc').setVisible(sortable);
+            menuItems.get('desc').setVisible(sortable);
+            sep = menuItems.get('sortSep');
+            if (sep) {
+                sep.setVisible(sortable);    
+            }
+        } else {
+            menuItems.get('asc').setDisabled(!sortable);
+            menuItems.get('desc').setDisabled(!sortable);
+        }
+        
+        menu.on('hide', function() {
+            Ext.fly(header).removeClass(menuCls);
+            this.lastHide = new Date()
+        }, this, {single:true});
+        
+        menu.show(target, 'tl-bl?');
+      }
+    },
+    getRowClass: function (record, index) {
+      var autoCheckAvailable = record.get('autoCheckAvailable');
+      if (autoCheckAvailable === true) {
+        return 'sm-scap-grid-item';
+      } 
+      // else {
+      //   return 'sm-manual-grid-item';
+      // }
+    }
+  })
+
   var groupGrid = new Ext.grid.GridPanel({
     cls: 'sm-round-panel',
     margins: { top: SM.Margin.top, right: SM.Margin.adjacent, bottom: SM.Margin.bottom, left: SM.Margin.edge },
@@ -575,6 +652,7 @@ async function addReview( params ) {
     width: '35%',
     minWidth: 340,
     hideMode: 'offsets',
+    enableColumnMove: false,
     filterType: 'All', // STIG Manager defined property
     titleColumnDataIndex: 'ruleTitle', // STIG Manager defined property
     title: 'Checklist',
@@ -642,24 +720,7 @@ async function addReview( params ) {
         }
       }
     }),
-    view: new Ext.grid.GridView({
-      forceFit: false,
-      emptyText: 'No checks to display',
-      // These listeners keep the grid in the same scroll position after the store is reloaded
-      holdPosition: true, // HACK to be used with override
-      listeners: {
-      },
-      deferEmptyText: false,
-      getRowClass: function (record, index) {
-        var autoCheckAvailable = record.get('autoCheckAvailable');
-        if (autoCheckAvailable === true) {
-          return 'sm-scap-grid-item';
-        } 
-        // else {
-        //   return 'sm-manual-grid-item';
-        // }
-      }
-    }),
+    view: groupGridView,
     columns: [
       {
         id: 'severity' + idAppend,
