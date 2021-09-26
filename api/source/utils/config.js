@@ -60,6 +60,12 @@ let config = {
         extraScopes: process.env.STIGMAN_CLIENT_EXTRA_SCOPES,
         refreshToken: {
             disabled: process.env.STIGMAN_CLIENT_REFRESH_DISABLED ? process.env.STIGMAN_CLIENT_REFRESH_DISABLED === "true" : false,
+        },
+        welcome: {
+            image: process.env.STIGMAN_CLIENT_WELCOME_IMAGE || "",
+            message: process.env.STIGMAN_CLIENT_WELCOME_MESSAGE || "",
+            title: process.env.STIGMAN_CLIENT_WELCOME_TITLE || "",
+            link: process.env.STIGMAN_CLIENT_WELCOME_LINK || ""
         }
     },
     docs: {
@@ -107,7 +113,8 @@ let config = {
             name: process.env.STIGMAN_JWT_NAME_CLAIM || process.env.STIGMAN_JWT_USERNAME_CLAIM || "name",
             privileges: formatChain(process.env.STIGMAN_JWT_PRIVILEGES_CLAIM || process.env.STIGMAN_JWT_ROLES_CLAIM || "realm_access.roles"),
             email: process.env.STIGMAN_JWT_EMAIL_CLAIM || "email"
-        }
+        },
+        proxyHost: process.env.STIGMAN_OIDC_PROXY_HOST
     }
 }
 
