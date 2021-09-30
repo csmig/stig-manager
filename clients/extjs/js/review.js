@@ -564,7 +564,7 @@ async function addReview( params ) {
     text: 'CSV'
   })
 
-  const groupGridView = new Ext.grid.GridView({
+  const groupGridView = new SM.ColumnFilters.GridView({
     forceFit: false,
     emptyText: 'No checks to display',
     // These listeners keep the grid in the same scroll position after the store is reloaded
@@ -573,71 +573,11 @@ async function addReview( params ) {
     },
     deferEmptyText: false,
     lastHide: new Date(),
-    handleHdOver : function(e, target) {
-      var header = this.findHeaderCell(target);
-      
-      if (header && !this.headersDisabled) {
-          var fly = this.fly(header);
-          
-          this.activeHdRef = target;
-          this.activeHdIndex = this.getCellIndex(header);
-          this.activeHdRegion = fly.getRegion();
-          
-          if (!this.isMenuDisabled(this.activeHdIndex, fly)) {
-              fly.addClass('x-grid3-hd-over');
-              // this.activeHdBtn = fly.child('.x-grid3-hd-btn');
-              
-              // if (this.activeHdBtn) {
-              //     this.activeHdBtn.dom.style.height = (header.firstChild.offsetHeight - 1) + 'px';
-              // }
-          }
-      }
-    },
-    // handleHdOut: function () {},
-    handleHdDown : function(e, target) {
-      e.stopEvent();
-      if (this.lastHide.getElapsed() > 100) {
-      
-        var colModel  = this.cm,
-            header    = this.findHeaderCell(target),
-            index     = this.getCellIndex(header),
-            sortable  = colModel.isSortable(index),
-            menu      = this.hmenu,
-            menuItems = menu.items,
-            menuCls   = this.headerMenuOpenCls,
-            sep;
-        
-        this.hdCtxIndex = index;
-        
-        Ext.fly(header).addClass(menuCls);
-        if (this.hideSortIcons) {
-            menuItems.get('asc').setVisible(sortable);
-            menuItems.get('desc').setVisible(sortable);
-            sep = menuItems.get('sortSep');
-            if (sep) {
-                sep.setVisible(sortable);    
-            }
-        } else {
-            menuItems.get('asc').setDisabled(!sortable);
-            menuItems.get('desc').setDisabled(!sortable);
-        }
-        
-        menu.on('hide', function() {
-            Ext.fly(header).removeClass(menuCls);
-            this.lastHide = new Date()
-        }, this, {single:true});
-        
-        menu.show(target, 'tl-bl?');
-      }
-    },
     getRowClass: function (record, index) {
       var autoCheckAvailable = record.get('autoCheckAvailable');
       if (autoCheckAvailable === true) {
         return 'sm-scap-grid-item';
       } 
-      // else {
-      //   return 'sm-manual-grid-item';
-      // }
     }
   })
 

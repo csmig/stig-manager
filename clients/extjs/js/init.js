@@ -103,6 +103,7 @@ function loadScripts() {
         "js/SM/CollectionAsset.js",
         "js/SM/CollectionStig.js",
         "js/SM/CollectionGrant.js",
+        "js/SM/ColumnFilters.js",
         "js/SM/FindingsPanel.js",
         "js/SM/Assignments.js",
         "js/SM/asmcrypto.all.es5.js",
