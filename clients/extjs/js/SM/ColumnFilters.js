@@ -78,17 +78,102 @@ SM.ColumnFilters.GridView = Ext.extend(Ext.grid.GridView, {
       menu.show(target, 'tl-bl?');    
     }
   },
+  getFilterFns: function () {
+    const hmenu = this.hmenu
+    const conditions = {}
+    const filterFns = []
+    // iterate the menu items and set the condition(s) for each dataIndex
+    for (const menuitem of hmenu.items.items) {
+      if (menuitem.filter) {
+        const dataIndex = menuitem.filter.dataIndex
+        if (menuitem.filter.hasOwnProperty('value')) {
+          if (!conditions[dataIndex]) {
+            conditions[dataIndex] = []
+          }
+          if (menuitem.checked === true) {
+            conditions[dataIndex].push(menuitem.filter.value)
+          }
+        }
+        else {
+          conditions[dataIndex] = menuitem.getValue()
+        }
+      }
+    }
+    // create an OR function for each dataIndex
+    for (const dataIndex of Object.keys(conditions)) {
+        filterFns.push({
+          fn: function (record) {
+            const value = record.data[dataIndex]
+            if (Array.isArray(conditions[dataIndex])) {
+              return conditions[dataIndex].includes(value) 
+            }
+            else {
+              // will find dataIndex substring anywhere in value
+              return value.includes(conditions[dataIndex])
+            }
+          }
+        })  
+    }
+    return filterFns
+  },
   afterRenderUI: function () {
     console.log("In SM.ColumnFilters.GridView.afterRenderUI")
-
     const _this = this
+    const dynamicColumns = []
+
     SM.ColumnFilters.GridView.superclass.afterRenderUI.call(this)
 
-    this.hmenu.on('beforeshow', function (menu) {
-      const property = _this.cm.config[_this.hdCtxIndex].dataIndex
+    const hmenu = this.hmenu
+    const hmenuItems = hmenu.items.items
+    let initial = true
+
+    // (Re)build the dynamic value items
+    function buildDynamicValues (records) {
+      const cVals = {}
+      const dynamicItems = hmenuItems.filter( item => item.filter?.type === 'values' )
+      for (const menuItem of dynamicItems) {
+        const dataIndex = menuItem.filter.dataIndex
+        if (menuItem.checked) {
+          (cVals[dataIndex] = cVals[dataIndex] || []).push(menuItem.filter.value)
+        }      
+        hmenu.remove(menuItem)
+      }    
+      for (const col of dynamicColumns) {
+        const uniqueSet = new Set(records.map( r => r.data[col.dataIndex] ))
+        for ( const value of uniqueSet.values()) {
+          hmenu.addItem({
+            text: col.filter.renderer ? col.filter.renderer(value) : value,
+            xtype: 'menucheckitem',
+            hideOnClick: false,
+            checked: initial ? true : cVals[col.dataIndex] ? cVals[col.dataIndex].includes(value) : false,
+            filter: {
+              dataIndex: col.dataIndex,
+              type: 'values',
+              value
+            },
+            listeners: {
+              checkchange: _this.onFilterChange
+            }
+          })
+        }
+      }
+      initial = false
+    }
+
+    this.grid.store.on('load', function (store, records, opt) {
+      buildDynamicValues(records)
+    })
+    this.grid.store.on('update', function (store, record) {
+      buildDynamicValues(store.snapshot ? store.snapshot.items : store.data.items)
+    })
+
+
+    // Hide menuitems not associated with the clicked column
+    hmenu.on('beforeshow', function (menu) {
+      const dataIndex = _this.cm.config[_this.hdCtxIndex].dataIndex
       for (const menuitem of menu.items.items) {
         if (menuitem.filter) {
-          menuitem.setVisible(menuitem.filter.property === property)
+          menuitem.setVisible(menuitem.filter.dataIndex === dataIndex)
         }
       }    
     })
@@ -98,9 +183,9 @@ SM.ColumnFilters.GridView = Ext.extend(Ext.grid.GridView, {
         case 'string':
           // search for string value
           console.log(`Column ${col.header} Type string `)
-          this.hmenu.add(new Ext.form.TextField({
+          hmenu.add(new Ext.form.TextField({
             emptyText: "Filter",
-            filter: { property: col.dataIndex},
+            filter: { dataIndex: col.dataIndex, type: 'string'},
             enableKeyEvents: true,
             hideParent: true,
             listeners: {
@@ -111,6 +196,7 @@ SM.ColumnFilters.GridView = Ext.extend(Ext.grid.GridView, {
         case 'values':
           // calculate 
           console.log(`Column ${col.header} Type values `)
+          dynamicColumns.push(col)
           break
       }
     }   

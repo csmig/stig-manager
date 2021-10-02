@@ -90,7 +90,7 @@ async function addReview( params ) {
 
         var ourGrid = Ext.getCmp('groupGrid' + idAppend);
         // Filter the store
-        filterGroupStore();
+        // filterGroupStore();
 
         // XCCDF option in export menu
         // if (store.reader.jsonData.xmlDisabled) {
@@ -578,41 +578,8 @@ async function addReview( params ) {
     deferEmptyText: false,
     lastHide: new Date(),
     onFilterChange: function (item, value) {
-      console.log(`Filter changed: ${item.filter?.property} IS ${value}`)
-      const filterMenu = groupGridView.hmenu
-      const conditions = {}
-      const filterFns = []
-      // iterate the menu items and group the allowed values for each property
-      for (const menuitem of filterMenu.items.items) {
-        if (menuitem.filter) {
-          if (menuitem.filter.hasOwnProperty('value') && menuitem.checked === true) {
-            if (!conditions[menuitem.filter.property]) {
-              conditions[menuitem.filter.property] = [menuitem.filter.value]
-            }
-            else {
-              conditions[menuitem.filter.property].push(menuitem.filter.value)
-            }
-          }
-          if (!menuitem.filter.hasOwnProperty('value')) {
-            conditions[menuitem.filter.property] = menuitem.getValue()
-          }
-        }
-      }
-      // create an OR function for each listCondition
-      for (const condition of Object.keys(conditions)) {
-          filterFns.push({
-            fn: function (record) {
-              const value = record.data[condition]
-              if (Array.isArray(conditions[condition])) {
-                return conditions[condition].includes(value) 
-              }
-              else {
-                return value.includes(conditions[condition])
-              }
-            }
-          })  
-      }
-      groupStore.filter(filterFns)
+      console.log(`Filter changed: ${item.filter?.dataIndex} IS ${value}`)
+      groupStore.filter(groupGridView.getFilterFns())
     }, 
     getRowClass: function (record, index) {
       var autoCheckAvailable = record.get('autoCheckAvailable');
@@ -713,7 +680,8 @@ async function addReview( params ) {
         sortable: true,        
         renderer: renderSeverity,
         filter: {
-          type: 'values'
+          type: 'values',
+          renderer: renderSeverity
         } 
       },
       {
@@ -772,7 +740,11 @@ async function addReview( params ) {
         fixed: true,
         dataIndex: 'result',
         sortable: true,
-        renderer: renderResult
+        renderer: renderResult,
+        filter: {
+          type: 'values',
+          renderer: renderResult
+        } 
       },
       {
         id: 'status' + idAppend,
@@ -925,65 +897,65 @@ async function addReview( params ) {
   };
 
   function filterGroupStore() {
-    var filterArray = [];
-    // Filter menu
-    switch (groupGrid.filterType) {
-      case 'Manual':
-      case 'SCAP':
-        filterArray.push({
-          property: 'autoCheckAvailable',
-          value: groupGrid.filterType === 'SCAP' ? true : false
-        });
-        break;
-      case 'Incomplete':
-        filterArray.push({
-          fn: function (record) {
-            return !record.get('reviewComplete')
-          }
-        });
-        break;
-      case 'Unsubmitted':
-        filterArray.push({
-          fn: function (record) {
-            return (record.get('reviewComplete') && record.get('status') === 'saved');
-          }
-        });
-        break;
-      case 'Submitted':
-        filterArray.push({
-          fn: function (record) {
-            return record.get('status') === 'submitted';
-          }
-        });
-        break;
-      case 'Rejected':
-        filterArray.push({
-          fn: function (record) {
-            return record.get('status') === 'rejected';
-          }
-        });
-        break;
-      case 'Accepted':
-        filterArray.push({
-          fn: function (record) {
-            return record.get('status') === 'accepted';
-          }
-        });
-        break;
-    }
-    // Title textfield
-    var titleValue = Ext.getCmp('groupGrid-filterTitle' + idAppend).getValue();
-    if (titleValue.length > 0) {
-      filterArray.push({
-        property: groupGrid.titleColumnDataIndex,
-        value: titleValue,
-        anyMatch: true,
-        caseSensitive: false
-      });
-    }
+    // var filterArray = [];
+    // // Filter menu
+    // switch (groupGrid.filterType) {
+    //   case 'Manual':
+    //   case 'SCAP':
+    //     filterArray.push({
+    //       property: 'autoCheckAvailable',
+    //       value: groupGrid.filterType === 'SCAP' ? true : false
+    //     });
+    //     break;
+    //   case 'Incomplete':
+    //     filterArray.push({
+    //       fn: function (record) {
+    //         return !record.get('reviewComplete')
+    //       }
+    //     });
+    //     break;
+    //   case 'Unsubmitted':
+    //     filterArray.push({
+    //       fn: function (record) {
+    //         return (record.get('reviewComplete') && record.get('status') === 'saved');
+    //       }
+    //     });
+    //     break;
+    //   case 'Submitted':
+    //     filterArray.push({
+    //       fn: function (record) {
+    //         return record.get('status') === 'submitted';
+    //       }
+    //     });
+    //     break;
+    //   case 'Rejected':
+    //     filterArray.push({
+    //       fn: function (record) {
+    //         return record.get('status') === 'rejected';
+    //       }
+    //     });
+    //     break;
+    //   case 'Accepted':
+    //     filterArray.push({
+    //       fn: function (record) {
+    //         return record.get('status') === 'accepted';
+    //       }
+    //     });
+    //     break;
+    // }
+    // // Title textfield
+    // var titleValue = Ext.getCmp('groupGrid-filterTitle' + idAppend).getValue();
+    // if (titleValue.length > 0) {
+    //   filterArray.push({
+    //     property: groupGrid.titleColumnDataIndex,
+    //     value: titleValue,
+    //     anyMatch: true,
+    //     caseSensitive: false
+    //   });
+    // }
 
-    groupStore.filter(filterArray);
-
+    // groupStore.filter(filterArray);
+    groupStore.filter(groupGridView.getFilterFns())
   }
 
 
