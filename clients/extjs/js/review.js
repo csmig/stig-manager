@@ -84,6 +84,10 @@ async function addReview( params ) {
     },
     listeners: {
       load: function (store, records) {
+        // prototype for getting unique vakues fo a filed
+        let severitySet = new Set(records.map( r => r.data.severity ))
+        let resultSet = new Set(records.map( r => r.data.result ))
+
         var ourGrid = Ext.getCmp('groupGrid' + idAppend);
         // Filter the store
         filterGroupStore();
@@ -573,6 +577,43 @@ async function addReview( params ) {
     },
     deferEmptyText: false,
     lastHide: new Date(),
+    onFilterChange: function (item, value) {
+      console.log(`Filter changed: ${item.filter?.property} IS ${value}`)
+      const filterMenu = groupGridView.hmenu
+      const conditions = {}
+      const filterFns = []
+      // iterate the menu items and group the allowed values for each property
+      for (const menuitem of filterMenu.items.items) {
+        if (menuitem.filter) {
+          if (menuitem.filter.hasOwnProperty('value') && menuitem.checked === true) {
+            if (!conditions[menuitem.filter.property]) {
+              conditions[menuitem.filter.property] = [menuitem.filter.value]
+            }
+            else {
+              conditions[menuitem.filter.property].push(menuitem.filter.value)
+            }
+          }
+          if (!menuitem.filter.hasOwnProperty('value')) {
+            conditions[menuitem.filter.property] = menuitem.getValue()
+          }
+        }
+      }
+      // create an OR function for each listCondition
+      for (const condition of Object.keys(conditions)) {
+          filterFns.push({
+            fn: function (record) {
+              const value = record.data[condition]
+              if (Array.isArray(conditions[condition])) {
+                return conditions[condition].includes(value) 
+              }
+              else {
+                return value.includes(conditions[condition])
+              }
+            }
+          })  
+      }
+      groupStore.filter(filterFns)
+    }, 
     getRowClass: function (record, index) {
       var autoCheckAvailable = record.get('autoCheckAvailable');
       if (autoCheckAvailable === true) {
@@ -670,7 +711,10 @@ async function addReview( params ) {
         align: 'center',
         dataIndex: 'severity',
         sortable: true,        
-        renderer: renderSeverity
+        renderer: renderSeverity,
+        filter: {
+          type: 'values'
+        } 
       },
       {
         id: 'groupId' + idAppend,
@@ -679,7 +723,10 @@ async function addReview( params ) {
         dataIndex: 'groupId',
         sortable: true,
         hidden: true,
-        align: 'left'
+        align: 'left',
+        filter: {
+          type: 'string'
+        }
       },
       {
         id: 'ruleId' + idAppend,
@@ -688,7 +735,10 @@ async function addReview( params ) {
         dataIndex: 'ruleId',
         hidden: false,
         sortable: true,
-        align: 'left'
+        align: 'left',
+        filter: {
+          type: 'string'
+        }
       },
       {
         id: 'groupTitle' + idAppend,
@@ -697,7 +747,10 @@ async function addReview( params ) {
         hidden: true,
         dataIndex: 'groupTitle',
         renderer: columnWrap,
-        sortable: true
+        sortable: true,
+        filter: {
+          type: 'string'
+        }
       },
       {
         id: 'ruleTitle' + idAppend,
@@ -706,7 +759,10 @@ async function addReview( params ) {
         hidden: false,
         dataIndex: 'ruleTitle',
         renderer: columnWrap,
-        sortable: true
+        sortable: true,
+        filter: {
+          type: 'string'
+        }
       },
       {
         id: 'result' + idAppend,
@@ -724,7 +780,7 @@ async function addReview( params ) {
         fixed: true,
         width: 44,
         align: 'center',
-        dataIndex: 'status',
+        // dataIndex: 'status',
         sortable: true,
         renderer: renderStatuses
       }
@@ -1426,119 +1482,119 @@ async function addReview( params ) {
   thisTab.show();
 
   let ggHmenu = groupGrid.getView().hmenu
-  ggHmenu.addItem({
-    text: renderSeverity('high'),
-    xtype: 'menucheckitem',
-    hideOnClick: false,
-    checked: true,
-    filter: {
-      property: 'severity',
-      value: 'high'
-    },
-    listeners: {
-      checkchange: onCheckChange
-    }
-  })
-  ggHmenu.addItem({
-    text: renderSeverity('medium'),
-    xtype: 'menucheckitem',
-    hideOnClick: false,
-    checked: true,
-    filter: {
-      property: 'severity',
-      value: 'medium'
-    },
-    listeners: {
-      checkchange: onCheckChange
-    }
-  })
-  ggHmenu.addItem({
-    text: renderSeverity('low'),
-    xtype: 'menucheckitem',
-    hideOnClick: false,
-    checked: true,
-    filter: {
-      property: 'severity',
-      value: 'low'
-    },
-    listeners: {
-      checkchange: onCheckChange
-    }
-  })
-  ggHmenu.addItem({
-    text: renderResult('fail'),
-    checked: true,
-    hideOnClick: false,
-    filter: {
-      property: 'result',
-      value: 'fail'
-    },
-    listeners: {
-      checkchange: onCheckChange
-    }
-  })
-  ggHmenu.addItem({
-    text: renderResult('pass'),
-    checked: true,
-    hideOnClick: false,
-    filter: {
-      property: 'result',
-      value: 'pass'
-    },
-    listeners: {
-      checkchange: onCheckChange
-    }
-  })
-  ggHmenu.addItem({
-    text: renderResult('notapplicable'),
-    checked: true,
-    hideOnClick: false,
-    filter: {
-      property: 'result',
-      value: 'notapplicable'
-    },
-    listeners: {
-      checkchange: onCheckChange
-    }
-  })
-  ggHmenu.addItem({
-    text: 'Unreviewed',
-    checked: true,
-    hideOnClick: false,
-    filter: {
-      property: 'result',
-      value: ''
-    },
-    listeners: {
-      checkchange: onCheckChange
-    }
-  })
-  ggHmenu.add(new Ext.form.TextField({
-    emptyText: "Search",
-    filter: { property: 'ruleId'},
-    enableKeyEvents: true,
-    listeners: {
-      keyup: onCheckChange
-    }
-  }))
-  ggHmenu.add(new Ext.form.TextField({
-    emptyText: "Search",
-    filter: { property: 'ruleTitle'},
-    enableKeyEvents: true,
-    listeners: {
-      keyup: onCheckChange
-    }
-  }))
+  // ggHmenu.addItem({
+  //   text: renderSeverity('high'),
+  //   xtype: 'menucheckitem',
+  //   hideOnClick: false,
+  //   checked: true,
+  //   filter: {
+  //     property: 'severity',
+  //     value: 'high'
+  //   },
+  //   listeners: {
+  //     checkchange: onCheckChange
+  //   }
+  // })
+  // ggHmenu.addItem({
+  //   text: renderSeverity('medium'),
+  //   xtype: 'menucheckitem',
+  //   hideOnClick: false,
+  //   checked: true,
+  //   filter: {
+  //     property: 'severity',
+  //     value: 'medium'
+  //   },
+  //   listeners: {
+  //     checkchange: onCheckChange
+  //   }
+  // })
+  // ggHmenu.addItem({
+  //   text: renderSeverity('low'),
+  //   xtype: 'menucheckitem',
+  //   hideOnClick: false,
+  //   checked: true,
+  //   filter: {
+  //     property: 'severity',
+  //     value: 'low'
+  //   },
+  //   listeners: {
+  //     checkchange: onCheckChange
+  //   }
+  // })
+  // ggHmenu.addItem({
+  //   text: renderResult('fail'),
+  //   checked: true,
+  //   hideOnClick: false,
+  //   filter: {
+  //     property: 'result',
+  //     value: 'fail'
+  //   },
+  //   listeners: {
+  //     checkchange: onCheckChange
+  //   }
+  // })
+  // ggHmenu.addItem({
+  //   text: renderResult('pass'),
+  //   checked: true,
+  //   hideOnClick: false,
+  //   filter: {
+  //     property: 'result',
+  //     value: 'pass'
+  //   },
+  //   listeners: {
+  //     checkchange: onCheckChange
+  //   }
+  // })
+  // ggHmenu.addItem({
+  //   text: renderResult('notapplicable'),
+  //   checked: true,
+  //   hideOnClick: false,
+  //   filter: {
+  //     property: 'result',
+  //     value: 'notapplicable'
+  //   },
+  //   listeners: {
+  //     checkchange: onCheckChange
+  //   }
+  // })
+  // ggHmenu.addItem({
+  //   text: 'Unreviewed',
+  //   checked: true,
+  //   hideOnClick: false,
+  //   filter: {
+  //     property: 'result',
+  //     value: ''
+  //   },
+  //   listeners: {
+  //     checkchange: onCheckChange
+  //   }
+  // })
+  // ggHmenu.add(new Ext.form.TextField({
+  //   emptyText: "Search",
+  //   filter: { property: 'ruleId'},
+  //   enableKeyEvents: true,
+  //   listeners: {
+  //     keyup: onCheckChange
+  //   }
+  // }))
+  // ggHmenu.add(new Ext.form.TextField({
+  //   emptyText: "Search",
+  //   filter: { property: 'ruleTitle'},
+  //   enableKeyEvents: true,
+  //   listeners: {
+  //     keyup: onCheckChange
+  //   }
+  // }))
 
-  ggHmenu.on('beforeshow', function (menu) {
-    const view = groupGrid.getView()
-    const property = view.cm.config[view.hdCtxIndex].dataIndex
-    for (const menuitem of menu.items.items) {
-      if (menuitem.filter) {
-        menuitem.setVisible(menuitem.filter.property === property)
-      }
-    }    
-  })
+  // ggHmenu.on('beforeshow', function (menu) {
+  //   const view = groupGrid.getView()
+  //   const property = view.cm.config[view.hdCtxIndex].dataIndex
+  //   for (const menuitem of menu.items.items) {
+  //     if (menuitem.filter) {
+  //       menuitem.setVisible(menuitem.filter.property === property)
+  //     }
+  //   }    
+  // })
   
 
 

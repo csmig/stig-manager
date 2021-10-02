@@ -1,5 +1,26 @@
 Ext.ns('SM.ColumnFilters')
 
+SM.ColumnFilters.BaseMenu = Ext.extend(Ext.menu.Menu, {
+  initComponent: function () {
+    const _this = this
+    let items
+    if (this.column.sortable) {
+      items = [
+        {itemId:'asc',  text: 'Sort Ascending',  cls: 'xg-hmenu-sort-asc'},
+        {itemId:'desc',  text: 'Sort Descending',  cls: 'xg-hmenu-sort-desc'},
+      ]
+    }
+    else {
+      items = []
+    }
+    const config = {
+      items: items
+    }
+    Ext.apply(this, Ext.apply(this.initialConfig, config))
+    SM.ColumnFilters.BaseMenu.superclass.initComponent.call(this)
+  }
+})
+
 SM.ColumnFilters.GridView = Ext.extend(Ext.grid.GridView, {
   handleHdOver : function(e, target) {
     var header = this.findHeaderCell(target);
@@ -58,8 +79,40 @@ SM.ColumnFilters.GridView = Ext.extend(Ext.grid.GridView, {
     }
   },
   afterRenderUI: function () {
-    SM.ColumnFilters.GridView.superclass.constructor.prototype.afterRenderUI.call(this)
-    
     console.log("In SM.ColumnFilters.GridView.afterRenderUI")
+
+    const _this = this
+    SM.ColumnFilters.GridView.superclass.afterRenderUI.call(this)
+
+    this.hmenu.on('beforeshow', function (menu) {
+      const property = _this.cm.config[_this.hdCtxIndex].dataIndex
+      for (const menuitem of menu.items.items) {
+        if (menuitem.filter) {
+          menuitem.setVisible(menuitem.filter.property === property)
+        }
+      }    
+    })
+
+    for (const col of this.cm.config) {
+      switch (col.filter?.type) {
+        case 'string':
+          // search for string value
+          console.log(`Column ${col.header} Type string `)
+          this.hmenu.add(new Ext.form.TextField({
+            emptyText: "Filter",
+            filter: { property: col.dataIndex},
+            enableKeyEvents: true,
+            hideParent: true,
+            listeners: {
+              keyup: _this.onFilterChange
+            }
+          }))
+          break
+        case 'values':
+          // calculate 
+          console.log(`Column ${col.header} Type values `)
+          break
+      }
+    }   
   }
 })
