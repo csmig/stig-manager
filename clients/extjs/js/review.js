@@ -577,15 +577,17 @@ async function addReview( params ) {
     },
     deferEmptyText: false,
     lastHide: new Date(),
-    onFilterChange: function (item, value) {
-      console.log(`Filter changed: ${item.filter?.dataIndex} IS ${value}`)
-      groupStore.filter(groupGridView.getFilterFns())
-    }, 
     getRowClass: function (record, index) {
       var autoCheckAvailable = record.get('autoCheckAvailable');
       if (autoCheckAvailable === true) {
         return 'sm-scap-grid-item';
       } 
+    },
+    listeners: {
+      filterschanged: function (view, item, value) {
+        console.log(`LISTENER Filter changed: ${item.filter?.dataIndex} IS ${value}`)
+        groupStore.filter(view.getFilterFns())  
+      }
     }
   })
 
@@ -675,7 +677,7 @@ async function addReview( params ) {
         header: "CAT",
         fixed: true,
         width: 48,
-        align: 'center',
+        align: 'left',
         dataIndex: 'severity',
         sortable: true,        
         renderer: renderSeverity,

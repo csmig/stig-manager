@@ -1,3 +1,28 @@
+.sm-grid3-col-filtered .x-grid3-hd-btn {
+	background-color: #f0f0f0;
+	background-image: url(../img/filter-solid.svg);
+	background-size: 8px 12px;
+	background-position: center;
+	display: block;
+	margin-top: 1px;
+}
+
+/* a.x-grid3-hd-btn:hover {
+    background-position: center;	
+}
+.x-grid3-hd-btn {
+    background-color: #f0f0f0;
+    background-image:url(../img/hamburger-lines.svg);
+    background-size: 8px 12px;
+    background-position: center;
+		display: block;
+} */
+
+.x-grid3-hd-btn {
+	background-color: transparent;
+	background-image:none;
+	display: block;
+} 
 
 .sm-cb .x-form-cb-label {
 	top: 3px;
@@ -21,7 +46,7 @@
 
 
 }
-.x-form-text:focus, .x-form-textarea:focus {
+.x-form-search:focus, .x-form-text:focus, .x-form-textarea:focus {
 	border: 1px solid rgb(220, 134, 51);
 	box-shadow: inset rgb(220 134 51 / 20%) 0px 0px 1px 1px;
 }
