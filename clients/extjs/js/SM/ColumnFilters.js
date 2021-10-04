@@ -139,25 +139,49 @@ SM.ColumnFilters.GridView = Ext.extend(Ext.grid.GridView, {
   },
   getFilterFns: function () {
     const hmenu = this.hmenu
+    const stringItems = hmenu.filterItems.stringItems
+    const selectItems = hmenu.filterItems.selectItems
     const conditions = {}
     const filterFns = []
-    // iterate the menu items and set the condition(s) for each dataIndex
-    for (const menuitem of hmenu.items.items) {
-      if (menuitem.filter) {
-        const dataIndex = menuitem.filter.dataIndex
-        if (menuitem.filter.hasOwnProperty('value')) {
-          if (!conditions[dataIndex]) {
-            conditions[dataIndex] = []
+
+    for (const stringItem of stringItems) {
+      const dataIndex = stringItem.filter.dataIndex
+      const value = stringItem.getValue()
+      if (value) {
+        conditions[dataIndex] = value
+      }
+    }
+    for (const selectItem of selectItems) {
+      if (!selectItem.checked) {
+        const dataIndex = selectItem.filter.dataIndex
+        conditions[dataIndex] = []
+        for (const valueItem of selectItem.valueItems) {
+          if (valueItem.checked === true) {
+            conditions[dataIndex].push(valueItem.filter.value)
           }
-          if (menuitem.checked === true) {
-            conditions[dataIndex].push(menuitem.filter.value)
-          }
-        }
-        else {
-          conditions[dataIndex] = menuitem.getValue()
         }
       }
     }
+    // // iterate the menu items and set the condition(s) for each dataIndex
+    // for (const menuitem of hmenu.items.items) {
+    //   if (menuitem.filter) {
+    //     const dataIndex = menuitem.filter.dataIndex
+    //     if (menuitem.filter.type === 'selectall' && menuitem.checked) {
+    //       continue
+    //     }
+    //     else if (menuitem.filter.hasOwnProperty('value')) {
+    //       if (!conditions[dataIndex]) {
+    //         conditions[dataIndex] = []
+    //       }
+    //       if (menuitem.checked === true) {
+    //         conditions[dataIndex].push(menuitem.filter.value)
+    //       }
+    //     }
+    //     else {
+    //       conditions[dataIndex] = menuitem.getValue()
+    //     }
+    //   }
+    // }
     // create an OR function for each dataIndex
     for (const dataIndex of Object.keys(conditions)) {
         filterFns.push({
@@ -175,9 +199,6 @@ SM.ColumnFilters.GridView = Ext.extend(Ext.grid.GridView, {
     }
     return filterFns
   },
-  doColumnFilterChange: function (column) {
-    const index = this.cm.getIndexById(column.id)
-  },
   onFilterChange: function (item, value) {
     let initialFiltered = item.column.filtered
     switch (item.filter.type) {
@@ -189,10 +210,11 @@ SM.ColumnFilters.GridView = Ext.extend(Ext.grid.GridView, {
         const hmenuPeers = hmenuItems.filter( i => i.filter?.type === 'values' && i.filter?.dataIndex === item.filter.dataIndex)
         const hmenuPeersChecked = hmenuPeers.map( i => i.checked)
         item.column.filtered = hmenuPeersChecked.includes(false)
+        break
+      case 'selectall':
+        item.column.filtered = !(!!value)
+        break
     }
-    // if (item.column.filtered !== initialFiltered) {
-    //   this.doColumnFilterChange(item.column)
-    // }
     console.log(`HYANDLER Filter changed: ${item.filter?.dataIndex} IS ${value}`)
     this.fireEvent('filterschanged', this, item, value)
   }, 
@@ -203,16 +225,18 @@ SM.ColumnFilters.GridView = Ext.extend(Ext.grid.GridView, {
 
     SM.ColumnFilters.GridView.superclass.afterRenderUI.call(this)
 
-    // set height of hd-btn
-
-
     const hmenu = this.hmenu
+    hmenu.filterItems = {
+      stringItems: [],
+      selectItems: []
+    }
     const hmenuItems = hmenu.items.items
     const itemSeparator = hmenu.addItem('-')
     let initial = true
 
     // (Re)build the dynamic value items
     function buildDynamicValues (records) {
+      // iterate the dynamic menu items, save their current values, and remove them
       const cVals = {}
       const dynamicItems = hmenuItems.filter( item => item.filter?.type === 'values' )
       for (const menuItem of dynamicItems) {
@@ -221,11 +245,15 @@ SM.ColumnFilters.GridView = Ext.extend(Ext.grid.GridView, {
           (cVals[dataIndex] = cVals[dataIndex] || []).push(menuItem.filter.value)
         }      
         hmenu.remove(menuItem)
-      }    
+      }
+      
+      // iterate the dynamic columns and create menu items, restoring saved values
       for (const col of dynamicColumns) {
+        const itemConfigs = []
+        // get unique values for this column from the record set
         const uniqueSet = new Set(records.map( r => r.data[col.dataIndex] ))
         for ( const value of uniqueSet.values()) {
-          hmenu.addItem({
+          itemConfigs.push({
             text: col.filter.renderer ? col.filter.renderer(value) : value,
             xtype: 'menucheckitem',
             column: col,
@@ -238,11 +266,44 @@ SM.ColumnFilters.GridView = Ext.extend(Ext.grid.GridView, {
             },
             listeners: {
               checkchange: function (item, value) {
+                item.selectAllItem.onValueItemChanged()
                 _this.onFilterChange(item, value)
               }
             }
           })
         }
+        // add the Select All item
+        const selectAllItem = hmenu.addItem({
+          text: '(Select All)',
+          xtype: 'menucheckitem',
+          column: col,
+          hideOnClick: false,
+          checked: initial ? true : itemConfigs.every( i => i.checked ),
+          filter: {
+            dataIndex: col.dataIndex,
+            type: 'selectall'
+          },
+          valueItems: [],
+          onValueItemChanged: function () {
+            const state = this.valueItems.every( i => i.checked )
+            this.setChecked(state, true)
+          },
+          listeners: {
+            checkchange: function (item, checked) {
+              for (const valueItem of item.valueItems) {
+                valueItem.setChecked(checked, true)
+              }
+              _this.onFilterChange(item, checked)
+            }
+          }
+        })
+        // add the child items
+        for (const itemConfig of itemConfigs) {
+          itemConfig.selectAllItem = selectAllItem
+          const valueItem = hmenu.addItem(itemConfig)
+          selectAllItem.valueItems.push(valueItem)
+        }
+        hmenu.filterItems.selectItems.push(selectAllItem)
       }
       initial = false
     }
@@ -274,7 +335,7 @@ SM.ColumnFilters.GridView = Ext.extend(Ext.grid.GridView, {
         case 'string':
           // search for string value
           console.log(`Column ${col.header} Type string `)
-          const tf = hmenu.add(new Ext.form.TextField({
+          const stringItem = hmenu.add(new Ext.form.TextField({
             emptyText: "Filter",
             column: col,
             filter: { dataIndex: col.dataIndex, type: 'string'},
@@ -292,6 +353,7 @@ SM.ColumnFilters.GridView = Ext.extend(Ext.grid.GridView, {
               }
             }
           }))
+          hmenu.filterItems.stringItems.push(stringItem)
           break
         case 'values':
           // calculate 
