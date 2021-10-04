@@ -431,11 +431,12 @@ async function addCollectionReview ( params ) {
 					}
 				}
 			}),
-			view: new Ext.grid.GridView({
+			view: new SM.ColumnFilters.GridView({
 				forceFit:false,
 				emptyText: '',
 				// These listeners keep the grid in the same scroll position after the store is reloaded
 				holdPosition: true, // HACK to be used with override
+				lastHide: new Date(),
 				listeners: {
 					// beforerefresh: function(v) {
 					// v.scrollTop = v.scroller.dom.scrollTop;
@@ -448,6 +449,12 @@ async function addCollectionReview ( params ) {
 					// }
 				},
 				deferEmptyText:false,
+				listeners: {
+					filterschanged: function (view, item, value) {
+						console.log(`LISTENER Filter changed: ${item.filter?.dataIndex} IS ${value}`)
+						groupStore.filter(view.getFilterFns())  
+					}
+				},		
 				getRowClass: function (record,index) {
 					var autoCheckAvailable = record.get('autoCheckAvailable');
 					if (autoCheckAvailable === true) {
@@ -460,11 +467,15 @@ async function addCollectionReview ( params ) {
 					id:'cat' + idAppend,
 					header: "CAT", 
 					width: 48,
-					align: 'center',
+					align: 'left',
 					dataIndex: 'severity',
 					fixed: true,
 					sortable: true,
-					renderer: renderSeverity
+					renderer: renderSeverity,
+					filter: {
+						type: 'values',
+						renderer: renderSeverity
+					}	
 				},
 				{ 	
 					id:'groupId' + idAppend,
@@ -474,7 +485,10 @@ async function addCollectionReview ( params ) {
 					sortable: true,
 					hidden: true,
 					hideable: false,
-					align: 'left'
+					align: 'left',
+					filter: {
+						type: 'string'
+					}	
 				},
 				{ 	
 					id:'ruleId' + idAppend,
@@ -483,7 +497,10 @@ async function addCollectionReview ( params ) {
 					dataIndex: 'ruleId',
 					sortable: true,
 					hideable: false,
-					align: 'left'
+					align: 'left',
+					filter: {
+						type: 'string'
+					}	
 				},
 				{ 
 					id:'groupTitle' + idAppend,
@@ -494,7 +511,10 @@ async function addCollectionReview ( params ) {
 					renderer: columnWrap,
 					hidden: true,
 					hideable: false,
-					sortable: true
+					sortable: true,
+					filter: {
+						type: 'string'
+					}	
 				},
 				{ 
 					id:'ruleTitle' + idAppend,
@@ -503,7 +523,10 @@ async function addCollectionReview ( params ) {
 					dataIndex: 'ruleTitle',
 					renderer: columnWrap,
 					hideable: false,
-					sortable: true
+					sortable: true,
+					filter: {
+						type: 'string'
+					}	
 				},
 				{ 	
 					id:'oCnt' + idAppend,
@@ -590,36 +613,37 @@ async function addCollectionReview ( params ) {
 						iconCls: 'sm-checklist-icon',  // <-- icon
 						text: 'Checklist',
 						menu: groupChecklistMenu
-					},'-',{
-						xtype: 'tbbutton',
-						id: 'groupGrid-tb-filterButton' + idAppend,
-						iconCls: 'sm-filter-icon',  // <-- icon
-						text: 'All checks',
-						menu: groupFilterMenu
-					}
-					,{
-						xtype: 'trigger',
-						fieldLabel: 'Filter',
-						triggerClass: 'x-form-clear-trigger',
-						onTriggerClick: function() {
-							this.triggerBlur();
-							this.blur();
-							this.setValue('');
-							filterGroupStore();
-						},
-						id: 'groupGrid-filterTitle' + idAppend,
-						width: 140,
-						submitValue: false,
-						disabled: false,
-						enableKeyEvents:true,
-						emptyText:'Title filter...',
-						listeners: {
-							keyup: function (field,e) {
-								filterGroupStore();
-								return false;
-							}
-						}
 					},
+					// '-',{
+					// 	xtype: 'tbbutton',
+					// 	id: 'groupGrid-tb-filterButton' + idAppend,
+					// 	iconCls: 'sm-filter-icon',  // <-- icon
+					// 	text: 'All checks',
+					// 	menu: groupFilterMenu
+					// },
+					// ,{
+					// 	xtype: 'trigger',
+					// 	fieldLabel: 'Filter',
+					// 	triggerClass: 'x-form-clear-trigger',
+					// 	onTriggerClick: function() {
+					// 		this.triggerBlur();
+					// 		this.blur();
+					// 		this.setValue('');
+					// 		filterGroupStore();
+					// 	},
+					// 	id: 'groupGrid-filterTitle' + idAppend,
+					// 	width: 140,
+					// 	submitValue: false,
+					// 	disabled: false,
+					// 	enableKeyEvents:true,
+					// 	emptyText:'Title filter...',
+					// 	listeners: {
+					// 		keyup: function (field,e) {
+					// 			filterGroupStore();
+					// 			return false;
+					// 		}
+					// 	}
+					// },
 					'->',
 					{
 						xtype: 'tbitem',
@@ -722,26 +746,28 @@ async function addCollectionReview ( params ) {
 		};
 			
 		function filterGroupStore () {
-			var filterArray = [];
-			// Filter menu
-			if (groupGrid.filterState === 'SCAP' || groupGrid.filterState === 'Manual') {
-				filterArray.push({
-					property: 'autoCheckAvailable',
-					value: groupGrid.filterState === 'SCAP'
-				});
-			}
-			// Title textfield
-			var titleValue = Ext.getCmp('groupGrid-filterTitle' + idAppend).getValue();
-			if (titleValue.length > 0) {
-				filterArray.push({
-					property: groupGrid.titleColumnDataIndex,
-					value: titleValue,
-					anyMatch: true,
-					caseSensitive: false
-				});
-			}
+			// var filterArray = [];
+			// // Filter menu
+			// if (groupGrid.filterState === 'SCAP' || groupGrid.filterState === 'Manual') {
+			// 	filterArray.push({
+			// 		property: 'autoCheckAvailable',
+			// 		value: groupGrid.filterState === 'SCAP'
+			// 	});
+			// }
+			// // Title textfield
+			// var titleValue = Ext.getCmp('groupGrid-filterTitle' + idAppend).getValue();
+			// if (titleValue.length > 0) {
+			// 	filterArray.push({
+			// 		property: groupGrid.titleColumnDataIndex,
+			// 		value: titleValue,
+			// 		anyMatch: true,
+			// 		caseSensitive: false
+			// 	});
+			// }
 			
-			groupStore.filter(filterArray);
+			// groupStore.filter(filterArray);
+			groupStore.filter(groupGrid.getView().getFilterFns())
+
 
 		}
 	/******************************************************/
@@ -829,7 +855,10 @@ async function addCollectionReview ( params ) {
 					fixed: true,
 					dataIndex: 'status',
 					sortable: true,
-					renderer: renderStatuses
+					renderer: renderStatuses,
+					filter: {
+						type: 'values'
+					} 
 				},
 				{ 	
 					id:'target' + idAppend,
@@ -838,7 +867,10 @@ async function addCollectionReview ( params ) {
 					//fixed: true,
 					dataIndex: 'assetName',
 					sortable: true,
-					align: 'left'
+					align: 'left',
+					filter: {
+						type: 'values'
+					}
 				}
 				,{ 
 					id:'Result' + idAppend,
@@ -1147,13 +1179,17 @@ async function addCollectionReview ( params ) {
 
 				}
 			},
-			view: new Ext.grid.GridView({
+			view: new SM.ColumnFilters.GridView({
 				forceFit:true,
 				holdPosition: true,
 				autoFill:true,
 				emptyText: 'No data to display.',
 				deferEmptyText:false,
 				listeners: {
+					filterschanged: function (view, item, value) {
+						console.log(`LISTENER Filter changed: ${item.filter?.dataIndex} IS ${value}`)
+						reviewsStore.filter(view.getFilterFns())  
+					},
 					refresh: function (view) {
 						// Setup the tooltips
 						const columns = view.grid.getColumnModel().columns

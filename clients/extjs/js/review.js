@@ -754,9 +754,12 @@ async function addReview( params ) {
         fixed: true,
         width: 44,
         align: 'center',
-        // dataIndex: 'status',
+        dataIndex: 'status',
         sortable: true,
-        renderer: renderStatuses
+        renderer: renderStatuses,
+        filter: {
+          type: 'values'
+        } 
       }
 
     ],
@@ -769,36 +772,37 @@ async function addReview( params ) {
           iconCls: 'sm-checklist-icon',  // <-- icon
           text: 'Checklist',
           menu: groupChecklistMenu
-        }, '-', {
-          xtype: 'tbbutton',
-          id: 'groupGrid-tb-filterButton' + idAppend,
-          iconCls: 'sm-filter-icon',  // <-- icon
-          text: 'Filters',
-          menu: groupFilterMenu
-        }
-        , {
-          xtype: 'trigger',
-          fieldLabel: 'Filter',
-          triggerClass: 'x-form-clear-trigger',
-          onTriggerClick: function () {
-            this.triggerBlur();
-            this.blur();
-            this.setValue('');
-            filterGroupStore();
-          },
-          id: 'groupGrid-filterTitle' + idAppend,
-          width: 140,
-          submitValue: false,
-          disabled: false,
-          enableKeyEvents: true,
-          emptyText: 'Title filter...',
-          listeners: {
-            keyup: function (field, e) {
-              filterGroupStore();
-              return false;
-            }
-          }
-        },
+        }, 
+        // '-', {
+        //   xtype: 'tbbutton',
+        //   id: 'groupGrid-tb-filterButton' + idAppend,
+        //   iconCls: 'sm-filter-icon',  // <-- icon
+        //   text: 'Filters',
+        //   menu: groupFilterMenu
+        // },
+        // , {
+        //   xtype: 'trigger',
+        //   fieldLabel: 'Filter',
+        //   triggerClass: 'x-form-clear-trigger',
+        //   onTriggerClick: function () {
+        //     this.triggerBlur();
+        //     this.blur();
+        //     this.setValue('');
+        //     filterGroupStore();
+        //   },
+        //   id: 'groupGrid-filterTitle' + idAppend,
+        //   width: 140,
+        //   submitValue: false,
+        //   disabled: false,
+        //   enableKeyEvents: true,
+        //   emptyText: 'Title filter...',
+        //   listeners: {
+        //     keyup: function (field, e) {
+        //       filterGroupStore();
+        //       return false;
+        //     }
+        //   }
+        // },
         '->',
         {
             xtype: 'tbitem',

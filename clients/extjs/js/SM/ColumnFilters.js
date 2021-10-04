@@ -125,6 +125,9 @@ SM.ColumnFilters.GridView = Ext.extend(Ext.grid.GridView, {
   },
   onDataChange : function(){
     SM.ColumnFilters.GridView.superclass.onDataChange.call(this)
+    this.setColumnFilteredStyle()
+  },
+  setColumnFilteredStyle: function () {
     const colCount = this.cm.getColumnCount()
     for (let i = 0; i < colCount; i++) {
       const td = this.getHeaderCell(i)
@@ -144,6 +147,7 @@ SM.ColumnFilters.GridView = Ext.extend(Ext.grid.GridView, {
     const conditions = {}
     const filterFns = []
 
+    // // iterate the menu items and set the condition(s) for each dataIndex
     for (const stringItem of stringItems) {
       const dataIndex = stringItem.filter.dataIndex
       const value = stringItem.getValue()
@@ -162,26 +166,6 @@ SM.ColumnFilters.GridView = Ext.extend(Ext.grid.GridView, {
         }
       }
     }
-    // // iterate the menu items and set the condition(s) for each dataIndex
-    // for (const menuitem of hmenu.items.items) {
-    //   if (menuitem.filter) {
-    //     const dataIndex = menuitem.filter.dataIndex
-    //     if (menuitem.filter.type === 'selectall' && menuitem.checked) {
-    //       continue
-    //     }
-    //     else if (menuitem.filter.hasOwnProperty('value')) {
-    //       if (!conditions[dataIndex]) {
-    //         conditions[dataIndex] = []
-    //       }
-    //       if (menuitem.checked === true) {
-    //         conditions[dataIndex].push(menuitem.filter.value)
-    //       }
-    //     }
-    //     else {
-    //       conditions[dataIndex] = menuitem.getValue()
-    //     }
-    //   }
-    // }
     // create an OR function for each dataIndex
     for (const dataIndex of Object.keys(conditions)) {
         filterFns.push({
@@ -200,7 +184,6 @@ SM.ColumnFilters.GridView = Ext.extend(Ext.grid.GridView, {
     return filterFns
   },
   onFilterChange: function (item, value) {
-    let initialFiltered = item.column.filtered
     switch (item.filter.type) {
       case 'string':
         item.column.filtered = !!(item.getValue())
@@ -215,11 +198,9 @@ SM.ColumnFilters.GridView = Ext.extend(Ext.grid.GridView, {
         item.column.filtered = !(!!value)
         break
     }
-    console.log(`HYANDLER Filter changed: ${item.filter?.dataIndex} IS ${value}`)
     this.fireEvent('filterschanged', this, item, value)
   }, 
   afterRenderUI: function () {
-    console.log("In SM.ColumnFilters.GridView.afterRenderUI")
     const _this = this
     const dynamicColumns = []
 
@@ -232,23 +213,26 @@ SM.ColumnFilters.GridView = Ext.extend(Ext.grid.GridView, {
     }
     const hmenuItems = hmenu.items.items
     const itemSeparator = hmenu.addItem('-')
-    let initial = true
 
     // (Re)build the dynamic value items
-    function buildDynamicValues (records) {
-      // iterate the dynamic menu items, save their current values, and remove them
+    function buildDynamicValues (records, isLoading) {
+      // iterate the dynamic menu items, save their current values if not loading, and remove them
       const cVals = {}
-      const dynamicItems = hmenuItems.filter( item => item.filter?.type === 'values' )
-      for (const menuItem of dynamicItems) {
-        const dataIndex = menuItem.filter.dataIndex
-        if (menuItem.checked) {
-          (cVals[dataIndex] = cVals[dataIndex] || []).push(menuItem.filter.value)
-        }      
-        hmenu.remove(menuItem)
+      const selectItems = hmenu.filterItems.selectItems
+      for (const selectAllItem of selectItems) {
+        const dataIndex = selectAllItem.filter.dataIndex
+        for (const valueItem of selectAllItem.valueItems) {
+          if (valueItem.checked && !isLoading) {
+            (cVals[dataIndex] = cVals[dataIndex] || []).push(valueItem.filter.value)
+          }      
+          hmenu.remove(valueItem)
+        }
+        hmenu.remove(selectAllItem)
       }
       
-      // iterate the dynamic columns and create menu items, restoring saved values
+      // iterate the dynamic columns and create menu items, restoring saved values if not loading
       for (const col of dynamicColumns) {
+        if (isLoading) col.filtered = false
         const itemConfigs = []
         // get unique values for this column from the record set
         const uniqueSet = new Set(records.map( r => r.data[col.dataIndex] ))
@@ -258,7 +242,7 @@ SM.ColumnFilters.GridView = Ext.extend(Ext.grid.GridView, {
             xtype: 'menucheckitem',
             column: col,
             hideOnClick: false,
-            checked: initial ? true : cVals[col.dataIndex] ? cVals[col.dataIndex].includes(value) : false,
+            checked: isLoading ? true : cVals[col.dataIndex] ? cVals[col.dataIndex].includes(value) : false,
             filter: {
               dataIndex: col.dataIndex,
               type: 'values',
@@ -278,7 +262,7 @@ SM.ColumnFilters.GridView = Ext.extend(Ext.grid.GridView, {
           xtype: 'menucheckitem',
           column: col,
           hideOnClick: false,
-          checked: initial ? true : itemConfigs.every( i => i.checked ),
+          checked: isLoading ? true : itemConfigs.every( i => i.checked ),
           filter: {
             dataIndex: col.dataIndex,
             type: 'selectall'
@@ -305,14 +289,14 @@ SM.ColumnFilters.GridView = Ext.extend(Ext.grid.GridView, {
         }
         hmenu.filterItems.selectItems.push(selectAllItem)
       }
-      initial = false
     }
 
     this.grid.store.on('load', function (store, records, opt) {
-      buildDynamicValues(records)
+      buildDynamicValues(records, true)
+      _this.setColumnFilteredStyle() 
     })
     this.grid.store.on('update', function (store, record) {
-      buildDynamicValues(store.snapshot ? store.snapshot.items : store.data.items)
+      buildDynamicValues(store.snapshot ? store.snapshot.items : store.data.items, false)
     })
 
 
