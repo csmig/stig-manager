@@ -225,7 +225,7 @@ SM.ColumnFilters.GridView = Ext.extend(Ext.grid.GridView, {
         const uniqueArray = [...uniqueSet].sort(col.filter.comparer)
         for ( const value of uniqueArray ) {
           itemConfigs.push({
-            text: col.filter.renderer ? col.filter.renderer(value) : value ? value : '(No value)',
+            text: col.filter.renderer ? col.filter.renderer(value) : value ? value : '<i>(No value)</i>',
             xtype: 'menucheckitem',
             column: col,
             hideOnClick: false,
@@ -245,7 +245,7 @@ SM.ColumnFilters.GridView = Ext.extend(Ext.grid.GridView, {
         }
         // add the Select All item
         const selectAllItem = hmenu.addItem({
-          text: '(Select All)',
+          text: '<i>(Select All)</i>',
           xtype: 'menucheckitem',
           column: col,
           hideOnClick: false,
@@ -378,7 +378,7 @@ SM.ColumnFilters.CompareFns = {
 
 SM.ColumnFilters.Renderers = {
   result: (v) => {
-    if (!v) return '(No value)'
+    if (!v) return '<i>(No value)</i>'
     return `<div class="sm-grid-result-sprite ${SM.RenderResult[v]?.css}">${SM.RenderResult[v]?.textDisa}</div>`
   },
   status: (v) => {
@@ -392,7 +392,7 @@ SM.ColumnFilters.Renderers = {
       case 'accepted':
         return '<img src="img/star.svg" width=12 height=12 class="sm-menuitem-status-icon">Accepted'
       default:
-        return '(No value)'
+        return '<i>(No value)</i>'
     }
   },
   severity: (v) => {
