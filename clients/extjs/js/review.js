@@ -683,7 +683,8 @@ async function addReview( params ) {
         renderer: renderSeverity,
         filter: {
           type: 'values',
-          renderer: renderSeverity
+          renderer: renderSeverity,
+          comparer: SM.ColumnFilters.CompareFns.severity
         } 
       },
       {
@@ -745,7 +746,7 @@ async function addReview( params ) {
         renderer: renderResult,
         filter: {
           type: 'values',
-          renderer: renderResult
+          renderer: SM.ColumnFilters.Renderers.result
         } 
       },
       {
@@ -758,7 +759,8 @@ async function addReview( params ) {
         sortable: true,
         renderer: renderStatuses,
         filter: {
-          type: 'values'
+          type: 'values',
+          renderer: SM.ColumnFilters.Renderers.status
         } 
       }
 

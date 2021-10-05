@@ -474,7 +474,8 @@ async function addCollectionReview ( params ) {
 					renderer: renderSeverity,
 					filter: {
 						type: 'values',
-						renderer: renderSeverity
+						comparer: SM.ColumnFilters.CompareFns.severity,
+						renderer: SM.ColumnFilters.Renderers.severity
 					}	
 				},
 				{ 	
@@ -857,7 +858,8 @@ async function addCollectionReview ( params ) {
 					sortable: true,
 					renderer: renderStatuses,
 					filter: {
-						type: 'values'
+						type: 'values',
+						renderer: SM.ColumnFilters.Renderers.status
 					} 
 				},
 				{ 	
@@ -869,7 +871,7 @@ async function addCollectionReview ( params ) {
 					sortable: true,
 					align: 'left',
 					filter: {
-						type: 'values'
+						type: 'string'
 					}
 				}
 				,{ 
@@ -921,7 +923,11 @@ async function addCollectionReview ( params ) {
 						}
 						return SM.styledEmptyRenderer(returnStr)
 					},
-					sortable: true
+					sortable: true,
+					filter: {
+						type: 'values',
+						renderer: SM.ColumnFilters.Renderers.result
+					}
 				},
 				{ 	
 					id:'Detail' + idAppend,
@@ -932,6 +938,9 @@ async function addCollectionReview ( params ) {
 						return columnWrap(SM.styledEmptyRenderer(v))
 					},
 					sortable: true,
+					filter: {
+						type: 'string'
+					},
 					editor: new Ext.form.TextArea({
 						id: 'reviewsGrid-editor-resultComment' + idAppend,
 						//height: 150
@@ -959,6 +968,9 @@ async function addCollectionReview ( params ) {
 					renderer: function (v) {
 						return columnWrap(SM.styledEmptyRenderer(v))
 					},
+					filter: {
+						type: 'string'
+					},
 					editor: new Ext.form.TextArea({
 						id: 'reviewsGrid-editor-actionComment' + idAppend,
 						grow: true,
@@ -984,7 +996,10 @@ async function addCollectionReview ( params ) {
 					width: 100,
 					dataIndex: 'username',
 					fixed: 50,
-					sortable: true
+					sortable: true,
+					filter: {
+						type: 'values'
+					}
 				}
 			],
 			isCellEditable: function(col, row) {

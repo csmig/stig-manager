@@ -1,26 +1,5 @@
 Ext.ns('SM.ColumnFilters')
 
-SM.ColumnFilters.BaseMenu = Ext.extend(Ext.menu.Menu, {
-  initComponent: function () {
-    const _this = this
-    let items
-    if (this.column.sortable) {
-      items = [
-        {itemId:'asc',  text: 'Sort Ascending',  cls: 'xg-hmenu-sort-asc'},
-        {itemId:'desc',  text: 'Sort Descending',  cls: 'xg-hmenu-sort-desc'},
-      ]
-    }
-    else {
-      items = []
-    }
-    const config = {
-      items: items
-    }
-    Ext.apply(this, Ext.apply(this.initialConfig, config))
-    SM.ColumnFilters.BaseMenu.superclass.initComponent.call(this)
-  }
-})
-
 SM.ColumnFilters.GridView = Ext.extend(Ext.grid.GridView, {
   constructor: function (config) {
     // Ext.apply(this, config);
@@ -236,9 +215,10 @@ SM.ColumnFilters.GridView = Ext.extend(Ext.grid.GridView, {
         const itemConfigs = []
         // get unique values for this column from the record set
         const uniqueSet = new Set(records.map( r => r.data[col.dataIndex] ))
-        for ( const value of uniqueSet.values()) {
+        const uniqueArray = [...uniqueSet].sort(col.filter.comparer)
+        for ( const value of uniqueArray ) {
           itemConfigs.push({
-            text: col.filter.renderer ? col.filter.renderer(value) : value,
+            text: col.filter.renderer ? col.filter.renderer(value) : value ? value : '(No value)',
             xtype: 'menucheckitem',
             column: col,
             hideOnClick: false,
@@ -292,7 +272,7 @@ SM.ColumnFilters.GridView = Ext.extend(Ext.grid.GridView, {
     }
 
     this.grid.store.on('load', function (store, records, opt) {
-      buildDynamicValues(records, true)
+      buildDynamicValues(store.data.items, true)
       _this.setColumnFilteredStyle() 
     })
     this.grid.store.on('update', function (store, record) {
@@ -319,21 +299,24 @@ SM.ColumnFilters.GridView = Ext.extend(Ext.grid.GridView, {
         case 'string':
           // search for string value
           console.log(`Column ${col.header} Type string `)
-          const stringItem = hmenu.add(new Ext.form.TextField({
+          SM.ColumnFilters.SearchTextField
+          const stringItem = hmenu.add(new SM.ColumnFilters.SearchTextField({
             emptyText: "Filter",
+            height: 24,
             column: col,
             filter: { dataIndex: col.dataIndex, type: 'string'},
             enableKeyEvents: true,
             hideParent: true,
-            autoCreate: {tag: 'input', type: 'search', size: '20', autocomplete: 'off'},            listeners: {
+            listeners: {
+              input: function (item, e) {
+                _this.onFilterChange(item, item.value)
+              },
               keyup: function (item, e) {
                 const k = e.getKey()
                 if (k == e.RETURN) {
                     e.stopEvent();
                     hmenu.hide(true)
-                    return
                 }
-                _this.onFilterChange(item, item.value)
               }
             }
           }))
@@ -348,3 +331,74 @@ SM.ColumnFilters.GridView = Ext.extend(Ext.grid.GridView, {
     }   
   }
 })
+
+SM.ColumnFilters.SearchTextField = Ext.extend(Ext.form.TextField, {
+  initComponent: function () {
+    const config = {
+      autoCreate: {tag: 'input', type: 'search', size: '20', autocomplete: 'off'}
+    }
+    Ext.apply(this, Ext.apply(this.initialConfig, config))
+    SM.ColumnFilters.SearchTextField.superclass.initComponent.call(this)
+    this.addEvents( 'input' )
+  },
+  initEvents: function () {
+    SM.ColumnFilters.SearchTextField.superclass.initEvents.call(this)
+    this.mon(this.el, {
+      scope: this,
+      input: this.onInput
+    })
+  },
+  onInput: function (e) {
+    console.log('onInput')
+    this.fireEvent('input', this, e);
+  }
+})
+
+SM.ColumnFilters.Scorers = {
+  severity: {
+    low: 2,
+    medium: 1,
+    high: 0
+  }
+}
+
+SM.ColumnFilters.CompareFns = {
+  severity: (a, b) => {
+    return SM.ColumnFilters.Scorers.severity[a] - SM.ColumnFilters.Scorers.severity[b]
+  }
+}
+
+SM.ColumnFilters.Renderers = {
+  result: (v) => {
+    if (!v) return '(No value)'
+    return `<div class="sm-grid-result-sprite ${SM.RenderResult[v]?.css}">${SM.RenderResult[v]?.textDisa}</div>`
+  },
+  status: (v) => {
+    switch (v) {
+      case 'saved':
+        return '<img src="img/disk-16.png" width=12 height=12 class="sm-menuitem-status-icon">Saved'
+      case 'submitted':
+        return '<img src="img/ready-16.png" width=12 height=12 class="sm-menuitem-status-icon">Submitted'
+      case 'rejected':
+        return '<img src="img/rejected-16.png" width=12 height=12 class="sm-menuitem-status-icon">Rejected'
+      case 'accepted':
+        return '<img src="img/star.svg" width=12 height=12 class="sm-menuitem-status-icon">Accepted'
+      default:
+        return '(No value)'
+    }
+  },
+  severity: (v) => {
+    switch (v) {
+      case 'high':
+        return '<span class="sm-grid-sprite sm-severity-high">CAT 1</span>'
+      case 'medium':
+        return '<span class="sm-grid-sprite sm-severity-medium">CAT 2</span>'
+      case 'low':
+        return '<span class="sm-grid-sprite sm-severity-low">CAT 3</span>'
+      case 'mixed':
+        return '<span class="sm-grid-sprite sm-severity-low">Mixed</span>'
+      default:
+        return '<span class="sm-grid-sprite sm-severity-low">U</span>'
+    }  
+  }
+}
