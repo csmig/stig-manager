@@ -280,6 +280,10 @@ SM.ColumnFilters.GridView = Ext.extend(Ext.grid.GridView, {
 
     this.grid.store.on('load', function (store, records, opt) {
       buildDynamicValues(store.data.items, true)
+      for (const stringItem of hmenu.filterItems.stringItems) {
+        stringItem.setValue('')
+        stringItem.column.filtered = false
+      }
       _this.setColumnFilteredStyle() 
     })
     this.grid.store.on('update', function (store, record) {
@@ -357,7 +361,6 @@ SM.ColumnFilters.SearchTextField = Ext.extend(Ext.form.TextField, {
     })
   },
   onInput: function (e) {
-    console.log('onInput')
     this.fireEvent('input', this, e);
   }
 })
