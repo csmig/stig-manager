@@ -162,7 +162,6 @@ async function addReview( params ) {
                 var idWidth = cm.getColumnWidth(ruleIdIndex);
                 cm.setColumnWidth(groupTitleIndex, titleWidth);
                 cm.setColumnWidth(groupIdIndex, idWidth);
-                groupGrid.titleColumnDataIndex = 'groupTitle';
                 filterGroupStore();
                 cm.setHidden(ruleTitleIndex, true);
                 cm.setHidden(ruleIdIndex, true);
@@ -186,7 +185,6 @@ async function addReview( params ) {
                 var idWidth = cm.getColumnWidth(groupIdIndex);
                 cm.setColumnWidth(ruleTitleIndex, titleWidth);
                 cm.setColumnWidth(ruleIdIndex, idWidth);
-                groupGrid.titleColumnDataIndex = 'ruleTitle';
                 filterGroupStore();
                 cm.setHidden(groupTitleIndex, true);
                 cm.setHidden(groupIdIndex, true);
@@ -300,235 +298,6 @@ async function addReview( params ) {
     }
   });
 
-  function onCheckChange (item, value) {
-    const filterMenu = groupGrid.getView().hmenu
-    const conditions = {
-      severity: [],
-      result:[]
-    }
-    const filterFns = []
-    // iterate the menu items and group the allowed values for each property
-    for (const menuitem of filterMenu.items.items) {
-      if (menuitem.filter) {
-        if (menuitem.filter.hasOwnProperty('value') && menuitem.checked === true) {
-          conditions[menuitem.filter.property].push(menuitem.filter.value)
-        }
-        if (!menuitem.filter.hasOwnProperty('value')) {
-          conditions[menuitem.filter.property] = menuitem.getValue()
-        }
-      }
-    }
-    // create an OR function for each listCondition
-    for (const condition of Object.keys(conditions)) {
-        filterFns.push({
-          fn: function (record) {
-            const value = record.data[condition]
-            if (Array.isArray(conditions[condition])) {
-              return conditions[condition].includes(value) 
-            }
-            else {
-              return value.includes(conditions[condition])
-            }
-          }
-        })  
-    }
-    groupStore.filter(filterFns)
-  }
-
-  var groupFilterMenu = new Ext.menu.Menu({
-    id: 'groupFilterMenu' + idAppend,
-    items: [
-      {
-        text: 'View all',
-        isTop: true,
-        checked: true,
-        hideOnClick: false,
-        listeners: {
-          checkchange: function (item, value) {
-            for (const menuitem of item.ownerCt.items.items) {
-              if (menuitem.id !== item.id) {
-                menuitem.setChecked && menuitem.setChecked(value, true)
-              }
-            }
-            onCheckChange(item)
-          }
-        },
-      },
-      '-', 
-      {
-        text: renderSeverity('high'),
-        xtype: 'menucheckitem',
-        hideOnClick: false,
-        checked: true,
-        filter: {
-          property: 'severity',
-          value: 'high'
-        },
-        listeners: {
-          checkchange: onCheckChange
-        }
-      },
-      {
-        text: renderSeverity('medium'),
-        checked: true,
-        hideOnClick: false,
-        filter: {
-          property: 'severity',
-          value: 'medium'
-        },
-        handler: function (item, eventObject) {
-        },
-        listeners: {
-          checkchange: onCheckChange
-        }
-      },
-      {
-        text: renderSeverity('low'),
-        checked: true,
-        hideOnClick: false,
-        filter: {
-          property: 'severity',
-          value: 'low'
-        },
-        listeners: {
-          checkchange: onCheckChange
-        }
-      },
-      '-',
-      {
-        text: renderResult('pass'),
-        checked: true,
-        hideOnClick: false,
-        filter: {
-          property: 'result',
-          value: 'pass'
-        },
-        listeners: {
-          checkchange: onCheckChange
-        }
-      },
-      {
-        text: renderResult('fail'),
-        checked: true,
-        hideOnClick: false,
-        filter: {
-          property: 'result',
-          value: 'fail'
-        },
-        listeners: {
-          checkchange: onCheckChange
-        }
-      },
-      {
-        text: renderResult('notapplicable'),
-        checked: true,
-        hideOnClick: false,
-        filter: {
-          property: 'result',
-          value: 'notapplicable'
-        },
-        listeners: {
-          checkchange: onCheckChange
-        }
-      },
-      {
-        text: 'Unreviewed',
-        checked: true,
-        hideOnClick: false,
-        filter: {
-          property: 'result',
-          value: ''
-        },
-        listeners: {
-          checkchange: onCheckChange
-        }
-      },
-
-      //  {
-      //   text: 'SCAP',
-      //   checked: false,
-      //   group: 'checkType' + idAppend,
-      //   handler: function (item, eventObject) {
-      //     groupGrid.filterType = 'SCAP',
-      //     Ext.getCmp('groupGrid-tb-filterButton' + idAppend).setText('SCAP only');
-      //     filterGroupStore();
-      //   }
-      // }, '-', {
-      //   text: 'Incomplete',
-      //   checked: false,
-      //   group: 'checkType' + idAppend,
-      //   handler: function (item, eventObject) {
-      //     groupGrid.filterType = 'Incomplete',
-      //     Ext.getCmp('groupGrid-tb-filterButton' + idAppend).setText('Incomplete only');
-      //     filterGroupStore();
-      //   }
-      // }
-      // , {
-      //   text: 'Unsubmitted',
-      //   checked: false,
-      //   group: 'checkType' + idAppend,
-      //   handler: function (item, eventObject) {
-      //     groupGrid.filterType = 'Unsubmitted',
-      //     Ext.getCmp('groupGrid-tb-filterButton' + idAppend).setText('Unsubmitted only');
-      //     filterGroupStore();
-      //   }
-      // }
-      // , {
-      //   text: 'Submitted',
-      //   checked: false,
-      //   group: 'checkType' + idAppend,
-      //   handler: function (item, eventObject) {
-      //     groupGrid.filterType = 'Submitted',
-      //     Ext.getCmp('groupGrid-tb-filterButton' + idAppend).setText('Submitted only');
-      //     filterGroupStore();
-      //   }
-      // }
-      // , {
-      //   text: 'Returned',
-      //   checked: false,
-      //   group: 'checkType' + idAppend,
-      //   handler: function (item, eventObject) {
-      //     groupGrid.filterType = 'Rejected',
-      //     Ext.getCmp('groupGrid-tb-filterButton' + idAppend).setText('Returned only');
-      //     filterGroupStore();
-      //   }
-      // }
-      // , {
-      //   text: 'Approved',
-      //   checked: false,
-      //   group: 'checkType' + idAppend,
-      //   handler: function (item, eventObject) {
-      //     groupGrid.filterType = 'Accepted',
-      //     Ext.getCmp('groupGrid-tb-filterButton' + idAppend).setText('Approved only');
-      //     filterGroupStore();
-      //   }
-      // }
-
-    ],
-    listeners: {
-      // itemclick: function (item, e) {
-      //   const _this = groupFilterMenu
-      //   if (item.isTop) {
-      //     for (const menuitem of item.ownerCt.items.items) {
-      //       menuitem.setChecked(true, true)
-      //     }
-      //     groupGrid.clearFilter()
-      //   }
-      //   else {
-      //     const filters = []
-      //     for (const menuitem of item.ownerCt.items.items) {
-      //       if (menuitem.checked === false) {
-      //         filters.push(menuitem.filter)
-      //       }
-      //     }
-      //     groupStore.filter(filters);
-      //   }
-      // }
-    }
-
-  });
-
-
   /******************************************************/
   // Group grid statistics string
   /******************************************************/
@@ -603,8 +372,6 @@ async function addReview( params ) {
     minWidth: 340,
     hideMode: 'offsets',
     enableColumnMove: false,
-    filterType: 'All', // STIG Manager defined property
-    titleColumnDataIndex: 'ruleTitle', // STIG Manager defined property
     title: 'Checklist',
     split: true,
     store: groupStore,
@@ -775,36 +542,6 @@ async function addReview( params ) {
           text: 'Checklist',
           menu: groupChecklistMenu
         }, 
-        // '-', {
-        //   xtype: 'tbbutton',
-        //   id: 'groupGrid-tb-filterButton' + idAppend,
-        //   iconCls: 'sm-filter-icon',  // <-- icon
-        //   text: 'Filters',
-        //   menu: groupFilterMenu
-        // },
-        // , {
-        //   xtype: 'trigger',
-        //   fieldLabel: 'Filter',
-        //   triggerClass: 'x-form-clear-trigger',
-        //   onTriggerClick: function () {
-        //     this.triggerBlur();
-        //     this.blur();
-        //     this.setValue('');
-        //     filterGroupStore();
-        //   },
-        //   id: 'groupGrid-filterTitle' + idAppend,
-        //   width: 140,
-        //   submitValue: false,
-        //   disabled: false,
-        //   enableKeyEvents: true,
-        //   emptyText: 'Title filter...',
-        //   listeners: {
-        //     keyup: function (field, e) {
-        //       filterGroupStore();
-        //       return false;
-        //     }
-        //   }
-        // },
         '->',
         {
             xtype: 'tbitem',
@@ -905,64 +642,6 @@ async function addReview( params ) {
   };
 
   function filterGroupStore() {
-    // var filterArray = [];
-    // // Filter menu
-    // switch (groupGrid.filterType) {
-    //   case 'Manual':
-    //   case 'SCAP':
-    //     filterArray.push({
-    //       property: 'autoCheckAvailable',
-    //       value: groupGrid.filterType === 'SCAP' ? true : false
-    //     });
-    //     break;
-    //   case 'Incomplete':
-    //     filterArray.push({
-    //       fn: function (record) {
-    //         return !record.get('reviewComplete')
-    //       }
-    //     });
-    //     break;
-    //   case 'Unsubmitted':
-    //     filterArray.push({
-    //       fn: function (record) {
-    //         return (record.get('reviewComplete') && record.get('status') === 'saved');
-    //       }
-    //     });
-    //     break;
-    //   case 'Submitted':
-    //     filterArray.push({
-    //       fn: function (record) {
-    //         return record.get('status') === 'submitted';
-    //       }
-    //     });
-    //     break;
-    //   case 'Rejected':
-    //     filterArray.push({
-    //       fn: function (record) {
-    //         return record.get('status') === 'rejected';
-    //       }
-    //     });
-    //     break;
-    //   case 'Accepted':
-    //     filterArray.push({
-    //       fn: function (record) {
-    //         return record.get('status') === 'accepted';
-    //       }
-    //     });
-    //     break;
-    // }
-    // // Title textfield
-    // var titleValue = Ext.getCmp('groupGrid-filterTitle' + idAppend).getValue();
-    // if (titleValue.length > 0) {
-    //   filterArray.push({
-    //     property: groupGrid.titleColumnDataIndex,
-    //     value: titleValue,
-    //     anyMatch: true,
-    //     caseSensitive: false
-    //   });
-    // }
-
-    // groupStore.filter(filterArray);
     groupStore.filter(groupGridView.getFilterFns())
   }
 
@@ -1082,10 +761,15 @@ async function addReview( params ) {
     sm: new Ext.grid.RowSelectionModel({
       singleSelect: true
     }),
-    view: new Ext.grid.GridView({
+    view: new SM.ColumnFilters.GridView({
       forceFit: true,
       emptyText: 'No other assets to display.',
-      deferEmptyText: false
+      deferEmptyText: false,
+      listeners: {
+        filterschanged: function (view, item, value) {
+          otherStore.filter(view.getFilterFns())  
+        }
+      }  
     }),
     tbar: new Ext.Toolbar({
       items: []
@@ -1105,6 +789,9 @@ async function addReview( params ) {
         renderer: function (value, metaData, record, rowIndex, colIndex, store) {
           metaData.css += ' sm-cell-asset';
           return value;
+        },
+        filter: {
+          type: 'string'
         }
       },
 			{ 	
@@ -1115,6 +802,10 @@ async function addReview( params ) {
 				sortable: true,
 				renderer: function (val, metaData, record, rowIndex, colIndex, store) {
           return renderStatuses(val, metaData, record, rowIndex, colIndex, store)
+        },
+        filter: {
+          type: 'values',
+          renderer: SM.ColumnFilters.Renderers.status
         }
 			},
       {
@@ -1124,13 +815,20 @@ async function addReview( params ) {
 				fixed: true,
         dataIndex: 'result',
         sortable: true,
-        renderer: renderResult
+        renderer: renderResult,
+        filter: {
+          type: 'values',
+          renderer: SM.ColumnFilters.Renderers.result
+        }
       },
 			{ 	
 				header: "User", 
 				width: 50,
 				dataIndex: 'username',
-				sortable: true
+				sortable: true,
+        filter: {
+          type: 'values'         
+        }
 			}
     ],
     // width: 300,
@@ -1460,124 +1158,6 @@ async function addReview( params ) {
   }
   thisTab.updateTitle.call(thisTab)
   thisTab.show();
-
-  let ggHmenu = groupGrid.getView().hmenu
-  // ggHmenu.addItem({
-  //   text: renderSeverity('high'),
-  //   xtype: 'menucheckitem',
-  //   hideOnClick: false,
-  //   checked: true,
-  //   filter: {
-  //     property: 'severity',
-  //     value: 'high'
-  //   },
-  //   listeners: {
-  //     checkchange: onCheckChange
-  //   }
-  // })
-  // ggHmenu.addItem({
-  //   text: renderSeverity('medium'),
-  //   xtype: 'menucheckitem',
-  //   hideOnClick: false,
-  //   checked: true,
-  //   filter: {
-  //     property: 'severity',
-  //     value: 'medium'
-  //   },
-  //   listeners: {
-  //     checkchange: onCheckChange
-  //   }
-  // })
-  // ggHmenu.addItem({
-  //   text: renderSeverity('low'),
-  //   xtype: 'menucheckitem',
-  //   hideOnClick: false,
-  //   checked: true,
-  //   filter: {
-  //     property: 'severity',
-  //     value: 'low'
-  //   },
-  //   listeners: {
-  //     checkchange: onCheckChange
-  //   }
-  // })
-  // ggHmenu.addItem({
-  //   text: renderResult('fail'),
-  //   checked: true,
-  //   hideOnClick: false,
-  //   filter: {
-  //     property: 'result',
-  //     value: 'fail'
-  //   },
-  //   listeners: {
-  //     checkchange: onCheckChange
-  //   }
-  // })
-  // ggHmenu.addItem({
-  //   text: renderResult('pass'),
-  //   checked: true,
-  //   hideOnClick: false,
-  //   filter: {
-  //     property: 'result',
-  //     value: 'pass'
-  //   },
-  //   listeners: {
-  //     checkchange: onCheckChange
-  //   }
-  // })
-  // ggHmenu.addItem({
-  //   text: renderResult('notapplicable'),
-  //   checked: true,
-  //   hideOnClick: false,
-  //   filter: {
-  //     property: 'result',
-  //     value: 'notapplicable'
-  //   },
-  //   listeners: {
-  //     checkchange: onCheckChange
-  //   }
-  // })
-  // ggHmenu.addItem({
-  //   text: 'Unreviewed',
-  //   checked: true,
-  //   hideOnClick: false,
-  //   filter: {
-  //     property: 'result',
-  //     value: ''
-  //   },
-  //   listeners: {
-  //     checkchange: onCheckChange
-  //   }
-  // })
-  // ggHmenu.add(new Ext.form.TextField({
-  //   emptyText: "Search",
-  //   filter: { property: 'ruleId'},
-  //   enableKeyEvents: true,
-  //   listeners: {
-  //     keyup: onCheckChange
-  //   }
-  // }))
-  // ggHmenu.add(new Ext.form.TextField({
-  //   emptyText: "Search",
-  //   filter: { property: 'ruleTitle'},
-  //   enableKeyEvents: true,
-  //   listeners: {
-  //     keyup: onCheckChange
-  //   }
-  // }))
-
-  // ggHmenu.on('beforeshow', function (menu) {
-  //   const view = groupGrid.getView()
-  //   const property = view.cm.config[view.hdCtxIndex].dataIndex
-  //   for (const menuitem of menu.items.items) {
-  //     if (menuitem.filter) {
-  //       menuitem.setVisible(menuitem.filter.property === property)
-  //     }
-  //   }    
-  // })
-  
-
-
 
   groupGrid.getStore().load();
   loadRevisionMenu(leaf.benchmarkId, 'latest', idAppend)

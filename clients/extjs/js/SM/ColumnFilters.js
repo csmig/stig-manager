@@ -190,8 +190,15 @@ SM.ColumnFilters.GridView = Ext.extend(Ext.grid.GridView, {
       stringItems: [],
       selectItems: []
     }
-    const hmenuItems = hmenu.items.items
     const itemSeparator = hmenu.addItem('-')
+
+    const itemLabel = hmenu.addItem({
+      hideOnClick : false,
+      activeClass: '',
+      text: 'FILTER',
+      iconCls: 'sm-menuitem-filter-icon',
+      cls: 'sm-menuitem-filter-label'
+    })
 
     // (Re)build the dynamic value items
     function buildDynamicValues (records, isLoading) {
@@ -292,6 +299,7 @@ SM.ColumnFilters.GridView = Ext.extend(Ext.grid.GridView, {
         }
       }
       itemSeparator.setVisible(showSep)    
+      itemLabel.setVisible(showSep)    
     })
 
     for (const col of this.cm.config) {
@@ -301,7 +309,7 @@ SM.ColumnFilters.GridView = Ext.extend(Ext.grid.GridView, {
           console.log(`Column ${col.header} Type string `)
           SM.ColumnFilters.SearchTextField
           const stringItem = hmenu.add(new SM.ColumnFilters.SearchTextField({
-            emptyText: "Filter",
+            emptyText: "Contains...",
             height: 24,
             column: col,
             filter: { dataIndex: col.dataIndex, type: 'string'},

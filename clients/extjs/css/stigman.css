@@ -1,3 +1,24 @@
+.sm-menuitem-filter-label {
+	background-color: #586574;
+	font-weight: 700;
+	font-size: 9px;
+	color: hsl(0deg 0% 85%)!important;
+	height: 10px;
+	line-height: 10px!important;
+}
+
+a#ext-comp-1065 {}
+
+a#ext-comp-1065 {}
+
+a#ext-comp-1065 {}
+.sm-menuitem-filter-icon {
+	background-image: url(../img/filter-solid-reverse.svg);
+	background-size: 8px 8px;
+	background-position: center;
+	background-repeat: no-repeat;
+	top: 0px;
+}
 .sm-menuitem-status-icon {
 	width: 12px;
 	height: 12px;
