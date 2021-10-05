@@ -204,8 +204,7 @@ SM.ColumnFilters.GridView = Ext.extend(Ext.grid.GridView, {
     function buildDynamicValues (records, isLoading) {
       // iterate the dynamic menu items, save their current values if not loading, and remove them
       const cVals = {}
-      const selectItems = hmenu.filterItems.selectItems
-      for (const selectAllItem of selectItems) {
+      for (const selectAllItem of hmenu.filterItems.selectItems) {
         const dataIndex = selectAllItem.filter.dataIndex
         for (const valueItem of selectAllItem.valueItems) {
           if (valueItem.checked && !isLoading) {
@@ -215,6 +214,7 @@ SM.ColumnFilters.GridView = Ext.extend(Ext.grid.GridView, {
         }
         hmenu.remove(selectAllItem)
       }
+      hmenu.filterItems.selectItems = []
       
       // iterate the dynamic columns and create menu items, restoring saved values if not loading
       for (const col of dynamicColumns) {
