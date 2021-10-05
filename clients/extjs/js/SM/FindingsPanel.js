@@ -85,35 +85,44 @@ SM.FindingsParentGrid = Ext.extend(Ext.grid.GridPanel, {
 				width: 60, 
 				dataIndex: 'severity', 
 				sortable: true, 
-				renderer: renderSeverity
+				renderer: renderSeverity,
+				filter: {
+					type: 'values',
+					comparer: SM.ColumnFilters.CompareFns.severity,
+					renderer: SM.ColumnFilters.Renderers.severity
+				}	
 			},
 			{ 
 				header: "Group", 
 				hidden: false,
 				width: 80, 
 				dataIndex: 'groupId', 
-				sortable: true, 
+				sortable: true,
+				filter: { type: 'string' }
 			},
 			{ 
 				header: "Rule", 
 				hidden: true,
 				width: 80, 
 				dataIndex: 'ruleId', 
-				sortable: true, 
+				sortable: true,
+				filter: { type: 'string' }
 			},
 			{ 
 				header: "CCI", 
 				hidden: true,
 				width: 80, 
 				dataIndex: 'cci', 
-				sortable: true, 
+				sortable: true,
+				filter: { type: 'values' }
 			},
 			{ 
 				header: "AP Acronym", 
 				hidden: true,
 				width: 80, 
 				dataIndex: 'apAcronym', 
-				sortable: true, 
+				sortable: true,
+				filter: { type: 'string' }
 			},
 			{ 
 				header: "Title", 
@@ -121,7 +130,8 @@ SM.FindingsParentGrid = Ext.extend(Ext.grid.GridPanel, {
 				width: 270, 
 				dataIndex: 'title', 
 				renderer: columnWrap, 
-				sortable: true, 
+				sortable: true,
+				filter: { type: 'string' }
 			},
 			{ 
 				header: "Definition", 
@@ -129,7 +139,8 @@ SM.FindingsParentGrid = Ext.extend(Ext.grid.GridPanel, {
 				width: 135, 
 				dataIndex: 'definition', 
 				renderer: columnWrap, 
-				sortable: true, 
+				sortable: true,
+				filter: { type: 'string' }
 			},
 			{ 
 				header: "Assets", 
@@ -137,8 +148,8 @@ SM.FindingsParentGrid = Ext.extend(Ext.grid.GridPanel, {
 				width: 75, 
 				align: 'center', 
 				dataIndex: 'assetCount', 
-				sortable: true 
-			},
+				sortable: true
+		},
 			{ 
 				header: "STIGs",
 				hidden: false,
@@ -150,19 +161,15 @@ SM.FindingsParentGrid = Ext.extend(Ext.grid.GridPanel, {
 				sortable: true, 
 			}
         ])
-        const view = new Ext.grid.GridView({
+        const view = new SM.ColumnFilters.GridView({
 			forceFit: true,
 			emptyText: 'No records found.',
-			// getRowClass: function (record, rowIndex, rp, ds) { // rp = rowParams
-			// 	if (record.data.severity == 'high') {
-			// 		return 'sm-grid3-row-red';
-			// 	} else if (record.data.severity == 'medium') {
-			// 		return 'sm-grid3-row-orange';
-			// 	} else {
-			// 		return 'sm-grid3-row-green';
-			// 	}
-			// }
-        })
+			listeners: {
+				filterschanged: function (view) {
+					store.filter(view.getFilterFns())  
+				}
+			},		
+		})
         const sm = new Ext.grid.RowSelectionModel({
 			singleSelect: true,
 			listeners: {

@@ -7,11 +7,6 @@
 	line-height: 10px!important;
 }
 
-a#ext-comp-1065 {}
-
-a#ext-comp-1065 {}
-
-a#ext-comp-1065 {}
 .sm-menuitem-filter-icon {
 	background-image: url(../img/filter-solid-reverse.svg);
 	background-size: 8px 8px;
@@ -26,8 +21,9 @@ a#ext-comp-1065 {}
 	vertical-align: -2px;
 }
 .sm-grid3-col-filtered .x-grid3-hd-btn {
-	background-color: #f0f0f0;
-	background-image: url(../img/filter.svg);
+	background-color: hsl(212deg 14% 40%);
+	background-image: url(../img/filter-solid-reverse.svg
+	);
 	background-size: 10px 14px;
 	background-position: center;
 	display: block;
@@ -35,19 +31,14 @@ a#ext-comp-1065 {}
 	margin-right: 0px;
 }
 
-.sm-grid3-col-filtered .x-grid3-hd-btn:hover {
-	background-color: #f0f0f0;
+a.x-grid3-hd-btn:hover {
+	background-position: center
+}
+/* .sm-grid3-col-filtered .x-grid3-hd-btn:hover {
+	background-color: unset;
 	background-image: url(../img/filter-solid.svg);
     background-position: center;	
-}
-/*.x-grid3-hd-btn {
-    background-color: #f0f0f0;
-    background-image:url(../img/hamburger-lines.svg);
-    background-size: 8px 12px;
-    background-position: center;
-		display: block;
 } */
-
 .x-grid3-hd-btn {
 	background-color: transparent;
 	background-image:none;

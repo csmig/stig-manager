@@ -234,85 +234,10 @@ async function addCollectionReview ( params ) {
 						]
 					}
 				},
-				// {
-				// 	text: 'Reset reviews...',
-				// 	iconCls: 'sm-unlock-icon',
-				// 	handler: function(){
-				// 		//===================================================
-				// 		//UNLOCKS ALL RULE REVIEWS FOR A SPECIFIC STIG
-				// 		//===================================================
-				// 		Ext.Msg.show({
-				// 			title: 'Confirm review reset',
-				// 			msg: 'Do you want to reset ALL approved reviews<br/>for ANY rule associated with<br/>ANY revision of STIG "' + leaf.benchmarkId + '"<br/>for ALL aseets in this Collection?',
-				// 			buttons: {yes: "&nbsp;Reset reviews&nbsp;", no: "Cancel"},
-				// 			icon: Ext.MessageBox.QUESTION,
-				// 			closable: false,
-				// 			fn: function(buttonId){
-				// 				if (buttonId == 'yes'){
-				// 					//===============================================
-				// 					//GATHER INFORMATION ACCORDINGLY AND EXECUTE
-				// 					//THE REVIEW RESET.
-				// 					//===============================================
-				// 					var unlockObject = new Object;
-				// 					unlockObject.benchmarkId = leaf.benchmarkId;
-				// 					//unlockObject.stigName = leaf.benchmarkId;
-				// 					unlockObject.assetId = -1;
-				// 					unlockObject.assetName = '';
-				// 					unlockObject.collectionId =leaf.collectionId;
-				// 					// unlockObject.collectionName=apiCollection.name;
-				// 					unlockObject.gridTorefresh = groupGrid;
-				// 					batchReviewUnlock(unlockObject);
-				// 					//===============================================
-				// 					//REFRESH THE INTERFACE
-				// 					//===============================================
-				// 					//groupGrid.getStore().reload();
-				// 					// Ext.getCmp('content-panel' + idAppend).update('')
-				// 					// reviewsGrid.getStore().removeAll(true);
-				// 					// reviewsGrid.getView().refresh();
-				// 				}
-				// 			}
-				// 		});
-				// 	}
-					
-				// },
 				'-'
 			]
 		});
 		
-		var groupFilterMenu = new Ext.menu.Menu({
-			id: 'groupFilterMenu' + idAppend,
-			items: [
-				{
-					text: 'All checks',
-					checked: true,
-					group: 'checkType' + idAppend,
-					handler: function(item,eventObject){
-						groupGrid.filterState = 'All',
-						filterGroupStore();
-						Ext.getCmp('groupGrid-tb-filterButton' + idAppend).setText('All checks');
-					}
-				},'-',{ 
-					text: 'Manual checks',
-					checked: false,
-					group: 'checkType' + idAppend,
-					handler: function(item,eventObject){
-						groupGrid.filterState = 'Manual',
-						filterGroupStore();
-						Ext.getCmp('groupGrid-tb-filterButton' + idAppend).setText('Manual checks');
-					}
-				},{
-					text: 'SCAP checks',
-					checked: false,
-					group: 'checkType' + idAppend,
-					handler: function(item,eventObject){
-						groupGrid.filterState = 'SCAP',
-						filterGroupStore();
-						Ext.getCmp('groupGrid-tb-filterButton' + idAppend).setText('SCAP checks');
-					}
-				}
-			]
-		});
-
 		async function exportCkls () {
 			try {
 				const zip = new JSZip()
@@ -451,7 +376,6 @@ async function addCollectionReview ( params ) {
 				deferEmptyText:false,
 				listeners: {
 					filterschanged: function (view, item, value) {
-						console.log(`LISTENER Filter changed: ${item.filter?.dataIndex} IS ${value}`)
 						groupStore.filter(view.getFilterFns())  
 					}
 				},		
