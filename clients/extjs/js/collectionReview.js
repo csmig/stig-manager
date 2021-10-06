@@ -1098,7 +1098,7 @@ async function addCollectionReview ( params ) {
 							})
 						}
 						let apiReview = JSON.parse(result.response.responseText)
-						e.grid.getStore().loadData(apiReview, true)
+						e.record.commit()
 						// hack to reselect the record for setReviewsGridButtonStates()
 						e.grid.getSelectionModel().onRefresh()
 						loadResources(e.grid.getStore().getById(apiReview.assetId))
