@@ -145,7 +145,7 @@ SM.ColumnFilters.GridView = Ext.extend(Ext.grid.GridView, {
         }
       }
     }
-    // create an OR function for each dataIndex
+    // create a function for each dataIndex
     for (const dataIndex of Object.keys(conditions)) {
         filterFns.push({
           fn: function (record) {
@@ -155,7 +155,10 @@ SM.ColumnFilters.GridView = Ext.extend(Ext.grid.GridView, {
             }
             else {
               // will find dataIndex substring anywhere in value
-              return value.includes(conditions[dataIndex])
+              const a = value.toLowerCase()
+              const b = conditions[dataIndex].toLowerCase()
+              return a.indexOf(b) > -1
+              // return value.includes(conditions[dataIndex])
             }
           }
         })  
