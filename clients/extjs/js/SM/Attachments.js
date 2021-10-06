@@ -234,7 +234,7 @@ SM.Attachments.Grid = Ext.extend(Ext.grid.GridPanel, {
       store: store,
       columns: columns,
       stripeRows: true,
-      view: new Ext.grid.GridView({
+      view: new SM.ColumnFilters.GridView({
         forceFit: true,
         emptyText: 'No attachments to display.',
         deferEmptyText: false

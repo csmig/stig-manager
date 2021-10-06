@@ -1126,7 +1126,6 @@ async function addCollectionReview ( params ) {
 				deferEmptyText:false,
 				listeners: {
 					filterschanged: function (view, item, value) {
-						console.log(`LISTENER Filter changed: ${item.filter?.dataIndex} IS ${value}`)
 						reviewsStore.filter(view.getFilterFns())  
 					},
 					refresh: function (view) {
