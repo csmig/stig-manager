@@ -362,6 +362,7 @@ SM.ColumnFilters.SearchTextField = Ext.extend(Ext.form.TextField, {
     })
   },
   onInput: function (e) {
+    this.column.filter.value = this.getValue()
     this.fireEvent('input', this, e);
   }
 })
@@ -412,5 +413,8 @@ SM.ColumnFilters.Renderers = {
       default:
         return '<span class="sm-grid-sprite sm-severity-low">U</span>'
     }  
+  },
+  highlighter: (v, m, r, ri, ci, s) => {
+    return v
   }
 }

@@ -496,7 +496,14 @@ async function addReview( params ) {
         width: 80,
         hidden: false,
         dataIndex: 'ruleTitle',
-        renderer: columnWrap,
+        // renderer: columnWrap,
+        renderer: function (v, md, r, ri, ci, s) {
+          if (this.filter?.type === 'string' && this.filter?.value) {
+            const re = new RegExp(this.filter.value,'gi')
+            v = v.replace(re,'<span class="sm-text-highlight">$&</span>')
+          }
+          return columnWrap(v)
+        },
         sortable: true,
         filter: {
           type: 'string'
