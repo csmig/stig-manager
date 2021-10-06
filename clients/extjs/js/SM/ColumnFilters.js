@@ -190,6 +190,8 @@ SM.ColumnFilters.GridView = Ext.extend(Ext.grid.GridView, {
       stringItems: [],
       selectItems: []
     }
+    // disables keyboard navigation, needed to support left-right arrow in search input
+    hmenu.keyNav = new Ext.KeyNav(document.body, {disabled: true})
     const itemSeparator = hmenu.addItem('-')
 
     const itemLabel = hmenu.addItem({
@@ -311,7 +313,6 @@ SM.ColumnFilters.GridView = Ext.extend(Ext.grid.GridView, {
         case 'string':
           // search for string value
           console.log(`Column ${col.header} Type string `)
-          SM.ColumnFilters.SearchTextField
           const stringItem = hmenu.add(new SM.ColumnFilters.SearchTextField({
             emptyText: "Contains...",
             height: 24,
