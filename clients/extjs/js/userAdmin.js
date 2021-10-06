@@ -83,13 +83,15 @@ function addUserAdmin(params ) {
 				header: "Username", 
 				width: 150,
 				dataIndex: 'username',
-				sortable: true
+				sortable: true,
+				filter: {type: 'string'}
 			},
 			{ 	
 				header: "Name",
 				width: 150,
 				dataIndex: 'name',
-				sortable: true
+				sortable: true,
+				filter: {type: 'string'}
 			},
 			{ 	
 				header: "Grants",
@@ -136,10 +138,13 @@ function addUserAdmin(params ) {
 				sortable: true
 			}
 		],
-		view: new Ext.grid.GridView({
+		view: new SM.ColumnFilters.GridView({
 			forceFit:true,
 			// These listeners keep the grid in the same scroll position after the store is reloaded
 			listeners: {
+        filterschanged: function (view) {
+          userStore.filter(view.getFilterFns())  
+        },
 				beforerefresh: function(v) {
 				   v.scrollTop = v.scroller.dom.scrollTop;
 				   v.scrollHeight = v.scroller.dom.scrollHeight;

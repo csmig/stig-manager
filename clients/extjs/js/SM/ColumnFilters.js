@@ -344,7 +344,9 @@ SM.ColumnFilters.GridView = Ext.extend(Ext.grid.GridView, {
           dynamicColumns.push(col)
           break
       }
-    }   
+    }
+    
+    buildDynamicValues(this.grid.store.data.items, true)
   }
 })
 

@@ -62,7 +62,7 @@ SM.CollectionStigsGrid = Ext.extend(Ext.grid.GridPanel, {
             text: '0 records',
             width: 80
         })
-        let stigStore = new Ext.data.JsonStore({
+        let store = new Ext.data.JsonStore({
             grid: this,
             smMaskDelay: 250,
             proxy: this.proxy,
@@ -87,7 +87,8 @@ SM.CollectionStigsGrid = Ext.extend(Ext.grid.GridPanel, {
 				header: "BenchmarkId",
 				width: 100,
                 dataIndex: 'benchmarkId',
-				sortable: true
+				sortable: true,
+                filter: {type:'string'}
 			// },{ 	
 			// 	header: "Title",
 			// 	width: 150,
@@ -175,7 +176,7 @@ SM.CollectionStigsGrid = Ext.extend(Ext.grid.GridPanel, {
         let config = {
             layout: 'fit',
             loadMask: true,
-            store: stigStore,
+            store: store,
             cm: new Ext.grid.ColumnModel ({
                 columns: columns   
             }),
@@ -188,10 +189,15 @@ SM.CollectionStigsGrid = Ext.extend(Ext.grid.GridPanel, {
                     }
                 }
             }),
-            view: new Ext.grid.GridView({
+            view: new SM.ColumnFilters.GridView({
                 emptyText: this.emptyText || 'No records to display',
                 deferEmptyText: false,
-                forceFit:true
+                forceFit:true,
+                listeners: {
+                    filterschanged: function (view, item, value) {
+                        store.filter(view.getFilterFns())  
+                    }
+                }		    
             }),
             listeners: {
                 rowdblclick: {
@@ -437,7 +443,7 @@ SM.StigAssetsGrid = Ext.extend(Ext.grid.GridPanel, {
             loadMask: true,
             stripeRows: true,
             sm: sm,
-            view: new Ext.grid.GridView({
+            view: new SM.ColumnFilters.GridView({
                 forceFit: true,
                 emptyText: 'No Assets to display',
                 selectedRowClass: 'x-grid3-row-selected-checkonly',

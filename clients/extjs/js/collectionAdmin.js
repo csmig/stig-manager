@@ -16,10 +16,6 @@ function addCollectionAdmin( params ) {
       type: 'string'
     },
     {
-      name: 'workflow',
-      type: 'string'
-    },
-    {
       name: 'description',
       type: 'string'
     },
@@ -93,19 +89,15 @@ function addCollectionAdmin( params ) {
         header: "Name",
         width: 150,
         dataIndex: 'name',
-        sortable: true
-      },
-      {
-        header: "Workflow",
-        width: 150,
-        dataIndex: 'workflow',
-        sortable: true
+        sortable: true,
+        filter: {type: 'string'}
       },
       {
         header: "Description",
-        width: 150,
+        width: 300,
         dataIndex: 'description',
-        sortable: true
+        sortable: true,
+        filter: {type: 'string'}
       },
       {
         header: "Owners",
@@ -150,10 +142,13 @@ function addCollectionAdmin( params ) {
       }
 
     ],
-    view: new Ext.grid.GridView({
+    view: new SM.ColumnFilters.GridView({
       forceFit: false,
       // These listeners keep the grid in the same scroll position after the store is reloaded
       listeners: {
+        filterschanged: function (view, item, value) {
+          store.filter(view.getFilterFns())  
+        },
         beforerefresh: function (v) {
           v.scrollTop = v.scroller.dom.scrollTop;
           v.scrollHeight = v.scroller.dom.scrollHeight;

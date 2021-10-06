@@ -505,7 +505,7 @@ SM.ReviewsImport.ReviewsGrid = Ext.extend(Ext.grid.GridPanel, {
             loadMask: true,
             store: store,
             columns: columns,
-            view: new Ext.grid.GridView({
+            view: new SM.ColumnFilters.GridView({
                 emptyText: this.emptyText || 'No records to display',
                 deferEmptyText: false,
                 forceFit: true
@@ -600,7 +600,7 @@ SM.ReviewsImport.ParseErrorsGrid = Ext.extend(Ext.grid.GridPanel, {
             sm: new Ext.grid.RowSelectionModel({
                 singleSelect: true
             }),
-            view: new Ext.grid.GridView({
+            view: new SM.ColumnFilters.GridView({
                 forceFit: true,
                 emptyText: 'No records to display'
             }),

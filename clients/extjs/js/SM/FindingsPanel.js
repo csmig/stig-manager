@@ -405,13 +405,15 @@ SM.FindingsChildGrid = Ext.extend(Ext.grid.GridPanel, {
 				header: "Asset", 
 				width: 80, 
 				dataIndex: 'assetName', 
-				sortable: true
+				sortable: true,
+				filter: {type: 'string'}
 			 },
 			 { 
 				header: "Rule", 
 				width: 80, 
 				dataIndex: 'ruleId', 
 				sortable: true, 
+				filter: {type: 'string'}
 			},
 			// { 
 			// 	header: "Severity", 
@@ -443,10 +445,14 @@ SM.FindingsChildGrid = Ext.extend(Ext.grid.GridPanel, {
 				sortable: true, 
 			}
         ]
-        const view = new Ext.grid.GridView({
+        const view = new SM.ColumnFilters.GridView({
 			forceFit: true,
-			emptyText: 'Select a finding to the left.'
-
+			emptyText: 'Select a finding to the left.',
+			listeners: {
+				filterschanged: function (view, item, value) {
+				  store.filter(view.getFilterFns())  
+				}
+			}		
         })
         const sm = new Ext.grid.RowSelectionModel({
 			singleSelect: true

@@ -125,14 +125,16 @@ SM.CollectionAssetGrid = Ext.extend(Ext.grid.GridPanel, {
 				header: "Asset",
 				width: 100,
                 dataIndex: 'name',
-				sortable: true
+				sortable: true,
+                filter: {type: 'string'}
 			},
             { 	
 				header: "FQDN",
 				width: 100,
                 dataIndex: 'fqdn',
 				sortable: true,
-                renderer: SM.styledEmptyRenderer
+                renderer: SM.styledEmptyRenderer,
+                filter: {type: 'string'}
 			},
             { 	
 				header: "IP",
@@ -148,7 +150,8 @@ SM.CollectionAssetGrid = Ext.extend(Ext.grid.GridPanel, {
 				width: 110,
                 dataIndex: 'mac',
 				sortable: true,
-                renderer: SM.styledEmptyRenderer
+                renderer: SM.styledEmptyRenderer,
+                filter: {type: 'string'}
 			},
             { 	
 				header: "STIGs",
@@ -239,10 +242,15 @@ SM.CollectionAssetGrid = Ext.extend(Ext.grid.GridPanel, {
                     }
                 }
             }),
-            view: new Ext.grid.GridView({
+            view: new SM.ColumnFilters.GridView({
                 emptyText: this.emptyText || 'No records to display',
                 deferEmptyText: false,
-                forceFit:true
+                forceFit:true,
+                listeners: {
+                    filterschanged: function (view, item, value) {
+                      assetStore.filter(view.getFilterFns())  
+                    }
+                }		    
             }),
             listeners: {
                 rowdblclick: function(grid,rowIndex,e) {
@@ -603,7 +611,8 @@ SM.AssetStigsGrid = Ext.extend(Ext.grid.GridPanel, {
                 width: 375,
                 dataIndex: 'benchmarkId',
                 sortable: true,
-                editor: stigSelectionField
+                editor: stigSelectionField,
+                filter: {type:'string'}
             },
             { 	
                 header: "Rules", 
@@ -693,11 +702,16 @@ SM.AssetStigsGrid = Ext.extend(Ext.grid.GridPanel, {
                     }
                 }
             }),
-            view: new Ext.grid.GridView({
+            view: new SM.ColumnFilters.GridView({
                 emptyText: this.emptyText || 'No records to display',
                 deferEmptyText: false,
                 forceFit:true,
-                markDirty: false
+                markDirty: false,
+                listeners: {
+                    filterschanged: function (view, item, value) {
+                        stigAssignedStore.filter(view.getFilterFns())  
+                    }
+                }		    
             }),
             listeners: {
             },
