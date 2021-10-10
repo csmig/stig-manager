@@ -1,14 +1,43 @@
 Securing and Assessing STIG Manager Deployments
 ##########################################################
 
-A STIG Manager application can be orchestrated several ways using container platforms ranging from docker-compose to Kubernetes and OpenShift. While we do not know the security requirements of your exact deployment scenario, we know many deployments must comply with the Application Security and Development STIG - commonly known as the ASD. Therefore we have organized this section around the ASD requirements and provide guidance for those tasked with securing and assessing a STIG Manager deployment for compliance with them.
+A STIG Manager application can be orchestrated several ways, each with unique security requirements. We know many deployments must comply with the Application Security and Development STIG - commonly known as the ASD. Therefore we have organized this section around ASD requirements, to provide guidance for those tasked with securing and assessing STIG-compliant STIG Manager deployments.
 
 .. note::
-  The ASD assesses all application components and application governance using a single checklist comprising 286 checks (as of V5R1).  Unfortunately the current ASD provides limited guidance if you're using modern security technologies such as Single Sign On, OpenID Connect, OAuth2 authorization, and containerization. If you are required to complete an ASD assessment, we encourage focusing on the spirit of the checklist until it is updated or re-imagined.
+  The ASD assesses many application components, and application governance, using a single checklist of 286 checks (as of V5R1).  Unfortunately, the current ASD provides limited guidance if you're using modern security technologies such as Single Sign On, OpenID Connect, OAuth2 authorization, and containerization. If you are required to complete an ASD assessment, we encourage focusing on the spirit of the checklist until it is updated or re-imagined.
+
+Securing your deployment
+========================
+
+These are some common security topics to consider when designing a secure STIG Manager application deployment.
+
+REST, OpenID Connect (OIDC), and OAuth2
+---------------------------------------
+
+Several ASD checks refer to SOAP, WS-Security and SAML, early protocols for securing online APIs. None of the checks refer to REST or OIDC/OAuth2, modern alternatives that are commonly used in cloud-native software. The checks that address SOAP, etc. state that if you aren't using those technologies, the assessment is 'not applicable'.
+
+.. warning::
+  You must secure your deployment in compliance with your individual security requirements. The discussion below is educational and does not address your specific requirements.
+
+The STIG Manager API and Web Client exchange data using a REST architecture. The API authorizes access to endpoints and data based on claims contained in OAuth2 JWT formatted tokens presented by remote clients, include the Project's Web Client. Communication between the clients and the API should occur over a TLS encrypted session. Client <=> API sessions do not require Mutual TLS (MTLS).
+
+The Web Client is a single-page application (SPA) that executes entirely in the browser. Browsers are low- to no-trust environments where OAuth2 access tokens should have short lifetimes to mitigate the risk of token diversion. Just what is considered 'short' is for you (or your organization) to decide, but 15 minutes or less is not uncommon.
+
+The Web Client will not engage in an OIDC implicit flow because it is insecure. To work with the Web Client, you must configure the OIDC Provider to provide tokens using the OIDC Authorization Code Flow with Proof Key for Code Exchange (PKCE). To work with bots such as 
+
+If your OIDC Provider issues refresh tokens (recommended for a better user experience), those tokens can have longer lifetimes but should be limited to a single use. Policies vary greatly, but refresh token lifetime is sometimes correlated to the SSO session lifetime. The idea is that a diverted access token.
+
+The Web Client should present the access token to the API over TLS, which mitigates the risk of token sniffing.
+
+
+
+
+User sessions
+-------------
 
 
 API and Web Client
--------------
+------------------
 
 About a third of the checks in the ASD assess application components provided by this Project - the API and Web Client. These checks assess both their behavior and how they are developed.
 
