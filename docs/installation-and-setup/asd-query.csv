@@ -1,0 +1,7 @@
+"groupId","ruleTitle","resultComment"
+V-222388,"The application must clear temporary storage and cookies when the session is terminated.","The Web Client does not persist storage of any user information, including OAuth2 tokens."
+V-222391,"Applications requiring user access authentication must provide a logoff capability for user initiated communication session.","The Web Client requests logoff service from the OIDC Provider after user interaction with a DOM element whose innerText = 'Logout'"
+V-222392,"The application must display an explicit logoff message to users indicating the reliable termination of authenticated communications sessions.","The SPA does not display a 'logged out' screen, it immediately attempts to re-authenticate a user"
+V-222393,"The application must associate organization-defined types of security attributes having organization-defined security attribute values with information in storage.","The API scaffolds a new database instance with the classification specified by the environment variable STIGMAN_CLASSIFICATION. This value is stored in the 'configuration' table and represents the default classification for all data stored by the database instance.
+
+ "

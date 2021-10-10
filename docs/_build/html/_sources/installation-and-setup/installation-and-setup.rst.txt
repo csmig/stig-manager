@@ -4,10 +4,19 @@
 STIG Manager OSS Setup and Technical Information
 ########################################################## 
 
-STIG Manager has been developed and tested in a Docker container. Using the container is the recommended way to run, but not required. 
+The STIG Manager open-source project provides an API and Web Client which are designed for deployment in a containerized service that is part of a fully orchestrated STIG Manager application. A STIG Manager application includes at least two other mandatory services:
 
-Components 
-============
+#. An OpenID Connect (OIDC) Provider
+#. A MySQL database
+
+The STIG Manager application is often deployed at the enterprise level with orchestration platforms such as Kubernetes or OpenShift. However, containerization allows STIG Manager deployments to be readily scaled up or down and it can be orchestrated on a single laptop with tools such as docker-compose.
+
+.. note::
+  Containerized deployments of STIG manager are highly recommended because they offer improved security, scalability, portability, and maintenance. If absolutely necessary, it is possible to deploy the STIG Manager API in legacy environments from source code, but this is not recommended for secure deployments and is not fully documented. 
+
+
+Common Components 
+=================
 
 .. thumbnail:: /assets/images/stigman-components-basic.svg
   :width: 50%
@@ -18,22 +27,44 @@ Components
 -------------------------------
 
 
-API
+API (always required)
 ------
 
-The STIG Manager API is a RESTful API using Node.js 14+ and the Express web application framework. Exposes 1 HTTP port. TLS support can be provided by a reverse proxy, such as nginx.
+A RESTful API implemented on the current LTS version of Node.js and the Express web application framework. Exposes 1 HTTP port. Built as a stateless container service.
 
-Client
+Web Client (recommended for interactive access)
 ---------
 
-The STIG Manager Client is using the ExtJS 3.4 application framework under the GNU General Public License.
+A Single Page Application (SPA) using the ExtJS 3.4 JavaScript framework. The Web Client is often enabled as static content from the API container which does not require a separate container.
+
+OIDC Provider (always required)
+-------------
+
+An authentication service that manages user accounts and issues OAuth2 JWT tokens to the Web Client which authorize access to the API. We routinely test using Red Hat Keycloak and fully support Keycloak as an OIDC Provider of choice. More limited testing has been done using authentication services from Okta and Azure AD.
+
+MySQL database (always required)
+--------------
+
+A stateful data storage capability that supports mutual TLS authentication and secure data at rest. We support MySQL 8.0.14 and above.
+
+Reverse Proxy (recommended)
+---------------------------
+
+An endpoint management capability that can provide mutual TLS authentication, including DoD Common Access Card (CAC), and TLS encryption for the API, Web Client, and OIDC Provider (if required)
+
+Log Collector (recommended)
+---------------------------
+
+A centralized logging capability that collects log records from all orchestration components. Most orchestration platforms provide some form of log collection.
+
+Log Analysis (recommended)
+-------------------
+A centralized log aggregation, analysis and reporting capability. Examples include Splunk, Solar Winds Security Event Manager, Elasticsearch, etc.
 
 
+Deployment Scenarios for product evaluation
+==========================================
 
-Setup Options
-===============
-
-STIG Manager requires Node.js 14+, an Authentication Provider (Such as Keycloak), and a MySQL Database. It is configured using :ref:`Environment Variables`, and can be deployed as a container from the image provided on Docker Hub or directly from source code.  
 
 Quick Start Orchestration with Docker Compose
 -------------------------------------------------
@@ -128,6 +159,7 @@ Procedure
 
 Common Configuration Variables
 -------------------------------------------------
+The API and Web Client are configured using :ref:`Environment Variables`. They neither require nor use a configuration file.
 
 It is likely you will have to set at least some of these Environment Variables, but check the full :ref:`Environment Variables` reference for the full list:
 
@@ -182,13 +214,6 @@ Check the `Node.js documentation for more information. <https://nodejs.org/api/c
 Configure Logging
 -----------------------
 :ref:`Store logs according to Organization requirements. <logging>`
-
-Address Possible CORS Issues
--------------------------------
-
-:ref:`The STIGMan API can act as a proxy for client calls to the Authentication Provider to help avoid issues arising from CORS enforcement settings.<cors>`
-
-
 
 First Steps
 ==============

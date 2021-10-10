@@ -4,7 +4,8 @@
 <html class="writer-html5" lang="en" >
 <head>
   <meta charset="utf-8" />
-  
+  <meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   
   <title>2. Authentication and Identity &mdash; STIG Manager  documentation</title>
@@ -13,10 +14,8 @@
   
   <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
   <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
-  <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
-  <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
-  <link rel="stylesheet" href="../_static/sphinxcontrib-images\LightBox2\lightbox2\dist\css\lightbox.css" type="text/css" />
   <link rel="stylesheet" href="../_static/css/custom.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/sphinxcontrib-images/LightBox2/lightbox2/css/lightbox.css" type="text/css" />
 
   
   
@@ -33,13 +32,13 @@
   
     
       <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
-        <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
         <script src="../_static/jquery.js"></script>
         <script src="../_static/underscore.js"></script>
         <script src="../_static/doctools.js"></script>
-        <script src="../_static/sphinxcontrib-images\LightBox2\lightbox2\dist\js\lightbox-plus-jquery.min.js"></script>
-        <script src="../_static/sphinxcontrib-images\LightBox2\lightbox2-customize\jquery-noconflict.js"></script>
         <script src="../_static/js/custom.js"></script>
+        <script src="../_static/sphinxcontrib-images/LightBox2/lightbox2/js/jquery-1.11.0.min.js"></script>
+        <script src="../_static/sphinxcontrib-images/LightBox2/lightbox2/js/lightbox.min.js"></script>
+        <script src="../_static/sphinxcontrib-images/LightBox2/lightbox2-customize/jquery-noconflict.js"></script>
     
     <script type="text/javascript" src="../_static/js/theme.js"></script>
 
@@ -95,7 +94,7 @@
               
             
             
-              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+              <p><span class="caption-text">Contents:</span></p>
 <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="../features/index.html">Introduction and Features</a></li>
 <li class="toctree-l1 current"><a class="reference internal" href="index.html">Install, Setup, and Run</a><ul class="current">
@@ -117,9 +116,9 @@
 <li class="toctree-l2"><a class="reference internal" href="db.html">3. Database</a></li>
 <li class="toctree-l2"><a class="reference internal" href="logging.html">4. STIG Manager Logging</a></li>
 <li class="toctree-l2"><a class="reference internal" href="reverse-proxy.html">5. STIG Manager TLS</a></li>
-<li class="toctree-l2"><a class="reference internal" href="cors.html">6. Cross-Origin Resource Sharing (CORS)</a></li>
-<li class="toctree-l2"><a class="reference internal" href="permissions-model.html">7. Permissions and Data</a></li>
-<li class="toctree-l2"><a class="reference internal" href="environment-variables.html">8. Environment Variables</a></li>
+<li class="toctree-l2"><a class="reference internal" href="permissions-model.html">6. Permissions and Data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="environment-variables.html">7. Environment Variables</a></li>
+<li class="toctree-l2"><a class="reference internal" href="securing.html">8. Securing and Assessing STIG Manager Deployments</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="../user-guide/index.html">For Users</a></li>
@@ -127,7 +126,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../the-project/index.html">The STIG Manager Project</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../reference/index.html">Terminology and Concepts</a></li>
 </ul>
-<p class="caption" role="heading"><span class="caption-text">Common Tasks:</span></p>
+<p><span class="caption-text">Common Tasks:</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../features/common-tasks.html">Build A Collection with .ckl or XCCDF Files</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../features/common-tasks.html#review-a-stig-on-an-asset">Review a STIG on an Asset</a></li>
@@ -218,7 +217,7 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
             
-  <div class="section" id="authentication-and-identity">
+  <section id="authentication-and-identity">
 <span id="authentication"></span><h1><span class="section-number">2. </span>Authentication and Identity<a class="headerlink" href="#authentication-and-identity" title="Permalink to this headline">¶</a></h1>
 <p>The API requires an OAuth2 JSON Web Token (JWT) that conforms to the OpenID Connect specification to determine client and user access.  The STIG Manager OSS Project suggests the use of the Authorization Code Flow with Proof Key for Code Exchange (PKCE)​ flavor of OAuth 2.0​.</p>
 <p>STIG Manager OSS has been tested to work with Keycloak and Okta as OIDC providers.  It is expected to work with other OIDC providers if they can be configured to provide a token that meets the requirements specified below. Please create an Issue with details on our GitHub project if you experience issues with other providers.</p>
@@ -226,7 +225,7 @@
 <p class="admonition-title">Note</p>
 <p>If you are using the demonstration Keycloak container from the Project’s Docker Hub page, you may not need to change any settings or variables described in this section.</p>
 </div>
-<div class="section" id="json-web-token-requirements">
+<section id="json-web-token-requirements">
 <h2><span class="section-number">2.1. </span>JSON Web Token Requirements<a class="headerlink" href="#json-web-token-requirements" title="Permalink to this headline">¶</a></h2>
 <p>The JWT produced by the Identity Provider should provide the claims specified below. Some of them may have different names in your configuration, and can be specified in STIGMan’s environment variables if they differ from the default values:</p>
 <blockquote>
@@ -291,17 +290,17 @@
 </div>
 </div>
 <p>The fields highlighted in the sample token above control the access and information STIG Manager requires to allow users to access the application.  The token your OIDC provider creates does not need to look exactly like this, but where it differs the relevant claims must be specified using STIG Manager Environment Variables.</p>
-<div class="section" id="cross-origin-resource-sharing-cors">
+<section id="cross-origin-resource-sharing-cors">
 <h3><span class="section-number">2.1.1. </span>Cross-Origin Resource Sharing (CORS)<a class="headerlink" href="#cross-origin-resource-sharing-cors" title="Permalink to this headline">¶</a></h3>
 <p>If your deployment environment has your OIDC Provider and the STIGMan Client in different origins (ie. domains), you will need to specify the Client origin in the Web Origins configuration options of your OIDC Provider. This will set the <code class="docutils literal notranslate"><span class="pre">Access-Control-Allow-Origin</span></code> header in the OIDC Provider’s responses, and permit browsers to make subsequent requests to the OIDC provider.</p>
 <p>Alternatively, you could situate your OIDC Provider and the Client server behind a reverse proxy that is configured to present them both as coming from the same origin, avoiding the problem.</p>
-</div>
-<div class="section" id="service-account-client-setup">
+</section>
+<section id="service-account-client-setup">
 <h3><span class="section-number">2.1.2. </span>Service Account Client Setup<a class="headerlink" href="#service-account-client-setup" title="Permalink to this headline">¶</a></h3>
 <p>If you are using a service account to connect to the STIGMan API, the <code class="docutils literal notranslate"><span class="pre">STIGMAN_JWT_SERVICENAME_CLAIM</span></code> Environment Variable must specify the claim that will hold the client ID. The default is <code class="docutils literal notranslate"><span class="pre">clientId</span></code>. There may be other Keycloak configuration required.</p>
-</div>
-</div>
-<div class="section" id="scopes-and-privileges">
+</section>
+</section>
+<section id="scopes-and-privileges">
 <h2><span class="section-number">2.2. </span>Scopes, and Privileges<a class="headerlink" href="#scopes-and-privileges" title="Permalink to this headline">¶</a></h2>
 <p>The STIG Manager API restricts endpoint access using the “scope” claims in the JWT. See the <a class="reference external" href="https://github.com/NUWCDIVNPT/stig-manager/blob/main/api/source/specification/stig-manager.yaml">API specification</a> for details.</p>
 <p>The guide provided below maps scopes to various Realm Roles that are then assigned to Users.
@@ -311,15 +310,15 @@ These Roles and Scopes can be provided to users in various ways, using Client Ro
 <p class="admonition-title">Note</p>
 <p>The information provided below is just one way to configure Keycloak to provide a JWT that will work with STIG Manager. Please make sure you configure Keycloak in accordance with your organization’s Security Policy.</p>
 </div>
-</div>
-<div class="section" id="authentication-redhat-keycloak-11">
+</section>
+<section id="authentication-redhat-keycloak-11">
 <span id="keycloak"></span><h2><span class="section-number">2.3. </span>Authentication - RedHat Keycloak 11+<a class="headerlink" href="#authentication-redhat-keycloak-11" title="Permalink to this headline">¶</a></h2>
 <p>The web client is an OpenID Connect (OIDC) OAuth2 Relying Party and the API is an OAuth2 Resource Server. User authentication is provided by an external Identity Provider (IdP). All API access is controlled by OAUth2 JSON Web Tokens (JWTs) issued by the IdP. User roles are extracted from token claims, endpoint access is controlled by token scope.
 Keycloak is readily available, actively maintained by a major OSS vendor, supports Identity Brokering and User Federation, and is used by major DoD projects such as Air Force Iron Bank.
 Keycloak supports many External Identity Providers, but has only been tested using its own authentication.
 <a class="reference external" href="https://www.keycloak.org/documentation">More information about RedHat Keycloak.</a></p>
 <p>A sample Keycloak Realm import file, configured as specified below and containing no users, can be found <a class="reference external" href="https://github.com/NUWCDIVNPT/stig-manager/tree/main/docker/keycloak">in our github repo.</a></p>
-<div class="section" id="keycloak-configuration">
+<section id="keycloak-configuration">
 <h3><span class="section-number">2.3.1. </span>Keycloak Configuration<a class="headerlink" href="#keycloak-configuration" title="Permalink to this headline">¶</a></h3>
 <p>The following items in the Keycloak installation must be created and configured appropriately, and their values passed to STIG Manager in the appropriate Environment Variable:</p>
 <ul class="simple">
@@ -409,8 +408,8 @@ Keycloak supports many External Identity Providers, but has only been tested usi
 </ul>
 </div></blockquote>
 <p>For other settings, the default Keycloak settings should work.</p>
-</div>
-<div class="section" id="configure-stig-manager-to-use-your-authentication-provider">
+</section>
+<section id="configure-stig-manager-to-use-your-authentication-provider">
 <h3><span class="section-number">2.3.2. </span>Configure STIG Manager to use your Authentication provider<a class="headerlink" href="#configure-stig-manager-to-use-your-authentication-provider" title="Permalink to this headline">¶</a></h3>
 <p>Most commonly, STIG Manager will require the below Environment Variable to be specified, unless their default values are appropriate.  Check the <a class="reference internal" href="environment-variables.html#environment-variables"><span class="std std-ref">Environment Variables</span></a> document for an exhaustive list of Environment Variables and their default values.</p>
 <blockquote>
@@ -423,9 +422,9 @@ Keycloak supports many External Identity Providers, but has only been tested usi
 </ul>
 </div></blockquote>
 <p>A sample Keycloak image, recommended only for testing purposes, is available on <a class="reference external" href="https://hub.docker.com/repository/docker/nuwcdivnpt/stig-manager-auth">Docker Hub.</a> Most of the default values for the above Environment variables will work with this image.</p>
-</div>
-</div>
-</div>
+</section>
+</section>
+</section>
 
 
            </div>

@@ -4,7 +4,8 @@
 <html class="writer-html5" lang="en" >
 <head>
   <meta charset="utf-8" />
-  <meta content="These pages describe how to use STIG Manager." name="description" />
+  <meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+<meta content="These pages describe how to use STIG Manager." name="description" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   
@@ -14,10 +15,8 @@
   
   <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
   <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
-  <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
-  <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
-  <link rel="stylesheet" href="../_static/sphinxcontrib-images\LightBox2\lightbox2\dist\css\lightbox.css" type="text/css" />
   <link rel="stylesheet" href="../_static/css/custom.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/sphinxcontrib-images/LightBox2/lightbox2/css/lightbox.css" type="text/css" />
 
   
   
@@ -34,13 +33,13 @@
   
     
       <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
-        <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
         <script src="../_static/jquery.js"></script>
         <script src="../_static/underscore.js"></script>
         <script src="../_static/doctools.js"></script>
-        <script src="../_static/sphinxcontrib-images\LightBox2\lightbox2\dist\js\lightbox-plus-jquery.min.js"></script>
-        <script src="../_static/sphinxcontrib-images\LightBox2\lightbox2-customize\jquery-noconflict.js"></script>
         <script src="../_static/js/custom.js"></script>
+        <script src="../_static/sphinxcontrib-images/LightBox2/lightbox2/js/jquery-1.11.0.min.js"></script>
+        <script src="../_static/sphinxcontrib-images/LightBox2/lightbox2/js/lightbox.min.js"></script>
+        <script src="../_static/sphinxcontrib-images/LightBox2/lightbox2-customize/jquery-noconflict.js"></script>
     
     <script type="text/javascript" src="../_static/js/theme.js"></script>
 
@@ -96,7 +95,7 @@
               
             
             
-              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+              <p><span class="caption-text">Contents:</span></p>
 <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="../features/index.html">Introduction and Features</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Install, Setup, and Run</a><ul>
@@ -105,9 +104,9 @@
 <li class="toctree-l2"><a class="reference internal" href="db.html">3. Database</a></li>
 <li class="toctree-l2"><a class="reference internal" href="logging.html">4. STIG Manager Logging</a></li>
 <li class="toctree-l2"><a class="reference internal" href="reverse-proxy.html">5. STIG Manager TLS</a></li>
-<li class="toctree-l2"><a class="reference internal" href="cors.html">6. Cross-Origin Resource Sharing (CORS)</a></li>
-<li class="toctree-l2"><a class="reference internal" href="permissions-model.html">7. Permissions and Data</a></li>
-<li class="toctree-l2"><a class="reference internal" href="environment-variables.html">8. Environment Variables</a></li>
+<li class="toctree-l2"><a class="reference internal" href="permissions-model.html">6. Permissions and Data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="environment-variables.html">7. Environment Variables</a></li>
+<li class="toctree-l2"><a class="reference internal" href="securing.html">8. Securing and Assessing STIG Manager Deployments</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="../user-guide/index.html">For Users</a></li>
@@ -115,7 +114,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../the-project/index.html">The STIG Manager Project</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../reference/index.html">Terminology and Concepts</a></li>
 </ul>
-<p class="caption" role="heading"><span class="caption-text">Common Tasks:</span></p>
+<p><span class="caption-text">Common Tasks:</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../features/common-tasks.html">Build A Collection with .ckl or XCCDF Files</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../features/common-tasks.html#review-a-stig-on-an-asset">Review a STIG on an Asset</a></li>
@@ -204,15 +203,15 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
             
-  <div class="section" id="install-setup-and-run">
+  <section id="install-setup-and-run">
 <span id="installation-and-setup-index"></span><h1>Install, Setup, and Run<a class="headerlink" href="#install-setup-and-run" title="Permalink to this headline">¶</a></h1>
 <p>These pages describe how to deploy STIG Manager.</p>
 <div class="toctree-wrapper compound">
-<p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<p><span class="caption-text">Contents:</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="installation-and-setup.html">1. STIG Manager OSS Setup and Technical Information</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="installation-and-setup.html#components">1.1. Components</a></li>
-<li class="toctree-l2"><a class="reference internal" href="installation-and-setup.html#setup-options">1.2. Setup Options</a></li>
+<li class="toctree-l2"><a class="reference internal" href="installation-and-setup.html#common-components">1.1. Common Components</a></li>
+<li class="toctree-l2"><a class="reference internal" href="installation-and-setup.html#deployment-scenarios-for-product-evaluation">1.2. Deployment Scenarios for product evaluation</a></li>
 <li class="toctree-l2"><a class="reference internal" href="installation-and-setup.html#additional-suggested-configuration">1.3. Additional Suggested Configuration</a></li>
 <li class="toctree-l2"><a class="reference internal" href="installation-and-setup.html#first-steps">1.4. First Steps</a></li>
 </ul>
@@ -234,15 +233,18 @@
 <li class="toctree-l2"><a class="reference internal" href="reverse-proxy.html#stig-manager-with-nginx-for-tls">5.2. STIG Manager with nginx for TLS</a></li>
 </ul>
 </li>
-<li class="toctree-l1"><a class="reference internal" href="cors.html">6. Cross-Origin Resource Sharing (CORS)</a></li>
-<li class="toctree-l1"><a class="reference internal" href="permissions-model.html">7. Permissions and Data</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="permissions-model.html#data-model">7.1. Data Model</a></li>
+<li class="toctree-l1"><a class="reference internal" href="permissions-model.html">6. Permissions and Data</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="permissions-model.html#data-model">6.1. Data Model</a></li>
 </ul>
 </li>
-<li class="toctree-l1"><a class="reference internal" href="environment-variables.html">8. Environment Variables</a></li>
+<li class="toctree-l1"><a class="reference internal" href="environment-variables.html">7. Environment Variables</a></li>
+<li class="toctree-l1"><a class="reference internal" href="securing.html">8. Securing and Assessing STIG Manager Deployments</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="securing.html#api-and-web-client">8.1. API and Web Client</a></li>
+</ul>
+</li>
 </ul>
 </div>
-</div>
+</section>
 
 
            </div>

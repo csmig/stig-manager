@@ -4,7 +4,8 @@
 <html class="writer-html5" lang="en" >
 <head>
   <meta charset="utf-8" />
-  
+  <meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   
   <title>STIG Manager Requirements and Dependencies &mdash; STIG Manager  documentation</title>
@@ -13,10 +14,8 @@
   
   <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
   <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
-  <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
-  <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
-  <link rel="stylesheet" href="../_static/sphinxcontrib-images\LightBox2\lightbox2\dist\css\lightbox.css" type="text/css" />
   <link rel="stylesheet" href="../_static/css/custom.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/sphinxcontrib-images/LightBox2/lightbox2/css/lightbox.css" type="text/css" />
 
   
   
@@ -33,13 +32,13 @@
   
     
       <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
-        <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
         <script src="../_static/jquery.js"></script>
         <script src="../_static/underscore.js"></script>
         <script src="../_static/doctools.js"></script>
-        <script src="../_static/sphinxcontrib-images\LightBox2\lightbox2\dist\js\lightbox-plus-jquery.min.js"></script>
-        <script src="../_static/sphinxcontrib-images\LightBox2\lightbox2-customize\jquery-noconflict.js"></script>
         <script src="../_static/js/custom.js"></script>
+        <script src="../_static/sphinxcontrib-images/LightBox2/lightbox2/js/jquery-1.11.0.min.js"></script>
+        <script src="../_static/sphinxcontrib-images/LightBox2/lightbox2/js/lightbox.min.js"></script>
+        <script src="../_static/sphinxcontrib-images/LightBox2/lightbox2-customize/jquery-noconflict.js"></script>
     
     <script type="text/javascript" src="../_static/js/theme.js"></script>
 
@@ -95,13 +94,14 @@
               
             
             
-              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+              <p><span class="caption-text">Contents:</span></p>
 <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="../features/index.html">Introduction and Features</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../installation-and-setup/index.html">Install, Setup, and Run</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../user-guide/index.html">For Users</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../admin-guide/index.html">For Admins</a></li>
 <li class="toctree-l1 current"><a class="reference internal" href="index.html">The STIG Manager Project</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="security.html">Security Efforts</a></li>
 <li class="toctree-l2"><a class="reference internal" href="contributing.html">STIG Manager Contribution Guide</a></li>
 <li class="toctree-l2"><a class="reference internal" href="testing.html">STIG Manager Testing Guide</a></li>
 <li class="toctree-l2"><a class="reference internal" href="documentation.html">STIG Manager Documentation</a></li>
@@ -124,7 +124,7 @@
 </li>
 <li class="toctree-l1"><a class="reference internal" href="../reference/index.html">Terminology and Concepts</a></li>
 </ul>
-<p class="caption" role="heading"><span class="caption-text">Common Tasks:</span></p>
+<p><span class="caption-text">Common Tasks:</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../features/common-tasks.html">Build A Collection with .ckl or XCCDF Files</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../features/common-tasks.html#review-a-stig-on-an-asset">Review a STIG on an Asset</a></li>
@@ -215,12 +215,12 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
             
-  <div class="section" id="stig-manager-requirements-and-dependencies">
+  <section id="stig-manager-requirements-and-dependencies">
 <span id="requirements-and-dependencies"></span><h1>STIG Manager Requirements and Dependencies<a class="headerlink" href="#stig-manager-requirements-and-dependencies" title="Permalink to this headline">¶</a></h1>
 <p>STIG Manager is under active development. Only the latest <a class="reference external" href="https://github.com/NUWCDIVNPT/stig-manager/releases">release</a> will be supported. If you experience any problems, we encourage you to make sure you are running the latest release before creating an issue.</p>
-<div class="section" id="requirements">
+<section id="requirements">
 <h2>Requirements<a class="headerlink" href="#requirements" title="Permalink to this headline">¶</a></h2>
-<div class="section" id="software-requirements">
+<section id="software-requirements">
 <h3>Software Requirements<a class="headerlink" href="#software-requirements" title="Permalink to this headline">¶</a></h3>
 <ul class="simple">
 <li><p>Node.js 14+</p></li>
@@ -234,17 +234,17 @@
 <li><p>NodeJs provided by registry1.dso.mil/ironbank/opensource/nodejs/nodejs14:latest image on Iron Bank</p></li>
 <li><p>MySQL provided by mysql:latest image on Docker Hub</p></li>
 </ul>
-</div>
-<div class="section" id="hardware-requirements">
+</section>
+<section id="hardware-requirements">
 <h3>Hardware Requirements<a class="headerlink" href="#hardware-requirements" title="Permalink to this headline">¶</a></h3>
 <p>Relatively lightweight, but hardware requirements are still being determined.</p>
-</div>
-</div>
-<div class="section" id="dependencies">
+</section>
+</section>
+<section id="dependencies">
 <h2>Dependencies<a class="headerlink" href="#dependencies" title="Permalink to this headline">¶</a></h2>
 <p>Please see the <a class="reference external" href="https://github.com/NUWCDIVNPT/stig-manager/blob/main/api/source/package-lock.json">package-lock.json file in our repo.</a></p>
-</div>
-</div>
+</section>
+</section>
 
 
            </div>
