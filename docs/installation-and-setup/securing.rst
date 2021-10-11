@@ -1,6 +1,10 @@
 Securing and Assessing STIG Manager Deployments
 ##########################################################
 
+.. warning::
+  You must secure and assess your deployments in compliance with your individual security requirements. The discussions below are educational. Encouragement to do things a particular way does not constitute advice that overrides your specific requirements.
+
+
 A STIG Manager application can be orchestrated several ways, each with unique security requirements. We know many deployments must comply with the Application Security and Development STIG - commonly known as the ASD. Therefore we have organized this section around ASD requirements, to provide guidance for those tasked with securing and assessing STIG-compliant STIG Manager deployments.
 
 .. note::
@@ -10,6 +14,38 @@ Securing your deployment
 ========================
 
 These are some common security topics to review when designing a secure STIG Manager application deployment.
+
+
+Container Security
+------------------
+
+We strongly encourage STIG Manager deployments to be containerized. Containerization has built-in security advantages such as immutability, image signing, transparency, modularity, small attack surface, secure updates, and environment parity. The content of container images and their runtime behavior require security evaluations, as in traditional deployments, but with the advantage of image layer inheritance.
+
+.. note::
+  If you are subject to ASD-compliance you are likely subject to other DoD requirements. We encourage an in-depth familiarity with the `Container Image Creation and Deployment Guide <https://dl.dod.cyber.mil/wp-content/uploads/devsecops/pdf/DevSecOps_Enterprise_Container_Image_Creation_and_Deployment_Guide_2.6-Public-Release.pdf>`_ from DISA. The STIG Manager Project adheres to DISA image creation guidance when defining and building container images, and we encourage STIG Manager deployments to follow the container deployment guidance.
+
+Image choice
+~~~~~~~~~~~~
+
+Many deployments might directly orchestrate `one of our published images <https://hub.docker.com/r/nuwcdivnpt/stig-manager>`_. For most ASD-compliant deployments, you should deploy one of our Iron Bank based images. Those images follow the naming convention ``nuwcdivnpt/stig-manager:[SEMANTIC-VERSION]-ironbank``. Example: ``nuwcdivnpt/stig-manager:1.0.40-ironbank``. Our Iron Bank-based images are built from the Iron Bank Node.js image, a hardened image that is based on the Iron Bank Universal Base Image (UBI). The UBI is a hardened Red Hat image that has been configured in accordance with applicable DoD requirements.
+
+Some deployments might prefer a custom container image of STIG Manager created by `modifying the Dockerfile from our repo <https://github.com/NUWCDIVNPT/stig-manager/blob/main/Dockerfile>`_ or basing their custom image on one of our published images. In these cases, we strongly encourage use of the relevant Iron Bank base images. To build from the actual Iron Bank Node.js or UBI image, you will need an account at https://ironbank.dso.mil/ which is a CAC-required service.
+
+If you need to understand how a container image was built, we encourage familiarity with the `docker history` command.
+
+
+Vulnerability scanning
+~~~~~~~~~~~~~~~~~~~~~~
+
+We encourage all deployments to perform vulnerability scans against our published container images. The Project scans our published images with OpenSCAP and proprietary Amazon Web Service and Azure tools, which report no security vulnerabilities. However, we do not currently publish those results but efforts are underway in FY22 to make then available.
+
+An alternative to trusting our vulnerability scanning that we encourage is for deployments to standup their own container registry with embedded image scanning. Choices include the open-source Harbor registry with buil-in Clair testing, and cloud-based offerings from Amazon, Azure and Google.
+
+Validating image signatures
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Before deploying any container image, we strongly encourage verifying the image was created by a trusted party. This is a critical step for any containerized deployment. The Project signs each published image using Docker Content Trust and Notary. 
+
 
 Data Flow
 ---------
@@ -46,7 +82,7 @@ The Web Client is a single-page application (SPA) that executes entirely in the 
 
 Our Web Client will not engage in the OIDC implicit flow because it is not secure enough. To work with the Web Client, the OIDC Provider must provide tokens using the OIDC Authorization Code Flow with Proof Key for Code Exchange (PKCE). To work with bots such as STIG Manager Watcher, the OIDC Provider should support the client_credentials flow with Signed JWT authentication.
 
-If your OIDC Provider issues refresh tokens (recommended for a better user experience), those tokens can have longer lifetimes than the access_token but should be rotated and limited to a single use. Policies vary greatly, but refresh token lifetime is sometimes correlated to the SSO session lifetime. Attempts to reuse a refresh_token should be logged by the OIDC Ppovider and generate alerts. 
+If your OIDC Provider issues refresh tokens (encouraged for a better user experience), those tokens can have longer lifetimes than the access_token but should be rotated and limited to a single use. Policies vary greatly, but refresh token lifetime is sometimes correlated to the SSO session lifetime. Attempts to reuse a refresh_token should be logged by the OIDC Ppovider and generate alerts. 
 
 
 User sessions

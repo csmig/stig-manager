@@ -107,11 +107,12 @@
 <li class="toctree-l2"><a class="reference internal" href="environment-variables.html">7. Environment Variables</a></li>
 <li class="toctree-l2 current"><a class="current reference internal" href="#">8. Securing and Assessing STIG Manager Deployments</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#securing-your-deployment">8.1. Securing your deployment</a><ul>
-<li class="toctree-l4"><a class="reference internal" href="#data-flow">8.1.1. Data Flow</a></li>
-<li class="toctree-l4"><a class="reference internal" href="#rest-openid-connect-oidc-and-oauth2">8.1.2. REST, OpenID Connect (OIDC), and OAuth2</a></li>
-<li class="toctree-l4"><a class="reference internal" href="#user-sessions">8.1.3. User sessions</a></li>
-<li class="toctree-l4"><a class="reference internal" href="#database">8.1.4. Database</a></li>
-<li class="toctree-l4"><a class="reference internal" href="#logging-and-analysis">8.1.5. Logging and Analysis</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#container-security">8.1.1. Container Security</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#data-flow">8.1.2. Data Flow</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#rest-openid-connect-oidc-and-oauth2">8.1.3. REST, OpenID Connect (OIDC), and OAuth2</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#user-sessions">8.1.4. User sessions</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#database">8.1.5. Database</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#logging-and-analysis">8.1.6. Logging and Analysis</a></li>
 </ul>
 </li>
 <li class="toctree-l3"><a class="reference internal" href="#assessing-your-deployment">8.2. Assessing your deployment</a><ul>
@@ -220,6 +221,10 @@
             
   <section id="securing-and-assessing-stig-manager-deployments">
 <h1><span class="section-number">8. </span>Securing and Assessing STIG Manager Deployments<a class="headerlink" href="#securing-and-assessing-stig-manager-deployments" title="Permalink to this headline">¶</a></h1>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>You must secure and assess your deployments in compliance with your individual security requirements. The discussions below are educational. Encouragement to do things a particular way does not constitute advice that overrides your specific requirements.</p>
+</div>
 <p>A STIG Manager application can be orchestrated several ways, each with unique security requirements. We know many deployments must comply with the Application Security and Development STIG - commonly known as the ASD. Therefore we have organized this section around ASD requirements, to provide guidance for those tasked with securing and assessing STIG-compliant STIG Manager deployments.</p>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
@@ -228,8 +233,29 @@
 <section id="securing-your-deployment">
 <h2><span class="section-number">8.1. </span>Securing your deployment<a class="headerlink" href="#securing-your-deployment" title="Permalink to this headline">¶</a></h2>
 <p>These are some common security topics to review when designing a secure STIG Manager application deployment.</p>
+<section id="container-security">
+<h3><span class="section-number">8.1.1. </span>Container Security<a class="headerlink" href="#container-security" title="Permalink to this headline">¶</a></h3>
+<p>We strongly encourage STIG Manager deployments to be containerized. Containerization has built-in security advantages such as immutability, image signing, transparency, modularity, small attack surface, secure updates, and environment parity. The content of container images and their runtime behavior require security evaluations, as in traditional deployments, but with the advantage of image layer inheritance.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>If you are subject to ASD-compliance you are likely subject to other DoD requirements. We encourage an in-depth familiarity with the <a class="reference external" href="https://dl.dod.cyber.mil/wp-content/uploads/devsecops/pdf/DevSecOps_Enterprise_Container_Image_Creation_and_Deployment_Guide_2.6-Public-Release.pdf">Container Image Creation and Deployment Guide</a> from DISA. The STIG Manager Project adheres to DISA image creation guidance when defining and building container images, and we encourage STIG Manager deployments to follow the container deployment guidance.</p>
+</div>
+<section id="image-choice">
+<h4><span class="section-number">8.1.1.1. </span>Image choice<a class="headerlink" href="#image-choice" title="Permalink to this headline">¶</a></h4>
+<p>Deployments might directly orchestrate <a class="reference external" href="https://hub.docker.com/r/nuwcdivnpt/stig-manager">one of our published images</a>. For most ASD-compliant deployments, you should deploy one of our Iron Bank based images. Those images follow the naming convention <code class="docutils literal notranslate"><span class="pre">nuwcdivnpt/stig-manager:[SEMANTIC-VERSION]-ironbank</span></code>. Example: <code class="docutils literal notranslate"><span class="pre">nuwcdivnpt/stig-manager:1.0.40-ironbank</span></code>. Our Iron Bank-based images are built from the Iron Bank Node.js image, a hardened image that is based on the Iron Bank Universal Base Image (UBI). The UBI is a hardened Red Hat image that has been configured in accordance with applicable DoD requirements.</p>
+<p>Some deployments might prefer a custom container image of STIG Manager created by <a class="reference external" href="https://github.com/NUWCDIVNPT/stig-manager/blob/main/Dockerfile">modifying the Dockerfile from our repo</a> or basing their custom image on one of our published images. In these cases, we strongly encourage use of the relevant Iron Bank base images. To build from the actual Iron Bank Node.js or UBI image, you will need an account at <a class="reference external" href="https://ironbank.dso.mil/">https://ironbank.dso.mil/</a> which is a CAC-required service.</p>
+</section>
+<section id="vulnerability-scanning">
+<h4><span class="section-number">8.1.1.2. </span>Vulnerability scanning<a class="headerlink" href="#vulnerability-scanning" title="Permalink to this headline">¶</a></h4>
+<p>We encourage all deployments to perform vulnerability scans against our published container images. The Project scans our published images with OpenSCAP and proprietary Amazon Web Service and Azure tools, which report no security vulnerabilities. However, we do not currently publish those results but efforts are underway in FY22 to make then available.</p>
+</section>
+<section id="validating-image-signatures">
+<h4><span class="section-number">8.1.1.3. </span>Validating image signatures<a class="headerlink" href="#validating-image-signatures" title="Permalink to this headline">¶</a></h4>
+<p>Before deploying any container image, we strongly encourage verifying the image was created by a trusted party. This is a critical step for any containerized deployment. The Project signs each published image using Docker Content Trust and Notary.</p>
+</section>
+</section>
 <section id="data-flow">
-<h3><span class="section-number">8.1.1. </span>Data Flow<a class="headerlink" href="#data-flow" title="Permalink to this headline">¶</a></h3>
+<h3><span class="section-number">8.1.2. </span>Data Flow<a class="headerlink" href="#data-flow" title="Permalink to this headline">¶</a></h3>
 <p>The STIG Manager API and Web Client exchange data across a REST architecture that enforces the STIG Manager <a class="reference external" href="https://github.com/NUWCDIVNPT/stig-manager/blob/main/api/source/specification/stig-manager.yaml">OpenAPI 3 Specification (OAS) definition</a>.</p>
 <p>The API grants or denies endpoint access based on the OAuth2 <code class="docutils literal notranslate"><span class="pre">scope</span></code> claims listed in each endpoint’s <code class="docutils literal notranslate"><span class="pre">security.oauth</span></code> property in the OAS.</p>
 <p>The API grants or denies access to STIG Manager data objects (Collections, Assets, Asset/STIG maps, and Reviews) based on the the OAuth2 <code class="docutils literal notranslate"><span class="pre">username</span></code> claim (or configured equivalent). The username value indexes into the internal STIG Manager discretionary access control (DAC) system which includes per-Collection role based access control (RBAC) lists (i.e, Collection Grants and Restricted User Access Lists). We have designed the access control logic with the goal of being assessed as ASD-compliant by local security requirements.</p>
@@ -249,7 +275,7 @@
                 </a><figcaption>Data Flow Diagram</figcaption>
             </figure></section>
 <section id="rest-openid-connect-oidc-and-oauth2">
-<h3><span class="section-number">8.1.2. </span>REST, OpenID Connect (OIDC), and OAuth2<a class="headerlink" href="#rest-openid-connect-oidc-and-oauth2" title="Permalink to this headline">¶</a></h3>
+<h3><span class="section-number">8.1.3. </span>REST, OpenID Connect (OIDC), and OAuth2<a class="headerlink" href="#rest-openid-connect-oidc-and-oauth2" title="Permalink to this headline">¶</a></h3>
 <p>Several ASD checks refer to SOAP, WS-Security and SAML, early protocols for implementing and securing online APIs. None of the checks refer to REST or OIDC/OAuth2, modern alternatives that are commonly used in cloud-native software such as STIG Manager. The checks that address SOAP, etc. state that if you aren’t using those technologies, the assessment is ‘not applicable’.</p>
 <div class="admonition warning">
 <p class="admonition-title">Warning</p>
@@ -258,10 +284,10 @@
 <p>The Web Client on startup redirects users to the OIDC Provider to authenticate and obtain an access token that defines the level of API access the user grants that client. For most ASD-compliant deployments, the connection to the OIDC Provider’s authorization_endpoint will use MTLS and CAC PKI.</p>
 <p>The Web Client is a single-page application (SPA) that executes entirely in the browser. Browsers are low- to zero-trust environments where OAuth2 access tokens should have short lifetimes to mitigate the risk of token diversion. Just what is considered ‘short’ is for you (or your organization) to decide, but 15 minutes or even less is not uncommon.</p>
 <p>Our Web Client will not engage in the OIDC implicit flow because it is not secure enough. To work with the Web Client, the OIDC Provider must provide tokens using the OIDC Authorization Code Flow with Proof Key for Code Exchange (PKCE). To work with bots such as STIG Manager Watcher, the OIDC Provider should support the client_credentials flow with Signed JWT authentication.</p>
-<p>If your OIDC Provider issues refresh tokens (recommended for a better user experience), those tokens can have longer lifetimes than the access_token but should be rotated and limited to a single use. Policies vary greatly, but refresh token lifetime is sometimes correlated to the SSO session lifetime. Attempts to reuse a refresh_token should be logged by the OIDC Ppovider and generate alerts.</p>
+<p>If your OIDC Provider issues refresh tokens (encouraged for a better user experience), those tokens can have longer lifetimes than the access_token but should be rotated and limited to a single use. Policies vary greatly, but refresh token lifetime is sometimes correlated to the SSO session lifetime. Attempts to reuse a refresh_token should be logged by the OIDC Ppovider and generate alerts.</p>
 </section>
 <section id="user-sessions">
-<h3><span class="section-number">8.1.3. </span>User sessions<a class="headerlink" href="#user-sessions" title="Permalink to this headline">¶</a></h3>
+<h3><span class="section-number">8.1.4. </span>User sessions<a class="headerlink" href="#user-sessions" title="Permalink to this headline">¶</a></h3>
 <div class="admonition warning">
 <p class="admonition-title">Warning</p>
 <p>You must secure your deployment in compliance with your individual security requirements. The discussion below is educational and does not address your specific requirements. It is assumed the reader has prerequisite knowledge of their specific OIDC Provider and any user federation or identify brokering features it is configured to use.</p>
@@ -269,7 +295,7 @@
 <p>Several ASD checks address the management of user login sessions. It is important to understand how your OIDC Provider controls user sessions, performs user management, and audits its activities</p>
 </section>
 <section id="database">
-<h3><span class="section-number">8.1.4. </span>Database<a class="headerlink" href="#database" title="Permalink to this headline">¶</a></h3>
+<h3><span class="section-number">8.1.5. </span>Database<a class="headerlink" href="#database" title="Permalink to this headline">¶</a></h3>
 <div class="admonition warning">
 <p class="admonition-title">Warning</p>
 <p>You must secure your deployment in compliance with your individual security requirements. The discussion below is educational and does not address your specific requirements. It is assumed the reader has prerequisite knowledge of the MySQL database and how to perform PKI user authentication (if required), secure data storage, and secure data backups.</p>
@@ -277,7 +303,7 @@
 <p>Several ASD checks address the management of data storage. It is important to understand how to configure MySQL in accordance with local security requirements, such as the Oracle MySQL 8.0 STIG. Ideally, your organization will provision MySQL instances from a hardened cloud subscription that requires a smaller set of customer-responsible security settings.</p>
 </section>
 <section id="logging-and-analysis">
-<h3><span class="section-number">8.1.5. </span>Logging and Analysis<a class="headerlink" href="#logging-and-analysis" title="Permalink to this headline">¶</a></h3>
+<h3><span class="section-number">8.1.6. </span>Logging and Analysis<a class="headerlink" href="#logging-and-analysis" title="Permalink to this headline">¶</a></h3>
 </section>
 </section>
 <section id="assessing-your-deployment">
