@@ -15,6 +15,9 @@ Securing your deployment
 
 These are some common security topics to review when designing a secure STIG Manager application deployment.
 
+  - bullet
+  - bullet
+
 
 Container Security
 ------------------
@@ -27,15 +30,19 @@ We strongly encourage STIG Manager deployments to be containerized. Containeriza
 Image choice
 ~~~~~~~~~~~~
 
-Deployments might directly orchestrate `one of our published images <https://hub.docker.com/r/nuwcdivnpt/stig-manager>`_. For most ASD-compliant deployments, you should deploy one of our Iron Bank based images. Those images follow the naming convention ``nuwcdivnpt/stig-manager:[SEMANTIC-VERSION]-ironbank``. Example: ``nuwcdivnpt/stig-manager:1.0.40-ironbank``. Our Iron Bank-based images are built from the Iron Bank Node.js image, a hardened image that is based on the Iron Bank Universal Base Image (UBI). The UBI is a hardened Red Hat image that has been configured in accordance with applicable DoD requirements.
+Many deployments might directly orchestrate `one of our published images <https://hub.docker.com/r/nuwcdivnpt/stig-manager>`_. For most ASD-compliant deployments, you should deploy one of our Iron Bank based images. Those images follow the naming convention ``nuwcdivnpt/stig-manager:[SEMANTIC-VERSION]-ironbank``. Example: ``nuwcdivnpt/stig-manager:1.0.40-ironbank``. Our Iron Bank-based images are built from the Iron Bank Node.js image, a hardened image that is based on the Iron Bank Universal Base Image (UBI). The UBI is a hardened Red Hat image that has been configured in accordance with applicable DoD requirements.
 
 Some deployments might prefer a custom container image of STIG Manager created by `modifying the Dockerfile from our repo <https://github.com/NUWCDIVNPT/stig-manager/blob/main/Dockerfile>`_ or basing their custom image on one of our published images. In these cases, we strongly encourage use of the relevant Iron Bank base images. To build from the actual Iron Bank Node.js or UBI image, you will need an account at https://ironbank.dso.mil/ which is a CAC-required service.
+
+If you need to understand how a container image was built, we encourage familiarity with the `docker history` command.
 
 
 Vulnerability scanning
 ~~~~~~~~~~~~~~~~~~~~~~
 
 We encourage all deployments to perform vulnerability scans against our published container images. The Project scans our published images with OpenSCAP and proprietary Amazon Web Service and Azure tools, which report no security vulnerabilities. However, we do not currently publish those results but efforts are underway in FY22 to make then available.
+
+An alternative to trusting our vulnerability scanning that we encourage is for deployments to standup their own container registry with embedded image scanning. Choices include the open-source Harbor registry with buil-in Clair testing, and cloud-based offerings from Amazon, Azure and Google.
 
 Validating image signatures
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -54,14 +61,15 @@ The API grants or denies access to STIG Manager data objects (Collections, Asset
 
 Both claims are contained in OAuth2 JWT formatted access_tokens issued by an OIDC Provider to remote clients, such as the Project's Web Client and the STIG Manager Watcher bot. Communication between the API and clients include the access_token and should occur using TLS but do not require Mutual TLS (MTLS).
 
-Correct implementation of the STIG Manager data flow, especially the DAC and RBAC logic, is certified by `automated endpoint testing <https://github.com/NUWCDIVNPT/stig-manager/blob/main/.github/workflows/api-tests.yml>`_ that is performed when any change to the codebase is proposed (a Pull Request or PR). Over 2000 assertions are evaluated using `tests you can review here <https://github.com/NUWCDIVNPT/stig-manager/tree/main/test/api>`_
+Correct implementation of the STIG Manager data flow, especially the DAC and RBAC logic, is verified by an `automated workflow <https://github.com/NUWCDIVNPT/stig-manager/blob/main/.github/workflows/api-tests.yml>`_ that is performed when any change to the codebase is proposed (a Pull Request or PR). Over 2000 assertions are evaluated using `tests you can review here <https://github.com/NUWCDIVNPT/stig-manager/tree/main/test/api>`_
 
 .. thumbnail:: /assets/images/data-flow-01b.svg
   :width: 75%
   :show_caption: True 
   :title: Data Flow Diagram
 
-  
+|
+
 REST, OpenID Connect (OIDC), and OAuth2
 ---------------------------------------
 
@@ -122,7 +130,7 @@ You can download a CKL file containing our self-evaluations or view them here.
 
 .. csv-table:: Table Title
   :file: asd-query-full.csv
-  :widths: 10, 25, 25
+  :widths: 10, 25, 10, 25 
   :header-rows: 1
   :stub-columns: 1
   :align: left

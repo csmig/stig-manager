@@ -4,8 +4,7 @@
 <html class="writer-html5" lang="en" >
 <head>
   <meta charset="utf-8" />
-  <meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
-
+  
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   
   <title>Terminology and Concepts &mdash; STIG Manager  documentation</title>
@@ -14,8 +13,10 @@
   
   <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
   <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/sphinxcontrib-images/LightBox2/lightbox2/dist/css/lightbox.css" type="text/css" />
   <link rel="stylesheet" href="../_static/css/custom.css" type="text/css" />
-  <link rel="stylesheet" href="../_static/sphinxcontrib-images/LightBox2/lightbox2/css/lightbox.css" type="text/css" />
 
   
   
@@ -32,13 +33,13 @@
   
     
       <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+        <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
         <script src="../_static/jquery.js"></script>
         <script src="../_static/underscore.js"></script>
         <script src="../_static/doctools.js"></script>
-        <script src="../_static/js/custom.js"></script>
-        <script src="../_static/sphinxcontrib-images/LightBox2/lightbox2/js/jquery-1.11.0.min.js"></script>
-        <script src="../_static/sphinxcontrib-images/LightBox2/lightbox2/js/lightbox.min.js"></script>
+        <script src="../_static/sphinxcontrib-images/LightBox2/lightbox2/dist/js/lightbox-plus-jquery.min.js"></script>
         <script src="../_static/sphinxcontrib-images/LightBox2/lightbox2-customize/jquery-noconflict.js"></script>
+        <script src="../_static/js/custom.js"></script>
     
     <script type="text/javascript" src="../_static/js/theme.js"></script>
 
@@ -93,7 +94,7 @@
               
             
             
-              <p><span class="caption-text">Contents:</span></p>
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
 <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="../features/index.html">Introduction and Features</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../installation-and-setup/index.html">Install, Setup, and Run</a></li>
@@ -102,7 +103,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../the-project/index.html">The STIG Manager Project</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Terminology and Concepts</a></li>
 </ul>
-<p><span class="caption-text">Common Tasks:</span></p>
+<p class="caption" role="heading"><span class="caption-text">Common Tasks:</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../features/common-tasks.html">Build A Collection with .ckl or XCCDF Files</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../features/common-tasks.html#review-a-stig-on-an-asset">Review a STIG on an Asset</a></li>
@@ -189,15 +190,15 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
             
-  <section id="terminology-and-concepts">
+  <div class="section" id="terminology-and-concepts">
 <span id="terminology"></span><h1>Terminology and Concepts<a class="headerlink" href="#terminology-and-concepts" title="Permalink to this headline">¶</a></h1>
 <p>This is a glossary with definition terms for thing like <a class="reference internal" href="#term-Asset"><span class="xref std std-term">Asset</span></a>:</p>
 <dl class="glossary">
-<dt id="term-Asset">Asset</dt><dd><p>An Asset is any component to which a STIG may be attached. Assets are created and changed in the Collection Configuration screen. To conform to the Navy RMF Process, an Asset must have a Name, IP Address, MAC Address, and Fully Qualified Domain Name unless it is designated “Non-Computing.” The Asset Properties screen allows you to set all these properties, as well as attach STIGs.</p>
+<dt id="term-Asset">Asset<a class="headerlink" href="#term-Asset" title="Permalink to this term">¶</a></dt><dd><p>An Asset is any component to which a STIG may be attached. Assets are created and changed in the Collection Configuration screen. To conform to the Navy RMF Process, an Asset must have a Name, IP Address, MAC Address, and Fully Qualified Domain Name unless it is designated “Non-Computing.” The Asset Properties screen allows you to set all these properties, as well as attach STIGs.</p>
 </dd>
-<dt id="term-checklist">checklist</dt><dd><p>The list of Rules that compose a STIG, and optionally, their Evaluations. Often encoded in the <a class="reference internal" href="#term-ckl"><span class="xref std std-term">ckl</span></a> format.</p>
+<dt id="term-checklist">checklist<a class="headerlink" href="#term-checklist" title="Permalink to this term">¶</a></dt><dd><p>The list of Rules that compose a STIG, and optionally, their Evaluations. Often encoded in the <a class="reference internal" href="#term-ckl"><span class="xref std std-term">ckl</span></a> format.</p>
 </dd>
-<dt id="term-ckl">ckl</dt><dd><p>An xml file format used by some common STIG tools. STIG Manager can import and export checklists in the .ckl format compatible with STIG Viewer and eMASS.</p>
+<dt id="term-ckl">ckl<a class="headerlink" href="#term-ckl" title="Permalink to this term">¶</a></dt><dd><p>An xml file format used by some common STIG tools. STIG Manager can import and export checklists in the .ckl format compatible with STIG Viewer and eMASS.</p>
 <p>STIG Manager maps its own data fields into and out of .ckl format as follows:</p>
 <table class="colwidths-given tight-table docutils align-default" id="id1">
 <caption><span class="caption-text">STIG Manager &lt;-&gt; STIG Viewer &lt;-&gt; .ckl Mappings:</span><a class="headerlink" href="#id1" title="Permalink to this table">¶</a></caption>
@@ -232,7 +233,7 @@
 <p>STIG Manager will import and export .ckl files differently depending on the values of certain .ckl elements and Asset metadata. See <a class="reference internal" href="../user-guide/user-guide.html#ckl-processing"><span class="std std-ref">A Note on .CKL Processing</span></a> for more information.</p>
 </div>
 </dd>
-<dt id="term-Collection">Collection</dt><dd><p>The Collection is STIG Manager’s primary organizational component.</p>
+<dt id="term-Collection">Collection<a class="headerlink" href="#term-Collection" title="Permalink to this term">¶</a></dt><dd><p>The Collection is STIG Manager’s primary organizational component.</p>
 <p>Collections are composed of:</p>
 <blockquote>
 <div><ul class="simple">
@@ -244,13 +245,13 @@
 </div></blockquote>
 <p><strong>Collections can be structured as an RMF Package, but do not need to be.</strong> It is recommended that large packages be broken up into more easily-manageable Collections, to which Users can be granted higher access and, therefore, greater autonomy.</p>
 </dd>
-<dt id="term-Evaluation">Evaluation</dt><dd><p>The Result or compliance state, either by a user or automated process, of a Review for a particular RuleId on an Asset.</p>
+<dt id="term-Evaluation">Evaluation<a class="headerlink" href="#term-Evaluation" title="Permalink to this term">¶</a></dt><dd><p>The Result or compliance state, either by a user or automated process, of a Review for a particular RuleId on an Asset.</p>
 </dd>
-<dt id="term-Finding">Finding</dt><dd><p>See <a class="reference internal" href="#term-Review"><span class="xref std std-term">Review</span></a></p>
+<dt id="term-Finding">Finding<a class="headerlink" href="#term-Finding" title="Permalink to this term">¶</a></dt><dd><p>See <a class="reference internal" href="#term-Review"><span class="xref std std-term">Review</span></a></p>
 </dd>
-<dt id="term-Package">Package</dt><dd><p>An RMF Process term referring to a group of artifacts describing a System that is submitted for ATO consideration. Within STIG Manager, a Package can be represented as a Collection or group of Collections.</p>
+<dt id="term-Package">Package<a class="headerlink" href="#term-Package" title="Permalink to this term">¶</a></dt><dd><p>An RMF Process term referring to a group of artifacts describing a System that is submitted for ATO consideration. Within STIG Manager, a Package can be represented as a Collection or group of Collections.</p>
 </dd>
-<dt id="term-Review">Review</dt><dd><p>A Review is the result of an Evaluation of a STIG Rule that a User or automated tool has performed. A Review has several components:</p>
+<dt id="term-Review">Review<a class="headerlink" href="#term-Review" title="Permalink to this term">¶</a></dt><dd><p>A Review is the result of an Evaluation of a STIG Rule that a User or automated tool has performed. A Review has several components:</p>
 <ul>
 <li><p>Evaluation - Requirements configured via Collection Settings.</p>
 <blockquote>
@@ -272,9 +273,9 @@
 </ul>
 <p>Each Review maintains a History, which is available to the User in the Review Resources panel. Metadata such as the User who evaluated the Rule, and a timestamp is also collected.</p>
 </dd>
-<dt id="term-STIG">STIG</dt><dd><p>Secure Technical Implementation Guidelines published by the Defense Information Security Agency. STIGs are published in XCCDF format that can be imported into STIG Manager. Automated SCAP results in XCCDF format, such as those produced by the DISA SCC Tool, can also be imported. Manually evaluated STIG Results are often recorded in a .ckl file, a different format, which is produced by the DISA tool STIG Viewer, and can also be imported into STIG Manager.</p>
+<dt id="term-STIG">STIG<a class="headerlink" href="#term-STIG" title="Permalink to this term">¶</a></dt><dd><p>Secure Technical Implementation Guidelines published by the Defense Information Security Agency. STIGs are published in XCCDF format that can be imported into STIG Manager. Automated SCAP results in XCCDF format, such as those produced by the DISA SCC Tool, can also be imported. Manually evaluated STIG Results are often recorded in a .ckl file, a different format, which is produced by the DISA tool STIG Viewer, and can also be imported into STIG Manager.</p>
 </dd>
-<dt id="term-User">User</dt><dd><p>Any User in STIG Manager can be granted access to a Collection by the Collection Owner or Manager.</p>
+<dt id="term-User">User<a class="headerlink" href="#term-User" title="Permalink to this term">¶</a></dt><dd><p>Any User in STIG Manager can be granted access to a Collection by the Collection Owner or Manager.</p>
 <ul class="simple">
 <li><p>When you grant Users access to your Collection, or when you are granted access to another Collection by someone else, that Collection will appear in the Nav Tree on the left upon refresh of the app.</p></li>
 </ul>
@@ -326,7 +327,7 @@
 </dd>
 </dl>
 </dd>
-<dt id="term-XCCDF">XCCDF</dt><dd><p>An XML formatted schema for encoding STIGs and their Evaluations.</p>
+<dt id="term-XCCDF">XCCDF<a class="headerlink" href="#term-XCCDF" title="Permalink to this term">¶</a></dt><dd><p>An XML formatted schema for encoding STIGs and their Evaluations.</p>
 <p>STIG Manager maps its own data fields into and out of XCCDF format as follows:</p>
 <table class="colwidths-given tight-table docutils align-default" id="id3">
 <caption><span class="caption-text">STIG Manager &lt;-&gt; XCCDF Mappings:</span><a class="headerlink" href="#id3" title="Permalink to this table">¶</a></caption>
@@ -357,7 +358,7 @@
 </div>
 </dd>
 </dl>
-</section>
+</div>
 
 
            </div>

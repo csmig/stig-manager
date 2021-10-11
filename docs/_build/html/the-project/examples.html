@@ -4,8 +4,7 @@
 <html class="writer-html5" lang="en" >
 <head>
   <meta charset="utf-8" />
-  <meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
-
+  
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   
   <title>Examples and Sample Data &mdash; STIG Manager  documentation</title>
@@ -14,8 +13,10 @@
   
   <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
   <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/sphinxcontrib-images/LightBox2/lightbox2/dist/css/lightbox.css" type="text/css" />
   <link rel="stylesheet" href="../_static/css/custom.css" type="text/css" />
-  <link rel="stylesheet" href="../_static/sphinxcontrib-images/LightBox2/lightbox2/css/lightbox.css" type="text/css" />
 
   
   
@@ -32,13 +33,13 @@
   
     
       <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+        <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
         <script src="../_static/jquery.js"></script>
         <script src="../_static/underscore.js"></script>
         <script src="../_static/doctools.js"></script>
-        <script src="../_static/js/custom.js"></script>
-        <script src="../_static/sphinxcontrib-images/LightBox2/lightbox2/js/jquery-1.11.0.min.js"></script>
-        <script src="../_static/sphinxcontrib-images/LightBox2/lightbox2/js/lightbox.min.js"></script>
+        <script src="../_static/sphinxcontrib-images/LightBox2/lightbox2/dist/js/lightbox-plus-jquery.min.js"></script>
         <script src="../_static/sphinxcontrib-images/LightBox2/lightbox2-customize/jquery-noconflict.js"></script>
+        <script src="../_static/js/custom.js"></script>
     
     <script type="text/javascript" src="../_static/js/theme.js"></script>
 
@@ -94,7 +95,7 @@
               
             
             
-              <p><span class="caption-text">Contents:</span></p>
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
 <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="../features/index.html">Introduction and Features</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../installation-and-setup/index.html">Install, Setup, and Run</a></li>
@@ -127,7 +128,7 @@
 </li>
 <li class="toctree-l1"><a class="reference internal" href="../reference/index.html">Terminology and Concepts</a></li>
 </ul>
-<p><span class="caption-text">Common Tasks:</span></p>
+<p class="caption" role="heading"><span class="caption-text">Common Tasks:</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../features/common-tasks.html">Build A Collection with .ckl or XCCDF Files</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../features/common-tasks.html#review-a-stig-on-an-asset">Review a STIG on an Asset</a></li>
@@ -218,52 +219,52 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
             
-  <section id="examples-and-sample-data">
+  <div class="section" id="examples-and-sample-data">
 <span id="examples"></span><h1>Examples and Sample Data<a class="headerlink" href="#examples-and-sample-data" title="Permalink to this headline">¶</a></h1>
 <p>This document lists examples and sample data resources maintained by the STIG Manager Team.  These examples are intended to demonstrate the functions of the project, and should not be used for Production Deployments without modification.</p>
-<section id="sample-data">
+<div class="section" id="sample-data">
 <h2>Sample Data<a class="headerlink" href="#sample-data" title="Permalink to this headline">¶</a></h2>
 <p><a class="reference external" href="https://github.com/NUWCDIVNPT/stig-manager/tree/main/data/appdata">Sample data to populate STIG Manager with an assortment of generated Collections, Assets, STIG Assignments, and Reviews is available in our repo.</a></p>
 <p>Load this data with the feature described here <a class="reference internal" href="../admin-guide/admin-guide.html#app-data"><span class="std std-ref">Application Data Panel</span></a></p>
 <p>This data set will not load unless the <a class="reference external" href="https://public.cyber.mil/stigs/compilations/">STIG Library Compilation</a> has been imported.</p>
-</section>
-<section id="containers">
+</div>
+<div class="section" id="containers">
 <h2>Containers<a class="headerlink" href="#containers" title="Permalink to this headline">¶</a></h2>
 <p>The STIG Manager project delivers the application in the form of two container images on Docker Hub.
 Several sample containers and Docker orchestrations are also provided to easily bring the App up in demonstration or test configurations.</p>
-<section id="stigman-oss">
+<div class="section" id="stigman-oss">
 <h3>STIGMan OSS<a class="headerlink" href="#stigman-oss" title="Permalink to this headline">¶</a></h3>
-<section id="alpine-image">
+<div class="section" id="alpine-image">
 <h4>alpine Image<a class="headerlink" href="#alpine-image" title="Permalink to this headline">¶</a></h4>
 <p>Based on the latest <a class="reference external" href="https://hub.docker.com/_/node/">NodeJS 14 alpine Linux base image:</a></p>
 <p><a class="reference external" href="https://hub.docker.com/r/nuwcdivnpt/stig-manager">STIGMan OSS based on alpine linux</a></p>
-</section>
-<section id="iron-bank-image">
+</div>
+<div class="section" id="iron-bank-image">
 <h4>Iron Bank Image<a class="headerlink" href="#iron-bank-image" title="Permalink to this headline">¶</a></h4>
 <p>Iron Bank images are hardended images produced by a Department of Defense effort and <a class="reference external" href="https://repo1.dso.mil/">available to the public here.</a></p>
 <p>The Image we make available on Docker Hub is based on the <a class="reference external" href="https://repo1.dso.mil/dsop/opensource/nodejs/nodejs14/-/tree/master">latest image available here.</a></p>
 <p><a class="reference external" href="https://hub.docker.com/r/nuwcdivnpt/stig-manager">STIGMan OSS based on Iron Bank NodeJS 14 (RHEL UBI)</a></p>
-</section>
-</section>
-</section>
-<section id="keycloak">
+</div>
+</div>
+</div>
+<div class="section" id="keycloak">
 <h2>Keycloak<a class="headerlink" href="#keycloak" title="Permalink to this headline">¶</a></h2>
 <p><a class="reference external" href="https://hub.docker.com/r/nuwcdivnpt/stig-manager-auth">Sample Keycloak configured for Username/Password</a></p>
-</section>
-<section id="mysql">
+</div>
+<div class="section" id="mysql">
 <h2>MySQL<a class="headerlink" href="#mysql" title="Permalink to this headline">¶</a></h2>
 <p>The standard <a class="reference external" href="https://hub.docker.com/_/mysql">MySQL Image available on Docker Hub</a> will work, when started with Environment Variables specified in the Sample Orchestration below.</p>
-</section>
-<section id="sample-orchestration">
+</div>
+<div class="section" id="sample-orchestration">
 <h2>Sample Orchestration<a class="headerlink" href="#sample-orchestration" title="Permalink to this headline">¶</a></h2>
 <p><a class="reference external" href="https://github.com/NUWCDIVNPT/stig-manager-docker-compose">https://github.com/NUWCDIVNPT/stig-manager-docker-compose</a></p>
-</section>
-<section id="stig-manager-with-nginx-for-tls">
+</div>
+<div class="section" id="stig-manager-with-nginx-for-tls">
 <h2>STIG Manager with nginx for TLS<a class="headerlink" href="#stig-manager-with-nginx-for-tls" title="Permalink to this headline">¶</a></h2>
 <p>The STIG Manager OSS team maintains a repository on GitHub with a sample nginx deployment, with a configuration file that may be useful to those setting up STIG Manager with a reverse proxy:</p>
 <p><a class="reference external" href="https://github.com/NUWCDIVNPT/stig-manager-docker-compose/tree/main/tls/nginx">https://github.com/NUWCDIVNPT/stig-manager-docker-compose/tree/main/tls/nginx</a></p>
-</section>
-</section>
+</div>
+</div>
 
 
            </div>

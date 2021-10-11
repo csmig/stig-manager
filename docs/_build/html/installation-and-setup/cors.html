@@ -4,8 +4,7 @@
 <html class="writer-html5" lang="en" >
 <head>
   <meta charset="utf-8" />
-  <meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
-
+  
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   
   <title>Cross-Origin Resource Sharing (CORS) &mdash; STIG Manager  documentation</title>
@@ -14,8 +13,10 @@
   
   <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
   <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/sphinxcontrib-images/LightBox2/lightbox2/dist/css/lightbox.css" type="text/css" />
   <link rel="stylesheet" href="../_static/css/custom.css" type="text/css" />
-  <link rel="stylesheet" href="../_static/sphinxcontrib-images/LightBox2/lightbox2/css/lightbox.css" type="text/css" />
 
   
   
@@ -32,13 +33,13 @@
   
     
       <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+        <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
         <script src="../_static/jquery.js"></script>
         <script src="../_static/underscore.js"></script>
         <script src="../_static/doctools.js"></script>
-        <script src="../_static/js/custom.js"></script>
-        <script src="../_static/sphinxcontrib-images/LightBox2/lightbox2/js/jquery-1.11.0.min.js"></script>
-        <script src="../_static/sphinxcontrib-images/LightBox2/lightbox2/js/lightbox.min.js"></script>
+        <script src="../_static/sphinxcontrib-images/LightBox2/lightbox2/dist/js/lightbox-plus-jquery.min.js"></script>
         <script src="../_static/sphinxcontrib-images/LightBox2/lightbox2-customize/jquery-noconflict.js"></script>
+        <script src="../_static/js/custom.js"></script>
     
     <script type="text/javascript" src="../_static/js/theme.js"></script>
 
@@ -92,7 +93,7 @@
               
             
             
-              <p><span class="caption-text">Contents:</span></p>
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../features/index.html">Introduction and Features</a></li>
 <li class="toctree-l1"><a class="reference internal" href="index.html">Install, Setup, and Run</a></li>
@@ -101,7 +102,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../the-project/index.html">The STIG Manager Project</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../reference/index.html">Terminology and Concepts</a></li>
 </ul>
-<p><span class="caption-text">Common Tasks:</span></p>
+<p class="caption" role="heading"><span class="caption-text">Common Tasks:</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../features/common-tasks.html">Build A Collection with .ckl or XCCDF Files</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../features/common-tasks.html#review-a-stig-on-an-asset">Review a STIG on an Asset</a></li>
@@ -181,7 +182,7 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
             
-  <section id="cross-origin-resource-sharing-cors">
+  <div class="section" id="cross-origin-resource-sharing-cors">
 <span id="cors"></span><h1>Cross-Origin Resource Sharing (CORS)<a class="headerlink" href="#cross-origin-resource-sharing-cors" title="Permalink to this headline">¶</a></h1>
 <p>The STIG Manager client needs to make requests to the Authentication Provider for its access token.  The Authentication Provider may have a different origin than the Client, so the Authentication Provider must be able to specify that this Cross-Origin request is allowed. It does this via the <code class="docutils literal notranslate"><span class="pre">Access-Control-Allow-Origin</span></code> response header.</p>
 <p>Some Authentication Providers, such as F5, are unable to set this header appropriately.</p>
@@ -194,7 +195,7 @@
 <p class="admonition-title">Note</p>
 <p>This feature is considered experimental and may not be supported indefinitely.</p>
 </div>
-</section>
+</div>
 
 
            </div>

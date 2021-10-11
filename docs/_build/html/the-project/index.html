@@ -4,8 +4,7 @@
 <html class="writer-html5" lang="en" >
 <head>
   <meta charset="utf-8" />
-  <meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
-<meta content="Information about the STIG Manager project itself." name="description" />
+  <meta content="Information about the STIG Manager project itself." name="description" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   
@@ -15,8 +14,10 @@
   
   <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
   <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/sphinxcontrib-images/LightBox2/lightbox2/dist/css/lightbox.css" type="text/css" />
   <link rel="stylesheet" href="../_static/css/custom.css" type="text/css" />
-  <link rel="stylesheet" href="../_static/sphinxcontrib-images/LightBox2/lightbox2/css/lightbox.css" type="text/css" />
 
   
   
@@ -33,13 +34,13 @@
   
     
       <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+        <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
         <script src="../_static/jquery.js"></script>
         <script src="../_static/underscore.js"></script>
         <script src="../_static/doctools.js"></script>
-        <script src="../_static/js/custom.js"></script>
-        <script src="../_static/sphinxcontrib-images/LightBox2/lightbox2/js/jquery-1.11.0.min.js"></script>
-        <script src="../_static/sphinxcontrib-images/LightBox2/lightbox2/js/lightbox.min.js"></script>
+        <script src="../_static/sphinxcontrib-images/LightBox2/lightbox2/dist/js/lightbox-plus-jquery.min.js"></script>
         <script src="../_static/sphinxcontrib-images/LightBox2/lightbox2-customize/jquery-noconflict.js"></script>
+        <script src="../_static/js/custom.js"></script>
     
     <script type="text/javascript" src="../_static/js/theme.js"></script>
 
@@ -95,7 +96,7 @@
               
             
             
-              <p><span class="caption-text">Contents:</span></p>
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
 <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="../features/index.html">Introduction and Features</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../installation-and-setup/index.html">Install, Setup, and Run</a></li>
@@ -120,7 +121,7 @@
 </li>
 <li class="toctree-l1"><a class="reference internal" href="../reference/index.html">Terminology and Concepts</a></li>
 </ul>
-<p><span class="caption-text">Common Tasks:</span></p>
+<p class="caption" role="heading"><span class="caption-text">Common Tasks:</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../features/common-tasks.html">Build A Collection with .ckl or XCCDF Files</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../features/common-tasks.html#review-a-stig-on-an-asset">Review a STIG on an Asset</a></li>
@@ -209,11 +210,11 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
             
-  <section id="the-stig-manager-project">
+  <div class="section" id="the-stig-manager-project">
 <span id="the-project"></span><h1>The STIG Manager Project<a class="headerlink" href="#the-stig-manager-project" title="Permalink to this headline">¶</a></h1>
 <p>These pages describe the STIG Manager project.</p>
 <div class="toctree-wrapper compound">
-<p><span class="caption-text">Contents:</span></p>
+<p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="security.html">Security Efforts</a></li>
 <li class="toctree-l1"><a class="reference internal" href="contributing.html">STIG Manager Contribution Guide</a></li>
@@ -226,24 +227,24 @@
 <li class="toctree-l1"><a class="reference internal" href="DockerHub_Readme.html">STIG Manager OSS on Docker Hub</a></li>
 </ul>
 </div>
-<section id="stig-manager-is-an-active-open-source-project-maintained-by-nuwcdivnpt">
+<div class="section" id="stig-manager-is-an-active-open-source-project-maintained-by-nuwcdivnpt">
 <h2>STIG Manager is an active, Open Source project maintained by NUWCDIVNPT<a class="headerlink" href="#stig-manager-is-an-active-open-source-project-maintained-by-nuwcdivnpt" title="Permalink to this headline">¶</a></h2>
 <p>STIG Manager is actively under development. Get the latest info here: <a class="reference external" href="https://github.com/NUWCDIVNPT/stig-manager/">STIG Manager</a></p>
 <p>STIG Manager is participating in the <a class="reference external" href="https://code.mil/">Code.mil Open Source initiative</a>.</p>
 <p>The STIG Manager project is chiefly composed of the STIG Manager API and the STIG Manager Client. <a class="reference external" href="https://github.com/NUWCDIVNPT/stig-manager/blob/main/api/source/specification/stig-manager.yaml">The STIG Manager API provides a well-defined programmatic interface for engaging with the resources and data it maintains.</a> The STIG Manager Client is just one use of the API that this architecture enables. In a modern, open source microservice-oriented ecosystem, other developers will be able to contribute new utilities and services that will expand functionality. User Stories, Feature Requests, Bugs, and Issues will be tracked in GitHub to help determine future efforts.</p>
-<section id="stig-manager-operations">
+<div class="section" id="stig-manager-operations">
 <h3>STIG Manager Operations<a class="headerlink" href="#stig-manager-operations" title="Permalink to this headline">¶</a></h3>
 <p>STIG Manager is a modern, containerized application built to take full advantage of a CI/CD DevOps pipeline. Updates to STIG Manager will trigger automatic testing and image creation. Organizations will have the option to engage with the pipeline to automatically deploy new versions to their test environments, or directly to production.</p>
-</section>
-</section>
-<section id="support">
+</div>
+</div>
+<div class="section" id="support">
 <h2>Support<a class="headerlink" href="#support" title="Permalink to this headline">¶</a></h2>
 <p>The STIG Manager team is usually available on the Flank Speed instance of Microsoft Teams</p>
 <div class="line-block">
 <div class="line"><br /></div>
 </div>
-</section>
-</section>
+</div>
+</div>
 
 
            </div>

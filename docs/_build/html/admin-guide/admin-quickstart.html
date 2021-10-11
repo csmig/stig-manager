@@ -4,8 +4,7 @@
 <html class="writer-html5" lang="en" >
 <head>
   <meta charset="utf-8" />
-  <meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
-
+  
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   
   <title>1. STIG Manager Administrator Walkthrough &mdash; STIG Manager  documentation</title>
@@ -14,8 +13,10 @@
   
   <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
   <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/sphinxcontrib-images/LightBox2/lightbox2/dist/css/lightbox.css" type="text/css" />
   <link rel="stylesheet" href="../_static/css/custom.css" type="text/css" />
-  <link rel="stylesheet" href="../_static/sphinxcontrib-images/LightBox2/lightbox2/css/lightbox.css" type="text/css" />
 
   
   
@@ -32,13 +33,13 @@
   
     
       <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+        <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
         <script src="../_static/jquery.js"></script>
         <script src="../_static/underscore.js"></script>
         <script src="../_static/doctools.js"></script>
-        <script src="../_static/js/custom.js"></script>
-        <script src="../_static/sphinxcontrib-images/LightBox2/lightbox2/js/jquery-1.11.0.min.js"></script>
-        <script src="../_static/sphinxcontrib-images/LightBox2/lightbox2/js/lightbox.min.js"></script>
+        <script src="../_static/sphinxcontrib-images/LightBox2/lightbox2/dist/js/lightbox-plus-jquery.min.js"></script>
         <script src="../_static/sphinxcontrib-images/LightBox2/lightbox2-customize/jquery-noconflict.js"></script>
+        <script src="../_static/js/custom.js"></script>
     
     <script type="text/javascript" src="../_static/js/theme.js"></script>
 
@@ -94,7 +95,7 @@
               
             
             
-              <p><span class="caption-text">Contents:</span></p>
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
 <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="../features/index.html">Introduction and Features</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../installation-and-setup/index.html">Install, Setup, and Run</a></li>
@@ -117,7 +118,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../the-project/index.html">The STIG Manager Project</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../reference/index.html">Terminology and Concepts</a></li>
 </ul>
-<p><span class="caption-text">Common Tasks:</span></p>
+<p class="caption" role="heading"><span class="caption-text">Common Tasks:</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../features/common-tasks.html">Build A Collection with .ckl or XCCDF Files</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../features/common-tasks.html#review-a-stig-on-an-asset">Review a STIG on an Asset</a></li>
@@ -208,7 +209,7 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
             
-  <section id="stig-manager-administrator-walkthrough">
+  <div class="section" id="stig-manager-administrator-walkthrough">
 <span id="admin-quickstart"></span><h1><span class="section-number">1. </span>STIG Manager Administrator Walkthrough<a class="headerlink" href="#stig-manager-administrator-walkthrough" title="Permalink to this headline">¶</a></h1>
 <p>This Admin Walkthrough will walk you through typical responsibilities for a STIG Manager User with the Administrator role. This Walkthrough assumes you are familiar with the terms and features specified in the <a class="reference internal" href="../user-guide/user-guide.html#user-guide-doc"><span class="std std-ref">STIG Manager User Guide</span></a>.
 Beyond the permissions granted to normal Users, Administrators have the ability to:</p>
@@ -224,10 +225,10 @@ Beyond the permissions granted to normal Users, Administrators have the ability 
 <p class="admonition-title">Attention</p>
 <p>Being an Administrator in STIG Manager does not give you the ability to <em>create</em> new users or assign them new Roles (Admin or Collection Creator). Creating users and assigning Roles can only be done in the Authentication provider (often the Keycloak Management Console), and you must have the proper permissions on your Authentication Provider to do this.</p>
 </div>
-<section id="administrator-menu">
+<div class="section" id="administrator-menu">
 <h2><span class="section-number">1.1. </span>Administrator Menu<a class="headerlink" href="#administrator-menu" title="Permalink to this headline">¶</a></h2>
 <p>Administrators in STIG Manager have access to 4 additional Administration tabs that other users do not, accessible from the Navigation Tree.</p>
-<section id="collections-tab">
+<div class="section" id="collections-tab">
 <h3><span class="section-number">1.1.1. </span>Collections Tab<a class="headerlink" href="#collections-tab" title="Permalink to this headline">¶</a></h3>
 <p>This tab presents a list of all Collections in STIG Manager, as well as some statistics about the Collection.  It also includes buttons to create, delete, and alter Collection properties and grants.</p>
 <p>In most cases, Collection Owners should be administering their own Collections. However, in cases where the Owner is unavailable, or has accidentally removed all owners from a Collection, this interface allows an Admin to assign new Owner Grants to Collections by double-clicking the Collection or using the “Collection Properties” button. The Admin can also delete Collections if required.</p>
@@ -237,27 +238,28 @@ Beyond the permissions granted to normal Users, Administrators have the ability 
                href="../_images/admin-collections1.png"
                title="Collection Admin"
                data-title="Collection Admin"
+               
                ><img src="../_images/admin-collections1.png"
                      class=""
                      width="50%"
                      height="auto"
                      alt="Collection Admin"/>
                 </a><figcaption>Collection Admin</figcaption>
-            </figure></section>
+            </figure></div>
 <hr class="docutils" />
-<section id="user-grants">
+<div class="section" id="user-grants">
 <h3><span class="section-number">1.1.2. </span>User Grants<a class="headerlink" href="#user-grants" title="Permalink to this headline">¶</a></h3>
 <p>This tab presents a lit of all users known to STIG Manager, as well as some statistics about them.
 It also includes buttons to pre-register User, unregister User, and modify User Grants.</p>
-<section id="pre-registering-users">
+<div class="section" id="pre-registering-users">
 <h4><span class="section-number">1.1.2.1. </span>Pre-registering Users<a class="headerlink" href="#pre-registering-users" title="Permalink to this headline">¶</a></h4>
 <p>The pre-register function does not grant access to STIG Manager. User <em>access</em> is solely managed via your Authentication Provider (Keycloak, F5, etc). The pre-register function allows an Admin to assign Grants to a user that has not yet accessed the system, presuming that that the user will be authenticated via the Authentication Provider at some later date. In that case, the Username entered when preregistering must match the username received from the Authentication Provider when they finally log in.  A pre-registered user will have <em>No value</em> in the Last Access column of this screen until they actually access STIG Manager.</p>
-</section>
-<section id="unregistering-users">
+</div>
+<div class="section" id="unregistering-users">
 <h4><span class="section-number">1.1.2.2. </span>Unregistering Users<a class="headerlink" href="#unregistering-users" title="Permalink to this headline">¶</a></h4>
 <p>Unregistering Users will remove all their Collection Grants, but will not prevent access to STIG Manager unless the user is also disabled/deleted/altered in the Authentication Provider.  However, once un-registered they will not see any Collections when they access STIG Manager. Depending on their Role in the Authentication Provider, they may still be able to create a collection or even Administer STIG Manager.</p>
-</section>
-<section id="modifying-users">
+</div>
+<div class="section" id="modifying-users">
 <h4><span class="section-number">1.1.2.3. </span>Modifying Users<a class="headerlink" href="#modifying-users" title="Permalink to this headline">¶</a></h4>
 <p>The only changes that can be made to Users in the STIG Manager interface is their Collection Grants. All other data in the User pop-up is derived from information in the access token, which is managed in the Authentication Provider.</p>
 <figure class="">
@@ -266,6 +268,7 @@ It also includes buttons to pre-register User, unregister User, and modify User 
                href="../_images/userAdmin1.png"
                title="User Admin"
                data-title="User Admin"
+               
                ><img src="../_images/userAdmin1.png"
                      class=""
                      width="50%"
@@ -273,9 +276,9 @@ It also includes buttons to pre-register User, unregister User, and modify User 
                      alt="User Admin"/>
                 </a><figcaption>User Admin</figcaption>
             </figure><hr class="docutils" />
-</section>
-</section>
-<section id="stig-and-scap-benchmarks">
+</div>
+</div>
+<div class="section" id="stig-and-scap-benchmarks">
 <span id="stig-import"></span><h3><span class="section-number">1.1.3. </span>STIG and SCAP Benchmarks<a class="headerlink" href="#stig-and-scap-benchmarks" title="Permalink to this headline">¶</a></h3>
 <p>This tab shows you a list of STIGs known to this instance of STIG Manager along with some basic statistics about them, such as their rule count and revision date. This interface also allows you to import new STIGs. This can be done individually, or as a .zip file of multiple STIGs (such as the <a class="reference external" href="cyber.mil/stigs/compilations/">quarterly STIG Library Compilations from DISA</a>).</p>
 <figure class="">
@@ -284,6 +287,7 @@ It also includes buttons to pre-register User, unregister User, and modify User 
                href="../_images/StigAdmin1.png"
                title="STIG Admin"
                data-title="STIG Admin"
+               
                ><img src="../_images/StigAdmin1.png"
                      class=""
                      width="50%"
@@ -296,13 +300,13 @@ It also includes buttons to pre-register User, unregister User, and modify User 
 <p>Click the “Import STIGs” button to be prompted to select a file for import.</p>
 <hr class="docutils" />
 <p>STIG Manager uses one set of STIG and SCAP benchmarks. When a new STIG is imported from this interface, ALL assets in the system will reflect new version of the imported STIG as the default. However, when viewing an individual Asset older revisions of STIGs, if present, can be selected.</p>
-</section>
-<section id="application-data">
+</div>
+<div class="section" id="application-data">
 <h3><span class="section-number">1.1.4. </span>Application Data<a class="headerlink" href="#application-data" title="Permalink to this headline">¶</a></h3>
 <p>This Tab has buttons that allow you to Import and Export all User and Collection data from STIG Manager. These options are considered experimental and should not be relied upon to move or preserve Production data or other data you cannot afford to lose. On import, the imported data completely replaces all STIG Manager data currently on the system. Compatibility with future versions of STIG Manager is not guaranteed. They are currently used only for Development purposes. All that said, we are considering developing a method for handling the importation of STIG Manager Collection objects and their associated Assets, STIGs, Reviews, History, and Users.</p>
-</section>
-</section>
-</section>
+</div>
+</div>
+</div>
 
 
            </div>

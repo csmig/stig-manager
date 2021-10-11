@@ -15,7 +15,6 @@ Securing your deployment
 
 These are some common security topics to review when designing a secure STIG Manager application deployment.
 
-
 Container Security
 ------------------
 
@@ -58,14 +57,15 @@ The API grants or denies access to STIG Manager data objects (Collections, Asset
 
 Both claims are contained in OAuth2 JWT formatted access_tokens issued by an OIDC Provider to remote clients, such as the Project's Web Client and the STIG Manager Watcher bot. Communication between the API and clients include the access_token and should occur using TLS but do not require Mutual TLS (MTLS).
 
-Correct implementation of the STIG Manager data flow, especially the DAC and RBAC logic, is certified by `automated endpoint testing <https://github.com/NUWCDIVNPT/stig-manager/blob/main/.github/workflows/api-tests.yml>`_ that is performed when any change to the codebase is proposed (a Pull Request or PR). Over 2000 assertions are evaluated using `tests you can review here <https://github.com/NUWCDIVNPT/stig-manager/tree/main/test/api>`_
+Correct implementation of the STIG Manager data flow, especially the DAC and RBAC logic, is verified by an `automated workflow <https://github.com/NUWCDIVNPT/stig-manager/blob/main/.github/workflows/api-tests.yml>`_ that is performed when any change to the codebase is proposed (a Pull Request or PR). Over 2000 assertions are evaluated using `tests you can review here <https://github.com/NUWCDIVNPT/stig-manager/tree/main/test/api>`_
 
 .. thumbnail:: /assets/images/data-flow-01b.svg
   :width: 75%
   :show_caption: True 
   :title: Data Flow Diagram
 
-  
+|
+
 REST, OpenID Connect (OIDC), and OAuth2
 ---------------------------------------
 
@@ -126,7 +126,7 @@ You can download a CKL file containing our self-evaluations or view them here.
 
 .. csv-table:: Table Title
   :file: asd-query-full.csv
-  :widths: 10, 25, 25
+  :widths: 10, 25, 10, 25 
   :header-rows: 1
   :stub-columns: 1
   :align: left

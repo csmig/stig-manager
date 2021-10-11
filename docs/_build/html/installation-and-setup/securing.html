@@ -4,8 +4,7 @@
 <html class="writer-html5" lang="en" >
 <head>
   <meta charset="utf-8" />
-  <meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
-
+  
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   
   <title>8. Securing and Assessing STIG Manager Deployments &mdash; STIG Manager  documentation</title>
@@ -14,8 +13,10 @@
   
   <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
   <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/sphinxcontrib-images/LightBox2/lightbox2/dist/css/lightbox.css" type="text/css" />
   <link rel="stylesheet" href="../_static/css/custom.css" type="text/css" />
-  <link rel="stylesheet" href="../_static/sphinxcontrib-images/LightBox2/lightbox2/css/lightbox.css" type="text/css" />
 
   
   
@@ -32,13 +33,13 @@
   
     
       <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+        <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
         <script src="../_static/jquery.js"></script>
         <script src="../_static/underscore.js"></script>
         <script src="../_static/doctools.js"></script>
-        <script src="../_static/js/custom.js"></script>
-        <script src="../_static/sphinxcontrib-images/LightBox2/lightbox2/js/jquery-1.11.0.min.js"></script>
-        <script src="../_static/sphinxcontrib-images/LightBox2/lightbox2/js/lightbox.min.js"></script>
+        <script src="../_static/sphinxcontrib-images/LightBox2/lightbox2/dist/js/lightbox-plus-jquery.min.js"></script>
         <script src="../_static/sphinxcontrib-images/LightBox2/lightbox2-customize/jquery-noconflict.js"></script>
+        <script src="../_static/js/custom.js"></script>
     
     <script type="text/javascript" src="../_static/js/theme.js"></script>
 
@@ -94,7 +95,7 @@
               
             
             
-              <p><span class="caption-text">Contents:</span></p>
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
 <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="../features/index.html">Introduction and Features</a></li>
 <li class="toctree-l1 current"><a class="reference internal" href="index.html">Install, Setup, and Run</a><ul class="current">
@@ -128,7 +129,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../the-project/index.html">The STIG Manager Project</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../reference/index.html">Terminology and Concepts</a></li>
 </ul>
-<p><span class="caption-text">Common Tasks:</span></p>
+<p class="caption" role="heading"><span class="caption-text">Common Tasks:</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../features/common-tasks.html">Build A Collection with .ckl or XCCDF Files</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../features/common-tasks.html#review-a-stig-on-an-asset">Review a STIG on an Asset</a></li>
@@ -219,7 +220,7 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
             
-  <section id="securing-and-assessing-stig-manager-deployments">
+  <div class="section" id="securing-and-assessing-stig-manager-deployments">
 <h1><span class="section-number">8. </span>Securing and Assessing STIG Manager Deployments<a class="headerlink" href="#securing-and-assessing-stig-manager-deployments" title="Permalink to this headline">¶</a></h1>
 <div class="admonition warning">
 <p class="admonition-title">Warning</p>
@@ -230,51 +231,63 @@
 <p class="admonition-title">Note</p>
 <p>The ASD assesses many application components, and application governance, using a single checklist of 286 checks (as of V5R1).  Unfortunately, the current ASD provides limited guidance if you’re using modern security technologies such as Single Sign On, OpenID Connect, OAuth2 authorization, and containerization. If you are required to complete an ASD assessment, we encourage focusing on the spirit of the checklist until it is updated or re-imagined.</p>
 </div>
-<section id="securing-your-deployment">
+<div class="section" id="securing-your-deployment">
 <h2><span class="section-number">8.1. </span>Securing your deployment<a class="headerlink" href="#securing-your-deployment" title="Permalink to this headline">¶</a></h2>
 <p>These are some common security topics to review when designing a secure STIG Manager application deployment.</p>
-<section id="container-security">
+<blockquote>
+<div><ul class="simple">
+<li><p>bullet</p></li>
+<li><p>bullet</p></li>
+</ul>
+</div></blockquote>
+<div class="section" id="container-security">
 <h3><span class="section-number">8.1.1. </span>Container Security<a class="headerlink" href="#container-security" title="Permalink to this headline">¶</a></h3>
 <p>We strongly encourage STIG Manager deployments to be containerized. Containerization has built-in security advantages such as immutability, image signing, transparency, modularity, small attack surface, secure updates, and environment parity. The content of container images and their runtime behavior require security evaluations, as in traditional deployments, but with the advantage of image layer inheritance.</p>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
 <p>If you are subject to ASD-compliance you are likely subject to other DoD requirements. We encourage an in-depth familiarity with the <a class="reference external" href="https://dl.dod.cyber.mil/wp-content/uploads/devsecops/pdf/DevSecOps_Enterprise_Container_Image_Creation_and_Deployment_Guide_2.6-Public-Release.pdf">Container Image Creation and Deployment Guide</a> from DISA. The STIG Manager Project adheres to DISA image creation guidance when defining and building container images, and we encourage STIG Manager deployments to follow the container deployment guidance.</p>
 </div>
-<section id="image-choice">
+<div class="section" id="image-choice">
 <h4><span class="section-number">8.1.1.1. </span>Image choice<a class="headerlink" href="#image-choice" title="Permalink to this headline">¶</a></h4>
-<p>Deployments might directly orchestrate <a class="reference external" href="https://hub.docker.com/r/nuwcdivnpt/stig-manager">one of our published images</a>. For most ASD-compliant deployments, you should deploy one of our Iron Bank based images. Those images follow the naming convention <code class="docutils literal notranslate"><span class="pre">nuwcdivnpt/stig-manager:[SEMANTIC-VERSION]-ironbank</span></code>. Example: <code class="docutils literal notranslate"><span class="pre">nuwcdivnpt/stig-manager:1.0.40-ironbank</span></code>. Our Iron Bank-based images are built from the Iron Bank Node.js image, a hardened image that is based on the Iron Bank Universal Base Image (UBI). The UBI is a hardened Red Hat image that has been configured in accordance with applicable DoD requirements.</p>
+<p>Many deployments might directly orchestrate <a class="reference external" href="https://hub.docker.com/r/nuwcdivnpt/stig-manager">one of our published images</a>. For most ASD-compliant deployments, you should deploy one of our Iron Bank based images. Those images follow the naming convention <code class="docutils literal notranslate"><span class="pre">nuwcdivnpt/stig-manager:[SEMANTIC-VERSION]-ironbank</span></code>. Example: <code class="docutils literal notranslate"><span class="pre">nuwcdivnpt/stig-manager:1.0.40-ironbank</span></code>. Our Iron Bank-based images are built from the Iron Bank Node.js image, a hardened image that is based on the Iron Bank Universal Base Image (UBI). The UBI is a hardened Red Hat image that has been configured in accordance with applicable DoD requirements.</p>
 <p>Some deployments might prefer a custom container image of STIG Manager created by <a class="reference external" href="https://github.com/NUWCDIVNPT/stig-manager/blob/main/Dockerfile">modifying the Dockerfile from our repo</a> or basing their custom image on one of our published images. In these cases, we strongly encourage use of the relevant Iron Bank base images. To build from the actual Iron Bank Node.js or UBI image, you will need an account at <a class="reference external" href="https://ironbank.dso.mil/">https://ironbank.dso.mil/</a> which is a CAC-required service.</p>
-</section>
-<section id="vulnerability-scanning">
+<p>If you need to understand how a container image was built, we encourage familiarity with the <cite>docker history</cite> command.</p>
+</div>
+<div class="section" id="vulnerability-scanning">
 <h4><span class="section-number">8.1.1.2. </span>Vulnerability scanning<a class="headerlink" href="#vulnerability-scanning" title="Permalink to this headline">¶</a></h4>
 <p>We encourage all deployments to perform vulnerability scans against our published container images. The Project scans our published images with OpenSCAP and proprietary Amazon Web Service and Azure tools, which report no security vulnerabilities. However, we do not currently publish those results but efforts are underway in FY22 to make then available.</p>
-</section>
-<section id="validating-image-signatures">
+<p>An alternative to trusting our vulnerability scanning that we encourage is for deployments to standup their own container registry with embedded image scanning. Choices include the open-source Harbor registry with buil-in Clair testing, and cloud-based offerings from Amazon, Azure and Google.</p>
+</div>
+<div class="section" id="validating-image-signatures">
 <h4><span class="section-number">8.1.1.3. </span>Validating image signatures<a class="headerlink" href="#validating-image-signatures" title="Permalink to this headline">¶</a></h4>
 <p>Before deploying any container image, we strongly encourage verifying the image was created by a trusted party. This is a critical step for any containerized deployment. The Project signs each published image using Docker Content Trust and Notary.</p>
-</section>
-</section>
-<section id="data-flow">
+</div>
+</div>
+<div class="section" id="data-flow">
 <h3><span class="section-number">8.1.2. </span>Data Flow<a class="headerlink" href="#data-flow" title="Permalink to this headline">¶</a></h3>
 <p>The STIG Manager API and Web Client exchange data across a REST architecture that enforces the STIG Manager <a class="reference external" href="https://github.com/NUWCDIVNPT/stig-manager/blob/main/api/source/specification/stig-manager.yaml">OpenAPI 3 Specification (OAS) definition</a>.</p>
 <p>The API grants or denies endpoint access based on the OAuth2 <code class="docutils literal notranslate"><span class="pre">scope</span></code> claims listed in each endpoint’s <code class="docutils literal notranslate"><span class="pre">security.oauth</span></code> property in the OAS.</p>
 <p>The API grants or denies access to STIG Manager data objects (Collections, Assets, Asset/STIG maps, and Reviews) based on the the OAuth2 <code class="docutils literal notranslate"><span class="pre">username</span></code> claim (or configured equivalent). The username value indexes into the internal STIG Manager discretionary access control (DAC) system which includes per-Collection role based access control (RBAC) lists (i.e, Collection Grants and Restricted User Access Lists). We have designed the access control logic with the goal of being assessed as ASD-compliant by local security requirements.</p>
 <p>Both claims are contained in OAuth2 JWT formatted access_tokens issued by an OIDC Provider to remote clients, such as the Project’s Web Client and the STIG Manager Watcher bot. Communication between the API and clients include the access_token and should occur using TLS but do not require Mutual TLS (MTLS).</p>
-<p>Correct implementation of the STIG Manager data flow, especially the DAC and RBAC logic, is certified by <a class="reference external" href="https://github.com/NUWCDIVNPT/stig-manager/blob/main/.github/workflows/api-tests.yml">automated endpoint testing</a> that is performed when any change to the codebase is proposed (a Pull Request or PR). Over 2000 assertions are evaluated using <a class="reference external" href="https://github.com/NUWCDIVNPT/stig-manager/tree/main/test/api">tests you can review here</a></p>
+<p>Correct implementation of the STIG Manager data flow, especially the DAC and RBAC logic, is verified by an <a class="reference external" href="https://github.com/NUWCDIVNPT/stig-manager/blob/main/.github/workflows/api-tests.yml">automated workflow</a> that is performed when any change to the codebase is proposed (a Pull Request or PR). Over 2000 assertions are evaluated using <a class="reference external" href="https://github.com/NUWCDIVNPT/stig-manager/tree/main/test/api">tests you can review here</a></p>
 <figure class="">
             <a 
                data-lightbox="group-default"
                href="../_images/data-flow-01b1.svg"
                title="Data Flow Diagram"
                data-title="Data Flow Diagram"
+               
                ><img src="../_images/data-flow-01b1.svg"
                      class=""
                      width="75%"
                      height="auto"
                      alt=""/>
                 </a><figcaption>Data Flow Diagram</figcaption>
-            </figure></section>
-<section id="rest-openid-connect-oidc-and-oauth2">
+            </figure><div class="line-block">
+<div class="line"><br /></div>
+</div>
+</div>
+<div class="section" id="rest-openid-connect-oidc-and-oauth2">
 <h3><span class="section-number">8.1.3. </span>REST, OpenID Connect (OIDC), and OAuth2<a class="headerlink" href="#rest-openid-connect-oidc-and-oauth2" title="Permalink to this headline">¶</a></h3>
 <p>Several ASD checks refer to SOAP, WS-Security and SAML, early protocols for implementing and securing online APIs. None of the checks refer to REST or OIDC/OAuth2, modern alternatives that are commonly used in cloud-native software such as STIG Manager. The checks that address SOAP, etc. state that if you aren’t using those technologies, the assessment is ‘not applicable’.</p>
 <div class="admonition warning">
@@ -285,31 +298,31 @@
 <p>The Web Client is a single-page application (SPA) that executes entirely in the browser. Browsers are low- to zero-trust environments where OAuth2 access tokens should have short lifetimes to mitigate the risk of token diversion. Just what is considered ‘short’ is for you (or your organization) to decide, but 15 minutes or even less is not uncommon.</p>
 <p>Our Web Client will not engage in the OIDC implicit flow because it is not secure enough. To work with the Web Client, the OIDC Provider must provide tokens using the OIDC Authorization Code Flow with Proof Key for Code Exchange (PKCE). To work with bots such as STIG Manager Watcher, the OIDC Provider should support the client_credentials flow with Signed JWT authentication.</p>
 <p>If your OIDC Provider issues refresh tokens (encouraged for a better user experience), those tokens can have longer lifetimes than the access_token but should be rotated and limited to a single use. Policies vary greatly, but refresh token lifetime is sometimes correlated to the SSO session lifetime. Attempts to reuse a refresh_token should be logged by the OIDC Ppovider and generate alerts.</p>
-</section>
-<section id="user-sessions">
+</div>
+<div class="section" id="user-sessions">
 <h3><span class="section-number">8.1.4. </span>User sessions<a class="headerlink" href="#user-sessions" title="Permalink to this headline">¶</a></h3>
 <div class="admonition warning">
 <p class="admonition-title">Warning</p>
 <p>You must secure your deployment in compliance with your individual security requirements. The discussion below is educational and does not address your specific requirements. It is assumed the reader has prerequisite knowledge of their specific OIDC Provider and any user federation or identify brokering features it is configured to use.</p>
 </div>
 <p>Several ASD checks address the management of user login sessions. It is important to understand how your OIDC Provider controls user sessions, performs user management, and audits its activities</p>
-</section>
-<section id="database">
+</div>
+<div class="section" id="database">
 <h3><span class="section-number">8.1.5. </span>Database<a class="headerlink" href="#database" title="Permalink to this headline">¶</a></h3>
 <div class="admonition warning">
 <p class="admonition-title">Warning</p>
 <p>You must secure your deployment in compliance with your individual security requirements. The discussion below is educational and does not address your specific requirements. It is assumed the reader has prerequisite knowledge of the MySQL database and how to perform PKI user authentication (if required), secure data storage, and secure data backups.</p>
 </div>
 <p>Several ASD checks address the management of data storage. It is important to understand how to configure MySQL in accordance with local security requirements, such as the Oracle MySQL 8.0 STIG. Ideally, your organization will provision MySQL instances from a hardened cloud subscription that requires a smaller set of customer-responsible security settings.</p>
-</section>
-<section id="logging-and-analysis">
+</div>
+<div class="section" id="logging-and-analysis">
 <h3><span class="section-number">8.1.6. </span>Logging and Analysis<a class="headerlink" href="#logging-and-analysis" title="Permalink to this headline">¶</a></h3>
-</section>
-</section>
-<section id="assessing-your-deployment">
+</div>
+</div>
+<div class="section" id="assessing-your-deployment">
 <h2><span class="section-number">8.2. </span>Assessing your deployment<a class="headerlink" href="#assessing-your-deployment" title="Permalink to this headline">¶</a></h2>
 <p>These are some common assessment topics to review when assessing a secure STIG Manager application deployment.</p>
-<section id="api-and-web-client">
+<div class="section" id="api-and-web-client">
 <h3><span class="section-number">8.2.1. </span>API and Web Client<a class="headerlink" href="#api-and-web-client" title="Permalink to this headline">¶</a></h3>
 <p>About a third of the checks in the ASD assess application components provided by this Project - the API and Web Client. These checks assess both their behavior and how they are developed.</p>
 <p>We have self-evaluated this portion of the checklist AS IF we were developer members of a deployed application’s team. For most deployments, though, we are NOT part of your team and therefore the checks covering development practices might be properly evaluated as not applicable. Even in this case, however, we hope our self-evaluation provides useful insight into how the Project integrates security into our practice.</p>
@@ -321,157 +334,194 @@
 <table class="colwidths-given tight-table docutils align-left" id="id1">
 <caption><span class="caption-text">Table Title</span><a class="headerlink" href="#id1" title="Permalink to this table">¶</a></caption>
 <colgroup>
-<col style="width: 17%" />
-<col style="width: 42%" />
-<col style="width: 42%" />
+<col style="width: 14%" />
+<col style="width: 36%" />
+<col style="width: 14%" />
+<col style="width: 36%" />
 </colgroup>
 <thead>
 <tr class="row-odd"><th class="head stub"><p>Vuln</p></th>
 <th class="head"><p>Title</p></th>
+<th class="head"><p>result</p></th>
 <th class="head"><p>Detail</p></th>
 </tr>
 </thead>
 <tbody>
 <tr class="row-even"><th class="stub"><p>V-222388</p></th>
 <td><p>The application must clear temporary storage and cookies when the session is terminated.</p></td>
+<td><p>pass</p></td>
 <td><p>The Web Client does not persist storage of any user information, including OAuth2 tokens.</p></td>
 </tr>
 <tr class="row-odd"><th class="stub"><p>V-222391</p></th>
 <td><p>Applications requiring user access authentication must provide a logoff capability for user initiated communication session.</p></td>
+<td><p>pass</p></td>
 <td><p>The Web Client requests logoff service from the OIDC Provider after user interaction with a DOM element whose innerText = ‘Logout’</p></td>
 </tr>
 <tr class="row-even"><th class="stub"><p>V-222392</p></th>
 <td><p>The application must display an explicit logoff message to users indicating the reliable termination of authenticated communications sessions.</p></td>
+<td><p>fail</p></td>
 <td><p>The SPA does not display a ‘logged out’ screen, it immediately attempts to re-authenticate a user</p></td>
 </tr>
 <tr class="row-odd"><th class="stub"><p>V-222393</p></th>
 <td><p>The application must associate organization-defined types of security attributes having organization-defined security attribute values with information in storage.</p></td>
-<td><p>The API scaffolds a new database instance with the classification specified by the environment variable STIGMAN_CLASSIFICATION. This value is stored in the ‘configuration’ table and represents the default classification for all data stored by the database instance.</p></td>
+<td><p>pass</p></td>
+<td><p>The API scaffolds each new database instance with the classification specified by the environment variable STIGMAN_CLASSIFICATION. This value is stored in the ‘configuration’ table and represents the default classification for all data that is stored by the database instance, served by the API, and received by the Web Client.</p></td>
 </tr>
 <tr class="row-even"><th class="stub"><p>V-222394</p></th>
 <td><p>The application must associate organization-defined types of security attributes having organization-defined security attribute values with information in process.</p></td>
-<td><p>The Web Client displays a banner that represents the data marking for all data displayed by the Client. Processing the data does not alter this banner in any circumstances.</p></td>
+<td><p>pass</p></td>
+<td><p>Individual objects do not contain data markings. An API endpoint returns the data marking for all data served by the API. The Web Client displays a banner that represents the data marking for all data received by the Client. Processing the data does not alter this banner in any circumstances.</p></td>
 </tr>
 <tr class="row-odd"><th class="stub"><p>V-222395</p></th>
 <td><p>The application must associate organization-defined types of security attributes having organization-defined security attribute values with information in transmission.</p></td>
-<td><p>The Web Client displays a banner that represents the data marking for all data displayed by the Client. Data transmission does not alter this banner in any circumstances.</p></td>
+<td><p>pass</p></td>
+<td><p>Individual objects do not contain data markings. An API endpoint returns the data marking for all data served by the API. The Web Client displays a banner that represents the data marking for all data received by the Client. Data transmission does not alter this banner in any circumstances.</p></td>
 </tr>
 <tr class="row-even"><th class="stub"><p>V-222423</p></th>
 <td><p>Application data protection requirements must be identified and documented.</p></td>
+<td><p>pass</p></td>
 <td><p>the project provides an ontology that identifies application data elements, their protection requirements, and steps that are taken to protect the data.. See documentation and OAS definition.</p></td>
 </tr>
 <tr class="row-odd"><th class="stub"><p>V-222425</p></th>
 <td><p>The application must enforce approved authorizations for logical access to information and system resources in accordance with applicable access control policies.</p></td>
+<td><p>pass</p></td>
 <td><p>The API enforces access to information in accordance with the discretionary access control policy of the associated Collection. See documentation.</p></td>
 </tr>
 <tr class="row-even"><th class="stub"><p>V-222426</p></th>
 <td><p>The application must enforce organization-defined discretionary access control policies over defined subjects and objects.</p></td>
+<td><p>pass</p></td>
 <td><p>the project implements discretionary access control to application resources. See documentation.</p></td>
 </tr>
 <tr class="row-odd"><th class="stub"><p>V-222427</p></th>
 <td><p>The application must enforce approved authorizations for controlling the flow of information within the system based on organization-defined information flow control policies.</p></td>
+<td><p>pass</p></td>
 <td><p>The API controls information flow in accordance with the discretionary access control policy of the associated Collection. See documentation.</p></td>
 </tr>
 <tr class="row-even"><th class="stub"><p>V-222428</p></th>
 <td><p>The application must enforce approved authorizations for controlling the flow of information between interconnected systems based on organization-defined information flow control policies.</p></td>
+<td><p>pass</p></td>
 <td><p>The API controls information flow in accordance with the discretionary access control policy of the associated Collection. See documentation.</p></td>
 </tr>
 <tr class="row-odd"><th class="stub"><p>V-222429</p></th>
 <td><p>The application must prevent non-privileged users from executing privileged functions to include disabling, circumventing, or altering implemented security safeguards/countermeasures.</p></td>
+<td><p>pass</p></td>
 <td><p>The Project publishes container images configured to execute the API as the unprivileged user, ‘node’ whose userId is not 0.</p></td>
 </tr>
 <tr class="row-even"><th class="stub"><p>V-222430</p></th>
 <td><p>The application must execute without excessive account permissions.</p></td>
+<td><p>pass</p></td>
 <td><p>The project supplied container images are configured to run by the limited, unprivileged user, ‘node’.</p></td>
 </tr>
 <tr class="row-odd"><th class="stub"><p>V-222431</p></th>
 <td><p>The application must audit the execution of privileged functions.</p></td>
+<td><p>pass</p></td>
 <td><p>The API emits audit records for privileged functions that document the specific endpoint invoked, the date and time, and all path and query parameters.</p></td>
 </tr>
 <tr class="row-even"><th class="stub"><p>V-222438</p></th>
 <td><p>The application must protect against an individual (or process acting on behalf of an individual) falsely denying having performed organization-defined actions to be covered by non-repudiation.</p></td>
+<td><p>fail</p></td>
 <td><p>Update documentation to specifically state that non-repudiation services for application users are not defined as part of the application design. Then change this to NA.</p></td>
 </tr>
 <tr class="row-odd"><th class="stub"><p>V-222444</p></th>
 <td><p>The application must not write sensitive data into the application logs.</p></td>
+<td><p>pass</p></td>
 <td><p>The API does not emit audit records with sensitive data, including session Ids (not used), encryption keys, or passwords (not used)</p></td>
 </tr>
 <tr class="row-even"><th class="stub"><p>V-222446</p></th>
 <td><p>The application must record a time stamp indicating when the event occurred.</p></td>
+<td><p>pass</p></td>
 <td><p>The API emits audit records that are time stamped.</p></td>
 </tr>
 <tr class="row-odd"><th class="stub"><p>V-222447</p></th>
 <td><p>The application must provide audit record generation capability for HTTP headers including User-Agent, Referer, GET, and POST.</p></td>
+<td><p>fail</p></td>
 <td><p>Will be addressed by #179, must include all headers in audit record.</p></td>
 </tr>
 <tr class="row-even"><th class="stub"><p>V-222448</p></th>
 <td><p>The application must provide audit record generation capability for connecting system IP addresses.</p></td>
+<td><p>pass</p></td>
 <td><p>When logging endpoint requests, the API emits audit records that include the original source IP address.</p></td>
 </tr>
 <tr class="row-odd"><th class="stub"><p>V-222449</p></th>
 <td><p>The application must record the username or user ID of the user associated with the event.</p></td>
+<td><p>pass</p></td>
 <td><p>When logging endpoint requests, the API emits audit records that include the OAuth2 token claim configured as representing the requesting entity’s username.</p></td>
 </tr>
 <tr class="row-even"><th class="stub"><p>V-222450</p></th>
 <td><p>The application must generate audit records when successful/unsuccessful attempts to grant privileges occur.</p></td>
+<td><p>fail</p></td>
 <td><p>Will be addressed by #179, must include POST content and JSON reply in audit record.</p></td>
 </tr>
 <tr class="row-odd"><th class="stub"><p>V-222451</p></th>
 <td><p>The application must generate audit records when successful/unsuccessful attempts to access security objects occur.</p></td>
+<td><p>pass</p></td>
 <td><p>When logging endpoint requests, the API emits audit records for successful and unsuccessful attempts to access security objects (i.e., Collections, Assets, Reviews).</p></td>
 </tr>
 <tr class="row-even"><th class="stub"><p>V-222452</p></th>
 <td><p>The application must generate audit records when successful/unsuccessful attempts to access security levels occur.</p></td>
+<td><p>pass</p></td>
 <td><p>When logging endpoint requests, the API emits audit records for successful and unsuccessful attempts to access security levels (i.e., Collection Grants).</p></td>
 </tr>
 <tr class="row-odd"><th class="stub"><p>V-222453</p></th>
 <td><p>The application must generate audit records when successful/unsuccessful attempts to access categories of information (e.g., classification levels) occur.</p></td>
+<td><p>pass</p></td>
 <td><p>When logging endpoint requests, the API emits audit records for successful and unsuccessful attempts to access all categories of information.</p></td>
 </tr>
 <tr class="row-even"><th class="stub"><p>V-222454</p></th>
 <td><p>The application must generate audit records when successful/unsuccessful attempts to modify privileges occur.</p></td>
+<td><p>fail</p></td>
 <td><p>Will be addressed by #179, must include POST content and JSON reply in audit record.</p></td>
 </tr>
 <tr class="row-odd"><th class="stub"><p>V-222455</p></th>
 <td><p>The application must generate audit records when successful/unsuccessful attempts to modify security objects occur.</p></td>
+<td><p>pass</p></td>
 <td><p>When logging endpoint requests, the API emits audit records for successful and unsuccessful attempts to modify security objects (i.e, Collections, Assets, Reviews and Users).</p></td>
 </tr>
 <tr class="row-even"><th class="stub"><p>V-222456</p></th>
 <td><p>The application must generate audit records when successful/unsuccessful attempts to modify security levels occur.</p></td>
+<td><p>pass</p></td>
 <td><p>When logging endpoint requests, the API emits audit records for successful and unsuccessful attempts to modify security levels (i.e, Collection Grants).</p></td>
 </tr>
 <tr class="row-odd"><th class="stub"><p>V-222457</p></th>
 <td><p>The application must generate audit records when successful/unsuccessful attempts to modify categories of information (e.g., classification levels) occur.</p></td>
+<td><p>pass</p></td>
 <td><p>When logging endpoint requests, the API emits audit records for successful and unsuccessful attempts to modify categories of information (i.e, Collection Grants, Restricted User Access).</p></td>
 </tr>
 <tr class="row-even"><th class="stub"><p>V-222458</p></th>
 <td><p>The application must generate audit records when successful/unsuccessful attempts to delete privileges occur.</p></td>
+<td><p>fail</p></td>
 <td><p>Will be addressed by #179, must include POST content and JSON reply in audit record.</p></td>
 </tr>
 <tr class="row-odd"><th class="stub"><p>V-222459</p></th>
 <td><p>The application must generate audit records when successful/unsuccessful attempts to delete security levels occur.</p></td>
+<td><p>pass</p></td>
 <td><p>When logging endpoint requests, the API emits audit records for successful and unsuccessful attempts to delete security levels  (i.e, Collection Grants, Restricted User Access).</p></td>
 </tr>
 <tr class="row-even"><th class="stub"><p>V-222460</p></th>
 <td><p>The application must generate audit records when successful/unsuccessful attempts to delete application database security objects occur.</p></td>
+<td><p>pass</p></td>
 <td><p>The API does not implement functionality that manipulates database security objects, including deletions.</p></td>
 </tr>
 <tr class="row-odd"><th class="stub"><p>V-222461</p></th>
 <td><p>The application must generate audit records when successful/unsuccessful attempts to delete categories of information (e.g., classification levels) occur.</p></td>
+<td><p>pass</p></td>
 <td><p>When logging endpoint requests, the API emits audit records for successful and unsuccessful attempts to delete categories of information (i.e, Collection Grants, Restricted User Access).</p></td>
 </tr>
 <tr class="row-even"><th class="stub"><p>V-222465</p></th>
 <td><p>The application must generate audit records when successful/unsuccessful accesses to objects occur.</p></td>
+<td><p>pass</p></td>
 <td><p>When logging endpoint requests, the API emits audit records for successful and unsuccessful attempts to access to application objects (i.e, Collections, Assets, Reviews, Users).</p></td>
 </tr>
 <tr class="row-odd"><th class="stub"><p>V-222468</p></th>
 <td><p>The application must initiate session auditing upon startup.</p></td>
+<td><p>pass</p></td>
 <td><p>The API emits audit records immediately upon start of its bootstrapping process.</p>
 <p>Your local definition of ‘application startup’ may include other components (i.e, OIDC Provider, database, reverse proxies, log servers, etc.) whose compliance with this check must be individually evaluated.</p>
 </td>
 </tr>
 <tr class="row-even"><th class="stub"><p>V-222469</p></th>
 <td><p>The application must log application shutdown events.</p></td>
+<td><p>fail</p></td>
 <td><p>The API emits audit records after receiving the SIGINT or SIGHUP signal that initiates a shutdown.</p>
 <p>Your local definition of ‘application shutdown’ may include other components (i.e, OIDC Provider, database, reverse proxies, log servers, etc.) whose compliance with this check must be individually evaluated.</p>
 <p>MAKE SURE THIS IS TRUE</p>
@@ -479,236 +529,293 @@
 </tr>
 <tr class="row-odd"><th class="stub"><p>V-222470</p></th>
 <td><p>The application must log destination IP addresses.</p></td>
+<td><p>pass</p></td>
 <td><p>The API emits audit records containing the destination IP when retrieving token signing keys from the OIDC Provider or when optionally downloading STIG compilations during  the initial database bootstrap.</p></td>
 </tr>
 <tr class="row-even"><th class="stub"><p>V-222471</p></th>
 <td><p>The application must log user actions involving access to data.</p></td>
+<td><p>pass</p></td>
 <td><p>When logging endpoint requests, the API emits audit records for user actions involving access to data (i.e, Collections, Assets, Reviews, Users).</p></td>
 </tr>
 <tr class="row-odd"><th class="stub"><p>V-222472</p></th>
 <td><p>The application must log user actions involving changes to data.</p></td>
+<td><p>pass</p></td>
 <td><p>When logging endpoint requests, the API emits audit records for user actions involving changes to data (i.e, Collections, Assets, Reviews, Users).</p></td>
 </tr>
 <tr class="row-even"><th class="stub"><p>V-222473</p></th>
 <td><p>The application must produce audit records containing information to establish when (date and time) the events occurred.</p></td>
+<td><p>pass</p></td>
 <td><p>The API emits audit records that are time stamped.</p></td>
 </tr>
 <tr class="row-odd"><th class="stub"><p>V-222474</p></th>
 <td><p>The application must produce audit records containing enough information to establish which component, feature or function of the application triggered the audit event.</p></td>
+<td><p>fail</p></td>
 <td><p>The API emits audit records that include a component property.</p>
 <p>Will be improved in #179</p>
 </td>
 </tr>
 <tr class="row-even"><th class="stub"><p>V-222475</p></th>
 <td><p>When using centralized logging; the application must include a unique identifier in order to distinguish itself from other application logs.</p></td>
+<td><p>fail</p></td>
 <td><p>The API emits audit records that include an instance property.</p>
 <p>Implement in #179</p>
 </td>
 </tr>
 <tr class="row-odd"><th class="stub"><p>V-222476</p></th>
 <td><p>The application must produce audit records that contain information to establish the outcome of the events.</p></td>
+<td><p>pass</p></td>
 <td><p>When logging endpoint requests, the API emits audit records that contain the response status code.</p></td>
 </tr>
 <tr class="row-even"><th class="stub"><p>V-222477</p></th>
 <td><p>The application must generate audit records containing information that establishes the identity of any individual or process associated with the event.</p></td>
+<td><p>pass</p></td>
 <td><p>When logging endpoint requests, the API emits audit records that include the OAuth2 token claim configured as representing the requesting entity’s username.</p></td>
 </tr>
 <tr class="row-odd"><th class="stub"><p>V-222478</p></th>
 <td><p>The application must generate audit records containing the full-text recording of privileged commands or the individual identities of group account users.</p></td>
+<td><p>fail</p></td>
 <td><p>When logging endpoint requests, if the request includes parameter ‘elevate’ == true, the API emits audit records that include the JSON POST content and the JSON reply</p>
 <p>Will be addressed by #179, must include POST content and JSON reply in audit record.</p>
 </td>
 </tr>
 <tr class="row-even"><th class="stub"><p>V-222497</p></th>
 <td><p>The applications must use internal system clocks to generate time stamps for audit records.</p></td>
+<td><p>pass</p></td>
 <td><p>The API emits audit records with a time stamp generated from the system clock.</p></td>
 </tr>
 <tr class="row-odd"><th class="stub"><p>V-222498</p></th>
 <td><p>The application must record time stamps for audit records that can be mapped to Coordinated Universal Time (UTC) or Greenwich Mean Time (GMT).</p></td>
+<td><p>pass</p></td>
 <td><p>The API emits audit records with the time stamp represented as an ISO-8601 string, including time zone.</p></td>
 </tr>
 <tr class="row-even"><th class="stub"><p>V-222499</p></th>
 <td><p>The application must record time stamps for audit records that meet a granularity of one second for a minimum degree of precision.</p></td>
+<td><p>pass</p></td>
 <td><p>The API emits audit records with millisecond time stamp precision.</p></td>
 </tr>
 <tr class="row-odd"><th class="stub"><p>V-222513</p></th>
 <td><p>The application must have the capability to prevent the installation of patches, service packs, or application components without verification the software component has been digitally signed using a certificate that is recognized and approved by the organization.</p></td>
+<td><p>pass</p></td>
 <td><p>All containerized API/Web Client builds are signed using Docker Content Trust.</p></td>
 </tr>
 <tr class="row-even"><th class="stub"><p>V-222514</p></th>
 <td><p>The applications must limit privileges to change the software resident within software libraries.</p></td>
+<td><p>pass</p></td>
 <td><p>The API is designed to be stateless and runnable in a read-only  container.</p></td>
 </tr>
 <tr class="row-odd"><th class="stub"><p>V-222515</p></th>
 <td><p>An application vulnerability assessment must be conducted.</p></td>
+<td><p>pass</p></td>
 <td><p>NULL</p></td>
 </tr>
 <tr class="row-even"><th class="stub"><p>V-222518</p></th>
 <td><p>The application must be configured to disable non-essential capabilities.</p></td>
+<td><p>pass</p></td>
 <td><p>Container images are based on either the Alpine Linux distribution or the Iron Bank Universal Base Image (UBI)</p></td>
 </tr>
 <tr class="row-odd"><th class="stub"><p>V-222522</p></th>
 <td><p>The application must uniquely identify and authenticate organizational users (or processes acting on behalf of organizational users).</p></td>
+<td><p>pass</p></td>
 <td><p>NULL</p></td>
 </tr>
 <tr class="row-even"><th class="stub"><p>V-222533</p></th>
 <td><p>The application must authenticate all network connected endpoint devices before establishing any connection.</p></td>
+<td><p>pass</p></td>
 <td><p>All endpoint access requires a valid OAuth2 token issued by the application OIDC Provider.</p></td>
 </tr>
 <tr class="row-odd"><th class="stub"><p>V-222560</p></th>
 <td><p>The application must conform to FICAM-issued profiles.</p></td>
+<td><p>pass</p></td>
 <td><p>The project conforms to OpenID Connect, a FICAM issued profile.</p></td>
 </tr>
 <tr class="row-even"><th class="stub"><p>V-222567</p></th>
 <td><p>The application must not be vulnerable to race conditions.</p></td>
+<td><p>pass</p></td>
 <td><p>Code review by SonarCloud tests for and reveals no race conditions.</p></td>
 </tr>
 <tr class="row-odd"><th class="stub"><p>V-222568</p></th>
 <td><p>The application must terminate all network connections associated with a communications session at the end of the session.</p></td>
+<td><p>pass</p></td>
 <td><p>NULL</p></td>
 </tr>
 <tr class="row-even"><th class="stub"><p>V-222570</p></th>
 <td><p>The application must utilize FIPS-validated cryptographic modules when signing application components.</p></td>
+<td><p>pass</p></td>
 <td><p>Container images are signed via Docker Content Trust, which uses SHA256 digests.</p></td>
 </tr>
 <tr class="row-odd"><th class="stub"><p>V-222571</p></th>
 <td><p>The application must utilize FIPS-validated cryptographic modules when generating cryptographic hashes.</p></td>
+<td><p>pass</p></td>
 <td><p>Container images are signed via Docker Content Trust, which uses SHA256 digests.</p></td>
 </tr>
 <tr class="row-even"><th class="stub"><p>V-222574</p></th>
 <td><p>The application user interface must be either physically or logically separated from data storage and management interfaces.</p></td>
+<td><p>pass</p></td>
 <td><p>NULL</p></td>
 </tr>
 <tr class="row-odd"><th class="stub"><p>V-222590</p></th>
 <td><p>The application must isolate security functions from non-security functions.</p></td>
+<td><p>pass</p></td>
 <td><p>The project RBAC is described in the documentation</p></td>
 </tr>
 <tr class="row-even"><th class="stub"><p>V-222591</p></th>
 <td><p>The application must maintain a separate execution domain for each executing process.</p></td>
+<td><p>pass</p></td>
 <td><p>The project should be deployed as an immutable, stateless container that runs in a single, isolated execution domain.</p></td>
 </tr>
 <tr class="row-odd"><th class="stub"><p>V-222593</p></th>
 <td><p>XML-based applications must mitigate DoS attacks by using XML filters, parser options, or gateways.</p></td>
+<td><p>pass</p></td>
 <td><p>The project uses the library ‘fast-xml-parser’ a maintained library whose development pipeline tests itself against XML based attacks.</p></td>
 </tr>
 <tr class="row-even"><th class="stub"><p>V-222600</p></th>
 <td><p>The application must not disclose unnecessary information to users.</p></td>
+<td><p>fail</p></td>
 <td><p>Sanitize error messages</p></td>
 </tr>
 <tr class="row-odd"><th class="stub"><p>V-222601</p></th>
 <td><p>The application must not store sensitive information in hidden fields.</p></td>
+<td><p>pass</p></td>
 <td><p>NULL</p></td>
 </tr>
 <tr class="row-even"><th class="stub"><p>V-222602</p></th>
 <td><p>The application must protect from Cross-Site Scripting (XSS) vulnerabilities.</p></td>
+<td><p>pass</p></td>
 <td><p>SonarCloud</p></td>
 </tr>
 <tr class="row-odd"><th class="stub"><p>V-222603</p></th>
 <td><p>The application must protect from Cross-Site Request Forgery (CSRF) vulnerabilities.</p></td>
+<td><p>pass</p></td>
 <td><p>SonarCloud</p></td>
 </tr>
 <tr class="row-even"><th class="stub"><p>V-222604</p></th>
 <td><p>The application must protect from command injection.</p></td>
+<td><p>pass</p></td>
 <td><p>NULL</p></td>
 </tr>
 <tr class="row-odd"><th class="stub"><p>V-222605</p></th>
 <td><p>The application must protect from canonical representation vulnerabilities.</p></td>
+<td><p>pass</p></td>
 <td><p>SonarCloud OWASP tests pass</p></td>
 </tr>
 <tr class="row-even"><th class="stub"><p>V-222606</p></th>
 <td><p>The application must validate all input.</p></td>
+<td><p>pass</p></td>
 <td><p>OAS for API</p></td>
 </tr>
 <tr class="row-odd"><th class="stub"><p>V-222607</p></th>
 <td><p>The application must not be vulnerable to SQL Injection.</p></td>
+<td><p>pass</p></td>
 <td><p>All queries parameterized</p></td>
 </tr>
 <tr class="row-even"><th class="stub"><p>V-222608</p></th>
 <td><p>The application must not be vulnerable to XML-oriented attacks.</p></td>
+<td><p>pass</p></td>
 <td><p>SonarCloud checks for XML attacks</p></td>
 </tr>
 <tr class="row-odd"><th class="stub"><p>V-222609</p></th>
 <td><p>The application must not be subject to input handling vulnerabilities.</p></td>
+<td><p>pass</p></td>
 <td><p>SonarCloud</p></td>
 </tr>
 <tr class="row-even"><th class="stub"><p>V-222610</p></th>
 <td><p>The application must generate error messages that provide information necessary for corrective actions without revealing information that could be exploited by adversaries.</p></td>
+<td><p>fail</p></td>
 <td><p>Check error messages</p></td>
 </tr>
 <tr class="row-odd"><th class="stub"><p>V-222611</p></th>
 <td><p>The application must reveal error messages only to the ISSO, ISSM, or SA.</p></td>
+<td><p>fail</p></td>
 <td><p>Check error messages</p></td>
 </tr>
 <tr class="row-even"><th class="stub"><p>V-222612</p></th>
 <td><p>The application must not be vulnerable to overflow attacks.</p></td>
+<td><p>pass</p></td>
 <td><p>NULL</p></td>
 </tr>
 <tr class="row-odd"><th class="stub"><p>V-222613</p></th>
 <td><p>The application must remove organization-defined software components after updated versions have been installed.</p></td>
+<td><p>pass</p></td>
 <td><p>Dependabot</p></td>
 </tr>
 <tr class="row-even"><th class="stub"><p>V-222614</p></th>
 <td><p>Security-relevant software updates and patches must be kept up to date.</p></td>
+<td><p>pass</p></td>
 <td><p>Dependabot</p></td>
 </tr>
 <tr class="row-odd"><th class="stub"><p>V-222625</p></th>
 <td><p>Execution flow diagrams and design documents must be created to show how deadlock and recursion issues in web services are being mitigated.</p></td>
+<td><p>pass</p></td>
 <td><p>web service (a.k.a. API) deadlocks not possible since API does not call client</p></td>
 </tr>
 <tr class="row-even"><th class="stub"><p>V-222626</p></th>
 <td><p>The designer must ensure the application does not store configuration and control files in the same directory as user data.</p></td>
+<td><p>pass</p></td>
 <td><p>API is stateless</p></td>
 </tr>
 <tr class="row-odd"><th class="stub"><p>V-222639</p></th>
 <td><p>Back-up copies of the application software or source code must be stored in a fire-rated container or stored separately (offsite).</p></td>
+<td><p>pass</p></td>
 <td><p>NULL</p></td>
 </tr>
 <tr class="row-even"><th class="stub"><p>V-222642</p></th>
 <td><p>The application must not contain embedded authentication data.</p></td>
+<td><p>pass</p></td>
 <td><p>NULL</p></td>
 </tr>
 <tr class="row-odd"><th class="stub"><p>V-222643</p></th>
 <td><p>The application must have the capability to mark sensitive/classified output when required.</p></td>
+<td><p>fail</p></td>
 <td><p>Add classification to CSV</p></td>
 </tr>
 <tr class="row-even"><th class="stub"><p>V-222644</p></th>
 <td><p>Prior to each release of the application, updates to system, or applying patches; tests plans and procedures must be created and executed.</p></td>
+<td><p>pass</p></td>
 <td><p>Github workflows</p></td>
 </tr>
 <tr class="row-odd"><th class="stub"><p>V-222645</p></th>
 <td><p>Application files must be cryptographically hashed prior to deploying to DoD operational networks.</p></td>
+<td><p>pass</p></td>
 <td><p>Signed containers</p></td>
 </tr>
 <tr class="row-even"><th class="stub"><p>V-222646</p></th>
 <td><p>At least one tester must be designated to test for security flaws in addition to functional testing.</p></td>
+<td><p>pass</p></td>
 <td><p>SonarCloud, newman</p></td>
 </tr>
 <tr class="row-odd"><th class="stub"><p>V-222656</p></th>
 <td><p>The application must not be subject to error handling vulnerabilities.</p></td>
+<td><p>pass</p></td>
 <td><p>SonarCloud</p></td>
 </tr>
 <tr class="row-even"><th class="stub"><p>V-222658</p></th>
 <td><p>All products must be supported by the vendor or the development team.</p></td>
+<td><p>pass</p></td>
 <td><p>NULL</p></td>
 </tr>
 <tr class="row-odd"><th class="stub"><p>V-222663</p></th>
 <td><p>An Application Configuration Guide must be created and included with the application.</p></td>
+<td><p>pass</p></td>
 <td><p>Documentation</p></td>
 </tr>
 <tr class="row-even"><th class="stub"><p>V-222665</p></th>
 <td><p>The designer must ensure uncategorized or emerging mobile code is not used in applications.</p></td>
+<td><p>pass</p></td>
 <td><p>NULL</p></td>
 </tr>
 <tr class="row-odd"><th class="stub"><p>V-222667</p></th>
 <td><p>Protections against DoS attacks must be implemented.</p></td>
+<td><p>fail</p></td>
 <td><p>Define DoS in threat model</p></td>
 </tr>
 <tr class="row-even"><th class="stub"><p>V-222670</p></th>
 <td><p>The application must provide notifications or alerts when product update and security related patches are available.</p></td>
+<td><p>pass</p></td>
 <td><p>GitHub and DockerHub</p></td>
 </tr>
 <tr class="row-odd"><th class="stub"><p>V-222672</p></th>
 <td><p>The application must generate audit records when concurrent logons from different workstations occur.</p></td>
+<td><p>pass</p></td>
 <td><p>NULL</p></td>
 </tr>
 </tbody>
@@ -720,9 +827,9 @@
 <li><p>SOAP/WS-Security/SAML requirements translated to OAuth2: “OAuth 2.0 provides the same functionality for RESTful APIs as WS-Trust and WS-Security provide for SOAP web services”</p></li>
 <li><p>audit tools</p></li>
 </ul>
-</section>
-</section>
-</section>
+</div>
+</div>
+</div>
 
 
            </div>

@@ -1,110 +1,110 @@
-Vuln,Title,Detail
-V-222388,"The application must clear temporary storage and cookies when the session is terminated.","The Web Client does not persist storage of any user information, including OAuth2 tokens."
-V-222391,"Applications requiring user access authentication must provide a logoff capability for user initiated communication session.","The Web Client requests logoff service from the OIDC Provider after user interaction with a DOM element whose innerText = 'Logout'"
-V-222392,"The application must display an explicit logoff message to users indicating the reliable termination of authenticated communications sessions.","The SPA does not display a 'logged out' screen, it immediately attempts to re-authenticate a user"
-V-222393,"The application must associate organization-defined types of security attributes having organization-defined security attribute values with information in storage.","The API scaffolds a new database instance with the classification specified by the environment variable STIGMAN_CLASSIFICATION. This value is stored in the 'configuration' table and represents the default classification for all data stored by the database instance.
+Vuln,Title,result,Detail
+V-222388,"The application must clear temporary storage and cookies when the session is terminated.",pass,"The Web Client does not persist storage of any user information, including OAuth2 tokens."
+V-222391,"Applications requiring user access authentication must provide a logoff capability for user initiated communication session.",pass,"The Web Client requests logoff service from the OIDC Provider after user interaction with a DOM element whose innerText = 'Logout'"
+V-222392,"The application must display an explicit logoff message to users indicating the reliable termination of authenticated communications sessions.",fail,"The SPA does not display a 'logged out' screen, it immediately attempts to re-authenticate a user"
+V-222393,"The application must associate organization-defined types of security attributes having organization-defined security attribute values with information in storage.",pass,"The API scaffolds each new database instance with the classification specified by the environment variable STIGMAN_CLASSIFICATION. This value is stored in the 'configuration' table and represents the default classification for all data that is stored by the database instance, served by the API, and received by the Web Client.
 
  "
-V-222394,"The application must associate organization-defined types of security attributes having organization-defined security attribute values with information in process.","The Web Client displays a banner that represents the data marking for all data displayed by the Client. Processing the data does not alter this banner in any circumstances."
-V-222395,"The application must associate organization-defined types of security attributes having organization-defined security attribute values with information in transmission.","The Web Client displays a banner that represents the data marking for all data displayed by the Client. Data transmission does not alter this banner in any circumstances."
-V-222423,"Application data protection requirements must be identified and documented.","the project provides an ontology that identifies application data elements, their protection requirements, and steps that are taken to protect the data.. See documentation and OAS definition."
-V-222425,"The application must enforce approved authorizations for logical access to information and system resources in accordance with applicable access control policies.","The API enforces access to information in accordance with the discretionary access control policy of the associated Collection. See documentation. "
-V-222426,"The application must enforce organization-defined discretionary access control policies over defined subjects and objects.","the project implements discretionary access control to application resources. See documentation."
-V-222427,"The application must enforce approved authorizations for controlling the flow of information within the system based on organization-defined information flow control policies.","The API controls information flow in accordance with the discretionary access control policy of the associated Collection. See documentation. "
-V-222428,"The application must enforce approved authorizations for controlling the flow of information between interconnected systems based on organization-defined information flow control policies.","The API controls information flow in accordance with the discretionary access control policy of the associated Collection. See documentation. "
-V-222429,"The application must prevent non-privileged users from executing privileged functions to include disabling, circumventing, or altering implemented security safeguards/countermeasures.","The Project publishes container images configured to execute the API as the unprivileged user, 'node' whose userId is not 0."
-V-222430,"The application must execute without excessive account permissions.","The project supplied container images are configured to run by the limited, unprivileged user, 'node'."
-V-222431,"The application must audit the execution of privileged functions.","The API emits audit records for privileged functions that document the specific endpoint invoked, the date and time, and all path and query parameters."
-V-222438,"The application must protect against an individual (or process acting on behalf of an individual) falsely denying having performed organization-defined actions to be covered by non-repudiation.","Update documentation to specifically state that non-repudiation services for application users are not defined as part of the application design. Then change this to NA."
-V-222444,"The application must not write sensitive data into the application logs.","The API does not emit audit records with sensitive data, including session Ids (not used), encryption keys, or passwords (not used)"
-V-222446,"The application must record a time stamp indicating when the event occurred.","The API emits audit records that are time stamped."
-V-222447,"The application must provide audit record generation capability for HTTP headers including User-Agent, Referer, GET, and POST.","Will be addressed by #179, must include all headers in audit record."
-V-222448,"The application must provide audit record generation capability for connecting system IP addresses.","When logging endpoint requests, the API emits audit records that include the original source IP address."
-V-222449,"The application must record the username or user ID of the user associated with the event.","When logging endpoint requests, the API emits audit records that include the OAuth2 token claim configured as representing the requesting entity's username."
-V-222450,"The application must generate audit records when successful/unsuccessful attempts to grant privileges occur.","Will be addressed by #179, must include POST content and JSON reply in audit record."
-V-222451,"The application must generate audit records when successful/unsuccessful attempts to access security objects occur.","When logging endpoint requests, the API emits audit records for successful and unsuccessful attempts to access security objects (i.e., Collections, Assets, Reviews).
+V-222394,"The application must associate organization-defined types of security attributes having organization-defined security attribute values with information in process.",pass,"Individual objects do not contain data markings. An API endpoint returns the data marking for all data served by the API. The Web Client displays a banner that represents the data marking for all data received by the Client. Processing the data does not alter this banner in any circumstances."
+V-222395,"The application must associate organization-defined types of security attributes having organization-defined security attribute values with information in transmission.",pass,"Individual objects do not contain data markings. An API endpoint returns the data marking for all data served by the API. The Web Client displays a banner that represents the data marking for all data received by the Client. Data transmission does not alter this banner in any circumstances."
+V-222423,"Application data protection requirements must be identified and documented.",pass,"the project provides an ontology that identifies application data elements, their protection requirements, and steps that are taken to protect the data.. See documentation and OAS definition."
+V-222425,"The application must enforce approved authorizations for logical access to information and system resources in accordance with applicable access control policies.",pass,"The API enforces access to information in accordance with the discretionary access control policy of the associated Collection. See documentation. "
+V-222426,"The application must enforce organization-defined discretionary access control policies over defined subjects and objects.",pass,"the project implements discretionary access control to application resources. See documentation."
+V-222427,"The application must enforce approved authorizations for controlling the flow of information within the system based on organization-defined information flow control policies.",pass,"The API controls information flow in accordance with the discretionary access control policy of the associated Collection. See documentation. "
+V-222428,"The application must enforce approved authorizations for controlling the flow of information between interconnected systems based on organization-defined information flow control policies.",pass,"The API controls information flow in accordance with the discretionary access control policy of the associated Collection. See documentation. "
+V-222429,"The application must prevent non-privileged users from executing privileged functions to include disabling, circumventing, or altering implemented security safeguards/countermeasures.",pass,"The Project publishes container images configured to execute the API as the unprivileged user, 'node' whose userId is not 0."
+V-222430,"The application must execute without excessive account permissions.",pass,"The project supplied container images are configured to run by the limited, unprivileged user, 'node'."
+V-222431,"The application must audit the execution of privileged functions.",pass,"The API emits audit records for privileged functions that document the specific endpoint invoked, the date and time, and all path and query parameters."
+V-222438,"The application must protect against an individual (or process acting on behalf of an individual) falsely denying having performed organization-defined actions to be covered by non-repudiation.",fail,"Update documentation to specifically state that non-repudiation services for application users are not defined as part of the application design. Then change this to NA."
+V-222444,"The application must not write sensitive data into the application logs.",pass,"The API does not emit audit records with sensitive data, including session Ids (not used), encryption keys, or passwords (not used)"
+V-222446,"The application must record a time stamp indicating when the event occurred.",pass,"The API emits audit records that are time stamped."
+V-222447,"The application must provide audit record generation capability for HTTP headers including User-Agent, Referer, GET, and POST.",fail,"Will be addressed by #179, must include all headers in audit record."
+V-222448,"The application must provide audit record generation capability for connecting system IP addresses.",pass,"When logging endpoint requests, the API emits audit records that include the original source IP address."
+V-222449,"The application must record the username or user ID of the user associated with the event.",pass,"When logging endpoint requests, the API emits audit records that include the OAuth2 token claim configured as representing the requesting entity's username."
+V-222450,"The application must generate audit records when successful/unsuccessful attempts to grant privileges occur.",fail,"Will be addressed by #179, must include POST content and JSON reply in audit record."
+V-222451,"The application must generate audit records when successful/unsuccessful attempts to access security objects occur.",pass,"When logging endpoint requests, the API emits audit records for successful and unsuccessful attempts to access security objects (i.e., Collections, Assets, Reviews).
 "
-V-222452,"The application must generate audit records when successful/unsuccessful attempts to access security levels occur.","When logging endpoint requests, the API emits audit records for successful and unsuccessful attempts to access security levels (i.e., Collection Grants).
+V-222452,"The application must generate audit records when successful/unsuccessful attempts to access security levels occur.",pass,"When logging endpoint requests, the API emits audit records for successful and unsuccessful attempts to access security levels (i.e., Collection Grants).
 "
-V-222453,"The application must generate audit records when successful/unsuccessful attempts to access categories of information (e.g., classification levels) occur.","When logging endpoint requests, the API emits audit records for successful and unsuccessful attempts to access all categories of information."
-V-222454,"The application must generate audit records when successful/unsuccessful attempts to modify privileges occur.","Will be addressed by #179, must include POST content and JSON reply in audit record."
-V-222455,"The application must generate audit records when successful/unsuccessful attempts to modify security objects occur.","When logging endpoint requests, the API emits audit records for successful and unsuccessful attempts to modify security objects (i.e, Collections, Assets, Reviews and Users)."
-V-222456,"The application must generate audit records when successful/unsuccessful attempts to modify security levels occur.","When logging endpoint requests, the API emits audit records for successful and unsuccessful attempts to modify security levels (i.e, Collection Grants)."
-V-222457,"The application must generate audit records when successful/unsuccessful attempts to modify categories of information (e.g., classification levels) occur.","When logging endpoint requests, the API emits audit records for successful and unsuccessful attempts to modify categories of information (i.e, Collection Grants, Restricted User Access)."
-V-222458,"The application must generate audit records when successful/unsuccessful attempts to delete privileges occur.","Will be addressed by #179, must include POST content and JSON reply in audit record."
-V-222459,"The application must generate audit records when successful/unsuccessful attempts to delete security levels occur.","When logging endpoint requests, the API emits audit records for successful and unsuccessful attempts to delete security levels  (i.e, Collection Grants, Restricted User Access)."
-V-222460,"The application must generate audit records when successful/unsuccessful attempts to delete application database security objects occur.","The API does not implement functionality that manipulates database security objects, including deletions."
-V-222461,"The application must generate audit records when successful/unsuccessful attempts to delete categories of information (e.g., classification levels) occur.","When logging endpoint requests, the API emits audit records for successful and unsuccessful attempts to delete categories of information (i.e, Collection Grants, Restricted User Access)."
-V-222465,"The application must generate audit records when successful/unsuccessful accesses to objects occur.","When logging endpoint requests, the API emits audit records for successful and unsuccessful attempts to access to application objects (i.e, Collections, Assets, Reviews, Users)."
-V-222468,"The application must initiate session auditing upon startup.","The API emits audit records immediately upon start of its bootstrapping process.
+V-222453,"The application must generate audit records when successful/unsuccessful attempts to access categories of information (e.g., classification levels) occur.",pass,"When logging endpoint requests, the API emits audit records for successful and unsuccessful attempts to access all categories of information."
+V-222454,"The application must generate audit records when successful/unsuccessful attempts to modify privileges occur.",fail,"Will be addressed by #179, must include POST content and JSON reply in audit record."
+V-222455,"The application must generate audit records when successful/unsuccessful attempts to modify security objects occur.",pass,"When logging endpoint requests, the API emits audit records for successful and unsuccessful attempts to modify security objects (i.e, Collections, Assets, Reviews and Users)."
+V-222456,"The application must generate audit records when successful/unsuccessful attempts to modify security levels occur.",pass,"When logging endpoint requests, the API emits audit records for successful and unsuccessful attempts to modify security levels (i.e, Collection Grants)."
+V-222457,"The application must generate audit records when successful/unsuccessful attempts to modify categories of information (e.g., classification levels) occur.",pass,"When logging endpoint requests, the API emits audit records for successful and unsuccessful attempts to modify categories of information (i.e, Collection Grants, Restricted User Access)."
+V-222458,"The application must generate audit records when successful/unsuccessful attempts to delete privileges occur.",fail,"Will be addressed by #179, must include POST content and JSON reply in audit record."
+V-222459,"The application must generate audit records when successful/unsuccessful attempts to delete security levels occur.",pass,"When logging endpoint requests, the API emits audit records for successful and unsuccessful attempts to delete security levels  (i.e, Collection Grants, Restricted User Access)."
+V-222460,"The application must generate audit records when successful/unsuccessful attempts to delete application database security objects occur.",pass,"The API does not implement functionality that manipulates database security objects, including deletions."
+V-222461,"The application must generate audit records when successful/unsuccessful attempts to delete categories of information (e.g., classification levels) occur.",pass,"When logging endpoint requests, the API emits audit records for successful and unsuccessful attempts to delete categories of information (i.e, Collection Grants, Restricted User Access)."
+V-222465,"The application must generate audit records when successful/unsuccessful accesses to objects occur.",pass,"When logging endpoint requests, the API emits audit records for successful and unsuccessful attempts to access to application objects (i.e, Collections, Assets, Reviews, Users)."
+V-222468,"The application must initiate session auditing upon startup.",pass,"The API emits audit records immediately upon start of its bootstrapping process.
 
 Your local definition of 'application startup' may include other components (i.e, OIDC Provider, database, reverse proxies, log servers, etc.) whose compliance with this check must be individually evaluated."
-V-222469,"The application must log application shutdown events.","The API emits audit records after receiving the SIGINT or SIGHUP signal that initiates a shutdown.
+V-222469,"The application must log application shutdown events.",fail,"The API emits audit records after receiving the SIGINT or SIGHUP signal that initiates a shutdown.
 
 Your local definition of 'application shutdown' may include other components (i.e, OIDC Provider, database, reverse proxies, log servers, etc.) whose compliance with this check must be individually evaluated.
 
 MAKE SURE THIS IS TRUE"
-V-222470,"The application must log destination IP addresses.","The API emits audit records containing the destination IP when retrieving token signing keys from the OIDC Provider or when optionally downloading STIG compilations during  the initial database bootstrap."
-V-222471,"The application must log user actions involving access to data.","When logging endpoint requests, the API emits audit records for user actions involving access to data (i.e, Collections, Assets, Reviews, Users)."
-V-222472,"The application must log user actions involving changes to data.","When logging endpoint requests, the API emits audit records for user actions involving changes to data (i.e, Collections, Assets, Reviews, Users)."
-V-222473,"The application must produce audit records containing information to establish when (date and time) the events occurred.","The API emits audit records that are time stamped."
-V-222474,"The application must produce audit records containing enough information to establish which component, feature or function of the application triggered the audit event.","The API emits audit records that include a component property.
+V-222470,"The application must log destination IP addresses.",pass,"The API emits audit records containing the destination IP when retrieving token signing keys from the OIDC Provider or when optionally downloading STIG compilations during  the initial database bootstrap."
+V-222471,"The application must log user actions involving access to data.",pass,"When logging endpoint requests, the API emits audit records for user actions involving access to data (i.e, Collections, Assets, Reviews, Users)."
+V-222472,"The application must log user actions involving changes to data.",pass,"When logging endpoint requests, the API emits audit records for user actions involving changes to data (i.e, Collections, Assets, Reviews, Users)."
+V-222473,"The application must produce audit records containing information to establish when (date and time) the events occurred.",pass,"The API emits audit records that are time stamped."
+V-222474,"The application must produce audit records containing enough information to establish which component, feature or function of the application triggered the audit event.",fail,"The API emits audit records that include a component property.
 
 Will be improved in #179"
-V-222475,"When using centralized logging; the application must include a unique identifier in order to distinguish itself from other application logs.","The API emits audit records that include an instance property.
+V-222475,"When using centralized logging; the application must include a unique identifier in order to distinguish itself from other application logs.",fail,"The API emits audit records that include an instance property.
 
 Implement in #179
 "
-V-222476,"The application must produce audit records that contain information to establish the outcome of the events.","When logging endpoint requests, the API emits audit records that contain the response status code."
-V-222477,"The application must generate audit records containing information that establishes the identity of any individual or process associated with the event.","When logging endpoint requests, the API emits audit records that include the OAuth2 token claim configured as representing the requesting entity's username."
-V-222478,"The application must generate audit records containing the full-text recording of privileged commands or the individual identities of group account users.","When logging endpoint requests, if the request includes parameter 'elevate' == true, the API emits audit records that include the JSON POST content and the JSON reply
+V-222476,"The application must produce audit records that contain information to establish the outcome of the events.",pass,"When logging endpoint requests, the API emits audit records that contain the response status code."
+V-222477,"The application must generate audit records containing information that establishes the identity of any individual or process associated with the event.",pass,"When logging endpoint requests, the API emits audit records that include the OAuth2 token claim configured as representing the requesting entity's username."
+V-222478,"The application must generate audit records containing the full-text recording of privileged commands or the individual identities of group account users.",fail,"When logging endpoint requests, if the request includes parameter 'elevate' == true, the API emits audit records that include the JSON POST content and the JSON reply
 
 Will be addressed by #179, must include POST content and JSON reply in audit record."
-V-222497,"The applications must use internal system clocks to generate time stamps for audit records.","The API emits audit records with a time stamp generated from the system clock."
-V-222498,"The application must record time stamps for audit records that can be mapped to Coordinated Universal Time (UTC) or Greenwich Mean Time (GMT).","The API emits audit records with the time stamp represented as an ISO-8601 string, including time zone."
-V-222499,"The application must record time stamps for audit records that meet a granularity of one second for a minimum degree of precision.","The API emits audit records with millisecond time stamp precision."
-V-222513,"The application must have the capability to prevent the installation of patches, service packs, or application components without verification the software component has been digitally signed using a certificate that is recognized and approved by the organization.","All containerized API/Web Client builds are signed using Docker Content Trust."
-V-222514,"The applications must limit privileges to change the software resident within software libraries.","The API is designed to be stateless and runnable in a read-only  container. "
-V-222515,"An application vulnerability assessment must be conducted.",NULL
-V-222518,"The application must be configured to disable non-essential capabilities.","Container images are based on either the Alpine Linux distribution or the Iron Bank Universal Base Image (UBI)"
-V-222522,"The application must uniquely identify and authenticate organizational users (or processes acting on behalf of organizational users).",NULL
-V-222533,"The application must authenticate all network connected endpoint devices before establishing any connection.","All endpoint access requires a valid OAuth2 token issued by the application OIDC Provider."
-V-222560,"The application must conform to FICAM-issued profiles.","The project conforms to OpenID Connect, a FICAM issued profile."
-V-222567,"The application must not be vulnerable to race conditions.","Code review by SonarCloud tests for and reveals no race conditions."
-V-222568,"The application must terminate all network connections associated with a communications session at the end of the session.",NULL
-V-222570,"The application must utilize FIPS-validated cryptographic modules when signing application components.","Container images are signed via Docker Content Trust, which uses SHA256 digests."
-V-222571,"The application must utilize FIPS-validated cryptographic modules when generating cryptographic hashes.","Container images are signed via Docker Content Trust, which uses SHA256 digests."
-V-222574,"The application user interface must be either physically or logically separated from data storage and management interfaces.",NULL
-V-222590,"The application must isolate security functions from non-security functions.","The project RBAC is described in the documentation"
-V-222591,"The application must maintain a separate execution domain for each executing process.","The project should be deployed as an immutable, stateless container that runs in a single, isolated execution domain."
-V-222593,"XML-based applications must mitigate DoS attacks by using XML filters, parser options, or gateways.","The project uses the library 'fast-xml-parser' a maintained library whose development pipeline tests itself against XML based attacks."
-V-222600,"The application must not disclose unnecessary information to users.","Sanitize error messages"
-V-222601,"The application must not store sensitive information in hidden fields.",NULL
-V-222602,"The application must protect from Cross-Site Scripting (XSS) vulnerabilities.",SonarCloud
-V-222603,"The application must protect from Cross-Site Request Forgery (CSRF) vulnerabilities.",SonarCloud
-V-222604,"The application must protect from command injection.",NULL
-V-222605,"The application must protect from canonical representation vulnerabilities.","SonarCloud OWASP tests pass"
-V-222606,"The application must validate all input.","OAS for API"
-V-222607,"The application must not be vulnerable to SQL Injection.","All queries parameterized"
-V-222608,"The application must not be vulnerable to XML-oriented attacks.","SonarCloud checks for XML attacks"
-V-222609,"The application must not be subject to input handling vulnerabilities.",SonarCloud
-V-222610,"The application must generate error messages that provide information necessary for corrective actions without revealing information that could be exploited by adversaries.","Check error messages"
-V-222611,"The application must reveal error messages only to the ISSO, ISSM, or SA.","Check error messages"
-V-222612,"The application must not be vulnerable to overflow attacks.",NULL
-V-222613,"The application must remove organization-defined software components after updated versions have been installed.",Dependabot
-V-222614,"Security-relevant software updates and patches must be kept up to date.",Dependabot
-V-222625,"Execution flow diagrams and design documents must be created to show how deadlock and recursion issues in web services are being mitigated.","web service (a.k.a. API) deadlocks not possible since API does not call client"
-V-222626,"The designer must ensure the application does not store configuration and control files in the same directory as user data.","API is stateless"
-V-222639,"Back-up copies of the application software or source code must be stored in a fire-rated container or stored separately (offsite).",NULL
-V-222642,"The application must not contain embedded authentication data.",NULL
-V-222643,"The application must have the capability to mark sensitive/classified output when required.","Add classification to CSV"
-V-222644,"Prior to each release of the application, updates to system, or applying patches; tests plans and procedures must be created and executed.","Github workflows"
-V-222645,"Application files must be cryptographically hashed prior to deploying to DoD operational networks.","Signed containers"
-V-222646,"At least one tester must be designated to test for security flaws in addition to functional testing.","SonarCloud, newman"
-V-222656,"The application must not be subject to error handling vulnerabilities.",SonarCloud
-V-222658,"All products must be supported by the vendor or the development team.",NULL
-V-222663,"An Application Configuration Guide must be created and included with the application.",Documentation
-V-222665,"The designer must ensure uncategorized or emerging mobile code is not used in applications.",NULL
-V-222667,"Protections against DoS attacks must be implemented.","Define DoS in threat model"
-V-222670,"The application must provide notifications or alerts when product update and security related patches are available.","GitHub and DockerHub"
-V-222672,"The application must generate audit records when concurrent logons from different workstations occur.",NULL
+V-222497,"The applications must use internal system clocks to generate time stamps for audit records.",pass,"The API emits audit records with a time stamp generated from the system clock."
+V-222498,"The application must record time stamps for audit records that can be mapped to Coordinated Universal Time (UTC) or Greenwich Mean Time (GMT).",pass,"The API emits audit records with the time stamp represented as an ISO-8601 string, including time zone."
+V-222499,"The application must record time stamps for audit records that meet a granularity of one second for a minimum degree of precision.",pass,"The API emits audit records with millisecond time stamp precision."
+V-222513,"The application must have the capability to prevent the installation of patches, service packs, or application components without verification the software component has been digitally signed using a certificate that is recognized and approved by the organization.",pass,"All containerized API/Web Client builds are signed using Docker Content Trust."
+V-222514,"The applications must limit privileges to change the software resident within software libraries.",pass,"The API is designed to be stateless and runnable in a read-only  container. "
+V-222515,"An application vulnerability assessment must be conducted.",pass,NULL
+V-222518,"The application must be configured to disable non-essential capabilities.",pass,"Container images are based on either the Alpine Linux distribution or the Iron Bank Universal Base Image (UBI)"
+V-222522,"The application must uniquely identify and authenticate organizational users (or processes acting on behalf of organizational users).",pass,NULL
+V-222533,"The application must authenticate all network connected endpoint devices before establishing any connection.",pass,"All endpoint access requires a valid OAuth2 token issued by the application OIDC Provider."
+V-222560,"The application must conform to FICAM-issued profiles.",pass,"The project conforms to OpenID Connect, a FICAM issued profile."
+V-222567,"The application must not be vulnerable to race conditions.",pass,"Code review by SonarCloud tests for and reveals no race conditions."
+V-222568,"The application must terminate all network connections associated with a communications session at the end of the session.",pass,NULL
+V-222570,"The application must utilize FIPS-validated cryptographic modules when signing application components.",pass,"Container images are signed via Docker Content Trust, which uses SHA256 digests."
+V-222571,"The application must utilize FIPS-validated cryptographic modules when generating cryptographic hashes.",pass,"Container images are signed via Docker Content Trust, which uses SHA256 digests."
+V-222574,"The application user interface must be either physically or logically separated from data storage and management interfaces.",pass,NULL
+V-222590,"The application must isolate security functions from non-security functions.",pass,"The project RBAC is described in the documentation"
+V-222591,"The application must maintain a separate execution domain for each executing process.",pass,"The project should be deployed as an immutable, stateless container that runs in a single, isolated execution domain."
+V-222593,"XML-based applications must mitigate DoS attacks by using XML filters, parser options, or gateways.",pass,"The project uses the library 'fast-xml-parser' a maintained library whose development pipeline tests itself against XML based attacks."
+V-222600,"The application must not disclose unnecessary information to users.",fail,"Sanitize error messages"
+V-222601,"The application must not store sensitive information in hidden fields.",pass,NULL
+V-222602,"The application must protect from Cross-Site Scripting (XSS) vulnerabilities.",pass,SonarCloud
+V-222603,"The application must protect from Cross-Site Request Forgery (CSRF) vulnerabilities.",pass,SonarCloud
+V-222604,"The application must protect from command injection.",pass,NULL
+V-222605,"The application must protect from canonical representation vulnerabilities.",pass,"SonarCloud OWASP tests pass"
+V-222606,"The application must validate all input.",pass,"OAS for API"
+V-222607,"The application must not be vulnerable to SQL Injection.",pass,"All queries parameterized"
+V-222608,"The application must not be vulnerable to XML-oriented attacks.",pass,"SonarCloud checks for XML attacks"
+V-222609,"The application must not be subject to input handling vulnerabilities.",pass,SonarCloud
+V-222610,"The application must generate error messages that provide information necessary for corrective actions without revealing information that could be exploited by adversaries.",fail,"Check error messages"
+V-222611,"The application must reveal error messages only to the ISSO, ISSM, or SA.",fail,"Check error messages"
+V-222612,"The application must not be vulnerable to overflow attacks.",pass,NULL
+V-222613,"The application must remove organization-defined software components after updated versions have been installed.",pass,Dependabot
+V-222614,"Security-relevant software updates and patches must be kept up to date.",pass,Dependabot
+V-222625,"Execution flow diagrams and design documents must be created to show how deadlock and recursion issues in web services are being mitigated.",pass,"web service (a.k.a. API) deadlocks not possible since API does not call client"
+V-222626,"The designer must ensure the application does not store configuration and control files in the same directory as user data.",pass,"API is stateless"
+V-222639,"Back-up copies of the application software or source code must be stored in a fire-rated container or stored separately (offsite).",pass,NULL
+V-222642,"The application must not contain embedded authentication data.",pass,NULL
+V-222643,"The application must have the capability to mark sensitive/classified output when required.",fail,"Add classification to CSV"
+V-222644,"Prior to each release of the application, updates to system, or applying patches; tests plans and procedures must be created and executed.",pass,"Github workflows"
+V-222645,"Application files must be cryptographically hashed prior to deploying to DoD operational networks.",pass,"Signed containers"
+V-222646,"At least one tester must be designated to test for security flaws in addition to functional testing.",pass,"SonarCloud, newman"
+V-222656,"The application must not be subject to error handling vulnerabilities.",pass,SonarCloud
+V-222658,"All products must be supported by the vendor or the development team.",pass,NULL
+V-222663,"An Application Configuration Guide must be created and included with the application.",pass,Documentation
+V-222665,"The designer must ensure uncategorized or emerging mobile code is not used in applications.",pass,NULL
+V-222667,"Protections against DoS attacks must be implemented.",fail,"Define DoS in threat model"
+V-222670,"The application must provide notifications or alerts when product update and security related patches are available.",pass,"GitHub and DockerHub"
+V-222672,"The application must generate audit records when concurrent logons from different workstations occur.",pass,NULL

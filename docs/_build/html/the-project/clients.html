@@ -4,8 +4,7 @@
 <html class="writer-html5" lang="en" >
 <head>
   <meta charset="utf-8" />
-  <meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
-
+  
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   
   <title>STIG Manager Clients &mdash; STIG Manager  documentation</title>
@@ -14,8 +13,10 @@
   
   <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
   <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/sphinxcontrib-images/LightBox2/lightbox2/dist/css/lightbox.css" type="text/css" />
   <link rel="stylesheet" href="../_static/css/custom.css" type="text/css" />
-  <link rel="stylesheet" href="../_static/sphinxcontrib-images/LightBox2/lightbox2/css/lightbox.css" type="text/css" />
 
   
   
@@ -32,13 +33,13 @@
   
     
       <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+        <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
         <script src="../_static/jquery.js"></script>
         <script src="../_static/underscore.js"></script>
         <script src="../_static/doctools.js"></script>
-        <script src="../_static/js/custom.js"></script>
-        <script src="../_static/sphinxcontrib-images/LightBox2/lightbox2/js/jquery-1.11.0.min.js"></script>
-        <script src="../_static/sphinxcontrib-images/LightBox2/lightbox2/js/lightbox.min.js"></script>
+        <script src="../_static/sphinxcontrib-images/LightBox2/lightbox2/dist/js/lightbox-plus-jquery.min.js"></script>
         <script src="../_static/sphinxcontrib-images/LightBox2/lightbox2-customize/jquery-noconflict.js"></script>
+        <script src="../_static/js/custom.js"></script>
     
     <script type="text/javascript" src="../_static/js/theme.js"></script>
 
@@ -94,7 +95,7 @@
               
             
             
-              <p><span class="caption-text">Contents:</span></p>
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
 <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="../features/index.html">Introduction and Features</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../installation-and-setup/index.html">Install, Setup, and Run</a></li>
@@ -125,7 +126,7 @@
 </li>
 <li class="toctree-l1"><a class="reference internal" href="../reference/index.html">Terminology and Concepts</a></li>
 </ul>
-<p><span class="caption-text">Common Tasks:</span></p>
+<p class="caption" role="heading"><span class="caption-text">Common Tasks:</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../features/common-tasks.html">Build A Collection with .ckl or XCCDF Files</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../features/common-tasks.html#review-a-stig-on-an-asset">Review a STIG on an Asset</a></li>
@@ -216,21 +217,21 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
             
-  <section id="stig-manager-clients">
+  <div class="section" id="stig-manager-clients">
 <span id="clients"></span><h1>STIG Manager Clients<a class="headerlink" href="#stig-manager-clients" title="Permalink to this headline">¶</a></h1>
 <p>The STIG Manager project consists of an API and a UI. <a class="reference external" href="https://github.com/NUWCDIVNPT/stig-manager/blob/main/api/source/specification/stig-manager.yaml">The API is designed so that other contributors can create Clients, GUI or CLI, to take advantage of and expand on its capabilities.</a></p>
-<section id="provided-clients">
+<div class="section" id="provided-clients">
 <h2>Provided Clients<a class="headerlink" href="#provided-clients" title="Permalink to this headline">¶</a></h2>
-<section id="stig-manager-oss-refernce-gui">
+<div class="section" id="stig-manager-oss-refernce-gui">
 <h3>STIG Manager OSS Refernce GUI<a class="headerlink" href="#stig-manager-oss-refernce-gui" title="Permalink to this headline">¶</a></h3>
 <p>A GUI client that makes use of the Project API is available in our Repo.  Its features are described elsewhere in this documentation.</p>
-</section>
-<section id="stig-manager-watcher">
+</div>
+<div class="section" id="stig-manager-watcher">
 <h3>STIG Manager Watcher<a class="headerlink" href="#stig-manager-watcher" title="Permalink to this headline">¶</a></h3>
 <p>A command-line client that will monitor a file-system directory and upload .ckls or SCAP results to a STIG Manager API instance: <a class="reference external" href="https://github.com/NUWCDIVNPT/stigman-watcher">STIG Manger Watcher.</a>  It is maintained by the main STIGMan OSS dev group, and also available as <a class="reference external" href="https://www.npmjs.com/package/stigman-watcher">an npm package.</a>  Check the gitHub repo’s <a class="reference external" href="https://github.com/NUWCDIVNPT/stigman-watcher/wiki">wiki for further documentation.</a></p>
-</section>
-</section>
-<section id="proposed-clients">
+</div>
+</div>
+<div class="section" id="proposed-clients">
 <h2>Proposed Clients<a class="headerlink" href="#proposed-clients" title="Permalink to this headline">¶</a></h2>
 <p>Several additional Clients may be found useful, but are not a priority for development by the STIG Manager OSS team at this time. Some potential ideas for these clients:</p>
 <blockquote>
@@ -244,13 +245,13 @@
 <li><p>Utility to import from an HBSS instance for STIG Evaluations</p></li>
 </ul>
 </div></blockquote>
-</section>
-<section id="create-a-new-client-for-the-stig-manager-api">
+</div>
+<div class="section" id="create-a-new-client-for-the-stig-manager-api">
 <h2>Create a new Client for the STIG Manager API<a class="headerlink" href="#create-a-new-client-for-the-stig-manager-api" title="Permalink to this headline">¶</a></h2>
 <p>STIG Manager API was created so that other clients could take advantage of the data it manages, though currently, the only one available is the Client provided as part of the project repo.</p>
 <p>For now, please use our existing Clients as a reference for how to do this.  If more information is required, please let us know in an Issue on our Repo and we will do our best to assist.</p>
-</section>
-</section>
+</div>
+</div>
 
 
            </div>
