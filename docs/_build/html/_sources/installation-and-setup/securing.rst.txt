@@ -18,7 +18,7 @@ The STIG Manager API and Web Client exchange data across a REST architecture tha
 
 The API grants or denies endpoint access based on the OAuth2 ``scope`` claims listed in each endpoint's ``security.oauth`` property in the OAS.
 
-The API grants or denies access to STIG Manager data objects (Collections, Assets, Asset/STIG maps, and Reviews) based on the the OAuth2 ``username`` claim (or configured equivalent). The username value indexes into the internal STIG Manager discretionary access control (DAC) system which includes per-Collection role based access control (RBAC) lists (i.e, Collection Grants and Restricted User Access Lists).
+The API grants or denies access to STIG Manager data objects (Collections, Assets, Asset/STIG maps, and Reviews) based on the the OAuth2 ``username`` claim (or configured equivalent). The username value indexes into the internal STIG Manager discretionary access control (DAC) system which includes per-Collection role based access control (RBAC) lists (i.e, Collection Grants and Restricted User Access Lists). We have designed the access control logic with the goal of being assessed as ASD-compliant by local security requirements.
 
 Both claims are contained in OAuth2 JWT formatted access_tokens issued by an OIDC Provider to remote clients, such as the Project's Web Client and the STIG Manager Watcher bot. Communication between the API and clients include the access_token and should occur using TLS but do not require Mutual TLS (MTLS).
 
@@ -33,7 +33,7 @@ Correct implementation of the STIG Manager data flow, especially the DAC and RBA
 REST, OpenID Connect (OIDC), and OAuth2
 ---------------------------------------
 
-Several ASD checks refer to SOAP, WS-Security and SAML, early protocols for securing online APIs. None of the checks refer to REST or OIDC/OAuth2, modern alternatives that are commonly used in cloud-native software such as STIG Manager. The checks that address SOAP, etc. state that if you aren't using those technologies, the assessment is 'not applicable'.
+Several ASD checks refer to SOAP, WS-Security and SAML, early protocols for implementing and securing online APIs. None of the checks refer to REST or OIDC/OAuth2, modern alternatives that are commonly used in cloud-native software such as STIG Manager. The checks that address SOAP, etc. state that if you aren't using those technologies, the assessment is 'not applicable'.
 
 .. warning::
   You must secure your deployment in compliance with your individual security requirements. The discussion below is educational and does not address your specific requirements. It is assumed the reader has prerequisite knowledge of REST principles, `OAuth2 flows as defined in RFC 6749 <https://datatracker.ietf.org/doc/html/rfc6749>`_ and the `Open ID Connect Core 1.0 specification <https://openid.net/developers/specs/>`_
@@ -55,10 +55,25 @@ User sessions
 .. warning::
   You must secure your deployment in compliance with your individual security requirements. The discussion below is educational and does not address your specific requirements. It is assumed the reader has prerequisite knowledge of their specific OIDC Provider and any user federation or identify brokering features it is configured to use.
 
-Several ASD checks address the management of user login sessions. It is important to understand that the 
+Several ASD checks address the management of user login sessions. It is important to understand how your OIDC Provider controls user sessions, performs user management, and audits its activities
+
+Database
+--------
+
+.. warning::
+  You must secure your deployment in compliance with your individual security requirements. The discussion below is educational and does not address your specific requirements. It is assumed the reader has prerequisite knowledge of the MySQL database and how to perform PKI user authentication (if required), secure data storage, and secure data backups.
+
+Several ASD checks address the management of data storage. It is important to understand how to configure MySQL in accordance with local security requirements, such as the Oracle MySQL 8.0 STIG. Ideally, your organization will provision MySQL instances from a hardened cloud subscription that requires a smaller set of customer-responsible security settings.
+
+Logging and Analysis
+--------------------
+
+
 
 Assessing your deployment
 =========================
+
+These are some common assessment topics to review when assessing a secure STIG Manager application deployment.
 
 
 API and Web Client
