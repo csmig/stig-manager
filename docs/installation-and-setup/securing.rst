@@ -57,6 +57,9 @@ User sessions
 
 Several ASD checks address the management of user login sessions. It is important to understand that the 
 
+Securing your deployment
+========================
+
 
 API and Web Client
 ------------------
