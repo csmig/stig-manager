@@ -9,31 +9,53 @@ A STIG Manager application can be orchestrated several ways, each with unique se
 Securing your deployment
 ========================
 
-These are some common security topics to consider when designing a secure STIG Manager application deployment.
+These are some common security topics to review when designing a secure STIG Manager application deployment.
 
+Data Flow
+---------
+
+The STIG Manager API and Web Client exchange data across a REST architecture that enforces the STIG Manager `OpenAPI 3 Specification (OAS) definition <https://github.com/NUWCDIVNPT/stig-manager/blob/main/api/source/specification/stig-manager.yaml>`_.
+
+The API grants or denies endpoint access based on the OAuth2 ``scope`` claims listed in each endpoint's ``security.oauth`` property in the OAS.
+
+The API grants or denies access to STIG Manager data objects (Collections, Assets, Asset/STIG maps, and Reviews) based on the the OAuth2 ``username`` claim (or configured equivalent). The username value indexes into the internal STIG Manager discretionary access control (DAC) system which includes per-Collection role based access control (RBAC) lists (i.e, Collection Grants and Restricted User Access Lists).
+
+Both claims are contained in OAuth2 JWT formatted access_tokens issued by an OIDC Provider to remote clients, such as the Project's Web Client and the STIG Manager Watcher bot. Communication between the API and clients include the access_token and should occur using TLS but do not require Mutual TLS (MTLS).
+
+Correct implementation of the STIG Manager data flow, especially the DAC and RBAC logic, is certified by `automated endpoint testing <https://github.com/NUWCDIVNPT/stig-manager/blob/main/.github/workflows/api-tests.yml>`_ that is performed when any change to the codebase is proposed (a Pull Request or PR). Over 2000 assertions are evaluated using `tests you can review here <https://github.com/NUWCDIVNPT/stig-manager/tree/main/test/api>`_
+
+.. thumbnail:: /assets/images/data-flow-01b.svg
+  :width: 75%
+  :show_caption: True 
+  :title: Data Flow Diagram
+
+  
 REST, OpenID Connect (OIDC), and OAuth2
 ---------------------------------------
 
-Several ASD checks refer to SOAP, WS-Security and SAML, early protocols for securing online APIs. None of the checks refer to REST or OIDC/OAuth2, modern alternatives that are commonly used in cloud-native software. The checks that address SOAP, etc. state that if you aren't using those technologies, the assessment is 'not applicable'.
+Several ASD checks refer to SOAP, WS-Security and SAML, early protocols for securing online APIs. None of the checks refer to REST or OIDC/OAuth2, modern alternatives that are commonly used in cloud-native software such as STIG Manager. The checks that address SOAP, etc. state that if you aren't using those technologies, the assessment is 'not applicable'.
 
 .. warning::
-  You must secure your deployment in compliance with your individual security requirements. The discussion below is educational and does not address your specific requirements.
-
-The STIG Manager API and Web Client exchange data using a REST architecture. The API authorizes access to endpoints and data based on claims contained in OAuth2 JWT formatted tokens presented by remote clients, include the Project's Web Client. Communication between the clients and the API should occur over a TLS encrypted session. Client <=> API sessions do not require Mutual TLS (MTLS).
-
-The Web Client is a single-page application (SPA) that executes entirely in the browser. Browsers are low- to no-trust environments where OAuth2 access tokens should have short lifetimes to mitigate the risk of token diversion. Just what is considered 'short' is for you (or your organization) to decide, but 15 minutes or less is not uncommon.
-
-The Web Client will not engage in an OIDC implicit flow because it is insecure. To work with the Web Client, you must configure the OIDC Provider to provide tokens using the OIDC Authorization Code Flow with Proof Key for Code Exchange (PKCE). To work with bots such as 
-
-If your OIDC Provider issues refresh tokens (recommended for a better user experience), those tokens can have longer lifetimes but should be limited to a single use. Policies vary greatly, but refresh token lifetime is sometimes correlated to the SSO session lifetime. The idea is that a diverted access token.
-
-The Web Client should present the access token to the API over TLS, which mitigates the risk of token sniffing.
+  You must secure your deployment in compliance with your individual security requirements. The discussion below is educational and does not address your specific requirements. It is assumed the reader has prerequisite knowledge of REST principles, `OAuth2 flows as defined in RFC 6749 <https://datatracker.ietf.org/doc/html/rfc6749>`_ and the `Open ID Connect Core 1.0 specification <https://openid.net/developers/specs/>`_
 
 
+
+The Web Client on startup redirects users to the OIDC Provider to authenticate and obtain an access token that defines the level of API access the user grants that client. For most ASD-compliant deployments, the connection to the OIDC Provider's authorization_endpoint will use MTLS and CAC PKI.
+
+The Web Client is a single-page application (SPA) that executes entirely in the browser. Browsers are low- to zero-trust environments where OAuth2 access tokens should have short lifetimes to mitigate the risk of token diversion. Just what is considered 'short' is for you (or your organization) to decide, but 15 minutes or even less is not uncommon.
+
+Our Web Client will not engage in the OIDC implicit flow because it is not secure enough. To work with the Web Client, the OIDC Provider must provide tokens using the OIDC Authorization Code Flow with Proof Key for Code Exchange (PKCE). To work with bots such as STIG Manager Watcher, the OIDC Provider should support the client_credentials flow with Signed JWT authentication.
+
+If your OIDC Provider issues refresh tokens (recommended for a better user experience), those tokens can have longer lifetimes than the access_token but should be rotated and limited to a single use. Policies vary greatly, but refresh token lifetime is sometimes correlated to the SSO session lifetime. Attempts to reuse a refresh_token should be logged by the OIDC Ppovider and generate alerts. 
 
 
 User sessions
 -------------
+
+.. warning::
+  You must secure your deployment in compliance with your individual security requirements. The discussion below is educational and does not address your specific requirements. It is assumed the reader has prerequisite knowledge of their specific OIDC Provider and any user federation or identify brokering features it is configured to use.
+
+Several ASD checks address the management of user login sessions. It is important to understand that the 
 
 
 API and Web Client

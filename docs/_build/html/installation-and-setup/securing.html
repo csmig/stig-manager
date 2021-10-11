@@ -107,9 +107,10 @@
 <li class="toctree-l2"><a class="reference internal" href="environment-variables.html">7. Environment Variables</a></li>
 <li class="toctree-l2 current"><a class="current reference internal" href="#">8. Securing and Assessing STIG Manager Deployments</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#securing-your-deployment">8.1. Securing your deployment</a><ul>
-<li class="toctree-l4"><a class="reference internal" href="#rest-openid-connect-oidc-and-oauth2">8.1.1. REST, OpenID Connect (OIDC), and OAuth2</a></li>
-<li class="toctree-l4"><a class="reference internal" href="#user-sessions">8.1.2. User sessions</a></li>
-<li class="toctree-l4"><a class="reference internal" href="#api-and-web-client">8.1.3. API and Web Client</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#data-flow">8.1.1. Data Flow</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#rest-openid-connect-oidc-and-oauth2">8.1.2. REST, OpenID Connect (OIDC), and OAuth2</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#user-sessions">8.1.3. User sessions</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#api-and-web-client">8.1.4. API and Web Client</a></li>
 </ul>
 </li>
 </ul>
@@ -221,25 +222,49 @@
 </div>
 <section id="securing-your-deployment">
 <h2><span class="section-number">8.1. </span>Securing your deployment<a class="headerlink" href="#securing-your-deployment" title="Permalink to this headline">¶</a></h2>
-<p>These are some common security topics to consider when designing a secure STIG Manager application deployment.</p>
+<p>These are some common security topics to review when designing a secure STIG Manager application deployment.</p>
+<section id="data-flow">
+<h3><span class="section-number">8.1.1. </span>Data Flow<a class="headerlink" href="#data-flow" title="Permalink to this headline">¶</a></h3>
+<p>The STIG Manager API and Web Client exchange data across a REST architecture that enforces the STIG Manager <a class="reference external" href="https://github.com/NUWCDIVNPT/stig-manager/blob/main/api/source/specification/stig-manager.yaml">OpenAPI 3 Specification (OAS) definition</a>.</p>
+<p>The API grants or denies endpoint access based on the OAuth2 <code class="docutils literal notranslate"><span class="pre">scope</span></code> claims listed in each endpoint’s <code class="docutils literal notranslate"><span class="pre">security.oauth</span></code> property in the OAS.</p>
+<p>The API grants or denies access to STIG Manager data objects (Collections, Assets, Asset/STIG maps, and Reviews) based on the the OAuth2 <code class="docutils literal notranslate"><span class="pre">username</span></code> claim (or configured equivalent). The username value indexes into the internal STIG Manager discretionary access control (DAC) system which includes per-Collection role based access control (RBAC) lists (i.e, Collection Grants and Restricted User Access Lists).</p>
+<p>Both claims are contained in OAuth2 JWT formatted access_tokens issued by an OIDC Provider to remote clients, such as the Project’s Web Client and the STIG Manager Watcher bot. Communication between the API and clients include the access_token and should occur using TLS but do not require Mutual TLS (MTLS).</p>
+<p>Correct implementation of the STIG Manager data flow, especially the DAC and RBAC logic, is certified by <a class="reference external" href="https://github.com/NUWCDIVNPT/stig-manager/blob/main/.github/workflows/api-tests.yml">automated endpoint testing</a> that is performed when any change to the codebase is proposed (a Pull Request or PR). Over 2000 assertions are evaluated using <a class="reference external" href="https://github.com/NUWCDIVNPT/stig-manager/tree/main/test/api">tests you can review here</a></p>
+<figure class="">
+            <a 
+               data-lightbox="group-default"
+               href="../_images/data-flow-01b1.svg"
+               title="Data Flow Diagram"
+               data-title="Data Flow Diagram"
+               ><img src="../_images/data-flow-01b1.svg"
+                     class=""
+                     width="75%"
+                     height="auto"
+                     alt=""/>
+                </a><figcaption>Data Flow Diagram</figcaption>
+            </figure></section>
 <section id="rest-openid-connect-oidc-and-oauth2">
-<h3><span class="section-number">8.1.1. </span>REST, OpenID Connect (OIDC), and OAuth2<a class="headerlink" href="#rest-openid-connect-oidc-and-oauth2" title="Permalink to this headline">¶</a></h3>
-<p>Several ASD checks refer to SOAP, WS-Security and SAML, early protocols for securing online APIs. None of the checks refer to REST or OIDC/OAuth2, modern alternatives that are commonly used in cloud-native software. The checks that address SOAP, etc. state that if you aren’t using those technologies, the assessment is ‘not applicable’.</p>
+<h3><span class="section-number">8.1.2. </span>REST, OpenID Connect (OIDC), and OAuth2<a class="headerlink" href="#rest-openid-connect-oidc-and-oauth2" title="Permalink to this headline">¶</a></h3>
+<p>Several ASD checks refer to SOAP, WS-Security and SAML, early protocols for securing online APIs. None of the checks refer to REST or OIDC/OAuth2, modern alternatives that are commonly used in cloud-native software such as STIG Manager. The checks that address SOAP, etc. state that if you aren’t using those technologies, the assessment is ‘not applicable’.</p>
 <div class="admonition warning">
 <p class="admonition-title">Warning</p>
-<p>You must secure your deployment in compliance with your individual security requirements. The discussion below is educational and does not address your specific requirements.</p>
+<p>You must secure your deployment in compliance with your individual security requirements. The discussion below is educational and does not address your specific requirements. It is assumed the reader has prerequisite knowledge of REST principles, <a class="reference external" href="https://datatracker.ietf.org/doc/html/rfc6749">OAuth2 flows as defined in RFC 6749</a> and the <a class="reference external" href="https://openid.net/developers/specs/">Open ID Connect Core 1.0 specification</a></p>
 </div>
-<p>The STIG Manager API and Web Client exchange data using a REST architecture. The API authorizes access to endpoints and data based on claims contained in OAuth2 JWT formatted tokens presented by remote clients, include the Project’s Web Client. Communication between the clients and the API should occur over a TLS encrypted session. Client &lt;=&gt; API sessions do not require Mutual TLS (MTLS).</p>
-<p>The Web Client is a single-page application (SPA) that executes entirely in the browser. Browsers are low- to no-trust environments where OAuth2 access tokens should have short lifetimes to mitigate the risk of token diversion. Just what is considered ‘short’ is for you (or your organization) to decide, but 15 minutes or less is not uncommon.</p>
-<p>The Web Client will not engage in an OIDC implicit flow because it is insecure. To work with the Web Client, you must configure the OIDC Provider to provide tokens using the OIDC Authorization Code Flow with Proof Key for Code Exchange (PKCE). To work with bots such as</p>
-<p>If your OIDC Provider issues refresh tokens (recommended for a better user experience), those tokens can have longer lifetimes but should be limited to a single use. Policies vary greatly, but refresh token lifetime is sometimes correlated to the SSO session lifetime. The idea is that a diverted access token.</p>
-<p>The Web Client should present the access token to the API over TLS, which mitigates the risk of token sniffing.</p>
+<p>The Web Client on startup redirects users to the OIDC Provider to authenticate and obtain an access token that defines the level of API access the user grants that client. For most ASD-compliant deployments, the connection to the OIDC Provider’s authorization_endpoint will use MTLS and CAC PKI.</p>
+<p>The Web Client is a single-page application (SPA) that executes entirely in the browser. Browsers are low- to zero-trust environments where OAuth2 access tokens should have short lifetimes to mitigate the risk of token diversion. Just what is considered ‘short’ is for you (or your organization) to decide, but 15 minutes or even less is not uncommon.</p>
+<p>Our Web Client will not engage in the OIDC implicit flow because it is not secure enough. To work with the Web Client, the OIDC Provider must provide tokens using the OIDC Authorization Code Flow with Proof Key for Code Exchange (PKCE). To work with bots such as STIG Manager Watcher, the OIDC Provider should support the client_credentials flow with Signed JWT authentication.</p>
+<p>If your OIDC Provider issues refresh tokens (recommended for a better user experience), those tokens can have longer lifetimes than the access_token but should be rotated and limited to a single use. Policies vary greatly, but refresh token lifetime is sometimes correlated to the SSO session lifetime. Attempts to reuse a refresh_token should be logged by the OIDC Ppovider and generate alerts.</p>
 </section>
 <section id="user-sessions">
-<h3><span class="section-number">8.1.2. </span>User sessions<a class="headerlink" href="#user-sessions" title="Permalink to this headline">¶</a></h3>
+<h3><span class="section-number">8.1.3. </span>User sessions<a class="headerlink" href="#user-sessions" title="Permalink to this headline">¶</a></h3>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>You must secure your deployment in compliance with your individual security requirements. The discussion below is educational and does not address your specific requirements. It is assumed the reader has prerequisite knowledge of their specific OIDC Provider and any user federation or identify brokering features it is configured to use.</p>
+</div>
+<p>Several ASD checks address the management of user login sessions. It is important to understand that the</p>
 </section>
 <section id="api-and-web-client">
-<h3><span class="section-number">8.1.3. </span>API and Web Client<a class="headerlink" href="#api-and-web-client" title="Permalink to this headline">¶</a></h3>
+<h3><span class="section-number">8.1.4. </span>API and Web Client<a class="headerlink" href="#api-and-web-client" title="Permalink to this headline">¶</a></h3>
 <p>About a third of the checks in the ASD assess application components provided by this Project - the API and Web Client. These checks assess both their behavior and how they are developed.</p>
 <p>We have self-evaluated this portion of the checklist AS IF we were developer members of a deployed application’s team. For most deployments, though, we are NOT part of your team and therefore the checks covering development practices might be properly evaluated as not applicable. Even in this case, however, we hope our self-evaluation provides useful insight into how the Project integrates security into our practice.</p>
 <div class="admonition warning">
