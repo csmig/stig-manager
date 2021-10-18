@@ -15,10 +15,6 @@ Securing your deployment
 
 These are some common security topics to review when designing a secure STIG Manager application deployment.
 
-  - bullet
-  - bullet
-
-
 Container Security
 ------------------
 
@@ -32,7 +28,7 @@ Image choice
 
 Many deployments might directly orchestrate `one of our published images <https://hub.docker.com/r/nuwcdivnpt/stig-manager>`_. For most ASD-compliant deployments, you should deploy one of our Iron Bank based images. Those images follow the naming convention ``nuwcdivnpt/stig-manager:[SEMANTIC-VERSION]-ironbank``. Example: ``nuwcdivnpt/stig-manager:1.0.40-ironbank``. Our Iron Bank-based images are built from the Iron Bank Node.js image, a hardened image that is based on the Iron Bank Universal Base Image (UBI). The UBI is a hardened Red Hat image that has been configured in accordance with applicable DoD requirements.
 
-Some deployments might prefer a custom container image of STIG Manager created by `modifying the Dockerfile from our repo <https://github.com/NUWCDIVNPT/stig-manager/blob/main/Dockerfile>`_ or basing their custom image on one of our published images. In these cases, we strongly encourage use of the relevant Iron Bank base images. To build from the actual Iron Bank Node.js or UBI image, you will need an account at https://ironbank.dso.mil/ which is a CAC-required service.
+Some deployments might prefer a custom container image of STIG Manager created by `modifying the Dockerfile from our repo <https://github.com/NUWCDIVNPT/stig-manager/blob/main/Dockerfile>`_ or basing their custom image on one of our published images. In these cases, we strongly encourage use of the relevant Iron Bank base images. To build from the actual Iron Bank Node.js or UBI image, you will need an account at https://ironbank.dso.mil/.
 
 If you need to understand how a container image was built, we encourage familiarity with the `docker history` command.
 
@@ -40,68 +36,75 @@ If you need to understand how a container image was built, we encourage familiar
 Vulnerability scanning
 ~~~~~~~~~~~~~~~~~~~~~~
 
-We encourage all deployments to perform vulnerability scans against our published container images. The Project scans our published images with OpenSCAP and proprietary Amazon Web Service and Azure tools, which report no security vulnerabilities. However, we do not currently publish those results but efforts are underway in FY22 to make then available.
+We encourage all deployments to perform vulnerability scanning of our published container images. The Project scans our published images with anchore and proprietary Amazon Web Service and Azure tools. We do not currently publish those results but efforts are being considered to make then available.
 
-An alternative to trusting our vulnerability scanning that we encourage is for deployments to standup their own container registry with embedded image scanning. Choices include the open-source Harbor registry with buil-in Clair testing, and cloud-based offerings from Amazon, Azure and Google.
+Organizations should consider deploying their own container registry with embedded image scanning. Choices include the open-source Harbor registry with built-in Clair testing, and cloud-based offerings from Amazon, Azure and Google.
 
 Validating image signatures
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Before deploying any container image, we strongly encourage verifying the image was created by a trusted party. This is a critical step for any containerized deployment. The Project signs each published image using Docker Content Trust and Notary. 
+The Project signs each image we publish to Docker Hub using Docker Content Trust (DCT).
+
+.. note::
+  For secure DCT image verification, you should understand trust-pinning. The default "Trust On First Use" (TOFU) behavior of the docker CE client may not be appropriate for your security requirements. Our root.json file will be helpful if you wish to pin trust in our signing key.
 
 
 Data Flow
 ---------
 
-The STIG Manager API and Web Client exchange data across a REST architecture that enforces the STIG Manager `OpenAPI 3 Specification (OAS) definition <https://github.com/NUWCDIVNPT/stig-manager/blob/main/api/source/specification/stig-manager.yaml>`_.
+Several ASD checks refer to SOAP, WS-Security and SAML, early protocols for implementing and securing online APIs. None of the checks refer to REST or OIDC/OAuth2, modern alternatives that are commonly used in cloud-ready software such as STIG Manager. The checks that address SOAP, etc. state that if you aren't using those technologies, the assessment is 'not applicable'.
 
-The API grants or denies endpoint access based on the OAuth2 ``scope`` claims listed in each endpoint's ``security.oauth`` property in the OAS.
-
-The API grants or denies access to STIG Manager data objects (Collections, Assets, Asset/STIG maps, and Reviews) based on the the OAuth2 ``username`` claim (or configured equivalent). The username value indexes into the internal STIG Manager discretionary access control (DAC) system which includes per-Collection role based access control (RBAC) lists (i.e, Collection Grants and Restricted User Access Lists). We have designed the access control logic with the goal of being assessed as ASD-compliant by local security requirements.
-
-Both claims are contained in OAuth2 JWT formatted access_tokens issued by an OIDC Provider to remote clients, such as the Project's Web Client and the STIG Manager Watcher bot. Communication between the API and clients include the access_token and should occur using TLS but do not require Mutual TLS (MTLS).
-
-Correct implementation of the STIG Manager data flow, especially the DAC and RBAC logic, is verified by an `automated workflow <https://github.com/NUWCDIVNPT/stig-manager/blob/main/.github/workflows/api-tests.yml>`_ that is performed when any change to the codebase is proposed (a Pull Request or PR). Over 2000 assertions are evaluated using `tests you can review here <https://github.com/NUWCDIVNPT/stig-manager/tree/main/test/api>`_
+.. note::
+  The discussion below assumes the reader has prerequisite knowledge of REST principles, `OAuth2 flows as defined in RFC 6749 <https://datatracker.ietf.org/doc/html/rfc6749>`_ and the `Open ID Connect Core 1.0 specification <https://openid.net/developers/specs/>`_
 
 .. thumbnail:: /assets/images/data-flow-01b.svg
   :width: 75%
   :show_caption: True 
   :title: Data Flow Diagram
 
-|
+REST and OpenAPI Specification (OAS)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-REST, OpenID Connect (OIDC), and OAuth2
----------------------------------------
+The STIG Manager API and Web Client exchange data across a REST architecture that enforces the STIG Manager `OAS definition <https://github.com/NUWCDIVNPT/stig-manager/blob/main/api/source/specification/stig-manager.yaml>`_.
 
-Several ASD checks refer to SOAP, WS-Security and SAML, early protocols for implementing and securing online APIs. None of the checks refer to REST or OIDC/OAuth2, modern alternatives that are commonly used in cloud-native software such as STIG Manager. The checks that address SOAP, etc. state that if you aren't using those technologies, the assessment is 'not applicable'.
+Access to individual endpoints is controlled by the OAuth2 ``scope`` claims listed in each endpoint's ``security.oauth`` property in the OAS. Oauth2 is discussed further below.
 
-.. warning::
-  You must secure your deployment in compliance with your individual security requirements. The discussion below is educational and does not address your specific requirements. It is assumed the reader has prerequisite knowledge of REST principles, `OAuth2 flows as defined in RFC 6749 <https://datatracker.ietf.org/doc/html/rfc6749>`_ and the `Open ID Connect Core 1.0 specification <https://openid.net/developers/specs/>`_
+Discretionary Access Control (DAC) and Role Based Access Control (RBAC)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+The API grants or denies access to STIG Manager data objects (Collections, Assets, Asset/STIG maps, and Reviews) based on the the OAuth2 ``username`` claim (or configured equivalent). The username value indexes into the internal STIG Manager DAC system which includes per-Collection RBAC lists (i.e, Collection Grants and Restricted User Access Lists).
 
+Correct implementation of the STIG Manager data flow, especially the DAC and RBAC logic, is verified by an `automated workflow <https://github.com/NUWCDIVNPT/stig-manager/blob/main/.github/workflows/api-tests.yml>`_ that is performed when any change to the codebase is proposed (a Pull Request or PR). Over 2000 assertions are evaluated using `tests you can review here <https://github.com/NUWCDIVNPT/stig-manager/tree/main/test/api>`_
 
-The Web Client on startup redirects users to the OIDC Provider to authenticate and obtain an access token that defines the level of API access the user grants that client. For most ASD-compliant deployments, the connection to the OIDC Provider's authorization_endpoint will use MTLS and CAC PKI.
+OpenID Connect (OIDC) and OAuth2
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The claims described in the sections above are contained in OAuth2 JWT formatted access_tokens issued by an OIDC Provider to remote clients, such as the Project's Web Client and the STIG Manager Watcher bot.
+
+The Web Client on startup redirects users to the OIDC Provider to authenticate and obtain an access token that defines the scope of API access the user grants that client. For most ASD-compliant deployments, the connection to the OIDC Provider's authorization_endpoint will use MTLS and CAC PKI.
+
+.. note::
+  Communication between the API and clients include the access_token and should occur using TLS but do not require Mutual TLS (MTLS). 
 
 The Web Client is a single-page application (SPA) that executes entirely in the browser. Browsers are low- to zero-trust environments where OAuth2 access tokens should have short lifetimes to mitigate the risk of token diversion. Just what is considered 'short' is for you (or your organization) to decide, but 15 minutes or even less is not uncommon.
 
-Our Web Client will not engage in the OIDC implicit flow because it is not secure enough. To work with the Web Client, the OIDC Provider must provide tokens using the OIDC Authorization Code Flow with Proof Key for Code Exchange (PKCE). To work with bots such as STIG Manager Watcher, the OIDC Provider should support the client_credentials flow with Signed JWT authentication.
+The Web Client will not engage in an OIDC implicit flow. The OIDC Provider must provide tokens using the OIDC Authorization Code Flow with Proof Key for Code Exchange (PKCE). To work with bots such as STIG Manager Watcher, the OIDC Provider should also support the client_credentials flow with Signed JWT authentication.
 
-If your OIDC Provider issues refresh tokens (encouraged for a better user experience), those tokens can have longer lifetimes than the access_token but should be rotated and limited to a single use. Policies vary greatly, but refresh token lifetime is sometimes correlated to the SSO session lifetime. Attempts to reuse a refresh_token should be logged by the OIDC Ppovider and generate alerts. 
-
+If your OIDC Provider issues refresh tokens (encouraged for a better user experience), those tokens usually have longer lifetimes than the access_token but should be rotated and limited to a single use. Policies vary greatly, but refresh token lifetime is sometimes correlated to the SSO session lifetime. Attempts to reuse a refresh_token should be logged by the OIDC Provider and generate alerts.
 
 User sessions
 -------------
 
-.. warning::
-  You must secure your deployment in compliance with your individual security requirements. The discussion below is educational and does not address your specific requirements. It is assumed the reader has prerequisite knowledge of their specific OIDC Provider and any user federation or identify brokering features it is configured to use.
+.. note::
+  The discussion below assumes the reader has knowledge of their specific OIDC Provider and any user federation or identify brokering features it is configured to use.
 
-Several ASD checks address the management of user login sessions. It is important to understand how your OIDC Provider controls user sessions, performs user management, and audits its activities
+Several ASD checks address the management of user login sessions. It is important to understand how your OIDC Provider controls user sessions, performs user management, and audits its activities.
 
 Database
 --------
 
-.. warning::
-  You must secure your deployment in compliance with your individual security requirements. The discussion below is educational and does not address your specific requirements. It is assumed the reader has prerequisite knowledge of the MySQL database and how to perform PKI user authentication (if required), secure data storage, and secure data backups.
+.. note::
+  The discussion below assumes the reader has prerequisite knowledge of MySQL and how to perform PKI user authentication (if required), secure data storage, and secure data backups.
 
 Several ASD checks address the management of data storage. It is important to understand how to configure MySQL in accordance with local security requirements, such as the Oracle MySQL 8.0 STIG. Ideally, your organization will provision MySQL instances from a hardened cloud subscription that requires a smaller set of customer-responsible security settings.
 
