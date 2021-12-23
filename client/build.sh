@@ -1,11 +1,38 @@
-#!/ bin/bash
+#!/bin/bash
 
 # Requires NodeJS
 # npm install -g uglify-js
 
+SrcDir=src
+DistDir=dist
+
 # Create dist if necessary
+[ ! -d "$DistDir" ] && mkdir -p "$DistDir"
+rm -rf $DistDir/*
 
+# ExtJS
+mkdir $DistDir/ext
+cp -r $SrcDir/ext/resources $DistDir/ext
+cp -r $SrcDir/ext/ux $DistDir/ext
 
+# CSS
+cp -r $SrcDir/css $DistDir
+
+# Fonts
+cp -r $SrcDir/fonts $DistDir
+
+# Images
+cp -r $SrcDir/img $DistDir
+
+# HTML
+cp -r $SrcDir/index.html $DistDir
+
+# JS
+mkdir $DistDir/js
+cp $SrcDir/js/init.js $DistDir/js
+cp $SrcDir/js/oidcProvider.js $DistDir/js
+cp $SrcDir/js/Env.js.example $DistDir/js
+cd $SrcDir
 uglifyjs \
 'ext/adapter/ext/ext-base.js' \
 'ext/ext-all.js' \
@@ -59,4 +86,4 @@ uglifyjs \
 'js/FileSaver.js' \
 'js/fast-xml-parser.min.js' \
 'js/jsonview.bundle.js' \
-'js/stigman.js' > dist/js/stig-manager.min.js
+'js/stigman.js' > ../$DistDir/js/stig-manager.min.js
