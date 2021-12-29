@@ -11,9 +11,31 @@ DistDir=dist
 rm -rf $DistDir/*
 
 # ExtJS
-mkdir $DistDir/ext
-cp -r $SrcDir/ext/resources $DistDir/ext
-cp -r $SrcDir/ext/ux $DistDir/ext
+ExtResources="ext/resources/css/ext-all.css
+ext/resources/css/xtheme-gray.css
+ext/resources/images/default/button/arrow.gif
+ext/resources/images/default/dd/drop-no.gif
+ext/resources/images/default/grid/grid-split.gif
+ext/resources/images/default/grid/loading.gif
+ext/resources/images/default/shadow-c.png
+ext/resources/images/default/shadow-lr.png
+ext/resources/images/default/shadow.png
+ext/resources/images/default/tree/loading.gif
+ext/resources/images/gray/button/btn.gif
+ext/resources/images/gray/form/trigger.gif
+ext/resources/images/gray/grid/col-move-bottom.gif
+ext/resources/images/gray/grid/col-move-top.gif
+ext/resources/images/gray/grid/sort_asc.gif
+ext/resources/images/gray/grid/sort_desc.gif
+ext/resources/images/gray/panel/tool-sprites.gif
+ext/resources/images/gray/panel/white-top-bottom.gif
+ext/resources/images/gray/qtip/tip-anchor-sprite.gif
+ext/resources/images/gray/qtip/tip-sprite.gif
+ext/resources/images/gray/tabs/tab-close.gif
+ext/resources/images/gray/window/icon-question.gif
+ext/ux/GroupSummary.js
+ext/ux/fileuploadfield/css/fileuploadfield.css"
+tar cf - -C $SrcDir --files-from <(echo "${ExtResources}") | tar xf - -C $DistDir
 
 # CSS
 cp -r $SrcDir/css $DistDir
@@ -86,4 +108,4 @@ uglifyjs \
 'js/FileSaver.js' \
 'js/fast-xml-parser.min.js' \
 'js/jsonview.bundle.js' \
-'js/stigman.js' > ../$DistDir/js/stig-manager.min.js
+'js/stigman.js' -m -c > ../$DistDir/js/stig-manager.min.js
