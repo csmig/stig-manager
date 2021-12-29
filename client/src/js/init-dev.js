@@ -88,6 +88,8 @@ function loadScripts() {
     [
         'ext/adapter/ext/ext-base-debug.js',
         'ext/ext-all-debug-w-comments.js',
+        'ext/adapter/ext/ext-base.js',
+        'ext/ext-all.js',
         "ext/ux/GroupSummary.js",
         'js/SM/Global.js',
         'js/SM/TipContent.js',
