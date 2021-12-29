@@ -11,7 +11,10 @@ DistDir=dist
 rm -rf $DistDir/*
 
 # ExtJS
-ExtResources="ext/resources/css/ext-all.css
+ExtResources="ext/adapter/ext/ext-base.js
+ext/ext-all.js
+ext/ux/GroupSummary.js
+ext/resources/css/ext-all.css
 ext/resources/css/xtheme-gray.css
 ext/resources/images/default/button/arrow.gif
 ext/resources/images/default/dd/drop-no.gif
@@ -33,7 +36,6 @@ ext/resources/images/gray/qtip/tip-anchor-sprite.gif
 ext/resources/images/gray/qtip/tip-sprite.gif
 ext/resources/images/gray/tabs/tab-close.gif
 ext/resources/images/gray/window/icon-question.gif
-ext/ux/GroupSummary.js
 ext/ux/fileuploadfield/css/fileuploadfield.css"
 tar cf - -C $SrcDir --files-from <(echo "${ExtResources}") | tar xf - -C $DistDir
 
@@ -56,9 +58,6 @@ cp $SrcDir/js/oidcProvider.js $DistDir/js
 cp $SrcDir/js/Env.js.example $DistDir/js
 cd $SrcDir
 uglifyjs \
-'ext/adapter/ext/ext-base.js' \
-'ext/ext-all.js' \
-'ext/ux/GroupSummary.js' \
 'js/SM/Global.js' \
 'js/SM/TipContent.js' \
 'js/SM/Ajax.js' \

@@ -86,6 +86,9 @@ function loadScripts() {
       });
 
     [
+        'ext/adapter/ext/ext-base.js',
+        'ext/ext-all.js',
+        'ext/ux/GroupSummary.js',
         "js/stig-manager.min.js"
     ].forEach(function(src) {
         var script = document.createElement('script');
