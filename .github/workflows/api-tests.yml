@@ -12,16 +12,27 @@ on:
     - '.github/workflows/api-tests.yml'
 
 jobs:
+  call-build-client:
+    uses: csmig/stig-manager/.github/worflow/build-client@minify-logged
   test_api:
     name: Postman tests
+    needs: call-build-client
     runs-on: ubuntu-latest
     steps:
       - 
         name: Check out the repo
         uses: actions/checkout@v2
       -
-        name: Create empty client distribution
-        run: mkdir ./client/dist
+        name: Download client distribution
+        uses: actions/download-artifact@v2
+        with:
+          name: clientDist
+      -
+        name: List current directory
+        run: ls -l .
+      -
+        name: List client distribution
+        run: ls -l ./client/dist
       -
         name: Build image
         id: image-build
