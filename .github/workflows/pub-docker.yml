@@ -22,6 +22,8 @@ jobs:
       - 
         name: Check out the repo
         uses: actions/checkout@v2
+        with:
+          ref: minify-logged
       -
         name: Download client distribution
         uses: actions/download-artifact@v2
