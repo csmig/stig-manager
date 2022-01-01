@@ -6,11 +6,15 @@
 SrcDir=src
 DistDir=dist
 
+echo "Client build starting"
+
 # Create dist if necessary
+echo "Creating and cleaning $DistDir"
 [ ! -d "$DistDir" ] && mkdir -p "$DistDir"
 rm -rf $DistDir/*
 
 # ExtJS
+echo "Preparing ExtJS resources"
 ExtResources="ext/adapter/ext/ext-base.js
 ext/ext-all.js
 ext/ux/GroupSummary.js
@@ -40,18 +44,23 @@ ext/ux/fileuploadfield/css/fileuploadfield.css"
 tar cf - -C $SrcDir --files-from <(echo "${ExtResources}") | tar xf - -C $DistDir
 
 # CSS
+echo "Preparing CSS resources"
 cp -r $SrcDir/css $DistDir
 
 # Fonts
+echo "Preparing font resources"
 cp -r $SrcDir/fonts $DistDir
 
 # Images
+echo "Preparing image resources"
 cp -r $SrcDir/img $DistDir
 
 # HTML
+echo "Preparing HTML resources"
 cp -r $SrcDir/index.html $DistDir
 
 # JS
+echo "Preparing JavaScript resources"
 mkdir $DistDir/js
 cp $SrcDir/js/init.js $DistDir/js
 cp $SrcDir/js/oidcProvider.js $DistDir/js
@@ -108,3 +117,5 @@ uglifyjs \
 'js/fast-xml-parser.min.js' \
 'js/jsonview.bundle.js' \
 'js/stigman.js' -m -c > ../$DistDir/js/stig-manager.min.js
+
+echo "Client build successful"
