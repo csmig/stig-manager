@@ -20,6 +20,9 @@ jobs:
         name: Check out the repo
         uses: actions/checkout@v2
       -
+        name: Create empty client distribution
+        run: mkdir ./client/dist
+      -
         name: Build image
         id: image-build
         run: |
