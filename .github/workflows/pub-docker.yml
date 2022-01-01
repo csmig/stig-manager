@@ -23,7 +23,7 @@ jobs:
         name: Check out the repo
         uses: actions/checkout@v2
         with:
-          ref: minify-logged
+          fetch-depth: 0
       -
         name: Download client distribution
         uses: actions/download-artifact@v2
@@ -42,7 +42,6 @@ jobs:
         name: Prepare variables
         id: prep
         run: |
-          git fetch --prune --unshallow
           DOCKER_IMAGE=carlsmig/stig-manager
           BRANCH=$(git symbolic-ref --short HEAD)
           SHA=$(git rev-parse --short=10 HEAD)
