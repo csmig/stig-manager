@@ -20,9 +20,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - 
+        name: Echo context
+        run: echo "$GITHUB_CONTEXT" 
+      - 
         name: Check out the repo
         uses: actions/checkout@v2
         with:
+
           fetch-depth: 0
       -
         name: Download client distribution
