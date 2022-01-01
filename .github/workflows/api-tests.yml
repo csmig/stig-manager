@@ -23,10 +23,14 @@ jobs:
         name: Check out the repo
         uses: actions/checkout@v2
       -
+        name: Create client/dist directory
+        run: mkdir ./client/dist
+      -
         name: Download client distribution
         uses: actions/download-artifact@v2
         with:
-          name: clientDist
+          name: client-dist
+          path: ./client/dist
       -
         name: List current directory
         run: ls -l .
