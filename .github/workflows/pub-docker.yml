@@ -21,7 +21,7 @@ jobs:
     steps:
       - 
         name: Echo context
-        run: echo "$GITHUB_CONTEXT" 
+        run: echo "${{ toJSON(github) }}" 
       - 
         name: Check out the repo
         uses: actions/checkout@v2
