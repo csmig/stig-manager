@@ -8,9 +8,8 @@ DistDir=dist
 
 echo "Client build starting"
 
-# Create dist if necessary
-echo "Creating and cleaning $DistDir"
-[ ! -d "$DistDir" ] && mkdir -p "$DistDir"
+# Clean dist directory
+echo "Cleaning $DistDir"
 rm -rf $DistDir/*
 
 # ExtJS
