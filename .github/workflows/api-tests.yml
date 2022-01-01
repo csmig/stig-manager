@@ -13,7 +13,7 @@ on:
 
 jobs:
   call-build-client:
-    uses: csmig/stig-manager/.github/worflow/build-client.yml@minify-logged
+    uses: csmig/stig-manager/.github/workflows/build-client.yml@minify-logged
   test_api:
     name: Postman tests
     needs: call-build-client
