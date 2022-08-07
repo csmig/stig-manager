@@ -233,8 +233,10 @@ paths:
                 items:
                   $ref: '#/components/schemas/ChecklistAssetStig'
             application/xml:
-              schema:
-                $ref: '#/components/schemas/ChecklistCkl'
+                schema:
+                  oneOf:
+                    - $ref: '#/components/schemas/ChecklistCkl'
+                    - $ref: '#/components/schemas/ChecklistXccdf'
         default:
           description: unexpected error
           content:
@@ -3467,6 +3469,14 @@ components:
         - accepted
         - rejected
         - null
+    ChecklistXccdf:
+      type: object
+      description: |
+        An XCCDF document with TestResult. Note: OAS 3.x cannot represent the actual XML schema
+      xml:
+        name: Benchmark
+        namespace: 'http://checklists.nist.gov/xccdf/1.2'
+      additionalProperties: true
     ClientErrorDuplicateAsset:
       type: object
       additionalProperties: false
