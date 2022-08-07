@@ -819,8 +819,8 @@ exports.cklFromAssetStigs = async function cklFromAssetStigs (assetId, benchmark
 
 }
 
-exports.xccdfFromAssetStig = async function (assetId, benchmarkId, revisionStr) {
-  let revisionStrResolved // Will hold specific revision string value, as opposed to "latest" 
+exports.xccdfFromAssetStig = async function (assetId, benchmarkId, revisionStr, includeCheckContent = true) {
+    // queries and query methods
   const sqlGetAsset = "select name, fqdn, ip, mac, noncomputing, metadata from asset where assetId = ?"
   const sqlGetChecklist =`SELECT 
     g.groupId,
@@ -851,100 +851,104 @@ exports.xccdfFromAssetStig = async function (assetId, benchmarkId, revisionStr) 
   order by
     substring(g.groupId from 3) + 0 asc
   `
+  async function getBenchmarkRevision(connection, benchmarkId, revisionStr) {
+    let revisionStrResolved
+    // Benchmark, calculate revId
+    const sqlGetRevision = revisionStr === 'latest' ?
+      `select
+        cr.benchmarkId, 
+        s.title, 
+        cr.revId, 
+        cr.description, 
+        cr.version, 
+        cr.release, 
+        cr.benchmarkDate,
+        cr.status,
+        cr.statusDate
+      from
+        current_rev cr 
+        left join stig s on cr.benchmarkId = s.benchmarkId
+      where
+        cr.benchmarkId = ?`
+    :
+    `select
+        r.benchmarkId,
+        s.title,
+        r.revId,
+        r.description,
+        r.version,
+        r.release,
+        r.benchmarkDate,
+        r.status,
+        r.statusDate
+      from 
+        stig s 
+        left join revision r on s.benchmarkId=r.benchmarkId
+      where
+        r.revId = ?`  
+
+    let result, revId
+    if (revisionStr === 'latest') {
+      ;[result] = await connection.query(sqlGetRevision, [benchmarkId])
+      revId = result[0].revId
+      revisionStrResolved = `V${result[0].version}R${result[0].release}`
+    }
+    else {
+      let revParse = /V(\d+)R(\d+(\.\d+)?)/.exec(revisionStr)
+      revId = `${benchmarkId}-${revParse[1]}-${revParse[2]}`
+      ;[result] = await connection.query(sqlGetRevision, [revId])
+      revisionStrResolved = revisionStr
+    }
+    result[0].revisionStr = revisionStrResolved
+    return result[0]
+  }
+
+  // reuse a connection for multiple SELECT queries
+  const connection = await dbUtils.pool.getConnection()
+  // target
+  const [resultGetAsset] = await connection.query(sqlGetAsset, [assetId])
+  // benchmark
+  const revision = await getBenchmarkRevision(connection, benchmarkId, revisionStr)
+  // checklist
+  const [resultGetChecklist] = await connection.query(sqlGetChecklist, [assetId, revision.revId])
+  // release connection
+  await connection.release()
+
+
+  // scaffold xccdf object
   const xccdfJs = {
     Benchmark: {
       "@_xmlns": "http://checklists.nist.gov/xccdf/1.2",
       "@_xmlns:dc": "http://purl.org/dc/elements/1.1/",
       "@_xmlns:sm": "http://github.com/nuwcdivnpt/stig-manager",
-      "@_id": `xccdf_mil.disa.stig_benchmark_${benchmarkId}`,
+      "@_id": `xccdf_mil.disa.stig_benchmark_${revision.benchmarkId}`,
       "status": {
-        "@_date": "rev.statusDate",
-        "#text": "rev.status"
+        "@_date": revision.statusDate,
+        "#text": revision.status
       },
-      "title": "rev.title",
-      "description": "rev.description",
-      "version": "",
+      "title": revision.title,
+      "description": revision.description,
+      "version": revision.revisionStr,
       "metadata": {
         "dc:creator": "DISA",
-        "dc:publisher": "STIG Manager"
+        "dc:publisher": "STIG Manager OSS"
       },
       "Group": [],
       TestResult: {
-        "@_id": `xccdf_mil.navy.nuwcdivnpt.stigmanager_testresult_${benchmarkId}`,
+        "@_id": `xccdf_mil.navy.nuwcdivnpt.stigmanager_testresult_${revision.benchmarkId}`,
         "@_test-system": `cpe:/a:nuwcdivnpt:stigmanager:${config.version}`,
         "@_end-time": new Date().toISOString(),
         "@_version": "1.0",
         "title": "",
-        "target": "",
-        "target-address": "",
+        "target": resultGetAsset[0].name,
+        "target-address": resultGetAsset[0].ip,
         "rule-result": [],
         "score": "1.0"
       } 
     }
-  }
+  }  
 
-  const connection = await dbUtils.pool.getConnection()
-  
-  // target
-  const [resultGetAsset] = await connection.query(sqlGetAsset, [assetId])
-  xccdfJs["Benchmark"]["TestResult"]["target"] = resultGetAsset[0].name
-  xccdfJs["Benchmark"]["TestResult"]["target-address"] = resultGetAsset[0].ip
-  
-  // Benchmark, calculate revId
-  let sqlGetBenchmarkId
-  if (revisionStr === 'latest') {
-    sqlGetBenchmarkId = `select
-      cr.benchmarkId, 
-      s.title, 
-      cr.revId, 
-      cr.description, 
-      cr.version, 
-      cr.release, 
-      cr.benchmarkDate,
-      cr.status,
-      cr.statusDate
-    from
-      current_rev cr 
-      left join stig s on cr.benchmarkId = s.benchmarkId
-    where
-      cr.benchmarkId = ?`
-  }
-  else {
-    sqlGetBenchmarkId = `select
-      r.benchmarkId,
-      s.title,
-      r.description,
-      r.version,
-      r.release,
-      r.benchmarkDate,
-      r.status,
-      r.statusDate
-    from 
-      stig s 
-      left join revision r on s.benchmarkId=r.benchmarkId
-    where
-      r.revId = ?`  
-  }
-  let resultGetBenchmarkId, revId
-  if (revisionStr === 'latest') {
-    ;[resultGetBenchmarkId] = await connection.query(sqlGetBenchmarkId, [benchmarkId])
-    revId = resultGetBenchmarkId[0].revId
-    revisionStrResolved = `V${resultGetBenchmarkId[0].version}R${resultGetBenchmarkId[0].release}`
-  }
-  else {
-    let revParse = /V(\d+)R(\d+(\.\d+)?)/.exec(revisionStr)
-    revId = `${benchmarkId}-${revParse[1]}-${revParse[2]}`
-    ;[resultGetBenchmarkId] = await connection.query(sqlGetBenchmarkId, [revId])
-    revisionStrResolved = revisionStr
-  }
-  xccdfJs["Benchmark"]["status"]["#text"] = resultGetBenchmarkId[0].status
-  xccdfJs["Benchmark"]["status"]["@_date"] = resultGetBenchmarkId[0].statusDate
-  xccdfJs["Benchmark"]["version"] = `V${resultGetBenchmarkId[0].version}R${resultGetBenchmarkId[0].release}`
-  xccdfJs["Benchmark"]["title"] = resultGetBenchmarkId[0].title
-  xccdfJs["Benchmark"]["description"] = resultGetBenchmarkId[0].description
-
-  // Group, rule-result
-  const [resultGetChecklist] = await connection.query(sqlGetChecklist, [assetId, revId])
+  // iterate through checklist query results
   for (const r of resultGetChecklist) {
     xccdfJs["Benchmark"]["Group"].push({
       "@_id": `xccdf_mil.disa.stig_group_${r.groupId}`,
@@ -967,18 +971,13 @@ exports.xccdfFromAssetStig = async function (assetId, benchmarkId, revisionStr) 
       "check": {
         "@_system": r.checkId,
         "check-content": {
-          "sm:detail": {
-            "__cdata": r.detail || undefined
-          },
-          "sm:comment": {
-            "__cdata": r.comment || undefined
-          }
+          "sm:detail": r.detail || undefined,
+          "sm:comment": r.comment || undefined
         }
       }
     })
   }
-  await connection.release()
-  return ({assetName: resultGetAsset[0].name, xccdfJs, revisionStrResolved})
+  return ({assetName: resultGetAsset[0].name, xccdfJs, revisionStrResolved: revision.revisionStr})
 }
 
 exports.createAsset = async function(body, projection, elevate, userObject) {
