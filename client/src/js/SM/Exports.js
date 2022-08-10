@@ -485,8 +485,13 @@ async function showExportCklFiles(collectionId, collectionName, treebase = 'asse
 
     const streamingApiCheckbox = new Ext.form.Checkbox({
       boxLabel: ` Use streaming API<span class="sm-navtree-sprite" style="font-size: 9px; font-weight: bold;">experimental</span>`,
-      checked: false,
-      hideLabel: true
+      checked: localStorage.getItem('exportArchiveStreaming') == '1',
+      hideLabel: true,
+      listeners: {
+        check: function (cb, checked) {
+          localStorage.setItem('exportArchiveStreaming', checked ? '1' : '0')
+        }
+      }
     })
 
     const formatComboBox = new Ext.form.ComboBox({
@@ -505,9 +510,14 @@ async function showExportCklFiles(collectionId, collectionName, treebase = 'asse
       }),
       valueField:'valueStr',
       displayField:'displayStr',
-      value: 'ckl-mono',
+      value: localStorage.getItem('exportFormat') || 'ckl-mono',
       monitorValid: false,
-      triggerAction: 'all'
+      triggerAction: 'all',
+      listeners: {
+        select: function (combo, record, index) {
+          localStorage.setItem('exportFormat', combo.getValue())
+        }
+      }
     })
 
     function checkStateHandler() {
