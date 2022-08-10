@@ -564,6 +564,7 @@ exports.cklFromAssetStigs = async function cklFromAssetStigs (assetId, benchmark
         ASSET: {
           ROLE: 'None',
           ASSET_TYPE: 'Computing',
+          MARKING: config.settings.setClassification,
           HOST_NAME: null,
           HOST_IP: null,
           HOST_MAC: null,
@@ -753,6 +754,7 @@ exports.cklFromAssetStigs = async function cklFromAssetStigs (assetId, benchmark
       const stigDataRef = [
         ['Vuln_Num', 'groupId' ],
         ['Severity',  'severity' ],
+        ['Weight',  'weight' ],
         ['Group_Title',  'groupTitle' ],
         ['Rule_ID',  'ruleId' ],
         ['Rule_Ver',  'version' ],
@@ -918,6 +920,34 @@ exports.xccdfFromAssetStig = async function (assetId, benchmarkId, revisionStr =
       }
   }
 
+  function generateTargetFacts({metadata, ...assetFields}) {
+    const fact = []
+    for (const field in assetFields) {
+      fact.push({
+        '@_name': `tag:stig-manager@users.noreply.github.com,2020:asset:${field}`,
+        '@_type': 'string',
+        '#text': assetFields[field]
+      })
+    }
+    const re = /^urn:/
+    for (const key in metadata) {
+      if (re.test(key)) {
+        fact.push({
+          '@_name': key,
+          '@_type': 'string',
+          '#text': metadata[key]
+        })
+      }
+      else {
+        fact.push({
+          '@_name': `tag:stig-manager@users.noreply.github.com,2020:asset:metadata:${encodeURI(key)}`,
+          '@_type': 'string',
+          '#text': metadata[key]
+        })
+      }
+    }
+    return {fact}
+  }
 
   // reuse a connection for multiple SELECT queries
   const connection = await dbUtils.pool.getConnection()
@@ -951,13 +981,14 @@ exports.xccdfFromAssetStig = async function (assetId, benchmarkId, revisionStr =
       },
       "Group": [],
       TestResult: {
-        "@_id": `xccdf_mil.navy.nuwcdivnpt.stigmanager_testresult_${revision.benchmarkId}`,
-        "@_test-system": `cpe:/a:nuwcdivnpt:stigmanager:${config.version}`,
+        "@_id": `xccdf_mil.navy.nuwcdivnpt.stig-manager_testresult_${revision.benchmarkId}`,
+        "@_test-system": `cpe:/a:nuwcdivnpt:stig-manager:${config.version}`,
         "@_end-time": new Date().toISOString(),
         "@_version": "1.0",
         "title": "",
         "target": resultGetAsset[0].name,
         "target-address": resultGetAsset[0].ip,
+        "target-facts": generateTargetFacts(resultGetAsset[0]),
         "rule-result": [],
         "score": "1.0"
       } 

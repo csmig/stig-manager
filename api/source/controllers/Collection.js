@@ -7,7 +7,7 @@ const AssetSvc = require(`../service/${config.database.type}/AssetService`)
 const Serialize = require(`../utils/serializers`)
 const Security = require('../utils/accessLevels')
 const SmError = require('../utils/error')
-const archiver = require('archiver')
+const Archiver = require('archiver')
 const J2X = require("fast-xml-parser").j2xParser
 const he = require('he')
 
@@ -573,7 +573,7 @@ module.exports.postCklArchiveByCollection = async function (req, res, next) {
     // process body array into service arguments
     const assetStigArguments = await assetStigsToArgs (assetStigSelections, mode, req.userObject)
 
-    let defaultOptions = {
+    const j2x = new J2X({
       attributeNamePrefix : "@_",
       attrNodeName: "@", //default is false
       textNodeName : "#text",
@@ -587,13 +587,11 @@ module.exports.postCklArchiveByCollection = async function (req, res, next) {
         return a ? he.encode(a.toString(), { useNamedReferences: false}) : a 
       },
       attrValueProcessor: a=> he.encode(a, {isAttributeValue: isAttribute, useNamedReferences: true})
-    }
-    const j2x = new J2X(defaultOptions)
+    })
 
-
-    const zip = archiver('zip', {level: 9})
-    // const zip = archiver('tar', {gzip: true, gzipOptions:{level: 9}})
-    res.attachment('archive-name.zip')
+    const zip = Archiver('zip', {level: 9})
+    // const zip = Archiver('tar', {gzip: true, gzipOptions:{level: 9}})
+    res.attachment('ckl.zip')
     zip.pipe(res)
     for (const args of assetStigArguments) {
       const response = await AssetSvc.cklFromAssetStigs(args.assetId, args.benchmarkIds)
@@ -617,7 +615,7 @@ module.exports.postXccdfArchiveByCollection = async function (req, res, next) {
     // process body array into service arguments
     const assetStigArguments = await assetStigsToArgs (assetStigSelections, 'mono', req.userObject)
 
-    let defaultOptions = {
+    const j2x = new J2X({
       attributeNamePrefix : "@_",
       textNodeName : "#text",
       ignoreAttributes : false,
@@ -630,16 +628,16 @@ module.exports.postXccdfArchiveByCollection = async function (req, res, next) {
         return a ? he.encode(a.toString(), { useNamedReferences: false}) : a 
       },
       attrValueProcessor: a => he.encode(a, {isAttributeValue: true, useNamedReferences: true})
-    }
-    const j2x = new J2X(defaultOptions)
+    })
 
-
-    const zip = archiver('zip', {level: 9})
-    res.attachment('archive-name.zip')
+    const zip = Archiver('zip', {level: 9})
+    res.attachment('xccdf.zip')
     zip.pipe(res)
     for (const args of assetStigArguments) {
       const response = await AssetSvc.xccdfFromAssetStig(args.assetId, args.benchmarkIds[0])
-      let xml = `<?xml version="1.0" encoding="UTF-8"?>\n<!-- STIG Manager ${config.version} -->\n<!-- Classification: ${config.settings.setClassification} -->\n`
+      let xml = `<?xml version="1.0" encoding="UTF-8"?>
+      <!-- STIG Manager ${config.version} -->
+      <!-- Classification: ${config.settings.setClassification} -->\n`
       xml += j2x.parse(response.xccdfJs)
       const filename = `${args.assetName}-${args.benchmarkIds[0]}-${response.revisionStrResolved}-xccdf.xml`
       zip.append(xml, {name: filename})
@@ -651,7 +649,7 @@ module.exports.postXccdfArchiveByCollection = async function (req, res, next) {
   }
 }
 
-
+// for the archive streaming endpoints
 async function assetStigsToArgs (assetStigSelections, mode = 'mono', userObject) {
   const assetStigArguments = []
   for (const assetStigSel of assetStigSelections) {

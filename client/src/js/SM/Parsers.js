@@ -388,9 +388,10 @@
       isArray: (name, jpath, isLeafNode, isAttribute) => {
         const arrayElements = [
           'override',
+          'overrides',
           'target',
           'target-address',
-          'target-facts'
+          'fact'
         ]
         return arrayElements.includes(name)
       }
@@ -464,6 +465,21 @@
       return { reviews, stats }
     }
 
+    function unprefixObjectProperties(prefix, obj) {
+      const re = new RegExp(`/^${prefix}:`)
+      for (const k in obj)
+        {
+            if (typeof obj[k] == "object" && obj[k] !== null) {
+              unprefixObjectProperties(prefix, obj[k])
+            }
+            if (!Array.isArray(obj) && re.test(k)) {
+              const kUnprefixed = k.replace(re, '')
+              obj[kUnprefixed] = obj[k]
+              delete obj[k] 
+            }
+        }
+    }
+
     function generateReview(ruleResult, resultEngineCommon) {
       let result = ruleResult.result
       if (!result) return
@@ -488,63 +504,72 @@
 
       let resultEngine
       if (resultEngineCommon) {
-        // build the resultEngine value
-        resultEngine = {
-          time: new Date(ruleResult.time), 
-          ...resultEngineCommon
+        if (resultEngineCommon.product === 'stig-manager') {
+          resultEngine = ruleResult.check?.['check-content']?.resultEngine
         }
-        // handle check-content-ref, if it exists
-        const checkContentHref = ruleResult?.check?.['check-content-ref']?.href?.replace('#scap_mil.disa.stig_comp_','')
-        const checkContentName = ruleResult?.check?.['check-content-ref']?.name?.replace('oval:mil.disa.stig.','')
-        if (checkContentHref || checkContentName) {
-          resultEngine.checkContent = {
-            location: checkContentHref,
-            component: checkContentName
+        else {
+          // build the resultEngine value
+          resultEngine = {
+            time: new Date(ruleResult.time).toISOString(), 
+            ...resultEngineCommon
           }
-        }
-        
-        if (ruleResult.override?.length) { //overrides
-          const overrides = []
-          for (const override of ruleResult.override) {
-            overrides.push({
-              authority: override.authority,
-              oldResult: override['old-result'],
-              newResult: override['new-result'],
-              remark: override['remark']
-            })
+          // handle check-content-ref, if it exists
+          const checkContentHref = ruleResult?.check?.['check-content-ref']?.href?.replace('#scap_mil.disa.stig_comp_','')
+          const checkContentName = ruleResult?.check?.['check-content-ref']?.name?.replace('oval:mil.disa.stig.','')
+          if (checkContentHref || checkContentName) {
+            resultEngine.checkContent = {
+              location: checkContentHref,
+              component: checkContentName
+            }
           }
-          if (overrides.length) {
-            resultEngine.overrides = overrides
-          }  
+          
+          if (ruleResult.override?.length) { //overrides
+            const overrides = []
+            for (const override of ruleResult.override) {
+              overrides.push({
+                authority: override.authority,
+                oldResult: override['old-result'],
+                newResult: override['new-result'],
+                remark: override['remark']
+              })
+            }
+            if (overrides.length) {
+              resultEngine.overrides = overrides
+            }  
+          }
         }
       }
 
-      const replacementText = `Result was reported by product "${resultEngine?.product}" version ${resultEngine?.version} at ${resultEngine?.time?.toISOString()} using check content "${resultEngine?.checkContent?.location}"`
+      const replacementText = `Result was reported by product "${resultEngine?.product}" version ${resultEngine?.version} at ${resultEngine?.time} using check content "${resultEngine?.checkContent?.location}"`
 
-      let detail
-      switch (importOptions.emptyDetail) {
-        case 'ignore':
-          detail= null
-          break
-        case 'import':
-          detail = ''
-          break
-        case 'replace':
-          detail = replacementText
-          break
+      let detail = ruleResult.check?.['check-content']?.detail
+      if (!detail) {
+        switch (importOptions.emptyDetail) {
+          case 'ignore':
+            detail= null
+            break
+          case 'import':
+            detail = ''
+            break
+          case 'replace':
+            detail = replacementText
+            break
+        }
       }
 
-      let comment
-      switch (importOptions.emptyComment) {
-        case 'ignore':
-          comment = null
-          break
-        case 'import':
-          comment = ''
-          break
-        case 'replace':
-          comment = replacementText
-          break
+      let comment = ruleResult.check?.['check-content']?.comment
+      if (!comment) {
+        switch (importOptions.emptyComment) {
+          case 'ignore':
+            comment = null
+            break
+          case 'import':
+            comment = ''
+            break
+          case 'replace':
+            comment = replacementText
+            break
+        }
       }
 
       const review = {
@@ -604,25 +629,45 @@
     }
 
     function processTargetFacts(targetFacts) {
-      const facts = {}
-      if (targetFacts) {
-        for (const targetFact of targetFacts) {
-          if (targetFact['#text']) {
-            facts[targetFact['name']] = targetFact['#text']
+      if (!targetFacts) return {}
+
+      const asset = { metadata: {} }
+      const reTagAsset = /^tag:stig-manager@users.noreply.github.com,2020:asset:(.*)/
+      const reMetadata = /^metadata:(.*)/
+
+      for (const targetFact of targetFacts) {
+        const matchesTagAsset = targetFact['name'].match(reTagAsset)
+        if (!matchesTagAsset) {
+          asset.metadata[targetFact['name']] = targetFact['#text']
+          continue
+        }
+        const property = matchesTagAsset[1]
+        const matchesMetadata = property.match(reMetadata)
+        if (matchesMetadata) {
+          asset.metadata[decodeURI(matchesMetadata[1])] = targetFact['#text']
+        }
+        else {
+          let value = targetFact['#text']
+          if (property === 'noncomputing') {
+            value = value === 'true'
+          }
+          if (['name','description','fqdn','ip','mac','noncomputing'].includes(property)) {
+            asset[property] = value
           }
         }
       }
-      return facts
+      return asset
     }
 
     function processTarget(testResult) {
-      const metadata = processTargetFacts(testResult['target-facts'])
+      const assetFromFacts = processTargetFacts(testResult['target-facts']?.fact)
       return {
         name: testResult.target[0],
         description: '',
         ip: testResult['target-address']?.[0] || '',
         noncomputing: false,
-        metadata
+        metadata: {},
+        ...assetFromFacts
       }
     }
   }

@@ -496,6 +496,7 @@ async function showExportCklFiles(collectionId, collectionName, treebase = 'asse
 
     const formatComboBox = new Ext.form.ComboBox({
       mode: 'local',
+      width: 110,
       fieldLabel: "Format",
       forceSelection: true,
       autoSelect: true,
@@ -503,9 +504,9 @@ async function showExportCklFiles(collectionId, collectionName, treebase = 'asse
       store: new Ext.data.SimpleStore({
         fields: ['displayStr', 'valueStr'],
         data: [
-          ['CKL (single STIG/file)', 'ckl-mono'],
-          ['CKL (multiple STIGs/file)', 'ckl-multi'],
-          ['XCCDF (single STIG/file)', 'xccdf']
+          ['CKL', 'ckl-mono'],
+          ['CKL (multi-STIG)', 'ckl-multi'],
+          ['XCCDF', 'xccdf']
         ]
       }),
       valueField:'valueStr',
@@ -790,6 +791,9 @@ async function exportCklArchiveStreaming(collectionId, checklists, multiStig) {
 
   try {
     initProgress("Exporting checklists", "Initializing...")
+    updateStatusText(`The streaming API is experimental.
+    Progress messages are not available. The final size of the archive is unknown during streaming.
+    When the stream has finished you will be prompted to save the data to disk.`, true)
     await window.oidcProvider.updateToken(10)
     const url = `${STIGMAN.Env.apiBase}/collections/${collectionId}/archive/ckl?mode=${multiStig ? 'multi' : 'mono'}`
     let response = await fetch(url, {
@@ -814,6 +818,8 @@ async function exportCklArchiveStreaming(collectionId, checklists, multiStig) {
     }
     const blob = new Blob(chunks)
     const collectionApi = SM.Cache.CollectionMap.get(collectionId)
+    updateStatusText(`\n\nStreaming is complete.`, true)
+
     saveAs(blob, `${collectionApi.name}.zip`)
   }
   catch (e) {
@@ -827,6 +833,9 @@ async function exportXccdfArchiveStreaming(collectionId, checklists) {
 
   try {
     initProgress("Exporting checklists", "Initializing...")
+    updateStatusText(`The streaming API is experimental.
+    Progress messages are not available. The final size of the archive is unknown during streaming.
+    When the stream has finished you will be prompted to save the data to disk.`, true)
     await window.oidcProvider.updateToken(10)
     const url = `${STIGMAN.Env.apiBase}/collections/${collectionId}/archive/xccdf`
     let response = await fetch(url, {
@@ -851,6 +860,7 @@ async function exportXccdfArchiveStreaming(collectionId, checklists) {
     }
     const blob = new Blob(chunks)
     const collectionApi = SM.Cache.CollectionMap.get(collectionId)
+    updateStatusText(`\n\nStreaming is complete.`, true)
     saveAs(blob, `${collectionApi.name}.zip`)
   }
   catch (e) {
