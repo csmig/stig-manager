@@ -386,7 +386,13 @@
       tagValueProcessor: valueProcessor,
       commentPropName: "__comment",
       isArray: (name, jpath, isLeafNode, isAttribute) => {
-        return name === 'override' || name === 'target-address'
+        const arrayElements = [
+          'override',
+          'target',
+          'target-address',
+          'target-facts'
+        ]
+        return arrayElements.includes(name)
       }
     }
     const parser = new XMLParser(parseOptions)  
@@ -404,11 +410,9 @@
     if (scapBenchmarkMap && scapBenchmarkMap.has(benchmarkId)) {
       benchmarkId = scapBenchmarkMap.get(benchmarkId)
     }
-    let target = processTargetFacts(parsed.Benchmark.TestResult['target-facts'].fact)
-    target.name = parsed.Benchmark.TestResult.target || target.name
-    target.ip = parsed.Benchmark.TestResult['target-address']?.[0] || target.ip
+    const target = processTarget(parsed.Benchmark.TestResult)
     if (!target.name) {
-      throw (new Error('No host_name fact'))
+      throw (new Error('No value for <target>'))
     }
 
     // resultEngine info
@@ -428,7 +432,7 @@
 
     // Return object
     return ({
-      target: target,
+      target,
       checklists: [{
         benchmarkId: benchmarkId,
         revisionStr: null,
@@ -599,25 +603,26 @@
       return status
     }
 
-    function processTargetFacts(facts) {
-      let target = {}
-      facts.forEach(fact => {
-        if (fact['#text']) {
-          let name = fact.name.replace('urn:scap:fact:asset:identifier:', '')
-          name = name.replace('urn:xccdf:fact:', '')
-          name = name === 'ipv4' ? 'ip' : name
-          target[name] = fact['#text'] 
+    function processTargetFacts(targetFacts) {
+      const facts = {}
+      if (targetFacts) {
+        for (const targetFact of targetFacts) {
+          if (targetFact['#text']) {
+            facts[targetFact['name']] = targetFact['#text']
+          }
         }
-      })
-      const {ip, host_name, fqdn, mac, ...metadata} = target
+      }
+      return facts
+    }
+
+    function processTarget(testResult) {
+      const metadata = processTargetFacts(testResult['target-facts'])
       return {
-        name: host_name,
+        name: testResult.target[0],
         description: '',
-        ip: ip,
-        mac: mac,
-        fqdn: fqdn,
+        ip: testResult['target-address']?.[0] || '',
         noncomputing: false,
-        metadata: metadata
+        metadata
       }
     }
   }
