@@ -819,7 +819,7 @@ exports.cklFromAssetStigs = async function cklFromAssetStigs (assetId, benchmark
 
 }
 
-exports.xccdfFromAssetStig = async function (assetId, benchmarkId, revisionStr, includeCheckContent = true) {
+exports.xccdfFromAssetStig = async function (assetId, benchmarkId, revisionStr = 'latest', includeCheckContent = true) {
     // queries and query methods
   const sqlGetAsset = "select name, fqdn, ip, mac, noncomputing, metadata from asset where assetId = ?"
   const sqlGetChecklist =`SELECT 
@@ -835,7 +835,8 @@ exports.xccdfFromAssetStig = async function (assetId, benchmarkId, revisionStr, 
     result.api as "result",
     review.ts,
     LEFT(review.detail,32767) as "detail",
-    LEFT(review.comment,32767) as "comment"
+    LEFT(review.comment,32767) as "comment",
+    review.resultEngine
   FROM
     revision rev 
     left join rev_group_map rg on rev.revId = rg.revId
@@ -846,6 +847,7 @@ exports.xccdfFromAssetStig = async function (assetId, benchmarkId, revisionStr, 
     left join \`check\` c on rgrc.checkId = c.checkId
     left join review on r.ruleId = review.ruleId and review.assetId = ?
     left join result on review.resultId = result.resultId 
+    left join status on review.statusId = status.statusId 
   WHERE
     rev.revId = ?
   order by
@@ -903,6 +905,20 @@ exports.xccdfFromAssetStig = async function (assetId, benchmarkId, revisionStr, 
     return result[0]
   }
 
+  function prefixObjectProperties(prefix, obj) {
+    for (const k in obj)
+      {
+          if (typeof obj[k] == "object" && obj[k] !== null) {
+            prefixObjectProperties(prefix, obj[k])
+          }
+          if (!Array.isArray(obj)) {
+            obj[`${prefix}:${k}`] = obj[k]
+            delete obj[k] 
+          }
+      }
+  }
+
+
   // reuse a connection for multiple SELECT queries
   const connection = await dbUtils.pool.getConnection()
   // target
@@ -956,7 +972,7 @@ exports.xccdfFromAssetStig = async function (assetId, benchmarkId, revisionStr, 
       "Rule": {
         "@_id": `xccdf_mil.disa.stig_rule_${r.ruleId}`,
         "@_weight": r.weight,
-        "@_severity": r.severity,
+        "@_severity": r.severity || undefined,
         "title": r.ruleTitle,
         "check": {
           "@_system": r.checkId,
@@ -964,6 +980,9 @@ exports.xccdfFromAssetStig = async function (assetId, benchmarkId, revisionStr, 
         }
       }
     })
+    if (r.resultEngine) {
+      prefixObjectProperties('sm', r.resultEngine)
+    }
     xccdfJs["Benchmark"]["TestResult"]["rule-result"].push({
       result: r.result || "notchecked",
       "@_idref": `xccdf_mil.disa.stig_rule_${r.ruleId}`,
@@ -972,7 +991,8 @@ exports.xccdfFromAssetStig = async function (assetId, benchmarkId, revisionStr, 
         "@_system": r.checkId,
         "check-content": {
           "sm:detail": r.detail || undefined,
-          "sm:comment": r.comment || undefined
+          "sm:comment": r.comment || undefined,
+          "sm:resultEngine": r.resultEngine || undefined
         }
       }
     })
