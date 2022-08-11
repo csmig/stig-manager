@@ -591,8 +591,6 @@ async function showExportCklFiles(collectionId, collectionName, treebase = 'asse
 
     })
     appwindow.show(document.body)
-    const cb = appwindow.getEl().dom.querySelector('#multi-ckl')
-    const streamingCb = appwindow.getEl().dom.querySelector('#streaming-cb')
   }
   catch (e) {
     if (typeof e === 'object') {
