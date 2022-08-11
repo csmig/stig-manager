@@ -923,11 +923,13 @@ exports.xccdfFromAssetStig = async function (assetId, benchmarkId, revisionStr =
   function generateTargetFacts({metadata, ...assetFields}) {
     const fact = []
     for (const field in assetFields) {
-      fact.push({
-        '@_name': `tag:stig-manager@users.noreply.github.com,2020:asset:${field}`,
-        '@_type': 'string',
-        '#text': assetFields[field]
-      })
+      if (assetFields[field]) {
+        fact.push({
+          '@_name': `tag:stig-manager@users.noreply.github.com,2020:asset:${field}`,
+          '@_type': 'string',
+          '#text': assetFields[field]
+        })  
+      }
     }
     const re = /^urn:/
     for (const key in metadata) {
@@ -935,14 +937,14 @@ exports.xccdfFromAssetStig = async function (assetId, benchmarkId, revisionStr =
         fact.push({
           '@_name': key,
           '@_type': 'string',
-          '#text': metadata[key]
+          '#text': metadata[key] || ''
         })
       }
       else {
         fact.push({
           '@_name': `tag:stig-manager@users.noreply.github.com,2020:asset:metadata:${encodeURI(key)}`,
           '@_type': 'string',
-          '#text': metadata[key]
+          '#text': metadata[key] || ''
         })
       }
     }
