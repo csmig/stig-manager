@@ -788,10 +788,29 @@ async function exportCklArchiveStreaming(collectionId, checklists, multiStig) {
   function formatBytes(a,b=2,k=1024){with(Math){let d=floor(log(a)/log(k));return 0==a?"0 Bytes":parseFloat((a/pow(k,d)).toFixed(max(0,b)))+" "+["Bytes","KB","MB","GB","TB","PB","EB","ZB","YB"][d]}}
 
   try {
+    const collectionApi = SM.Cache.CollectionMap.get(collectionId)
+    let statusText = `The streaming API is experimental.
+    Progress messages are not available. The final size of the archive is unknown during streaming.`
+
+    let writableStream, fileHandle, fileObj
+    if (window.isSecureContext && window.showSaveFilePicker) {
+      fileHandle = await window.showSaveFilePicker({
+        suggestedName:  `${collectionApi.name}-xccdf.zip`,
+        types: [{
+          description: 'Zip file',
+          accept: {'application/zip': ['.zip']},
+        }]
+      })
+      writableStream = await fileHandle.createWritable()
+      fileObj = await fileHandle.getFile()
+    }
+    else {
+      statusText += `
+      When the stream has finished you will be prompted to save the data to disk.`
+    }
     initProgress("Exporting checklists", "Initializing...")
-    updateStatusText(`The streaming API is experimental.
-    Progress messages are not available. The final size of the archive is unknown during streaming.
-    When the stream has finished you will be prompted to save the data to disk.`, true)
+    updateStatusText(statusText, true)
+
     await window.oidcProvider.updateToken(10)
     const url = `${STIGMAN.Env.apiBase}/collections/${collectionId}/archive/ckl?mode=${multiStig ? 'multi' : 'mono'}`
     let response = await fetch(url, {
@@ -810,15 +829,25 @@ async function exportCklArchiveStreaming(collectionId, checklists, multiStig) {
       if (done) {
         break
       }
-      chunks.push(value)
+      if (writableStream) {
+        await writableStream.write(value)
+      }
+      else {
+        chunks.push(value)
+      }
       receivedLength += value.length
       updateProgress(0, `Fetched: ${formatBytes(receivedLength, 1)}`)
     }
-    const blob = new Blob(chunks)
-    const collectionApi = SM.Cache.CollectionMap.get(collectionId)
     updateStatusText(`\n\nStreaming is complete.`, true)
-
-    saveAs(blob, `${collectionApi.name}.zip`)
+    if (writableStream) {
+      await writableStream.close()
+      updateProgress(0, `Finished writing to: ${fileHandle.name}`)
+    }
+    else {
+      const blob = new Blob(chunks)
+      const collectionApi = SM.Cache.CollectionMap.get(collectionId)
+      saveAs(blob, `${collectionApi.name}.zip`)
+    }
   }
   catch (e) {
     alert(`${e.message}\n${e.stack}`)
@@ -830,10 +859,30 @@ async function exportXccdfArchiveStreaming(collectionId, checklists) {
   function formatBytes(a,b=2,k=1024){with(Math){let d=floor(log(a)/log(k));return 0==a?"0 Bytes":parseFloat((a/pow(k,d)).toFixed(max(0,b)))+" "+["Bytes","KB","MB","GB","TB","PB","EB","ZB","YB"][d]}}
 
   try {
+    const collectionApi = SM.Cache.CollectionMap.get(collectionId)
+    let statusText = `The streaming API is experimental.
+    Progress messages are not available. The final size of the archive is unknown during streaming.`
+
+    let writableStream, fileHandle, fileObj
+    if (window.isSecureContext && window.showSaveFilePicker) {
+      fileHandle = await window.showSaveFilePicker({
+        suggestedName:  `${collectionApi.name}-xccdf.zip`,
+        types: [{
+          description: 'Zip file',
+          accept: {'application/zip': ['.zip']},
+        }]
+      })
+      writableStream = await fileHandle.createWritable()
+      fileObj = await fileHandle.getFile()
+    }
+    else {
+      statusText += `
+      When the stream has finished you will be prompted to save the data to disk.`
+    }
+    
     initProgress("Exporting checklists", "Initializing...")
-    updateStatusText(`The streaming API is experimental.
-    Progress messages are not available. The final size of the archive is unknown during streaming.
-    When the stream has finished you will be prompted to save the data to disk.`, true)
+    updateStatusText(statusText, true)
+
     await window.oidcProvider.updateToken(10)
     const url = `${STIGMAN.Env.apiBase}/collections/${collectionId}/archive/xccdf`
     let response = await fetch(url, {
@@ -845,6 +894,7 @@ async function exportXccdfArchiveStreaming(collectionId, checklists) {
       body: JSON.stringify(checklists)
     })
     const reader = response.body.getReader()
+
     let receivedLength = 0; // received that many bytes at the moment
     let chunks = []; // array of received binary chunks (comprises the body)
     while(true) {
@@ -852,14 +902,25 @@ async function exportXccdfArchiveStreaming(collectionId, checklists) {
       if (done) {
         break
       }
-      chunks.push(value)
+      if (writableStream) {
+        await writableStream.write(value)
+      }
+      else {
+        chunks.push(value)
+      }
       receivedLength += value.length
       updateProgress(0, `Fetched: ${formatBytes(receivedLength, 1)}`)
     }
-    const blob = new Blob(chunks)
-    const collectionApi = SM.Cache.CollectionMap.get(collectionId)
     updateStatusText(`\n\nStreaming is complete.`, true)
-    saveAs(blob, `${collectionApi.name}.zip`)
+    if (writableStream) {
+      await writableStream.close()
+      updateProgress(0, `Finished writing to: ${fileHandle.name}`)
+    }
+    else {
+      const blob = new Blob(chunks)
+      const collectionApi = SM.Cache.CollectionMap.get(collectionId)
+      saveAs(blob, `${collectionApi.name}.zip`)
+    }
   }
   catch (e) {
     alert(`${e.message}\n${e.stack}`)
