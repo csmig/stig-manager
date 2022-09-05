@@ -5,6 +5,27 @@ const Security = require('../../utils/accessLevels')
 
 const _this = this
 
+const defaultSettings = {
+  fields: {
+    detail: {
+      enabled: 'always',
+      required: 'always'
+    },
+    comment: {
+      enabled: 'findings',
+      required: 'findings'
+    }
+  },
+  status: {
+    canAccept: true,
+    resetCriteria: 'result',
+    minAcceptGrant: 3
+  },
+  history: {
+    maxReviews: 10
+  }
+}
+
 /**
 Generalized queries for collection(s).
 **/
@@ -17,7 +38,7 @@ exports.queryCollections = async function (inProjection = [], inPredicates = {},
       'CAST(c.collectionId as char) as collectionId',
       'c.name',
       'c.description',
-      'c.settings',
+      `JSON_MERGE_PATCH('${JSON.stringify(defaultSettings)}', c.settings) as settings`,
       'c.metadata'
     ]
     let joins = [
@@ -580,7 +601,7 @@ exports.addOrUpdateCollection = async function(writeAction, collectionId, body, 
       collectionFields.metadata = JSON.stringify(collectionFields.metadata)
     }
     if ('settings' in collectionFields) {
-      collectionFields.settings = JSON.stringify(collectionFields.settings)
+      collectionFields.settings = JSON.stringify({...defaultSettings, ...collectionFields.settings})
     }
   
     // Connect to MySQL
@@ -1274,7 +1295,7 @@ exports.getReviewHistoryStatsByCollection = async function (collectionId, startD
 exports.getCollectionSettings = async function ( collectionId ) {
   let sql = `
     select
-      settings
+      JSON_MERGE_PATCH('${JSON.stringify(defaultSettings)}', settings) as settings
     from 
       collection
     where 

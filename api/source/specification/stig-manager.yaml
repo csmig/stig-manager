@@ -3765,6 +3765,17 @@ components:
               type: string
         accessLevel:
           type: integer
+    CollectionHistorySettings:
+      type: object
+      additionalProperties: false
+      required:
+        - maxReviews
+      properties:
+        maxReviews:
+          type: integer
+          minimum: -1
+          maximum: 50
+          example: 5
     CollectionProjected:
       type: object
       required:
@@ -3854,6 +3865,8 @@ components:
           $ref: '#/components/schemas/CollectionFieldSettings'
         status:
           $ref: '#/components/schemas/CollectionStatusSettings'
+        history:
+          $ref: '#/components/schemas/CollectionHistorySettings'
     CollectionStatistics:
       type: object
       required:
