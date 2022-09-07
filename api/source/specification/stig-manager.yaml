@@ -724,7 +724,7 @@ paths:
       description: |
         The `settings` property is optional and can be partially provided.
         - If `settings` is not provided, the Collection will be created with the default settings.
-        - If a partial `settings` object is provided, the Collection will be created with settings merged from the provied object and the default settings.
+        - If a partial `settings` object is provided, the Collection will be created with settings merged from the provided object and the default settings.
         
         The default settings are:
         ```

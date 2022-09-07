@@ -13714,7 +13714,7 @@
 								],
 								"body": {
 									"mode": "raw",
-									"raw": "{\n    \"name\": \"TEST\",\n    \"description\": \"Collection TEST description\",\n    \"settings\": {\n        \"fields\": {\n            \"detail\": {\n                \"enabled\": \"always\",\n                \"required\": \"findings\"\n            },\n            \"comment\": {\n                \"enabled\": \"always\",\n                \"required\": \"findings\"\n            }\n        },\n        \"status\": {\n            \"canAccept\": true,\n            \"minAcceptGrant\": 2,\n            \"resetCriteria\": \"result\"\n        }\n  },\n    \"metadata\": {\n        \"pocName\": \"poc2Put\",\n        \"pocEmail\": \"pocEmailPut@email.com\",\n        \"pocPhone\": \"12342\",\n        \"reqRar\": \"true\"\n    },\n    \"grants\": [\n        {\n                \"userId\": \"1\",\n                \"accessLevel\": 4\n        }\n    ],\n    \"labels\": [\n        {\n            \"name\": \"TEST\",\n            \"description\": \"Collection label description\",\n            \"color\": \"ffffff\"\n        }\n    ]\n}\n"
+									"raw": "{\n    \"name\": \"TEST\",\n    \"description\": \"Collection TEST description\",\n    \"settings\": {\n        \"fields\": {\n            \"detail\": {\n                \"enabled\": \"always\",\n                \"required\": \"findings\"\n            },\n            \"comment\": {\n                \"enabled\": \"always\",\n                \"required\": \"findings\"\n            }\n        },\n        \"status\": {\n            \"canAccept\": true,\n            \"minAcceptGrant\": 2,\n            \"resetCriteria\": \"result\"\n        },\n        \"history\": {\n            \"maxReviews\": 11\n        }\n  },\n    \"metadata\": {\n        \"pocName\": \"poc2Put\",\n        \"pocEmail\": \"pocEmailPut@email.com\",\n        \"pocPhone\": \"12342\",\n        \"reqRar\": \"true\"\n    },\n    \"grants\": [\n        {\n                \"userId\": \"1\",\n                \"accessLevel\": 4\n        }\n    ],\n    \"labels\": [\n        {\n            \"name\": \"TEST\",\n            \"description\": \"Collection label description\",\n            \"color\": \"ffffff\"\n        }\n    ]\n}\n"
 								},
 								"url": {
 									"raw": "{{baseUrl}}/collections?elevate={{elevated}}&projection=grants&projection=labels",
@@ -22946,8 +22946,8 @@
 									"listen": "test",
 									"script": {
 										"exec": [
-											"pm.test(\"Status is 400 \", function () {",
-											"    pm.response.to.have.status(400);",
+											"pm.test(\"Status is 201 \", function () {",
+											"    pm.response.to.have.status(201);",
 											"});",
 											""
 										],
