@@ -384,8 +384,10 @@ module.exports.uuidToSqlString  = function (uuid) {
   }
 }
 
-module.exports.makeQueryString = function ({columns, joins, predicates, groupBy, orderBy}) {
-  return `SELECT
+module.exports.makeQueryString = function ({ctes, columns, joins, predicates, groupBy, orderBy}) {
+  const query = `
+${ctes.length ? 'WITH ' + ctes.join(',  \n') : ''}
+SELECT
   ${columns.join(',\n  ')}
 FROM
   ${joins.join('\n  ')}
@@ -393,6 +395,7 @@ ${predicates?.statements.length ? 'WHERE\n  ' + predicates.statements.join(' and
 ${groupBy?.length ? 'GROUP BY\n  ' + groupBy.join(',\n  ') : ''}
 ${orderBy?.length ? 'ORDER BY\n  ' + orderBy.join(',\n  ') : ''}
 `
+  return query
 }
 
 module.exports.CONTEXT_ALL = 'all'

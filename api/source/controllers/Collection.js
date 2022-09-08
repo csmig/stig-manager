@@ -193,19 +193,39 @@ module.exports.getPoamByCollection = async function getFindingsByCollection (req
   }
 }
 
-module.exports.getStatusByCollection = async function getStatusByCollection (req, res, next) {
+module.exports.getStatusByCollection = async function (req, res, next) {
   try {
-    const collectionId = req.params.collectionId
+    const collectionId = getCollectionIdAndCheckPermission(req, Security.ACCESS_LEVEL.Restricted)
     const benchmarkIds = req.query.benchmarkId
     const assetIds = req.query.assetId
-    const collectionGrant = req.userObject.collectionGrants.find( g => g.collection.collectionId === collectionId )
-    if (collectionGrant || req.userObject.privileges.globalAccess ) {
-      const response = await CollectionSvc.getStatusByCollection( collectionId, assetIds, benchmarkIds, req.userObject )
-      res.json(response)
-    }
-    else {
-      throw new SmError.PrivilegeError()
-    }
+    const response = await CollectionSvc.getStatusByCollection( collectionId, assetIds, benchmarkIds, req.userObject, 'none' )
+    res.json(response)
+  }
+  catch (err) {
+    next(err)
+  }
+}
+
+module.exports.getStatusByCollectionAsset = async function (req, res, next) {
+  try {
+    const collectionId = getCollectionIdAndCheckPermission(req, Security.ACCESS_LEVEL.Restricted)
+    const benchmarkIds = req.query.benchmarkId
+    const assetIds = req.query.assetId
+    const response = await CollectionSvc.getStatusByCollection( collectionId, assetIds, benchmarkIds, req.userObject, 'asset' )
+    res.json(response)
+  }
+  catch (err) {
+    next(err)
+  }
+}
+
+module.exports.getStatusByCollectionStig = async function (req, res, next) {
+  try {
+    const collectionId = getCollectionIdAndCheckPermission(req, Security.ACCESS_LEVEL.Restricted)
+    const benchmarkIds = req.query.benchmarkId
+    const assetIds = req.query.assetId
+    const response = await CollectionSvc.getStatusByCollection( collectionId, assetIds, benchmarkIds, req.userObject, 'stig' )
+    res.json(response)
   }
   catch (err) {
     next(err)

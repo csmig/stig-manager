@@ -362,99 +362,184 @@ exports.queryFindings = async function (aggregator, inProjection = [], inPredica
   return (rows)
 }
 
-exports.queryStatus = async function (inPredicates = {}, userObject) {
-  let columns = [
-    `distinct cast(a.assetId as char) as assetId`,
-    'a.name as assetName',
-    `coalesce(
-      (select
-        json_arrayagg(BIN_TO_UUID(cl.uuid,1))
-      from
-        collection_label_asset_map cla
-        left join collection_label cl on cla.clId = cl.clId
-      where
-        cla.assetId = a.assetId),
-      json_array()
-    ) as assetLabelIds`,
-    'sa.benchmarkId',
-    `json_object(
-      'total', cr.ruleCount
-    ) as rules`,
-    'sa.minTs',
-    'sa.maxTs',
-
-    `json_object(
-      'low', sa.lowCount,
-      'medium', sa.mediumCount,
-      'high', sa.highCount
-    ) as findings`,
-
-    `json_object(
-      'saved', json_object(
-        'total', sa.saved,
-        'resultEngine', sa.savedResultEngine),
-      'submitted', json_object(
-        'total', sa.submitted,
-        'resultEngine', sa.submittedResultEngine),
-      'rejected', json_object(
-        'total', sa.rejected,
-        'resultEngine', sa.rejectedResultEngine),
-      'accepted', json_object(
-        'total', sa.accepted,
-        'resultEngine', sa.acceptedResultEngine)
-    ) as status`,     
-
-    `json_object(
-      'notchecked', json_object(
-        'total', sa.notchecked ,
-        'resultEngine', sa.notcheckedResultEngine),
-      'notapplicable', json_object(
-        'total', sa.notapplicable ,
-        'resultEngine', sa.notapplicableResultEngine),
-      'pass', json_object(
-        'total', sa.pass,
-        'resultEngine', sa.passResultEngine),
-      'fail', json_object(
-        'total', sa.fail,
-        'resultEngine', sa.failResultEngine),
-      'unknown', json_object(
-        'total', sa.unknown,
-        'resultEngine', sa.unknownResultEngine),
-      'error', json_object(
-        'total', sa.error ,
-        'resultEngine', sa.errorResultEngine),
-      'notselected', json_object(
-        'total', sa.notselected,
-        'resultEngine', sa.notselectedResultEngine),
-      'informational', json_object(
-        'total', sa.informational,
-        'resultEngine', sa.informationalResultEngine),
-      'fixed', json_object(
-        'total', sa.fixed ,
-        'resultEngine', sa.fixedResultEngine)               
-    ) as result`               
+exports.queryStatus = async function (inPredicates = {}, userObject, aggregate = 'none') {
+  let ctes = [
+    `granted as (select
+      distinct sa.benchmarkId, a.assetId
+    from
+      collection c
+      left join collection_grant cg on c.collectionId = cg.collectionId
+      left join asset a on c.collectionId = a.collectionId
+      left join stig_asset_map sa on a.assetId = sa.assetId
+      left join user_stig_asset_map usa on sa.saId = usa.saId
+    where
+      c.collectionId = ?
+        and (cg.userId = ? AND CASE WHEN cg.accessLevel = 1 THEN usa.userId = cg.userId ELSE TRUE END)
+    )`
   ]
+  let columns, groupBy, orderBy
+  switch (aggregate) {
+    case 'none':
+      columns = [
+        `cast(a.assetId as char) as assetId`,
+        'a.name as assetName',
+        'a.ip',
+        `coalesce(
+          (select
+            json_arrayagg(BIN_TO_UUID(cl.uuid,1))
+          from
+            collection_label_asset_map cla
+            left join collection_label cl on cla.clId = cl.clId
+          where
+            cla.assetId = a.assetId),
+          json_array()
+        ) as assetLabelIds`,
+        'sa.benchmarkId',
+        `json_object(
+          'total', cr.ruleCount
+        ) as rules`,
+        'sa.minTs',
+        'sa.maxTs',
+        `json_object(
+          'low', sa.lowCount,
+          'medium', sa.mediumCount,
+          'high', sa.highCount
+        ) as findings`,
+    
+        `json_object(
+          'saved', json_object(
+            'total', sa.saved,
+            'resultEngine', sa.savedResultEngine),
+          'submitted', json_object(
+            'total', sa.submitted,
+            'resultEngine', sa.submittedResultEngine),
+          'rejected', json_object(
+            'total', sa.rejected,
+            'resultEngine', sa.rejectedResultEngine),
+          'accepted', json_object(
+            'total', sa.accepted,
+            'resultEngine', sa.acceptedResultEngine)
+        ) as status`,     
+    
+        `json_object(
+          'notchecked', json_object(
+            'total', sa.notchecked ,
+            'resultEngine', sa.notcheckedResultEngine),
+          'notapplicable', json_object(
+            'total', sa.notapplicable ,
+            'resultEngine', sa.notapplicableResultEngine),
+          'pass', json_object(
+            'total', sa.pass,
+            'resultEngine', sa.passResultEngine),
+          'fail', json_object(
+            'total', sa.fail,
+            'resultEngine', sa.failResultEngine),
+          'unknown', json_object(
+            'total', sa.unknown,
+            'resultEngine', sa.unknownResultEngine),
+          'error', json_object(
+            'total', sa.error ,
+            'resultEngine', sa.errorResultEngine),
+          'notselected', json_object(
+            'total', sa.notselected,
+            'resultEngine', sa.notselectedResultEngine),
+          'informational', json_object(
+            'total', sa.informational,
+            'resultEngine', sa.informationalResultEngine),
+          'fixed', json_object(
+            'total', sa.fixed ,
+            'resultEngine', sa.fixedResultEngine)               
+        ) as result`               
+      ]
+      groupBy = []
+      orderBy = []
+      break
+    case 'asset':
+      columns = [
+        `cast(a.assetId as char) as assetId`,
+        'a.name as assetName',
+        'a.ip',
+        `coalesce(
+          (select
+            json_arrayagg(BIN_TO_UUID(cl.uuid,1))
+          from
+            collection_label_asset_map cla
+            left join collection_label cl on cla.clId = cl.clId
+          where
+            cla.assetId = a.assetId),
+          json_array()
+        ) as assetLabelIds`,
+        'JSON_ARRAYAGG(sa.benchmarkId) as stigs',
+        `json_object(
+          'total', coalesce(sum(cr.ruleCount), 0)
+        ) as rules`,
+        'sa.minTs',
+        'sa.maxTs',
+        `json_object(
+          'low', sa.lowCount,
+          'medium', sa.mediumCount,
+          'high', sa.highCount
+        ) as findings`,
+    
+        `json_object(
+          'saved', json_object(
+            'total', sa.saved,
+            'resultEngine', sa.savedResultEngine),
+          'submitted', json_object(
+            'total', sa.submitted,
+            'resultEngine', sa.submittedResultEngine),
+          'rejected', json_object(
+            'total', sa.rejected,
+            'resultEngine', sa.rejectedResultEngine),
+          'accepted', json_object(
+            'total', sa.accepted,
+            'resultEngine', sa.acceptedResultEngine)
+        ) as status`,     
+    
+        `json_object(
+          'notchecked', json_object(
+            'total', sa.notchecked ,
+            'resultEngine', sa.notcheckedResultEngine),
+          'notapplicable', json_object(
+            'total', sa.notapplicable ,
+            'resultEngine', sa.notapplicableResultEngine),
+          'pass', json_object(
+            'total', sa.pass,
+            'resultEngine', sa.passResultEngine),
+          'fail', json_object(
+            'total', sa.fail,
+            'resultEngine', sa.failResultEngine),
+          'unknown', json_object(
+            'total', sa.unknown,
+            'resultEngine', sa.unknownResultEngine),
+          'error', json_object(
+            'total', sa.error ,
+            'resultEngine', sa.errorResultEngine),
+          'notselected', json_object(
+            'total', sa.notselected,
+            'resultEngine', sa.notselectedResultEngine),
+          'informational', json_object(
+            'total', sa.informational,
+            'resultEngine', sa.informationalResultEngine),
+          'fixed', json_object(
+            'total', sa.fixed ,
+            'resultEngine', sa.fixedResultEngine)               
+        ) as result`               
+      ]
+      break
+  }
   let joins = [
-    'collection c',
-    'left join collection_grant cg on c.collectionId = cg.collectionId',
-    'left join asset a on c.collectionId = a.collectionId',
-    'inner join stig_asset_map sa on a.assetId = sa.assetId',
-    'left join user_stig_asset_map usa on sa.saId = usa.saId',
-    'left join current_rev cr on sa.benchmarkId = cr.benchmarkId',
+    'granted',
+    'left join asset a on granted.assetId = a.assetId',
+    'left join stig_asset_map sa on (granted.assetId = sa.assetId and granted.benchmarkId = sa.benchmarkId)',
+    'left join current_rev cr on sa.benchmarkId = cr.benchmarkId'
   ]
-
-  // PROJECTIONS
 
   // PREDICATES
   let predicates = {
     statements: [],
-    binds: []
-  }
-  
-  // collectionId predicate is mandatory per API spec
-  if ( inPredicates.collectionId ) {
-    predicates.statements.push('c.collectionId = ?')
-    predicates.binds.push( inPredicates.collectionId )
+    // collectionId predicate is mandatory per API spec
+    binds: [inPredicates.collectionId, userObject.userId]
   }
   if ( inPredicates.benchmarkIds ) {
     predicates.statements.push('sa.benchmarkId IN ?')
@@ -464,18 +549,9 @@ exports.queryStatus = async function (inPredicates = {}, userObject) {
     predicates.statements.push('sa.assetId IN ?')
     predicates.binds.push( [inPredicates.assetIds] )
   }
-  predicates.statements.push('(cg.userId = ? AND CASE WHEN cg.accessLevel = 1 THEN usa.userId = cg.userId ELSE TRUE END)')
-  predicates.binds.push( userObject.userId, userObject.userId )
   
   // CONSTRUCT MAIN QUERY
-  let sql = 'SELECT '
-  sql+= columns.join(",\n")
-  sql += '\nFROM '
-  sql+= joins.join(" \n")
-  if (predicates.statements.length > 0) {
-    sql += "\nWHERE " + predicates.statements.join(" and ")
-  }
-  sql += '\norder by a.name, sa.benchmarkId'
+  let sql = dbUtils.makeQueryString({ctes,columns,joins,predicates,groupBy,orderBy})
   
   let [rows] = await dbUtils.pool.query(sql, predicates.binds)
   return (rows)
@@ -860,12 +936,15 @@ exports.getFindingsByCollection = async function( collectionId, aggregator, benc
   return (rows)
 }
 
-exports.getStatusByCollection = async function( collectionId, assetIds, benchmarkIds, userObject ) {
+exports.getStatusByCollection = async function( collectionId, assetIds, benchmarkIds, userObject, aggregate ) {
   let rows = await _this.queryStatus({ 
     collectionId,
     benchmarkIds,
     assetIds
-    }, userObject)
+    },
+    userObject,
+    aggregate
+  )
   return (rows)
 }
 
