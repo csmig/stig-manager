@@ -384,7 +384,7 @@ module.exports.uuidToSqlString  = function (uuid) {
   }
 }
 
-module.exports.makeQueryString = function ({ctes, columns, joins, predicates, groupBy, orderBy}) {
+module.exports.makeQueryString = function ({ctes = [], columns, joins, predicates, groupBy, orderBy}) {
   const query = `
 ${ctes.length ? 'WITH ' + ctes.join(',  \n') : ''}
 SELECT
