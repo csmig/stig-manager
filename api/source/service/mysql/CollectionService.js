@@ -5,6 +5,89 @@ const Security = require('../../utils/accessLevels')
 
 const _this = this
 
+// status endpoint helpers
+function totalResultEngine (field) {
+  return `'${field}', json_object('total',sa.${field},'resultEngine',sa.${field}ResultEngine)`
+}
+function totalResultEngineAgg (field) {
+  return `'${field}', json_object('total',coalesce(sum(sa.${field}),0),'resultEngine',coalesce(sum(sa.${field}ResultEngine),0))`
+}
+function summaryObject (aggregate = 'none') {
+  const calc = {
+    assessments: 'cr.ruleCount',
+    assessed: 'sa.pass + sa.fail + sa.notapplicable',
+    minTs: 'sa.minTs',
+    maxTs: 'sa.maxTs',
+    saved: 'sa.saved',
+    submitted: 'sa.submitted',
+    accepted: 'sa.accepted',
+    rejected: 'sa.rejected',
+    low: 'sa.lowCount',
+    medium: 'sa.mediumCount',
+    high: 'sa.highCount'
+  }
+  let calcArgs = '', i = 0
+  for (const [key, value] of Object.entries(calc)) {
+    calcArgs += `${i > 0 ? ',\n  ' : ''}'${key}', ${aggregate === 'none' ? value : `coalesce(sum(${value}),0)`}`
+    i++
+  }
+  return `json_object(
+  ${calcArgs}
+)`
+}
+function detailsObject (fields, withAgg = false) {
+  const detailsFn = withAgg ? totalResultEngineAgg : totalResultEngine
+  const detailVals = fields.map( field => detailsFn(field) )
+  return `json_object(
+    ${detailVals.join(',\n')}
+  )`
+}
+
+const sqlJsonObjectStatus = detailsObject([
+  'saved',
+  'submitted',
+  'rejected',
+  'accepted'
+])
+const sqlJsonObjectStatusAgg = detailsObject([
+  'saved',
+  'submitted',
+  'rejected',
+  'accepted'
+], true)
+const sqlJsonObjectResult = detailsObject([
+  'notchecked',
+  'notapplicable',
+  'pass',
+  'fail',
+  'unknown',
+  'error',
+  'notselected',
+  'informational',
+  'fixed'
+])
+const sqlJsonObjectResultAgg = detailsObject([
+  'notchecked',
+  'notapplicable',
+  'pass',
+  'fail',
+  'unknown',
+  'error',
+  'notselected',
+  'informational',
+  'fixed'
+], true)
+const sqlJsonObjectFindings = `json_object(
+  'low', sa.lowCount,
+  'medium', sa.mediumCount,
+  'high', sa.highCount
+)`
+const sqlJsonObjectFindingsAgg = `json_object(
+  'low', coalesce(sum(sa.lowCount),0),
+  'medium', coalesce(sum(sa.mediumCount),0),
+  'high', coalesce(sum(sa.highCount),0)
+)`
+
 /**
 Generalized queries for collection(s).
 **/
@@ -362,7 +445,7 @@ exports.queryFindings = async function (aggregator, inProjection = [], inPredica
   return (rows)
 }
 
-exports.queryStatus = async function (inPredicates = {}, userObject, aggregate = 'none') {
+exports.queryStatus = async function (inPredicates = {}, userObject, aggregate = 'none', summary = true) {
   let ctes = [
     `granted as (select
       distinct sa.benchmarkId, a.assetId
@@ -378,155 +461,66 @@ exports.queryStatus = async function (inPredicates = {}, userObject, aggregate =
     )`
   ]
   let columns, groupBy, orderBy
+  const assetProperties = [
+    `cast(a.assetId as char) as assetId`,
+    'a.name as assetName',
+    'a.ip',
+    `coalesce(
+      (select
+        json_arrayagg(BIN_TO_UUID(cl.uuid,1))
+      from
+        collection_label_asset_map cla
+        left join collection_label cl on cla.clId = cl.clId
+      where
+        cla.assetId = a.assetId),
+      json_array()
+    ) as assetLabelIds`,
+  ]
+  const statsProperties = summary ? [
+
+
+  ] : [
+    `${sqlJsonObjectFindings} as findings`,
+    `${sqlJsonObjectStatus} as status`,
+    `${sqlJsonObjectResult} as result`              
+  ]
+
   switch (aggregate) {
     case 'none':
       columns = [
-        `cast(a.assetId as char) as assetId`,
-        'a.name as assetName',
-        'a.ip',
-        `coalesce(
-          (select
-            json_arrayagg(BIN_TO_UUID(cl.uuid,1))
-          from
-            collection_label_asset_map cla
-            left join collection_label cl on cla.clId = cl.clId
-          where
-            cla.assetId = a.assetId),
-          json_array()
-        ) as assetLabelIds`,
+        ...assetProperties,
         'sa.benchmarkId',
         `json_object(
           'total', cr.ruleCount
-        ) as rules`,
+        ) as assessments`,
         'sa.minTs',
         'sa.maxTs',
-        `json_object(
-          'low', sa.lowCount,
-          'medium', sa.mediumCount,
-          'high', sa.highCount
-        ) as findings`,
-    
-        `json_object(
-          'saved', json_object(
-            'total', sa.saved,
-            'resultEngine', sa.savedResultEngine),
-          'submitted', json_object(
-            'total', sa.submitted,
-            'resultEngine', sa.submittedResultEngine),
-          'rejected', json_object(
-            'total', sa.rejected,
-            'resultEngine', sa.rejectedResultEngine),
-          'accepted', json_object(
-            'total', sa.accepted,
-            'resultEngine', sa.acceptedResultEngine)
-        ) as status`,     
-    
-        `json_object(
-          'notchecked', json_object(
-            'total', sa.notchecked ,
-            'resultEngine', sa.notcheckedResultEngine),
-          'notapplicable', json_object(
-            'total', sa.notapplicable ,
-            'resultEngine', sa.notapplicableResultEngine),
-          'pass', json_object(
-            'total', sa.pass,
-            'resultEngine', sa.passResultEngine),
-          'fail', json_object(
-            'total', sa.fail,
-            'resultEngine', sa.failResultEngine),
-          'unknown', json_object(
-            'total', sa.unknown,
-            'resultEngine', sa.unknownResultEngine),
-          'error', json_object(
-            'total', sa.error ,
-            'resultEngine', sa.errorResultEngine),
-          'notselected', json_object(
-            'total', sa.notselected,
-            'resultEngine', sa.notselectedResultEngine),
-          'informational', json_object(
-            'total', sa.informational,
-            'resultEngine', sa.informationalResultEngine),
-          'fixed', json_object(
-            'total', sa.fixed ,
-            'resultEngine', sa.fixedResultEngine)               
-        ) as result`               
+        `${sqlJsonObjectFindings} as findings`,
+        `${sqlJsonObjectStatus} as status`,
+        `${sqlJsonObjectResult} as result`              
       ]
       groupBy = []
       orderBy = []
       break
     case 'asset':
       columns = [
-        `cast(a.assetId as char) as assetId`,
-        'a.name as assetName',
-        'a.ip',
-        `coalesce(
-          (select
-            json_arrayagg(BIN_TO_UUID(cl.uuid,1))
-          from
-            collection_label_asset_map cla
-            left join collection_label cl on cla.clId = cl.clId
-          where
-            cla.assetId = a.assetId),
-          json_array()
-        ) as assetLabelIds`,
+        ...assetProperties,
         'JSON_ARRAYAGG(sa.benchmarkId) as stigs',
-        `json_object(
-          'total', coalesce(sum(cr.ruleCount), 0)
-        ) as rules`,
-        'sa.minTs',
-        'sa.maxTs',
-        `json_object(
-          'low', sa.lowCount,
-          'medium', sa.mediumCount,
-          'high', sa.highCount
-        ) as findings`,
-    
-        `json_object(
-          'saved', json_object(
-            'total', sa.saved,
-            'resultEngine', sa.savedResultEngine),
-          'submitted', json_object(
-            'total', sa.submitted,
-            'resultEngine', sa.submittedResultEngine),
-          'rejected', json_object(
-            'total', sa.rejected,
-            'resultEngine', sa.rejectedResultEngine),
-          'accepted', json_object(
-            'total', sa.accepted,
-            'resultEngine', sa.acceptedResultEngine)
-        ) as status`,     
-    
-        `json_object(
-          'notchecked', json_object(
-            'total', sa.notchecked ,
-            'resultEngine', sa.notcheckedResultEngine),
-          'notapplicable', json_object(
-            'total', sa.notapplicable ,
-            'resultEngine', sa.notapplicableResultEngine),
-          'pass', json_object(
-            'total', sa.pass,
-            'resultEngine', sa.passResultEngine),
-          'fail', json_object(
-            'total', sa.fail,
-            'resultEngine', sa.failResultEngine),
-          'unknown', json_object(
-            'total', sa.unknown,
-            'resultEngine', sa.unknownResultEngine),
-          'error', json_object(
-            'total', sa.error ,
-            'resultEngine', sa.errorResultEngine),
-          'notselected', json_object(
-            'total', sa.notselected,
-            'resultEngine', sa.notselectedResultEngine),
-          'informational', json_object(
-            'total', sa.informational,
-            'resultEngine', sa.informationalResultEngine),
-          'fixed', json_object(
-            'total', sa.fixed ,
-            'resultEngine', sa.fixedResultEngine)               
-        ) as result`               
+        `coalesce(sum(cr.ruleCount),0) as assessmentsRequired`,
+        'min(sa.minTs) as minTs',
+        'max(sa.maxTs) as maxTs',
+        `${sqlJsonObjectFindingsAgg} as findings`,
+        `${sqlJsonObjectStatusAgg} as status`,
+        `${sqlJsonObjectResultAgg} as result`              
       ]
+      groupBy = ['granted.assetId']
+      orderBy = ['a.name']
+
       break
+    case 'stig':
+      columns = [
+        'sa.benchmarkId'
+      ]
   }
   let joins = [
     'granted',
