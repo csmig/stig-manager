@@ -1967,6 +1967,63 @@ paths:
       security:
         - oauth:
             - 'stig-manager:collection'
+  '/collections/{collectionId}/metrics':
+    parameters:
+      - $ref: '#/components/parameters/CollectionIdPath'
+      - $ref: '#/components/parameters/BenchmarkIdArrayQuery'
+      - $ref: '#/components/parameters/AssetIdArrayQuery'
+    get:
+      tags:
+        - Metrics
+      summary: Return the metrics for the specified Collection
+      operationId: getMetricsByCollection
+      responses:
+        '200':
+          description: CollectionStatus response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/CollectionStatus'
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      security:
+        - oauth:
+            - 'stig-manager:collection:read'
+  '/collections/{collectionId}/metrics/assets':
+    parameters:
+      - $ref: '#/components/parameters/CollectionIdPath'
+      - $ref: '#/components/parameters/BenchmarkIdArrayQuery'
+      - $ref: '#/components/parameters/AssetIdArrayQuery'
+    get:
+      tags:
+        - Metrics
+      summary: Return the status statistics for the specified Collection grouped by Asset
+      operationId: getStatusByCollectionAsset
+      responses:
+        '200':
+          description: CollectionStatus response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/CollectionStatus'
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      security:
+        - oauth:
+            - 'stig-manager:collection:read'
+
   '/collections/{collectionId}/review-history':
     parameters:
       - $ref: '#/components/parameters/CollectionIdPath'
@@ -3139,6 +3196,19 @@ components:
           type: string
         name:
           type: string
+    AssetLabels:
+      type: object
+      required:
+        - assetId
+        - name
+        - labels
+      additionalProperties: false
+      properties:
+        assetId:
+          $ref: '#/components/schemas/String255'
+        name:
+          $ref: '#/components/schemas/String255'
+
     AssetBasicProjected:
       type: object
       required:
@@ -4288,6 +4358,14 @@ components:
       type: string
     MetadataValue:
       type: string
+    MetricSummary:
+      type: object
+      additionalProperties: false
+      properties:
+        assetId:
+          $ref: '#/components/schemas/String255'
+        
+
     ResultEngine:
       type: object
       nullable: true
