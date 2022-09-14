@@ -4835,16 +4835,17 @@ components:
       required:
         - collectionId
         - name
-        - benchmarkIds
+        - checklists
+        - assets
       properties:
         collectionId:
           type: string
         name:
           type: string
-        benchmarkIds:
-          type: array
-          items:
-            $ref: '#/components/schemas/BenchmarkId'
+        checklists:
+          type: integer
+        assets:
+          type: integer
     MetricsDetailAggCollection:
       allOf:
         - $ref: '#/components/schemas/MetricsAggCollection'
