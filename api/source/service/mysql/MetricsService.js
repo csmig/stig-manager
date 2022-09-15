@@ -202,6 +202,30 @@ module.exports.queryMetrics = async function ({inPredicates = {},inProjections =
     )
     cteProps.predicates.binds.push([inPredicates.labelNames])
   }
+  if (inPredicates.labelIds) {
+    cteProps.joins.push(
+      'left join collection_label_asset_map cla on a.assetId = cla.assetId',
+      'left join collection_label cl on cla.clId = cl.clId'
+    )
+    cteProps.predicates.statements.push(
+      'cl.uuid IN ?'
+    )
+    const uuidBinds = inPredicates.labelIds.map( uuid => dbUtils.uuidToSqlString(uuid))
+    cteProps.predicates.binds.push([uuidBinds])
+  }
+  if (inPredicates.assetIds) {
+    cteProps.predicates.statements.push(
+      'a.assetId IN ?'
+    )
+    cteProps.predicates.binds.push([inPredicates.assetIds])
+  }
+  if (inPredicates.benchmarkIds) {
+    cteProps.predicates.statements.push(
+      'sa.benchmarkId IN ?'
+    )
+    cteProps.predicates.binds.push([inPredicates.benchmarkIds])
+  }
+
   const cteQuery = dbUtils.makeQueryString({
     columns: cteProps.columns,
     joins: cteProps.joins,
@@ -260,5 +284,5 @@ module.exports.queryMetrics = async function ({inPredicates = {},inProjections =
     orderBy
   })
   let [rows] = await dbUtils.pool.query(query, cteProps.predicates.binds)
-  return (rows)
+  return (rows || [])
 }
