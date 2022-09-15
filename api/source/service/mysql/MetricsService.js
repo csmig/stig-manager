@@ -7,7 +7,22 @@ function totalResultEngine (field) {
 function totalResultEngineAgg (field) {
   return `'${field}', json_object('total',coalesce(sum(sa.${field}),0),'resultEngine',coalesce(sum(sa.${field}ResultEngine),0))`
 }
-function summaryObject (aggregate = 'none') {
+
+function serializeProperties (props, aggregate = false) {
+  let result = '', i = 0
+  for (const [key, value] of Object.entries(props)) {
+    result += `${i > 0 ? ',\n  ' : ''}'${key}', ${aggregate ? `coalesce(sum(${value}),0)` : value}`
+    i++
+  }
+  return result
+}
+
+const top = {
+  assessments: 'cr.ruleCount',
+  assessed: 'sa.pass + sa.fail + sa.notapplicable'
+}
+
+function summaryObject (aggregate = false) {
   const statuses = {
     saved: 'sa.saved',
     submitted: 'sa.submitted',
@@ -19,52 +34,40 @@ function summaryObject (aggregate = 'none') {
     medium: 'sa.mediumCount',
     high: 'sa.highCount'
   }
-  const top = {
-    assessments: 'cr.ruleCount',
-    assessed: 'sa.pass + sa.fail + sa.notapplicable',
-    minTs: 'sa.minTs',
-    maxTs: 'sa.maxTs'
-  }
-  function serializeProperties (props) {
-    let result = '', i = 0
-    for (const [key, value] of Object.entries(props)) {
-      result += `${i > 0 ? ',\n  ' : ''}'${key}', ${aggregate === 'none' ? value : `coalesce(sum(${value}),0)`}`
-      i++
-    }
-    return result
-  }
 
   return `json_object(
-  ${serializeProperties(top)},
+  ${serializeProperties(top, aggregate)},
+  'minTs', DATE_FORMAT(${aggregate ? 'MIN(sa.minTs)':'sa.minTs'}, '%Y-%m-%dT%H:%i:%sZ'),
+  'maxTs', DATE_FORMAT(${aggregate ? 'MAX(sa.maxTs)':'sa.maxTs'}, '%Y-%m-%dT%H:%i:%sZ'),
   'statuses', json_object(
-    ${serializeProperties(statuses)}
+    ${serializeProperties(statuses, aggregate)}
   ),
   'findings', json_object(
-    ${serializeProperties(findings)}
+    ${serializeProperties(findings, aggregate)}
   )
 )`
 }
-function detailsObject (fields, withAgg = false) {
-  const detailsFn = withAgg ? totalResultEngineAgg : totalResultEngine
+function detailsObject (fields, aggregate = false) {
+  const detailsFn = aggregate ? totalResultEngineAgg : totalResultEngine
   const detailVals = fields.map( field => detailsFn(field) )
   return `json_object(
     ${detailVals.join(',\n')}
   )`
 }
 
-const sqlJsonObjectStatus = detailsObject([
+const sqlDetailStatuses = detailsObject([
   'saved',
   'submitted',
   'rejected',
   'accepted'
 ])
-const sqlJsonObjectStatusAgg = detailsObject([
+const sqlDetailStatusesAgg = detailsObject([
   'saved',
   'submitted',
   'rejected',
   'accepted'
 ], true)
-const sqlJsonObjectResult = detailsObject([
+const sqlDetailResults = detailsObject([
   'notchecked',
   'notapplicable',
   'pass',
@@ -75,7 +78,7 @@ const sqlJsonObjectResult = detailsObject([
   'informational',
   'fixed'
 ])
-const sqlJsonObjectResultAgg = detailsObject([
+const sqlDetailResultsAgg = detailsObject([
   'notchecked',
   'notapplicable',
   'pass',
@@ -86,119 +89,176 @@ const sqlJsonObjectResultAgg = detailsObject([
   'informational',
   'fixed'
 ], true)
-const sqlJsonObjectFindings = `json_object(
+const sqlFindings = `json_object(
   'low', sa.lowCount,
   'medium', sa.mediumCount,
   'high', sa.highCount
 )`
-const sqlJsonObjectFindingsAgg = `json_object(
+const sqlFindingsAgg = `json_object(
   'low', coalesce(sum(sa.lowCount),0),
   'medium', coalesce(sum(sa.mediumCount),0),
   'high', coalesce(sum(sa.highCount),0)
 )`
 
-module.exports.queryMetrics = async function () {
-  let ctes = [
-    `granted as (select
-      distinct sa.benchmarkId, a.assetId
-    from
-      collection c
-      left join collection_grant cg on c.collectionId = cg.collectionId
-      left join asset a on c.collectionId = a.collectionId
-      left join stig_asset_map sa on a.assetId = sa.assetId
-      left join user_stig_asset_map usa on sa.saId = usa.saId
-    where
-      c.collectionId = ?
-        and (cg.userId = ? AND CASE WHEN cg.accessLevel = 1 THEN usa.userId = cg.userId ELSE TRUE END)
-    )`
+const sqlMetricsDetail = `json_object(
+  ${serializeProperties(top, false)},
+  'minTs', DATE_FORMAT(sa.minTs, '%Y-%m-%dT%H:%i:%sZ'),
+  'maxTs', DATE_FORMAT(sa.maxTs, '%Y-%m-%dT%H:%i:%sZ'),
+  'findings', ${sqlFindings},
+  'statuses', ${sqlDetailStatuses},
+  'results', ${sqlDetailResults}
+) as metrics`
+
+const sqlMetricsDetailAgg = `json_object(
+  ${serializeProperties(top, true)},
+  'minTs', DATE_FORMAT(MIN(sa.minTs), '%Y-%m-%dT%H:%i:%sZ'),
+  'maxTs', DATE_FORMAT(MAX(sa.maxTs), '%Y-%m-%dT%H:%i:%sZ'),
+  'findings', ${sqlFindingsAgg},
+  'statuses', ${sqlDetailStatusesAgg},
+  'results', ${sqlDetailResultsAgg}
+) as metrics`
+
+const sqlMetricsSummary = `${summaryObject(false)} as metrics`
+const sqlMetricsSummaryAgg = `${summaryObject(true)} as metrics`
+
+const sqlLabels = `coalesce(
+  (select
+    json_arrayagg(json_object(
+      'labelId', BIN_TO_UUID(cl2.uuid,1),
+      'name', cl2.name
+      ))
+  from
+    collection_label_asset_map cla2
+    left join collection_label cl2 on cla2.clId = cl2.clId
+  where
+    cla2.assetId = a.assetId),
+  json_array()) as labels`
+
+
+const baseCols = {
+  unagg: [
+    'cast(a.assetId as char) as assetId',
+    'a.name',
+    sqlLabels,
+    'cr.benchmarkId'
+  ],
+  asset: [
+    'cast(a.assetId as char) as assetId',
+    'a.name',
+    sqlLabels,
+    'case when count(sa.benchmarkId) > 0 THEN json_arrayagg(sa.benchmarkId) ELSE json_array() END as benchmarkIds'
+  ],
+  collection: [
+    'cast(c.collectionId as char) as collectionId',
+    'c.name',
+    'count(distinct a.assetId) as assets',
+    'count(sa.saId) as checklists'
+  ],
+  stig: [
+    'cr.benchmarkId',
+    'count(distinct a.assetId) as assets'
+  ],
+  label: [
+    'BIN_TO_UUID(cl.uuid,1) as labelId',
+    'cl.name',
+    'count(distinct a.assetId) as assets'
   ]
-  let columns, groupBy, orderBy
-  const assetProperties = [
-    `cast(a.assetId as char) as assetId`,
-    'a.name as assetName',
-    'a.ip',
-    `coalesce(
-      (select
-        json_arrayagg(BIN_TO_UUID(cl.uuid,1))
-      from
-        collection_label_asset_map cla
-        left join collection_label cl on cla.clId = cl.clId
-      where
-        cla.assetId = a.assetId),
-      json_array()
-    ) as assetLabelIds`,
-  ]
-  const statsProperties = summary ? [
+}
 
+module.exports.queryMetrics = async function ({inPredicates = {},inProjections = [],userId,aggregation = 'unagg',style = 'detail'}) {
 
-  ] : [
-    `${sqlJsonObjectFindings} as findings`,
-    `${sqlJsonObjectStatus} as status`,
-    `${sqlJsonObjectResult} as result`              
-  ]
-
-  switch (aggregate) {
-    case 'none':
-      columns = [
-        ...assetProperties,
-        'sa.benchmarkId',
-        `json_object(
-          'total', cr.ruleCount
-        ) as assessments`,
-        'sa.minTs',
-        'sa.maxTs',
-        `${sqlJsonObjectFindings} as findings`,
-        `${sqlJsonObjectStatus} as status`,
-        `${sqlJsonObjectResult} as result`              
+    // CTE processing
+  const cteProps = {
+    columns: [
+      'distinct sa.benchmarkId',
+      'a.assetId',
+      'sa.saId'
+    ],
+    joins: [
+      'collection c',
+      'left join collection_grant cg on c.collectionId = cg.collectionId',
+      'left join asset a on c.collectionId = a.collectionId',
+      'left join stig_asset_map sa on a.assetId = sa.assetId',
+      'left join user_stig_asset_map usa on sa.saId = usa.saId'
+    ],
+    predicates: {
+      statements: [
+        'c.collectionId = ?',
+        '(cg.userId = ? AND CASE WHEN cg.accessLevel = 1 THEN usa.userId = cg.userId ELSE TRUE END)'
+      ],
+      binds: [
+        inPredicates.collectionId,
+        userId
       ]
-      groupBy = []
-      orderBy = []
-      break
-    case 'asset':
-      columns = [
-        ...assetProperties,
-        'JSON_ARRAYAGG(sa.benchmarkId) as stigs',
-        `coalesce(sum(cr.ruleCount),0) as assessmentsRequired`,
-        'min(sa.minTs) as minTs',
-        'max(sa.maxTs) as maxTs',
-        `${sqlJsonObjectFindingsAgg} as findings`,
-        `${sqlJsonObjectStatusAgg} as status`,
-        `${sqlJsonObjectResultAgg} as result`              
-      ]
-      groupBy = ['granted.assetId']
-      orderBy = ['a.name']
-
-      break
-    case 'stig':
-      columns = [
-        'sa.benchmarkId'
-      ]
+    }
   }
-  let joins = [
+  if (inPredicates.labelNames) {
+    cteProps.joins.push(
+      'left join collection_label_asset_map cla on a.assetId = cla.assetId',
+      'left join collection_label cl on cla.clId = cl.clId'
+    )
+    cteProps.predicates.statements.push(
+      'cl.name IN ?'
+    )
+    cteProps.predicates.binds.push([inPredicates.labelNames])
+  }
+  const cteQuery = dbUtils.makeQueryString({
+    columns: cteProps.columns,
+    joins: cteProps.joins,
+    predicates: cteProps.predicates
+  })
+  const ctes = [
+    `granted as (${cteQuery})`
+  ]
+
+  // Main query
+  const columns = [...baseCols[aggregation]]
+  const joins = [
     'granted',
     'left join asset a on granted.assetId = a.assetId',
-    'left join stig_asset_map sa on (granted.assetId = sa.assetId and granted.benchmarkId = sa.benchmarkId)',
+    'left join stig_asset_map sa on granted.saId = sa.saId',
     'left join current_rev cr on sa.benchmarkId = cr.benchmarkId'
   ]
+  const groupBy = []
+  const orderBy = []
 
-  // PREDICATES
-  let predicates = {
-    statements: [],
-    // collectionId predicate is mandatory per API spec
-    binds: [inPredicates.collectionId, userObject.userId]
+  switch (aggregation) {
+    case 'asset':
+      groupBy.push('a.assetId')
+      orderBy.push('a.name')
+      break
+    case 'stig':
+      groupBy.push('sa.benchmarkId')
+      orderBy.push('sa.benchmarkId')
+      break
+    case 'collection':
+      joins.push('left join collection c on a.collectionId = c.collectionId')
+      groupBy.push('c.collectionId')
+      orderBy.push('c.name')
+      break
+    case 'label':
+      joins.push(
+        'left join collection_label_asset_map cla on a.assetId = cla.assetId',
+        'left join collection_label cl on cla.clId = cl.clId'
+      )
+      groupBy.push('cl.uuid', 'cl.name')
+      orderBy.push('cl.name')
+      break
+ }
+
+  if (style === 'detail') {
+    columns.push( aggregation === 'unagg' ? sqlMetricsDetail : sqlMetricsDetailAgg)
   }
-  if ( inPredicates.benchmarkIds ) {
-    predicates.statements.push('sa.benchmarkId IN ?')
-    predicates.binds.push( [inPredicates.benchmarkIds] )
+  else {
+    columns.push( aggregation === 'unagg' ? sqlMetricsSummary : sqlMetricsSummaryAgg)
   }
-  if ( inPredicates.assetIds ) {
-    predicates.statements.push('sa.assetId IN ?')
-    predicates.binds.push( [inPredicates.assetIds] )
-  }
-  
-  // CONSTRUCT MAIN QUERY
-  let sql = dbUtils.makeQueryString({ctes,columns,joins,predicates,groupBy,orderBy})
-  
-  let [rows] = await dbUtils.pool.query(sql, predicates.binds)
+  const query = dbUtils.makeQueryString({
+    ctes,
+    columns,
+    joins,
+    groupBy,
+    orderBy
+  })
+  let [rows] = await dbUtils.pool.query(query, cteProps.predicates.binds)
   return (rows)
 }
