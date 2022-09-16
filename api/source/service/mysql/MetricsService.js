@@ -29,6 +29,12 @@ function summaryObject (aggregate = false) {
     accepted: 'sa.accepted',
     rejected: 'sa.rejected'  
   }
+  const results = {
+    pass: 'sa.pass',
+    fail: 'sa.fail',
+    notapplicable: 'sa.notapplicable',
+    other : 'sa.notchecked + sa.unknown + sa.error + sa.notselected + sa.informational + sa.fixed'  
+  }
   const findings = {
     low: 'sa.lowCount',
     medium: 'sa.mediumCount',
@@ -39,6 +45,9 @@ function summaryObject (aggregate = false) {
   ${serializeProperties(top, aggregate)},
   'minTs', DATE_FORMAT(${aggregate ? 'MIN(sa.minTs)':'sa.minTs'}, '%Y-%m-%dT%H:%i:%sZ'),
   'maxTs', DATE_FORMAT(${aggregate ? 'MAX(sa.maxTs)':'sa.maxTs'}, '%Y-%m-%dT%H:%i:%sZ'),
+  'results', json_object(
+    ${serializeProperties(results, aggregate)}
+  ),
   'statuses', json_object(
     ${serializeProperties(statuses, aggregate)}
   ),

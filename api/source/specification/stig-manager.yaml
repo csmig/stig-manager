@@ -5026,6 +5026,14 @@ components:
         metrics:
           type: object
           additionalProperties: false
+          required:
+            - assessments
+            - assessed
+            - minTs
+            - maxTs
+            - results
+            - statuses
+            - findings
           properties:
             assessments:
               type: integer
@@ -5035,6 +5043,23 @@ components:
               $ref: '#/components/schemas/StringDateTimeNullable'
             maxTs:
               $ref: '#/components/schemas/StringDateTimeNullable'
+            results:
+              type: object
+              additionalProperties: false
+              required:
+                - pass
+                - fail
+                - notapplicable
+                - other
+              properties:
+                pass:
+                  type: integer
+                fail:
+                  type: integer
+                notapplicable:
+                  type: integer
+                other:
+                  type: integer
             statuses:
               type: object
               additionalProperties: false
