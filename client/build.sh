@@ -93,6 +93,7 @@ cp $SrcDir/js/oidcProvider.js $DistDir/js
 cp $SrcDir/js/Env.js.example $DistDir/js
 cd $SrcDir
 uglifyjs \
+'js/chart.min.js' \
 'js/SM/Global.js' \
 'js/SM/EventDispatcher.js' \
 'js/SM/Cache.js' \
@@ -129,6 +130,7 @@ uglifyjs \
 'js/SM/TransferAssets.js' \
 'js/SM/Library.js' \
 'js/SM/StigRevision.js' \
+'js/SM/Metrics.js' \
 'js/library.js' \
 'js/stigmanUtils.js' \
 'js/userAdmin.js' \

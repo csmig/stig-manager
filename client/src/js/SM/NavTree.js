@@ -137,6 +137,15 @@ SM.CollectionNodeConfig = function (collection) {
       action: 'collection-status',
       iconCls: 'sm-report-icon',
       leaf: true
+    },
+    {
+      id: `${collection.collectionId}-collection-metrics-node`,
+      text: 'Metrics',
+      collectionId: collection.collectionId,
+      collectionName: collection.name,
+      action: 'collection-metrics',
+      iconCls: 'sm-report-icon',
+      leaf: true
     }
   ]
   const collectionGrant = curUser.collectionGrants.find( g => g.collection.collectionId === collection.collectionId )
@@ -1057,6 +1066,22 @@ SM.AppNavTree = Ext.extend(Ext.tree.TreePanel, {
             tab.show()
           } else {
             addCompletionStatus({
+              collectionId: n.attributes.collectionId,
+              collectionName: n.attributes.collectionName,
+              treePath: n.getPath()
+            })
+          }
+        }
+        if (n.attributes.action == 'collection-metrics') {
+          tab = Ext.getCmp('main-tab-panel').getItem('metricsTab-' + n.attributes.collectionId)       
+          if (tab) {
+            // Detect double click
+            if (e.browserEvent.detail === 2) {
+              tab.makePermanent()
+            }
+            tab.show()
+          } else {
+            SM.Metrics.addCollectionMetricsTab({
               collectionId: n.attributes.collectionId,
               collectionName: n.attributes.collectionName,
               treePath: n.getPath()
