@@ -4887,17 +4887,15 @@ components:
       required:
         - labelId
         - name
-        - benchmarkIds
+        - assets
       additionalProperties: false
       properties:
         labelId:
           $ref: '#/components/schemas/LabelId'
         name:
           type: string
-        benchmarkIds:
-          type: array
-          items:
-            $ref: '#/components/schemas/BenchmarkId'
+        assets:
+          type: integer
     MetricsDetailAggLabel:
       allOf:
         - $ref: '#/components/schemas/MetricsAggLabel'
@@ -4919,9 +4917,7 @@ components:
         benchmarkId:
           $ref: '#/components/schemas/BenchmarkId'
         assets:
-          type: array
-          items:
-            $ref: '#/components/schemas/AssetBasic'
+          type: integer
     MetricsDetailAggStig:
       allOf:
         - $ref: '#/components/schemas/MetricsAggStig'
