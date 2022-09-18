@@ -14,37 +14,12 @@ SM.Metrics.ChartPanel = Ext.extend(Ext.Panel, {
           compiled: true
       }
     )
-    // const chartOptions = {
-    //   type: 'doughnut',
-    //   data: {
-    //     datasets:[{
-    //       data: [this.metrics.assessments - this.metrics.assessed, this.metrics.assessed],
-    //       backgroundColor: ['#f4a4a4', '#dfe6b3' ],
-    //       borderWidth: [1,1]
-    //     }],
-    //     //labels: ['Unassessed', 'Assessed'],
-    //   },
-    //   options: {
-    //     responsive: false,
-    //     // plugins: {
-    //     //   legend: {
-    //     //     position: 'chartArea',
-    //     //     align: 'center'
-    //     //   }
-    //     // }
-    //   }               
-    // }
+    this.chartId = Ext.id()
+    const html = `<canvas id="sm-chart-${this.chartId}"${this.chartHeight ? ' height="250px"' : ''}${this.chartWidth ? ' width="250px"' : ''}></canvas>`
 
-    this.chartId = Ext.ns()
     const config = {
-      tpl,
-      data: {chartId: this.chartId},
+      html,
       border: false,
-      style: {
-          borderLeftWidth: '1px',
-          borderBottomWidth: '1px'
-      },
-      title: 'Completion',
       listeners: {
           afterrender (me) {
               me.chart = new Chart(`sm-chart-${me.chartId}`, this.chartOptions)
@@ -62,26 +37,6 @@ SM.Metrics.ChartPanel = Ext.extend(Ext.Panel, {
 SM.Metrics.CompletionPanel = Ext.extend(Ext.Panel, {
   initComponent: function () {
     const _this = this
-    const tpl = new Ext.XTemplate(
-      '<div class="pm-stats-container">',
-        '<div class="pm-chart-container">',
-          '<canvas id="completion-chart-{collectionId}" height="250px" width="250px"></canvas>',
-        '</div>',
-      '<table>',
-      '<thead><tr>',
-      '<th scope="col">Assessments</th>',
-      '<th scope="col">Assessed</th>',
-      '<th scope="col">Assessed Pct</th>',
-      '</tr></thead>',
-      '<tbody><tr>',
-      '<td>{assessments}</td><td>{assessed}</td><td>{[(values.assessed/values.assessments * 100).toFixed(2)]}%</td>',
-      '</tr></tbody>',
-      '</table>',
-      '</div>',
-      {
-          compiled: true
-      }
-    )
     const chartOptions = {
       type: 'doughnut',
       data: {
@@ -90,38 +45,49 @@ SM.Metrics.CompletionPanel = Ext.extend(Ext.Panel, {
           backgroundColor: ['#f4a4a4', '#dfe6b3' ],
           borderWidth: [1,1]
         }],
-        //labels: ['Unassessed', 'Assessed'],
+        labels: ['Unassessed', 'Assessed'],
       },
       options: {
-        responsive: false,
-        // plugins: {
-        //   legend: {
-        //     position: 'chartArea',
-        //     align: 'center'
-        //   }
-        // }
+        responsive: true,
+        plugins: {
+          legend: {
+            display: false
+          }
+        }
       }               
     }
-    Chart.defaults.font = {
-      size: 11,
-      family: "'Open Sans', helvetica, sans-serif"
-    }
+
+    const chartPanel = new SM.Metrics.ChartPanel({
+      border: false,
+      id: 'chart-panel',
+      width: 150,
+      height: 150,
+      chartOptions
+    })
+
+    const dataTpl = [
+      `<div style="padding-top:35px;text-align:center;font-size:large;">{[(values.assessed/values.assessments * 100).toFixed(2)]}%</div>`,
+      '<table>',
+      '<tbody>',
+      '<tr><td>Assessments</td><td>{assessments}</td></tr>',
+      '<tr><td>Assessed</td><td>{assessed}</td></tr>',
+      '</tbody>',
+      '</table>'
+    ]
+    const dataPanel = new Ext.Panel({
+      tpl: dataTpl,
+      flex: 1,
+      data: this.metrics
+    })
+
     
     const config = {
-      tpl,
-      data: {collectionId: this.collectionId, ...this.metrics},
-      border: false,
-      style: {
-          borderLeftWidth: '1px',
-          borderBottomWidth: '1px'
-      },
       title: 'Completion',
-      listeners: {
-          afterrender (me) {
-              // me.update(me.data)
-              me.chart = new Chart(`completion-chart-${me.collectionId}`, chartOptions)
-          }
-      }
+      layout: 'hbox',
+      layoutConfig: {
+        align: 'top'
+      },
+      items: [chartPanel, dataPanel]
     }
     Ext.apply(this, Ext.apply(this.initialConfig, config))
 		SM.Metrics.CompletionPanel.superclass.initComponent.call(this)
@@ -131,11 +97,13 @@ SM.Metrics.CompletionPanel = Ext.extend(Ext.Panel, {
 SM.Metrics.OverviewPanel = Ext.extend(Ext.Panel, {
   initComponent: function () {
     const completionPanel = new SM.Metrics.CompletionPanel({
-      layout: 'fit',
+      border: false,
       collectionId: this.collectionId,
       metrics: this.metrics
     })
     const config = {
+      border: false,
+      layout: 'fit',
       items: [completionPanel]
     }
     Ext.apply(this, Ext.apply(this.initialConfig, config))
