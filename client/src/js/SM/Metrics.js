@@ -624,11 +624,20 @@ SM.Metrics.ProgressPanel = Ext.extend(Ext.Panel, {
       type: 'doughnut',
       data: {
         datasets: [{
-          data: [this.metrics.assessments - this.metrics.assessed, this.metrics.assessed],
-          backgroundColor: ['#f4a4a4', '#dfe6b3'],
+          // data: [this.metrics.assessments - this.metrics.assessed, this.metrics.assessed],
+          data: [
+            this.metrics.statuses.saved,
+            this.metrics.assessed,
+            this.metrics.statuses.submitted,
+            this.metrics.statuses.accepted,
+            this.metrics.assessments - this.metrics.assessed,
+            this.metrics.statuses.rejected            
+          ],
+          backgroundColor: ['#82E0AA', '#D2B4DE', '#AED6F1', '#A2D9CE', '#f8f8f8', '#F5B7B1'],
           borderWidth: [1, 1]
         }],
-        labels: ['Unassessed', 'Assessed'],
+        // labels: ['Unassessed', 'Assessed'],
+        labels: ['Saved', 'Assessed', 'Submitted', 'Accepted', 'Unassessed', 'Rejected'],
       },
       options: {
         responsive: true,
@@ -653,11 +662,11 @@ SM.Metrics.ProgressPanel = Ext.extend(Ext.Panel, {
       '<table>',
       '<tbody>',
       '<tr><td>Assessments</td><td>{assessments}</td></tr>',
-      '<tr><td>Saved</td><td>{[values.statuses.saved]}</td></tr>',
-      '<tr><td>Assessed</td><td>{assessed}</td></tr>',
-      '<tr><td>Submitted</td><td>{[values.statuses.submitted]}</td></tr>',
-      '<tr><td>Accepted</td><td>{[values.statuses.accepted]}</td></tr>',
-      '<tr><td>Rejected</td><td>{[values.statuses.rejected]}</td></tr>',
+      '<tr><td bgcolor="#82E0AA">Saved</td><td>{[values.statuses.saved]}</td></tr>',
+      '<tr><td bgcolor="#D2B4DE">Assessed</td><td>{assessed}</td></tr>',
+      '<tr><td bgcolor="#AED6F1">Submitted</td><td>{[values.statuses.submitted]}</td></tr>',
+      '<tr><td bgcolor="#A2D9CE">Accepted</td><td>{[values.statuses.accepted]}</td></tr>',
+      '<tr><td bgcolor="#F5B7B1">Rejected</td><td>{[values.statuses.rejected]}</td></tr>',
       '</tbody>',
       '</table>'
     ]
@@ -861,10 +870,6 @@ SM.Metrics.addCollectionMetricsTab = async function (options) {
     })
     const aggLabelGrid = new SM.Metrics.AggGrid({
       aggregation: 'label',
-      collectionId
-    })
-    const aggStigGrid = new SM.Metrics.AggGrid({
-      aggregation: 'stig',
       collectionId
     })
 
