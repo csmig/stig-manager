@@ -624,20 +624,32 @@ SM.Metrics.ProgressPanel = Ext.extend(Ext.Panel, {
       type: 'doughnut',
       data: {
         datasets: [{
-          // data: [this.metrics.assessments - this.metrics.assessed, this.metrics.assessed],
           data: [
-            this.metrics.statuses.saved,
-            this.metrics.assessed,
-            this.metrics.statuses.submitted,
-            this.metrics.statuses.accepted,
-            this.metrics.assessments - this.metrics.assessed,
-            this.metrics.statuses.rejected            
+            this.metrics.statuses.saved - this.metrics.results.other, // Saved Assessed
+            this.metrics.statuses.submitted, // Submitted
+            this.metrics.statuses.accepted, // Accepted
+            this.metrics.results.other, // Saved Unassessed
+            this.metrics.assessments - this.metrics.assessed - this.metrics.results.other, // Unsaved
+            this.metrics.statuses.rejected // Rejected         
           ],
-          backgroundColor: ['#82E0AA', '#D2B4DE', '#AED6F1', '#A2D9CE', '#f8f8f8', '#F5B7B1'],
+          backgroundColor: [
+            '#82E0AA', // Saved Assessed
+            '#D2B4DE', // Submitted
+            '#AED6F1', // Accepted
+            '#eee', // Saved Unassessed
+            '#eee', // Unsaved
+            '#F5B7B1' // Rejected
+          ],
           borderWidth: [1, 1]
         }],
-        // labels: ['Unassessed', 'Assessed'],
-        labels: ['Saved', 'Assessed', 'Submitted', 'Accepted', 'Unassessed', 'Rejected'],
+        labels: [
+          'Saved and Assessed',
+          'Submitted',
+          'Accepted',
+          'Saved and Unassessed',
+          'Unsaved',
+          'Rejected'
+        ],
       },
       options: {
         responsive: true,
@@ -661,11 +673,12 @@ SM.Metrics.ProgressPanel = Ext.extend(Ext.Panel, {
       `<div style="padding-top:10px;text-align:center;font-size:large;">{[(values.assessed/values.assessments * 100).toFixed(2)]}%</div>`,
       '<table>',
       '<tbody>',
-      '<tr><td>Assessments</td><td>{assessments}</td></tr>',
-      '<tr><td bgcolor="#82E0AA">Saved</td><td>{[values.statuses.saved]}</td></tr>',
-      '<tr><td bgcolor="#D2B4DE">Assessed</td><td>{assessed}</td></tr>',
-      '<tr><td bgcolor="#AED6F1">Submitted</td><td>{[values.statuses.submitted]}</td></tr>',
-      '<tr><td bgcolor="#A2D9CE">Accepted</td><td>{[values.statuses.accepted]}</td></tr>',
+      '<tr><td><b>Total Checks</b></td><td><b>{assessments}</b></td></tr>',
+      '<tr><td bgcolor="#eee">Unsaved</td><td>{[values.assessments - values.assessed - values.results.other]}</td></tr>',
+      '<tr><td bgcolor="#eee">Saved and Unassessed</td><td>{[values.results.other]}</td></tr>',
+      '<tr><td bgcolor="#82E0AA">Saved and Assessed</td><td>{[values.statuses.saved - values.results.other]}</td></tr>',
+      '<tr><td bgcolor="#D2B4DE">Submitted</td><td>{[values.statuses.submitted]}</td></tr>',
+      '<tr><td bgcolor="#AED6F1">Accepted</td><td>{[values.statuses.accepted]}</td></tr>',
       '<tr><td bgcolor="#F5B7B1">Rejected</td><td>{[values.statuses.rejected]}</td></tr>',
       '</tbody>',
       '</table>'
