@@ -72,7 +72,7 @@ SM.Metrics.CommonFields = [
     mapping: 'metrics.results.other'
   },
   {
-    name: 'completedPct',
+    name: 'assessedPct',
     convert: (v, r) => r.metrics.assessments ? r.metrics.assessed / r.metrics.assessments * 100 : 0
   },
   {
@@ -105,19 +105,19 @@ SM.Metrics.CommonFields = [
 
 SM.Metrics.CommonColumns = [
   {
-    header: "Assessments",
+    header: "Checks",
     width: 50,
     dataIndex: 'assessments',
     align: "center",
     sortable: true
   },
-  {
-    header: "Assessed",
-    width: 50,
-    dataIndex: 'assessed',
-    align: "center",
-    sortable: true
-  },
+  // {
+  //   header: "Assessed",
+  //   width: 50,
+  //   dataIndex: 'assessed',
+  //   align: "center",
+  //   sortable: true
+  // },
   {
     header: 'Oldest',
     width: 50,
@@ -136,23 +136,23 @@ SM.Metrics.CommonColumns = [
   },
   {
     header: "Saved",
-    width: 100,
+    width: 75,
     dataIndex: 'savedPct',
     align: "center",
     sortable: true,
     renderer: renderPct
   },
   {
-    header: "Completed",
-    width: 100,
-    dataIndex: 'completedPct',
+    header: "Assessed",
+    width: 75,
+    dataIndex: 'assessedPct',
     align: "center",
     sortable: true,
     renderer: renderPct
   },
   {
     header: "Submitted",
-    width: 100,
+    width: 75,
     dataIndex: 'submittedPct',
     align: "center",
     sortable: true,
@@ -160,7 +160,7 @@ SM.Metrics.CommonColumns = [
   },
   {
     header: "Accepted",
-    width: 100,
+    width: 75,
     dataIndex: 'acceptedPct',
     align: "center",
     sortable: true,
@@ -168,7 +168,7 @@ SM.Metrics.CommonColumns = [
   },
   {
     header: "Rejected",
-    width: 100,
+    width: 75,
     dataIndex: 'rejectedPct',
     align: "center",
     sortable: true,
@@ -617,7 +617,7 @@ SM.Metrics.ChartPanel = Ext.extend(Ext.Panel, {
   }
 })
 
-SM.Metrics.CompletionPanel = Ext.extend(Ext.Panel, {
+SM.Metrics.ProgressPanel = Ext.extend(Ext.Panel, {
   initComponent: function () {
     const _this = this
     const chartOptions = {
@@ -649,11 +649,15 @@ SM.Metrics.CompletionPanel = Ext.extend(Ext.Panel, {
     })
 
     const dataTpl = [
-      `<div style="padding-top:35px;text-align:center;font-size:large;">{[(values.assessed/values.assessments * 100).toFixed(2)]}%</div>`,
+      `<div style="padding-top:10px;text-align:center;font-size:large;">{[(values.assessed/values.assessments * 100).toFixed(2)]}%</div>`,
       '<table>',
       '<tbody>',
       '<tr><td>Assessments</td><td>{assessments}</td></tr>',
+      '<tr><td>Saved</td><td>{[values.statuses.saved]}</td></tr>',
       '<tr><td>Assessed</td><td>{assessed}</td></tr>',
+      '<tr><td>Submitted</td><td>{[values.statuses.submitted]}</td></tr>',
+      '<tr><td>Accepted</td><td>{[values.statuses.accepted]}</td></tr>',
+      '<tr><td>Rejected</td><td>{[values.statuses.rejected]}</td></tr>',
       '</tbody>',
       '</table>'
     ]
@@ -664,7 +668,6 @@ SM.Metrics.CompletionPanel = Ext.extend(Ext.Panel, {
     })
 
     const config = {
-      title: 'Completion',
       layout: 'hbox',
       layoutConfig: {
         align: 'top'
@@ -672,21 +675,71 @@ SM.Metrics.CompletionPanel = Ext.extend(Ext.Panel, {
       items: [chartPanel, dataPanel]
     }
     Ext.apply(this, Ext.apply(this.initialConfig, config))
-    SM.Metrics.CompletionPanel.superclass.initComponent.call(this)
+    SM.Metrics.ProgressPanel.superclass.initComponent.call(this)
+  }
+})
+
+SM.Metrics.FindingsPanel = Ext.extend(Ext.Panel, {
+  initComponent: function () {
+    const _this = this
+    const tpl = new Ext.XTemplate(
+      '<div class="sm-metrics-findings-panel">',
+      `low: {low}<br>medium: {medium}<br>high: {high}`,
+      '</div>'
+    )
+    const config = {
+      tpl,
+      data: this.metrics
+    }
+    Ext.apply(this, Ext.apply(this.initialConfig, config))
+    this.superclass().initComponent.call(this)
+  }
+})
+SM.Metrics.AgesPanel = Ext.extend(Ext.Panel, {
+  initComponent: function () {
+    const _this = this
+    const tpl = new Ext.XTemplate(
+      '<div class="sm-metrics-age-panel">',
+      `minTs: {minTs}<br>maxTs: {maxTs}`,
+      '</div>'
+    )
+    const config = {
+      tpl,
+      data: this.metrics
+    }
+    Ext.apply(this, Ext.apply(this.initialConfig, config))
+    this.superclass().initComponent.call(this)
   }
 })
 
 SM.Metrics.OverviewPanel = Ext.extend(Ext.Panel, {
   initComponent: function () {
-    const completionPanel = new SM.Metrics.CompletionPanel({
+    const progressPanel = new SM.Metrics.ProgressPanel({
+      title: 'Progress',
       border: false,
-      collectionId: this.collectionId,
       metrics: this.metrics
+    })
+    const agesPanel = new SM.Metrics.AgesPanel({
+      title: 'Review Age',
+      border: false,
+      metrics: this.metrics
+    })
+    const findingsPanel = new SM.Metrics.FindingsPanel({
+      title: 'Findings',
+      border: false,
+      metrics: this.metrics.findings
     })
     const config = {
       border: false,
-      layout: 'fit',
-      items: [completionPanel]
+      layout: 'vbox',
+      layoutConfig: {
+        align: 'stretch'
+      },
+      items: [
+        progressPanel,
+        agesPanel,
+        findingsPanel
+      ]
     }
     Ext.apply(this, Ext.apply(this.initialConfig, config))
     SM.Metrics.OverviewPanel.superclass.initComponent.call(this)
@@ -703,6 +756,7 @@ SM.Metrics.AggAssetPanel = Ext.extend(Ext.Panel, {
       region: 'center'
     })
     const unaggGrid = new SM.Metrics.UnaggGrid({
+      title: 'Details',
       parentAggregation: 'asset',
       collectionId,
       region: 'south',
@@ -713,12 +767,14 @@ SM.Metrics.AggAssetPanel = Ext.extend(Ext.Panel, {
       await unaggGrid.store.loadPromise({
         assetId: record.data.assetId
       })
+      unaggGrid.setTitle(`Details for ${record.data.name}`)
     }
 
     aggAssetGrid.getSelectionModel().on('rowselect', onRowSelect)
 
     const config = {
       layout: 'border',
+      cls: 'sm-metric-agg-panel',
       items: [
         aggAssetGrid,
         unaggGrid
