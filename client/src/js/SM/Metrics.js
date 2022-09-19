@@ -670,7 +670,7 @@ SM.Metrics.ProgressPanel = Ext.extend(Ext.Panel, {
     })
 
     const dataTpl = [
-      `<div style="padding-top:10px;text-align:center;font-size:large;">{[(values.assessed/values.assessments * 100).toFixed(2)]}%</div>`,
+      `<div style="padding-top:10px;text-align:center;font-size:large;">{[(values.assessed/values.assessments * 100).toFixed(2)]}% assessed</div>`,
       '<table>',
       '<tbody>',
       '<tr><td><b>Total Checks</b></td><td><b>{assessments}</b></td></tr>',
