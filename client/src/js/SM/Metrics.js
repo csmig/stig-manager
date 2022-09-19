@@ -785,6 +785,46 @@ SM.Metrics.AggAssetPanel = Ext.extend(Ext.Panel, {
   }
 })
 
+SM.Metrics.AggStigPanel = Ext.extend(Ext.Panel, {
+  initComponent: function () {
+    const _this = this
+    const collectionId = this.collectionId
+    const aggStigGrid = new SM.Metrics.AggGrid({
+      aggregation: 'stig',
+      collectionId,
+      region: 'center'
+    })
+    const unaggGrid = new SM.Metrics.UnaggGrid({
+      title: 'Details',
+      parentAggregation: 'stig',
+      collectionId,
+      region: 'south',
+      split: true,
+      height: '66%'
+    })
+    async function onRowSelect (cm, index, record) {
+      await unaggGrid.store.loadPromise({
+        benchmarkId: record.data.benchmarkId
+      })
+      unaggGrid.setTitle(`Details for ${record.data.benchmarkId}`)
+    }
+
+    aggStigGrid.getSelectionModel().on('rowselect', onRowSelect)
+
+    const config = {
+      layout: 'border',
+      cls: 'sm-metric-agg-panel',
+      items: [
+        aggStigGrid,
+        unaggGrid
+      ]
+    }
+    Ext.apply(this, Ext.apply(this.initialConfig, config))
+    this.superclass().initComponent.call(this)
+  }
+})
+
+
 SM.Metrics.addCollectionMetricsTab = async function (options) {
   try {
     let { collectionId, collectionName, treePath } = options
@@ -813,11 +853,10 @@ SM.Metrics.addCollectionMetricsTab = async function (options) {
       collectionId,
       metrics: apiMetricsCollection.metrics
     })
-    // const aggAssetGrid = new SM.Metrics.AggGrid({
-    //   aggregation: 'asset',
-    //   collectionId
-    // })
     const aggAssetPanel = new SM.Metrics.AggAssetPanel({
+      collectionId
+    })
+    const aggStigPanel = new SM.Metrics.AggStigPanel({
       collectionId
     })
     const aggLabelGrid = new SM.Metrics.AggGrid({
@@ -860,7 +899,7 @@ SM.Metrics.addCollectionMetricsTab = async function (options) {
               title: 'STIGs',
               iconCls: 'sm-stig-icon',
               layout: 'fit',
-              items: [aggStigGrid]
+              items: [aggStigPanel]
             }
           ]
         }
