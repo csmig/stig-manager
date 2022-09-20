@@ -409,8 +409,10 @@ a.x-grid3-hd-btn:hover {
 	color: hsl(0deg 0% 33%);
 }
 .sm-cell-thermometer-bg {
-	background-color: #f5f5f5;
+	background-color: #eee;
 	margin-left: 34px;
+	outline: solid 1px #bbb;
+	outline-offset: -1px;
 }
 .sm-cell-thermometer-text {
 	float: left;
@@ -421,6 +423,7 @@ a.x-grid3-hd-btn:hover {
 }
 .sm-cell-mercury-medium {
 	background-color: hsl(230deg 40% 86%);
+	/* box-shadow: 0px 0px 0px 1px red inset; */
 }
 .sm-cell-mercury-high {
 	background-color: #eba795;

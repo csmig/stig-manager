@@ -3996,6 +3996,7 @@ body.x-body-masked .x-window-plain .x-window-mc {
 }
 .sm-cell-thermometer-bg {
     background-color: rgb(30, 32, 33);
+    outline: solid 1px #444;
 }
 .sm-cell-mercury-low {
     background-color: rgb(66, 87, 34);
