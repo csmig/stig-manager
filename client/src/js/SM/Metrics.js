@@ -239,7 +239,7 @@ SM.Metrics.AggGrid = Ext.extend(Ext.grid.GridPanel, {
               }
               labels.sort((a, b) => a.name.localeCompare(b.name))
               metadata.attr = 'style="white-space:normal;"'
-              return SM.Collection.LabelArrayTpl.apply(labels)
+              return SM.styledEmptyRenderer(SM.Collection.LabelArrayTpl.apply(labels))
             }
           },
           {
@@ -299,9 +299,22 @@ SM.Metrics.AggGrid = Ext.extend(Ext.grid.GridPanel, {
             header: "Label",
             width: 175,
             id: autoExpandColumn,
-            dataIndex: 'name',
+            dataIndex: 'labelId',
             sortable: true,
-            filter: { type: 'string' }
+            filter: {
+              type: 'values',
+              collectionId: _this.collectionId,
+              renderer: SM.ColumnFilters.Renderers.labels
+            },
+            renderer: function (value, metadata) {
+              const labels = []
+              const labelId = value
+              const label = SM.Cache.CollectionMap.get(_this.collectionId).labelMap.get(labelId)
+              if (label) labels.push(label)
+              labels.sort((a, b) => a.name.localeCompare(b.name))
+              metadata.attr = 'style="white-space:normal;"'
+              return SM.styledEmptyRenderer(SM.Collection.LabelArrayTpl.apply(labels))
+            }
           },
           {
             header: "Assets",
@@ -361,7 +374,7 @@ SM.Metrics.AggGrid = Ext.extend(Ext.grid.GridPanel, {
     })
     const store = new Ext.data.JsonStore({
       grid: this,
-      autoLoad: true,
+      autoLoad: this.storeAutoLoad ?? true,
       smMaskDelay: 250,
       proxy: this.proxy,
       root: '',
@@ -475,7 +488,7 @@ SM.Metrics.UnaggGrid = Ext.extend(Ext.grid.GridPanel, {
               }
               labels.sort((a, b) => a.name.localeCompare(b.name))
               metadata.attr = 'style="white-space:normal;"'
-              return SM.Collection.LabelArrayTpl.apply(labels)
+              return SM.styledEmptyRenderer(SM.Collection.LabelArrayTpl.apply(labels))
             }
           }
         )
@@ -601,7 +614,6 @@ SM.Metrics.ChartPanel = Ext.extend(Ext.Panel, {
 
     const config = {
       html,
-      border: false,
       listeners: {
         afterrender(me) {
           me.chart = new Chart(`sm-chart-${me.chartId}`, this.chartOptions)
@@ -625,28 +637,29 @@ SM.Metrics.ProgressPanel = Ext.extend(Ext.Panel, {
       data: {
         datasets: [{
           data: [
-            this.metrics.statuses.saved - this.metrics.results.other, // Saved Assessed
+            // this.metrics.statuses.saved - this.metrics.results.other, // Saved Assessed
+            this.metrics.assessed, // Assessed
             this.metrics.statuses.submitted, // Submitted
             this.metrics.statuses.accepted, // Accepted
-            this.metrics.results.other, // Saved Unassessed
+            this.metrics.results.other, // Unassessed
             this.metrics.assessments - this.metrics.assessed - this.metrics.results.other, // Unsaved
             this.metrics.statuses.rejected // Rejected         
           ],
           backgroundColor: [
-            '#82E0AA', // Saved Assessed
+            '#82E0AA', // Assessed
             '#D2B4DE', // Submitted
             '#AED6F1', // Accepted
-            '#eee', // Saved Unassessed
+            '#eee', // Unassessed
             '#eee', // Unsaved
             '#F5B7B1' // Rejected
           ],
           borderWidth: [1, 1]
         }],
         labels: [
-          'Saved and Assessed',
+          'Assessed',
           'Submitted',
           'Accepted',
-          'Saved and Unassessed',
+          'Unassessed',
           'Unsaved',
           'Rejected'
         ],
@@ -670,13 +683,13 @@ SM.Metrics.ProgressPanel = Ext.extend(Ext.Panel, {
     })
 
     const dataTpl = [
-      `<div style="padding-top:10px;text-align:center;font-size:large;">{[(values.assessed/values.assessments * 100).toFixed(2)]}% assessed</div>`,
-      '<table>',
+      `<div style="text-align:center;font-size:large;">{[(values.assessed/values.assessments * 100).toFixed(2)]}% assessed</div>`,
+      '<table style="margin: 0 auto;">',
       '<tbody>',
       '<tr><td><b>Total Checks</b></td><td><b>{assessments}</b></td></tr>',
       '<tr><td bgcolor="#eee">Unsaved</td><td>{[values.assessments - values.assessed - values.results.other]}</td></tr>',
-      '<tr><td bgcolor="#eee">Saved and Unassessed</td><td>{[values.results.other]}</td></tr>',
-      '<tr><td bgcolor="#82E0AA">Saved and Assessed</td><td>{[values.statuses.saved - values.results.other]}</td></tr>',
+      '<tr><td bgcolor="#eee">Unassessed</td><td>{[values.results.other]}</td></tr>',
+      '<tr><td bgcolor="#82E0AA">Assessed</td><td>{[values.statuses.saved - values.results.other]}</td></tr>',
       '<tr><td bgcolor="#D2B4DE">Submitted</td><td>{[values.statuses.submitted]}</td></tr>',
       '<tr><td bgcolor="#AED6F1">Accepted</td><td>{[values.statuses.accepted]}</td></tr>',
       '<tr><td bgcolor="#F5B7B1">Rejected</td><td>{[values.statuses.rejected]}</td></tr>',
@@ -684,6 +697,7 @@ SM.Metrics.ProgressPanel = Ext.extend(Ext.Panel, {
       '</table>'
     ]
     const dataPanel = new Ext.Panel({
+      border: false,
       tpl: dataTpl,
       flex: 1,
       data: this.metrics
@@ -717,6 +731,7 @@ SM.Metrics.FindingsPanel = Ext.extend(Ext.Panel, {
     this.superclass().initComponent.call(this)
   }
 })
+
 SM.Metrics.AgesPanel = Ext.extend(Ext.Panel, {
   initComponent: function () {
     const _this = this
@@ -734,33 +749,66 @@ SM.Metrics.AgesPanel = Ext.extend(Ext.Panel, {
   }
 })
 
+SM.Metrics.ExportPanel = Ext.extend(Ext.Panel, {
+  initComponent: function () {
+    const _this = this
+    const tpl = new Ext.XTemplate(
+      '<div class="sm-metrics-export-panel">',
+      `Export to file functionality here`,
+      '</div>'
+    )
+    const config = {
+      tpl,
+      data: this.metrics
+    }
+    Ext.apply(this, Ext.apply(this.initialConfig, config))
+    this.superclass().initComponent.call(this)
+  }
+})
+
 SM.Metrics.OverviewPanel = Ext.extend(Ext.Panel, {
   initComponent: function () {
     const progressPanel = new SM.Metrics.ProgressPanel({
+      cls: 'sm-round-inner-panel',
+      bodyStyle: 'padding: 15px;',
       title: 'Progress',
-      border: false,
+      border: true,
       metrics: this.metrics
     })
     const agesPanel = new SM.Metrics.AgesPanel({
+      cls: 'sm-round-inner-panel',
+      bodyStyle: 'padding: 15px;',
       title: 'Review Age',
-      border: false,
+      border: true,
       metrics: this.metrics
     })
     const findingsPanel = new SM.Metrics.FindingsPanel({
+      cls: 'sm-round-inner-panel',
+      bodyStyle: 'padding: 15px;',
       title: 'Findings',
-      border: false,
+      border: true,
       metrics: this.metrics.findings
+    })
+    const exportPanel = new SM.Metrics.ExportPanel({
+      cls: 'sm-round-inner-panel',
+      bodyStyle: 'padding: 15px;',
+      title: 'Export metrics',
+      border: true,
+      height: 300,
+      metrics: this.metrics
     })
     const config = {
       border: false,
-      layout: 'vbox',
-      layoutConfig: {
-        align: 'stretch'
-      },
+      autoScroll: true,
+      // layout: 'vbox',
+      // layoutConfig: {
+      //   align: 'stretch',
+      // },
       items: [
         progressPanel,
         agesPanel,
-        findingsPanel
+        findingsPanel,
+        exportPanel
       ]
     }
     Ext.apply(this, Ext.apply(this.initialConfig, config))
@@ -778,7 +826,7 @@ SM.Metrics.AggAssetPanel = Ext.extend(Ext.Panel, {
       region: 'center'
     })
     const unaggGrid = new SM.Metrics.UnaggGrid({
-      title: 'Details',
+      title: 'STIGs',
       parentAggregation: 'asset',
       collectionId,
       region: 'south',
@@ -789,7 +837,7 @@ SM.Metrics.AggAssetPanel = Ext.extend(Ext.Panel, {
       await unaggGrid.store.loadPromise({
         assetId: record.data.assetId
       })
-      unaggGrid.setTitle(`Details for ${record.data.name}`)
+      unaggGrid.setTitle(`STIGs mapped to ${record.data.name}`)
     }
 
     aggAssetGrid.getSelectionModel().on('rowselect', onRowSelect)
@@ -817,7 +865,7 @@ SM.Metrics.AggStigPanel = Ext.extend(Ext.Panel, {
       region: 'center'
     })
     const unaggGrid = new SM.Metrics.UnaggGrid({
-      title: 'Details',
+      title: 'Assets',
       parentAggregation: 'stig',
       collectionId,
       region: 'south',
@@ -828,7 +876,7 @@ SM.Metrics.AggStigPanel = Ext.extend(Ext.Panel, {
       await unaggGrid.store.loadPromise({
         benchmarkId: record.data.benchmarkId
       })
-      unaggGrid.setTitle(`Details for ${record.data.benchmarkId}`)
+      unaggGrid.setTitle(`Assets mapped to ${record.data.benchmarkId}`)
     }
 
     aggStigGrid.getSelectionModel().on('rowselect', onRowSelect)
@@ -838,6 +886,63 @@ SM.Metrics.AggStigPanel = Ext.extend(Ext.Panel, {
       cls: 'sm-metric-agg-panel',
       items: [
         aggStigGrid,
+        unaggGrid
+      ]
+    }
+    Ext.apply(this, Ext.apply(this.initialConfig, config))
+    this.superclass().initComponent.call(this)
+  }
+})
+
+SM.Metrics.AggLabelPanel = Ext.extend(Ext.Panel, {
+  initComponent: function () {
+    const _this = this
+    const collectionId = this.collectionId
+    const aggLabelGrid = new SM.Metrics.AggGrid({
+      aggregation: 'label',
+      collectionId,
+      region: 'north',
+      split: true,
+      height: '33%'
+    })
+    const aggAssetGrid = new SM.Metrics.AggGrid({
+      title: 'Assets',
+      aggregation: 'asset',
+      storeAutoLoad: false,
+      collectionId,
+      region: 'center'
+    })
+    const unaggGrid = new SM.Metrics.UnaggGrid({
+      title: 'STIGs',
+      parentAggregation: 'asset',
+      collectionId,
+      region: 'south',
+      split: true,
+      height: '33%'
+    })
+    async function onRowSelectLabel (cm, index, record) {
+      await aggAssetGrid.store.loadPromise({
+        labelId: record.data.labelId
+      })
+      unaggGrid.store.removeAll()
+      aggAssetGrid.setTitle(`Assets for ${record.data.name}`)
+    }
+    async function onRowSelectAsset (cm, index, record) {
+      await unaggGrid.store.loadPromise({
+        assetId: record.data.assetId
+      })
+      unaggGrid.setTitle(`STIGs for ${record.data.name}`)
+    }
+
+    aggLabelGrid.getSelectionModel().on('rowselect', onRowSelectLabel)
+    aggAssetGrid.getSelectionModel().on('rowselect', onRowSelectAsset)
+
+    const config = {
+      layout: 'border',
+      cls: 'sm-metric-agg-panel',
+      items: [
+        aggLabelGrid,
+        aggAssetGrid,
         unaggGrid
       ]
     }
@@ -865,7 +970,8 @@ SM.Metrics.addCollectionMetricsTab = async function (options) {
     const apiMetricsCollection = JSON.parse(results.response.responseText)
 
     const overviewPanel = new SM.Metrics.OverviewPanel({
-      cls: 'sm-round-panel',
+      cls: 'sm-round-panel sm-metrics-overview-panel',
+      collapsible: true,
       title: 'Overview',
       margins: { top: SM.Margin.top, right: SM.Margin.edge, bottom: SM.Margin.bottom, left: SM.Margin.edge },
       region: 'west',
@@ -881,8 +987,7 @@ SM.Metrics.addCollectionMetricsTab = async function (options) {
     const aggStigPanel = new SM.Metrics.AggStigPanel({
       collectionId
     })
-    const aggLabelGrid = new SM.Metrics.AggGrid({
-      aggregation: 'label',
+    const aggLabelPanel = new SM.Metrics.AggLabelPanel({
       collectionId
     })
 
@@ -911,7 +1016,7 @@ SM.Metrics.addCollectionMetricsTab = async function (options) {
               title: 'Labels',
               iconCls: 'sm-label-icon',
               layout: 'fit',
-              items: [aggLabelGrid]
+              items: [aggLabelPanel]
             },
             {
               title: 'STIGs',

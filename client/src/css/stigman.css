@@ -1,3 +1,17 @@
+.sm-metrics-overview-panel .x-panel-body{
+	background-color: hsl(0 0% 95% / 1);
+}
+.sm-round-inner-panel {
+	border-radius: 6px;
+	overflow: hidden;
+	margin: 20px;
+}
+.sm-round-inner-panel .x-panel-body {
+	background-color: #fff;
+	border-bottom-left-radius: 6px;
+    border-bottom-right-radius: 6px;
+}
+
 .sm-metric-agg-panel .x-layout-split {
 	background-color:#eee
 }

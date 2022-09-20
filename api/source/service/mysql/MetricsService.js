@@ -252,6 +252,10 @@ module.exports.queryMetrics = async function ({inPredicates = {},inProjections =
     'left join stig_asset_map sa on granted.saId = sa.saId',
     'left join current_rev cr on sa.benchmarkId = cr.benchmarkId'
   ]
+  const predicates = {
+    statements: [],
+    binds: []
+  }
   const groupBy = []
   const orderBy = []
 
@@ -261,6 +265,7 @@ module.exports.queryMetrics = async function ({inPredicates = {},inProjections =
       orderBy.push('a.name')
       break
     case 'stig':
+      predicates.statements.push('sa.benchmarkId IS NOT NULL')
       groupBy.push('sa.benchmarkId')
       orderBy.push('sa.benchmarkId')
       break
@@ -289,6 +294,7 @@ module.exports.queryMetrics = async function ({inPredicates = {},inProjections =
     ctes,
     columns,
     joins,
+    predicates,
     groupBy,
     orderBy
   })
