@@ -4775,7 +4775,7 @@ components:
 
     MetricsUnagg:
       type: object
-      additionalProperties: false
+      # additionalProperties: false
       required:
         - assetId
         - name
@@ -4802,7 +4802,7 @@ components:
         
     MetricsAggAsset:
       type: object
-      additionalProperties: false
+      # additionalProperties: false
       required:
         - assetId
         - name
@@ -4814,7 +4814,9 @@ components:
         name:
           type: string
         labels:
-          $ref: '#/components/schemas/LabelBasic'
+          type: array
+          items:
+            $ref: '#/components/schemas/LabelBasic'
         benchmarkIds:
           type: array
           items:
@@ -4831,7 +4833,7 @@ components:
             
     MetricsAggCollection:
       type: object
-      additionalProperties: false
+      # additionalProperties: false
       required:
         - collectionId
         - name
@@ -4858,7 +4860,7 @@ components:
             
     MetricsAggCollections:
       type: object
-      additionalProperties: false
+      # additionalProperties: false
       required:
         - collectionIds
         - name
@@ -4888,7 +4890,7 @@ components:
         - labelId
         - name
         - assets
-      additionalProperties: false
+      # additionalProperties: false
       properties:
         labelId:
           $ref: '#/components/schemas/LabelId'
@@ -4912,7 +4914,7 @@ components:
       required:
         - benchmarkId
         - assets
-      additionalProperties: false
+      # additionalProperties: false
       properties:
         benchmarkId:
           $ref: '#/components/schemas/BenchmarkId'
@@ -5015,7 +5017,7 @@ components:
                   type: integer
     MetricsSummary:
       type: object
-      additionalProperties: false
+      # additionalProperties: false
       required:
         - metrics
       properties:
