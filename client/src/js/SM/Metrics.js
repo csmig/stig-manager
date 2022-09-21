@@ -715,12 +715,17 @@ SM.Metrics.ProgressPanel = Ext.extend(Ext.Panel, {
   }
 })
 
-SM.Metrics.FindingsPanel = Ext.extend(Ext.Panel, {
+SM.Metrics.AgesPanel = Ext.extend(Ext.Panel, {
   initComponent: function () {
     const _this = this
     const tpl = new Ext.XTemplate(
-      '<div class="sm-metrics-findings-panel">',
-      `low: {low}<br>medium: {medium}<br>high: {high}`,
+      '<div class="sm-metrics-count-parent">',
+        '<div class="sm-metrics-count-child sm-metrics-age-box" >',
+          `<div class="sm-metrics-count-label">Oldest</div><div class="sm-metrics-count-value">{[renderDurationToNow(values.minTs)]}</div>`,
+        '</div>',
+        '<div class="sm-metrics-count-child sm-metrics-age-box">',
+          `<div class="sm-metrics-count-label">Newest</div><div class="sm-metrics-count-value">{[renderDurationToNow(values.maxTs)]}</div>`,
+        '</div>',
       '</div>'
     )
     const config = {
@@ -732,12 +737,20 @@ SM.Metrics.FindingsPanel = Ext.extend(Ext.Panel, {
   }
 })
 
-SM.Metrics.AgesPanel = Ext.extend(Ext.Panel, {
+SM.Metrics.FindingsPanel = Ext.extend(Ext.Panel, {
   initComponent: function () {
     const _this = this
     const tpl = new Ext.XTemplate(
-      '<div class="sm-metrics-age-panel">',
-      `minTs: {minTs}<br>maxTs: {maxTs}`,
+      '<div class="sm-metrics-count-parent">',
+        '<div class="sm-metrics-count-child sm-metrics-low-box">',
+          `<div class="sm-metrics-count-label">CAT 3</div><div class="sm-metrics-count-value">{[values.low]}</div>`,
+        '</div>',
+        '<div class="sm-metrics-count-child sm-metrics-medium-box" >',
+          `<div class="sm-metrics-count-label">Cat 2</div><div class="sm-metrics-count-value">{[values.medium]}</div>`,
+        '</div>',
+        '<div class="sm-metrics-count-child sm-metrics-high-box" >',
+          `<div class="sm-metrics-count-label">Cat 1</div><div class="sm-metrics-count-value">{[values.high]}</div>`,
+        '</div>',
       '</div>'
     )
     const config = {
@@ -754,7 +767,8 @@ SM.Metrics.ExportPanel = Ext.extend(Ext.Panel, {
     const _this = this
     const tpl = new Ext.XTemplate(
       '<div class="sm-metrics-export-panel">',
-      `Export to file functionality here`,
+      `Export Collection summary - JSON/CSV<br>`,
+      `Export Collection details - JSON/CSV`,
       '</div>'
     )
     const config = {
@@ -794,7 +808,7 @@ SM.Metrics.OverviewPanel = Ext.extend(Ext.Panel, {
       bodyStyle: 'padding: 15px;',
       title: 'Export metrics',
       border: true,
-      height: 300,
+      height: 250,
       metrics: this.metrics
     })
     const config = {
@@ -806,8 +820,8 @@ SM.Metrics.OverviewPanel = Ext.extend(Ext.Panel, {
       // },
       items: [
         progressPanel,
-        agesPanel,
         findingsPanel,
+        agesPanel,
         exportPanel
       ]
     }
@@ -823,12 +837,14 @@ SM.Metrics.AggAssetPanel = Ext.extend(Ext.Panel, {
     const aggAssetGrid = new SM.Metrics.AggGrid({
       aggregation: 'asset',
       collectionId,
+      border: false,
       region: 'center'
     })
     const unaggGrid = new SM.Metrics.UnaggGrid({
       title: 'STIGs',
       parentAggregation: 'asset',
       collectionId,
+      border: false,
       region: 'south',
       split: true,
       height: '33%'
@@ -982,12 +998,15 @@ SM.Metrics.addCollectionMetricsTab = async function (options) {
       metrics: apiMetricsCollection.metrics
     })
     const aggAssetPanel = new SM.Metrics.AggAssetPanel({
+      border: false,
       collectionId
     })
     const aggStigPanel = new SM.Metrics.AggStigPanel({
+      border: false,
       collectionId
     })
     const aggLabelPanel = new SM.Metrics.AggLabelPanel({
+      border: false,
       collectionId
     })
 
@@ -1010,18 +1029,21 @@ SM.Metrics.addCollectionMetricsTab = async function (options) {
               title: 'Assets',
               iconCls: 'sm-asset-icon',
               layout: 'fit',
+              border: false,
               items: [aggAssetPanel]
             },
             {
               title: 'Labels',
               iconCls: 'sm-label-icon',
               layout: 'fit',
+              border: false,
               items: [aggLabelPanel]
             },
             {
               title: 'STIGs',
               iconCls: 'sm-stig-icon',
               layout: 'fit',
+              border: false,
               items: [aggStigPanel]
             }
           ]

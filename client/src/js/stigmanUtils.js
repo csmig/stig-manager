@@ -28,9 +28,12 @@ function renderPctAllHigh ( v, m, r, ri, ci, s ) {
 	return markup
 }
 
-function renderDurationToNow(date, md) {
+function renderDurationToNow(date, md = {}) {
 	if (!date) {
 		return '-'
+	}
+	if (!(date instanceof Date)) {
+		date = new Date(date)
 	}
 	let d = Math.abs(date - new Date()) / 1000 // delta
 	const r = {} // result

@@ -48,6 +48,10 @@ select:-webkit-autofill {
 
 /* Modified CSS */
 
+.sm-metric-agg-panel .x-layout-split {
+    background-color: #1f1f1f;
+}
+
 .sm-metrics-overview-panel .x-panel-body{
 	background-color: hsl(0 0% 12% / 1);
 }
