@@ -746,10 +746,10 @@ SM.Metrics.FindingsPanel = Ext.extend(Ext.Panel, {
           `<div class="sm-metrics-count-label">CAT 3</div><div class="sm-metrics-count-value">{[values.low]}</div>`,
         '</div>',
         '<div class="sm-metrics-count-child sm-metrics-medium-box" >',
-          `<div class="sm-metrics-count-label">Cat 2</div><div class="sm-metrics-count-value">{[values.medium]}</div>`,
+          `<div class="sm-metrics-count-label">CAT 2</div><div class="sm-metrics-count-value">{[values.medium]}</div>`,
         '</div>',
         '<div class="sm-metrics-count-child sm-metrics-high-box" >',
-          `<div class="sm-metrics-count-label">Cat 1</div><div class="sm-metrics-count-value">{[values.high]}</div>`,
+          `<div class="sm-metrics-count-label">CAT 1</div><div class="sm-metrics-count-value">{[values.high]}</div>`,
         '</div>',
       '</div>'
     )

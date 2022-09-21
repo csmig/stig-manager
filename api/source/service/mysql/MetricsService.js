@@ -284,26 +284,24 @@ module.exports.queryMetrics = async function ({
       ]
     }
   }
-  if (inPredicates.labelNames) {
+  if (inPredicates.labelNames || inPredicates.labelIds) {
     cteProps.joins.push(
       'left join collection_label_asset_map cla on a.assetId = cla.assetId',
       'left join collection_label cl on cla.clId = cl.clId'
     )
+    const labelPredicates = []
+    if (inPredicates.labelNames) {
+      labelPredicates.push('cl.name IN ?')
+      cteProps.predicates.binds.push([inPredicates.labelNames])
+    }
+    if (inPredicates.labelIds) {
+      const uuidBinds = inPredicates.labelIds.map( uuid => dbUtils.uuidToSqlString(uuid))
+      cteProps.predicates.binds.push([uuidBinds]) 
+      labelPredicates.push('cl.uuid IN ?')
+    }
     cteProps.predicates.statements.push(
-      'cl.name IN ?'
+      `(${labelPredicates.join(' OR ')})`
     )
-    cteProps.predicates.binds.push([inPredicates.labelNames])
-  }
-  if (inPredicates.labelIds) {
-    cteProps.joins.push(
-      'left join collection_label_asset_map cla on a.assetId = cla.assetId',
-      'left join collection_label cl on cla.clId = cl.clId'
-    )
-    cteProps.predicates.statements.push(
-      'cl.uuid IN ?'
-    )
-    const uuidBinds = inPredicates.labelIds.map( uuid => dbUtils.uuidToSqlString(uuid))
-    cteProps.predicates.binds.push([uuidBinds])
   }
   if (inPredicates.assetIds) {
     cteProps.predicates.statements.push(
