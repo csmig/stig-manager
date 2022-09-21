@@ -1,11 +1,25 @@
 const dbUtils = require('./utils')
+const stream = require('node:stream')
 
 // metrics endpoint helpers
-function totalResultEngine (field) {
+function totalResultEngineObject (field) {
   return `'${field}', json_object('total',sa.${field},'resultEngine',sa.${field}ResultEngine)`
 }
-function totalResultEngineAgg (field) {
+function totalResultEngineColumns (field) {
+  return [
+    `sa.${field}`,
+    `sa.${field}ResultEngine`
+  ]
+}
+
+function totalResultEngineAggObject (field) {
   return `'${field}', json_object('total',coalesce(sum(sa.${field}),0),'resultEngine',coalesce(sum(sa.${field}ResultEngine),0))`
+}
+function totalResultEngineAggColumns (field) {
+  return [
+    `coalesce(sum(sa.${field}),0) as "${field}"`,
+    `coalesce(sum(sa.${field}ResultEngine),0) as "${field}ResultEngine"`
+  ] 
 }
 
 function serializeProperties (props, aggregate = false) {
@@ -17,32 +31,50 @@ function serializeProperties (props, aggregate = false) {
   return result
 }
 
-const top = {
+function propertyColumns (props, aggregate = false) {
+  const columns = []
+  for (const [key, value] of Object.entries(props)) {
+    columns.push(`${aggregate ? `coalesce(sum(${value}),0)` : value} as "${key}"`)
+  }
+  return columns
+}
+
+const rootProperties = {
   assessments: 'cr.ruleCount',
   assessed: 'sa.pass + sa.fail + sa.notapplicable'
 }
+const statuses = {
+  saved: 'sa.saved',
+  submitted: 'sa.submitted',
+  accepted: 'sa.accepted',
+  rejected: 'sa.rejected'  
+}
+const results = {
+  pass: 'sa.pass',
+  fail: 'sa.fail',
+  notapplicable: 'sa.notapplicable',
+  other : 'sa.notchecked + sa.unknown + sa.error + sa.notselected + sa.informational + sa.fixed'  
+}
+const findings = {
+  low: 'sa.lowCount',
+  medium: 'sa.mediumCount',
+  high: 'sa.highCount'
+}
+
+function summaryColumns (aggregate = false) {
+  return [
+    ...propertyColumns(rootProperties, aggregate),
+    `DATE_FORMAT(${aggregate ? 'MIN(sa.minTs)':'sa.minTs'}, '%Y-%m-%dT%H:%i:%sZ') as minTs`,
+    `DATE_FORMAT(${aggregate ? 'MAX(sa.maxTs)':'sa.maxTs'}, '%Y-%m-%dT%H:%i:%sZ') as maxTs`,
+    ...propertyColumns(results, aggregate),
+    ...propertyColumns(statuses, aggregate),
+    ...propertyColumns(findings, aggregate)
+  ]
+}
 
 function summaryObject (aggregate = false) {
-  const statuses = {
-    saved: 'sa.saved',
-    submitted: 'sa.submitted',
-    accepted: 'sa.accepted',
-    rejected: 'sa.rejected'  
-  }
-  const results = {
-    pass: 'sa.pass',
-    fail: 'sa.fail',
-    notapplicable: 'sa.notapplicable',
-    other : 'sa.notchecked + sa.unknown + sa.error + sa.notselected + sa.informational + sa.fixed'  
-  }
-  const findings = {
-    low: 'sa.lowCount',
-    medium: 'sa.mediumCount',
-    high: 'sa.highCount'
-  }
-
   return `json_object(
-  ${serializeProperties(top, aggregate)},
+  ${serializeProperties(rootProperties, aggregate)},
   'minTs', DATE_FORMAT(${aggregate ? 'MIN(sa.minTs)':'sa.minTs'}, '%Y-%m-%dT%H:%i:%sZ'),
   'maxTs', DATE_FORMAT(${aggregate ? 'MAX(sa.maxTs)':'sa.maxTs'}, '%Y-%m-%dT%H:%i:%sZ'),
   'results', json_object(
@@ -57,7 +89,7 @@ function summaryObject (aggregate = false) {
 )`
 }
 function detailsObject (fields, aggregate = false) {
-  const detailsFn = aggregate ? totalResultEngineAgg : totalResultEngine
+  const detailsFn = aggregate ? totalResultEngineAggObject : totalResultEngineObject
   const detailVals = fields.map( field => detailsFn(field) )
   return `json_object(
     ${detailVals.join(',\n')}
@@ -110,7 +142,7 @@ const sqlFindingsAgg = `json_object(
 )`
 
 const sqlMetricsDetail = `json_object(
-  ${serializeProperties(top, false)},
+  ${serializeProperties(rootProperties, false)},
   'minTs', DATE_FORMAT(sa.minTs, '%Y-%m-%dT%H:%i:%sZ'),
   'maxTs', DATE_FORMAT(sa.maxTs, '%Y-%m-%dT%H:%i:%sZ'),
   'findings', ${sqlFindings},
@@ -119,7 +151,7 @@ const sqlMetricsDetail = `json_object(
 ) as metrics`
 
 const sqlMetricsDetailAgg = `json_object(
-  ${serializeProperties(top, true)},
+  ${serializeProperties(rootProperties, true)},
   'minTs', DATE_FORMAT(MIN(sa.minTs), '%Y-%m-%dT%H:%i:%sZ'),
   'maxTs', DATE_FORMAT(MAX(sa.maxTs), '%Y-%m-%dT%H:%i:%sZ'),
   'findings', ${sqlFindingsAgg},
@@ -129,6 +161,10 @@ const sqlMetricsDetailAgg = `json_object(
 
 const sqlMetricsSummary = `${summaryObject(false)} as metrics`
 const sqlMetricsSummaryAgg = `${summaryObject(true)} as metrics`
+
+const colsMetricsSummary = summaryColumns(false)
+const colsMetricsSummaryAgg = summaryColumns(true)
+
 
 const sqlLabels = `coalesce(
   (select
@@ -142,6 +178,15 @@ const sqlLabels = `coalesce(
   where
     cla2.assetId = a.assetId),
   json_array()) as labels`
+
+const sqlLabelsFlat = `(
+  select  
+    group_concat(cl2.name)
+  from
+    collection_label_asset_map cla2
+    left join collection_label cl2 on cla2.clId = cl2.clId
+  where
+    cla2.assetId = a.assetId) as "labels"`
 
 
 const baseCols = {
@@ -174,7 +219,45 @@ const baseCols = {
   ]
 }
 
-module.exports.queryMetrics = async function ({inPredicates = {},inProjections = [],userId,aggregation = 'unagg',style = 'detail'}) {
+const baseColsFlat = {
+  unagg: [
+    'cast(a.assetId as char) as assetId',
+    'a.name',
+    sqlLabelsFlat,
+    'cr.benchmarkId'
+  ],
+  asset: [
+    'cast(a.assetId as char) as assetId',
+    'a.name',
+    sqlLabelsFlat,
+    'group_concat(sa.benchmarkId) as benchmarkIds'
+  ],
+  collection: [
+    'cast(c.collectionId as char) as collectionId',
+    'c.name',
+    'count(distinct a.assetId) as assets',
+    'count(sa.saId) as checklists'
+  ],
+  stig: [
+    'cr.benchmarkId',
+    'count(distinct a.assetId) as assets'
+  ],
+  label: [
+    'BIN_TO_UUID(cl.uuid,1) as labelId',
+    'cl.name',
+    'count(distinct a.assetId) as assets'
+  ]
+}
+
+
+module.exports.queryMetrics = async function ({
+  inPredicates = {},
+  inProjections = [],
+  userId,
+  aggregation = 'unagg',
+  style = 'detail',
+  returnType = 'json'
+}) {
 
     // CTE processing
   const cteProps = {
@@ -245,7 +328,7 @@ module.exports.queryMetrics = async function ({inPredicates = {},inProjections =
   ]
 
   // Main query
-  const columns = [...baseCols[aggregation]]
+  const columns = returnType === 'csv' ? [...baseColsFlat[aggregation]] : [...baseCols[aggregation]]
   const joins = [
     'granted',
     'left join asset a on granted.assetId = a.assetId',
@@ -288,7 +371,15 @@ module.exports.queryMetrics = async function ({inPredicates = {},inProjections =
     columns.push( aggregation === 'unagg' ? sqlMetricsDetail : sqlMetricsDetailAgg)
   }
   else {
-    columns.push( aggregation === 'unagg' ? sqlMetricsSummary : sqlMetricsSummaryAgg)
+    if (returnType === 'csv' && aggregation === 'unagg') {
+      columns.push(...colsMetricsSummary)
+    }
+    else if (returnType === 'csv') {
+      columns.push(...colsMetricsSummaryAgg)
+    }
+    else {
+      columns.push( aggregation === 'unagg' ? sqlMetricsSummary : sqlMetricsSummaryAgg)
+    }
   }
   const query = dbUtils.makeQueryString({
     ctes,
@@ -298,6 +389,16 @@ module.exports.queryMetrics = async function ({inPredicates = {},inProjections =
     groupBy,
     orderBy
   })
+
+  // let connection = await dbUtils.pool.getConnection()
+
+  // let recordStream = connection.connection.query(query, cteProps.predicates.binds).stream()
+  // const rows = []
+  // for await (const row of recordStream) {
+  //   rows.push(row)
+  // }
+  // await connection.release()
+
   let [rows] = await dbUtils.pool.query(query, cteProps.predicates.binds)
   return (rows || [])
 }
