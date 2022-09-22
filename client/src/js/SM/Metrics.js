@@ -638,7 +638,8 @@ SM.Metrics.ProgressPanel = Ext.extend(Ext.Panel, {
         datasets: [{
           data: [
             // this.metrics.statuses.saved - this.metrics.results.other, // Saved Assessed
-            this.metrics.assessed, // Assessed
+            values.statuses.saved - values.results.other, //Assessed
+            // this.metrics.assessed, // Assessed
             this.metrics.statuses.submitted, // Submitted
             this.metrics.statuses.accepted, // Accepted
             this.metrics.results.other, // Unassessed
@@ -765,6 +766,98 @@ SM.Metrics.FindingsPanel = Ext.extend(Ext.Panel, {
 SM.Metrics.ExportPanel = Ext.extend(Ext.Panel, {
   initComponent: function () {
     const _this = this
+
+    const formatComboBox = new Ext.form.ComboBox({
+      mode: 'local',
+      width: 110,
+      fieldLabel: "Format",
+      forceSelection: true,
+      autoSelect: true,
+      editable: false,
+      store: new Ext.data.SimpleStore({
+        fields: ['displayStr', 'valueStr'],
+        data: [
+          ['JSON', 'json'],
+          ['CSV', 'csv']
+        ]
+      }),
+      valueField:'valueStr',
+      displayField:'displayStr',
+      value: localStorage.getItem('metricsExportFormat') || 'json',
+      monitorValid: false,
+      triggerAction: 'all',
+      listeners: {
+        select: function (combo, record, index) {
+          localStorage.setItem('metricsExportFormat', combo.getValue())
+        }
+      }
+    })
+    const styleComboBox = new Ext.form.ComboBox({
+      mode: 'local',
+      width: 110,
+      fieldLabel: "Style",
+      forceSelection: true,
+      autoSelect: true,
+      editable: false,
+      store: new Ext.data.SimpleStore({
+        fields: ['displayStr', 'valueStr'],
+        data: [
+          ['Summary', 'summary'],
+          ['Detail', 'detail']
+        ]
+      }),
+      valueField:'valueStr',
+      displayField:'displayStr',
+      value: localStorage.getItem('metricsExportStyle') || 'summary',
+      monitorValid: false,
+      triggerAction: 'all',
+      listeners: {
+        select: function (combo, record, index) {
+          localStorage.setItem('metricsExportStyle', combo.getValue())
+        }
+      }
+    })
+    const aggComboBox = new Ext.form.ComboBox({
+      mode: 'local',
+      width: 110,
+      fieldLabel: "Grouped by",
+      forceSelection: true,
+      autoSelect: true,
+      editable: false,
+      store: new Ext.data.SimpleStore({
+        fields: ['displayStr', 'valueStr'],
+        data: [
+          ['Collection', 'collection'],
+          ['Asset', 'asset'],
+          ['Label', 'label'],
+          ['STIG', 'stig'],
+          ['Ungrouped', 'unagg']
+        ]
+      }),
+      valueField:'valueStr',
+      displayField:'displayStr',
+      value: localStorage.getItem('metricsExportAgg') || 'collection',
+      monitorValid: false,
+      triggerAction: 'all',
+      listeners: {
+        select: function (combo, record, index) {
+          localStorage.setItem('metricsExportAgg', combo.getValue())
+        }
+      }
+    })
+    const exportButton = new Ext.Button({
+      text: 'Download',
+      iconCls: 'sm-export-icon',
+      disabled: false,
+      style: {
+        position: 'relative',
+        top: '-52px',
+        left: '255px'
+      },
+      handler: function () {
+      }
+    })
+
     const tpl = new Ext.XTemplate(
       '<div class="sm-metrics-export-panel">',
       `Export Collection summary - JSON/CSV<br>`,
@@ -772,8 +865,13 @@ SM.Metrics.ExportPanel = Ext.extend(Ext.Panel, {
       '</div>'
     )
     const config = {
-      tpl,
-      data: this.metrics
+      layout: 'form',
+      items:[
+        aggComboBox,
+        styleComboBox,
+        formatComboBox,
+        exportButton
+      ]
     }
     Ext.apply(this, Ext.apply(this.initialConfig, config))
     this.superclass().initComponent.call(this)
@@ -808,7 +906,7 @@ SM.Metrics.OverviewPanel = Ext.extend(Ext.Panel, {
       bodyStyle: 'padding: 15px;',
       title: 'Export metrics',
       border: true,
-      height: 250,
+      height: 140,
       metrics: this.metrics
     })
     const config = {
