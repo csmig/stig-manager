@@ -638,7 +638,7 @@ SM.Metrics.ProgressPanel = Ext.extend(Ext.Panel, {
         datasets: [{
           data: [
             // this.metrics.statuses.saved - this.metrics.results.other, // Saved Assessed
-            values.statuses.saved - values.results.other, //Assessed
+            this.metrics.statuses.saved - this.metrics.results.other, //Assessed
             // this.metrics.assessed, // Assessed
             this.metrics.statuses.submitted, // Submitted
             this.metrics.statuses.accepted, // Accepted
