@@ -1975,6 +1975,7 @@ paths:
       - $ref: '#/components/parameters/AssetIdArrayQuery'
       - $ref: '#/components/parameters/LabelIdQuery'
       - $ref: '#/components/parameters/LabelNameQuery'
+      - $ref: '#/components/parameters/MetricsFormatQuery'
     get:
       tags:
         - Metrics
@@ -1989,6 +1990,9 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/MetricsDetailUnagg'
+            text/csv:
+              schema:
+                type: string
         default:
           description: unexpected error
           content:
@@ -2005,6 +2009,7 @@ paths:
       - $ref: '#/components/parameters/AssetIdArrayQuery'
       - $ref: '#/components/parameters/LabelIdQuery'
       - $ref: '#/components/parameters/LabelNameQuery'
+      - $ref: '#/components/parameters/MetricsFormatQuery'
     get:
       tags:
         - Metrics
@@ -2019,6 +2024,9 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/MetricsDetailAggAsset'
+            text/csv:
+              schema:
+                type: string
         default:
           description: unexpected error
           content:
@@ -2035,6 +2043,7 @@ paths:
       - $ref: '#/components/parameters/AssetIdArrayQuery'
       - $ref: '#/components/parameters/LabelIdQuery'
       - $ref: '#/components/parameters/LabelNameQuery'
+      - $ref: '#/components/parameters/MetricsFormatQuery'
     get:
       tags:
         - Metrics
@@ -2047,7 +2056,9 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/MetricsDetailAggCollection'
-
+            text/csv:
+              schema:
+                type: string
         default:
           description: unexpected error
           content:
@@ -2064,6 +2075,7 @@ paths:
       - $ref: '#/components/parameters/AssetIdArrayQuery'
       - $ref: '#/components/parameters/LabelIdQuery'
       - $ref: '#/components/parameters/LabelNameQuery'
+      - $ref: '#/components/parameters/MetricsFormatQuery'
     get:
       tags:
         - Metrics
@@ -2078,6 +2090,9 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/MetricsDetailAggLabel'
+            text/csv:
+              schema:
+                type: string
         default:
           description: unexpected error
           content:
@@ -2094,6 +2109,7 @@ paths:
       - $ref: '#/components/parameters/AssetIdArrayQuery'
       - $ref: '#/components/parameters/LabelIdQuery'
       - $ref: '#/components/parameters/LabelNameQuery'
+      - $ref: '#/components/parameters/MetricsFormatQuery'
     get:
       tags:
         - Metrics
@@ -2108,6 +2124,9 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/MetricsDetailAggStig'
+            text/csv:
+              schema:
+                type: string
         default:
           description: unexpected error
           content:
@@ -2125,6 +2144,7 @@ paths:
       - $ref: '#/components/parameters/AssetIdArrayQuery'
       - $ref: '#/components/parameters/LabelIdQuery'
       - $ref: '#/components/parameters/LabelNameQuery'
+      - $ref: '#/components/parameters/MetricsFormatQuery'
     get:
       tags:
         - Metrics
@@ -2139,6 +2159,9 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/MetricsSummaryUnagg'
+            text/csv:
+              schema:
+                type: string
         default:
           description: unexpected error
           content:
@@ -2155,6 +2178,7 @@ paths:
       - $ref: '#/components/parameters/AssetIdArrayQuery'
       - $ref: '#/components/parameters/LabelIdQuery'
       - $ref: '#/components/parameters/LabelNameQuery'
+      - $ref: '#/components/parameters/MetricsFormatQuery'
     get:
       tags:
         - Metrics
@@ -2169,6 +2193,9 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/MetricsSummaryAggAsset'
+            text/csv:
+              schema:
+                type: string
         default:
           description: unexpected error
           content:
@@ -2185,6 +2212,7 @@ paths:
       - $ref: '#/components/parameters/AssetIdArrayQuery'
       - $ref: '#/components/parameters/LabelIdQuery'
       - $ref: '#/components/parameters/LabelNameQuery'
+      - $ref: '#/components/parameters/MetricsFormatQuery'
     get:
       tags:
         - Metrics
@@ -2197,7 +2225,9 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/MetricsSummaryAggCollection'
-
+            text/csv:
+              schema:
+                type: string
         default:
           description: unexpected error
           content:
@@ -2214,6 +2244,7 @@ paths:
       - $ref: '#/components/parameters/AssetIdArrayQuery'
       - $ref: '#/components/parameters/LabelIdQuery'
       - $ref: '#/components/parameters/LabelNameQuery'
+      - $ref: '#/components/parameters/MetricsFormatQuery'
     get:
       tags:
         - Metrics
@@ -2228,6 +2259,9 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/MetricsSummaryAggLabel'
+            text/csv:
+              schema:
+                type: string
         default:
           description: unexpected error
           content:
@@ -2244,6 +2278,7 @@ paths:
       - $ref: '#/components/parameters/AssetIdArrayQuery'
       - $ref: '#/components/parameters/LabelIdQuery'
       - $ref: '#/components/parameters/LabelNameQuery'
+      - $ref: '#/components/parameters/MetricsFormatQuery'
     get:
       tags:
         - Metrics
@@ -2258,6 +2293,9 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/MetricsSummaryAggStig'
+            text/csv:
+              schema:
+                type: string
         default:
           description: unexpected error
           content:
@@ -2272,6 +2310,7 @@ paths:
     parameters:
       - $ref: '#/components/parameters/CollectionIdArrayQuery'
       - $ref: '#/components/parameters/BenchmarkIdArrayQuery'
+      - $ref: '#/components/parameters/MetricsFormatQuery'
     get:
       tags:
         - Metrics
@@ -2284,7 +2323,9 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/MetricsSummaryAggCollections'
-
+            text/csv:
+              schema:
+                type: string
         default:
           description: unexpected error
           content:
@@ -2299,6 +2340,7 @@ paths:
     parameters:
       - $ref: '#/components/parameters/CollectionIdArrayQuery'
       - $ref: '#/components/parameters/BenchmarkIdArrayQuery'
+      - $ref: '#/components/parameters/MetricsFormatQuery'
     get:
       tags:
         - Metrics
@@ -2313,6 +2355,9 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/MetricsSummaryAggCollection'
+            text/csv:
+              schema:
+                type: string
         default:
           description: unexpected error
           content:
@@ -2326,6 +2371,7 @@ paths:
     parameters:
       - $ref: '#/components/parameters/CollectionIdArrayQuery'
       - $ref: '#/components/parameters/BenchmarkIdArrayQuery'
+      - $ref: '#/components/parameters/MetricsFormatQuery'
     get:
       tags:
         - Metrics
@@ -2340,6 +2386,9 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/CollectionStatus'
+            text/csv:
+              schema:
+                type: string
         default:
           description: unexpected error
           content:
@@ -2354,6 +2403,7 @@ paths:
     parameters:
       - $ref: '#/components/parameters/CollectionIdArrayQuery'
       - $ref: '#/components/parameters/BenchmarkIdArrayQuery'
+      - $ref: '#/components/parameters/MetricsFormatQuery'
     get:
       tags:
         - Metrics
@@ -2366,6 +2416,9 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/MetricsSummaryAggCollections'
+            text/csv:
+              schema:
+                type: string
 
         default:
           description: unexpected error
@@ -2381,6 +2434,7 @@ paths:
     parameters:
       - $ref: '#/components/parameters/CollectionIdArrayQuery'
       - $ref: '#/components/parameters/BenchmarkIdArrayQuery'
+      - $ref: '#/components/parameters/MetricsFormatQuery'
     get:
       tags:
         - Metrics
@@ -2395,6 +2449,9 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/MetricsSummaryAggCollection'
+            text/csv:
+              schema:
+                type: string
         default:
           description: unexpected error
           content:
@@ -2408,6 +2465,7 @@ paths:
     parameters:
       - $ref: '#/components/parameters/CollectionIdArrayQuery'
       - $ref: '#/components/parameters/BenchmarkIdArrayQuery'
+      - $ref: '#/components/parameters/MetricsFormatQuery'
     get:
       tags:
         - Metrics
@@ -2422,6 +2480,9 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/CollectionStatus'
+            text/csv:
+              schema:
+                type: string
         default:
           description: unexpected error
           content:
@@ -5090,7 +5151,7 @@ components:
                 high:
                   type: integer
           
-          
+              
         
 
     ResultEngine:
@@ -6333,6 +6394,16 @@ components:
         items:
           pattern: '^([\w\.]+\:.*?)$'
           type: string
+    MetricsFormatQuery:
+      name: format
+      in: query
+      description: The format of the response
+      schema:
+        type: string
+        default: 'json'
+        enum:
+          - json
+          - csv
     NameQuery:
       name: name
       in: query

@@ -2,20 +2,19 @@ const dbUtils = require('./utils')
 const stream = require('node:stream')
 
 // metrics endpoint helpers
-function totalResultEngineObject (field) {
+function serializeDetailObject (field) {
   return `'${field}', json_object('total',sa.${field},'resultEngine',sa.${field}ResultEngine)`
 }
-function totalResultEngineColumns (field) {
+function serializeDetailColumns (field) {
   return [
     `sa.${field}`,
     `sa.${field}ResultEngine`
   ]
 }
-
-function totalResultEngineAggObject (field) {
+function serializeDetailAggObject (field) {
   return `'${field}', json_object('total',coalesce(sum(sa.${field}),0),'resultEngine',coalesce(sum(sa.${field}ResultEngine),0))`
 }
-function totalResultEngineAggColumns (field) {
+function serializeDetailAggColumns (field) {
   return [
     `coalesce(sum(sa.${field}),0) as "${field}"`,
     `coalesce(sum(sa.${field}ResultEngine),0) as "${field}ResultEngine"`
@@ -31,7 +30,7 @@ function serializeProperties (props, aggregate = false) {
   return result
 }
 
-function propertyColumns (props, aggregate = false) {
+function serializeColumns (props, aggregate = false) {
   const columns = []
   for (const [key, value] of Object.entries(props)) {
     columns.push(`${aggregate ? `coalesce(sum(${value}),0)` : value} as "${key}"`)
@@ -63,12 +62,12 @@ const findings = {
 
 function summaryColumns (aggregate = false) {
   return [
-    ...propertyColumns(rootProperties, aggregate),
+    ...serializeColumns(rootProperties, aggregate),
     `DATE_FORMAT(${aggregate ? 'MIN(sa.minTs)':'sa.minTs'}, '%Y-%m-%dT%H:%i:%sZ') as minTs`,
     `DATE_FORMAT(${aggregate ? 'MAX(sa.maxTs)':'sa.maxTs'}, '%Y-%m-%dT%H:%i:%sZ') as maxTs`,
-    ...propertyColumns(results, aggregate),
-    ...propertyColumns(statuses, aggregate),
-    ...propertyColumns(findings, aggregate)
+    ...serializeColumns(findings, aggregate),
+    ...serializeColumns(results, aggregate),
+    ...serializeColumns(statuses, aggregate)
   ]
 }
 
@@ -88,12 +87,18 @@ function summaryObject (aggregate = false) {
   )
 )`
 }
+
 function detailsObject (fields, aggregate = false) {
-  const detailsFn = aggregate ? totalResultEngineAggObject : totalResultEngineObject
+  const detailsFn = aggregate ? serializeDetailAggObject : serializeDetailObject
   const detailVals = fields.map( field => detailsFn(field) )
   return `json_object(
     ${detailVals.join(',\n')}
   )`
+}
+
+function detailsColumns (aggregate = false) {
+  const detailsFn = aggregate ? serializeDetailAggColumns : serializeDetailColumns
+  return detailsFn(fields)
 }
 
 const sqlDetailStatuses = detailsObject([
@@ -149,7 +154,6 @@ const sqlMetricsDetail = `json_object(
   'statuses', ${sqlDetailStatuses},
   'results', ${sqlDetailResults}
 ) as metrics`
-
 const sqlMetricsDetailAgg = `json_object(
   ${serializeProperties(rootProperties, true)},
   'minTs', DATE_FORMAT(MIN(sa.minTs), '%Y-%m-%dT%H:%i:%sZ'),
@@ -158,13 +162,81 @@ const sqlMetricsDetailAgg = `json_object(
   'statuses', ${sqlDetailStatusesAgg},
   'results', ${sqlDetailResultsAgg}
 ) as metrics`
-
 const sqlMetricsSummary = `${summaryObject(false)} as metrics`
 const sqlMetricsSummaryAgg = `${summaryObject(true)} as metrics`
 
+const colsMetricsDetail = [
+  `cr.ruleCount as assessments`,
+  `sa.pass + sa.fail + sa.notapplicable as assessed`,
+  `DATE_FORMAT(sa.minTs, '%Y-%m-%dT%H:%i:%sZ') as minTs`,
+  `DATE_FORMAT(sa.maxTs, '%Y-%m-%dT%H:%i:%sZ') as maxTs`,
+  `sa.lowCount as low`,
+  `sa.mediumCount as medium`,
+  `sa.highCount as high`,
+  `sa.saved`,
+  `sa.savedResultEngine`,
+  `sa.submitted`,
+  `sa.submittedResultEngine`,
+  `sa.accepted`,
+  `sa.acceptedResultEngine`,
+  `sa.rejected`,
+  `sa.rejectedResultEngine`,
+  `sa.pass`,
+  `sa.passResultEngine`,
+  `sa.fail`,
+  `sa.failResultEngine`,
+  `sa.notapplicable`,
+  `sa.notapplicableResultEngine`,
+  `sa.notchecked`,
+  `sa.notcheckedResultEngine`,
+  `sa.unknown`,
+  `sa.unknownResultEngine`,
+  `sa.error`,
+  `sa.errorResultEngine`,
+  `sa.notselected`,
+  `sa.notselectedResultEngine`,
+  `sa.informational`,
+  `sa.informationalResultEngine`,
+  `sa.fixed`,
+  `sa.fixedResultEngine`,
+]
+const colsMetricsDetailAgg = [
+  `coalesce(sum(cr.ruleCount),0) as assessments`,
+  `coalesce(sum(sa.pass + sa.fail + sa.notapplicable),0) as assessed`,
+  `DATE_FORMAT(min(sa.minTs), '%Y-%m-%dT%H:%i:%sZ') as minTs`,
+  `DATE_FORMAT(max(sa.maxTs), '%Y-%m-%dT%H:%i:%sZ') as maxTs`,
+  `coalesce(sum(sa.lowCount),0) as low`,
+  `coalesce(sum(sa.mediumCount),0) as medium`,
+  `coalesce(sum(sa.highCount),0) as high`,
+  `coalesce(sum(sa.saved),0) as saved`,
+  `coalesce(sum(sa.savedResultEngine),0) as savedResultEngine`,
+  `coalesce(sum(sa.submitted),0) as submitted`,
+  `coalesce(sum(sa.submittedResultEngine),0) as submittedResultEngine`,
+  `coalesce(sum(sa.accepted),0) as accepted`,
+  `coalesce(sum(sa.acceptedResultEngine),0) as acceptedResultEngine`,
+  `coalesce(sum(sa.rejected),0) as rejected`,
+  `coalesce(sum(sa.rejectedResultEngine),0) as rejectedResultEngine`,
+  `coalesce(sum(sa.pass),0) as pass`,
+  `coalesce(sum(sa.passResultEngine),0) as passResultEngine`,
+  `coalesce(sum(sa.fail),0) as fail`,
+  `coalesce(sum(sa.failResultEngine),0) as failResultEngine`,
+  `coalesce(sum(sa.notapplicable),0) as notapplicable`,
+  `coalesce(sum(sa.notapplicableResultEngine),0) as notapplicableResultEngine`,
+  `coalesce(sum(sa.notchecked),0) as notchecked`,
+  `coalesce(sum(sa.notcheckedResultEngine),0) as notcheckedResultEngine`,
+  `coalesce(sum(sa.unknown),0) as unknown`,
+  `coalesce(sum(sa.unknownResultEngine),0) as unknownResultEngine`,
+  `coalesce(sum(sa.error),0) as error`,
+  `coalesce(sum(sa.errorResultEngine),0) as errorResultEngine`,
+  `coalesce(sum(sa.notselected),0) as notselected`,
+  `coalesce(sum(sa.notselectedResultEngine),0) as notselectedResultEngine`,
+  `coalesce(sum(sa.informational),0) as informational`,
+  `coalesce(sum(sa.informationalResultEngine),0) as informationalResultEngine`,
+  `coalesce(sum(sa.fixed),0) as fixed`,
+  `coalesce(sum(sa.fixedResultEngine),0) as fixedResultEngine`
+]
 const colsMetricsSummary = summaryColumns(false)
 const colsMetricsSummaryAgg = summaryColumns(true)
-
 
 const sqlLabels = `coalesce(
   (select
@@ -366,7 +438,15 @@ module.exports.queryMetrics = async function ({
  }
 
   if (style === 'detail') {
-    columns.push( aggregation === 'unagg' ? sqlMetricsDetail : sqlMetricsDetailAgg)
+    if (returnType === 'csv' && aggregation === 'unagg') {
+      columns.push(...colsMetricsDetail)
+    }
+    else if (returnType === 'csv') {
+      columns.push(...colsMetricsDetailAgg)
+    }
+    else {
+      columns.push( aggregation === 'unagg' ? sqlMetricsDetail : sqlMetricsDetailAgg)
+    }
   }
   else {
     if (returnType === 'csv' && aggregation === 'unagg') {

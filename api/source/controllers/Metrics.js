@@ -3,10 +3,12 @@ const MetricsSvc = require(`../service/${config.database.type}/MetricsService`)
 const Collection = require('./Collection')
 const Security = require('../utils/accessLevels')
 const SmError = require('../utils/error')
+const {stringify: csvStringify} = require('csv-stringify/sync')
 
 async function getCollectionMetrics (req, res, next, {style, aggregation, firstRowOnly = false}) {
   try {
     const collectionId = Collection.getCollectionIdAndCheckPermission(req, Security.ACCESS_LEVEL.Restricted)
+    const returnType = req.query.format
     const inPredicates = {
       collectionId,
       labelNames: req.query.labelName,
@@ -18,9 +20,16 @@ async function getCollectionMetrics (req, res, next, {style, aggregation, firstR
       inPredicates,
       userId: req.userObject.userId,
       style,
-      aggregation
+      aggregation,
+      returnType 
     })
-    res.json(firstRowOnly ? rows[0] : rows)
+    if (returnType === 'csv') {
+      res.type('text/csv')
+      res.send(csvStringify(rows, {header: true}))
+    }
+    else {
+      res.json(firstRowOnly ? rows[0] : rows)
+    }
   }
   catch (e) {
     next(e)
