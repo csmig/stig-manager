@@ -8,7 +8,7 @@ const {stringify: csvStringify} = require('csv-stringify/sync')
 async function getCollectionMetrics (req, res, next, {style, aggregation, firstRowOnly = false}) {
   try {
     const collectionId = Collection.getCollectionIdAndCheckPermission(req, Security.ACCESS_LEVEL.Restricted)
-    const returnType = req.query.format
+    const returnType = req.query.attachment || 'json'
     const inPredicates = {
       collectionId,
       labelNames: req.query.labelName,
@@ -23,6 +23,9 @@ async function getCollectionMetrics (req, res, next, {style, aggregation, firstR
       aggregation,
       returnType 
     })
+    if (req.query.attachment) {
+      res.attachment(`${aggregation}-${style}.${req.query.attachment}`)
+    }
     if (returnType === 'csv') {
       res.type('text/csv')
       res.send(csvStringify(rows, {header: true}))

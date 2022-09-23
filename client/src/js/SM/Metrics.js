@@ -766,6 +766,7 @@ SM.Metrics.FindingsPanel = Ext.extend(Ext.Panel, {
 SM.Metrics.ExportPanel = Ext.extend(Ext.Panel, {
   initComponent: function () {
     const _this = this
+    const collectionId = this.collectionId
 
     const formatComboBox = new Ext.form.ComboBox({
       mode: 'local',
@@ -854,16 +855,33 @@ SM.Metrics.ExportPanel = Ext.extend(Ext.Panel, {
         top: '-52px',
         left: '255px'
       },
-      handler: function () {
+      handler: async function () {
+        const format = formatComboBox.getValue()
+        const style = styleComboBox.getValue()
+        const agg = aggComboBox.getValue() 
+        const url = `${STIGMAN.Env.apiBase}/collections/${collectionId}/metrics/${style}${agg === 'unagg' ? '' : `/${agg}`}?attachment=${format}`
+        await window.oidcProvider.updateToken(10)
+        const fetchInit = {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${window.oidcProvider.token}`,
+            'Accept': `${format === 'csv' ? 'text/csv' : 'application/json'}`
+          }     
+        }
+        const href = await SM.ServiceWorker.getDownloadUrl({ url, ...fetchInit })
+        if (href) {
+          // window.location = href
+          let a = window.document.createElement("a");
+          a.style.display= "none";
+          a.href = href;
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+    
+        }
       }
     })
 
-    const tpl = new Ext.XTemplate(
-      '<div class="sm-metrics-export-panel">',
-      `Export Collection summary - JSON/CSV<br>`,
-      `Export Collection details - JSON/CSV`,
-      '</div>'
-    )
     const config = {
       layout: 'form',
       items:[
@@ -880,6 +898,7 @@ SM.Metrics.ExportPanel = Ext.extend(Ext.Panel, {
 
 SM.Metrics.OverviewPanel = Ext.extend(Ext.Panel, {
   initComponent: function () {
+    const collectionId = this.collectionId
     const progressPanel = new SM.Metrics.ProgressPanel({
       cls: 'sm-round-inner-panel',
       bodyStyle: 'padding: 15px;',
@@ -907,7 +926,7 @@ SM.Metrics.OverviewPanel = Ext.extend(Ext.Panel, {
       title: 'Export metrics',
       border: true,
       height: 140,
-      metrics: this.metrics
+      collectionId
     })
     const config = {
       border: false,
