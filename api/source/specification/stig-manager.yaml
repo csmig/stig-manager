@@ -1975,7 +1975,7 @@ paths:
       - $ref: '#/components/parameters/AssetIdArrayQuery'
       - $ref: '#/components/parameters/LabelIdQuery'
       - $ref: '#/components/parameters/LabelNameQuery'
-      - $ref: '#/components/parameters/MetricsAttachmentQuery'
+      - $ref: '#/components/parameters/MetricsFormatQuery'
     get:
       tags:
         - Metrics
@@ -2009,7 +2009,7 @@ paths:
       - $ref: '#/components/parameters/AssetIdArrayQuery'
       - $ref: '#/components/parameters/LabelIdQuery'
       - $ref: '#/components/parameters/LabelNameQuery'
-      - $ref: '#/components/parameters/MetricsAttachmentQuery'
+      - $ref: '#/components/parameters/MetricsFormatQuery'
     get:
       tags:
         - Metrics
@@ -2043,7 +2043,7 @@ paths:
       - $ref: '#/components/parameters/AssetIdArrayQuery'
       - $ref: '#/components/parameters/LabelIdQuery'
       - $ref: '#/components/parameters/LabelNameQuery'
-      - $ref: '#/components/parameters/MetricsAttachmentQuery'
+      - $ref: '#/components/parameters/MetricsFormatQuery'
     get:
       tags:
         - Metrics
@@ -2075,7 +2075,7 @@ paths:
       - $ref: '#/components/parameters/AssetIdArrayQuery'
       - $ref: '#/components/parameters/LabelIdQuery'
       - $ref: '#/components/parameters/LabelNameQuery'
-      - $ref: '#/components/parameters/MetricsAttachmentQuery'
+      - $ref: '#/components/parameters/MetricsFormatQuery'
     get:
       tags:
         - Metrics
@@ -2109,7 +2109,7 @@ paths:
       - $ref: '#/components/parameters/AssetIdArrayQuery'
       - $ref: '#/components/parameters/LabelIdQuery'
       - $ref: '#/components/parameters/LabelNameQuery'
-      - $ref: '#/components/parameters/MetricsAttachmentQuery'
+      - $ref: '#/components/parameters/MetricsFormatQuery'
     get:
       tags:
         - Metrics
@@ -2144,7 +2144,7 @@ paths:
       - $ref: '#/components/parameters/AssetIdArrayQuery'
       - $ref: '#/components/parameters/LabelIdQuery'
       - $ref: '#/components/parameters/LabelNameQuery'
-      - $ref: '#/components/parameters/MetricsAttachmentQuery'
+      - $ref: '#/components/parameters/MetricsFormatQuery'
     get:
       tags:
         - Metrics
@@ -2178,7 +2178,7 @@ paths:
       - $ref: '#/components/parameters/AssetIdArrayQuery'
       - $ref: '#/components/parameters/LabelIdQuery'
       - $ref: '#/components/parameters/LabelNameQuery'
-      - $ref: '#/components/parameters/MetricsAttachmentQuery'
+      - $ref: '#/components/parameters/MetricsFormatQuery'
     get:
       tags:
         - Metrics
@@ -2212,7 +2212,7 @@ paths:
       - $ref: '#/components/parameters/AssetIdArrayQuery'
       - $ref: '#/components/parameters/LabelIdQuery'
       - $ref: '#/components/parameters/LabelNameQuery'
-      - $ref: '#/components/parameters/MetricsAttachmentQuery'
+      - $ref: '#/components/parameters/MetricsFormatQuery'
     get:
       tags:
         - Metrics
@@ -2244,7 +2244,7 @@ paths:
       - $ref: '#/components/parameters/AssetIdArrayQuery'
       - $ref: '#/components/parameters/LabelIdQuery'
       - $ref: '#/components/parameters/LabelNameQuery'
-      - $ref: '#/components/parameters/MetricsAttachmentQuery'
+      - $ref: '#/components/parameters/MetricsFormatQuery'
     get:
       tags:
         - Metrics
@@ -2278,7 +2278,7 @@ paths:
       - $ref: '#/components/parameters/AssetIdArrayQuery'
       - $ref: '#/components/parameters/LabelIdQuery'
       - $ref: '#/components/parameters/LabelNameQuery'
-      - $ref: '#/components/parameters/MetricsAttachmentQuery'
+      - $ref: '#/components/parameters/MetricsFormatQuery'
     get:
       tags:
         - Metrics
@@ -2310,7 +2310,7 @@ paths:
     parameters:
       - $ref: '#/components/parameters/CollectionIdArrayQuery'
       - $ref: '#/components/parameters/BenchmarkIdArrayQuery'
-      - $ref: '#/components/parameters/MetricsAttachmentQuery'
+      - $ref: '#/components/parameters/MetricsFormatQuery'
     get:
       tags:
         - Metrics
@@ -2340,7 +2340,7 @@ paths:
     parameters:
       - $ref: '#/components/parameters/CollectionIdArrayQuery'
       - $ref: '#/components/parameters/BenchmarkIdArrayQuery'
-      - $ref: '#/components/parameters/MetricsAttachmentQuery'
+      - $ref: '#/components/parameters/MetricsFormatQuery'
     get:
       tags:
         - Metrics
@@ -2371,7 +2371,7 @@ paths:
     parameters:
       - $ref: '#/components/parameters/CollectionIdArrayQuery'
       - $ref: '#/components/parameters/BenchmarkIdArrayQuery'
-      - $ref: '#/components/parameters/MetricsAttachmentQuery'
+      - $ref: '#/components/parameters/MetricsFormatQuery'
     get:
       tags:
         - Metrics
@@ -2403,7 +2403,7 @@ paths:
     parameters:
       - $ref: '#/components/parameters/CollectionIdArrayQuery'
       - $ref: '#/components/parameters/BenchmarkIdArrayQuery'
-      - $ref: '#/components/parameters/MetricsAttachmentQuery'
+      - $ref: '#/components/parameters/MetricsFormatQuery'
     get:
       tags:
         - Metrics
@@ -2434,7 +2434,7 @@ paths:
     parameters:
       - $ref: '#/components/parameters/CollectionIdArrayQuery'
       - $ref: '#/components/parameters/BenchmarkIdArrayQuery'
-      - $ref: '#/components/parameters/MetricsAttachmentQuery'
+      - $ref: '#/components/parameters/MetricsFormatQuery'
     get:
       tags:
         - Metrics
@@ -2465,7 +2465,7 @@ paths:
     parameters:
       - $ref: '#/components/parameters/CollectionIdArrayQuery'
       - $ref: '#/components/parameters/BenchmarkIdArrayQuery'
-      - $ref: '#/components/parameters/MetricsAttachmentQuery'
+      - $ref: '#/components/parameters/MetricsFormatQuery'
     get:
       tags:
         - Metrics
@@ -6396,12 +6396,13 @@ components:
         items:
           pattern: '^([\w\.]+\:.*?)$'
           type: string
-    MetricsAttachmentQuery:
-      name: attachment
+    MetricsFormatQuery:
+      name: format
       in: query
-      description: Enable Content-Disposition
+      description: The format of the response body
       schema:
         type: string
+        default: 'json'
         enum:
           - json
           - csv

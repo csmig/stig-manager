@@ -859,26 +859,29 @@ SM.Metrics.ExportPanel = Ext.extend(Ext.Panel, {
         const format = formatComboBox.getValue()
         const style = styleComboBox.getValue()
         const agg = aggComboBox.getValue() 
-        const url = `${STIGMAN.Env.apiBase}/collections/${collectionId}/metrics/${style}${agg === 'unagg' ? '' : `/${agg}`}?attachment=${format}`
+        const url = `${STIGMAN.Env.apiBase}/collections/${collectionId}/metrics/${style}${agg === 'unagg' ? '' : `/${agg}`}?format=${format}`
+        const attachment = `${agg}-${style}.${format}` 
         await window.oidcProvider.updateToken(10)
         const fetchInit = {
           method: 'GET',
           headers: {
             'Authorization': `Bearer ${window.oidcProvider.token}`,
             'Accept': `${format === 'csv' ? 'text/csv' : 'application/json'}`
-          }     
+          },
+          attachment 
         }
         const href = await SM.ServiceWorker.getDownloadUrl({ url, ...fetchInit })
         if (href) {
-          // window.location = href
-          let a = window.document.createElement("a");
-          a.style.display= "none";
-          a.href = href;
-          document.body.appendChild(a);
-          a.click();
-          document.body.removeChild(a);
-    
+          window.location = href
+          return
         }
+        const response = await fetch(url, fetchInit)
+        if (!response.ok) {
+          const body = await response.text()
+          throw new Error(`Request failed with status ${response.status}\n${body}`)
+        }
+        const blob = await response.blob()
+        saveAs(blob, attachment)
       }
     })
 
