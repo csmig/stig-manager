@@ -1,3 +1,31 @@
+:root {
+	--metrics-progress-chart-assessed: hsl(146deg 60% 69%);
+	--metrics-progress-chart-submitted: hsl(283deg 39% 79%);
+	--metrics-progress-chart-accepted: hsl(204deg 71% 81%);
+	--metrics-progress-chart-unassessed: hsl(0deg 0% 93%);
+	--metrics-progress-chart-unsaved: hsl(0deg 0% 93%);
+	--metrics-progress-chart-rejected: hsl(5deg 77% 83%);
+}
+
+.sm-metrics-progress-table .sm-metrics-assessed {
+	background-color: var(--metrics-progress-chart-assessed)
+}
+.sm-metrics-progress-table .sm-metrics-submitted {
+	background-color: var(--metrics-progress-chart-submitted)
+}
+.sm-metrics-progress-table .sm-metrics-accepted {
+	background-color: var(--metrics-progress-chart-accepted)
+}
+.sm-metrics-progress-table .sm-metrics-unassessed {
+	background-color: var(--metrics-progress-chart-unassessed)
+}
+.sm-metrics-progress-table .sm-metrics-unsaved {
+	background-color: var(--metrics-progress-chart-unsaved)
+}
+.sm-metrics-progress-table .sm-metrics-rejected {
+	background-color: var(--metrics-progress-chart-rejected)
+}
+
 .sm-metrics-count-parent {
 	text-align: center;
 	color: #111;

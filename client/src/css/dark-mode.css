@@ -39,11 +39,24 @@ select:-webkit-autofill {
 
 /* Variables Style */
 :root {
-   --darkreader-neutral-background: hsl(200deg 7% 8%);
+   --darkreader-neutral-background:
+   hsl(200deg 7% 8%);
    --darkreader-neutral-text: #d8d4cf;
    --darkreader-selection-background: #004daa;
    --darkreader-selection-text: #e8e6e3;
    color-scheme: dark;
+	--metrics-progress-chart-assessed:
+   hsl(146deg 90% 25%);
+	--metrics-progress-chart-submitted:
+   hsl(283deg 90% 25%);
+	--metrics-progress-chart-accepted:
+   hsl(204deg 90% 25%);
+	--metrics-progress-chart-unassessed:
+   hsl(0deg 0% 25%);
+	--metrics-progress-chart-unsaved:
+   hsl(0deg 0% 25%);
+	--metrics-progress-chart-rejected:
+   hsl(5deg 90% 25%);
 }
 
 /* Modified CSS */

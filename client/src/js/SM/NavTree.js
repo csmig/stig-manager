@@ -815,6 +815,7 @@ SM.AppNavTree = Ext.extend(Ext.tree.TreePanel, {
                       checkchange: function (node, checked) {
                         document.querySelector("link[href='css/dark-mode.css']").disabled = !checked
                         localStorage.setItem('darkMode', checked ? '1' : '0')
+                        SM.Dispatcher.fireEvent('themechanged', checked ? 'dark' : 'light')
                       }
                     }
                   }
