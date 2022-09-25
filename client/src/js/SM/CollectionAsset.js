@@ -139,7 +139,7 @@ SM.CollectionAssetGrid = Ext.extend(Ext.grid.GridPanel, {
             sm,
             { 	
 				header: "Asset",
-                id: assetColumnId,
+                // id: assetColumnId,
 				width: 175,
                 dataIndex: 'name',
 				sortable: true,

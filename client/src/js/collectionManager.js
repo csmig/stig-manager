@@ -42,6 +42,8 @@ async function addCollectionManager( params ) {
 			allowDelete: collectionGrant.accessLevel === 4
 		})
 		let assetGrid = new SM.CollectionAssetGrid({
+			stateful: true,
+			stateId: `${collectionId}-manager-asset-grid`,
 			collectionId: collectionId,
 			collectionName: collectionName,
 			apiFieldSettings: apiFieldSettings,
