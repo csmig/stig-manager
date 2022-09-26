@@ -435,7 +435,10 @@ module.exports.queryMetrics = async function ({
       groupBy.push('cl.uuid', 'cl.name')
       orderBy.push('cl.name')
       break
- }
+    case 'unagg':
+      predicates.statements.push('sa.benchmarkId IS NOT NULL')
+      break
+  }
 
   if (style === 'detail') {
     if (returnType === 'csv' && aggregation === 'unagg') {

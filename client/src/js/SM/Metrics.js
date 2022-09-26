@@ -632,12 +632,13 @@ SM.Metrics.ProgressPanel = Ext.extend(Ext.Panel, {
   initComponent: function () {
 
     const metricCalcs = {
-      unassessed: (this.metrics.assessments - this.metrics.assessed - this.metrics.results.other) + this.metrics.results.other, // (unsaved) + saved:unassessed
+      unassessed: this.metrics.assessments - this.metrics.assessed,
       assessed: this.metrics.statuses.saved - this.metrics.results.other,
       submitted: this.metrics.statuses.submitted,
       accepted: this.metrics.statuses.accepted,
       rejected: this.metrics.statuses.rejected,
-      assessments: this.metrics.assessments
+      assessments: this.metrics.assessments,
+      apiAssessed: this.metrics.assessed
     }
     
     const chartOptions = {
@@ -690,7 +691,7 @@ SM.Metrics.ProgressPanel = Ext.extend(Ext.Panel, {
     SM.Dispatcher.addListener('themechanged', onThemeChanged)
 
     const dataTpl = [
-      `<div class="sm-metrics-progress-pct">{[(values.assessed/values.assessments * 100).toFixed(2)]}% assessed</div>`,
+      `<div class="sm-metrics-progress-pct">{[(values.apiAssessed/values.assessments * 100).toFixed(1)]}% assessed</div>`,
       '<table class="sm-metrics-progress-table" style="margin: 0 auto;">',
       '<tbody>',
       '<tr><td class="sm-metrics-label sm-metrics-unassessed">Unassessed</td><td class="sm-metrics-value">{unassessed}</td></tr>',
