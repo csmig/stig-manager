@@ -12,6 +12,7 @@ async function getCollectionMetrics (req, res, next, {style, aggregation, firstR
     const inPredicates = {
       collectionId,
       labelNames: req.query.labelName,
+      labelMatch: req.query.labelMatch,
       labelIds: req.query.labelId,
       assetIds: req.query.assetId,
       benchmarkIds: req.query.benchmarkId,

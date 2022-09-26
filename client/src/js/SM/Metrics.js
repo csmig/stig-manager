@@ -1068,9 +1068,14 @@ SM.Metrics.AggLabelPanel = Ext.extend(Ext.Panel, {
       height: '33%'
     })
     async function onRowSelectLabel (cm, index, record) {
-      await aggAssetGrid.store.loadPromise({
-        labelId: record.data.labelId
-      })
+      const params = {}
+      if (record.data.labelId) {
+        params.labelId = record.data.labelId
+      }
+      else {
+        params.labelMatch = 'null'
+      }
+      await aggAssetGrid.store.loadPromise(params)
       unaggGrid.store.removeAll()
       aggAssetGrid.setTitle(`Assets for ${record.data.name}`)
     }

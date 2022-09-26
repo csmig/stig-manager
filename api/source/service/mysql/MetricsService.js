@@ -356,7 +356,7 @@ module.exports.queryMetrics = async function ({
       ]
     }
   }
-  if (inPredicates.labelNames || inPredicates.labelIds) {
+  if (inPredicates.labelNames || inPredicates.labelIds || inPredicates.labelMatch) {
     cteProps.joins.push(
       'left join collection_label_asset_map cla on a.assetId = cla.assetId',
       'left join collection_label cl on cla.clId = cl.clId'
@@ -370,6 +370,9 @@ module.exports.queryMetrics = async function ({
       const uuidBinds = inPredicates.labelIds.map( uuid => dbUtils.uuidToSqlString(uuid))
       cteProps.predicates.binds.push([uuidBinds]) 
       labelPredicates.push('cl.uuid IN ?')
+    }
+    if (inPredicates.labelMatch === 'null') {
+      labelPredicates.push('cl.uuid IS NULL')
     }
     cteProps.predicates.statements.push(
       `(${labelPredicates.join(' OR ')})`
