@@ -10,7 +10,7 @@
 	--metrics-progress-chart-unsaved-light:
 	hsl(0deg 0% 93%);
 	--metrics-progress-chart-rejected-light:
-	hsl(5deg 77% 83%);
+	hsl(0deg 0% 70%);
 
 	--metrics-progress-chart-assessed-dark:
 	hsl(204deg 90% 25%);
@@ -64,16 +64,16 @@
 	background-color: var(--metrics-progress-chart-assessed-light);
 }
 .sm-metrics-progress-table .sm-metrics-submitted {
-	background-color: var(--metrics-progress-chart-submitted-light)
+	background-color: var(--metrics-progress-chart-submitted-light);
 }
 .sm-metrics-progress-table .sm-metrics-accepted {
-	background-color: var(--metrics-progress-chart-accepted-light)
+	background-color: var(--metrics-progress-chart-accepted-light);
 }
 .sm-metrics-progress-table .sm-metrics-unassessed {
-	background-color: var(--metrics-progress-chart-unassessed-light)
+	background-color: var(--metrics-progress-chart-unassessed-light);
 }
 .sm-metrics-progress-table .sm-metrics-unsaved {
-	background-color: var(--metrics-progress-chart-unsaved-light)
+	background-color: var(--metrics-progress-chart-unsaved-light);
 }
 .sm-metrics-progress-table .sm-metrics-rejected {
 	background-color: var(--metrics-progress-chart-rejected-light)

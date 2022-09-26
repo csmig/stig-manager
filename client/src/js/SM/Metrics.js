@@ -650,14 +650,14 @@ SM.Metrics.ProgressPanel = Ext.extend(Ext.Panel, {
             metricCalcs.submitted, // Submitted
             metricCalcs.accepted, // Accepted
             metricCalcs.unassessed, // Unassessed
-            metricCalcs.unassessed.rejected // Rejected         
+            metricCalcs.rejected // Rejected         
           ],
           backgroundColor: SM.Metrics.ProgressPanelColors(localStorage.getItem('darkMode') === '1' ? 'dark' : 'light'),
           borderWidth: [1, 1],
           borderColor: '#bbbbbb'
         }],
         labels: [
-          'Assessed',
+          'Saved',
           'Submitted',
           'Accepted',
           'Unassessed',
@@ -695,7 +695,7 @@ SM.Metrics.ProgressPanel = Ext.extend(Ext.Panel, {
       '<table class="sm-metrics-progress-table" style="margin: 0 auto;">',
       '<tbody>',
       '<tr><td class="sm-metrics-label sm-metrics-unassessed">Unassessed</td><td class="sm-metrics-value">{unassessed}</td></tr>',
-      '<tr><td class="sm-metrics-label sm-metrics-assessed">Assessed</td><td class="sm-metrics-value">{assessed}</td></tr>',
+      '<tr><td class="sm-metrics-label sm-metrics-assessed">Saved</td><td class="sm-metrics-value">{assessed}</td></tr>',
       '<tr><td class="sm-metrics-label sm-metrics-submitted">Submitted</td><td class="sm-metrics-value">{submitted}</td></tr>',
       '<tr><td class="sm-metrics-label sm-metrics-accepted">Accepted</td><td class="sm-metrics-value">{accepted}</td></tr>',
       '<tr><td class="sm-metrics-label sm-metrics-rejected">Rejected</td><td class="sm-metrics-value">{rejected}</td></tr>',
@@ -916,7 +916,7 @@ SM.Metrics.OverviewPanel = Ext.extend(Ext.Panel, {
     const progressPanel = new SM.Metrics.ProgressPanel({
       cls: 'sm-round-inner-panel',
       bodyStyle: 'padding: 15px;',
-      title: 'Progress',
+      title: 'Assessment Status',
       border: true,
       metrics: this.metrics
     })
