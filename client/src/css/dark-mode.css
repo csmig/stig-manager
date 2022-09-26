@@ -45,21 +45,28 @@ select:-webkit-autofill {
    --darkreader-selection-background: #004daa;
    --darkreader-selection-text: #e8e6e3;
    color-scheme: dark;
-	--metrics-progress-chart-assessed:
-   hsl(146deg 90% 25%);
-	--metrics-progress-chart-submitted:
-   hsl(283deg 90% 25%);
-	--metrics-progress-chart-accepted:
-   hsl(204deg 90% 25%);
-	--metrics-progress-chart-unassessed:
-   hsl(0deg 0% 25%);
-	--metrics-progress-chart-unsaved:
-   hsl(0deg 0% 25%);
-	--metrics-progress-chart-rejected:
-   hsl(5deg 90% 25%);
 }
 
 /* Modified CSS */
+
+.sm-metrics-progress-table .sm-metrics-assessed {
+	background-color: var(--metrics-progress-chart-assessed-dark)
+}
+.sm-metrics-progress-table .sm-metrics-submitted {
+	background-color: var(--metrics-progress-chart-submitted-dark)
+}
+.sm-metrics-progress-table .sm-metrics-accepted {
+	background-color: var(--metrics-progress-chart-accepted-dark)
+}
+.sm-metrics-progress-table .sm-metrics-unassessed {
+	background-color: var(--metrics-progress-chart-unassessed-dark)
+}
+.sm-metrics-progress-table .sm-metrics-unsaved {
+	background-color: var(--metrics-progress-chart-unsaved-dark)
+}
+.sm-metrics-progress-table .sm-metrics-rejected {
+	background-color: var(--metrics-progress-chart-rejected-dark)
+}
 
 .sm-metric-agg-panel .x-layout-split {
     background-color: #1f1f1f;

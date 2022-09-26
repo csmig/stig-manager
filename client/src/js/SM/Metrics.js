@@ -616,7 +616,7 @@ SM.Metrics.ChartPanel = Ext.extend(Ext.Panel, {
 
 })
 
-SM.Metrics.ProgressPanelColors = function () {
+SM.Metrics.ProgressPanelColors = function (theme) {
   const style = getComputedStyle(document.documentElement)
   const ordered = [  
     'assessed',
@@ -625,7 +625,7 @@ SM.Metrics.ProgressPanelColors = function () {
     'unassessed',
     'unsaved',
     'rejected'
-  ].map( category => style.getPropertyValue(`--metrics-progress-chart-${category}`))
+  ].map( category => style.getPropertyValue(`--metrics-progress-chart-${category}-${theme}`))
   return ordered
 }
 
@@ -643,7 +643,7 @@ SM.Metrics.ProgressPanel = Ext.extend(Ext.Panel, {
             this.metrics.assessments - this.metrics.assessed - this.metrics.results.other, // Unsaved
             this.metrics.statuses.rejected // Rejected         
           ],
-          backgroundColor: SM.Metrics.ProgressPanelColors(),
+          backgroundColor: SM.Metrics.ProgressPanelColors(localStorage.getItem('darkMode') === '1' ? 'dark' : 'light'),
           borderWidth: [1, 1]
         }],
         labels: [
@@ -668,16 +668,16 @@ SM.Metrics.ProgressPanel = Ext.extend(Ext.Panel, {
     const chartPanel = new SM.Metrics.ChartPanel({
       border: false,
       id: 'chart-panel',
-      width: 150,
-      height: 150,
+      width: 175,
+      height: 175,
       chartOptions
     })
 
     const onThemeChanged = function (theme) {
-      setTimeout( () => {
-        chartPanel.chart.config._config.data.datasets[0].backgroundColor = SM.Metrics.ProgressPanelColors()
+      // setTimeout( () => {
+        chartPanel.chart.config._config.data.datasets[0].backgroundColor = SM.Metrics.ProgressPanelColors(theme)
         chartPanel.chart.update()
-      }, 100)
+      // }, 100)
     }
     SM.Dispatcher.addListener('themechanged', onThemeChanged)
 
@@ -685,13 +685,13 @@ SM.Metrics.ProgressPanel = Ext.extend(Ext.Panel, {
       `<div style="text-align:center;font-size:large;">{[(values.assessed/values.assessments * 100).toFixed(2)]}% assessed</div>`,
       '<table class="sm-metrics-progress-table" style="margin: 0 auto;">',
       '<tbody>',
-      '<tr><td><b>Total Checks</b></td><td><b>{assessments}</b></td></tr>',
-      '<tr><td class="sm-metrics-unsaved">Unsaved</td><td>{[values.assessments - values.assessed - values.results.other]}</td></tr>',
-      '<tr><td class="sm-metrics-unassessed">Saved/Unassessed</td><td>{[values.results.other]}</td></tr>',
-      '<tr><td class="sm-metrics-assessed">Saved/Assessed</td><td>{[values.statuses.saved - values.results.other]}</td></tr>',
-      '<tr><td class="sm-metrics-submitted">Submitted</td><td>{[values.statuses.submitted]}</td></tr>',
-      '<tr><td class="sm-metrics-accepted">Accepted</td><td>{[values.statuses.accepted]}</td></tr>',
-      '<tr><td class="sm-metrics-rejected">Rejected</td><td>{[values.statuses.rejected]}</td></tr>',
+      '<tr><td class="sm-metrics-label sm-metrics-unsaved">Unsaved</td><td class="sm-metrics-value">{[values.assessments - values.assessed - values.results.other]}</td></tr>',
+      '<tr><td class="sm-metrics-label sm-metrics-unassessed">Saved/Unassessed</td><td class="sm-metrics-value">{[values.results.other]}</td></tr>',
+      '<tr><td class="sm-metrics-label sm-metrics-assessed">Saved/Assessed</td><td class="sm-metrics-value">{[values.statuses.saved - values.results.other]}</td></tr>',
+      '<tr><td class="sm-metrics-label sm-metrics-submitted">Submitted</td><td class="sm-metrics-value">{[values.statuses.submitted]}</td></tr>',
+      '<tr><td class="sm-metrics-label sm-metrics-accepted">Accepted</td><td class="sm-metrics-value">{[values.statuses.accepted]}</td></tr>',
+      '<tr><td class="sm-metrics-label sm-metrics-rejected">Rejected</td><td class="sm-metrics-value">{[values.statuses.rejected]}</td></tr>',
+      '<tr class="sm-metrics-total"><td>Total Checks</td><td class="sm-metrics-value">{assessments}</td></tr>',
       '</tbody>',
       '</table>'
     ]

@@ -1,29 +1,72 @@
 :root {
-	--metrics-progress-chart-assessed: hsl(146deg 60% 69%);
-	--metrics-progress-chart-submitted: hsl(283deg 39% 79%);
-	--metrics-progress-chart-accepted: hsl(204deg 71% 81%);
-	--metrics-progress-chart-unassessed: hsl(0deg 0% 93%);
-	--metrics-progress-chart-unsaved: hsl(0deg 0% 93%);
-	--metrics-progress-chart-rejected: hsl(5deg 77% 83%);
+	--metrics-progress-chart-assessed-light:
+	hsl(204deg 71% 81%);
+	--metrics-progress-chart-submitted-light:
+	hsl(87deg 39% 79%);
+	--metrics-progress-chart-accepted-light:
+	hsl(146deg 60% 69%);
+	--metrics-progress-chart-unassessed-light:
+	hsl(0deg 0% 93%);
+	--metrics-progress-chart-unsaved-light:
+	hsl(0deg 0% 93%);
+	--metrics-progress-chart-rejected-light:
+	hsl(5deg 77% 83%);
+
+	--metrics-progress-chart-assessed-dark:
+	hsl(204deg 90% 25%);
+	--metrics-progress-chart-submitted-dark:
+	hsl(87deg 41% 25%);
+	--metrics-progress-chart-accepted-dark:
+	hsl(146deg 90% 25%);
+	--metrics-progress-chart-unassessed-dark:
+	hsl(0 0% 18% / 1);
+	--metrics-progress-chart-unsaved-dark:
+	hsl(0deg 0% 18%);
+	--metrics-progress-chart-rejected-dark:
+	hsl(5deg 90% 25%);
+}
+
+.sm-metrics-progress-table .sm-metrics-total {
+	font-weight: 600;
+}
+.sm-metrics-progress-table .sm-metrics-total td{
+	font-weight: 600;
+	border-top: 1px solid #bbbbbb;
+}
+.sm-metrics-progress-table tr {
+	height: 19px;
+}
+.sm-metrics-progress-table td {
+	padding-left: 4px;
+	padding-right: 4px;
+}
+.sm-metrics-progress-table .sm-metrics-value {
+	text-align: right;
+	padding-left: 10px;
+}
+
+.sm-metrics-progress-table .sm-metrics-label {
+	border: 1px solid #bbbbbb;
+	border-radius: 3px;
 }
 
 .sm-metrics-progress-table .sm-metrics-assessed {
-	background-color: var(--metrics-progress-chart-assessed)
+	background-color: var(--metrics-progress-chart-assessed-light);
 }
 .sm-metrics-progress-table .sm-metrics-submitted {
-	background-color: var(--metrics-progress-chart-submitted)
+	background-color: var(--metrics-progress-chart-submitted-light)
 }
 .sm-metrics-progress-table .sm-metrics-accepted {
-	background-color: var(--metrics-progress-chart-accepted)
+	background-color: var(--metrics-progress-chart-accepted-light)
 }
 .sm-metrics-progress-table .sm-metrics-unassessed {
-	background-color: var(--metrics-progress-chart-unassessed)
+	background-color: var(--metrics-progress-chart-unassessed-light)
 }
 .sm-metrics-progress-table .sm-metrics-unsaved {
-	background-color: var(--metrics-progress-chart-unsaved)
+	background-color: var(--metrics-progress-chart-unsaved-light)
 }
 .sm-metrics-progress-table .sm-metrics-rejected {
-	background-color: var(--metrics-progress-chart-rejected)
+	background-color: var(--metrics-progress-chart-rejected-light)
 }
 
 .sm-metrics-count-parent {
@@ -36,9 +79,11 @@
 	height: 40px;
 	border-radius: 5px;
 	background-color: #eeeeee;
+	border:  1px solid #bbbbbb;
 	padding: 8px 16px;
 	margin: 0px 16px;
 	vertical-align: middle;
+	/* box-shadow: 1px 1px 5px #bbbbbb; */
 }
 .sm-metrics-count-label {
 	font-weight: 600;
