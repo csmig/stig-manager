@@ -49,6 +49,14 @@ select:-webkit-autofill {
 
 /* Modified CSS */
 
+.sm-metrics-progress-table .sm-metrics-label {
+	border: 1px solid #444;
+}
+
+.sm-metrics-progress-table .sm-metrics-total td{
+	border-top: 1px solid #444;
+}
+
 .sm-metrics-progress-table .sm-metrics-assessed {
 	background-color: var(--metrics-progress-chart-assessed-dark)
 }
@@ -67,7 +75,9 @@ select:-webkit-autofill {
 .sm-metrics-progress-table .sm-metrics-rejected {
 	background-color: var(--metrics-progress-chart-rejected-dark)
 }
-
+.sm-metrics-count-child {
+	border:  1px solid #444;
+}
 .sm-metric-agg-panel .x-layout-split {
     background-color: #1f1f1f;
 }

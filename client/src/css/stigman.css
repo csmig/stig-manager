@@ -26,6 +26,16 @@
 	hsl(5deg 90% 25%);
 }
 
+.sm-metrics-progress-table {
+	padding-top: 10px;
+}
+
+.sm-metrics-progress-pct {
+	text-align:center;
+	font-size:large;
+	font-weight: 600;
+}
+
 .sm-metrics-progress-table .sm-metrics-total {
 	font-weight: 600;
 }

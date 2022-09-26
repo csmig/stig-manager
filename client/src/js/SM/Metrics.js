@@ -127,14 +127,14 @@ SM.Metrics.CommonColumns = [
     sortable: true,
     renderer: renderDurationToNow
   },
-  {
-    header: "Saved",
-    width: 75,
-    dataIndex: 'savedPct',
-    align: "center",
-    sortable: true,
-    renderer: renderPct
-  },
+  // {
+  //   header: "Saved",
+  //   width: 75,
+  //   dataIndex: 'savedPct',
+  //   align: "center",
+  //   sortable: true,
+  //   renderer: renderPct
+  // },
   {
     header: "Assessed",
     width: 75,
@@ -623,7 +623,6 @@ SM.Metrics.ProgressPanelColors = function (theme) {
     'submitted',
     'accepted',
     'unassessed',
-    'unsaved',
     'rejected'
   ].map( category => style.getPropertyValue(`--metrics-progress-chart-${category}-${theme}`))
   return ordered
@@ -631,27 +630,36 @@ SM.Metrics.ProgressPanelColors = function (theme) {
 
 SM.Metrics.ProgressPanel = Ext.extend(Ext.Panel, {
   initComponent: function () {
+
+    const metricCalcs = {
+      unassessed: (this.metrics.assessments - this.metrics.assessed - this.metrics.results.other) + this.metrics.results.other, // (unsaved) + saved:unassessed
+      assessed: this.metrics.statuses.saved - this.metrics.results.other,
+      submitted: this.metrics.statuses.submitted,
+      accepted: this.metrics.statuses.accepted,
+      rejected: this.metrics.statuses.rejected,
+      assessments: this.metrics.assessments
+    }
+    
     const chartOptions = {
       type: 'doughnut',
       data: {
         datasets: [{
           data: [
-            this.metrics.statuses.saved - this.metrics.results.other, //Saved/Assessed
-            this.metrics.statuses.submitted, // Submitted
-            this.metrics.statuses.accepted, // Accepted
-            this.metrics.results.other, // Saved/Unassessed
-            this.metrics.assessments - this.metrics.assessed - this.metrics.results.other, // Unsaved
-            this.metrics.statuses.rejected // Rejected         
+            metricCalcs.assessed, //Assessed
+            metricCalcs.submitted, // Submitted
+            metricCalcs.accepted, // Accepted
+            metricCalcs.unassessed, // Unassessed
+            metricCalcs.unassessed.rejected // Rejected         
           ],
           backgroundColor: SM.Metrics.ProgressPanelColors(localStorage.getItem('darkMode') === '1' ? 'dark' : 'light'),
-          borderWidth: [1, 1]
+          borderWidth: [1, 1],
+          borderColor: '#bbbbbb'
         }],
         labels: [
-          'Saved/Assessed',
+          'Assessed',
           'Submitted',
           'Accepted',
-          'Saved/Unassessed',
-          'Unsaved',
+          'Unassessed',
           'Rejected'
         ],
       },
@@ -682,15 +690,14 @@ SM.Metrics.ProgressPanel = Ext.extend(Ext.Panel, {
     SM.Dispatcher.addListener('themechanged', onThemeChanged)
 
     const dataTpl = [
-      `<div style="text-align:center;font-size:large;">{[(values.assessed/values.assessments * 100).toFixed(2)]}% assessed</div>`,
+      `<div class="sm-metrics-progress-pct">{[(values.assessed/values.assessments * 100).toFixed(2)]}% assessed</div>`,
       '<table class="sm-metrics-progress-table" style="margin: 0 auto;">',
       '<tbody>',
-      '<tr><td class="sm-metrics-label sm-metrics-unsaved">Unsaved</td><td class="sm-metrics-value">{[values.assessments - values.assessed - values.results.other]}</td></tr>',
-      '<tr><td class="sm-metrics-label sm-metrics-unassessed">Saved/Unassessed</td><td class="sm-metrics-value">{[values.results.other]}</td></tr>',
-      '<tr><td class="sm-metrics-label sm-metrics-assessed">Saved/Assessed</td><td class="sm-metrics-value">{[values.statuses.saved - values.results.other]}</td></tr>',
-      '<tr><td class="sm-metrics-label sm-metrics-submitted">Submitted</td><td class="sm-metrics-value">{[values.statuses.submitted]}</td></tr>',
-      '<tr><td class="sm-metrics-label sm-metrics-accepted">Accepted</td><td class="sm-metrics-value">{[values.statuses.accepted]}</td></tr>',
-      '<tr><td class="sm-metrics-label sm-metrics-rejected">Rejected</td><td class="sm-metrics-value">{[values.statuses.rejected]}</td></tr>',
+      '<tr><td class="sm-metrics-label sm-metrics-unassessed">Unassessed</td><td class="sm-metrics-value">{unassessed}</td></tr>',
+      '<tr><td class="sm-metrics-label sm-metrics-assessed">Assessed</td><td class="sm-metrics-value">{assessed}</td></tr>',
+      '<tr><td class="sm-metrics-label sm-metrics-submitted">Submitted</td><td class="sm-metrics-value">{submitted}</td></tr>',
+      '<tr><td class="sm-metrics-label sm-metrics-accepted">Accepted</td><td class="sm-metrics-value">{accepted}</td></tr>',
+      '<tr><td class="sm-metrics-label sm-metrics-rejected">Rejected</td><td class="sm-metrics-value">{rejected}</td></tr>',
       '<tr class="sm-metrics-total"><td>Total Checks</td><td class="sm-metrics-value">{assessments}</td></tr>',
       '</tbody>',
       '</table>'
@@ -699,7 +706,7 @@ SM.Metrics.ProgressPanel = Ext.extend(Ext.Panel, {
       border: false,
       tpl: dataTpl,
       flex: 1,
-      data: this.metrics
+      data: metricCalcs
     })
 
     const config = {
