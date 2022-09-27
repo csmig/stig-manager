@@ -139,7 +139,7 @@ SM.Metrics.CommonColumns = [
     header: "Assessed",
     width: 75,
     dataIndex: 'assessedPct',
-    align: "center",
+    // align: "center",
     sortable: true,
     renderer: renderPct
   },
@@ -147,7 +147,7 @@ SM.Metrics.CommonColumns = [
     header: "Submitted",
     width: 75,
     dataIndex: 'submittedPct',
-    align: "center",
+    // align: "center",
     sortable: true,
     renderer: renderPct
   },
@@ -155,7 +155,7 @@ SM.Metrics.CommonColumns = [
     header: "Accepted",
     width: 75,
     dataIndex: 'acceptedPct',
-    align: "center",
+    // align: "center",
     sortable: true,
     renderer: renderPct
   },
@@ -163,7 +163,7 @@ SM.Metrics.CommonColumns = [
     header: "Rejected",
     width: 75,
     dataIndex: 'rejectedPct',
-    align: "center",
+    // align: "center",
     sortable: true,
     renderer: renderPctAllHigh
   },
@@ -616,7 +616,44 @@ SM.Metrics.ChartPanel = Ext.extend(Ext.Panel, {
 
 })
 
-SM.Metrics.ProgressPanelColors = function (theme) {
+SM.Metrics.ProgressPanel = Ext.extend(Ext.Panel, {
+  initComponent: function () {
+    const data = {
+      assessed: this.metrics.assessments ? this.metrics.assessed / this.metrics.assessments * 100 : 0,
+      submitted: this.metrics.assessments ? ((this.metrics.statuses.submitted + this.metrics.statuses.accepted + this.metrics.statuses.rejected) / this.metrics.assessments) * 100 : 0,
+      accepted: this.metrics.assessments ? (this.metrics.statuses.accepted / this.metrics.assessments) * 100 : 0,
+      rejected: this.metrics.assessments ? (this.metrics.statuses.rejected / this.metrics.assessments) * 100 : 0
+    }
+    const tpl = new Ext.XTemplate(
+      '<div class="sm-metrics-progress-parent">',
+        '<div class="sm-metrics-progress-child">',
+          `<div class="sm-metrics-progress-label">Assessed</div>`,
+          `<div class="sm-metrics-progress-thermometer-wrap">{[renderPct(values.assessed)]}</div>`,
+        '</div>',
+        '<div class="sm-metrics-progress-child" >',
+          `<div class="sm-metrics-progress-label">Submitted</div>`,
+          `<div class="sm-metrics-progress-thermometer-wrap">{[renderPct(values.submitted)]}</div>`,
+        '</div>',
+        '<div class="sm-metrics-progress-child" >',
+          `<div class="sm-metrics-progress-label">Accepted</div>`,
+          `<div class="sm-metrics-progress-thermometer-wrap">{[renderPct(values.accepted)]}</div>`,
+        '</div>',
+        '<div class="sm-metrics-progress-child" >',
+          `<div class="sm-metrics-progress-label">Rejected</div>`,
+          `<div class="sm-metrics-progress-thermometer-wrap">{[renderPct(values.rejected)]}</div>`,
+        '</div>',
+      '</div>'
+    )
+    const config = {
+      tpl,
+      data
+    }
+    Ext.apply(this, Ext.apply(this.initialConfig, config))
+    this.superclass().initComponent.call(this)
+  }
+})
+
+SM.Metrics.StatusPanelColors = function (theme) {
   const style = getComputedStyle(document.documentElement)
   const ordered = [  
     'assessed',
@@ -624,11 +661,11 @@ SM.Metrics.ProgressPanelColors = function (theme) {
     'accepted',
     'unassessed',
     'rejected'
-  ].map( category => style.getPropertyValue(`--metrics-progress-chart-${category}-${theme}`))
+  ].map( category => style.getPropertyValue(`--metrics-status-chart-${category}-${theme}`))
   return ordered
 }
 
-SM.Metrics.ProgressPanel = Ext.extend(Ext.Panel, {
+SM.Metrics.StatusPanel = Ext.extend(Ext.Panel, {
   initComponent: function () {
 
     const metricCalcs = {
@@ -652,7 +689,7 @@ SM.Metrics.ProgressPanel = Ext.extend(Ext.Panel, {
             metricCalcs.unassessed, // Unassessed
             metricCalcs.rejected // Rejected         
           ],
-          backgroundColor: SM.Metrics.ProgressPanelColors(localStorage.getItem('darkMode') === '1' ? 'dark' : 'light'),
+          backgroundColor: SM.Metrics.StatusPanelColors(localStorage.getItem('darkMode') === '1' ? 'dark' : 'light'),
           borderWidth: [1, 1],
           borderColor: '#bbbbbb'
         }],
@@ -684,15 +721,15 @@ SM.Metrics.ProgressPanel = Ext.extend(Ext.Panel, {
 
     const onThemeChanged = function (theme) {
       // setTimeout( () => {
-        chartPanel.chart.config._config.data.datasets[0].backgroundColor = SM.Metrics.ProgressPanelColors(theme)
+        chartPanel.chart.config._config.data.datasets[0].backgroundColor = SM.Metrics.StatusPanelColors(theme)
         chartPanel.chart.update()
       // }, 100)
     }
     SM.Dispatcher.addListener('themechanged', onThemeChanged)
 
     const dataTpl = [
-      `<div class="sm-metrics-progress-pct">{[(values.apiAssessed/values.assessments * 100).toFixed(1)]}% assessed</div>`,
-      '<table class="sm-metrics-progress-table" style="margin: 0 auto;">',
+      `<div class="sm-metrics-status-pct">{[(values.apiAssessed/values.assessments * 100).toFixed(1)]}% assessed</div>`,
+      '<table class="sm-metrics-status-table" style="margin: 0 auto;">',
       '<tbody>',
       '<tr><td class="sm-metrics-label sm-metrics-unassessed">Unassessed</td><td class="sm-metrics-value">{unassessed}</td></tr>',
       '<tr><td class="sm-metrics-label sm-metrics-assessed">Saved</td><td class="sm-metrics-value">{assessed}</td></tr>',
@@ -723,7 +760,7 @@ SM.Metrics.ProgressPanel = Ext.extend(Ext.Panel, {
       }
     }
     Ext.apply(this, Ext.apply(this.initialConfig, config))
-    SM.Metrics.ProgressPanel.superclass.initComponent.call(this)
+    SM.Metrics.StatusPanel.superclass.initComponent.call(this)
   }
 })
 
@@ -913,30 +950,38 @@ SM.Metrics.ExportPanel = Ext.extend(Ext.Panel, {
 SM.Metrics.OverviewPanel = Ext.extend(Ext.Panel, {
   initComponent: function () {
     const collectionId = this.collectionId
+
     const progressPanel = new SM.Metrics.ProgressPanel({
       cls: 'sm-round-inner-panel',
-      bodyStyle: 'padding: 15px;',
-      title: 'Assessment Status',
+      bodyStyle: 'padding: 10px;',
+      title: 'Progress',
+      border: true,
+      metrics: this.metrics
+    })
+    const statusPanel = new SM.Metrics.StatusPanel({
+      cls: 'sm-round-inner-panel',
+      bodyStyle: 'padding: 10px;',
+      title: 'Status Distribution',
       border: true,
       metrics: this.metrics
     })
     const agesPanel = new SM.Metrics.AgesPanel({
       cls: 'sm-round-inner-panel',
-      bodyStyle: 'padding: 15px;',
+      bodyStyle: 'padding: 10px;',
       title: 'Review Age',
       border: true,
       metrics: this.metrics
     })
     const findingsPanel = new SM.Metrics.FindingsPanel({
       cls: 'sm-round-inner-panel',
-      bodyStyle: 'padding: 15px;',
+      bodyStyle: 'padding: 10px;',
       title: 'Findings',
       border: true,
       metrics: this.metrics.findings
     })
     const exportPanel = new SM.Metrics.ExportPanel({
       cls: 'sm-round-inner-panel',
-      bodyStyle: 'padding: 15px;',
+      bodyStyle: 'padding: 10px;',
       title: 'Export metrics',
       border: true,
       height: 140,
@@ -950,6 +995,7 @@ SM.Metrics.OverviewPanel = Ext.extend(Ext.Panel, {
       //   align: 'stretch',
       // },
       items: [
+        statusPanel,
         progressPanel,
         findingsPanel,
         agesPanel,
@@ -1106,7 +1152,7 @@ SM.Metrics.AggLabelPanel = Ext.extend(Ext.Panel, {
 
 SM.Metrics.addCollectionMetricsTab = async function (options) {
   try {
-    let { collectionId, collectionName, treePath } = options
+    let { collectionId, collectionName, treePath, apiParams = {} } = options
 
     const tab = Ext.getCmp('main-tab-panel').getItem(`metrics-tab-${collectionId}`)
     if (tab) {
@@ -1117,7 +1163,8 @@ SM.Metrics.addCollectionMetricsTab = async function (options) {
     // API requests
     const results = await Ext.Ajax.requestPromise({
       url: `${STIGMAN.Env.apiBase}/collections/${collectionId}/metrics/summary/collection`,
-      method: 'GET'
+      method: 'GET',
+      params: apiParams
     })
     const apiMetricsCollection = JSON.parse(results.response.responseText)
 

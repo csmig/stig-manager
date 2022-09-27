@@ -1082,11 +1082,18 @@ SM.AppNavTree = Ext.extend(Ext.tree.TreePanel, {
             }
             tab.show()
           } else {
-            SM.Metrics.addCollectionMetricsTab({
+            const labelIds = this.getCollectionNode(n.attributes.collectionId).attributes.labelsMenu.getCheckedLabelIds()
+            const addCollectionMetricsOptions = {
               collectionId: n.attributes.collectionId,
               collectionName: n.attributes.collectionName,
               treePath: n.getPath()
-            })
+            }
+            if (labelIds.length) {
+              addCollectionMetricsOptions.apiParams = {
+                labelId: labelIds
+              }
+            }
+            SM.Metrics.addCollectionMetricsTab(addCollectionMetricsOptions)
           }
         }
 

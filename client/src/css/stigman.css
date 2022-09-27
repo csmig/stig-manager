@@ -1,82 +1,132 @@
 :root {
-	--metrics-progress-chart-assessed-light:
+	--metrics-status-chart-assessed-light:
 	hsl(204deg 71% 81%);
-	--metrics-progress-chart-submitted-light:
+	--metrics-status-chart-submitted-light:
 	hsl(87deg 39% 79%);
-	--metrics-progress-chart-accepted-light:
+	--metrics-status-chart-accepted-light:
 	hsl(146deg 60% 69%);
-	--metrics-progress-chart-unassessed-light:
+	--metrics-status-chart-unassessed-light:
 	hsl(0deg 0% 93%);
-	--metrics-progress-chart-unsaved-light:
+	--metrics-status-chart-unsaved-light:
 	hsl(0deg 0% 93%);
-	--metrics-progress-chart-rejected-light:
+	--metrics-status-chart-rejected-light:
 	hsl(0deg 0% 70%);
 
-	--metrics-progress-chart-assessed-dark:
+	--metrics-status-chart-assessed-dark:
 	hsl(204deg 90% 25%);
-	--metrics-progress-chart-submitted-dark:
+	--metrics-status-chart-submitted-dark:
 	hsl(87deg 41% 25%);
-	--metrics-progress-chart-accepted-dark:
+	--metrics-status-chart-accepted-dark:
 	hsl(146deg 90% 25%);
-	--metrics-progress-chart-unassessed-dark:
+	--metrics-status-chart-unassessed-dark:
 	hsl(0 0% 18% / 1);
-	--metrics-progress-chart-unsaved-dark:
+	--metrics-status-chart-unsaved-dark:
 	hsl(0deg 0% 18%);
-	--metrics-progress-chart-rejected-dark:
+	--metrics-status-chart-rejected-dark:
 	hsl(5deg 90% 25%);
 }
 
-.sm-metrics-progress-table {
+.sm-metrics-progress-parent {
+	text-align: center;
+	/* color: #111; */
+}
+
+.sm-metrics-progress-child {
+	display: inline-block;
+	width: 65px;
+	/* height: 37px; */
+	border-radius: 5px;
+	/* background-color: #eeeeee; */
+	/* border:  1px solid #bbbbbb; */
+	/* padding: 0px 6px; */
+	margin: 0px 12px;
+	vertical-align: middle;
+	/* box-shadow: 1px 1px 5px #bbbbbb; */
+}
+.sm-metrics-progress-label {
+	font-weight: 600;
+	padding-bottom: 4px;
+	/* font-size:larger; */
+}
+
+
+.sm-metrics-progress-child .sm-metrics-progress-thermometer-wrap {
+	height: 20px;
+	line-height: 20px;
+	font-weight: 600;
+}
+.sm-metrics-progress-child .sm-cell-thermometer-bg {
+	height: 100%;
+	border-radius: 3px;
+}
+.sm-metrics-progress-child .sm-cell-mercury-high {
+	height: 100%;
+	border-radius: 3px;
+}
+.sm-metrics-progress-child .sm-cell-mercury-medium {
+	height: 100%;
+	border-radius: 3px;
+}
+.sm-metrics-progress-child .sm-cell-mercury-low {
+	height: 100%;
+	border-radius: 3px;
+}
+/* .sm-metrics-progress-child .sm-cell-thermometer-text {
+	line-height: 20px;
+}
+ */
+
+.sm-metrics-status-table {
 	padding-top: 10px;
 }
 
-.sm-metrics-progress-pct {
+.sm-metrics-status-pct {
 	text-align:center;
 	font-size:large;
 	font-weight: 600;
 }
 
-.sm-metrics-progress-table .sm-metrics-total {
+.sm-metrics-status-table .sm-metrics-total {
 	font-weight: 600;
 }
-.sm-metrics-progress-table .sm-metrics-total td{
+.sm-metrics-status-table .sm-metrics-total td{
 	font-weight: 600;
 	border-top: 1px solid #bbbbbb;
 }
-.sm-metrics-progress-table tr {
+.sm-metrics-status-table tr {
 	height: 19px;
 }
-.sm-metrics-progress-table td {
+.sm-metrics-status-table td {
 	padding-left: 4px;
 	padding-right: 4px;
 }
-.sm-metrics-progress-table .sm-metrics-value {
+.sm-metrics-status-table .sm-metrics-value {
 	text-align: right;
 	padding-left: 10px;
 }
 
-.sm-metrics-progress-table .sm-metrics-label {
+.sm-metrics-status-table .sm-metrics-label {
 	border: 1px solid #bbbbbb;
 	border-radius: 3px;
 }
 
-.sm-metrics-progress-table .sm-metrics-assessed {
-	background-color: var(--metrics-progress-chart-assessed-light);
+.sm-metrics-status-table .sm-metrics-assessed {
+	background-color: var(--metrics-status-chart-assessed-light);
 }
-.sm-metrics-progress-table .sm-metrics-submitted {
-	background-color: var(--metrics-progress-chart-submitted-light);
+.sm-metrics-status-table .sm-metrics-submitted {
+	background-color: var(--metrics-status-chart-submitted-light);
 }
-.sm-metrics-progress-table .sm-metrics-accepted {
-	background-color: var(--metrics-progress-chart-accepted-light);
+.sm-metrics-status-table .sm-metrics-accepted {
+	background-color: var(--metrics-status-chart-accepted-light);
 }
-.sm-metrics-progress-table .sm-metrics-unassessed {
-	background-color: var(--metrics-progress-chart-unassessed-light);
+.sm-metrics-status-table .sm-metrics-unassessed {
+	background-color: var(--metrics-status-chart-unassessed-light);
 }
-.sm-metrics-progress-table .sm-metrics-unsaved {
-	background-color: var(--metrics-progress-chart-unsaved-light);
+.sm-metrics-status-table .sm-metrics-unsaved {
+	background-color: var(--metrics-status-chart-unsaved-light);
 }
-.sm-metrics-progress-table .sm-metrics-rejected {
-	background-color: var(--metrics-progress-chart-rejected-light)
+.sm-metrics-status-table .sm-metrics-rejected {
+	background-color: var(--metrics-status-chart-rejected-light)
 }
 
 .sm-metrics-count-parent {
@@ -90,8 +140,8 @@
 	border-radius: 5px;
 	background-color: #eeeeee;
 	border:  1px solid #bbbbbb;
-	padding: 8px 16px;
-	margin: 0px 16px;
+	padding: 6px 12px;
+	margin: 0px 12px;
 	vertical-align: middle;
 	/* box-shadow: 1px 1px 5px #bbbbbb; */
 }
@@ -546,13 +596,17 @@ a.x-grid3-hd-btn:hover {
 }
 .sm-cell-thermometer-bg {
 	background-color: #eee;
-	margin-left: 34px;
+	/* height: 15px; */
+	/* margin-left: 29px; */
 	outline: solid 1px #bbb;
 	outline-offset: -1px;
 }
 .sm-cell-thermometer-text {
 	float: left;
-	width: 30px;
+	margin-left: 4px;
+	font-style: italic;
+	/* font-weight: 600; */
+	/* width: 30px; */
 }
 .sm-cell-mercury-low {
 	background-color: #c3deab;
@@ -563,6 +617,7 @@ a.x-grid3-hd-btn:hover {
 }
 .sm-cell-mercury-high {
 	background-color: #eba795;
+	height: 15px;
 }
 
 
