@@ -49,31 +49,31 @@ select:-webkit-autofill {
 
 /* Modified CSS */
 
-.sm-metrics-progress-table .sm-metrics-label {
+.sm-metrics-status-table .sm-metrics-label {
 	border: 1px solid #444;
 }
 
-.sm-metrics-progress-table .sm-metrics-total td{
+.sm-metrics-status-table .sm-metrics-total td{
 	border-top: 1px solid #444;
 }
 
-.sm-metrics-progress-table .sm-metrics-assessed {
-	background-color: var(--metrics-progress-chart-assessed-dark)
+.sm-metrics-status-table .sm-metrics-assessed {
+	background-color: var(--metrics-status-chart-assessed-dark)
 }
-.sm-metrics-progress-table .sm-metrics-submitted {
-	background-color: var(--metrics-progress-chart-submitted-dark)
+.sm-metrics-status-table .sm-metrics-submitted {
+	background-color: var(--metrics-status-chart-submitted-dark)
 }
-.sm-metrics-progress-table .sm-metrics-accepted {
-	background-color: var(--metrics-progress-chart-accepted-dark)
+.sm-metrics-status-table .sm-metrics-accepted {
+	background-color: var(--metrics-status-chart-accepted-dark)
 }
-.sm-metrics-progress-table .sm-metrics-unassessed {
-	background-color: var(--metrics-progress-chart-unassessed-dark)
+.sm-metrics-status-table .sm-metrics-unassessed {
+	background-color: var(--metrics-status-chart-unassessed-dark)
 }
-.sm-metrics-progress-table .sm-metrics-unsaved {
-	background-color: var(--metrics-progress-chart-unsaved-dark)
+.sm-metrics-status-table .sm-metrics-unsaved {
+	background-color: var(--metrics-status-chart-unsaved-dark)
 }
-.sm-metrics-progress-table .sm-metrics-rejected {
-	background-color: var(--metrics-progress-chart-rejected-dark)
+.sm-metrics-status-table .sm-metrics-rejected {
+	background-color: var(--metrics-status-chart-rejected-dark)
 }
 .sm-metrics-count-child {
 	border:  1px solid #444;
