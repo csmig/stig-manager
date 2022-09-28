@@ -368,6 +368,7 @@ SM.Metrics.AggGrid = Ext.extend(Ext.grid.GridPanel, {
     const store = new Ext.data.JsonStore({
       grid: this,
       autoLoad: this.storeAutoLoad ?? true,
+      baseParams: this.baseParams,
       smMaskDelay: 250,
       proxy: this.proxy,
       root: '',
@@ -1015,7 +1016,8 @@ SM.Metrics.AggAssetPanel = Ext.extend(Ext.Panel, {
       aggregation: 'asset',
       collectionId,
       border: false,
-      region: 'center'
+      region: 'center',
+      baseParams: this.baseParams
     })
     const unaggGrid = new SM.Metrics.UnaggGrid({
       title: 'STIGs',
@@ -1055,6 +1057,7 @@ SM.Metrics.AggStigPanel = Ext.extend(Ext.Panel, {
     const aggStigGrid = new SM.Metrics.AggGrid({
       aggregation: 'stig',
       collectionId,
+      baseParams: this.baseParams,
       region: 'center'
     })
     const unaggGrid = new SM.Metrics.UnaggGrid({
@@ -1067,7 +1070,8 @@ SM.Metrics.AggStigPanel = Ext.extend(Ext.Panel, {
     })
     async function onRowSelect (cm, index, record) {
       await unaggGrid.store.loadPromise({
-        benchmarkId: record.data.benchmarkId
+        benchmarkId: record.data.benchmarkId,
+        labelId: _this.baseParams?.labelId
       })
       unaggGrid.setTitle(`Assets mapped to ${record.data.benchmarkId}`)
     }
@@ -1094,6 +1098,7 @@ SM.Metrics.AggLabelPanel = Ext.extend(Ext.Panel, {
     const aggLabelGrid = new SM.Metrics.AggGrid({
       aggregation: 'label',
       collectionId,
+      baseParams: this.baseParams,
       region: 'north',
       split: true,
       height: '33%'
@@ -1103,6 +1108,7 @@ SM.Metrics.AggLabelPanel = Ext.extend(Ext.Panel, {
       aggregation: 'asset',
       storeAutoLoad: false,
       collectionId,
+      baseParams: this.baseParams,
       region: 'center'
     })
     const unaggGrid = new SM.Metrics.UnaggGrid({
@@ -1152,7 +1158,7 @@ SM.Metrics.AggLabelPanel = Ext.extend(Ext.Panel, {
 
 SM.Metrics.addCollectionMetricsTab = async function (options) {
   try {
-    let { collectionId, collectionName, treePath, apiParams = {} } = options
+    let { collectionId, collectionName, treePath, labelIds } = options
 
     const tab = Ext.getCmp('main-tab-panel').getItem(`metrics-tab-${collectionId}`)
     if (tab) {
@@ -1161,10 +1167,11 @@ SM.Metrics.addCollectionMetricsTab = async function (options) {
     }
 
     // API requests
+    const params = labelIds.length ? { labelId: labelIds } : undefined
     const results = await Ext.Ajax.requestPromise({
       url: `${STIGMAN.Env.apiBase}/collections/${collectionId}/metrics/summary/collection`,
       method: 'GET',
-      params: apiParams
+      params
     })
     const apiMetricsCollection = JSON.parse(results.response.responseText)
 
@@ -1182,15 +1189,18 @@ SM.Metrics.addCollectionMetricsTab = async function (options) {
     })
     const aggAssetPanel = new SM.Metrics.AggAssetPanel({
       border: false,
-      collectionId
+      collectionId,
+      baseParams: params
     })
     const aggStigPanel = new SM.Metrics.AggStigPanel({
       border: false,
-      collectionId
+      collectionId,
+      baseParams: params
     })
     const aggLabelPanel = new SM.Metrics.AggLabelPanel({
       border: false,
-      collectionId
+      collectionId,
+      baseParams: params
     })
 
     const aggPanel = new Ext.Panel({
