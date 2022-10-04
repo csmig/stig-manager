@@ -1069,10 +1069,13 @@ SM.Metrics.AggStigPanel = Ext.extend(Ext.Panel, {
       height: '66%'
     })
     async function onRowSelect (cm, index, record) {
-      await unaggGrid.store.loadPromise({
-        benchmarkId: record.data.benchmarkId,
-        labelId: _this.baseParams?.labelId
-      })
+      const params = {
+        benchmarkId: record.data.benchmarkId
+      }
+      if (_this.baseParams?.labelId.length) {
+        params.labelId = _this.baseParams.labelId
+      }
+      await unaggGrid.store.loadPromise(params)
       unaggGrid.setTitle(`Assets mapped to ${record.data.benchmarkId}`)
     }
 

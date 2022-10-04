@@ -129,15 +129,15 @@ SM.CollectionNodeConfig = function (collection) {
       action: 'findings',
       leaf: true
     },
-    {
-      id: `${collection.collectionId}-findings-status-node`,
-      text: 'Status',
-      collectionId: collection.collectionId,
-      collectionName: collection.name,
-      action: 'collection-status',
-      iconCls: 'sm-report-icon',
-      leaf: true
-    },
+    // {
+    //   id: `${collection.collectionId}-findings-status-node`,
+    //   text: 'Status',
+    //   collectionId: collection.collectionId,
+    //   collectionName: collection.name,
+    //   action: 'collection-status',
+    //   iconCls: 'sm-report-icon',
+    //   leaf: true
+    // },
     {
       id: `${collection.collectionId}-collection-metrics-node`,
       text: 'Metrics',
