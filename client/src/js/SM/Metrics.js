@@ -5,6 +5,12 @@ Chart.defaults.font = {
   family: "'Open Sans', helvetica, sans-serif"
 }
 
+SM.Metrics.Renderers = {
+  severityCount: function (v, md) {
+    return v === 0 ? '' : `<div class="sm-metrics-findings-count-cell sm-metrics-${this.dataIndex}-box">${v}</div>`
+  }
+}
+
 SM.Metrics.CommonFields = [
   {
     name: 'assessments',
@@ -168,26 +174,29 @@ SM.Metrics.CommonColumns = [
     renderer: renderPctAllHigh
   },
   {
-    header: "CAT 1",
+    header: "CAT 3",
     width: 50,
-    dataIndex: 'high',
+    dataIndex: 'low',
     align: "center",
-    sortable: true
+    sortable: true,
+    renderer: SM.Metrics.Renderers.severityCount
   },
   {
     header: "CAT 2",
     width: 50,
     dataIndex: 'medium',
     align: "center",
-    sortable: true
+    sortable: true,
+    renderer: SM.Metrics.Renderers.severityCount
   },
   {
-    header: "CAT 3",
+    header: "CAT 1",
     width: 50,
-    dataIndex: 'low',
+    dataIndex: 'high',
     align: "center",
-    sortable: true
-  }
+    sortable: true,
+    renderer: SM.Metrics.Renderers.severityCount
+  },
 ]
 
 SM.Metrics.AggGrid = Ext.extend(Ext.grid.GridPanel, {
@@ -1233,7 +1242,7 @@ SM.Metrics.addCollectionMetricsTab = async function (options) {
     const overviewPanel = new SM.Metrics.OverviewPanel({
       cls: 'sm-round-panel sm-metrics-overview-panel',
       collapsible: true,
-      title: 'Overview',
+      title: `Overview ${SM.Collection.LabelSpritesByCollectionLabelId(collectionId, labelIds)}`,
       margins: { top: SM.Margin.top, right: SM.Margin.edge, bottom: SM.Margin.bottom, left: SM.Margin.edge },
       region: 'west',
       width: 430,

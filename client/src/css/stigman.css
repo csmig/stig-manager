@@ -1,8 +1,8 @@
 :root {
 	--metrics-status-chart-assessed-light:
-	hsl(204deg 71% 81%);
+	hsl(230deg 41% 86%);
 	--metrics-status-chart-submitted-light:
-	hsl(87deg 39% 79%);
+	hsl(92deg 44% 77%);
 	--metrics-status-chart-accepted-light:
 	hsl(146deg 60% 69%);
 	--metrics-status-chart-unassessed-light:
@@ -155,16 +155,20 @@
 	font-size:large
 }
 
-/* .sm-metrics-age-box {
-	width: 50px;
-	height: 40px;
+.sm-metrics-findings-count-cell {
+	border-radius: 5px;
+	outline:  1px solid #bbb;
+	outline-offset: -1px;
+	width: 35px;
+	font-weight:normal;
+	color: rgb(17,17,17);
+	margin:0 auto;
 }
- */
 .sm-metrics-high-box {
-	background-color: hsl(5 70% 73% / 1)
+	background-color: hsl(13 68% 78% / 1)
 }
 .sm-metrics-medium-box {
-	background-color: hsl(39deg 100% 71%)
+	background-color: hsl(38 100% 78% / 1)
 }
 .sm-metrics-low-box {
 	background-color: #cdd2ea
