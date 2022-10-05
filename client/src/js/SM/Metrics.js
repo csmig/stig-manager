@@ -1026,7 +1026,10 @@ SM.Metrics.AggAssetPanel = Ext.extend(Ext.Panel, {
       border: false,
       region: 'south',
       split: true,
-      height: '33%'
+      height: '33%',
+			listeners: {
+				rowdblclick: onChildRowDblClick
+			}            
     })
     async function onRowSelect (cm, index, record) {
       await unaggGrid.store.loadPromise({
@@ -1034,7 +1037,21 @@ SM.Metrics.AggAssetPanel = Ext.extend(Ext.Panel, {
       })
       unaggGrid.setTitle(`STIGs mapped to ${record.data.name}`)
     }
-
+		function onChildRowDblClick (grid, rowIndex) {
+			const r = grid.getStore().getAt(rowIndex);
+			const leaf = {
+				collectionId: collectionId, 
+				assetId: r.data.assetId,
+				assetName: r.data.name,
+				assetLabelIds: r.data.labelIds,
+				benchmarkId: r.data.benchmarkId,
+				stigName: r.data.benchmarkId,
+			}
+			addReview({
+				leaf,
+				// selectedRule: r.data.ruleId
+			})
+		}    
     aggAssetGrid.getSelectionModel().on('rowselect', onRowSelect)
 
     const config = {
@@ -1066,7 +1083,10 @@ SM.Metrics.AggStigPanel = Ext.extend(Ext.Panel, {
       collectionId,
       region: 'south',
       split: true,
-      height: '66%'
+      height: '66%',
+			listeners: {
+				rowdblclick: onChildRowDblClick
+			}      
     })
     async function onRowSelect (cm, index, record) {
       const params = {
@@ -1078,6 +1098,21 @@ SM.Metrics.AggStigPanel = Ext.extend(Ext.Panel, {
       await unaggGrid.store.loadPromise(params)
       unaggGrid.setTitle(`Assets mapped to ${record.data.benchmarkId}`)
     }
+		function onChildRowDblClick (grid, rowIndex) {
+			const r = grid.getStore().getAt(rowIndex);
+			const leaf = {
+				collectionId: collectionId, 
+				assetId: r.data.assetId,
+				assetName: r.data.name,
+				assetLabelIds: r.data.labelIds,
+				benchmarkId: r.data.benchmarkId,
+				stigName: r.data.benchmarkId,
+			}
+			addReview({
+				leaf,
+				// selectedRule: r.data.ruleId
+			})
+		}    
 
     aggStigGrid.getSelectionModel().on('rowselect', onRowSelect)
 
@@ -1120,7 +1155,10 @@ SM.Metrics.AggLabelPanel = Ext.extend(Ext.Panel, {
       collectionId,
       region: 'south',
       split: true,
-      height: '33%'
+      height: '33%',
+			listeners: {
+				rowdblclick: onChildRowDblClick
+			}           
     })
     async function onRowSelectLabel (cm, index, record) {
       const params = {}
@@ -1140,7 +1178,21 @@ SM.Metrics.AggLabelPanel = Ext.extend(Ext.Panel, {
       })
       unaggGrid.setTitle(`STIGs for ${record.data.name}`)
     }
-
+		function onChildRowDblClick (grid, rowIndex) {
+			const r = grid.getStore().getAt(rowIndex);
+			const leaf = {
+				collectionId: collectionId, 
+				assetId: r.data.assetId,
+				assetName: r.data.name,
+				assetLabelIds: r.data.labelIds,
+				benchmarkId: r.data.benchmarkId,
+				stigName: r.data.benchmarkId,
+			}
+			addReview({
+				leaf,
+				// selectedRule: r.data.ruleId
+			})
+		}    
     aggLabelGrid.getSelectionModel().on('rowselect', onRowSelectLabel)
     aggAssetGrid.getSelectionModel().on('rowselect', onRowSelectAsset)
 
