@@ -549,15 +549,16 @@ SM.Metrics.UnaggGrid = Ext.extend(Ext.grid.GridPanel, {
     })
 
     const rowdblclick = (grid, rowIndex) => {
-      const r = grid.getStore().getAt(rowIndex);
-      addReview({
+      const r = grid.getStore().getAt(rowIndex)
+      const leaf = {
         collectionId: grid.collectionId, 
         assetId: r.data.assetId,
         assetName: r.data.name,
         assetLabelIds: r.data.labelIds,
         benchmarkId: r.data.benchmarkId,
         stigName: r.data.benchmarkId,
-      })
+      }
+      addReview({leaf})
     }
     
     const config = {
