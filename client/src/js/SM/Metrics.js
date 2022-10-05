@@ -729,7 +729,7 @@ SM.Metrics.StatusPanel = Ext.extend(Ext.Panel, {
     SM.Dispatcher.addListener('themechanged', onThemeChanged)
 
     const dataTpl = [
-      `<div class="sm-metrics-status-pct">{[(values.apiAssessed/values.assessments * 100).toFixed(1)]}% assessed</div>`,
+      `<div class="sm-metrics-status-pct">{[values.assessments ? ( values.apiAssessed/values.assessments * 100).toFixed(1) : 0]}% assessed</div>`,
       '<table class="sm-metrics-status-table" style="margin: 0 auto;">',
       '<tbody>',
       '<tr><td class="sm-metrics-label sm-metrics-unassessed">Unassessed</td><td class="sm-metrics-value">{unassessed}</td></tr>',
