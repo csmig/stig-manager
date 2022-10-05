@@ -547,6 +547,18 @@ SM.Metrics.UnaggGrid = Ext.extend(Ext.grid.GridPanel, {
     _this.totalTextCmp = new SM.RowCountTextItem({
       store
     })
+
+    const onChildRowDblClick = (grid, rowIndex) => {
+      const r = grid.getStore().getAt(rowIndex);
+      addReview({
+        collectionId: grid.collectionId, 
+        assetId: r.data.assetId,
+        assetName: r.data.name,
+        assetLabelIds: r.data.labelIds,
+        benchmarkId: r.data.benchmarkId,
+        stigName: r.data.benchmarkId,
+      })
+    }
     
     const config = {
       layout: 'fit',
@@ -596,7 +608,10 @@ SM.Metrics.UnaggGrid = Ext.extend(Ext.grid.GridPanel, {
           },
           this.totalTextCmp
         ]
-      })
+      }),
+      listeners: {
+        rowdblclick: onChildRowDblClick
+      }
     }
     Ext.apply(this, Ext.apply(this.initialConfig, config))
     this.superclass().initComponent.call(this)
@@ -721,24 +736,31 @@ SM.Metrics.StatusPanel = Ext.extend(Ext.Panel, {
       }
     }
 
-    const chartPanel = new SM.Metrics.ChartPanel({
+    const chartPanel = metricCalcs.assessments ? new SM.Metrics.ChartPanel({
       border: false,
       id: 'chart-panel',
       width: 175,
       height: 175,
       chartOptions
-    })
+    }) : { 
+      border: false,
+      html: '<div class="sm-metrics-no-assessments-body">No Asset/STIG mappings exist</div>',
+      width: 175,
+      height: 175
+    }
 
     const onThemeChanged = function (theme) {
       // setTimeout( () => {
-        chartPanel.chart.config._config.data.datasets[0].backgroundColor = SM.Metrics.StatusPanelColors(theme)
-        chartPanel.chart.update()
+        if (chartPanel.chart) {
+          chartPanel.chart.config._config.data.datasets[0].backgroundColor = SM.Metrics.StatusPanelColors(theme)
+          chartPanel.chart.update() 
+        }
       // }, 100)
     }
     SM.Dispatcher.addListener('themechanged', onThemeChanged)
 
     const dataTpl = [
-      `<div class="sm-metrics-status-pct">{[(values.apiAssessed/values.assessments * 100).toFixed(1)]}% assessed</div>`,
+      `<div class="sm-metrics-status-pct">{[values.assessments ? ( values.apiAssessed/values.assessments * 100).toFixed(1) : 0]}% assessed</div>`,
       '<table class="sm-metrics-status-table" style="margin: 0 auto;">',
       '<tbody>',
       '<tr><td class="sm-metrics-label sm-metrics-unassessed">Unassessed</td><td class="sm-metrics-value">{unassessed}</td></tr>',

@@ -26,6 +26,15 @@
 	hsl(5deg 90% 25%);
 }
 
+.sm-metrics-no-assessments-body {
+	color: #bbb;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: inherit;
+    width: inherit;
+}
+
 .sm-metrics-progress-parent {
 	text-align: center;
 	/* color: #111; */

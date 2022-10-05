@@ -334,7 +334,8 @@ module.exports.queryMetrics = async function ({
     // CTE processing
   const cteProps = {
     columns: [
-      'distinct sa.benchmarkId',
+      'distinct c.collectionId',
+      'sa.benchmarkId',
       'a.assetId',
       'sa.saId'
     ],
@@ -417,6 +418,7 @@ module.exports.queryMetrics = async function ({
 
   switch (aggregation) {
     case 'asset':
+      predicates.statements.push('a.assetId IS NOT NULL')
       groupBy.push('a.assetId')
       orderBy.push('a.name')
       break
@@ -426,11 +428,12 @@ module.exports.queryMetrics = async function ({
       orderBy.push('sa.benchmarkId')
       break
     case 'collection':
-      joins.push('left join collection c on a.collectionId = c.collectionId')
+      joins.push('left join collection c on granted.collectionId = c.collectionId')
       groupBy.push('c.collectionId')
       orderBy.push('c.name')
       break
     case 'label':
+      predicates.statements.push('a.assetId IS NOT NULL')
       joins.push(
         'left join collection_label_asset_map cla on a.assetId = cla.assetId',
         'left join collection_label cl on cla.clId = cl.clId'
