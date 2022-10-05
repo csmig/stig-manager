@@ -548,7 +548,7 @@ SM.Metrics.UnaggGrid = Ext.extend(Ext.grid.GridPanel, {
       store
     })
 
-    const onChildRowDblClick = (grid, rowIndex) => {
+    const rowdblclick = (grid, rowIndex) => {
       const r = grid.getStore().getAt(rowIndex);
       addReview({
         collectionId: grid.collectionId, 
@@ -610,7 +610,7 @@ SM.Metrics.UnaggGrid = Ext.extend(Ext.grid.GridPanel, {
         ]
       }),
       listeners: {
-        rowdblclick: onChildRowDblClick
+        rowdblclick
       }
     }
     Ext.apply(this, Ext.apply(this.initialConfig, config))
