@@ -1108,6 +1108,7 @@ SM.Metrics.AggAssetPanel = Ext.extend(Ext.Panel, {
 
     aggAssetGrid.getSelectionModel().on('rowselect', onRowSelect)
     const updateBaseParams = function (params) {
+      _this.baseParams = params
       unaggGrid.store.removeAll()
       aggAssetGrid.store.baseParams =  params
       aggAssetGrid.store.load()
@@ -1158,6 +1159,7 @@ SM.Metrics.AggStigPanel = Ext.extend(Ext.Panel, {
 
     aggStigGrid.getSelectionModel().on('rowselect', onRowSelect)
     const updateBaseParams = function (params) {
+      _this.baseParams = params
       unaggGrid.store.removeAll()
       aggStigGrid.store.baseParams =  params
       aggStigGrid.store.load()
@@ -1227,6 +1229,7 @@ SM.Metrics.AggLabelPanel = Ext.extend(Ext.Panel, {
     aggLabelGrid.getSelectionModel().on('rowselect', onRowSelectLabel)
     aggAssetGrid.getSelectionModel().on('rowselect', onRowSelectAsset)
     const updateBaseParams = function (params) {
+      _this.baseParams = params
       unaggGrid.store.removeAll()
       aggAssetGrid.store.removeAll()
       aggLabelGrid.store.baseParams =  params
