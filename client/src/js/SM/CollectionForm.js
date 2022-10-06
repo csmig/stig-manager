@@ -2130,10 +2130,10 @@ SM.Collection.LabelsMenu = Ext.extend(Ext.menu.Menu, {
             items,
             listeners: {
                 itemclick: this.onItemClick,
-                hide: function (menu) {
-                    const labelIds = menu.getCheckedLabelIds()
-                    this.fireEvent('applied', labelIds)
-                }
+                // hide: function (menu) {
+                //     const labelIds = menu.getCheckedLabelIds()
+                //     this.fireEvent('applied', labelIds)
+                // }
             }    
         }
         Ext.apply(this, Ext.apply(this.initialConfig, config))

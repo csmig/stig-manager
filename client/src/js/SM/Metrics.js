@@ -644,12 +644,16 @@ SM.Metrics.ChartPanel = Ext.extend(Ext.Panel, {
 
 SM.Metrics.ProgressPanel = Ext.extend(Ext.Panel, {
   initComponent: function () {
-    const data = {
-      assessed: this.metrics.assessments ? this.metrics.assessed / this.metrics.assessments * 100 : 0,
-      submitted: this.metrics.assessments ? ((this.metrics.statuses.submitted + this.metrics.statuses.accepted + this.metrics.statuses.rejected) / this.metrics.assessments) * 100 : 0,
-      accepted: this.metrics.assessments ? (this.metrics.statuses.accepted / this.metrics.assessments) * 100 : 0,
-      rejected: this.metrics.assessments ? (this.metrics.statuses.rejected / this.metrics.assessments) * 100 : 0
+    const _this = this
+    const calcData = function (metrics) {
+      return {
+        assessed: metrics.assessments ? metrics.assessed / metrics.assessments * 100 : 0,
+        submitted: metrics.assessments ? ((metrics.statuses.submitted + metrics.statuses.accepted + metrics.statuses.rejected) / metrics.assessments) * 100 : 0,
+        accepted: metrics.assessments ? (metrics.statuses.accepted / metrics.assessments) * 100 : 0,
+        rejected: metrics.assessments ? (metrics.statuses.rejected / metrics.assessments) * 100 : 0
+      }
     }
+    const data = calcData(this.metrics)
     const tpl = new Ext.XTemplate(
       '<div class="sm-metrics-progress-parent">',
         '<div class="sm-metrics-progress-child">',
@@ -670,9 +674,13 @@ SM.Metrics.ProgressPanel = Ext.extend(Ext.Panel, {
         '</div>',
       '</div>'
     )
+    const updateMetrics = function(metrics) {
+      _this.update(calcData(metrics))
+    }
     const config = {
       tpl,
-      data
+      data,
+      updateMetrics
     }
     Ext.apply(this, Ext.apply(this.initialConfig, config))
     this.superclass().initComponent.call(this)
@@ -694,15 +702,18 @@ SM.Metrics.StatusPanelColors = function (theme) {
 SM.Metrics.StatusPanel = Ext.extend(Ext.Panel, {
   initComponent: function () {
 
-    const metricCalcs = {
-      unassessed: this.metrics.assessments - this.metrics.assessed,
-      assessed: this.metrics.statuses.saved - this.metrics.results.other,
-      submitted: this.metrics.statuses.submitted,
-      accepted: this.metrics.statuses.accepted,
-      rejected: this.metrics.statuses.rejected,
-      assessments: this.metrics.assessments,
-      apiAssessed: this.metrics.assessed
+    const calcMetrics = function (metrics) {
+      return {
+        unassessed: metrics.assessments - metrics.assessed,
+        assessed: metrics.statuses.saved - metrics.results.other,
+        submitted: metrics.statuses.submitted,
+        accepted: metrics.statuses.accepted,
+        rejected: metrics.statuses.rejected,
+        assessments: metrics.assessments,
+        apiAssessed: metrics.assessed
+      }
     }
+    const metricCalcs = calcMetrics(this.metrics)
     
     const chartOptions = {
       type: 'doughnut',
@@ -760,6 +771,19 @@ SM.Metrics.StatusPanel = Ext.extend(Ext.Panel, {
     }
     SM.Dispatcher.addListener('themechanged', onThemeChanged)
 
+    const updateMetrics = function (metrics) {
+      const metricCalcs = calcMetrics(metrics)
+      dataPanel.update(metricCalcs)
+      chartPanel.chart.config._config.data.datasets[0].data = [
+        metricCalcs.assessed, //Assessed
+        metricCalcs.submitted, // Submitted
+        metricCalcs.accepted, // Accepted
+        metricCalcs.unassessed, // Unassessed
+        metricCalcs.rejected // Rejected         
+      ]
+      chartPanel.chart.update() 
+    }
+
     const dataTpl = [
       `<div class="sm-metrics-status-pct">{[values.assessments ? ( values.apiAssessed/values.assessments * 100).toFixed(1) : 0]}% assessed</div>`,
       '<table class="sm-metrics-status-table" style="margin: 0 auto;">',
@@ -786,6 +810,7 @@ SM.Metrics.StatusPanel = Ext.extend(Ext.Panel, {
         align: 'top'
       },
       items: [chartPanel, dataPanel],
+      updateMetrics,
       listeners: {
         beforedestroy: function () {
           SM.Dispatcher.removeListener('themechanged', onThemeChanged)
@@ -810,9 +835,14 @@ SM.Metrics.AgesPanel = Ext.extend(Ext.Panel, {
         '</div>',
       '</div>'
     )
+    const updateMetrics = function (metrics) {
+      _this.update(metrics)
+    }
+
     const config = {
       tpl,
-      data: this.metrics
+      data: this.metrics,
+      updateMetrics
     }
     Ext.apply(this, Ext.apply(this.initialConfig, config))
     this.superclass().initComponent.call(this)
@@ -835,9 +865,13 @@ SM.Metrics.FindingsPanel = Ext.extend(Ext.Panel, {
         '</div>',
       '</div>'
     )
+    const updateMetrics = function (metrics) {
+      _this.update(metrics)
+    }
     const config = {
       tpl,
-      data: this.metrics
+      data: this.metrics,
+      updateMetrics
     }
     Ext.apply(this, Ext.apply(this.initialConfig, config))
     this.superclass().initComponent.call(this)
@@ -982,6 +1016,7 @@ SM.Metrics.ExportPanel = Ext.extend(Ext.Panel, {
 
 SM.Metrics.OverviewPanel = Ext.extend(Ext.Panel, {
   initComponent: function () {
+    const _this = this
     const collectionId = this.collectionId
 
     const progressPanel = new SM.Metrics.ProgressPanel({
@@ -1020,20 +1055,24 @@ SM.Metrics.OverviewPanel = Ext.extend(Ext.Panel, {
       height: 140,
       collectionId
     })
+    const updateMetrics = function (metrics) {
+      _this.metrics = metrics
+      statusPanel.updateMetrics(metrics)
+      progressPanel.updateMetrics(metrics)
+      agesPanel.updateMetrics(metrics)
+      findingsPanel.updateMetrics(metrics.findings)
+    }
     const config = {
       border: false,
       autoScroll: true,
-      // layout: 'vbox',
-      // layoutConfig: {
-      //   align: 'stretch',
-      // },
       items: [
         statusPanel,
         progressPanel,
         findingsPanel,
         agesPanel,
         exportPanel
-      ]
+      ],
+      updateMetrics
     }
     Ext.apply(this, Ext.apply(this.initialConfig, config))
     SM.Metrics.OverviewPanel.superclass.initComponent.call(this)
@@ -1068,6 +1107,11 @@ SM.Metrics.AggAssetPanel = Ext.extend(Ext.Panel, {
     }
 
     aggAssetGrid.getSelectionModel().on('rowselect', onRowSelect)
+    const updateBaseParams = function (params) {
+      unaggGrid.store.removeAll()
+      aggAssetGrid.store.baseParams =  params
+      aggAssetGrid.store.load()
+    }
 
     const config = {
       layout: 'border',
@@ -1075,7 +1119,8 @@ SM.Metrics.AggAssetPanel = Ext.extend(Ext.Panel, {
       items: [
         aggAssetGrid,
         unaggGrid
-      ]
+      ],
+      updateBaseParams
     }
     Ext.apply(this, Ext.apply(this.initialConfig, config))
     this.superclass().initComponent.call(this)
@@ -1112,6 +1157,11 @@ SM.Metrics.AggStigPanel = Ext.extend(Ext.Panel, {
     }
 
     aggStigGrid.getSelectionModel().on('rowselect', onRowSelect)
+    const updateBaseParams = function (params) {
+      unaggGrid.store.removeAll()
+      aggStigGrid.store.baseParams =  params
+      aggStigGrid.store.load()
+    }
 
     const config = {
       layout: 'border',
@@ -1119,7 +1169,8 @@ SM.Metrics.AggStigPanel = Ext.extend(Ext.Panel, {
       items: [
         aggStigGrid,
         unaggGrid
-      ]
+      ],
+      updateBaseParams
     }
     Ext.apply(this, Ext.apply(this.initialConfig, config))
     this.superclass().initComponent.call(this)
@@ -1175,6 +1226,12 @@ SM.Metrics.AggLabelPanel = Ext.extend(Ext.Panel, {
 
     aggLabelGrid.getSelectionModel().on('rowselect', onRowSelectLabel)
     aggAssetGrid.getSelectionModel().on('rowselect', onRowSelectAsset)
+    const updateBaseParams = function (params) {
+      unaggGrid.store.removeAll()
+      aggAssetGrid.store.removeAll()
+      aggLabelGrid.store.baseParams =  params
+      aggLabelGrid.store.load()
+    }
 
     const config = {
       layout: 'border',
@@ -1183,7 +1240,8 @@ SM.Metrics.AggLabelPanel = Ext.extend(Ext.Panel, {
         aggLabelGrid,
         aggAssetGrid,
         unaggGrid
-      ]
+      ],
+      updateBaseParams
     }
     Ext.apply(this, Ext.apply(this.initialConfig, config))
     this.superclass().initComponent.call(this)
@@ -1193,7 +1251,8 @@ SM.Metrics.AggLabelPanel = Ext.extend(Ext.Panel, {
 
 SM.Metrics.addCollectionMetricsTab = async function (options) {
   try {
-    let { collectionId, collectionName, treePath, labelIds } = options
+    const { collectionId, collectionName, treePath, labelIds } = options
+    const initialBaseParams = labelIds.length ? { labelId: labelIds } : undefined
 
     const tab = Ext.getCmp('main-tab-panel').getItem(`metrics-tab-${collectionId}`)
     if (tab) {
@@ -1201,15 +1260,18 @@ SM.Metrics.addCollectionMetricsTab = async function (options) {
       return
     }
 
-    // API requests
-    const params = labelIds.length ? { labelId: labelIds } : undefined
-    const results = await Ext.Ajax.requestPromise({
-      url: `${STIGMAN.Env.apiBase}/collections/${collectionId}/metrics/summary/collection`,
-      method: 'GET',
-      params
-    })
-    const apiMetricsCollection = JSON.parse(results.response.responseText)
-
+    const getMetricsAggCollection = async function (collectionId, labelIds) {
+      // API requests
+      const params = labelIds.length ? { labelId: labelIds } : undefined
+      const results = await Ext.Ajax.requestPromise({
+        url: `${STIGMAN.Env.apiBase}/collections/${collectionId}/metrics/summary/collection`,
+        method: 'GET',
+        params
+      })
+      return JSON.parse(results.response.responseText)
+    }
+    
+    const apiMetricsCollection = await getMetricsAggCollection(collectionId, labelIds)
     const overviewPanel = new SM.Metrics.OverviewPanel({
       cls: 'sm-round-panel sm-metrics-overview-panel',
       collapsible: true,
@@ -1225,20 +1287,20 @@ SM.Metrics.addCollectionMetricsTab = async function (options) {
     const aggAssetPanel = new SM.Metrics.AggAssetPanel({
       border: false,
       collectionId,
-      baseParams: params
+      baseParams: initialBaseParams
     })
     const aggStigPanel = new SM.Metrics.AggStigPanel({
       border: false,
       collectionId,
-      baseParams: params
+      baseParams: initialBaseParams
     })
     const aggLabelPanel = new SM.Metrics.AggLabelPanel({
       border: false,
       collectionId,
-      baseParams: params
+      baseParams: initialBaseParams
     })
 
-    const aggPanel = new Ext.Panel({
+    const centerPanel = new Ext.Panel({
       region: 'center',
       layout: 'fit',
       title: 'Aggregations',
@@ -1293,9 +1355,29 @@ SM.Metrics.addCollectionMetricsTab = async function (options) {
       sm_treePath: treePath,
       items: [
         overviewPanel,
-        aggPanel
+        centerPanel
       ]
     })
+
+    // handle change to label filters in NavTree
+    const onLabelFilter = async (srcCollectionId, srcLabelIds) => {
+      try {
+        if (srcCollectionId === collectionId) {
+          const apiMetricsCollection = await getMetricsAggCollection(srcCollectionId, srcLabelIds)
+          overviewPanel.setTitle(`Overview ${SM.Collection.LabelSpritesByCollectionLabelId(srcCollectionId, srcLabelIds)}`)
+          overviewPanel.updateMetrics(apiMetricsCollection.metrics)
+          const newBaseParams = srcLabelIds.length ? { labelId: srcLabelIds } : undefined
+          aggAssetPanel.updateBaseParams(newBaseParams)
+          aggStigPanel.updateBaseParams(newBaseParams)
+          aggLabelPanel.updateBaseParams(newBaseParams)
+        }
+      }
+      catch (e) {
+        alert (e)
+      }
+    }
+    SM.Dispatcher.addListener('labelfilter', onLabelFilter)
+    metricsTab.on('beforedestroy', () => { SM.Dispatcher.removeListener('labelfilter', onLabelFilter) })
 
     metricsTab.updateTitle = function () {
       metricsTab.setTitle(`${metricsTab.sm_tabMode === 'ephemeral' ? '<i>' : ''}${SM.he(metricsTab.collectionName)} / Metrics${metricsTab.sm_tabMode === 'ephemeral' ? '</i>' : ''}`)
@@ -1304,6 +1386,8 @@ SM.Metrics.addCollectionMetricsTab = async function (options) {
       metricsTab.sm_tabMode = 'permanent'
       metricsTab.updateTitle.call(metricsTab)
     }
+
+  
 
     let tp = Ext.getCmp('main-tab-panel')
     let ephTabIndex = tp.items.findIndex('sm_tabMode', 'ephemeral')
