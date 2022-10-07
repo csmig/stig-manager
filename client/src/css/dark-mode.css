@@ -77,9 +77,19 @@ select:-webkit-autofill {
 }
 .sm-metrics-count-child {
 	border:  1px solid #444;
+	background-color: #aaa;
 }
 .sm-metric-agg-panel .x-layout-split {
     background-color: #1f1f1f;
+}
+.sm-metrics-high-box {
+	background-color: hsl(0deg 36% 64%);
+}
+.sm-metrics-medium-box {
+	background-color: hsl(38deg 56% 51%);
+}
+.sm-metrics-low-box {
+	background-color: hsl(230deg 41% 76%);
 }
 
 .sm-metrics-overview-panel .x-panel-body{
@@ -4037,16 +4047,16 @@ body.x-body-masked .x-window-plain .x-window-mc {
 }
 .sm-cell-thermometer-bg {
     background-color: rgb(30, 32, 33);
-    outline: solid 1px #444;
+    outline: solid 1px #565656;
 }
 .sm-cell-mercury-low {
     background-color: rgb(66, 87, 34);
 }
 .sm-cell-mercury-medium {
-    background-color: hsl(200deg 30% 18%);
+    background-color: hsl(209deg 48% 26%);
 }
 .sm-cell-mercury-high {
-    background-color: rgb(107, 38, 20);
+    background-color: hsl(5deg 56% 21%);
 }
 .sm-dialog-panel-text {
     color: rgb(232, 230, 227);
