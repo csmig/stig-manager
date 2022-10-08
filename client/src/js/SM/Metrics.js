@@ -106,6 +106,11 @@ SM.Metrics.CommonFields = [
     name: 'maxTs',
     type: 'date',
     mapping: 'metrics.maxTs'
+  },
+  {
+    name: 'maxTouchTs',
+    type: 'date',
+    mapping: 'metrics.maxTouchTs'
   }
 ]
 
@@ -128,19 +133,11 @@ SM.Metrics.CommonColumns = [
   {
     header: 'Newest',
     width: 50,
-    dataIndex: 'maxTs',
+    dataIndex: 'maxTouchTs',
     align: 'center',
     sortable: true,
     renderer: renderDurationToNow
   },
-  // {
-  //   header: "Saved",
-  //   width: 75,
-  //   dataIndex: 'savedPct',
-  //   align: "center",
-  //   sortable: true,
-  //   renderer: renderPct
-  // },
   {
     header: "Assessed",
     width: 75,
@@ -833,6 +830,9 @@ SM.Metrics.AgesPanel = Ext.extend(Ext.Panel, {
         '<div class="sm-metrics-count-child sm-metrics-age-box">',
           `<div class="sm-metrics-count-label">Newest</div><div class="sm-metrics-count-value">{[renderDurationToNow(values.maxTs)]}</div>`,
         '</div>',
+        '<div class="sm-metrics-count-child sm-metrics-age-box">',
+          `<div class="sm-metrics-count-label">Updated</div><div class="sm-metrics-count-value">{[renderDurationToNow(values.maxTouchTs)]}</div>`,
+        '</div>',
       '</div>'
     )
     const updateMetrics = function (metrics) {
@@ -1113,6 +1113,30 @@ SM.Metrics.AggAssetPanel = Ext.extend(Ext.Panel, {
       aggAssetGrid.store.baseParams =  params
       aggAssetGrid.store.load()
     }
+    const updateDisplay = function (onlyUpdateView) {
+      const selModel = aggAssetGrid.getSelectionModel()
+      const selectedRow = selModel.getSelected()
+      if (onlyUpdateView) {
+        aggAssetGrid.getView().refresh()
+        if (selectedRow) {
+          unaggGrid.getView().refresh()
+        }
+      }
+      else {
+        if (selectedRow) {
+          const lastMaxTouchTs = selectedRow.data.maxTouchTs || ''
+          aggAssetGrid.store.reload()
+          aggAssetGrid.getSelectionModel().selectRecords([selectedRow])
+          const currentMaxTouchTs = selModel.getSelected().data.maxTouchTs
+          if (lastMaxTouchTs !== currentMaxTouchTs) {
+            unaggGrid.store.reload()
+          }
+        }
+        else {
+          aggAssetGrid.store.reload()
+        }
+      }
+    }
 
     const config = {
       layout: 'border',
@@ -1121,7 +1145,8 @@ SM.Metrics.AggAssetPanel = Ext.extend(Ext.Panel, {
         aggAssetGrid,
         unaggGrid
       ],
-      updateBaseParams
+      updateBaseParams,
+      updateDisplay
     }
     Ext.apply(this, Ext.apply(this.initialConfig, config))
     this.superclass().initComponent.call(this)
@@ -1254,8 +1279,9 @@ SM.Metrics.AggLabelPanel = Ext.extend(Ext.Panel, {
 
 SM.Metrics.addCollectionMetricsTab = async function (options) {
   try {
-    const { collectionId, collectionName, treePath, labelIds } = options
-    const initialBaseParams = labelIds.length ? { labelId: labelIds } : undefined
+    const { collectionId, collectionName, treePath, initialLabelIds } = options
+    let currentBaseParams = initialLabelIds.length ? { labelId: initialLabelIds } : undefined
+    let currentLabelIds = initialLabelIds
 
     const tab = Ext.getCmp('main-tab-panel').getItem(`metrics-tab-${collectionId}`)
     if (tab) {
@@ -1274,11 +1300,12 @@ SM.Metrics.addCollectionMetricsTab = async function (options) {
       return JSON.parse(results.response.responseText)
     }
     
-    const apiMetricsCollection = await getMetricsAggCollection(collectionId, labelIds)
+    const apiMetricsCollection = await getMetricsAggCollection(collectionId, currentLabelIds)
+    let lastMaxTouchTs = apiMetricsCollection.metrics.maxTouchTs || ''
     const overviewPanel = new SM.Metrics.OverviewPanel({
       cls: 'sm-round-panel sm-metrics-overview-panel',
       collapsible: true,
-      title: `Overview ${SM.Collection.LabelSpritesByCollectionLabelId(collectionId, labelIds)}`,
+      title: `Overview ${SM.Collection.LabelSpritesByCollectionLabelId(collectionId, currentLabelIds)}`,
       margins: { top: SM.Margin.top, right: SM.Margin.edge, bottom: SM.Margin.bottom, left: SM.Margin.edge },
       region: 'west',
       width: 430,
@@ -1290,17 +1317,17 @@ SM.Metrics.addCollectionMetricsTab = async function (options) {
     const aggAssetPanel = new SM.Metrics.AggAssetPanel({
       border: false,
       collectionId,
-      baseParams: initialBaseParams
+      baseParams: currentBaseParams
     })
     const aggStigPanel = new SM.Metrics.AggStigPanel({
       border: false,
       collectionId,
-      baseParams: initialBaseParams
+      baseParams: currentBaseParams
     })
     const aggLabelPanel = new SM.Metrics.AggLabelPanel({
       border: false,
       collectionId,
-      baseParams: initialBaseParams
+      baseParams: currentBaseParams
     })
 
     const centerPanel = new Ext.Panel({
@@ -1366,13 +1393,14 @@ SM.Metrics.addCollectionMetricsTab = async function (options) {
     const onLabelFilter = async (srcCollectionId, srcLabelIds) => {
       try {
         if (srcCollectionId === collectionId) {
-          const apiMetricsCollection = await getMetricsAggCollection(srcCollectionId, srcLabelIds)
-          overviewPanel.setTitle(`Overview ${SM.Collection.LabelSpritesByCollectionLabelId(srcCollectionId, srcLabelIds)}`)
+          currentLabelIds = srcLabelIds
+          const apiMetricsCollection = await getMetricsAggCollection(collectionId, currentLabelIds)
+          overviewPanel.setTitle(`Overview ${SM.Collection.LabelSpritesByCollectionLabelId(collectionId, currentLabelIds)}`)
           overviewPanel.updateMetrics(apiMetricsCollection.metrics)
-          const newBaseParams = srcLabelIds.length ? { labelId: srcLabelIds } : undefined
-          aggAssetPanel.updateBaseParams(newBaseParams)
-          aggStigPanel.updateBaseParams(newBaseParams)
-          aggLabelPanel.updateBaseParams(newBaseParams)
+          currentBaseParams = currentLabelIds.length ? { labelId: currentLabelIds } : undefined
+          aggAssetPanel.updateBaseParams(currentBaseParams)
+          aggStigPanel.updateBaseParams(currentBaseParams)
+          aggLabelPanel.updateBaseParams(currentBaseParams)
         }
       }
       catch (e) {
@@ -1380,7 +1408,31 @@ SM.Metrics.addCollectionMetricsTab = async function (options) {
       }
     }
     SM.Dispatcher.addListener('labelfilter', onLabelFilter)
-    metricsTab.on('beforedestroy', () => { SM.Dispatcher.removeListener('labelfilter', onLabelFilter) })
+
+    // handle periodic updates
+    const updateDisplay = async () => {
+      try {
+        const apiMetricsCollection = await getMetricsAggCollection(collectionId, currentLabelIds)
+        const currentMaxTouchTs = apiMetricsCollection.metrics.maxTouchTs || ''
+        overviewPanel.updateMetrics(apiMetricsCollection.metrics)
+        const onlyUpdateView = lastMaxTouchTs === currentMaxTouchTs
+        aggAssetPanel.updateDisplay(onlyUpdateView)
+        // aggStigPanel.updateDisplay()
+        // aggLabelPanel.updateDisplay()
+        lastMaxTouchTs = currentMaxTouchTs
+      }
+      catch (e) {
+        alert (e)
+      }
+    }
+    const updateDisplayInterval = setInterval(updateDisplay, 5000)
+
+    metricsTab.on('beforedestroy', () => { 
+      SM.Dispatcher.removeListener('labelfilter', onLabelFilter) 
+      clearInterval(updateDisplayInterval)
+    })
+
+
 
     metricsTab.updateTitle = function () {
       metricsTab.setTitle(`${metricsTab.sm_tabMode === 'ephemeral' ? '<i>' : ''}${SM.he(metricsTab.collectionName)} / Metrics${metricsTab.sm_tabMode === 'ephemeral' ? '</i>' : ''}`)

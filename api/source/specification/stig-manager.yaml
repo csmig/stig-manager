@@ -1984,7 +1984,7 @@ paths:
       operationId: getMetricsDetailByCollection
       responses:
         '200':
-          description: CollectionStatus response
+          description: Metrics response
           content:
             application/json:
               schema:
@@ -2019,7 +2019,7 @@ paths:
       operationId: getMetricsDetailByCollectionAggAsset
       responses:
         '200':
-          description: CollectionStatus response
+          description: Metrics response
           content:
             application/json:
               schema:
@@ -2054,7 +2054,7 @@ paths:
       operationId: getMetricsDetailByCollectionAgg
       responses:
         '200':
-          description: CollectionStatus response
+          description: Metrics response
           content:
             application/json:
               schema:
@@ -2087,7 +2087,7 @@ paths:
       operationId: getMetricsDetailByCollectionAggLabel
       responses:
         '200':
-          description: CollectionStatus response
+          description: Metrics response
           content:
             application/json:
               schema:
@@ -2122,7 +2122,7 @@ paths:
       operationId: getMetricsDetailByCollectionAggStig
       responses:
         '200':
-          description: CollectionStatus response
+          description: Metrics response
           content:
             application/json:
               schema:
@@ -2158,7 +2158,7 @@ paths:
       operationId: getMetricsSummaryByCollection
       responses:
         '200':
-          description: CollectionStatus response
+          description: Metrics response
           content:
             application/json:
               schema:
@@ -2193,7 +2193,7 @@ paths:
       operationId: getMetricsSummaryByCollectionAggAsset
       responses:
         '200':
-          description: CollectionStatus response
+          description: Metrics response
           content:
             application/json:
               schema:
@@ -2228,7 +2228,7 @@ paths:
       operationId: getMetricsSummaryByCollectionAgg
       responses:
         '200':
-          description: CollectionStatus response
+          description: Metrics response
           content:
             application/json:
               schema:
@@ -2261,7 +2261,7 @@ paths:
       operationId: getMetricsSummaryByCollectionAggLabel
       responses:
         '200':
-          description: CollectionStatus response
+          description: Metrics response
           content:
             application/json:
               schema:
@@ -2296,7 +2296,7 @@ paths:
       operationId: getMetricsSummaryByCollectionAggStig
       responses:
         '200':
-          description: CollectionStatus response
+          description: Metrics response
           content:
             application/json:
               schema:
@@ -2328,7 +2328,7 @@ paths:
       operationId: getMetricsRootDetail
       responses:
         '200':
-          description: CollectionStatus response
+          description: Metrics response
           content:
             application/json:
               schema:
@@ -2358,7 +2358,7 @@ paths:
       operationId: getMetricsRootDetailAggCollection
       responses:
         '200':
-          description: CollectionStatus response
+          description: Metrics response
           content:
             application/json:
               schema:
@@ -2389,7 +2389,7 @@ paths:
       operationId: getMetricsRootDetailAggStig
       responses:
         '200':
-          description: CollectionStatus response
+          description: Metrics response
           content:
             application/json:
               schema:
@@ -2421,7 +2421,7 @@ paths:
       operationId: getMetricsRootSummary
       responses:
         '200':
-          description: CollectionStatus response
+          description: Metrics response
           content:
             application/json:
               schema:
@@ -2452,7 +2452,7 @@ paths:
       operationId: getMetricsRootSummaryAggCollection
       responses:
         '200':
-          description: CollectionStatus response
+          description: Metrics response
           content:
             application/json:
               schema:
@@ -2483,7 +2483,7 @@ paths:
       operationId: getMetricsRootSummaryAggStig
       responses:
         '200':
-          description: CollectionStatus response
+          description: Metrics response
           content:
             application/json:
               schema:
@@ -2604,7 +2604,7 @@ paths:
       operationId: getStatusByCollection
       responses:
         '200':
-          description: CollectionStatus response
+          description: Metrics response
           content:
             application/json:
               schema:
@@ -5019,6 +5019,7 @@ components:
             - assessed
             - minTs
             - maxTs
+            - maxTouchTs
             - results
             - statuses
             - findings
@@ -5030,6 +5031,8 @@ components:
             minTs:
               $ref: '#/components/schemas/StringDateTimeNullable'
             maxTs:
+              $ref: '#/components/schemas/StringDateTimeNullable'
+            maxTouchTs:
               $ref: '#/components/schemas/StringDateTimeNullable'
             results:
               type: object
@@ -5102,6 +5105,7 @@ components:
             - assessed
             - minTs
             - maxTs
+            - maxTouchTs
             - results
             - statuses
             - findings
@@ -5113,6 +5117,8 @@ components:
             minTs:
               $ref: '#/components/schemas/StringDateTimeNullable'
             maxTs:
+              $ref: '#/components/schemas/StringDateTimeNullable'
+            maxTouchTs:
               $ref: '#/components/schemas/StringDateTimeNullable'
             results:
               type: object

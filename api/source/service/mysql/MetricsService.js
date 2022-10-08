@@ -65,6 +65,7 @@ function summaryColumns (aggregate = false) {
     ...serializeColumns(rootProperties, aggregate),
     `DATE_FORMAT(${aggregate ? 'MIN(sa.minTs)':'sa.minTs'}, '%Y-%m-%dT%H:%i:%sZ') as minTs`,
     `DATE_FORMAT(${aggregate ? 'MAX(sa.maxTs)':'sa.maxTs'}, '%Y-%m-%dT%H:%i:%sZ') as maxTs`,
+    `DATE_FORMAT(${aggregate ? 'MAX(sa.maxTouchTs)':'sa.maxTouchTs'}, '%Y-%m-%dT%H:%i:%sZ') as maxTouchTs`,
     ...serializeColumns(findings, aggregate),
     ...serializeColumns(results, aggregate),
     ...serializeColumns(statuses, aggregate)
@@ -76,6 +77,7 @@ function summaryObject (aggregate = false) {
   ${serializeProperties(rootProperties, aggregate)},
   'minTs', DATE_FORMAT(${aggregate ? 'MIN(sa.minTs)':'sa.minTs'}, '%Y-%m-%dT%H:%i:%sZ'),
   'maxTs', DATE_FORMAT(${aggregate ? 'MAX(sa.maxTs)':'sa.maxTs'}, '%Y-%m-%dT%H:%i:%sZ'),
+  'maxTouchTs', DATE_FORMAT(${aggregate ? 'MAX(sa.maxTouchTs)':'sa.maxTouchTs'}, '%Y-%m-%dT%H:%i:%sZ'),
   'results', json_object(
     ${serializeProperties(results, aggregate)}
   ),
@@ -150,6 +152,7 @@ const sqlMetricsDetail = `json_object(
   ${serializeProperties(rootProperties, false)},
   'minTs', DATE_FORMAT(sa.minTs, '%Y-%m-%dT%H:%i:%sZ'),
   'maxTs', DATE_FORMAT(sa.maxTs, '%Y-%m-%dT%H:%i:%sZ'),
+  'maxTouchTs', DATE_FORMAT(sa.maxTouchTs, '%Y-%m-%dT%H:%i:%sZ'),
   'findings', ${sqlFindings},
   'statuses', ${sqlDetailStatuses},
   'results', ${sqlDetailResults}
@@ -158,6 +161,7 @@ const sqlMetricsDetailAgg = `json_object(
   ${serializeProperties(rootProperties, true)},
   'minTs', DATE_FORMAT(MIN(sa.minTs), '%Y-%m-%dT%H:%i:%sZ'),
   'maxTs', DATE_FORMAT(MAX(sa.maxTs), '%Y-%m-%dT%H:%i:%sZ'),
+  'maxTouchTs', DATE_FORMAT(MAX(sa.maxTouchTs), '%Y-%m-%dT%H:%i:%sZ'),
   'findings', ${sqlFindingsAgg},
   'statuses', ${sqlDetailStatusesAgg},
   'results', ${sqlDetailResultsAgg}
@@ -170,6 +174,7 @@ const colsMetricsDetail = [
   `sa.pass + sa.fail + sa.notapplicable as assessed`,
   `DATE_FORMAT(sa.minTs, '%Y-%m-%dT%H:%i:%sZ') as minTs`,
   `DATE_FORMAT(sa.maxTs, '%Y-%m-%dT%H:%i:%sZ') as maxTs`,
+  `DATE_FORMAT(sa.maxTouchTs, '%Y-%m-%dT%H:%i:%sZ') as maxTouchTs`,
   `sa.lowCount as low`,
   `sa.mediumCount as medium`,
   `sa.highCount as high`,
@@ -205,6 +210,7 @@ const colsMetricsDetailAgg = [
   `coalesce(sum(sa.pass + sa.fail + sa.notapplicable),0) as assessed`,
   `DATE_FORMAT(min(sa.minTs), '%Y-%m-%dT%H:%i:%sZ') as minTs`,
   `DATE_FORMAT(max(sa.maxTs), '%Y-%m-%dT%H:%i:%sZ') as maxTs`,
+  `DATE_FORMAT(max(sa.maxTouchTs), '%Y-%m-%dT%H:%i:%sZ') as maxTouchTs`,
   `coalesce(sum(sa.lowCount),0) as low`,
   `coalesce(sum(sa.mediumCount),0) as medium`,
   `coalesce(sum(sa.highCount),0) as high`,
