@@ -373,7 +373,7 @@ SM.Metrics.AggGrid = Ext.extend(Ext.grid.GridPanel, {
     })
     const store = new Ext.data.JsonStore({
       grid: this,
-      autoLoad: this.storeAutoLoad ?? true,
+      autoLoad: this.storeAutoLoad ?? false,
       baseParams: this.baseParams,
       smMaskDelay: 250,
       proxy: this.proxy,
@@ -429,8 +429,8 @@ SM.Metrics.AggGrid = Ext.extend(Ext.grid.GridPanel, {
           }, {
             xtype: 'exportbutton',
             hasMenu: false,
-            gridBasename: 'Assets (grid)',
-            storeBasename: 'Assets (store)',
+            grid: this,
+            gridBasename: this.exportName || this.title || 'aggregation',
             iconCls: 'sm-export-icon',
             text: 'CSV'
           }, {
@@ -595,8 +595,8 @@ SM.Metrics.UnaggGrid = Ext.extend(Ext.grid.GridPanel, {
           }, {
             xtype: 'exportbutton',
             hasMenu: false,
-            gridBasename: 'Assets (grid)',
-            storeBasename: 'Assets (store)',
+            grid: this,
+            gridBasename: this.exportName || this.title || 'unaggregated',
             iconCls: 'sm-export-icon',
             text: 'CSV'
           }, {
@@ -1087,6 +1087,7 @@ SM.Metrics.AggAssetPanel = Ext.extend(Ext.Panel, {
       collectionId,
       border: false,
       region: 'center',
+      exportName: 'Assets',
       baseParams: this.baseParams
     })
     const unaggGrid = new SM.Metrics.UnaggGrid({
@@ -1164,6 +1165,7 @@ SM.Metrics.AggStigPanel = Ext.extend(Ext.Panel, {
       aggregation: 'stig',
       collectionId,
       baseParams: this.baseParams,
+      exportName: 'STIGs',
       region: 'center'
     })
     const unaggGrid = new SM.Metrics.UnaggGrid({
@@ -1244,6 +1246,7 @@ SM.Metrics.AggLabelPanel = Ext.extend(Ext.Panel, {
       aggregation: 'label',
       collectionId,
       baseParams: this.baseParams,
+      exportName: 'Labels',
       region: 'north',
       split: true,
       height: '33%'
@@ -1254,6 +1257,7 @@ SM.Metrics.AggLabelPanel = Ext.extend(Ext.Panel, {
       storeAutoLoad: false,
       collectionId,
       baseParams: this.baseParams,
+      exportName: 'Assets',
       region: 'center'
     })
     const unaggGrid = new SM.Metrics.UnaggGrid({
@@ -1320,7 +1324,7 @@ SM.Metrics.AggLabelPanel = Ext.extend(Ext.Panel, {
           return
         }
         await aggAssetGrid.store.reloadPromise()
-        const currentRecordAsset = aggAssetGrid.store.getById(selectedRow.data.assetId)
+        const currentRecordAsset = aggAssetGrid.store.getById(selectedRowAsset.data.assetId)
         if (!currentRecordAsset) {
           unaggGrid.store.removeAll()
           return
@@ -1386,19 +1390,49 @@ SM.Metrics.addCollectionMetricsTab = async function (options) {
       metrics: apiMetricsCollection.metrics
     })
     const aggAssetPanel = new SM.Metrics.AggAssetPanel({
+      title: 'Assets',
+      iconCls: 'sm-asset-icon',
+      layout: 'fit',
       border: false,
       collectionId,
       baseParams: currentBaseParams
     })
     const aggStigPanel = new SM.Metrics.AggStigPanel({
+      title: 'STIGs',
+      iconCls: 'sm-stig-icon',
+      layout: 'fit',
       border: false,
       collectionId,
       baseParams: currentBaseParams
     })
     const aggLabelPanel = new SM.Metrics.AggLabelPanel({
+      title: 'Labels',
+      iconCls: 'sm-label-icon',
+      layout: 'fit',
       border: false,
       collectionId,
       baseParams: currentBaseParams
+    })
+
+    const aggTabPanel = new Ext.TabPanel({
+      activeTab: 0,
+      border: false,
+      deferredRender: false,
+      items: [
+        aggStigPanel,
+        aggLabelPanel,
+        aggAssetPanel
+      ],
+      listeners: {
+        beforetabchange: function (tp, newTab, currentTab) {
+          if (currentTab) { // will be false during initial setup
+            updateDisplay()
+          }
+          else {
+            newTab.updateDisplay()
+          }
+        }
+      }
     })
 
     const centerPanel = new Ext.Panel({
@@ -1409,37 +1443,7 @@ SM.Metrics.addCollectionMetricsTab = async function (options) {
       margins: { top: SM.Margin.top, right: SM.Margin.edge, bottom: SM.Margin.bottom, left: SM.Margin.adjacent },
       border: false,
       collapsible: false,
-      items: [
-        {
-          xtype: 'tabpanel',
-          activeTab: 0,
-          border: false,
-          deferredRender: false,
-          items: [
-            {
-              title: 'STIGs',
-              iconCls: 'sm-stig-icon',
-              layout: 'fit',
-              border: false,
-              items: [aggStigPanel]
-            },
-            {
-              title: 'Labels',
-              iconCls: 'sm-label-icon',
-              layout: 'fit',
-              border: false,
-              items: [aggLabelPanel]
-            },
-            {
-              title: 'Assets',
-              iconCls: 'sm-asset-icon',
-              layout: 'fit',
-              border: false,
-              items: [aggAssetPanel]
-            }
-          ]
-        }
-      ]
+      items: aggTabPanel
     })
 
     const metricsTab = new Ext.Panel({
@@ -1485,9 +1489,8 @@ SM.Metrics.addCollectionMetricsTab = async function (options) {
       try {
         const apiMetricsCollection = await getMetricsAggCollection(collectionId, currentLabelIds)
         overviewPanel.updateMetrics(apiMetricsCollection.metrics)
-        aggAssetPanel.updateDisplay()
-        aggStigPanel.updateDisplay()
-        aggLabelPanel.updateDisplay()
+        const activePanel = aggTabPanel.getActiveTab()
+        activePanel.updateDisplay()
       }
       catch (e) {
         alert (e)
@@ -1499,8 +1502,6 @@ SM.Metrics.addCollectionMetricsTab = async function (options) {
       SM.Dispatcher.removeListener('labelfilter', onLabelFilter) 
       clearInterval(updateDisplayInterval)
     })
-
-
 
     metricsTab.updateTitle = function () {
       metricsTab.setTitle(`${metricsTab.sm_tabMode === 'ephemeral' ? '<i>' : ''}${SM.he(metricsTab.collectionName)} / Metrics${metricsTab.sm_tabMode === 'ephemeral' ? '</i>' : ''}`)
