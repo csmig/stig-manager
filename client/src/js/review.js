@@ -95,6 +95,7 @@ async function addReview( params ) {
       method: 'GET'
     }),
     root: '',
+    autoLoad: false,
     storeId: 'groupStore' + idAppend,
     fields: groupFields,
     idProperty: 'ruleId',
@@ -380,15 +381,9 @@ async function addReview( params ) {
     store: groupStore,
     stripeRows: true,
     listeners: {
-      beforehide: {
-        fn: function (grid) {
-          var test = '1';
-        }
-      },
-      beforeshow: {
-        fn: function (grid) {
-          var test = '1';
-        }
+      render: function () {
+        groupStore.load()
+        loadRevisionMenu(leaf.benchmarkId, 'latest', idAppend)
       }
     },
     sm: new Ext.grid.RowSelectionModel({
@@ -1206,10 +1201,10 @@ async function addReview( params ) {
     thisTab = tp.add( reviewTab )
   }
   thisTab.updateTitle.call(thisTab)
-  thisTab.show();
+  // thisTab.show();
 
-  groupGrid.getStore().load();
-  loadRevisionMenu(leaf.benchmarkId, 'latest', idAppend)
+  // groupGrid.getStore().load();
+  // loadRevisionMenu(leaf.benchmarkId, 'latest', idAppend)
 
   async function saveReview(saveParams) {
     // saveParams = {
