@@ -7,69 +7,6 @@ SM.Margin = {
   edge: 0
 }
 
-SM.MainTabPanel = Ext.extend(Ext.TabPanel, {
-  initComponent: function () {
-    const me = this
-    this.onCollectionChanged = change => {
-      if (change.name) {
-        for (const tab of me.items.items) {
-          if (tab.collectionId === change.collectionId) {
-            tab.collectionName = change.name
-            tab.updateTitle.call(tab)
-          }
-        }
-      }
-    }
-    this.onCollectionDeleted = collectionId => {
-      const tabsToRemove = me.items.items.filter( tab => tab.collectionId === collectionId )
-      for (const tab of tabsToRemove) {
-          me.remove(tab)
-      }
-    }
-    const config = {
-      plugins: new SM.TabEnhancements(),
-      title: 'STIGManager',
-      enableTabScroll: true,
-      activeTab: 0,
-      listeners: {
-        beforetabchange: function (tabPanel, newTab, currentTab) {
-          // For IE: Keep the panels in the same scroll position after tab changes
-          if (Ext.isIE) {
-            if (Ext.isDefined(currentTab)) {
-              if (currentTab.sm_TabType == 'asset_review') {
-                var vCur = currentTab.sm_GroupGridView;
-                vCur.scrollTop = vCur.scroller.dom.scrollTop;
-                vCur.scrollHeight = vCur.scroller.dom.scrollHeight;
-              }
-            }
-            if (Ext.isDefined(newTab)) {
-              if (newTab.sm_TabType == 'asset_review') {
-                var vNew = newTab.sm_GroupGridView;
-                if (Ext.isDefined(vNew.scroller)) {
-                  setTimeout(function () {
-                    vNew.scroller.dom.scrollTop = vNew.scrollTop + (vNew.scrollTop == 0 ? 0 : vNew.scroller.dom.scrollHeight - vNew.scrollHeight);
-                  }, 100);
-                }
-              }
-            }
-          }
-        },
-        tabchange: function (tp, tab) {
-          // expand the navigation tree to the source node
-          if (tab.sm_treePath) {
-            Ext.getCmp('app-nav-tree').selectPath(tab.sm_treePath)
-          }
-        }
-      },
-      items: []
-    }
-    Ext.apply(this, Ext.apply(this.initialConfig, config))
-    SM.MainTabPanel.superclass.initComponent.call(this)
-    SM.Dispatcher.addListener('collectionchanged', this.onCollectionChanged)
-    SM.Dispatcher.addListener('collectiondeleted', this.onCollectionDeleted)
-  }
-})
-
 SM.HomeTab = Ext.extend(Ext.Panel, {
   initComponent: function() {
     const me = this
@@ -221,3 +158,131 @@ SM.StigWidget = Ext.extend(Ext.Panel, {
   }
 })
 Ext.reg('sm-home-widget-stig', SM.StigWidget)
+
+SM.MainTabPanel = Ext.extend(Ext.TabPanel, {
+  initComponent: function () {
+    const me = this
+    this.onCollectionChanged = change => {
+      if (change.name) {
+        for (const tab of me.items.items) {
+          if (tab.collectionId === change.collectionId) {
+            tab.collectionName = change.name
+            tab.updateTitle.call(tab)
+          }
+        }
+      }
+    }
+    this.onCollectionDeleted = collectionId => {
+      const tabsToRemove = me.items.items.filter( tab => tab.collectionId === collectionId )
+      for (const tab of tabsToRemove) {
+          me.remove(tab)
+      }
+    }
+    const getState = function () {
+      return { tabId: 'main-tab-panel' }
+    }
+    const applyState = function (state) {
+      console.log(state)
+    }
+    const appTitleHtml = `<div class='sm-home-title'>
+		STIG Manager<span id='sm-home-oss-sprite'>OSS</span><span id='sm-home-version-sprite'>${STIGMAN.Env.version}</span></div>`
+
+    const homeTab = new SM.HomeTab({
+			border: false,
+			region: 'center',
+			layout: 'table',
+			layoutConfig: {
+				tableAttrs: {
+					style: {
+						width: '100%',
+						padding: '20px',
+						"table-layout": 'fixed'
+
+					}
+				},
+				columns: 3
+			},
+			items: [
+				{
+					html: appTitleHtml,
+					colspan: 3,
+					border: false
+				},
+				{
+					xtype: 'sm-home-widget-welcome'
+				},
+				{
+					xtype: 'sm-home-widget-doc'
+				},
+				{
+					xtype: 'sm-home-widget-resources'
+				}
+			]
+		})
+
+    const config = {
+      plugins: new SM.TabEnhancements(),
+      title: 'STIGManager',
+      enableTabScroll: true,
+      activeTab: 0,
+      stateful: true,
+      stateEvents: ['main-tab-item-added', 'main-tab-item-removed'],
+      getState,
+      applyState,
+      deferredRenderer: false,
+      listeners: {
+        beforetabchange: function (tabPanel, newTab, currentTab) {
+          // For IE: Keep the panels in the same scroll position after tab changes
+          if (Ext.isIE) {
+            if (Ext.isDefined(currentTab)) {
+              if (currentTab.sm_TabType == 'asset_review') {
+                var vCur = currentTab.sm_GroupGridView;
+                vCur.scrollTop = vCur.scroller.dom.scrollTop;
+                vCur.scrollHeight = vCur.scroller.dom.scrollHeight;
+              }
+            }
+            if (Ext.isDefined(newTab)) {
+              if (newTab.sm_TabType == 'asset_review') {
+                var vNew = newTab.sm_GroupGridView;
+                if (Ext.isDefined(vNew.scroller)) {
+                  setTimeout(function () {
+                    vNew.scroller.dom.scrollTop = vNew.scrollTop + (vNew.scrollTop == 0 ? 0 : vNew.scroller.dom.scrollHeight - vNew.scrollHeight);
+                  }, 100);
+                }
+              }
+            }
+          }
+        },
+        tabchange: function (tp, tab) {
+          // expand the navigation tree to the source node
+          if (tab.sm_treePath) {
+            Ext.getCmp('app-nav-tree').selectPath(tab.sm_treePath)
+          }
+        }
+      },
+			items: [{
+				layout: 'border',
+				border: false,
+				title: 'Home',
+				iconCls: 'sm-stig-icon',
+				items: [
+					{
+						region: 'center',
+						cls: 'sm-round-panel',
+						border: false,
+						margins: { top: SM.Margin.top, right: SM.Margin.edge, bottom: SM.Margin.bottom, left: SM.Margin.edge },
+						layout: 'fit',
+						// html: 'Hi there'
+						items: homeTab
+					}
+				]
+			}]
+    }
+    Ext.apply(this, Ext.apply(this.initialConfig, config))
+    SM.MainTabPanel.superclass.initComponent.call(this)
+    SM.Dispatcher.addListener('collectionchanged', this.onCollectionChanged)
+    SM.Dispatcher.addListener('collectiondeleted', this.onCollectionDeleted)
+  }
+})
+
+

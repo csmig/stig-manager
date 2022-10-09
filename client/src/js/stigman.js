@@ -94,60 +94,7 @@ async function loadApp () {
 			dismissDelay: 0 // Show while cursor is over element
 		})
 
-		const appTitleHtml = `<div class='sm-home-title'>
-		STIG Manager<span id='sm-home-oss-sprite'>OSS</span><span id='sm-home-version-sprite'>${STIGMAN.Env.version}</span></div>`
-		
-		const homeTab = new SM.HomeTab({
-			border: false,
-			region: 'center',
-			layout: 'table',
-			layoutConfig: {
-				tableAttrs: {
-					style: {
-						width: '100%',
-						padding: '20px',
-						"table-layout": 'fixed'
 
-					}
-				},
-				columns: 3
-			},
-			items: [
-				{
-					html: appTitleHtml,
-					colspan: 3,
-					border: false
-				},
-				{
-					xtype: 'sm-home-widget-welcome'
-				},
-				{
-					xtype: 'sm-home-widget-doc'
-				},
-				{
-					xtype: 'sm-home-widget-resources'
-				}
-			]
-		})
-
-		// mainTabPanel.add(homeTab)
-		mainTabPanel.add({
-			layout: 'border',
-			border: false,
-			title: 'Home',
-			iconCls: 'sm-stig-icon',
-			items: [
-				{
-					region: 'center',
-					cls: 'sm-round-panel',
-					border: false,
-					margins: { top: SM.Margin.top, right: SM.Margin.edge, bottom: SM.Margin.bottom, left: SM.Margin.edge },
-					layout: 'fit',
-					// html: 'Hi there'
-					items: homeTab
-				}
-			]
-		})
 
 		let viewportConfig = {
 			id: 'app-viewport',
@@ -209,7 +156,7 @@ async function loadApp () {
 				}
 			}
 		})
-		
+		mainTabPanel.fireEvent('main-tab-item-added')
 	}
 	catch (e) {
 		Ext.get( 'indicator' ).dom.innerHTML = e.message
