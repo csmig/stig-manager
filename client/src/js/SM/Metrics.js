@@ -747,7 +747,6 @@ SM.Metrics.StatusPanel = Ext.extend(Ext.Panel, {
 
     const chartPanel = metricCalcs.assessments ? new SM.Metrics.ChartPanel({
       border: false,
-      id: 'chart-panel',
       width: 175,
       height: 175,
       chartOptions
@@ -1113,28 +1112,32 @@ SM.Metrics.AggAssetPanel = Ext.extend(Ext.Panel, {
       aggAssetGrid.store.baseParams =  params
       aggAssetGrid.store.load()
     }
-    const updateDisplay = function (onlyUpdateView) {
-      const selModel = aggAssetGrid.getSelectionModel()
-      const selectedRow = selModel.getSelected()
-      if (onlyUpdateView) {
-        aggAssetGrid.getView().refresh()
-        if (selectedRow) {
-          unaggGrid.getView().refresh()
-        }
-      }
-      else {
-        if (selectedRow) {
-          const lastMaxTouchTs = selectedRow.data.maxTouchTs || ''
-          aggAssetGrid.store.reload()
-          aggAssetGrid.getSelectionModel().selectRecords([selectedRow])
-          const currentMaxTouchTs = selModel.getSelected().data.maxTouchTs
-          if (lastMaxTouchTs !== currentMaxTouchTs) {
-            unaggGrid.store.reload()
+    const updateDisplay = async function (onlyUpdateView = false) {
+      try {
+        const selectedRow = aggAssetGrid.getSelectionModel().getSelected()
+
+        if (onlyUpdateView) {
+          aggAssetGrid.getView().refresh()
+          if (selectedRow) {
+            unaggGrid.getView().refresh()
           }
+          return
         }
-        else {
-          aggAssetGrid.store.reload()
+
+        await aggAssetGrid.store.reloadPromise()
+        if (!selectedRow) {
+          return
         }
+
+        const currentRecord = aggAssetGrid.store.getById(selectedRow.data.assetId)
+        if (!currentRecord) {
+          unaggGrid.store.removeAll()
+          return
+        }
+        await unaggGrid.store.reloadPromise()
+      }
+      catch (e) {
+        console.log(e)
       }
     }
 
@@ -1189,6 +1192,34 @@ SM.Metrics.AggStigPanel = Ext.extend(Ext.Panel, {
       aggStigGrid.store.baseParams =  params
       aggStigGrid.store.load()
     }
+    const updateDisplay = async function (onlyUpdateView = false) {
+      try {
+        const selectedRow = aggStigGrid.getSelectionModel().getSelected()
+
+        if (onlyUpdateView) {
+          aggStigGrid.getView().refresh()
+          if (selectedRow) {
+            unaggGrid.getView().refresh()
+          }
+          return
+        }
+
+        await aggStigGrid.store.reloadPromise()
+        if (!selectedRow) {
+          return
+        }
+
+        const currentRecord = aggStigGrid.store.getById(selectedRow.data.benchmarkId)
+        if (!currentRecord) {
+          unaggGrid.store.removeAll()
+          return
+        }
+        await unaggGrid.store.reloadPromise()
+      }
+      catch (e) {
+        console.log(e)
+      }
+    }
 
     const config = {
       layout: 'border',
@@ -1197,7 +1228,8 @@ SM.Metrics.AggStigPanel = Ext.extend(Ext.Panel, {
         aggStigGrid,
         unaggGrid
       ],
-      updateBaseParams
+      updateBaseParams,
+      updateDisplay
     }
     Ext.apply(this, Ext.apply(this.initialConfig, config))
     this.superclass().initComponent.call(this)
@@ -1260,6 +1292,45 @@ SM.Metrics.AggLabelPanel = Ext.extend(Ext.Panel, {
       aggLabelGrid.store.baseParams =  params
       aggLabelGrid.store.load()
     }
+    const updateDisplay = async function (onlyUpdateView = false) {
+      try {
+        const selectedRowLabel = aggLabelGrid.getSelectionModel().getSelected()
+        const selectedRowAsset = aggAssetGrid.getSelectionModel().getSelected()
+
+        if (onlyUpdateView) {
+          aggLabelGrid.getView().refresh()
+          if (selectedRowLabel) {
+            aggAssetGrid.getView().refresh()
+            if (selectedRowAsset) {
+              unaggGrid.getView().refresh()
+            }
+          }
+          return
+        }
+
+        await aggLabelGrid.store.reloadPromise()
+        if (!selectedRowLabel) {
+          return
+        }
+
+        const currentRecordLabel = aggLabelGrid.store.getById(selectedRowLabel.data.labelId)
+        if (!currentRecordLabel) {
+          aggAssetGrid.store.removeAll()
+          unaggGrid.store.removeAll()
+          return
+        }
+        await aggAssetGrid.store.reloadPromise()
+        const currentRecordAsset = aggAssetGrid.store.getById(selectedRow.data.assetId)
+        if (!currentRecordAsset) {
+          unaggGrid.store.removeAll()
+          return
+        }
+        await unaggGrid.store.reloadPromise()
+      }
+      catch (e) {
+        console.log(e)
+      }
+    }
 
     const config = {
       layout: 'border',
@@ -1269,7 +1340,8 @@ SM.Metrics.AggLabelPanel = Ext.extend(Ext.Panel, {
         aggAssetGrid,
         unaggGrid
       ],
-      updateBaseParams
+      updateBaseParams,
+      updateDisplay
     }
     Ext.apply(this, Ext.apply(this.initialConfig, config))
     this.superclass().initComponent.call(this)
@@ -1301,7 +1373,6 @@ SM.Metrics.addCollectionMetricsTab = async function (options) {
     }
     
     const apiMetricsCollection = await getMetricsAggCollection(collectionId, currentLabelIds)
-    let lastMaxTouchTs = apiMetricsCollection.metrics.maxTouchTs || ''
     const overviewPanel = new SM.Metrics.OverviewPanel({
       cls: 'sm-round-panel sm-metrics-overview-panel',
       collapsible: true,
@@ -1346,11 +1417,11 @@ SM.Metrics.addCollectionMetricsTab = async function (options) {
           deferredRender: false,
           items: [
             {
-              title: 'Assets',
-              iconCls: 'sm-asset-icon',
+              title: 'STIGs',
+              iconCls: 'sm-stig-icon',
               layout: 'fit',
               border: false,
-              items: [aggAssetPanel]
+              items: [aggStigPanel]
             },
             {
               title: 'Labels',
@@ -1360,11 +1431,11 @@ SM.Metrics.addCollectionMetricsTab = async function (options) {
               items: [aggLabelPanel]
             },
             {
-              title: 'STIGs',
-              iconCls: 'sm-stig-icon',
+              title: 'Assets',
+              iconCls: 'sm-asset-icon',
               layout: 'fit',
               border: false,
-              items: [aggStigPanel]
+              items: [aggAssetPanel]
             }
           ]
         }
@@ -1413,19 +1484,16 @@ SM.Metrics.addCollectionMetricsTab = async function (options) {
     const updateDisplay = async () => {
       try {
         const apiMetricsCollection = await getMetricsAggCollection(collectionId, currentLabelIds)
-        const currentMaxTouchTs = apiMetricsCollection.metrics.maxTouchTs || ''
         overviewPanel.updateMetrics(apiMetricsCollection.metrics)
-        const onlyUpdateView = lastMaxTouchTs === currentMaxTouchTs
-        aggAssetPanel.updateDisplay(onlyUpdateView)
-        // aggStigPanel.updateDisplay()
-        // aggLabelPanel.updateDisplay()
-        lastMaxTouchTs = currentMaxTouchTs
+        aggAssetPanel.updateDisplay()
+        aggStigPanel.updateDisplay()
+        aggLabelPanel.updateDisplay()
       }
       catch (e) {
         alert (e)
       }
     }
-    const updateDisplayInterval = setInterval(updateDisplay, 5000)
+    const updateDisplayInterval = setInterval(updateDisplay, 60000)
 
     metricsTab.on('beforedestroy', () => { 
       SM.Dispatcher.removeListener('labelfilter', onLabelFilter) 
