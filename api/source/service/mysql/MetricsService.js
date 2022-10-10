@@ -284,6 +284,7 @@ const baseCols = {
     'cast(c.collectionId as char) as collectionId',
     'c.name',
     'count(distinct a.assetId) as assets',
+    'count(distinct sa.benchmarkId) as stigs',
     'count(sa.saId) as checklists'
   ],
   stig: [
