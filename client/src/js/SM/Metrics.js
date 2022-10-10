@@ -133,6 +133,14 @@ SM.Metrics.CommonColumns = [
   {
     header: 'Newest',
     width: 50,
+    dataIndex: 'maxTs',
+    align: 'center',
+    sortable: true,
+    renderer: renderDurationToNow
+  },
+  {
+    header: 'Updated',
+    width: 50,
     dataIndex: 'maxTouchTs',
     align: 'center',
     sortable: true,
@@ -416,9 +424,9 @@ SM.Metrics.AggGrid = Ext.extend(Ext.grid.GridPanel, {
             xtype: 'tbbutton',
             grid: this,
             iconCls: 'icon-refresh',
-            tooltip: 'Reload this grid',
+            tooltip: 'Reload the metrics',
             width: 20,
-            handler: function (btn) {
+            handler: this.reloadBtnHandler ?? function (btn) {
               const savedSmMaskDelay = btn.grid.store.smMaskDelay
               btn.grid.store.smMaskDelay = 0
               btn.grid.store.reload();
@@ -582,9 +590,9 @@ SM.Metrics.UnaggGrid = Ext.extend(Ext.grid.GridPanel, {
             xtype: 'tbbutton',
             grid: this,
             iconCls: 'icon-refresh',
-            tooltip: 'Reload this grid',
+            tooltip: 'Reload the metrics',
             width: 20,
-            handler: function (btn) {
+            handler: this.reloadBtnHandler ?? function (btn) {
               const savedSmMaskDelay = btn.grid.store.smMaskDelay
               btn.grid.store.smMaskDelay = 0
               btn.grid.store.reload();
@@ -1088,11 +1096,13 @@ SM.Metrics.AggAssetPanel = Ext.extend(Ext.Panel, {
       border: false,
       region: 'center',
       exportName: 'Assets',
-      baseParams: this.baseParams
+      baseParams: this.baseParams,
+      reloadBtnHandler: this.reloadBtnHandler
     })
     const unaggGrid = new SM.Metrics.UnaggGrid({
       title: 'STIGs',
       parentAggregation: 'asset',
+      reloadBtnHandler: this.reloadBtnHandler,
       collectionId,
       border: false,
       region: 'south',
@@ -1165,6 +1175,7 @@ SM.Metrics.AggStigPanel = Ext.extend(Ext.Panel, {
       aggregation: 'stig',
       collectionId,
       baseParams: this.baseParams,
+      reloadBtnHandler: this.reloadBtnHandler,
       exportName: 'STIGs',
       region: 'center'
     })
@@ -1172,6 +1183,7 @@ SM.Metrics.AggStigPanel = Ext.extend(Ext.Panel, {
       title: 'Assets',
       parentAggregation: 'stig',
       collectionId,
+      reloadBtnHandler: this.reloadBtnHandler,
       region: 'south',
       split: true,
       height: '66%'
@@ -1245,6 +1257,7 @@ SM.Metrics.AggLabelPanel = Ext.extend(Ext.Panel, {
     const aggLabelGrid = new SM.Metrics.AggGrid({
       aggregation: 'label',
       collectionId,
+      reloadBtnHandler: this.reloadBtnHandler,
       baseParams: this.baseParams,
       exportName: 'Labels',
       region: 'north',
@@ -1253,6 +1266,7 @@ SM.Metrics.AggLabelPanel = Ext.extend(Ext.Panel, {
     })
     const aggAssetGrid = new SM.Metrics.AggGrid({
       title: 'Assets',
+      reloadBtnHandler: this.reloadBtnHandler,
       aggregation: 'asset',
       storeAutoLoad: false,
       collectionId,
@@ -1263,6 +1277,7 @@ SM.Metrics.AggLabelPanel = Ext.extend(Ext.Panel, {
     const unaggGrid = new SM.Metrics.UnaggGrid({
       title: 'STIGs',
       parentAggregation: 'asset',
+      reloadBtnHandler: this.reloadBtnHandler,
       collectionId,
       region: 'south',
       split: true,
@@ -1358,6 +1373,7 @@ SM.Metrics.addCollectionMetricsTab = async function (options) {
     const { collectionId, collectionName, treePath, initialLabelIds } = options
     let currentBaseParams = initialLabelIds.length ? { labelId: initialLabelIds } : undefined
     let currentLabelIds = initialLabelIds
+    const refreshInterval = 15000
 
     const tab = Ext.getCmp('main-tab-panel').getItem(`metrics-tab-${collectionId}`)
     if (tab) {
@@ -1389,12 +1405,15 @@ SM.Metrics.addCollectionMetricsTab = async function (options) {
       collectionId,
       metrics: apiMetricsCollection.metrics
     })
+
+    const reloadBtnHandler = updateDisplay
     const aggAssetPanel = new SM.Metrics.AggAssetPanel({
       title: 'Assets',
       iconCls: 'sm-asset-icon',
       layout: 'fit',
       border: false,
       collectionId,
+      reloadBtnHandler,
       baseParams: currentBaseParams
     })
     const aggStigPanel = new SM.Metrics.AggStigPanel({
@@ -1403,6 +1422,7 @@ SM.Metrics.addCollectionMetricsTab = async function (options) {
       layout: 'fit',
       border: false,
       collectionId,
+      reloadBtnHandler,
       baseParams: currentBaseParams
     })
     const aggLabelPanel = new SM.Metrics.AggLabelPanel({
@@ -1411,6 +1431,7 @@ SM.Metrics.addCollectionMetricsTab = async function (options) {
       layout: 'fit',
       border: false,
       collectionId,
+      reloadBtnHandler,
       baseParams: currentBaseParams
     })
 
@@ -1425,10 +1446,10 @@ SM.Metrics.addCollectionMetricsTab = async function (options) {
       ],
       listeners: {
         beforetabchange: function (tp, newTab, currentTab) {
-          if (currentTab) { // will be false during initial setup
+          if (currentTab) { // after initial setup update the whole presentation
             updateDisplay()
           }
-          else {
+          else { // during initial setup just update the newTab
             newTab.updateDisplay()
           }
         }
@@ -1485,22 +1506,24 @@ SM.Metrics.addCollectionMetricsTab = async function (options) {
     SM.Dispatcher.addListener('labelfilter', onLabelFilter)
 
     // handle periodic updates
-    const updateDisplay = async () => {
+    async function updateDisplay () {
       try {
+        clearTimeout(updateDisplayTimer)
+        console.log('updateDisplay() for metrics')
         const apiMetricsCollection = await getMetricsAggCollection(collectionId, currentLabelIds)
         overviewPanel.updateMetrics(apiMetricsCollection.metrics)
         const activePanel = aggTabPanel.getActiveTab()
-        activePanel.updateDisplay()
+        await activePanel.updateDisplay()
+        updateDisplayTimer = setTimeout(updateDisplay, refreshInterval)
       }
       catch (e) {
         alert (e)
       }
     }
-    const updateDisplayInterval = setInterval(updateDisplay, 60000)
-
+    let updateDisplayTimer = setTimeout(updateDisplay, refreshInterval)
     metricsTab.on('beforedestroy', () => { 
       SM.Dispatcher.removeListener('labelfilter', onLabelFilter) 
-      clearInterval(updateDisplayInterval)
+      clearTimeout(updateDisplayTimer)
     })
 
     metricsTab.updateTitle = function () {
