@@ -42,13 +42,13 @@
 
 .sm-metrics-progress-child {
 	display: inline-block;
-	width: 65px;
+	width: 73px;
 	/* height: 37px; */
 	border-radius: 5px;
 	/* background-color: #eeeeee; */
 	/* border:  1px solid #bbbbbb; */
 	/* padding: 0px 6px; */
-	margin: 0px 12px;
+	margin: 0px 9px;
 	vertical-align: middle;
 	/* box-shadow: 1px 1px 5px #bbbbbb; */
 }
@@ -66,24 +66,16 @@
 }
 .sm-metrics-progress-child .sm-cell-thermometer-bg {
 	height: 100%;
-	/* border-radius: 3px; */
 }
 .sm-metrics-progress-child .sm-cell-mercury-high {
 	height: 100%;
-	border-radius: 3px;
 }
 .sm-metrics-progress-child .sm-cell-mercury-medium {
 	height: 100%;
-	border-radius: 3px;
 }
 .sm-metrics-progress-child .sm-cell-mercury-low {
 	height: 100%;
-	border-radius: 3px;
 }
-/* .sm-metrics-progress-child .sm-cell-thermometer-text {
-	line-height: 20px;
-}
- */
 
 .sm-metrics-status-table {
 	padding-top: 10px;
@@ -138,21 +130,29 @@
 	background-color: var(--metrics-status-chart-rejected-light);
 }
 
+.sm-metrics-refresh-parent {
+	padding-right: 20px;
+	text-align:right;
+	font-style:italic;
+}
+
 .sm-metrics-count-parent {
 	text-align: center;
 	color: #111;
 }
 .sm-metrics-count-child {
 	display: inline-block;
-	width: 50px;
-	height: 40px;
+	cursor: default;
+	width: 61px;
+	height: 36px;
 	border-radius: 5px;
 	background-color: #eeeeee;
 	border:  1px solid #bbbbbb;
-	padding: 6px 12px;
+	padding: 4px 12px;
 	margin: 0px 12px;
 	vertical-align: middle;
 	/* box-shadow: 1px 1px 5px #bbbbbb; */
+	line-height: 18px;
 }
 .sm-metrics-count-label {
 	font-weight: 600;
@@ -182,6 +182,10 @@
 .sm-metrics-low-box {
 	background-color: hsl(230deg 41% 86%);
 }
+.sm-metrics-age-box {/* background-color: hsl(290deg 41% 94%); */}
+.sm-metrics-inventory-box {
+	background-color: hsl(21deg 41% 86%);
+}
 
 .sm-metrics-overview-panel .x-panel-body{
 	background-color: hsl(0 0% 95% / 1);
@@ -189,8 +193,9 @@
 .sm-round-inner-panel {
 	border-radius: 6px;
 	overflow: hidden;
-	margin: 20px;
+	margin: 12px;
 }
+
 .sm-round-inner-panel .x-panel-body {
 	background-color: #fff;
 	border-bottom-left-radius: 6px;
@@ -1112,6 +1117,15 @@ td.x-grid3-hd-over .x-grid3-hd-inner, td.sort-desc .x-grid3-hd-inner, td.sort-as
 	background-image: none;
 	padding: 5px 3px 4px 8px;
 } 
+
+.sm-round-inner-panel .x-panel-header {
+	background-color: hsl(0deg 0% 90%);
+	background-image: none;
+	overflow:hidden;
+	border-radius: 6px 6px 0px 0px;
+	padding: 5px 3px 4px 8px;
+} 
+
 
 .sm-home-widget-body {
 	background-color: #dedede;
