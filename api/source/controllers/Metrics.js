@@ -44,7 +44,7 @@ module.exports.getMetricsDetailByCollectionAggAsset = async function (req, res, 
   await getCollectionMetrics(req, res, next, {style: 'detail', aggregation: 'asset'})
 }
 module.exports.getMetricsDetailByCollectionAgg = async function (req, res, next) {
-  await getCollectionMetrics(req, res, next, {style: 'detail', aggregation: 'collection'})
+  await getCollectionMetrics(req, res, next, {style: 'detail', aggregation: 'collection', firstRowOnly: true})
 }
 module.exports.getMetricsDetailByCollectionAggLabel = async function (req, res, next) {
   await getCollectionMetrics(req, res, next, {style: 'detail', aggregation: 'label'})
