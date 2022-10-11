@@ -874,30 +874,11 @@ SM.Metrics.AgesPanel = Ext.extend(Ext.Panel, {
         '</div>',
       '</div>'
     )
-    const calcDelay = (maxTouchTs) => {
-      const diffSecs = Math.ceil(Math.abs(new Date() - new Date(maxTouchTs))/1000)
-      if ( diffSecs < 3600 ) {
-        return 60 * 1000
-      }
-      if ( diffSecs < 86400 ) {
-        return 3600 * 1000
-      }
-      return 86400 * 1000
-    }
     const updateMetrics = function (metrics) {
       _this.metrics = metrics
       _this.update(metrics)
-      clearTimeout(refreshTimer)
-      const delay = calcDelay(metrics.maxTouchTs)
-      refreshTimer = setTimeout(refresh, delay)
     }
 
-    const refresh = () => {
-      _this.update(_this.metrics)
-      const delay = calcDelay(_this.metrics.maxTouchTs)
-      console.log(`AGE: refreshing ${ _this.metrics.maxTouchTs} in ${delay}`)
-      refreshTimer = setTimeout(refresh, delay)
-    }
     const config = {
       tpl,
       data: this.metrics,
@@ -906,9 +887,6 @@ SM.Metrics.AgesPanel = Ext.extend(Ext.Panel, {
         beforedestroy: () => {
           clearTimeout(refreshTimer)
         },
-        render: () => {
-          refresh()
-        }
       }
     }
     Ext.apply(this, Ext.apply(this.initialConfig, config))
@@ -1189,21 +1167,20 @@ SM.Metrics.OverviewPanel = Ext.extend(Ext.Panel, {
       height: 122,
       collectionId
     })
-    const refreshPanel = new SM.Metrics.RefreshPanel({
-      // cls: 'sm-round-inner-panel',
-      bodyStyle: 'padding: 10px;',
-      border: false,
-      lastRefresh: new Date()
-    })
+    // const refreshPanel = new SM.Metrics.RefreshPanel({
+    //   // cls: 'sm-round-inner-panel',
+    //   bodyStyle: 'padding: 10px;',
+    //   border: false,
+    //   lastRefresh: new Date()
+    // })
 
     const updateMetrics = function (data) {
       _this.data = data
       inventoryPanel.updateMetrics(data)
       progressPanel.updateMetrics(data.metrics)
-      // progressPanel.updateMetrics(data.metrics)
       agesPanel.updateMetrics(data.metrics)
       findingsPanel.updateMetrics(data.metrics.findings)
-      refreshPanel.updateData(new Date())
+      // refreshPanel.updateData(new Date())
     }
     const config = {
       border: false,
@@ -1214,7 +1191,7 @@ SM.Metrics.OverviewPanel = Ext.extend(Ext.Panel, {
         findingsPanel,
         agesPanel,
         exportPanel,
-        refreshPanel
+        // refreshPanel
       ],
       updateMetrics
     }
@@ -1260,11 +1237,11 @@ SM.Metrics.AggAssetPanel = Ext.extend(Ext.Panel, {
       aggAssetGrid.store.baseParams =  params
       aggAssetGrid.store.load()
     }
-    const updateDisplay = async function (onlyUpdateView = false) {
+    const updateData = async function (onlyRefreshView = false) {
       try {
         const selectedRow = aggAssetGrid.getSelectionModel().getSelected()
 
-        if (onlyUpdateView) {
+        if (onlyRefreshView) {
           aggAssetGrid.getView().refresh()
           if (selectedRow) {
             unaggGrid.getView().refresh()
@@ -1297,7 +1274,7 @@ SM.Metrics.AggAssetPanel = Ext.extend(Ext.Panel, {
         unaggGrid
       ],
       updateBaseParams,
-      updateDisplay
+      updateData
     }
     Ext.apply(this, Ext.apply(this.initialConfig, config))
     this.superclass().initComponent.call(this)
@@ -1343,11 +1320,11 @@ SM.Metrics.AggStigPanel = Ext.extend(Ext.Panel, {
       aggStigGrid.store.baseParams =  params
       aggStigGrid.store.load()
     }
-    const updateDisplay = async function (onlyUpdateView = false) {
+    const updateData = async function (onlyRefreshView = false) {
       try {
         const selectedRow = aggStigGrid.getSelectionModel().getSelected()
 
-        if (onlyUpdateView) {
+        if (onlyRefreshView) {
           aggStigGrid.getView().refresh()
           if (selectedRow) {
             unaggGrid.getView().refresh()
@@ -1380,7 +1357,7 @@ SM.Metrics.AggStigPanel = Ext.extend(Ext.Panel, {
         unaggGrid
       ],
       updateBaseParams,
-      updateDisplay
+      updateData
     }
     Ext.apply(this, Ext.apply(this.initialConfig, config))
     this.superclass().initComponent.call(this)
@@ -1448,12 +1425,12 @@ SM.Metrics.AggLabelPanel = Ext.extend(Ext.Panel, {
       aggLabelGrid.store.baseParams =  params
       aggLabelGrid.store.load()
     }
-    const updateDisplay = async function (onlyUpdateView = false) {
+    const updateData = async function (onlyRefreshView = false) {
       try {
         const selectedRowLabel = aggLabelGrid.getSelectionModel().getSelected()
         const selectedRowAsset = aggAssetGrid.getSelectionModel().getSelected()
 
-        if (onlyUpdateView) {
+        if (onlyRefreshView) {
           aggLabelGrid.getView().refresh()
           if (selectedRowLabel) {
             aggAssetGrid.getView().refresh()
@@ -1497,7 +1474,7 @@ SM.Metrics.AggLabelPanel = Ext.extend(Ext.Panel, {
         unaggGrid
       ],
       updateBaseParams,
-      updateDisplay
+      updateData
     }
     Ext.apply(this, Ext.apply(this.initialConfig, config))
     this.superclass().initComponent.call(this)
@@ -1510,7 +1487,7 @@ SM.Metrics.addCollectionMetricsTab = async function (options) {
     const { collectionId, collectionName, treePath, initialLabelIds } = options
     let currentBaseParams = initialLabelIds.length ? { labelId: initialLabelIds } : undefined
     let currentLabelIds = initialLabelIds
-    const refreshInterval = 180000
+    const updateDelay = 180000
 
     const tab = Ext.getCmp('main-tab-panel').getItem(`metrics-tab-${collectionId}`)
     if (tab) {
@@ -1529,7 +1506,7 @@ SM.Metrics.addCollectionMetricsTab = async function (options) {
       return JSON.parse(results.response.responseText)
     }
     
-    const apiMetricsCollection = await getMetricsAggCollection(collectionId, currentLabelIds)
+    let apiMetricsCollection = await getMetricsAggCollection(collectionId, currentLabelIds)
     const overviewPanel = new SM.Metrics.OverviewPanel({
       cls: 'sm-round-panel sm-metrics-overview-panel',
       collapsible: true,
@@ -1543,7 +1520,7 @@ SM.Metrics.addCollectionMetricsTab = async function (options) {
       data: apiMetricsCollection
     })
 
-    const reloadBtnHandler = updateDisplay
+    const reloadBtnHandler = () => { updateData() }
     const aggAssetPanel = new SM.Metrics.AggAssetPanel({
       title: 'Assets',
       iconCls: 'sm-asset-icon',
@@ -1584,10 +1561,10 @@ SM.Metrics.addCollectionMetricsTab = async function (options) {
       listeners: {
         beforetabchange: function (tp, newTab, currentTab) {
           if (currentTab) { // after initial setup update the whole presentation
-            updateDisplay()
+            updateData()
           }
           else { // during initial setup just update the newTab
-            newTab.updateDisplay()
+            newTab.updateData()
           }
         }
       }
@@ -1627,7 +1604,7 @@ SM.Metrics.addCollectionMetricsTab = async function (options) {
       try {
         if (srcCollectionId === collectionId) {
           currentLabelIds = srcLabelIds
-          const apiMetricsCollection = await getMetricsAggCollection(collectionId, currentLabelIds)
+          apiMetricsCollection = await getMetricsAggCollection(collectionId, currentLabelIds)
           overviewPanel.setTitle(`Overview ${SM.Collection.LabelSpritesByCollectionLabelId(collectionId, currentLabelIds)}`)
           overviewPanel.updateMetrics(apiMetricsCollection)
           currentBaseParams = currentLabelIds.length ? { labelId: currentLabelIds } : undefined
@@ -1643,24 +1620,53 @@ SM.Metrics.addCollectionMetricsTab = async function (options) {
     SM.Dispatcher.addListener('labelfilter', onLabelFilter)
 
     // handle periodic updates
-    async function updateDisplay () {
+    async function updateData (onlyRefreshView = false) {
       try {
-        clearTimeout(updateDisplayTimer)
-        console.log('updateDisplay() for metrics')
-        const apiMetricsCollection = await getMetricsAggCollection(collectionId, currentLabelIds)
+        console.log(`executing updateData(${onlyRefreshView})`)
+        if (!onlyRefreshView) {
+          console.log(`cancelling refreshView timer`)
+          clearTimeout(refreshViewTimer)
+          apiMetricsCollection = await getMetricsAggCollection(collectionId, currentLabelIds)
+          console.log(`set updateData timer in ${updateDelay}`)
+          updateDataTimer = setTimeout(updateData, updateDelay)
+        }
         overviewPanel.updateMetrics(apiMetricsCollection)
         const activePanel = aggTabPanel.getActiveTab()
-        await activePanel.updateDisplay()
-        updateDisplayTimer = setTimeout(updateDisplay, refreshInterval)
+        await activePanel.updateData(onlyRefreshView)
+
+        const refreshDelay = calcRefreshDelay(apiMetricsCollection.metrics.maxTouchTs)
+        if (refreshDelay < updateDelay) {
+          console.log(`set refreshView timer in ${refreshDelay}`)
+          refreshViewTimer = setTimeout(updateData, refreshDelay, true)
+        }
       }
       catch (e) {
         alert (e)
       }
     }
-    let updateDisplayTimer = setTimeout(updateDisplay, refreshInterval)
+
+    const calcRefreshDelay = (maxTouchTs) => {
+      const diffSecs = Math.ceil(Math.abs(new Date() - new Date(maxTouchTs))/1000)
+      if ( diffSecs < 3600 ) {
+        return 5 * 1000
+      }
+      if ( diffSecs < 86400 ) {
+        return 3600 * 1000
+      }
+      return 86400 * 1000
+    }
+    const refreshDelay = calcRefreshDelay(apiMetricsCollection.metrics.maxTouchTs)
+    let refreshViewTimer
+    if (refreshDelay < updateDelay) {
+      console.log(`set refreshView timer in ${refreshDelay}`)
+      refreshViewTimer = setTimeout(updateData, refreshDelay, true)
+    }
+    console.log(`set updateData timer in ${updateDelay}`)
+    let updateDataTimer = setTimeout(updateData, updateDelay)
+
     metricsTab.on('beforedestroy', () => { 
       SM.Dispatcher.removeListener('labelfilter', onLabelFilter) 
-      clearTimeout(updateDisplayTimer)
+      clearTimeout(updateDataTimer)
     })
 
     metricsTab.updateTitle = function () {
