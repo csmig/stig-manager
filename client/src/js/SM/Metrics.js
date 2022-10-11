@@ -210,6 +210,7 @@ SM.Metrics.AggGrid = Ext.extend(Ext.grid.GridPanel, {
     const fields = [...SM.Metrics.CommonFields]
     const columns = []
     let idProperty, sortField = 'name', autoExpandColumn = Ext.id()
+    let rowdblclick = () => {}
     switch (this.aggregation) {
       case 'asset':
         fields.push(
@@ -359,6 +360,14 @@ SM.Metrics.AggGrid = Ext.extend(Ext.grid.GridPanel, {
         )
         idProperty = 'benchmarkId'
         sortField = 'benchmarkId'
+        rowdblclick = (grid, rowIndex) => {
+          const r = grid.getStore().getAt(rowIndex)
+          const leaf = {
+            collectionId: grid.collectionId, 
+            benchmarkId: r.data.benchmarkId
+          }
+          addCollectionReview({leaf})
+        }
         break
     }
     columns.push(...SM.Metrics.CommonColumns)
@@ -448,7 +457,10 @@ SM.Metrics.AggGrid = Ext.extend(Ext.grid.GridPanel, {
           },
           this.totalTextCmp
         ]
-      })
+      }),
+      listeners: {
+        rowdblclick
+      }
     }
     Ext.apply(this, Ext.apply(this.initialConfig, config))
     this.superclass().initComponent.call(this)
