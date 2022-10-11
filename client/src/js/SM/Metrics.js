@@ -1614,7 +1614,16 @@ SM.Metrics.addCollectionMetricsTab = async function (options) {
       items: [
         overviewPanel,
         centerPanel
-      ]
+      ],
+      listeners: {
+        hide: (tab) => {
+          console.log(`hide tab ${tab.id}`)
+        },
+        show: (tab) => {
+          console.log(`show tab ${tab.id}`)
+        }
+
+      }
     })
 
     // handle change to label filters in NavTree
@@ -1701,8 +1710,8 @@ SM.Metrics.addCollectionMetricsTab = async function (options) {
     }
 
     updateOverviewTitle()
-    console.log(`set updateOverviewTitle interval every 5000`)
-    let updateOverviewTitleInterval = setInterval(updateOverviewTitle, 5000)
+    console.log(`set updateOverviewTitle interval every 60000`)
+    let updateOverviewTitleInterval = setInterval(updateOverviewTitle, 60000)
 
     let tp = Ext.getCmp('main-tab-panel')
     let ephTabIndex = tp.items.findIndex('sm_tabMode', 'ephemeral')
@@ -1715,7 +1724,8 @@ SM.Metrics.addCollectionMetricsTab = async function (options) {
       thisTab = tp.add(metricsTab)
     }
     thisTab.updateTitle.call(thisTab)
-    thisTab.show();
+    thisTab.show()
+
 
   }
   catch (e) {
