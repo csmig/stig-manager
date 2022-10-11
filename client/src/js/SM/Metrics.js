@@ -848,6 +848,7 @@ SM.Metrics.ProgressPanel = Ext.extend(Ext.Panel, {
 SM.Metrics.AgesPanel = Ext.extend(Ext.Panel, {
   initComponent: function () {
     const _this = this
+    let refreshTimer
     const tpl = new Ext.XTemplate(
       '<div class="sm-metrics-count-parent">',
         `<div class="sm-metrics-count-child sm-metrics-age-box" ext:qwidth=130 ext:qtip="{[Ext.util.Format.date(values.minTs,'Y-m-d H:i T')]}">`,
@@ -861,14 +862,42 @@ SM.Metrics.AgesPanel = Ext.extend(Ext.Panel, {
         '</div>',
       '</div>'
     )
+    const calcDelay = (maxTouchTs) => {
+      const diffSecs = Math.ceil(Math.abs(new Date() - new Date(maxTouchTs))/1000)
+      if ( diffSecs < 3600 ) {
+        return 60 * 1000
+      }
+      if ( diffSecs < 86400 ) {
+        return 3600 * 1000
+      }
+      return 86400 * 1000
+    }
     const updateMetrics = function (metrics) {
+      _this.metrics = metrics
       _this.update(metrics)
+      clearTimeout(refreshTimer)
+      const delay = calcDelay(metrics.maxTouchTs)
+      refreshTimer = setTimeout(refresh, delay)
     }
 
+    const refresh = () => {
+      _this.update(_this.metrics)
+      const delay = calcDelay(_this.metrics.maxTouchTs)
+      console.log(`AGE: refreshing ${ _this.metrics.maxTouchTs} in ${delay}`)
+      refreshTimer = setTimeout(refresh, delay)
+    }
     const config = {
       tpl,
       data: this.metrics,
-      updateMetrics
+      updateMetrics,
+      listeners: {
+        beforedestroy: () => {
+          clearTimeout(refreshTimer)
+        },
+        render: () => {
+          refresh()
+        }
+      }
     }
     Ext.apply(this, Ext.apply(this.initialConfig, config))
     this.superclass().initComponent.call(this)
@@ -1049,23 +1078,27 @@ SM.Metrics.RefreshPanel = Ext.extend(Ext.Panel, {
       'Last refreshed: {[renderDurationToNow(values.lastRefresh)]}',
       '</div>'
     )
-    const updateData = (data) => {
-      _this.update(data)
-      _this.data = data
+    const updateData = (lastRefresh) => {
+      _this.update({lastRefresh})
+      _this.lastRefresh = lastRefresh
       clearTimeout(refreshTimer)
       refreshTimer = setTimeout(refresh, 60000)
     }
     const refresh = () => {
-      _this.update(_this.data)
+      console.log(`refreshing ${ _this.lastRefresh}`)
+      _this.update({lastRefresh: _this.lastRefresh})
       refreshTimer = setTimeout(refresh, 60000)
     }
     const config = {
       tpl,
-      data: this.data,
+      data: {lastRefresh: this.lastRefresh},
       updateData,
       listeners: {
         beforedestroy: () => {
           clearTimeout(refreshTimer)
+        },
+        render: () => {
+          refresh()
         }
       }
     }
@@ -1141,15 +1174,15 @@ SM.Metrics.OverviewPanel = Ext.extend(Ext.Panel, {
       bodyStyle: 'padding: 10px;',
       title: 'Export metrics',
       border: true,
-      height: 140,
+      height: 122,
       collectionId
     })
-    // const refreshPanel = new SM.Metrics.RefreshPanel({
-    //   // cls: 'sm-round-inner-panel',
-    //   bodyStyle: 'padding: 10px;',
-    //   border: false,
-    //   data: {lastRefresh: this.lastRefresh}
-    // })
+    const refreshPanel = new SM.Metrics.RefreshPanel({
+      // cls: 'sm-round-inner-panel',
+      bodyStyle: 'padding: 10px;',
+      border: false,
+      lastRefresh: new Date()
+    })
 
     const updateMetrics = function (data) {
       _this.data = data
@@ -1158,7 +1191,7 @@ SM.Metrics.OverviewPanel = Ext.extend(Ext.Panel, {
       // progressPanel.updateMetrics(data.metrics)
       agesPanel.updateMetrics(data.metrics)
       findingsPanel.updateMetrics(data.metrics.findings)
-      // refreshPanel.updateData({lastRefresh: new Date()})
+      refreshPanel.updateData(new Date())
     }
     const config = {
       border: false,
@@ -1169,7 +1202,7 @@ SM.Metrics.OverviewPanel = Ext.extend(Ext.Panel, {
         findingsPanel,
         agesPanel,
         exportPanel,
-        // refreshPanel
+        refreshPanel
       ],
       updateMetrics
     }
