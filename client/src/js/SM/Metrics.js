@@ -790,14 +790,16 @@ SM.Metrics.ProgressPanel = Ext.extend(Ext.Panel, {
     const updateMetrics = function (metrics) {
       const metricCalcs = calcMetrics(metrics)
       dataPanel.update(metricCalcs)
-      chartPanel.chart.config._config.data.datasets[0].data = [
-        metricCalcs.assessed, //Assessed
-        metricCalcs.submitted, // Submitted
-        metricCalcs.accepted, // Accepted
-        metricCalcs.unassessed, // Unassessed
-        metricCalcs.rejected // Rejected         
-      ]
-      chartPanel.chart.update()
+      if (chartPanel.chart) {
+        chartPanel.chart.config._config.data.datasets[0].data = [
+          metricCalcs.assessed, //Assessed
+          metricCalcs.submitted, // Submitted
+          metricCalcs.accepted, // Accepted
+          metricCalcs.unassessed, // Unassessed
+          metricCalcs.rejected // Rejected         
+        ]
+        chartPanel.chart.update()  
+      }
       progressBarsPanel.updateMetrics(metrics)
     }
 
@@ -835,6 +837,7 @@ SM.Metrics.ProgressPanel = Ext.extend(Ext.Panel, {
       items: [
         {
           layout: 'hbox',
+          height: 180,
           border: false,
           layoutConfig: {
             align: 'middle',
@@ -1487,6 +1490,7 @@ SM.Metrics.addCollectionMetricsTab = async function (options) {
     const { collectionId, collectionName, treePath, initialLabelIds } = options
     let currentBaseParams = initialLabelIds.length ? { labelId: initialLabelIds } : undefined
     let currentLabelIds = initialLabelIds
+    let lastApiRefresh
     const updateDelay = 180000
 
     const tab = Ext.getCmp('main-tab-panel').getItem(`metrics-tab-${collectionId}`)
@@ -1494,6 +1498,10 @@ SM.Metrics.addCollectionMetricsTab = async function (options) {
       tab.show()
       return
     }
+
+    const overviewTitleTpl = new Ext.XTemplate(
+      `Overview{[values.labels ? ' ' + values.labels : '']} {[values.lastApiRefresh ? '<i>(' + durationToNow(values.lastApiRefresh, true) + ')</i>' : '']}`
+    )
 
     const getMetricsAggCollection = async function (collectionId, labelIds) {
       // API requests
@@ -1503,6 +1511,7 @@ SM.Metrics.addCollectionMetricsTab = async function (options) {
         method: 'GET',
         params
       })
+      lastApiRefresh = new Date()
       return JSON.parse(results.response.responseText)
     }
     
@@ -1510,7 +1519,7 @@ SM.Metrics.addCollectionMetricsTab = async function (options) {
     const overviewPanel = new SM.Metrics.OverviewPanel({
       cls: 'sm-round-panel sm-metrics-overview-panel',
       collapsible: true,
-      title: `Overview ${SM.Collection.LabelSpritesByCollectionLabelId(collectionId, currentLabelIds)}`,
+      title: 'Overview',
       margins: { top: SM.Margin.top, right: SM.Margin.edge, bottom: SM.Margin.bottom, left: SM.Margin.edge },
       region: 'west',
       width: 430,
@@ -1519,6 +1528,15 @@ SM.Metrics.addCollectionMetricsTab = async function (options) {
       collectionId,
       data: apiMetricsCollection
     })
+
+    const updateOverviewTitle = () => {
+      console.log(`Executing updateOverviewTitle with ${currentLabelIds} and ${lastApiRefresh}`)
+      const overviewTitle = overviewTitleTpl.apply({
+        labels: SM.Collection.LabelSpritesByCollectionLabelId(collectionId, currentLabelIds),
+        lastApiRefresh
+      })
+      overviewPanel.setTitle(overviewTitle)
+    }
 
     const reloadBtnHandler = () => { updateData() }
     const aggAssetPanel = new SM.Metrics.AggAssetPanel({
@@ -1605,7 +1623,7 @@ SM.Metrics.addCollectionMetricsTab = async function (options) {
         if (srcCollectionId === collectionId) {
           currentLabelIds = srcLabelIds
           apiMetricsCollection = await getMetricsAggCollection(collectionId, currentLabelIds)
-          overviewPanel.setTitle(`Overview ${SM.Collection.LabelSpritesByCollectionLabelId(collectionId, currentLabelIds)}`)
+          updateOverviewTitle()
           overviewPanel.updateMetrics(apiMetricsCollection)
           currentBaseParams = currentLabelIds.length ? { labelId: currentLabelIds } : undefined
           aggAssetPanel.updateBaseParams(currentBaseParams)
@@ -1630,9 +1648,12 @@ SM.Metrics.addCollectionMetricsTab = async function (options) {
           console.log(`set updateData timer in ${updateDelay}`)
           updateDataTimer = setTimeout(updateData, updateDelay)
         }
+        updateOverviewTitle()
         overviewPanel.updateMetrics(apiMetricsCollection)
         const activePanel = aggTabPanel.getActiveTab()
-        await activePanel.updateData(onlyRefreshView)
+        if (activePanel) {
+          await activePanel.updateData(onlyRefreshView)
+        }
 
         const refreshDelay = calcRefreshDelay(apiMetricsCollection.metrics.maxTouchTs)
         if (refreshDelay < updateDelay) {
@@ -1667,6 +1688,8 @@ SM.Metrics.addCollectionMetricsTab = async function (options) {
     metricsTab.on('beforedestroy', () => { 
       SM.Dispatcher.removeListener('labelfilter', onLabelFilter) 
       clearTimeout(updateDataTimer)
+      clearTimeout(refreshViewTimer)
+      clearInterval(updateOverviewTitleInterval)
     })
 
     metricsTab.updateTitle = function () {
@@ -1677,7 +1700,9 @@ SM.Metrics.addCollectionMetricsTab = async function (options) {
       metricsTab.updateTitle.call(metricsTab)
     }
 
-  
+    updateOverviewTitle()
+    console.log(`set updateOverviewTitle interval every 5000`)
+    let updateOverviewTitleInterval = setInterval(updateOverviewTitle, 5000)
 
     let tp = Ext.getCmp('main-tab-panel')
     let ephTabIndex = tp.items.findIndex('sm_tabMode', 'ephemeral')
