@@ -2,6 +2,11 @@ Ext.ns('SM.WhatsNew')
 
 SM.WhatsNew.Sources = [
   {
+    date: '2022-10-12',
+    header: `Metrics reporting interface`,
+    body: `<p>The Status report interface has been replaced with a more interactive Metrics interface.</p>`
+  },      
+  {
     date: '2022-09-12',
     header: `Review History Pruning`,
     body: `<p>Every time an individual Review for an Asset changes, a History record of its previous state is recorded.  With the release of this new feature, Collection Owners and Managers can now limit how many of these History records they keep for for each Review, or turn Review History off entirely.</p>
