@@ -1209,7 +1209,7 @@ SM.Metrics.AggAssetPanel = Ext.extend(Ext.Panel, {
     const collectionId = this.collectionId
     const aggAssetGrid = new SM.Metrics.AggGrid({
       aggregation: 'asset',
-      id: `sm-metrics-agg-grid-asset-${collectionId}`,
+      stateId: `sm-metrics-agg-grid-asset-${collectionId}`,
       stateful: true,
       collectionId,
       border: false,
@@ -1220,7 +1220,7 @@ SM.Metrics.AggAssetPanel = Ext.extend(Ext.Panel, {
     })
     const unaggGrid = new SM.Metrics.UnaggGrid({
       title: 'STIGs',
-      id: `sm-metrics-unagg-grid-asset-${collectionId}`,
+      stateId: `sm-metrics-unagg-grid-asset-${collectionId}`,
       stateful: true,
       parentAggregation: 'asset',
       reloadBtnHandler: this.reloadBtnHandler,
@@ -1296,7 +1296,7 @@ SM.Metrics.AggStigPanel = Ext.extend(Ext.Panel, {
     const collectionId = this.collectionId
     const aggStigGrid = new SM.Metrics.AggGrid({
       aggregation: 'stig',
-      id: `sm-metrics-agg-grid-stig-${collectionId}`,
+      stateId: `sm-metrics-agg-grid-stig-${collectionId}`,
       stateful: true,
       collectionId,
       baseParams: this.baseParams,
@@ -1306,7 +1306,7 @@ SM.Metrics.AggStigPanel = Ext.extend(Ext.Panel, {
     })
     const unaggGrid = new SM.Metrics.UnaggGrid({
       title: 'Assets',
-      id: `sm-metrics-unagg-grid-stig-${collectionId}`,
+      stateId: `sm-metrics-unagg-grid-stig-${collectionId}`,
       stateful: true,
       parentAggregation: 'stig',
       collectionId,
@@ -1385,7 +1385,7 @@ SM.Metrics.AggLabelPanel = Ext.extend(Ext.Panel, {
     const collectionId = this.collectionId
     const aggLabelGrid = new SM.Metrics.AggGrid({
       aggregation: 'label',
-      id: `sm-metrics-agg-grid-label-${collectionId}`,
+      stateId: `sm-metrics-agg-grid-label-${collectionId}`,
       stateful: true,
       collectionId,
       reloadBtnHandler: this.reloadBtnHandler,
@@ -1397,7 +1397,7 @@ SM.Metrics.AggLabelPanel = Ext.extend(Ext.Panel, {
     })
     const aggAssetGrid = new SM.Metrics.AggGrid({
       title: 'Assets',
-      id: `sm-metrics-agg-grid-label-asset-${collectionId}`,
+      stateId: `sm-metrics-agg-grid-label-asset-${collectionId}`,
       stateful: true,
       reloadBtnHandler: this.reloadBtnHandler,
       aggregation: 'asset',
@@ -1409,7 +1409,7 @@ SM.Metrics.AggLabelPanel = Ext.extend(Ext.Panel, {
     })
     const unaggGrid = new SM.Metrics.UnaggGrid({
       title: 'STIGs',
-      id: `sm-metrics-unagg-grid-label-${collectionId}`,
+      stateId: `sm-metrics-unagg-grid-label-${collectionId}`,
       stateful: true,
       parentAggregation: 'asset',
       reloadBtnHandler: this.reloadBtnHandler,
