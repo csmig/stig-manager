@@ -480,7 +480,7 @@ On the left, the "Overview" panel provides top-level summary information about y
 .. note::
       The Metrics Report inherits any Label filtering you have applied at the Navtree level, and presents the filtered metrics accordingly.     
       
-      .. thumbnail:: /assets/images/metrics-report-collection-with-nav-filters-highlighted.png
+      .. thumbnail:: /assets/images/metrics-report-collection-with-nav-filters.png
             :width: 50% 
             :show_caption: True
             :title: Metrics Report Filtering
@@ -608,7 +608,7 @@ The table below describes the fields that are included in the exports available 
      - Number of Reviews with a "notapplicable" result that were evaluated by an automated tool. 
      - 
      - **X**
-   * - other
+   * - unassessed
      - Total number of Reviews with a result that is NOT "pass", "fail", or "notapplicable". 
      - **X**
      -      
