@@ -3,9 +3,15 @@ Ext.ns('SM.WhatsNew')
 SM.WhatsNew.Sources = [
   {
     date: '2022-10-12',
-    header: `Metrics reporting interface`,
-    body: `<p>The Status report interface has been replaced with a more interactive Metrics interface.</p>`
-  },      
+    header: `New Metrics Report Replaces Status Report`,
+    body: `<p>The old Status Report has been replaced with a shiny new Metrics Report!</p>
+    
+    <p>Available to all users from the NavTree, the new Metrics Report provides a much easier to digest view of the overall Status and Evaluation progress of your entire Collection, as well as metrics export options and various pivoted presentations of your Collection's assessment statistics.</p>
+    
+    <p>Please see the <a target="_blank" href="docs/user-guide/user-guide.html#metrics-report-workspace">STIG Manager Documentation for more details about this new feature!</a></p>
+    <p><img src="img/whatsnew/2022-10-12-metrics-report1.png"/></p>
+    `
+  },        
   {
     date: '2022-09-12',
     header: `Review History Pruning`,
