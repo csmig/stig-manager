@@ -52,7 +52,7 @@ const results = {
   pass: 'sa.pass',
   fail: 'sa.fail',
   notapplicable: 'sa.notapplicable',
-  other : 'sa.notchecked + sa.unknown + sa.error + sa.notselected + sa.informational + sa.fixed'  
+  unassessed : 'sa.notchecked + sa.unknown + sa.error + sa.notselected + sa.informational + sa.fixed'  
 }
 const findings = {
   low: 'sa.lowCount',

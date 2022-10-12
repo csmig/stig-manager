@@ -73,9 +73,9 @@ SM.Metrics.CommonFields = [
     mapping: 'metrics.results.notapplicable'
   },
   {
-    name: 'other',
+    name: 'unassessed',
     type: 'integer',
-    mapping: 'metrics.results.other'
+    mapping: 'metrics.results.unassessed'
   },
   {
     name: 'assessedPct',
@@ -722,7 +722,7 @@ SM.Metrics.ProgressPanel = Ext.extend(Ext.Panel, {
     const calcMetrics = function (metrics) {
       return {
         unassessed: metrics.assessments - metrics.assessed,
-        assessed: metrics.statuses.saved - metrics.results.other,
+        assessed: metrics.statuses.saved - metrics.results.unassessed,
         submitted: metrics.statuses.submitted,
         accepted: metrics.statuses.accepted,
         rejected: metrics.statuses.rejected,
@@ -1235,10 +1235,8 @@ SM.Metrics.AggAssetPanel = Ext.extend(Ext.Panel, {
 
     aggAssetGrid.getSelectionModel().on('rowselect', onRowSelect)
     const updateBaseParams = function (params) {
-      _this.baseParams = params
-      unaggGrid.store.removeAll()
-      aggAssetGrid.store.baseParams =  params
-      aggAssetGrid.store.load()
+      unaggGrid.store.baseParams = aggAssetGrid.store.baseParams = _this.baseParams = params
+      updateData()
     }
     const updateData = async function (onlyRefreshView = false) {
       try {
@@ -1252,7 +1250,7 @@ SM.Metrics.AggAssetPanel = Ext.extend(Ext.Panel, {
           return
         }
 
-        await aggAssetGrid.store.reloadPromise()
+        await aggAssetGrid.store.loadPromise()
         if (!selectedRow) {
           return
         }
@@ -1262,7 +1260,11 @@ SM.Metrics.AggAssetPanel = Ext.extend(Ext.Panel, {
           unaggGrid.store.removeAll()
           return
         }
-        await unaggGrid.store.reloadPromise()
+        const currentIndex = aggAssetGrid.store.indexOfId(selectedRow.data.assetId)
+        aggAssetGrid.view.focusRow(currentIndex)
+        await unaggGrid.store.loadPromise({
+          assetId: currentRecord.data.assetId
+        })
       }
       catch (e) {
         console.log(e)
@@ -1318,10 +1320,8 @@ SM.Metrics.AggStigPanel = Ext.extend(Ext.Panel, {
 
     aggStigGrid.getSelectionModel().on('rowselect', onRowSelect)
     const updateBaseParams = function (params) {
-      _this.baseParams = params
-      unaggGrid.store.removeAll()
-      aggStigGrid.store.baseParams =  params
-      aggStigGrid.store.load()
+      unaggGrid.store.baseParams = aggStigGrid.store.baseParams = _this.baseParams = params
+      updateData()
     }
     const updateData = async function (onlyRefreshView = false) {
       try {
@@ -1335,7 +1335,7 @@ SM.Metrics.AggStigPanel = Ext.extend(Ext.Panel, {
           return
         }
 
-        await aggStigGrid.store.reloadPromise()
+        await aggStigGrid.store.loadPromise()
         if (!selectedRow) {
           return
         }
@@ -1345,7 +1345,11 @@ SM.Metrics.AggStigPanel = Ext.extend(Ext.Panel, {
           unaggGrid.store.removeAll()
           return
         }
-        await unaggGrid.store.reloadPromise()
+        const currentIndex = aggStigGrid.store.indexOfId(selectedRow.data.benchmarkId)
+        aggStigGrid.view.focusRow(currentIndex)
+        await unaggGrid.store.loadPromise({
+          benchmarkId: currentRecord.data.benchmarkId
+        })
       }
       catch (e) {
         console.log(e)
@@ -1422,11 +1426,8 @@ SM.Metrics.AggLabelPanel = Ext.extend(Ext.Panel, {
     aggLabelGrid.getSelectionModel().on('rowselect', onRowSelectLabel)
     aggAssetGrid.getSelectionModel().on('rowselect', onRowSelectAsset)
     const updateBaseParams = function (params) {
-      _this.baseParams = params
-      unaggGrid.store.removeAll()
-      aggAssetGrid.store.removeAll()
-      aggLabelGrid.store.baseParams =  params
-      aggLabelGrid.store.load()
+      unaggGrid.store.baseParams = aggLabelGrid.store.baseParams = aggAssetGrid.store.baseParams = _this.baseParams = params
+      updateData()
     }
     const updateData = async function (onlyRefreshView = false) {
       try {
@@ -1444,7 +1445,7 @@ SM.Metrics.AggLabelPanel = Ext.extend(Ext.Panel, {
           return
         }
 
-        await aggLabelGrid.store.reloadPromise()
+        await aggLabelGrid.store.loadPromise()
         if (!selectedRowLabel) {
           return
         }
@@ -1455,13 +1456,21 @@ SM.Metrics.AggLabelPanel = Ext.extend(Ext.Panel, {
           unaggGrid.store.removeAll()
           return
         }
-        await aggAssetGrid.store.reloadPromise()
+        const currentIndexLabel = aggLabelGrid.store.indexOfId(selectedRowLabel.data.labelId)
+        aggLabelGrid.view.focusRow(currentIndexLabel)
+        await aggAssetGrid.store.loadPromise({
+          labelId: currentRecordLabel.data.labelId
+        })
         const currentRecordAsset = aggAssetGrid.store.getById(selectedRowAsset.data.assetId)
         if (!currentRecordAsset) {
           unaggGrid.store.removeAll()
           return
         }
-        await unaggGrid.store.reloadPromise()
+        const currentIndexAsset = aggAssetGrid.store.indexOfId(selectedRowAsset.data.assetId)
+        aggAssetGrid.view.focusRow(currentIndexAsset)
+        await unaggGrid.store.loadPromise({
+          assetId: currentRecordAsset.data.assetId
+        })
       }
       catch (e) {
         console.log(e)
