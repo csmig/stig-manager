@@ -73,9 +73,9 @@ SM.Metrics.CommonFields = [
     mapping: 'metrics.results.notapplicable'
   },
   {
-    name: 'other',
+    name: 'unassessed',
     type: 'integer',
-    mapping: 'metrics.results.other'
+    mapping: 'metrics.results.unassessed'
   },
   {
     name: 'assessedPct',
@@ -722,7 +722,7 @@ SM.Metrics.ProgressPanel = Ext.extend(Ext.Panel, {
     const calcMetrics = function (metrics) {
       return {
         unassessed: metrics.assessments - metrics.assessed,
-        assessed: metrics.statuses.saved - metrics.results.other,
+        assessed: metrics.statuses.saved - metrics.results.unassessed,
         submitted: metrics.statuses.submitted,
         accepted: metrics.statuses.accepted,
         rejected: metrics.statuses.rejected,
