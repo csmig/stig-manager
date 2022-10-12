@@ -11908,7 +11908,7 @@
 															"        }\t ",
 															"    }",
 															"",
-															"    metricsReferenceCommon.results.other = {",
+															"    metricsReferenceCommon.results.unassessed = {",
 															"        total:  metricsReferenceCommon.results.informational.total + ",
 															"                metricsReferenceCommon.results.notselected.total + ",
 															"                metricsReferenceCommon.results.notchecked.total + ",
@@ -12016,8 +12016,8 @@
 															"            pm.test(\"Check some stats - results - fail\", function () {",
 															"                pm.expect(item.metrics.results.fail).to.equal(metricsReferenceCommon.results.fail.total);",
 															"            });     ",
-															"            pm.test(\"Check some stats - results - other\", function () {",
-															"                pm.expect(item.metrics.results.other).to.equal(metricsReferenceCommon.results.other.total);",
+															"            pm.test(\"Check some stats - results - unassessed\", function () {",
+															"                pm.expect(item.metrics.results.unassessed).to.equal(metricsReferenceCommon.results.unassessed.total);",
 															"            });                   ",
 															"",
 															"            pm.test(\"Check some stats - status - saved\", function () {",
@@ -12094,8 +12094,8 @@
 															"                pm.expect(item.metrics.results.fixed.total).to.equal(metricsReferenceCommon.results.fixed.total);",
 															"            });                 ",
 															"",
-															"            // pm.test(\"Check some stats - results - other\", function () {",
-															"            //     pm.expect(item.metrics.results.other).to.equal(metricsReferenceCommon.results.other.total);",
+															"            // pm.test(\"Check some stats - results - unassessed\", function () {",
+															"            //     pm.expect(item.metrics.results.unassessed).to.equal(metricsReferenceCommon.results.unassessed.total);",
 															"            // });                   ",
 															"",
 															"            pm.test(\"Check some stats - status - saved\", function () {",
@@ -12745,7 +12745,7 @@
 															"",
 															"    }            ",
 															"     ",
-															"    metricsReferenceCommon.results.other = {",
+															"    metricsReferenceCommon.results.unassessed = {",
 															"        total:  metricsReferenceCommon.results.informational.total + ",
 															"                metricsReferenceCommon.results.notselected.total + ",
 															"                metricsReferenceCommon.results.notchecked.total + ",
@@ -12785,8 +12785,8 @@
 															"            pm.test(\"Check some stats - results - fail\", function () {",
 															"                pm.expect(item.metrics.results.fail).to.equal(metricsReferenceCommon.results.fail.total);",
 															"            });     ",
-															"            pm.test(\"Check some stats - results - other\", function () {",
-															"                pm.expect(item.metrics.results.other).to.equal(metricsReferenceCommon.results.other.total);",
+															"            pm.test(\"Check some stats - results - unassessed\", function () {",
+															"                pm.expect(item.metrics.results.unassessed).to.equal(metricsReferenceCommon.results.unassessed.total);",
 															"            });                   ",
 															"",
 															"            pm.test(\"Check some stats - status - saved\", function () {",
@@ -12863,8 +12863,8 @@
 															"                pm.expect(item.metrics.results.fixed.total).to.equal(metricsReferenceCommon.results.fixed.total);",
 															"            });                 ",
 															"",
-															"            // pm.test(\"Check some stats - results - other\", function () {",
-															"            //     pm.expect(item.metrics.results.other).to.equal(metricsReferenceCommon.results.other.total);",
+															"            // pm.test(\"Check some stats - results - unassessed\", function () {",
+															"            //     pm.expect(item.metrics.results.unassessed).to.equal(metricsReferenceCommon.results.unassessed.total);",
 															"            // });                   ",
 															"",
 															"            pm.test(\"Check some stats - status - saved\", function () {",
@@ -13458,7 +13458,7 @@
 															"        })",
 															"    }          ",
 															"    ",
-															"    metricsReferenceCommon.results.other = {",
+															"    metricsReferenceCommon.results.unassessed = {",
 															"        total:  metricsReferenceCommon.results.informational.total + ",
 															"                metricsReferenceCommon.results.notselected.total + ",
 															"                metricsReferenceCommon.results.notchecked.total + ",
@@ -13501,8 +13501,8 @@
 															"            pm.test(\"Check some stats - results - fail\", function () {",
 															"                pm.expect(item.metrics.results.fail).to.equal(metricsReferenceCommon.results.fail.total);",
 															"            });     ",
-															"            pm.test(\"Check some stats - results - other\", function () {",
-															"                pm.expect(item.metrics.results.other).to.equal(metricsReferenceCommon.results.other.total);",
+															"            pm.test(\"Check some stats - results - unassessed\", function () {",
+															"                pm.expect(item.metrics.results.unassessed).to.equal(metricsReferenceCommon.results.unassessed.total);",
 															"            });                   ",
 															"",
 															"            pm.test(\"Check some stats - status - saved\", function () {",
@@ -13579,8 +13579,8 @@
 															"                pm.expect(item.metrics.results.fixed.total).to.equal(metricsReferenceCommon.results.fixed.total);",
 															"            });                 ",
 															"",
-															"            // pm.test(\"Check some stats - results - other\", function () {",
-															"            //     pm.expect(item.metrics.results.other).to.equal(metricsReferenceCommon.results.other.total);",
+															"            // pm.test(\"Check some stats - results - unassessed\", function () {",
+															"            //     pm.expect(item.metrics.results.unassessed).to.equal(metricsReferenceCommon.results.unassessed.total);",
 															"            // });                   ",
 															"",
 															"            pm.test(\"Check some stats - status - saved\", function () {",
@@ -14030,7 +14030,7 @@
 															"        }\t ",
 															"    }",
 															"",
-															"    metricsReferenceCommon.results.other = {",
+															"    metricsReferenceCommon.results.unassessed = {",
 															"        total:  metricsReferenceCommon.results.informational.total + ",
 															"                metricsReferenceCommon.results.notselected.total + ",
 															"                metricsReferenceCommon.results.notchecked.total + ",
@@ -14256,8 +14256,8 @@
 															"            pm.test(\"Check some stats - results - fail\", function () {",
 															"                pm.expect(jsonData.metrics.results.fail).to.equal(metricsReferenceCommon.results.fail.total);",
 															"            });     ",
-															"            pm.test(\"Check some stats - results - other\", function () {",
-															"                pm.expect(jsonData.metrics.results.other).to.equal(metricsReferenceCommon.results.other.total);",
+															"            pm.test(\"Check some stats - results - unassessed\", function () {",
+															"                pm.expect(jsonData.metrics.results.unassessed).to.equal(metricsReferenceCommon.results.unassessed.total);",
 															"            });                   ",
 															"",
 															"            pm.test(\"Check some stats - status - saved\", function () {",
@@ -14332,8 +14332,8 @@
 															"                pm.expect(jsonData.metrics.results.fixed.total).to.equal(metricsReferenceCommon.results.fixed.total);",
 															"            });                 ",
 															"",
-															"            // pm.test(\"Check some stats - results - other\", function () {",
-															"            //     pm.expect(jsonData.metrics.results.other).to.equal(metricsReferenceCommon.results.other.total);",
+															"            // pm.test(\"Check some stats - results - unassessed\", function () {",
+															"            //     pm.expect(jsonData.metrics.results.unassessed).to.equal(metricsReferenceCommon.results.unassessed.total);",
 															"            // });                   ",
 															"",
 															"            pm.test(\"Check some stats - status - saved\", function () {",
@@ -14980,7 +14980,7 @@
 															"        }\t \r",
 															"    }\r",
 															"\r",
-															"    metricsReferenceCommon.results.other = {\r",
+															"    metricsReferenceCommon.results.unassessed = {\r",
 															"        total:  metricsReferenceCommon.results.informational.total + \r",
 															"                metricsReferenceCommon.results.notselected.total + \r",
 															"                metricsReferenceCommon.results.notchecked.total + \r",
@@ -15022,8 +15022,8 @@
 															"            pm.test(\"Check some stats - results - fail\", function () {\r",
 															"                pm.expect(item.metrics.results.fail).to.equal(metricsReferenceCommon.results.fail.total);\r",
 															"            });     \r",
-															"            pm.test(\"Check some stats - results - other\", function () {\r",
-															"                pm.expect(item.metrics.results.other).to.equal(metricsReferenceCommon.results.other.total);\r",
+															"            pm.test(\"Check some stats - results - unassessed\", function () {\r",
+															"                pm.expect(item.metrics.results.unassessed).to.equal(metricsReferenceCommon.results.unassessed.total);\r",
 															"            });                   \r",
 															"\r",
 															"            pm.test(\"Check some stats - status - saved\", function () {\r",
@@ -15099,8 +15099,8 @@
 															"                pm.expect(item.metrics.results.fixed.total).to.equal(metricsReferenceCommon.results.fixed.total);\r",
 															"            });                 \r",
 															"\r",
-															"            // pm.test(\"Check some stats - results - other\", function () {\r",
-															"            //     pm.expect(item.metrics.results.other).to.equal(metricsReferenceCommon.results.other.total);\r",
+															"            // pm.test(\"Check some stats - results - unassessed\", function () {\r",
+															"            //     pm.expect(item.metrics.results.unassessed).to.equal(metricsReferenceCommon.results.unassessed.total);\r",
 															"            // });                   \r",
 															"\r",
 															"            pm.test(\"Check some stats - status - saved\", function () {\r",
@@ -16744,7 +16744,7 @@
 															"        }\t ",
 															"    }",
 															"",
-															"    metricsReferenceCommon.results.other = {",
+															"    metricsReferenceCommon.results.unassessed = {",
 															"        total:  metricsReferenceCommon.results.informational.total + ",
 															"                metricsReferenceCommon.results.notselected.total + ",
 															"                metricsReferenceCommon.results.notchecked.total + ",
@@ -16852,8 +16852,8 @@
 															"            pm.test(\"Check some stats - results - fail\", function () {",
 															"                pm.expect(item.metrics.results.fail).to.equal(metricsReferenceCommon.results.fail.total);",
 															"            });     ",
-															"            pm.test(\"Check some stats - results - other\", function () {",
-															"                pm.expect(item.metrics.results.other).to.equal(metricsReferenceCommon.results.other.total);",
+															"            pm.test(\"Check some stats - results - unassessed\", function () {",
+															"                pm.expect(item.metrics.results.unassessed).to.equal(metricsReferenceCommon.results.unassessed.total);",
 															"            });                   ",
 															"",
 															"            pm.test(\"Check some stats - status - saved\", function () {",
@@ -16930,8 +16930,8 @@
 															"                pm.expect(item.metrics.results.fixed.total).to.equal(metricsReferenceCommon.results.fixed.total);",
 															"            });                 ",
 															"",
-															"            // pm.test(\"Check some stats - results - other\", function () {",
-															"            //     pm.expect(item.metrics.results.other).to.equal(metricsReferenceCommon.results.other.total);",
+															"            // pm.test(\"Check some stats - results - unassessed\", function () {",
+															"            //     pm.expect(item.metrics.results.unassessed).to.equal(metricsReferenceCommon.results.unassessed.total);",
 															"            // });                   ",
 															"",
 															"            pm.test(\"Check some stats - status - saved\", function () {",
@@ -17580,7 +17580,7 @@
 															"",
 															"    }            ",
 															"  ",
-															"    metricsReferenceCommon.results.other = {",
+															"    metricsReferenceCommon.results.unassessed = {",
 															"        total:  metricsReferenceCommon.results.informational.total + ",
 															"                metricsReferenceCommon.results.notselected.total + ",
 															"                metricsReferenceCommon.results.notchecked.total + ",
@@ -17620,8 +17620,8 @@
 															"            pm.test(\"Check some stats - results - fail\", function () {",
 															"                pm.expect(item.metrics.results.fail).to.equal(metricsReferenceCommon.results.fail.total);",
 															"            });     ",
-															"            pm.test(\"Check some stats - results - other\", function () {",
-															"                pm.expect(item.metrics.results.other).to.equal(metricsReferenceCommon.results.other.total);",
+															"            pm.test(\"Check some stats - results - unassessed\", function () {",
+															"                pm.expect(item.metrics.results.unassessed).to.equal(metricsReferenceCommon.results.unassessed.total);",
 															"            });                   ",
 															"",
 															"            pm.test(\"Check some stats - status - saved\", function () {",
@@ -17698,8 +17698,8 @@
 															"                pm.expect(item.metrics.results.fixed.total).to.equal(metricsReferenceCommon.results.fixed.total);",
 															"            });                 ",
 															"",
-															"            // pm.test(\"Check some stats - results - other\", function () {",
-															"            //     pm.expect(item.metrics.results.other).to.equal(metricsReferenceCommon.results.other.total);",
+															"            // pm.test(\"Check some stats - results - unassessed\", function () {",
+															"            //     pm.expect(item.metrics.results.unassessed).to.equal(metricsReferenceCommon.results.unassessed.total);",
 															"            // });                   ",
 															"",
 															"            pm.test(\"Check some stats - status - saved\", function () {",
@@ -18149,7 +18149,7 @@
 															"        }\t ",
 															"    }",
 															"",
-															"    metricsReferenceCommon.results.other = {",
+															"    metricsReferenceCommon.results.unassessed = {",
 															"        total:  metricsReferenceCommon.results.informational.total + ",
 															"                metricsReferenceCommon.results.notselected.total + ",
 															"                metricsReferenceCommon.results.notchecked.total + ",
@@ -18373,8 +18373,8 @@
 															"            pm.test(\"Check some stats - results - fail\", function () {",
 															"                pm.expect(jsonData.metrics.results.fail).to.equal(metricsReferenceCommon.results.fail.total);",
 															"            });     ",
-															"            pm.test(\"Check some stats - results - other\", function () {",
-															"                pm.expect(jsonData.metrics.results.other).to.equal(metricsReferenceCommon.results.other.total);",
+															"            pm.test(\"Check some stats - results - unassessed\", function () {",
+															"                pm.expect(jsonData.metrics.results.unassessed).to.equal(metricsReferenceCommon.results.unassessed.total);",
 															"            });                   ",
 															"",
 															"            pm.test(\"Check some stats - status - saved\", function () {",
@@ -18449,8 +18449,8 @@
 															"                pm.expect(jsonData.metrics.results.fixed.total).to.equal(metricsReferenceCommon.results.fixed.total);",
 															"            });                 ",
 															"",
-															"            // pm.test(\"Check some stats - results - other\", function () {",
-															"            //     pm.expect(jsonData.metrics.results.other).to.equal(metricsReferenceCommon.results.other.total);",
+															"            // pm.test(\"Check some stats - results - unassessed\", function () {",
+															"            //     pm.expect(jsonData.metrics.results.unassessed).to.equal(metricsReferenceCommon.results.unassessed.total);",
 															"            // });                   ",
 															"",
 															"            pm.test(\"Check some stats - status - saved\", function () {",
@@ -19044,7 +19044,7 @@
 															"        })",
 															"    }          ",
 															"    ",
-															"    metricsReferenceCommon.results.other = {",
+															"    metricsReferenceCommon.results.unassessed = {",
 															"        total:  metricsReferenceCommon.results.informational.total + ",
 															"                metricsReferenceCommon.results.notselected.total + ",
 															"                metricsReferenceCommon.results.notchecked.total + ",
@@ -19087,8 +19087,8 @@
 															"            pm.test(\"Check some stats - results - fail\", function () {",
 															"                pm.expect(item.metrics.results.fail).to.equal(metricsReferenceCommon.results.fail.total);",
 															"            });     ",
-															"            pm.test(\"Check some stats - results - other\", function () {",
-															"                pm.expect(item.metrics.results.other).to.equal(metricsReferenceCommon.results.other.total);",
+															"            pm.test(\"Check some stats - results - unassessed\", function () {",
+															"                pm.expect(item.metrics.results.unassessed).to.equal(metricsReferenceCommon.results.unassessed.total);",
 															"            });                   ",
 															"",
 															"            pm.test(\"Check some stats - status - saved\", function () {",
@@ -19165,8 +19165,8 @@
 															"                pm.expect(item.metrics.results.fixed.total).to.equal(metricsReferenceCommon.results.fixed.total);",
 															"            });                 ",
 															"",
-															"            // pm.test(\"Check some stats - results - other\", function () {",
-															"            //     pm.expect(item.metrics.results.other).to.equal(metricsReferenceCommon.results.other.total);",
+															"            // pm.test(\"Check some stats - results - unassessed\", function () {",
+															"            //     pm.expect(item.metrics.results.unassessed).to.equal(metricsReferenceCommon.results.unassessed.total);",
 															"            // });                   ",
 															"",
 															"            pm.test(\"Check some stats - status - saved\", function () {",
@@ -19368,7 +19368,7 @@
 															"        }\t \r",
 															"    }\r",
 															"\r",
-															"    metricsReferenceCommon.results.other = {\r",
+															"    metricsReferenceCommon.results.unassessed = {\r",
 															"        total:  metricsReferenceCommon.results.informational.total + \r",
 															"                metricsReferenceCommon.results.notselected.total + \r",
 															"                metricsReferenceCommon.results.notchecked.total + \r",
@@ -19410,8 +19410,8 @@
 															"            pm.test(\"Check some stats - results - fail\", function () {\r",
 															"                pm.expect(item.metrics.results.fail).to.equal(metricsReferenceCommon.results.fail.total);\r",
 															"            });     \r",
-															"            pm.test(\"Check some stats - results - other\", function () {\r",
-															"                pm.expect(item.metrics.results.other).to.equal(metricsReferenceCommon.results.other.total);\r",
+															"            pm.test(\"Check some stats - results - unassessed\", function () {\r",
+															"                pm.expect(item.metrics.results.unassessed).to.equal(metricsReferenceCommon.results.unassessed.total);\r",
 															"            });                   \r",
 															"\r",
 															"            pm.test(\"Check some stats - status - saved\", function () {\r",
@@ -19487,8 +19487,8 @@
 															"                pm.expect(item.metrics.results.fixed.total).to.equal(metricsReferenceCommon.results.fixed.total);\r",
 															"            });                 \r",
 															"\r",
-															"            // pm.test(\"Check some stats - results - other\", function () {\r",
-															"            //     pm.expect(item.metrics.results.other).to.equal(metricsReferenceCommon.results.other.total);\r",
+															"            // pm.test(\"Check some stats - results - unassessed\", function () {\r",
+															"            //     pm.expect(item.metrics.results.unassessed).to.equal(metricsReferenceCommon.results.unassessed.total);\r",
 															"            // });                   \r",
 															"\r",
 															"            pm.test(\"Check some stats - status - saved\", function () {\r",
@@ -20089,10 +20089,10 @@
 							],
 							"request": {
 								"auth": {
-									"type": "oauth2",
-									"oauth2": [
+									"type": "bearer",
+									"bearer": [
 										{
-											"key": "accessToken",
+											"key": "token",
 											"value": "{{token.stigmanadmin}}",
 											"type": "string"
 										}
@@ -25331,10 +25331,10 @@
 							],
 							"request": {
 								"auth": {
-									"type": "oauth2",
-									"oauth2": [
+									"type": "bearer",
+									"bearer": [
 										{
-											"key": "accessToken",
+											"key": "token",
 											"value": "{{token.stigmanadmin}}",
 											"type": "string"
 										}
@@ -26801,7 +26801,7 @@
 							"response": []
 						},
 						{
-							"name": "Import and overwrite application data (as elevated Admin) Copy",
+							"name": "Import and overwrite application data (as elevated Admin)",
 							"event": [
 								{
 									"listen": "test",
@@ -26843,10 +26843,10 @@
 							],
 							"request": {
 								"auth": {
-									"type": "oauth2",
-									"oauth2": [
+									"type": "bearer",
+									"bearer": [
 										{
-											"key": "accessToken",
+											"key": "token",
 											"value": "{{token.stigmanadmin}}",
 											"type": "string"
 										}
@@ -32229,7 +32229,7 @@
 							"name": "gh-761 - statusStats",
 							"item": [
 								{
-									"name": "Import and overwrite application data (as elevated Admin) Copy",
+									"name": "Import and overwrite application data (as elevated Admin)",
 									"event": [
 										{
 											"listen": "test",
@@ -32271,10 +32271,10 @@
 									],
 									"request": {
 										"auth": {
-											"type": "oauth2",
-											"oauth2": [
+											"type": "bearer",
+											"bearer": [
 												{
-													"key": "accessToken",
+													"key": "token",
 													"value": "{{token.stigmanadmin}}",
 													"type": "string"
 												}
@@ -33507,16 +33507,11 @@
 		}
 	],
 	"auth": {
-		"type": "oauth2",
-		"oauth2": [
+		"type": "bearer",
+		"bearer": [
 			{
-				"key": "accessToken",
+				"key": "token",
 				"value": "{{token}}",
-				"type": "string"
-			},
-			{
-				"key": "addTokenTo",
-				"value": "header",
 				"type": "string"
 			}
 		]
