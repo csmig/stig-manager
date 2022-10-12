@@ -2600,7 +2600,7 @@ paths:
     get:
       tags:
         - Collection
-      summary: Return the status statistics for the specified Collection
+      summary: DEPRECATED - targeted for removal soon, please use the Metrics endpoints
       operationId: getStatusByCollection
       responses:
         '200':
