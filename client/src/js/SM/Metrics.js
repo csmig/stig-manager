@@ -778,12 +778,10 @@ SM.Metrics.ProgressPanel = Ext.extend(Ext.Panel, {
     }
 
     const onThemeChanged = function (theme) {
-      // setTimeout( () => {
         if (chartPanel.chart) {
           chartPanel.chart.config._config.data.datasets[0].backgroundColor = SM.Metrics.ProgressPanelColors(theme)
           chartPanel.chart.update() 
         }
-      // }, 100)
     }
     SM.Dispatcher.addListener('themechanged', onThemeChanged)
 
@@ -1062,44 +1060,6 @@ SM.Metrics.ExportPanel = Ext.extend(Ext.Panel, {
   }
 })
 
-SM.Metrics.RefreshPanel = Ext.extend(Ext.Panel, {
-  initComponent: function () {
-    const _this = this
-    let refreshTimer
-    const tpl = new Ext.XTemplate(
-      '<div class="sm-metrics-refresh-parent">',
-      'Last refreshed: {[renderDurationToNow(values.lastRefresh)]}',
-      '</div>'
-    )
-    const updateData = (lastRefresh) => {
-      _this.update({lastRefresh})
-      _this.lastRefresh = lastRefresh
-      clearTimeout(refreshTimer)
-      refreshTimer = setTimeout(refresh, 60000)
-    }
-    const refresh = () => {
-      // console.log(`${collectionName}: refreshing ${ _this.lastRefresh}`)
-      _this.update({lastRefresh: _this.lastRefresh})
-      refreshTimer = setTimeout(refresh, 60000)
-    }
-    const config = {
-      tpl,
-      data: {lastRefresh: this.lastRefresh},
-      updateData,
-      listeners: {
-        beforedestroy: () => {
-          clearTimeout(refreshTimer)
-        },
-        render: () => {
-          refresh()
-        }
-      }
-    }
-    Ext.apply(this, Ext.apply(this.initialConfig, config))
-    this.superclass().initComponent.call(this)
-  }
-})
-
 SM.Metrics.InventoryPanel = Ext.extend(Ext.Panel, {
   initComponent: function () {
     const _this = this
@@ -1183,7 +1143,6 @@ SM.Metrics.OverviewPanel = Ext.extend(Ext.Panel, {
       progressPanel.updateMetrics(data.metrics)
       agesPanel.updateMetrics(data.metrics)
       findingsPanel.updateMetrics(data.metrics.findings)
-      // refreshPanel.updateData(new Date())
     }
     const config = {
       border: false,
@@ -1514,7 +1473,8 @@ SM.Metrics.addCollectionMetricsTab = async function (options) {
     let currentBaseParams = initialLabelIds.length ? { labelId: initialLabelIds } : undefined
     let currentLabelIds = initialLabelIds
     let lastApiRefresh
-    const updateDelay = 180000
+    const updateDelay = 120000
+    const updateTitle = 20000
 
     const tab = Ext.getCmp('main-tab-panel').getItem(`metrics-tab-${collectionId}`)
     if (tab) {
@@ -1553,7 +1513,7 @@ SM.Metrics.addCollectionMetricsTab = async function (options) {
     })
 
     const updateOverviewTitle = () => {
-      // console.log(`${collectionName}: Executing updateOverviewTitle with ${currentLabelIds} and ${lastApiRefresh}`)
+        // console.log(`${collectionName}: Executing updateOverviewTitle with ${currentLabelIds} and ${lastApiRefresh}`)
       const overviewTitle = overviewTitleTpl.apply({
         labels: SM.Collection.LabelSpritesByCollectionLabelId(collectionId, currentLabelIds),
         lastApiRefresh
@@ -1640,10 +1600,10 @@ SM.Metrics.addCollectionMetricsTab = async function (options) {
       ],
       listeners: {
         hide: (tab) => {
-          // console.log(`${collectionName}: hide tab ${tab.id}`)
+            // console.log(`${collectionName}: hide tab ${tab.id}`)
         },
         show: (tab) => {
-          // console.log(`${collectionName}: show tab ${tab.id}`)
+            // console.log(`${collectionName}: show tab ${tab.id}`)
         }
 
       }
@@ -1672,13 +1632,15 @@ SM.Metrics.addCollectionMetricsTab = async function (options) {
     // handle periodic updates
     async function updateData (onlyRefreshView = false) {
       try {
-        // console.log(`${collectionName}: executing updateData(${onlyRefreshView})`)
+          // console.log(`${collectionName}: executing updateData(${onlyRefreshView})`)
         if (!onlyRefreshView) {
-          // console.log(`${collectionName}: cancelling refreshView timer`)
+           // console.log(`${collectionName}: cancelling refreshView timer, id ${refreshViewTimer}`)
           clearTimeout(refreshViewTimer)
+           // console.log(`${collectionName}: cancelling updateData timer, id ${updateDataTimer}`)
+          clearTimeout(updateDataTimer)
           apiMetricsCollection = await getMetricsAggCollection(collectionId, currentLabelIds)
-          // console.log(`${collectionName}: set updateData timer in ${updateDelay}`)
           updateDataTimer = setTimeout(updateData, updateDelay)
+           // console.log(`${collectionName}: set updateData timer in ${updateDelay}, id ${updateDataTimer}`)
         }
         updateOverviewTitle()
         overviewPanel.updateMetrics(apiMetricsCollection)
@@ -1689,8 +1651,8 @@ SM.Metrics.addCollectionMetricsTab = async function (options) {
 
         const refreshDelay = calcRefreshDelay(apiMetricsCollection.metrics.maxTouchTs)
         if (refreshDelay < updateDelay) {
-          // console.log(`${collectionName}: set refreshView timer in ${refreshDelay}`)
           refreshViewTimer = setTimeout(updateData, refreshDelay, true)
+           // console.log(`${collectionName}: set refreshView timer in ${refreshDelay}, id ${refreshViewTimer}`)
         }
       }
       catch (e) {
@@ -1701,7 +1663,7 @@ SM.Metrics.addCollectionMetricsTab = async function (options) {
     const calcRefreshDelay = (maxTouchTs) => {
       const diffSecs = Math.ceil(Math.abs(new Date() - new Date(maxTouchTs))/1000)
       if ( diffSecs < 3600 ) {
-        return 5 * 1000
+        return 30 * 1000
       }
       if ( diffSecs < 86400 ) {
         return 3600 * 1000
@@ -1711,11 +1673,11 @@ SM.Metrics.addCollectionMetricsTab = async function (options) {
     const refreshDelay = calcRefreshDelay(apiMetricsCollection.metrics.maxTouchTs)
     let refreshViewTimer
     if (refreshDelay < updateDelay) {
-      // console.log(`${collectionName}: set refreshView timer in ${refreshDelay}`)
       refreshViewTimer = setTimeout(updateData, refreshDelay, true)
+       // console.log(`${collectionName}: set refreshView timer in ${refreshDelay}, id ${refreshViewTimer}`)
     }
-    // console.log(`${collectionName}: set updateData timer in ${updateDelay}`)
     let updateDataTimer = setTimeout(updateData, updateDelay)
+     // console.log(`${collectionName}: set updateData timer in ${updateDelay}, id ${updateDataTimer}`)
 
     metricsTab.on('beforedestroy', () => { 
       SM.Dispatcher.removeListener('labelfilter', onLabelFilter) 
@@ -1733,8 +1695,8 @@ SM.Metrics.addCollectionMetricsTab = async function (options) {
     }
 
     updateOverviewTitle()
-    // console.log(`${collectionName}: set updateOverviewTitle interval every 60000`)
-    let updateOverviewTitleInterval = setInterval(updateOverviewTitle, 60000)
+      // console.log(`${collectionName}: set updateOverviewTitle interval every ${updateTitle}`)
+    let updateOverviewTitleInterval = setInterval(updateOverviewTitle, updateTitle)
 
     let tp = Ext.getCmp('main-tab-panel')
     let ephTabIndex = tp.items.findIndex('sm_tabMode', 'ephemeral')
