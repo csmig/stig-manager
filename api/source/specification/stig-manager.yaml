@@ -3933,7 +3933,7 @@ components:
                   type: integer
                 notapplicable:
                   type: integer
-                other:
+                unassessed:
                   type: integer
             statuses:
               type: object
@@ -4628,6 +4628,8 @@ components:
           $ref: '#/components/schemas/StringHexColor'
     LabelId:
       $ref: '#/components/schemas/StringUuid'
+    LabelIdNullable:
+      $ref: '#/components/schemas/StringUuidNullable'
     LabelName:
       type: string
       minLength: 1
@@ -4649,12 +4651,9 @@ components:
     MetadataKey:
       type: string
     MetadataValue:
-      type: string
-      
-
+      type: string   
     MetricsUnagg:
       type: object
-      # additionalProperties: false
       required:
         - assetId
         - name
@@ -4678,12 +4677,9 @@ components:
     MetricsSummaryUnagg:
       allOf:
         - $ref: '#/components/schemas/MetricsUnagg'
-        - $ref: '#/components/schemas/MetricsSummary'
-        
-        
+        - $ref: '#/components/schemas/MetricsSummary'       
     MetricsAggAsset:
       type: object
-      # additionalProperties: false
       required:
         - assetId
         - name
@@ -4710,11 +4706,8 @@ components:
       allOf:
         - $ref: '#/components/schemas/MetricsAggAsset'
         - $ref: '#/components/schemas/MetricsSummary'
-
-            
     MetricsAggCollection:
       type: object
-      # additionalProperties: false
       required:
         - collectionId
         - name
@@ -4740,46 +4733,18 @@ components:
       allOf:
         - $ref: '#/components/schemas/MetricsAggCollection'
         - $ref: '#/components/schemas/MetricsSummary'
-            
-            
-    MetricsAggCollections:
-      type: object
-      # additionalProperties: false
-      required:
-        - collectionIds
-        - name
-        - benchmarkIds
-      properties:
-        collections:
-          type: array
-          items:
-            $ref: '#/components/schemas/CollectionBasic'
-        benchmarkIds:
-          type: array
-          items:
-            $ref: '#/components/schemas/BenchmarkId'
-    MetricsDetailAggCollections:
-      allOf:
-        - $ref: '#/components/schemas/MetricsAggCollections'
-        - $ref: '#/components/schemas/MetricsDetail'
-    MetricsSummaryAggCollections:
-      allOf:
-        - $ref: '#/components/schemas/MetricsAggCollections'
-        - $ref: '#/components/schemas/MetricsSummary'
-
-
     MetricsAggLabel:
       type: object
       required:
         - labelId
         - name
         - assets
-      # additionalProperties: false
       properties:
         labelId:
-          $ref: '#/components/schemas/LabelId'
+          $ref: '#/components/schemas/LabelIdNullable'
         name:
           type: string
+          nullable: true
         assets:
           type: integer
     MetricsDetailAggLabel:
@@ -4790,15 +4755,11 @@ components:
       allOf:
         - $ref: '#/components/schemas/MetricsAggLabel'
         - $ref: '#/components/schemas/MetricsSummary'
-            
-            
-            
     MetricsAggStig:
       type: object
       required:
         - benchmarkId
         - assets
-      # additionalProperties: false
       properties:
         benchmarkId:
           $ref: '#/components/schemas/BenchmarkId'
@@ -4812,13 +4773,8 @@ components:
       allOf:
         - $ref: '#/components/schemas/MetricsAggStig'
         - $ref: '#/components/schemas/MetricsSummary'
-
-            
-            
-
     MetricsDetail:
       type: object
-      additionalProperties: false
       required:
         - metrics
       properties:
@@ -4938,7 +4894,7 @@ components:
                 - pass
                 - fail
                 - notapplicable
-                - other
+                - unassessed
               properties:
                 pass:
                   type: integer
@@ -4946,7 +4902,7 @@ components:
                   type: integer
                 notapplicable:
                   type: integer
-                other:
+                unassessed:
                   type: integer
             statuses:
               type: object
@@ -4979,10 +4935,6 @@ components:
                   type: integer
                 high:
                   type: integer
-          
-              
-        
-
     ResultEngine:
       type: object
       nullable: true
