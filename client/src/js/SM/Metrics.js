@@ -1447,8 +1447,8 @@ SM.Metrics.addCollectionMetricsTab = async function (options) {
     let currentBaseParams = initialLabelIds.length ? { labelId: initialLabelIds } : undefined
     let currentLabelIds = initialLabelIds
     let lastApiRefresh
-    const updateDataDelay = 120000
-    const updateOverviewTitleDelay = 20000
+    const updateDataDelay = 300000
+    const updateOverviewTitleDelay = 60000
     let updateDataTimer, refreshViewTimer, updateOverviewTitleInterval
 
     const tab = Ext.getCmp('main-tab-panel').getItem(`metrics-tab-${collectionId}`)
