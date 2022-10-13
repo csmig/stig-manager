@@ -670,7 +670,6 @@ SM.Metrics.ProgressBarsPanel = Ext.extend(Ext.Panel, {
         rejected: metrics.assessments ? (metrics.statuses.rejected / metrics.assessments) * 100 : 0
       }
     }
-    const data = calcData(this.metrics)
     const tpl = new Ext.XTemplate(
       '<div class="sm-metrics-progress-parent">',
         '<div class="sm-metrics-progress-child">',
@@ -696,7 +695,6 @@ SM.Metrics.ProgressBarsPanel = Ext.extend(Ext.Panel, {
     }
     const config = {
       tpl,
-      data,
       updateMetrics
     }
     Ext.apply(this, Ext.apply(this.initialConfig, config))
@@ -730,19 +728,12 @@ SM.Metrics.ProgressPanel = Ext.extend(Ext.Panel, {
         apiAssessed: metrics.assessed
       }
     }
-    const metricCalcs = calcMetrics(this.metrics)
     
     const chartOptions = {
       type: 'doughnut',
       data: {
         datasets: [{
-          data: [
-            metricCalcs.assessed, //Assessed
-            metricCalcs.submitted, // Submitted
-            metricCalcs.accepted, // Accepted
-            metricCalcs.unassessed, // Unassessed
-            metricCalcs.rejected // Rejected         
-          ],
+          data: [0,0,0,0,0],
           backgroundColor: SM.Metrics.ProgressPanelColors(localStorage.getItem('darkMode') === '1' ? 'dark' : 'light'),
           borderWidth: [1, 1],
           borderColor: '#bbbbbb'
@@ -765,17 +756,12 @@ SM.Metrics.ProgressPanel = Ext.extend(Ext.Panel, {
       }
     }
 
-    const chartPanel = metricCalcs.assessments ? new SM.Metrics.ChartPanel({
+    const chartPanel = new SM.Metrics.ChartPanel({
       border: false,
       width: 170,
       height: 170,
       chartOptions
-    }) : { 
-      border: false,
-      html: '<div class="sm-metrics-no-assessments-body">No Asset/STIG mappings exist</div>',
-      width: 170,
-      height: 170
-    }
+    })
 
     const onThemeChanged = function (theme) {
         if (chartPanel.chart) {
@@ -817,10 +803,9 @@ SM.Metrics.ProgressPanel = Ext.extend(Ext.Panel, {
     const dataPanel = new Ext.Panel({
       border: false,
       tpl: dataTpl,
-      data: metricCalcs
+      width: 150
     })
     const progressBarsPanel = new SM.Metrics.ProgressBarsPanel({
-      metrics: this.metrics,
       border: false,
       height: 44
     })
@@ -1093,34 +1078,29 @@ SM.Metrics.OverviewPanel = Ext.extend(Ext.Panel, {
   initComponent: function () {
     const _this = this
     const collectionId = this.collectionId
-    this.data = this.data ?? {}
     const inventoryPanel = new SM.Metrics.InventoryPanel({
       cls: 'sm-round-inner-panel',
       bodyStyle: 'padding: 10px;',
       title: 'Inventory',
-      border: true,
-      data: this.data
+      border: true
     })
     const progressPanel = new SM.Metrics.ProgressPanel({
       cls: 'sm-round-inner-panel',
       bodyStyle: 'padding: 10px;',
       title: 'Progress',
-      border: true,
-      metrics: this.data.metrics
+      border: true
     })
     const agesPanel = new SM.Metrics.AgesPanel({
       cls: 'sm-round-inner-panel',
       bodyStyle: 'padding: 10px;',
       title: 'Review Ages',
-      border: true,
-      metrics: this.data.metrics
+      border: true
     })
     const findingsPanel = new SM.Metrics.FindingsPanel({
       cls: 'sm-round-inner-panel',
       bodyStyle: 'padding: 10px;',
       title: 'Findings',
-      border: true,
-      metrics: this.data.metrics.findings
+      border: true
     })
     const exportPanel = new SM.Metrics.ExportPanel({
       cls: 'sm-round-inner-panel',
@@ -1130,12 +1110,6 @@ SM.Metrics.OverviewPanel = Ext.extend(Ext.Panel, {
       height: 122,
       collectionId
     })
-    // const refreshPanel = new SM.Metrics.RefreshPanel({
-    //   // cls: 'sm-round-inner-panel',
-    //   bodyStyle: 'padding: 10px;',
-    //   border: false,
-    //   lastRefresh: new Date()
-    // })
 
     const updateMetrics = function (data) {
       _this.data = data
@@ -1499,7 +1473,6 @@ SM.Metrics.addCollectionMetricsTab = async function (options) {
       return JSON.parse(results.response.responseText)
     }
     
-    let apiMetricsCollection = await getMetricsAggCollection(collectionId, currentLabelIds)
     const overviewPanel = new SM.Metrics.OverviewPanel({
       cls: 'sm-round-panel sm-metrics-overview-panel',
       collapsible: true,
@@ -1509,8 +1482,7 @@ SM.Metrics.addCollectionMetricsTab = async function (options) {
       width: 430,
       minWidth: 430,
       split: true,
-      collectionId,
-      data: apiMetricsCollection
+      collectionId
     })
 
     const updateOverviewTitle = () => {
