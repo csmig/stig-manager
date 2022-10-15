@@ -801,3 +801,89 @@ binds.push(`$."${key}"`, assetId, ruleId)
   let [rows] = await dbUtils.pool.query(sql, binds)
   return rows.length > 0 ? rows[0].value : ""
 }
+
+exports.getBatchDisposition = async function ( batch, collectionId, userId ) {
+  // document this method
+  const binds = [
+    JSON.stringify(batch.assets.ids),
+    JSON.stringify(batch.rules.ids),
+    collectionId,
+    userId
+  ]
+
+  // initial implementation of the multi-edit feature supports assetIds
+  const assetTargetsCte = `
+    select
+      jtAssets.assetId
+    from
+      json_table(
+        ?,
+        '$[*]'
+        COLUMNS (assetId INT PATH '$') 
+      ) as jtAssets`
+  // initial implementation of the multi-edit feature supports ruleIds
+  const ruleTargetsCte = `
+    select
+      jtRules.ruleId
+    from
+      json_table(
+        ?,
+        '$[*]'
+        COLUMNS (ruleId VARCHAR(255) PATH '$') 
+      ) as jtRules`
+  
+  const dispositionQuery = `
+    WITH
+      inAssets AS (${assetTargetsCte}),
+      inRules AS (${ruleTargetsCte}),
+      granted AS (select
+          distinct a.assetId, rgr.ruleId 
+        from 
+          asset a
+          left join collection_grant cg on a.collectionId = cg.collectionId
+          left join stig_asset_map sa using (assetId)
+          left join user_stig_asset_map usa on sa.saId = usa.saId
+          left join revision rev using (benchmarkId)
+          left join rev_group_map rg using (revId)
+          left join rev_group_rule_map rgr using (rgId)
+        where 
+          cg.collectionId =  ?
+          and a.assetId IN (select assetId from inAssets)
+          and cg.userId = ?
+          and CASE WHEN cg.accessLevel = 1 THEN usa.userId = cg.userId ELSE TRUE END)
+    SELECT
+      review.reviewId, 
+      CAST(inAssets.assetId as CHAR) as assetId,
+      inRules.ruleId,
+      CASE WHEN granted.assetId IS NOT NULL THEN 1 ELSE 0 END as isGranted,
+      result.api as result,
+      CASE WHEN review.detail IS NULL OR review.detail = "" THEN review.detail ELSE "present" END as detail,
+      CASE WHEN review.comment IS NULL OR review.comment = "" THEN review.comment ELSE "present" END as comment,
+      status.api as status
+    FROM
+      inAssets 
+      CROSS JOIN inRules
+      LEFT JOIN granted on granted.assetId = inAssets.assetId and granted.ruleId = inRules.ruleId
+      LEFT JOIN review on review.assetId = granted.assetId and review.ruleId = granted.ruleId
+      LEFT JOIN result using (resultId)
+      LEFT JOIN status using (statusId)
+  `
+  const [rows] = await dbUtils.pool.query(dispositionQuery, binds)
+  
+  const reducer = (obj, row) => {
+    if (row.isGranted) {
+      const statement = row.result ? obj.accepted.toUpdate : obj.accepted.toInsert
+      statement.push(row)
+    }
+    else {
+      obj.rejected.push({
+        assetId: row.assetId.toString(),
+        ruleId: row.ruleId,
+        reason: "Reviews for this assetId/ruleId pair are not permitted"
+      })
+    }
+    return obj
+  }
+
+  return rows.reduce( reducer, { accepted: { toUpdate: [], toInsert: [] }, rejected: [] })
+}

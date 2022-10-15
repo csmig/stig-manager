@@ -1182,6 +1182,35 @@ paths:
       security:
         - oauth:
             - 'stig-manager:collection:read'
+    post:
+      tags:
+        - Review
+      summary: Post one review to multiple Assets and Rules
+      description: Explain business rules here
+      operationId: postReviewBatch
+      parameters:
+        - $ref: '#/components/parameters/CollectionIdPath'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReviewBatch'
+      responses:
+        '200':
+          description: ReviewBatchResponse response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReviewBatchResponse'
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      security:
+        - oauth:
+            - 'stig-manager:collection'      
   '/collections/{collectionId}/reviews/{assetId}':
     get:
       tags:
@@ -3577,6 +3606,8 @@ components:
           type: string
         name:
           type: string
+    AssetId:
+      $ref: '#/components/schemas/StringIntId'
     AssetProjected:
       type: object
       required:
@@ -5150,6 +5181,103 @@ components:
             type: string
         rule:
           $ref: '#/components/schemas/RuleAbbr'
+    ReviewAssetWrite:
+      type: object
+      required:
+        - ruleId
+        - result
+        - detail
+        - comment
+        - autoResult
+      additionalProperties: false
+      properties:
+        ruleId:
+          $ref: '#/components/schemas/String255'
+        result:
+          $ref: '#/components/schemas/ReviewResult'
+        detail:
+          $ref: '#/components/schemas/StringMaxNullable'
+        comment:
+          $ref: '#/components/schemas/StringMaxNullable'
+        autoResult:
+          type: boolean
+        metadata:
+          $ref: '#/components/schemas/Metadata'
+        status:
+          $ref: '#/components/schemas/ReviewStatusRestrictedWrite'
+    ReviewBatch:
+      type: object
+      required:
+        - source
+        - assets
+        - rules
+      additionalProperties: false
+      properties:
+        source:
+          $ref: '#/components/schemas/ReviewBatchSource'
+        assets:
+          $ref: '#/components/schemas/ReviewBatchAssetsCriteria_Ids'
+        rules:
+          $ref: '#/components/schemas/ReviewBatchRulesCriteria_Ids'
+    ReviewBatchAssetsCriteria_Ids:
+      type: object
+      required:
+        - ids
+      additionalProperties: false
+      properties:
+        ids:
+          type: array
+          minItems: 1
+          maxItems: 1000
+          uniqueItems: true
+          items:
+            $ref: '#/components/schemas/AssetId'
+    ReviewBatchRulesCriteria_Ids:
+      type: object
+      required:
+        - ids
+      additionalProperties: false
+      properties:
+        ids:
+          type: array
+          minItems: 1
+          maxItems: 500
+          uniqueItems: true
+          items:
+            $ref: '#/components/schemas/String255'
+    ReviewBatchSource:
+      type: object
+      required:
+        - review
+      additionalProperties: false
+      properties:
+        review:
+          $ref: '#/components/schemas/ReviewAssetRulePatch'
+    ReviewBatchResponse:
+      type: object
+      required:
+        - rejected
+        - affected
+      additionalProperties: false
+      properties:
+        rejected:
+          type: array
+          items:
+            type: object
+            properties:
+              assetId:
+                $ref: '#/components/schemas/AssetId'
+              ruleId:
+                $ref: '#/components/schemas/String255'
+              reason:
+                $ref: '#/components/schemas/String255'
+        affected:
+          type: object
+          properties:
+            updated:
+              type: number
+            inserted:
+              type: number
     ReviewHistory:
       type: object
       required:
@@ -5623,6 +5751,23 @@ components:
       type: string
       pattern: "^[a-fA-F0-9]{6}$"
       example: "aa33cc"
+    StringIntId:
+      type: string
+      minLength: 1
+      maxLength: 10
+      pattern: "^[0-9]{1,6}$"
+    StringIntIdReadOnly:
+      type: string
+      minLength: 1
+      maxLength: 10
+      pattern: "^[0-9]{1,6}$"
+      readOnly: true
+    StringIntIdNullable:
+      type: string
+      minLength: 1
+      maxLength: 10
+      pattern: "^[0-9]{1,6}$"
+      nullable: true
     StringMax:
       type: string
       maxLength: 16777215
