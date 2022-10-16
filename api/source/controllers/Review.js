@@ -151,7 +151,7 @@ module.exports.postReviewsByAsset = async function postReviewsByAsset (req, res,
       const {permitted, rejected, statusSettings, historySettings} = await normalizeAndValidateReviews(reviewsRequested, collectionId, assetId, req.userObject)
       let affected = { updated: 0, inserted: 0 }
       if (permitted.length > 0) {
-        affected = await Review.putReviewsByAsset({
+        affected = await ReviewService.putReviewsByAsset({
           assetId,
           reviews: permitted,
           userObject: req.userObject,
@@ -184,7 +184,7 @@ module.exports.deleteReviewByAssetRule = async function deleteReviewByAssetRule 
     if ( collectionGrant || req.userObject.privileges.globalAccess ) {
       const userHasRule = await ReviewService.checkRuleByAssetUser( ruleId, assetId, req.userObject )
       if (userHasRule) {
-        let response = await Review.deleteReviewByAssetRule(assetId, ruleId, projection, req.userObject, res.svcStatus)
+        let response = await ReviewService.deleteReviewByAssetRule(assetId, ruleId, projection, req.userObject, res.svcStatus)
         res.status(response ? 200 : 204).json(response)
       }
       else {
@@ -301,7 +301,7 @@ module.exports.putReviewByAssetRule = async function (req, res, next) {
       review.ruleId = ruleId
       const {permitted, rejected, statusSettings, historySettings} = await normalizeAndValidateReviews([review], collectionId, assetId, req.userObject)
       if (permitted.length > 0) {
-        const affected = await Review.putReviewsByAsset({
+        const affected = await ReviewService.putReviewsByAsset({
           assetId,
           reviews: permitted,
           userObject: req.userObject,
@@ -310,7 +310,7 @@ module.exports.putReviewByAssetRule = async function (req, res, next) {
           svcStatus: res.svcStatus,
           maxHistory: historySettings.maxReviews
         })
-        const rows =  await Review.getReviews(projection, {
+        const rows =  await ReviewService.getReviews(projection, {
           assetId: assetId,
           ruleId: ruleId
         }, req.userObject)
@@ -354,7 +354,7 @@ module.exports.patchReviewByAssetRule = async function (req, res, next) {
       }
       const {permitted, rejected, statusSettings, historySettings} = await normalizeAndValidateReviews([review], collectionId, assetId, req.userObject)
       if (permitted.length > 0) {
-        await Review.putReviewsByAsset( {
+        await ReviewService.putReviewsByAsset( {
           assetId,
           reviews: [incomingReview],
           userObject: req.userObject,
@@ -363,7 +363,7 @@ module.exports.patchReviewByAssetRule = async function (req, res, next) {
           svcStatus: res.svcStatus,
           maxHistory: historySettings.maxReviews
         })
-        const rows =  await Review.getReviews(projection, { assetId, ruleId }, req.userObject)
+        const rows =  await ReviewService.getReviews(projection, { assetId, ruleId }, req.userObject)
         res.json(rows[0])
       }
       else {
