@@ -3,6 +3,279 @@ const dbUtils = require('./utils')
 
 let _this = this
 
+function cteReviewGen(obj, cteName = 'cteReview') {
+  const json = JSON.stringify(obj)
+  const sql = `SELECT
+  jtresult.resultId,
+  jt.resultEngine,
+  TRIM(jt.detail) as detail,
+  TRIM(jt.comment) as comment,
+  jtstatus.statusId,
+  jt.statusText
+  FROM
+  JSON_TABLE(
+    ?,
+    "$"
+    COLUMNS(
+    result VARCHAR(255) PATH "$.result",
+    detail MEDIUMTEXT PATH "$.detail" NULL ON EMPTY,
+    comment MEDIUMTEXT PATH "$.comment",
+    resultEngine JSON PATH "$.resultEngine" DEFAULT '0' ON EMPTY,
+    statusLabel VARCHAR(255) PATH "$.status.label",
+    statusText VARCHAR(255) PATH "$.status.text"
+    )
+  ) as jt
+  left join result jtresult on (jtresult.api = jt.result)
+  left join status jtstatus on (jtstatus.api = jt.statusLabel)`
+  const cte = dbUtils.pool.format(sql, [json])
+  return `${cteName} AS (${cte})`
+}
+
+function cteAssetGen({assetIds, benchmarkIds, labelIds, labelNames}, collectionId, cteName = 'cteAsset') {
+  let cte
+  if (assetIds?.length) {
+    const json = JSON.stringify(assetIds)
+    const sql = `select jtAssets.assetId
+  from
+    json_table(
+      ?,
+      '$[*]'
+      COLUMNS (assetId INT PATH '$') 
+    ) as jtAssets`
+    cte = dbUtils.pool.format(sql,[json])
+  }
+  else if (benchmarkIds?.length && collectionId) {
+    const sql = `select assetId 
+    from
+      asset a
+      inner join stig_asset_map sa using (assetId)
+    where
+      a.collectionId = ? and sa.benchmarkId IN ?`
+    cte = dbUtils.pool.format(sql,[collectionId, [benchmarkIds]])
+  }
+  return `${cteName} AS (${cte})`
+}
+
+function cteRuleGen({ruleIds, benchmarkIds}, cteName = 'cteRule') {
+  let cte
+  if (ruleIds?.length) {
+    const json = JSON.stringify(ruleIds)
+    const sql = `select jtRules.ruleId
+  from
+    json_table(
+      ?,
+      '$[*]'
+      COLUMNS (ruleId VARCHAR(255) PATH '$') 
+    ) as jtRules`
+    cte = dbUtils.pool.format(sql,[json])
+  }
+  else if (benchmarkIds?.length) {
+    const sql = `select ruleId from current_group_rule where benchmarkId IN ?`
+    cte = dbUtils.pool.format(sql,[[benchmarkIds]])
+  }
+  return `${cteName} AS (${cte})`
+}
+
+function cteGrantGen(collectionId, userId, cteAsset = 'cteAsset', cteRule = 'cteRule', cteName = 'cteGrant') {
+  const sql = `select
+  distinct a.assetId,
+  rgr.ruleId 
+from 
+  asset a
+  left join collection_grant cg on a.collectionId = cg.collectionId
+  left join stig_asset_map sa using (assetId)
+  left join user_stig_asset_map usa on sa.saId = usa.saId
+  left join revision rev using (benchmarkId)
+  left join rev_group_map rg using (revId)
+  left join rev_group_rule_map rgr using (rgId)
+where 
+  cg.collectionId =  ?
+  and a.assetId IN (select assetId from ${cteAsset})
+  and rgr.ruleId IN (select ruleId from ${cteRule})
+  and cg.userId = ? 
+  and (CASE WHEN cg.accessLevel = 1 THEN usa.userId = cg.userId ELSE TRUE END)`
+  
+  const cte = dbUtils.pool.format(sql,[collectionId, userId])
+  return `${cteName} AS (${cte})`
+}
+
+function cteCollectionSettingGen (collectionId, cteName = 'cteCollectionSetting') {
+  const sql = `SELECT 
+  c.settings->>"$.fields.detail.required" as detailRequired,
+  c.settings->>"$.fields.comment.required" as commentRequired,
+  c.settings->>"$.status.canAccept" as canAccept,
+  c.settings->>"$.status.resetCriteria" as resetCriteria,
+  c.settings->>"$.status.minAcceptGrant" as minAcceptGrant
+FROM
+  collection c
+where
+  collectionId = ?`
+  const cte = dbUtils.pool.format(sql,[collectionId])
+  return `${cteName} AS (${cte})`
+}
+
+function cteCandidateGen ({
+  cteReview = 'cteReview', 
+  cteAsset = 'cteAsset', 
+  cteRule = 'cteRule', 
+  cteGrant = 'cteGrant', 
+  cteCollectionSetting = 'cteCollectionSetting',
+  cteName = 'cteCandidate'
+}) {
+    const cte = `select
+    ${cteAsset}.assetId,
+    ${cteRule}.ruleId,
+    ${cteGrant}.assetId as gAssetId,
+    ${cteGrant}.ruleId as gRuleId,
+    review.reviewId,
+    COALESCE(${cteReview}.resultId, review.resultId) as resultId,
+    COALESCE(${cteReview}.detail, review.detail, '') as detail,
+    COALESCE(${cteReview}.comment, review.comment, '') as comment,
+
+    CASE WHEN ${cteReview}.resultId = review.resultId -- result not changed
+		  THEN
+        CASE WHEN ${cteReview}.resultEngine = '0' -- absent resultEngine
+          THEN review.resultEngine
+          ELSE ${cteReview}.resultEngine
+        END
+      ELSE -- result changed
+        CASE WHEN ${cteReview}.resultEngine = '0' -- absent resultEngine
+          THEN NULL
+          ELSE ${cteReview}.resultEngine
+        END
+	  END as resultEngine,
+
+    CASE WHEN ${cteReview}.statusId is not null
+      THEN ${cteReview}.statusId
+      ELSE
+        CASE WHEN review.statusId != 0
+          THEN
+            CASE WHEN (${cteCollectionSetting}.resetCriteria = 'result' AND ${cteReview}.resultId != review.resultId) 
+                OR (${cteCollectionSetting}.resetCriteria = 'any' 
+                AND (${cteReview}.resultId != review.resultId OR ${cteReview}.detail != review.detail OR ${cteReview}.comment != review.comment))
+              THEN 0 -- reset to saved
+              ELSE review.statusId
+            END
+          ELSE review.statusId
+        END
+    END as statusId,
+
+    CASE WHEN ${cteReview}.statusId is not null
+      THEN ${cteReview}.statusText
+      ELSE
+        CASE WHEN review.statusId != 0
+          THEN
+            CASE WHEN (${cteCollectionSetting}.resetCriteria = 'result' AND ${cteReview}.resultId != review.resultId) 
+                OR (${cteCollectionSetting}.resetCriteria = 'any' 
+                AND (${cteReview}.resultId != review.resultId OR ${cteReview}.detail != review.detail OR ${cteReview}.comment != review.comment))
+              THEN 'Review change triggered status update'
+              ELSE review.statusText
+            END
+          ELSE review.statusText
+        END
+    END as statusText,
+
+    CASE WHEN review.reviewId 
+      THEN 'update' 
+      ELSE 'insert'
+    END as crud
+  from
+    ${cteAsset}
+    CROSS JOIN ${cteRule}
+    LEFT JOIN ${cteReview} on true
+    LEFT JOIN ${cteGrant} on (${cteAsset}.assetId = ${cteGrant}.assetId and ${cteRule}.ruleId = ${cteGrant}.ruleId)
+    LEFT JOIN review on (${cteAsset}.assetId = review.assetId and ${cteRule}.ruleId = review.ruleId)
+    LEFT JOIN ${cteCollectionSetting} on true`
+    
+    return `${cteName} AS (${cte})`
+}
+
+exports.postReviewBatch = async function ({source, assets, rules, collectionId, userId}) {
+  const cteReview = cteReviewGen(source.review)
+  const cteAsset = cteAssetGen(assets, collectionId)
+  const cteRule = cteRuleGen(rules)
+  const cteGrant = cteGrantGen(collectionId, userId)
+  const cteCollectionSetting = cteCollectionSettingGen(collectionId)
+  const cteCandidate = cteCandidateGen({})
+
+  const sqlTempTable = `
+create temporary table validated_reviews 
+WITH
+${cteReview},
+${cteAsset},
+${cteRule},
+${cteGrant},
+${cteCollectionSetting},
+${cteCandidate}
+select
+  cteCandidate.crud, 
+  cteCandidate.assetId, 
+  cteCandidate.ruleId, 
+  cteCandidate.resultId, 
+  cteCandidate.detail, 
+  cteCandidate.comment, 
+  cteCandidate.resultEngine, 
+  cteCandidate.statusId, 
+  cteCandidate.statusText,
+  CASE WHEN cteCandidate.gAssetId IS NULL
+    THEN 
+      'no grant for this asset/ruleId'
+    ELSE
+      CASE WHEN (cteCandidate.crud = 'insert' AND cteCandidate.resultId IS NULL)
+        THEN 
+          'cannot insert null result'
+        ELSE
+          CASE WHEN cteCandidate.statusId > 0 -- submitted, rejected, accepted
+            THEN
+              CASE WHEN (cteCollectionSetting.detailRequired = 'always' AND cteCandidate.detail = '')
+                THEN 
+                  'detail is empty and detail.required = always'
+                ELSE
+                  CASE WHEN (cteCollectionSetting.commentRequired = 'always' AND cteCandidate.comment = '')
+                    THEN 
+                      'comment is empty and comment.required = always'
+                    ELSE
+                      CASE WHEN cteCandidate.resultId = 4 -- fail
+                        THEN
+                          CASE WHEN (cteCollectionSetting.detailRequired = 'findings' AND cteCandidate.detail = '')
+                            THEN 
+                              'detail is empty and detail.required = findings'
+                            ELSE
+                              CASE WHEN (cteCollectionSetting.commentRequired = 'findings' AND cteCandidate.comment = '')
+                                THEN 
+                                  'comment is empty and comment.required = findings '
+                              END
+                          END
+                      END
+                  END
+              END
+          END
+      END
+	END as validationError
+from
+  cteCandidate
+  LEFT JOIN cteCollectionSetting on true`
+
+  let connection
+  try {
+    connection = await dbUtils.pool.getConnection()
+    await connection.query(sqlTempTable)
+    const errors = connection.query('select assetId, ruleId, error from validated_reviews where error is not null')
+    return errors
+  }
+  catch (err) {
+    if (typeof connection !== 'undefined') {
+      await connection.rollback()
+    }    
+    throw ( {status: 500, message: err.message, stack: err.stack} ) ;
+  }
+  finally {
+    if (typeof connection !== 'undefined') {
+      await connection.release()
+    }
+  }
+}
+
 const writeQueries = {
   dropIncoming: 'DROP TEMPORARY TABLE IF EXISTS incoming',
   createIncomingForPost: `
@@ -800,90 +1073,4 @@ exports.deleteReviewMetadataKey = async function ( assetId, ruleId, key ) {
 binds.push(`$."${key}"`, assetId, ruleId)
   let [rows] = await dbUtils.pool.query(sql, binds)
   return rows.length > 0 ? rows[0].value : ""
-}
-
-exports.getBatchDisposition = async function ( batch, collectionId, userId ) {
-  // document this method
-  const binds = [
-    JSON.stringify(batch.assets.ids),
-    JSON.stringify(batch.rules.ids),
-    collectionId,
-    userId
-  ]
-
-  // initial implementation of the multi-edit feature supports assetIds
-  const assetTargetsCte = `
-    select
-      jtAssets.assetId
-    from
-      json_table(
-        ?,
-        '$[*]'
-        COLUMNS (assetId INT PATH '$') 
-      ) as jtAssets`
-  // initial implementation of the multi-edit feature supports ruleIds
-  const ruleTargetsCte = `
-    select
-      jtRules.ruleId
-    from
-      json_table(
-        ?,
-        '$[*]'
-        COLUMNS (ruleId VARCHAR(255) PATH '$') 
-      ) as jtRules`
-  
-  const dispositionQuery = `
-    WITH
-      inAssets AS (${assetTargetsCte}),
-      inRules AS (${ruleTargetsCte}),
-      granted AS (select
-          distinct a.assetId, rgr.ruleId 
-        from 
-          asset a
-          left join collection_grant cg on a.collectionId = cg.collectionId
-          left join stig_asset_map sa using (assetId)
-          left join user_stig_asset_map usa on sa.saId = usa.saId
-          left join revision rev using (benchmarkId)
-          left join rev_group_map rg using (revId)
-          left join rev_group_rule_map rgr using (rgId)
-        where 
-          cg.collectionId =  ?
-          and a.assetId IN (select assetId from inAssets)
-          and cg.userId = ?
-          and CASE WHEN cg.accessLevel = 1 THEN usa.userId = cg.userId ELSE TRUE END)
-    SELECT
-      review.reviewId, 
-      CAST(inAssets.assetId as CHAR) as assetId,
-      inRules.ruleId,
-      CASE WHEN granted.assetId IS NOT NULL THEN 1 ELSE 0 END as isGranted,
-      result.api as result,
-      CASE WHEN review.detail IS NULL OR review.detail = "" THEN review.detail ELSE "present" END as detail,
-      CASE WHEN review.comment IS NULL OR review.comment = "" THEN review.comment ELSE "present" END as comment,
-      status.api as status
-    FROM
-      inAssets 
-      CROSS JOIN inRules
-      LEFT JOIN granted on granted.assetId = inAssets.assetId and granted.ruleId = inRules.ruleId
-      LEFT JOIN review on review.assetId = granted.assetId and review.ruleId = granted.ruleId
-      LEFT JOIN result using (resultId)
-      LEFT JOIN status using (statusId)
-  `
-  const [rows] = await dbUtils.pool.query(dispositionQuery, binds)
-  
-  const reducer = (obj, row) => {
-    if (row.isGranted) {
-      const statement = row.result ? obj.accepted.toUpdate : obj.accepted.toInsert
-      statement.push(row)
-    }
-    else {
-      obj.rejected.push({
-        assetId: row.assetId.toString(),
-        ruleId: row.ruleId,
-        reason: "Reviews for this assetId/ruleId pair are not permitted"
-      })
-    }
-    return obj
-  }
-
-  return rows.reduce( reducer, { accepted: { toUpdate: [], toInsert: [] }, rejected: [] })
 }

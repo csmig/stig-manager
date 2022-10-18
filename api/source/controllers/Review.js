@@ -574,26 +574,16 @@ module.exports.postReviewBatch = async function (req, res, next) {
   try {
     const collectionId = Collection.getCollectionIdAndCheckPermission(req, Security.ACCESS_LEVEL.Restricted)
     const {source, assets, rules} = req.body
-    
-    // getBatchDisposition() performs initial vetting of the asset/rule pairs against the user's
-    // collection grant and groups the accepted pairs into updates and insertions
-    const {accepted, rejected} = await ReviewService.getBatchDisposition({assets, rules}, collectionId, req.userObject.userId)
-
-    // if the source review has no result (cannot be created), reject all the inserts
-    if (accepted.toInsert.length && !source.review.result) {
-      for (const insert of accepted.toInsert) {
-        rejected.push({
-          assetId: insert.assetId,
-          ruleId: insert.ruleId,
-          reason: 'Cannot create a Review without a result'
-        })
+    if (typeof source.review.status === 'string') {
+      source.review.status = {
+        label: source.review.status,
+        text: null
       }
-      accepted.toInsert = []
     }
-
-
-
-    res.json({rejected, accepted: { updated: accepted.toUpdate, inserted: accepted.toInsert }})
+    const userId = req.userObject.userId
+    
+    const result = await ReviewService.postReviewBatch({source, assets, rules, collectionId, userId})
+    res.json(result)
   }
   catch (err) {
     next(err)
