@@ -75,8 +75,8 @@ SM.BatchReview.showDialog = function (fieldSettings, initialResult) {
           fpwindow.close()
           resolve({
             result: values.result,
-            detail: values.detail === '' ? null : values.detail.trim(),
-            comment: values.comment === '' ? null : values.comment.trim()
+            detail: values.detail === '' ? undefined : values.detail.trim(),
+            comment: values.comment === '' ? undefined : values.comment.trim()
           })
         }
       })

@@ -1388,28 +1388,43 @@ async function addCollectionReview ( params ) {
 			}
 
 			const review = await SM.BatchReview.showDialog(apiFieldSettings, initialResult)
-
-			const ruleId = grid.currentChecklistRecord.data.ruleId
-			const updatedReviews = []
+			const ruleIds = [grid.currentChecklistRecord.data.ruleId]
+			const assetIds = []
 			for (i = 0, l = records.length; i < l; i++) {
-				Ext.getBody().mask(`Updating ${i+1}/${l} Reviews`)
 				if (review.resultEngine && review.result !== records[i].data.result) {
 					review.resultEngine = null
 				}
-				try {
-					const result = await Ext.Ajax.requestPromise({
-						url: `${STIGMAN.Env.apiBase}/collections/${leaf.collectionId}/reviews/${records[i].data.assetId}/${ruleId}`,
-						method: 'PUT',
-						jsonData: review
-					})
-					updatedReviews.push(JSON.parse(result.response.responseText))
-				}
-				catch (e) {
-					console.log(e)
+				assetIds.push(records[i].data.assetId)
+			}
+			const jsonData = {
+				source: {
+					review
+				},
+				assets: {
+					assetIds
+				},
+				rules: {
+					ruleIds
 				}
 			}
 
-			reviewsStore.loadData(updatedReviews, true)
+			Ext.getBody().mask(`Updating ${records.length} Reviews`)
+			const updatedReviews = []
+			try {
+				const result = await Ext.Ajax.requestPromise({
+					url: `${STIGMAN.Env.apiBase}/collections/${leaf.collectionId}/reviews`,
+					method: 'POST',
+					jsonData
+				})
+				updatedReviews.push(JSON.parse(result.response.responseText))
+			}
+			catch (e) {
+				alert(e)
+			}
+
+			// ugly code follows
+			const record = groupGrid.getSelectionModel().getSelected()
+			await getReviews(leaf.collectionId, record)
 			
 			// hack to reselect the records
 			const sm =reviewsGrid.getSelectionModel()
