@@ -1436,44 +1436,56 @@ async function addCollectionReview ( params ) {
 			setReviewsGridButtonStates()
 		}
 		
-		async function handleStatusChange (grid,sm,status) {
+		async function handleStatusChange (grid, sm, status) {
 			try {
 				const selections = sm.getSelections()
-				const results = []
-				let i, l
-				for (i = 0, l = selections.length; i < l; i++) {
-					const record = selections[i]
-					Ext.getBody().mask(`Updating ${i+1}/${l} Reviews`)
-					try {
-						const result = await Ext.Ajax.requestPromise({
-							url: `${STIGMAN.Env.apiBase}/collections/${leaf.collectionId}/reviews/${record.data.assetId}/${record.data.ruleId}`,
-							method: 'PATCH',
-							jsonData: {
-								status: status
-							}
-						})
-						results.push({
-							success: true,
-							result: result
-						})
+				if (selections.length === 1) {
+					const record = selections[0]
+					const result = await Ext.Ajax.requestPromise({
+						url: `${STIGMAN.Env.apiBase}/collections/${leaf.collectionId}/reviews/${record.data.assetId}/${record.data.ruleId}`,
+						method: 'PATCH',
+						jsonData: {
+							status
+						}
+					})
+				}
+				if (selections.length > 1) {
+					const ruleIds = [selections[0].data.ruleId]
+					const assetIds = selections.map( record => record.data.assetId)
+					const review = {status}
+					const jsonData = {
+						source: {
+							review
+						},
+						assets: {
+							assetIds
+						},
+						rules: {
+							ruleIds
+						}
 					}
-					catch (e) {
-						results.push({
-							success: false,
-							result: e
-						})
-					}
+					Ext.getBody().mask(`Updating ${selections.length} Reviews`)
+					const updatedReviews = []
+					const result = await Ext.Ajax.requestPromise({
+						url: `${STIGMAN.Env.apiBase}/collections/${leaf.collectionId}/reviews`,
+						method: 'POST',
+						jsonData
+					})
+					updatedReviews.push(JSON.parse(result.response.responseText))
 				}
 
-				for (i=0, l=selections.length; i < l; i++) {
-					if (results[i].success) {
-						selections[i].data.status = status
-						selections[i].commit()
-					}
-				}
 				if (selections.length === 1) {
 					loadResources(selections[0])
 				}
+				// ugly code follows
+				const record = groupGrid.getSelectionModel().getSelected()
+				await getReviews(leaf.collectionId, record)
+				
+				// hack to reselect the records
+				const reviewsGridSm = reviewsGrid.getSelectionModel()
+				reviewsGridSm.onRefresh()
+				reviewsGridSm.fireEvent('selectionchange', sm)
+
 				grid.updateGroupStore(grid)
 				setReviewsGridButtonStates()
 			}
