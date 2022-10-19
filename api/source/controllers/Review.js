@@ -573,6 +573,10 @@ module.exports.deleteReviewMetadataKey = async function (req, res, next) {
 module.exports.postReviewBatch = async function (req, res, next) {
   try {
     const collectionId = Collection.getCollectionIdAndCheckPermission(req, Security.ACCESS_LEVEL.Restricted)
+    const collectionSettings = await CollectionService.getCollectionSettings(collectionId)
+    const historySettings = collectionSettings.history
+    const statusSettings = collectionSettings.status
+  
     const {source, assets, rules} = req.body
     if (typeof source.review.status === 'string') {
       source.review.status = {
@@ -582,7 +586,16 @@ module.exports.postReviewBatch = async function (req, res, next) {
     }
     const userId = req.userObject.userId
     
-    const result = await ReviewService.postReviewBatch({source, assets, rules, collectionId, userId})
+    const result = await ReviewService.postReviewBatch({
+      source, 
+      assets, 
+      rules, 
+      collectionId, 
+      userId,
+      svcStatus: res.svcStatus,
+      historyMaxReviews: historySettings.maxReviews,
+      statusResetCriteria: statusSettings.resetCriteria
+    })
     res.json(result)
   }
   catch (err) {
