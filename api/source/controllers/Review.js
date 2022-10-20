@@ -578,10 +578,21 @@ module.exports.postReviewBatch = async function (req, res, next) {
     const statusSettings = collectionSettings.status
   
     const {source, assets, rules} = req.body
+    // normalize status property
     if (typeof source.review.status === 'string') {
       source.review.status = {
         label: source.review.status,
         text: null
+      }
+    }
+    // reject unpermitted accept/reject
+    if (source.review.status?.label === 'accepted' || source.review.status?.label === 'rejected') {
+      if (!statusSettings.canAccept) {
+        throw new SmError.PrivilegeError('Reviews cannot be accepted/rejected in this Collection') 
+      }
+      const collectionGrant = req.userObject.collectionGrants.find( g => g.collection.collectionId === collectionId )
+      if (collectionGrant.accessLevel < statusSettings.minAcceptGrant) {
+        throw new SmError.PrivilegeError('User cannot accept/reject Reviews in this Collection') 
       }
     }
     const userId = req.userObject.userId
@@ -594,7 +605,7 @@ module.exports.postReviewBatch = async function (req, res, next) {
       userId,
       svcStatus: res.svcStatus,
       historyMaxReviews: historySettings.maxReviews,
-      statusResetCriteria: statusSettings.resetCriteria
+      skipGrantCheck: false
     })
     res.json(result)
   }

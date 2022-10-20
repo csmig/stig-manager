@@ -112,10 +112,10 @@ where
   return `cteCollectionSetting AS (${cte})`
 }
 
-function cteCandidateGen () {
+function cteCandidateGen (skipGrantCheck = false) {
   const cte = `
 select
-  CASE WHEN cteGrant.assetId is not null then 1 else null end as granted,
+  ${!skipGrantCheck ? 'CASE WHEN cteGrant.assetId is not null then 1 else null end' : '1'} as granted,
   review.reviewId,
   cteAsset.assetId,
   cteRule.ruleId,
@@ -191,7 +191,7 @@ from
   cteAsset
   CROSS JOIN cteRule
   LEFT JOIN cteReview on true
-  LEFT JOIN cteGrant on (cteAsset.assetId = cteGrant.assetId and cteRule.ruleId = cteGrant.ruleId)
+  ${!skipGrantCheck ? 'LEFT JOIN cteGrant on (cteAsset.assetId = cteGrant.assetId and cteRule.ruleId = cteGrant.ruleId)' : ''}
   LEFT JOIN review on (cteAsset.assetId = review.assetId and cteRule.ruleId = review.ruleId)
   LEFT JOIN cteCollectionSetting on true
   LEFT JOIN review rChangedResult on (
@@ -217,21 +217,24 @@ exports.postReviewBatch = async function ({
   userId,
   svcStatus,
   historyMaxReviews,
-  statusResetCriteria
+  skipGrantCheck = false
 }) {
   const cteReview = cteReviewGen()
   const cteAsset = cteAssetGen(assets)
   const cteRule = cteRuleGen(rules)
-  const cteGrant = cteGrantGen()
+  let cteGrant
+  if (!skipGrantCheck) {
+    cteGrant = cteGrantGen()
+  }
   const cteCollectionSetting = cteCollectionSettingGen()
-  const cteCandidate = cteCandidateGen()
+  const cteCandidate = cteCandidateGen(skipGrantCheck)
   const sqlTempTable = `
 CREATE TEMPORARY TABLE IF NOT EXISTS validated_reviews
 WITH
 ${cteReview},
 ${cteAsset},
 ${cteRule},
-${cteGrant},
+${!skipGrantCheck ? `${cteGrant},` : ''}
 ${cteCollectionSetting},
 ${cteCandidate}
 select
@@ -439,7 +442,7 @@ from
     const sqlVariables = `set @collectionId = ${parseInt(collectionId)}, @userId = ${parseInt(userId)}, @review = '${JSON.stringify(source.review)}'`
     await connection.query(sqlVariables)
     await connection.query(sqlTempTable)
-    let [errors] = await connection.query('select CAST(assetId AS CHAR) as assetId, ruleId, error from validated_reviews where error is not null')
+    let [errors] = await connection.query('select CAST(assetId AS CHAR) as assetId, ruleId, error from validated_reviews where error is not null LIMIT 50')
     let [updateCount] = await connection.query('select count(*) as cnt from validated_reviews where error is null and reviewId is not null')
     let [insertCount] = await connection.query('select count(*) as cnt from validated_reviews where error is null and reviewId is null')
     

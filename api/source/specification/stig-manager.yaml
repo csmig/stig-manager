@@ -6624,7 +6624,7 @@ components:
   securitySchemes:
     oauth:
       type: openIdConnect
-      openIdConnectUrl: http://localhost:8080/auth/realms/stigman/.well-known/openid-configuration
+      openIdConnectUrl: http://localhost:8080/realms/stigman/.well-known/openid-configuration
 
 # supported oauth scopes:
 # - stig-manager
