@@ -112,7 +112,7 @@ where
   return `cteCollectionSetting AS (${cte})`
 }
 
-function cteCandidateGen (skipGrantCheck = false) {
+function cteCandidateGen ({skipGrantCheck = false, action}) {
   const cte = `
 select
   ${!skipGrantCheck ? 'CASE WHEN cteGrant.assetId is not null then 1 else null end' : '1'} as granted,
@@ -204,15 +204,16 @@ from
     and rChangedAny.statusId != 0
     and (rChangedAny.resultId != cteReview.resultId or rChangedAny.detail != cteReview.detail or rChangedAny.comment != cteReview.comment)
   )
+  ${action === 'insert' ? 'WHERE review.reviewId is null' : action === 'update' ? 'WHERE review.reviewId is not null' : ''}
   `
-    
-    return `cteCandidate AS (${cte})`
+  return `cteCandidate AS (${cte})`
 }
 
 exports.postReviewBatch = async function ({
   source, 
   assets, 
-  rules, 
+  rules,
+  action, 
   collectionId, 
   userId,
   svcStatus,
@@ -227,7 +228,7 @@ exports.postReviewBatch = async function ({
     cteGrant = cteGrantGen()
   }
   const cteCollectionSetting = cteCollectionSettingGen()
-  const cteCandidate = cteCandidateGen(skipGrantCheck)
+  const cteCandidate = cteCandidateGen({skipGrantCheck, action})
   const sqlTempTable = `
 CREATE TEMPORARY TABLE IF NOT EXISTS validated_reviews
 WITH
@@ -461,6 +462,7 @@ from
       if (insertCount[0].cnt) {
         await connection.query(sqlInsertReviews) 
       }
+      // dbUtils.updateStatsAssetStig(connection, {})
 
       await connection.commit()
     }

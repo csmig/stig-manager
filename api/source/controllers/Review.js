@@ -576,8 +576,9 @@ module.exports.postReviewBatch = async function (req, res, next) {
     const collectionSettings = await CollectionService.getCollectionSettings(collectionId)
     const historySettings = collectionSettings.history
     const statusSettings = collectionSettings.status
+    const userId = req.userObject.userId
   
-    const {source, assets, rules} = req.body
+    let {source, assets, rules, action} = req.body
     // normalize status property
     if (typeof source.review.status === 'string') {
       source.review.status = {
@@ -595,12 +596,21 @@ module.exports.postReviewBatch = async function (req, res, next) {
         throw new SmError.PrivilegeError('User cannot accept/reject Reviews in this Collection') 
       }
     }
-    const userId = req.userObject.userId
+    // validate action
+    if (!source.result && (action === 'insert' || action === 'merge')) {
+      throw new SmError.UnprocessableError('Cannot insert a NULL result')
+    }
+    // default action if missing
+    if (!action) {
+      action = source.result ? 'merge' : 'update'
+    }
+
     
     const result = await ReviewService.postReviewBatch({
       source, 
       assets, 
-      rules, 
+      rules,
+      action, 
       collectionId, 
       userId,
       svcStatus: res.svcStatus,

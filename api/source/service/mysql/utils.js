@@ -257,7 +257,7 @@ module.exports.scrubReviewsByUser = async function(reviews, elevate, userObject)
  * @param {string} param1.benchmarkId
  * @param {string[]} param1.rules
  */
-module.exports.updateStatsAssetStig = async function(connection, { collectionId, assetId, benchmarkId, rules }) {
+module.exports.updateStatsAssetStig = async function(connection, { collectionId, assetId, assetBenchmark, benchmarkId, rules }) {
   if (!connection) { throw ('Connection required')}
   // Handle optional predicates, 
   let predicates = ['sa.assetId IS NOT NULL AND sa.benchmarkId IS NOT NULL']
@@ -275,6 +275,10 @@ module.exports.updateStatsAssetStig = async function(connection, { collectionId,
   }
   if (assetId) {
     predicates.push('a.assetId = ?')
+    binds.push(assetId)
+  }
+  if (assetBenchmark) {
+    predicates.push(`a.assetId IN (select assetId from stig_asset_map where benchmarkId in ?)`)
     binds.push(assetId)
   }
   if (benchmarkId) {

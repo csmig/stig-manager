@@ -5217,6 +5217,18 @@ components:
           $ref: '#/components/schemas/ReviewBatchAssetsCriteria'
         rules:
           $ref: '#/components/schemas/ReviewBatchRulesCriteria'
+        action:
+          $ref: '#/components/schemas/ReviewBatchAction'
+        updateFilters:
+          type: array
+          items:
+            $ref: '#/components/schemas/ReviewBatchFilter_String'
+    ReviewBatchAction:
+      type: string
+      enum:
+        - insert
+        - updates
+        - merge
     ReviewBatchAssetsCriteria:
       oneOf:
         - $ref: '#/components/schemas/ReviewBatchCriteria_AssetIds'
@@ -5264,6 +5276,44 @@ components:
           uniqueItems: true
           items:
             $ref: '#/components/schemas/String255'
+    ReviewBatchFilter_String:
+      type: object
+      required:
+        - field
+        - condition
+        - value
+      additionalProperties: false
+      properties:
+        field:
+          type: string
+          enum:
+            - detail
+            - comment
+            - statusText
+        condition:
+          type: string
+          enum:
+            - equals
+            - contains
+            - beginsWith
+            - endsWith
+        value:
+          type: string
+    ReviewBatchFilter_Result:
+      type: object
+      required:
+        - field
+        - value
+      additionalProperties: false
+      properties:
+        field:
+          type: string
+          enum:
+            - result
+        value:
+          $ref: '#/components/schemas/ReviewResult'
+          
+      
     ReviewBatchSource:
       type: object
       required:
@@ -5275,11 +5325,16 @@ components:
     ReviewBatchResponse:
       type: object
       required:
-        - rejected
-        - affected
+        - inserted
+        - updated
+        - errors
       additionalProperties: false
       properties:
-        rejected:
+        inserted:
+          type: integer
+        updated:
+          type: integer
+        errors:
           type: array
           items:
             type: object
@@ -5288,15 +5343,8 @@ components:
                 $ref: '#/components/schemas/AssetId'
               ruleId:
                 $ref: '#/components/schemas/String255'
-              reason:
+              error:
                 $ref: '#/components/schemas/String255'
-        affected:
-          type: object
-          properties:
-            updated:
-              type: number
-            inserted:
-              type: number
     ReviewHistory:
       type: object
       required:
