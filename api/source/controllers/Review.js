@@ -578,7 +578,7 @@ module.exports.postReviewBatch = async function (req, res, next) {
     const statusSettings = collectionSettings.status
     const userId = req.userObject.userId
   
-    let {source, assets, rules, action} = req.body
+    let {source, assets, rules, action, updateFilters} = req.body
     // normalize status property
     if (typeof source.review.status === 'string') {
       source.review.status = {
@@ -610,7 +610,8 @@ module.exports.postReviewBatch = async function (req, res, next) {
       source, 
       assets, 
       rules,
-      action, 
+      action,
+      updateFilters, 
       collectionId, 
       userId,
       svcStatus: res.svcStatus,

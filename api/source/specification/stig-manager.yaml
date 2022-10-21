@@ -5222,7 +5222,7 @@ components:
         updateFilters:
           type: array
           items:
-            $ref: '#/components/schemas/ReviewBatchFilter_String'
+            $ref: '#/components/schemas/ReviewBatchFilter'
     ReviewBatchAction:
       type: string
       enum:
@@ -5276,6 +5276,12 @@ components:
           uniqueItems: true
           items:
             $ref: '#/components/schemas/String255'
+    ReviewBatchFilter:
+      oneOf:
+        - $ref: '#/components/schemas/ReviewBatchFilter_String'
+        - $ref: '#/components/schemas/ReviewBatchFilter_Result'
+        - $ref: '#/components/schemas/ReviewBatchFilter_Date'
+        - $ref: '#/components/schemas/ReviewBatchFilter_User'
     ReviewBatchFilter_String:
       type: object
       required:
@@ -5299,6 +5305,28 @@ components:
             - endsWith
         value:
           type: string
+    ReviewBatchFilter_Date:
+      type: object
+      required:
+        - field
+        - condition
+        - value
+      additionalProperties: false
+      properties:
+        field:
+          type: string
+          enum:
+            - ts
+            - statusTs
+            - touchTs
+        condition:
+          type: string
+          enum:
+            - equals
+            - lessThan
+            - greaterThan
+        value:
+          $ref: '#/components/schemas/StringDateTime'
     ReviewBatchFilter_Result:
       type: object
       required:
@@ -5312,6 +5340,20 @@ components:
             - result
         value:
           $ref: '#/components/schemas/ReviewResult'
+    ReviewBatchFilter_User:
+      type: object
+      required:
+        - field
+        - value
+      additionalProperties: false
+      properties:
+        field:
+          type: string
+          enum:
+            - userId
+            - statusUserId
+        value:
+          $ref: '#/components/schemas/StringIntId'
           
       
     ReviewBatchSource:

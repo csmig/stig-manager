@@ -112,7 +112,59 @@ where
   return `cteCollectionSetting AS (${cte})`
 }
 
-function cteCandidateGen ({skipGrantCheck = false, action}) {
+const mergeFilterOperators = {
+  contains: 'LIKE',
+  beginsWith: 'LIKE',
+  endsWith: 'LIKE',
+  equals: '=',
+  greaterThan: '>',
+  lessThan: '<',
+}
+
+function genFilter(filter) {
+  let {field, condition = 'equals', value} = filter
+  if (field === 'result') {
+    field = 'resultId'
+    value = dbUtils.REVIEW_RESULT_API[value]
+  }
+  value = field === 'userId' || field === 'statusUserId' ? parseInt(value) : value
+
+  const sqlOperator = mergeFilterOperators[condition]
+  const isDateValue =  (field === 'ts' || field === 'touchTs' || field === 'statusTs')
+  let sqlValue
+  if (isDateValue) {
+    sqlValue = dbUtils.pool.escape(new Date(value))
+  }
+  else if (condition === 'contains') {
+    sqlValue = dbUtils.pool.escape(`%${value}%`)
+  }
+  else if (condition === 'beginsWith') {
+    sqlValue = dbUtils.pool.escape(`${value}%`)
+  }
+  else if (condition === 'endsWith') {
+    sqlValue = dbUtils.pool.escape(`%${value}`)
+  }
+  else {
+    sqlValue = dbUtils.pool.escape(value)
+  }
+  return `review.${field} ${sqlOperator} ${sqlValue}`
+}
+
+function cteCandidateGen ({skipGrantCheck = false, action, updateFilters}) {
+  let sqlFilterPredicates, sqlPredicates
+  if (updateFilters) {
+    sqlFilterPredicates = updateFilters.map( filter => genFilter(filter)).join(' AND ')
+  }
+
+  if (action === 'insert') {
+    sqlPredicates = `review.reviewId is null`
+  }
+  else if (action === 'update') {
+    sqlPredicates = sqlFilterPredicates || 'review.reviewId is not null'
+  }
+  else if (action === 'merge') {
+    sqlPredicates = `${sqlFilterPredicates ? `review.reviewId is null OR (${sqlFilterPredicates})` : ''}`
+  }
   const cte = `
 select
   ${!skipGrantCheck ? 'CASE WHEN cteGrant.assetId is not null then 1 else null end' : '1'} as granted,
@@ -204,7 +256,7 @@ from
     and rChangedAny.statusId != 0
     and (rChangedAny.resultId != cteReview.resultId or rChangedAny.detail != cteReview.detail or rChangedAny.comment != cteReview.comment)
   )
-  ${action === 'insert' ? 'WHERE review.reviewId is null' : action === 'update' ? 'WHERE review.reviewId is not null' : ''}
+  ${sqlPredicates ? `WHERE ${sqlPredicates}` : ''}
   `
   return `cteCandidate AS (${cte})`
 }
@@ -213,12 +265,13 @@ exports.postReviewBatch = async function ({
   source, 
   assets, 
   rules,
-  action, 
+  action,
+  updateFilters,
   collectionId, 
   userId,
   svcStatus,
   historyMaxReviews,
-  skipGrantCheck = false
+  skipGrantCheck = true
 }) {
   const cteReview = cteReviewGen()
   const cteAsset = cteAssetGen(assets)
@@ -228,7 +281,7 @@ exports.postReviewBatch = async function ({
     cteGrant = cteGrantGen()
   }
   const cteCollectionSetting = cteCollectionSettingGen()
-  const cteCandidate = cteCandidateGen({skipGrantCheck, action})
+  const cteCandidate = cteCandidateGen({skipGrantCheck, action, updateFilters})
   const sqlTempTable = `
 CREATE TEMPORARY TABLE IF NOT EXISTS validated_reviews
 WITH
