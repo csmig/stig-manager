@@ -445,49 +445,6 @@ from
     r.userId = vr.userId,
     r.ts = vr.ts
   `
-  const sqlUpsertReviews = `
-  insert into review (
-    assetId,
-    ruleId,
-    resultId,
-    detail,
-    comment,
-    metadata,
-    statusId,
-    statusText,
-    statusUserId,
-    statusTs,
-    userId,
-    ts)
-  select 
-    assetId,
-    ruleId,
-    resultId,
-    detail,
-    comment,
-    metadata,
-    statusId,
-    statusText,
-    statusUserId,
-    statusTs,
-    userId,
-    ts
-  from
-    validated_reviews vr
-  where
-    error is null
-  on duplicate key update
-      resultId = vr.resultId,
-      detail = vr.detail,
-      comment = vr.comment,
-      metadata = vr.metadata,
-      statusId = vr.statusId,
-      statusText = vr.statusText,
-      statusUserId = vr.statusUserId,
-      statusTs = vr.statusTs,
-      userId = vr.userId,
-      ts = vr.ts
-  `
   let connection
   try {
     connection = await dbUtils.pool.getConnection()
@@ -515,7 +472,23 @@ from
       if (insertCount[0].cnt) {
         await connection.query(sqlInsertReviews) 
       }
-      // dbUtils.updateStatsAssetStig(connection, {})
+      const statsParams = {
+        collectionId
+      }
+      if (assets.assetIds) {
+        statsParams.assetIds = assets.assetIds
+      }
+      else if (assets.benchmarkIds) {
+        statsParams.assetBenchmarkIds = assets.benchmarkIds
+      }
+      if (rules.ruleIds) {
+        statsParams.rules = assets.ruleIds
+      }
+      else if (rules.benchmarkIds) {
+        statsParams.benchmarkIds = rules.benchmarkIds
+      }
+
+      dbUtils.updateStatsAssetStig(connection, statsParams)
 
       await connection.commit()
     }
