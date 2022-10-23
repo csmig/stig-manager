@@ -5223,6 +5223,9 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/ReviewBatchFilter'
+        dryRun:
+          type: boolean
+          default: false
     ReviewBatchAction:
       type: string
       enum:

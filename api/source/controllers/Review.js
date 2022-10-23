@@ -572,13 +572,16 @@ module.exports.deleteReviewMetadataKey = async function (req, res, next) {
 
 module.exports.postReviewBatch = async function (req, res, next) {
   try {
+    const { performance } = require('node:perf_hooks');
+  
+    performance.mark('A')
     const collectionId = Collection.getCollectionIdAndCheckPermission(req, Security.ACCESS_LEVEL.Restricted)
     const collectionSettings = await CollectionService.getCollectionSettings(collectionId)
     const historySettings = collectionSettings.history
     const statusSettings = collectionSettings.status
     const userId = req.userObject.userId
   
-    let {source, assets, rules, action, updateFilters} = req.body
+    let {source, assets, rules, action, updateFilters, dryRun = false} = req.body
     // normalize status property
     if (typeof source.review.status === 'string') {
       source.review.status = {
@@ -605,18 +608,19 @@ module.exports.postReviewBatch = async function (req, res, next) {
       action = source.result ? 'merge' : 'update'
     }
 
-    
+    performance.mark('B')
+    performance.measure('AtoB', 'A', 'B')
     const result = await ReviewService.postReviewBatch({
       source, 
       assets, 
       rules,
       action,
-      updateFilters, 
+      updateFilters,
+      dryRun,
       collectionId, 
       userId,
       svcStatus: res.svcStatus,
-      historyMaxReviews: historySettings.maxReviews,
-      skipGrantCheck: false
+      historyMaxReviews: historySettings.maxReviews
     })
     res.json(result)
   }

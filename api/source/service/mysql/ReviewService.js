@@ -267,12 +267,17 @@ exports.postReviewBatch = async function ({
   rules,
   action,
   updateFilters,
+  dryRun,
   collectionId, 
   userId,
   svcStatus,
   historyMaxReviews,
-  skipGrantCheck = true
+  skipGrantCheck = false
 }) {
+  const { performance } = require('node:perf_hooks');
+
+  performance.mark('beforeCteGen');
+
   const cteReview = cteReviewGen()
   const cteAsset = cteAssetGen(assets)
   const cteRule = cteRuleGen(rules)
@@ -283,7 +288,10 @@ exports.postReviewBatch = async function ({
   const cteCollectionSetting = cteCollectionSettingGen()
   const cteCandidate = cteCandidateGen({skipGrantCheck, action, updateFilters})
   const sqlTempTable = `
-CREATE TEMPORARY TABLE IF NOT EXISTS validated_reviews
+CREATE TEMPORARY TABLE IF NOT EXISTS validated_reviews (
+  INDEX idx_reviewId (reviewId),
+  INDEX id_error (error)
+)
 WITH
 ${cteReview},
 ${cteAsset},
@@ -445,29 +453,57 @@ from
     r.userId = vr.userId,
     r.ts = vr.ts
   `
+  performance.mark('afterCteGen');
+
+  performance.measure('CteGen', 'beforeCteGen', 'afterCteGen')
+
   let connection
   try {
+    performance.mark('beforeGetConnection')
     connection = await dbUtils.pool.getConnection()
+    performance.mark('afterGetConnection')
+    performance.measure('GetConnection', 'beforeGetConnection', 'afterGetConnection')
+
     connection.config.namedPlaceholders = false
 
     const sqlVariables = `set @collectionId = ${parseInt(collectionId)}, @userId = ${parseInt(userId)}, @review = '${JSON.stringify(source.review)}'`
     await connection.query(sqlVariables)
+    performance.mark('beforeTempTable')
     await connection.query(sqlTempTable)
+    performance.mark('afterTempTable')
+    performance.measure('TempTable', 'beforeTempTable', 'afterTempTable')
+
     let [errors] = await connection.query('select CAST(assetId AS CHAR) as assetId, ruleId, error from validated_reviews where error is not null LIMIT 50')
     let [updateCount] = await connection.query('select count(*) as cnt from validated_reviews where error is null and reviewId is not null')
     let [insertCount] = await connection.query('select count(*) as cnt from validated_reviews where error is null and reviewId is null')
-    
+    performance.mark('afterCounts')
+    performance.measure('Counts', 'afterTempTable', 'afterCounts')
+
+    // return {inserted: 0, updated: 0, errors:[]}
     async function transaction () {
       await connection.query('START TRANSACTION')
 
       if (updateCount[0].cnt) {
         if (historyMaxReviews !== -1) {
+          performance.mark('beforeHistoryPrune')
           await connection.query(sqlHistoryPrune, [ historyMaxReviews ])
+          performance.mark('afterHistoryPrune')
+          performance.measure('HistoryPrune', 'beforeHistoryPrune', 'afterHistoryPrune')
+
+
         }
         if (historyMaxReviews !== 0) {
+          performance.mark('beforeHistory')
           await connection.query(sqlHistory)
+          performance.mark('afterHistory')
+          performance.measure('History', 'beforeHistory', 'afterHistory')
+
         }
+        performance.mark('beforeUpdateReviews')
         await connection.query(sqlUpdateReviews) 
+        performance.mark('afterUpdateReviews')
+        performance.measure('UpdateReviews', 'beforeUpdateReviews', 'afterUpdateReviews')
+
       }
       if (insertCount[0].cnt) {
         await connection.query(sqlInsertReviews) 
@@ -482,18 +518,28 @@ from
         statsParams.assetBenchmarkIds = assets.benchmarkIds
       }
       if (rules.ruleIds) {
-        statsParams.rules = assets.ruleIds
+        statsParams.rules = rules.ruleIds
       }
       else if (rules.benchmarkIds) {
         statsParams.benchmarkIds = rules.benchmarkIds
       }
-
+      performance.mark('beforeUpdateStats')
       dbUtils.updateStatsAssetStig(connection, statsParams)
+      performance.mark('afterUpdateStats')
+      performance.measure('UpdateStats', 'beforeUpdateStats', 'afterUpdateStats')
 
+
+      performance.mark('beforeCommit')
       await connection.commit()
+      performance.mark('afterCommit')
+      performance.measure('Commit', 'beforeCommit', 'afterCommit')
+
+     
     }
 
-    await dbUtils.retryOnDeadlock(transaction, svcStatus)
+    if (!dryRun) {
+      await dbUtils.retryOnDeadlock(transaction, svcStatus)
+    }
 
     return {inserted: insertCount[0].cnt, updated: updateCount[0].cnt, errors}
   }
