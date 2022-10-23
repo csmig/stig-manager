@@ -576,6 +576,7 @@ module.exports.postReviewBatch = async function (req, res, next) {
   
     performance.mark('A')
     const collectionId = Collection.getCollectionIdAndCheckPermission(req, Security.ACCESS_LEVEL.Restricted)
+    const collectionGrant = req.userObject.collectionGrants.find( g => g.collection.collectionId === collectionId )
     const collectionSettings = await CollectionService.getCollectionSettings(collectionId)
     const historySettings = collectionSettings.history
     const statusSettings = collectionSettings.status
@@ -594,7 +595,6 @@ module.exports.postReviewBatch = async function (req, res, next) {
       if (!statusSettings.canAccept) {
         throw new SmError.PrivilegeError('Reviews cannot be accepted/rejected in this Collection') 
       }
-      const collectionGrant = req.userObject.collectionGrants.find( g => g.collection.collectionId === collectionId )
       if (collectionGrant.accessLevel < statusSettings.minAcceptGrant) {
         throw new SmError.PrivilegeError('User cannot accept/reject Reviews in this Collection') 
       }
@@ -610,7 +610,7 @@ module.exports.postReviewBatch = async function (req, res, next) {
 
     // are grant checks required
     let skipGrantCheck = false
-    if (assets.benchmarkIds?.length === rules.benchmarkIds?.length) {
+    if (collectionGrant >= Security.ACCESS_LEVEL.Full && assets.benchmarkIds?.length === rules.benchmarkIds?.length) {
       skipGrantCheck = assets.benchmarkIds.every( i => rules.benchmarkIds.includes(i))
     }
 
