@@ -5230,7 +5230,7 @@ components:
       type: string
       enum:
         - insert
-        - updates
+        - update
         - merge
     ReviewBatchAssetsCriteria:
       oneOf:

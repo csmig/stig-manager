@@ -608,6 +608,12 @@ module.exports.postReviewBatch = async function (req, res, next) {
       action = source.result ? 'merge' : 'update'
     }
 
+    // are grant checks required
+    let skipGrantCheck = false
+    if (assets.benchmarkIds?.length === rules.benchmarkIds?.length) {
+      skipGrantCheck = assets.benchmarkIds.every( i => rules.benchmarkIds.includes(i))
+    }
+
     performance.mark('B')
     performance.measure('AtoB', 'A', 'B')
     const result = await ReviewService.postReviewBatch({
@@ -620,7 +626,8 @@ module.exports.postReviewBatch = async function (req, res, next) {
       collectionId, 
       userId,
       svcStatus: res.svcStatus,
-      historyMaxReviews: historySettings.maxReviews
+      historyMaxReviews: historySettings.maxReviews,
+      skipGrantCheck
     })
     res.json(result)
   }
