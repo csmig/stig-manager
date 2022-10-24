@@ -1201,7 +1201,9 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ReviewBatchResponse'
+                oneOf:
+                  - $ref: '#/components/schemas/ReviewBatchResponse'
+                  - $ref: '#/components/schemas/ReviewBatchResponseDryRun'
         default:
           description: unexpected error
           content:
@@ -5367,19 +5369,50 @@ components:
       properties:
         review:
           $ref: '#/components/schemas/ReviewAssetRulePatch'
+    
+    ReviewBatchResponseDryRun:
+      type: object
+      required:
+      - willInsert
+      - willUpdate
+      - willFailValidation
+      - validationErrors
+      additionalProperties: false
+      properties:
+        willInsert:
+          type: integer
+        willUpdate:
+          type: integer
+        willFailValidation:
+          type: integer
+        validationErrors:
+          type: array
+          items:
+            type: object
+            properties:
+              assetId:
+                $ref: '#/components/schemas/AssetId'
+              ruleId:
+                $ref: '#/components/schemas/String255'
+              error:
+                $ref: '#/components/schemas/String255'
+     
     ReviewBatchResponse:
       type: object
       required:
         - inserted
         - updated
-        - errors
+        - failedValidation
+        - validationErrors
       additionalProperties: false
       properties:
         inserted:
           type: integer
         updated:
           type: integer
-        errors:
+        failedValidation:
+          type: integer
+        validationErrors:
           type: array
           items:
             type: object

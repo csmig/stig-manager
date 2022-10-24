@@ -473,9 +473,17 @@ from
     performance.mark('afterTempTable')
     performance.measure('TempTable', 'beforeTempTable', 'afterTempTable')
 
-    let [errors] = await connection.query('select CAST(assetId AS CHAR) as assetId, ruleId, error from validated_reviews where error is not null LIMIT 50')
-    let [updateCount] = await connection.query('select count(*) as cnt from validated_reviews where error is null and reviewId is not null')
-    let [insertCount] = await connection.query('select count(*) as cnt from validated_reviews where error is null and reviewId is null')
+    
+    let validationErrors = []
+    let [table] = await connection.query('select * from validated_reviews')
+    let [counts] = await connection.query(`select
+    coalesce(sum(case when error is not null then 1 else 0 end),0) as failedValidations,
+    coalesce(sum(case when error is null and reviewId is null then 1 else 0 end),0) as inserts,
+    coalesce(sum(case when error is null and reviewId is not null then 1 else 0 end),0) as updates
+    from validated_reviews`)
+    if (counts[0].failedValidations) {
+      ;[validationErrors] = await connection.query('select CAST(assetId AS CHAR) as assetId, ruleId, error from validated_reviews where error is not null LIMIT 50')
+    }
     performance.mark('afterCounts')
     performance.measure('Counts', 'afterTempTable', 'afterCounts')
 
@@ -483,7 +491,7 @@ from
     async function transaction () {
       await connection.query('START TRANSACTION')
 
-      if (updateCount[0].cnt) {
+      if (counts[0].updates) {
         if (historyMaxReviews !== -1) {
           performance.mark('beforeHistoryPrune')
           await connection.query(sqlHistoryPrune, [ historyMaxReviews ])
@@ -505,7 +513,7 @@ from
         performance.measure('UpdateReviews', 'beforeUpdateReviews', 'afterUpdateReviews')
 
       }
-      if (insertCount[0].cnt) {
+      if (counts[0].inserts) {
         await connection.query(sqlInsertReviews) 
       }
       const statsParams = {
@@ -540,8 +548,10 @@ from
     if (!dryRun) {
       await dbUtils.retryOnDeadlock(transaction, svcStatus)
     }
-
-    return {inserted: insertCount[0].cnt, updated: updateCount[0].cnt, errors}
+    if (dryRun) {
+      return {willInsert: counts[0].inserts, willUpdate: counts[0].updates, willFailValidation: counts[0].failedValidations, validationErrors}
+    }
+    return {inserted: counts[0].inserts, updated: counts[0].updates, failedValidation: counts[0].failedValidations, validationErrors}
   }
   catch (err) {
     if (typeof connection !== 'undefined') {

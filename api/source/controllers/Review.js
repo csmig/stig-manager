@@ -600,17 +600,17 @@ module.exports.postReviewBatch = async function (req, res, next) {
       }
     }
     // validate action
-    if (!source.result && (action === 'insert' || action === 'merge')) {
+    if (!source.review.result && (action === 'insert' || action === 'merge')) {
       throw new SmError.UnprocessableError('Cannot insert a NULL result')
     }
     // default action if missing
     if (!action) {
-      action = source.result ? 'merge' : 'update'
+      action = source.review.result ? 'merge' : 'update'
     }
 
     // are grant checks required
     let skipGrantCheck = false
-    if (collectionGrant >= Security.ACCESS_LEVEL.Full && assets.benchmarkIds?.length === rules.benchmarkIds?.length) {
+    if (collectionGrant.accessLevel >= Security.ACCESS_LEVEL.Full && assets.benchmarkIds?.length === rules.benchmarkIds?.length) {
       skipGrantCheck = assets.benchmarkIds.every( i => rules.benchmarkIds.includes(i))
     }
 
