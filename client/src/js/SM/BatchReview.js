@@ -116,3 +116,34 @@ SM.BatchReview.showDialog = function (fieldSettings, initialResult) {
     }
   })
 }
+
+SM.BatchReview.post = function ({collectionId, body}) {
+
+}
+
+SM.BatchReview.ResponsePanel = Ext.extend(Ext.Panel, {
+  initComponent: function () {
+    const _this = this
+    const config = {}
+    Ext.apply(this, Ext.apply(this.initialConfig, config))
+    this.superclass().initComponent.call(this)
+  }
+})
+
+SM.BatchReview.ResponseCounts = Ext.extend(Ext.Panel, {
+  initComponent: function () {
+    const _this = this
+    const config = {}
+    Ext.apply(this, Ext.apply(this.initialConfig, config))
+    this.superclass().initComponent.call(this)
+  }
+})
+
+SM.BatchReview.ResponseErrors = Ext.extend(Ext.Panel, {
+  initComponent: function () {
+    const _this = this
+    const config = {}
+    Ext.apply(this, Ext.apply(this.initialConfig, config))
+    this.superclass().initComponent.call(this)
+  }
+})
