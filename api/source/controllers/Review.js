@@ -610,8 +610,9 @@ module.exports.postReviewBatch = async function (req, res, next) {
 
     // are grant checks required
     let skipGrantCheck = false
-    if (collectionGrant.accessLevel >= Security.ACCESS_LEVEL.Full && assets.benchmarkIds && rules.benchmarkIds && assets.benchmarkIds.length === rules.benchmarkIds.length) {
-      skipGrantCheck = assets.benchmarkIds.every( i => rules.benchmarkIds.includes(i))
+    if (assets.benchmarkIds && rules.benchmarkIds && assets.benchmarkIds.length === rules.benchmarkIds.length) {
+      skipGrantCheck = assets.benchmarkIds.every( i => rules.benchmarkIds.includes(i)) &&
+        rules.benchmarkIds.every( i => assets.benchmarkIds.includes(i))
     }
 
     performance.mark('B')
