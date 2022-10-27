@@ -48,9 +48,14 @@ function cteAssetGen({assetIds, benchmarkIds, labelIds, labelNames}) {
     const sql = `select assetId 
     from
       asset a
-      inner join stig_asset_map sa using (assetId)
+      left join collection_grant cg on a.collectionId = cg.collectionId
+      left join stig_asset_map sa using (assetId)
+      left join user_stig_asset_map usa on sa.saId = usa.saId
     where
-      a.collectionId = @collectionId and sa.benchmarkId IN ?`
+      a.collectionId = @collectionId 
+      and cg.userId = @userId 
+      and (CASE WHEN cg.accessLevel = 1 THEN usa.userId = cg.userId ELSE TRUE END)
+      and sa.benchmarkId IN ?`
     cte = dbUtils.pool.format(sql,[[benchmarkIds]])
   }
   return `cteAsset AS (${cte})`
