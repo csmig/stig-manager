@@ -28,7 +28,7 @@ jobs:
         id: idp-run
         working-directory: ./test/api/mock-keycloak
         run: |
-          python3 -m http.server 8080 &
+          python3 -m http.server 48080 &
       -
         name: Run MySQL container
         id: mysql-run
@@ -50,7 +50,7 @@ jobs:
           -e STIGMAN_DB_HOST=localhost \
           -e STIGMAN_DB_PORT=3306 \
           -e STIGMAN_DB_PASSWORD=stigman \
-          -e STIGMAN_API_AUTHORITY=http://localhost:8080/auth/realms/stigman \
+          -e STIGMAN_API_AUTHORITY=http://localhost:48080/auth/realms/stigman \
           -e STIGMAN_DEV_RESPONSE_VALIDATION=logOnly \
           stig-manager
       -
