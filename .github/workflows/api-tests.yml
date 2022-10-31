@@ -36,6 +36,12 @@ jobs:
         run: |
           netstat -ant
       -
+        name: curl
+        id: curl
+        working-directory: ./test/api/mock-keycloak
+        run: |
+          curl http://localhost:48080/auth/realms/stigman/.well-known/openid-configuration
+      -
         name: Run MySQL container
         id: mysql-run
         run: |
