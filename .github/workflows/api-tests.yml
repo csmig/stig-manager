@@ -31,13 +31,11 @@ jobs:
           python3 -m http.server 48080 &
       -
         name: netstat
-        id: netstat
         working-directory: ./test/api/mock-keycloak
         run: |
           netstat -ant
       -
         name: curl
-        id: curl
         working-directory: ./test/api/mock-keycloak
         run: |
           curl http://localhost:48080/auth/realms/stigman/.well-known/openid-configuration
@@ -66,8 +64,7 @@ jobs:
           -e STIGMAN_DEV_RESPONSE_VALIDATION=logOnly \
           stig-manager
       -
-        name: netstat
-        id: netstat
+        name: netstat2
         working-directory: ./test/api/mock-keycloak
         run: |
           netstat -ant
@@ -77,8 +74,7 @@ jobs:
         run: |
           sudo npm install -g newman-reporter-htmlextra          
       -
-        name: netstat
-        id: netstat
+        name: netstat3
         working-directory: ./test/api/mock-keycloak
         run: |
           netstat -ant
