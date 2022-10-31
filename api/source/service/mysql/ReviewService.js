@@ -415,6 +415,7 @@ from
     assetId,
     ruleId,
     resultId,
+    resultEngine,
     detail,
     comment,
     metadata,
@@ -428,6 +429,7 @@ from
     assetId,
     ruleId,
     resultId,
+    resultEngine,
     detail,
     comment,
     metadata,
@@ -448,6 +450,7 @@ from
     inner join validated_reviews vr on (r.reviewId = vr.reviewId and vr.error is null)
   set
     r.resultId = vr.resultId,
+    r.resultEngine = vr.resultEngine,
     r.detail = vr.detail,
     r.comment = vr.comment,
     r.metadata = vr.metadata,
