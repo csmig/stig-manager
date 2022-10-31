@@ -13,7 +13,7 @@ on:
 jobs:
   test_api:
     name: Postman tests
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-latest
     steps:
       - 
         name: Check out the repo
@@ -168,7 +168,7 @@ jobs:
     name: Response validation
     needs: 
       - test_api
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-latest
     steps:
       -
         name: Download API log artifact
