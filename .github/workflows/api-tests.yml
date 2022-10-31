@@ -28,17 +28,15 @@ jobs:
         id: idp-run
         working-directory: ./test/api/mock-keycloak
         run: |
-          python3 -m http.server 48080 &
+          python3 -m http.server 8080 &
       -
         name: netstat
-        working-directory: ./test/api/mock-keycloak
         run: |
           netstat -ant
       -
         name: curl
-        working-directory: ./test/api/mock-keycloak
         run: |
-          curl http://localhost:48080/auth/realms/stigman/.well-known/openid-configuration
+          curl http://localhost:8080/auth/realms/stigman/.well-known/openid-configuration
       -
         name: Run MySQL container
         id: mysql-run
@@ -60,12 +58,11 @@ jobs:
           -e STIGMAN_DB_HOST=localhost \
           -e STIGMAN_DB_PORT=3306 \
           -e STIGMAN_DB_PASSWORD=stigman \
-          -e STIGMAN_API_AUTHORITY=http://localhost:48080/auth/realms/stigman \
+          -e STIGMAN_API_AUTHORITY=http://localhost:8080/auth/realms/stigman \
           -e STIGMAN_DEV_RESPONSE_VALIDATION=logOnly \
           stig-manager
       -
         name: netstat2
-        working-directory: ./test/api/mock-keycloak
         run: |
           netstat -ant
       -
@@ -75,7 +72,6 @@ jobs:
           sudo npm install -g newman-reporter-htmlextra          
       -
         name: netstat3
-        working-directory: ./test/api/mock-keycloak
         run: |
           netstat -ant
       -
