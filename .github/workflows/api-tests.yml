@@ -28,7 +28,7 @@ jobs:
         id: idp-run
         working-directory: ./test/api/mock-keycloak
         run: |
-          python3 -m http.server 8080 &
+          python3 -m http.server 8080 --bind :: &
       -
         name: netstat
         run: |
