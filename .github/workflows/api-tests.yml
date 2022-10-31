@@ -30,6 +30,12 @@ jobs:
         run: |
           python3 -m http.server 48080 &
       -
+        name: netstat
+        id: netstat
+        working-directory: ./test/api/mock-keycloak
+        run: |
+          netstat -ant
+      -
         name: Run MySQL container
         id: mysql-run
         run: |
