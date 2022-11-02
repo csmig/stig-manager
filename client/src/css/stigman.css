@@ -1530,6 +1530,11 @@ td.x-grid3-hd-over .x-grid3-hd-inner, td.sort-desc .x-grid3-hd-inner, td.sort-as
 	 background-repeat: no-repeat;
 	 background-size: 16px 16px;
 }
+.sm-collection-color-icon {
+	background-image: url(../img/collection-color.svg) !important;
+	 background-repeat: no-repeat;
+	 background-size: 16px 16px;
+}
  .sm-collection-tab-icon {
   background-image: url(../img/collection.svg) !important;
   background-repeat: no-repeat;

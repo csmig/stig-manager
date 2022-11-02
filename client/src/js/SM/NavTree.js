@@ -19,7 +19,7 @@ SM.NavTree.CollectionLeafConfig = function (collection) {
     text: SM.he(collection.name),
     collectionId: collection.collectionId,
     collectionName: collection.name,
-    iconCls: 'sm-collection-icon'
+    iconCls: 'sm-collection-color-icon'
   }
 }
 
@@ -750,11 +750,6 @@ SM.NavTree.TreePanel = Ext.extend(Ext.tree.TreePanel, {
       SM.Dispatcher.addListener('labelfilter', this.onLabelFilter, me) 
       SM.Dispatcher.addListener('labelassetschanged', this.onLabelAssetsChanged, me) 
     },
-    loaders: {
-      'stigman-root': function (node) {
-        
-      }
-    },
     loadTree: async function (node, cb) {
         try {
           let match, collectionGrant
@@ -803,7 +798,7 @@ SM.NavTree.TreePanel = Ext.extend(Ext.tree.TreePanel, {
                 id: `collections2-root`,
                 node: 'collections2',
                 text: 'Collections<span class="sm-navtree-sprite">preview</span>',
-                iconCls: 'sm-collection-icon',
+                iconCls: 'sm-collection-color-icon',
                 expanded: true
               }
             )
@@ -1010,7 +1005,14 @@ SM.NavTree.TreePanel = Ext.extend(Ext.tree.TreePanel, {
         if (!n.leaf) {
           return
         }
-        console.log(`in treeClick() with ${e.type}`)
+        if (n.attributes.leafType === 'collection') {
+          SM.Collection.showCollectionTab({
+            collectionId: n.attributes.collectionId,
+            collectionName: n.attributes.collectionName,
+            treePath: n.getPath()
+          })
+          return
+        }
         if (n.attributes.report == 'library') {
           addLibraryStig({
             benchmarkId: n.attributes.benchmarkId,
