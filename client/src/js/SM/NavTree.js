@@ -11,6 +11,18 @@ SM.NavTree.NodeSorter = (a, b) => {
   return a.text.toUpperCase() < b.text.toUpperCase() ? -1 : 1
 }
 
+SM.NavTree.CollectionLeafConfig = function (collection) {
+  return {
+    id: `${collection.collectionId}-collection-leaf`,
+    leaf: true,
+    leafType: 'collection',
+    text: SM.he(collection.name),
+    collectionId: collection.collectionId,
+    collectionName: collection.name,
+    iconCls: 'sm-collection-icon'
+  }
+}
+
 SM.NavTree.CollectionNodeConfig = function (collection) {
   // Handlers for the STIG parent node
   async function onAssetChanged (node, apiAsset) {
@@ -422,6 +434,9 @@ SM.NavTree.TreePanel = Ext.extend(Ext.tree.TreePanel, {
           }
         }
       }
+      this.getCollectionLeaf = function (collectionId) {
+        return me.getNodeById('collections-root').findChild('id', `${collectionId}-collection-leaf`, true)
+      }
       this.getCollectionNode = getCollectionNode
       let config = {
           autoScroll: true,
@@ -455,6 +470,8 @@ SM.NavTree.TreePanel = Ext.extend(Ext.tree.TreePanel, {
         if (collectionGrant) {
           let collectionRoot = me.getNodeById('collections-root')
           let newNode = collectionRoot.appendChild( SM.NavTree.CollectionNodeConfig( apiCollection ) )
+          let collection2Root = me.getNodeById('collections2-root')
+          let newLeaf = collection2Root.appendChild( SM.NavTree.CollectionLeafConfig( apiCollection ) )
           function sortFn (a, b) {
             if (a.attributes.id === 'collection-create-leaf') {
               return -1
@@ -471,12 +488,18 @@ SM.NavTree.TreePanel = Ext.extend(Ext.tree.TreePanel, {
             return 0
           }
           collectionRoot.sort(sortFn)
+          collection2Root.sort(sortFn)
           if (options.showManager) {
-            me.selectPath(`${newNode.getPath()}${me.pathSeparator}${newNode.attributes.children[0].id}`, undefined, (bSuccess, oSelNode) => {
+            me.selectPath(newLeaf.getPath(), undefined, (bSuccess, oSelNode) => {
               if (bSuccess) {
                 oSelNode.getUI().elNode.click()
               }
             })
+            // me.selectPath(`${newNode.getPath()}${me.pathSeparator}${newNode.attributes.children[0].id}`, undefined, (bSuccess, oSelNode) => {
+            //   if (bSuccess) {
+            //     oSelNode.getUI().elNode.click()
+            //   }
+            // })
           }
         }
       }
@@ -524,7 +547,23 @@ SM.NavTree.TreePanel = Ext.extend(Ext.tree.TreePanel, {
       }
       this.onCollectionChanged = function (apiCollection) {
         const collectionNode = getCollectionNode(apiCollection.collectionId)
-        if (collectionNode) {
+        function sortFn (a, b) {
+          if (a.attributes.id === 'collection-create-leaf') {
+            return -1
+          }
+          if (b.attributes.id === 'collection-create-leaf') {
+            return 1
+          }
+          if (a.text.toUpperCase() < b.text.toUpperCase()) {
+            return -1
+          }
+          if (a.text.toUpperCase() > b.text.toUpperCase()) {
+            return 1
+          }
+          return 0
+        }
+
+        if (collectionNode) { //legacy node
           refreshCollectionNodeText(collectionNode)
           collectionNode.collectionName = apiCollection.name
           collectionNode.eachChild( child => {
@@ -532,28 +571,23 @@ SM.NavTree.TreePanel = Ext.extend(Ext.tree.TreePanel, {
               child.attributes.collectionName = apiCollection.name
             }
           })
-          function sortFn (a, b) {
-            if (a.attributes.id === 'collection-create-leaf') {
-              return -1
-            }
-            if (b.attributes.id === 'collection-create-leaf') {
-              return 1
-            }
-            if (a.text.toUpperCase() < b.text.toUpperCase()) {
-              return -1
-            }
-            if (a.text.toUpperCase() > b.text.toUpperCase()) {
-              return 1
-            }
-            return 0
-          }
           collectionNode.parentNode.sort(sortFn)
+        }
+
+        const collectionLeaf = me.getCollectionLeaf(apiCollection.collectionId)
+        if (collectionLeaf) {
+          collectionLeaf.collectionName = apiCollection.name
+          collectionLeaf.parentNode.sort(sortFn)
         }
       }
       this.onCollectionDeleted = function (collectionId) {
         const collectionNode = getCollectionNode(collectionId)
         if (collectionNode) {
           collectionNode.remove()
+        }
+        const collectionLeaf = me.getCollectionLeaf(collectionId)
+        if (collectionLeaf) {
+          collectionLeaf.remove()
         }
       }
       this.onStigAssetsChanged = async (collectionId, benchmarkId, apiStigAssets) => {
@@ -716,6 +750,11 @@ SM.NavTree.TreePanel = Ext.extend(Ext.tree.TreePanel, {
       SM.Dispatcher.addListener('labelfilter', this.onLabelFilter, me) 
       SM.Dispatcher.addListener('labelassetschanged', this.onLabelAssetsChanged, me) 
     },
+    loaders: {
+      'stigman-root': function (node) {
+        
+      }
+    },
     loadTree: async function (node, cb) {
         try {
           let match, collectionGrant
@@ -761,11 +800,20 @@ SM.NavTree.TreePanel = Ext.extend(Ext.tree.TreePanel, {
             }
             content.push(
               {
+                id: `collections2-root`,
+                node: 'collections2',
+                text: 'Collections<span class="sm-navtree-sprite">preview</span>',
+                iconCls: 'sm-collection-icon',
+                expanded: true
+              }
+            )
+            content.push(
+              {
                 id: `collections-root`,
                 node: 'collections',
                 text: 'Collections',
                 iconCls: 'sm-collection-icon',
-                expanded: true
+                expanded: false
               }
             )
             content.push(
@@ -830,6 +878,24 @@ SM.NavTree.TreePanel = Ext.extend(Ext.tree.TreePanel, {
             const collectionMap = await SM.Cache.getCollections()
             const apiCollections = [...collectionMap.values()]
             let content = apiCollections.map(collection => SM.NavTree.CollectionNodeConfig(collection))
+            if (curUser.privileges.canCreateCollection) {
+              content.unshift({
+                id: `collection-create-leaf`,
+                action: 'collection-create',
+                text: 'Create Collection...',
+                cls: 'sm-tree-node-create',
+                iconCls: 'sm-add-icon',
+                qtip: 'Create a new STIG Manager Collection',
+                leaf: true
+              })
+            }
+            cb(content, { status: true })
+            return
+          }
+          if (node === 'collections2-root') {
+            const collectionMap = await SM.Cache.getCollections()
+            const apiCollections = [...collectionMap.values()].sort((a, b) => a.name.localeCompare(b.name))
+            let content = apiCollections.map(collection => SM.NavTree.CollectionLeafConfig(collection))
             if (curUser.privileges.canCreateCollection) {
               content.unshift({
                 id: `collection-create-leaf`,
