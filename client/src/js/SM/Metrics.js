@@ -410,7 +410,7 @@ SM.Metrics.AggGrid = Ext.extend(Ext.grid.GridPanel, {
       layout: 'fit',
       loadMask: {msg:null, msgCls:null},
       store,
-      sm: new Ext.grid.RowSelectionModel({
+      sm: this.sm || new Ext.grid.RowSelectionModel({
         singleSelect: true
       }),
       cm: new Ext.grid.ColumnModel({

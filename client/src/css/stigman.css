@@ -293,10 +293,14 @@
     right: 2px;
     cursor: pointer;
 }
+
 .x-tree-node-el.x-unselectable {
 	cursor: default
 }
 .sm-tree-toolbar {
+	display: none;
+}
+.sm-grid-row-toolbar {
 	display: none;
 }
 .x-tree-node-el:hover .sm-tree-toolbar, .x-tree-selected .sm-tree-toolbar {
@@ -306,9 +310,15 @@
 	margin-top: 2px;
 	cursor: pointer;
 }
+.x-grid3-row-over .sm-grid-row-toolbar {
+	display: inline;
+	float: right;
+	cursor: pointer;
+}
 .x-tree-node-el:not(.x-tree-selected):hover .sm-tree-toolbar {
 	opacity: 0.5
 }
+
 .x-color-palette {
 	height: unset;
 	width: 108px;

@@ -12,14 +12,32 @@ SM.NavTree.NodeSorter = (a, b) => {
 }
 
 SM.NavTree.CollectionLeafConfig = function (collection) {
+  const collectionGrant = curUser.collectionGrants.find( g => g.collection.collectionId === collection.collectionId )
+  let toolsEl = ''
+  if (collectionGrant && collectionGrant.accessLevel >= 3) {
+    toolsEl = '<img class="sm-tree-toolbar" src="img/gear.svg" width="12" height="12">'
+  }
   return {
     id: `${collection.collectionId}-collection-leaf`,
     leaf: true,
     leafType: 'collection',
-    text: SM.he(collection.name),
+    text: SM.he(collection.name) + toolsEl,
     collectionId: collection.collectionId,
     collectionName: collection.name,
-    iconCls: 'sm-collection-color-icon'
+    iconCls: 'sm-collection-color-icon',
+    listeners: {
+      beforeclick: function (n, e) {
+        if (e.target.className === "sm-tree-toolbar") {
+          addCollectionManager({
+            collectionId: n.attributes.collectionId,
+            collectionName: n.attributes.collectionName,
+            treePath: n.getPath()
+          })
+          return false
+        }
+        return true
+      }
+    }
   }
 }
 
