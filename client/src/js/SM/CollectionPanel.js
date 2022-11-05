@@ -18,9 +18,16 @@ SM.Collection.AggGrid = Ext.extend(Ext.grid.GridPanel, {
     }
     let idProperty, sortField = 'name', autoExpandColumn = Ext.id()
     let rowdblclick = () => {}
+    let cellmousedown = () => {}
 
-    function renderReviewAction (v) {
-      return `${v} <img class="sm-grid-row-toolbar" src="img/edit.svg" width="12" height="12">`
+    function renderWithToolbar (v) {
+      return `
+      <div class="sm-grid-cell-with-toolbar">
+        <div class="sm-dynamic-width">
+          <div class="sm-info">${v}</div>
+        </div>
+        <div class="sm-static-width"><img class="sm-grid-cell-toolbar-edit" src="img/edit.svg" width="12" height="12"></div>
+      </div>`
     }
 
     switch (this.aggregation) {
@@ -159,8 +166,15 @@ SM.Collection.AggGrid = Ext.extend(Ext.grid.GridPanel, {
             id: autoExpandColumn,
             dataIndex: 'benchmarkId',
             sortable: true,
-            renderer: renderReviewAction,
-            filter: { type: 'string' }
+            renderer: renderWithToolbar,
+            filter: { type: 'string' },
+            listeners: {
+              mousedown: function (col, grid, index, e) {
+                if (e.target.className === "sm-grid-cell-toolbar-edit") {
+                  return false
+                }
+              }
+            }
           },
           {
             header: "Assets",
@@ -181,6 +195,17 @@ SM.Collection.AggGrid = Ext.extend(Ext.grid.GridPanel, {
           }
           addCollectionReview({leaf})
         }
+        cellmousedown = (grid, rowIndex, columnIndex, e) => {
+          if (e.target.className === "sm-grid-cell-toolbar-edit") {
+            const r = grid.getStore().getAt(rowIndex)
+            const leaf = {
+              collectionId: grid.collectionId, 
+              benchmarkId: r.data.benchmarkId
+            }
+            addCollectionReview({leaf})
+          }
+        }
+    
         break
     }
     columns.push(...SM.Metrics.CommonColumns)
@@ -231,6 +256,7 @@ SM.Collection.AggGrid = Ext.extend(Ext.grid.GridPanel, {
         emptyText: this.emptyText || 'No records to display',
         deferEmptyText: false,
         forceFit: true,
+        cellSelectorDepth: 5,
         // custom row height
         rowHeight: 21,
         borderHeight: 2,
@@ -275,7 +301,8 @@ SM.Collection.AggGrid = Ext.extend(Ext.grid.GridPanel, {
         ]
       }),
       listeners: {
-        rowdblclick
+        rowdblclick,
+        cellmousedown
       }
     }
     Ext.apply(this, Ext.apply(this.initialConfig, config))
@@ -296,8 +323,14 @@ SM.Collection.UnaggGrid = Ext.extend(Ext.grid.GridPanel, {
     const columns = []
     let sortField, autoExpandColumn = Ext.id()
 
-    function renderReviewAction (v) {
-      return `${v} <img class="sm-grid-row-toolbar" src="img/edit.svg" width="12" height="12">`
+    function renderWithToolbar (v) {
+      return `
+      <div class="sm-grid-cell-with-toolbar">
+        <div class="sm-dynamic-width">
+          <div class="sm-info">${v}</div>
+        </div>
+        <div class="sm-static-width"><img class="sm-grid-cell-toolbar-edit" src="img/edit.svg" width="12" height="12"></div>
+      </div>`
     }
 
     switch (this.parentAggregation) {
@@ -310,7 +343,7 @@ SM.Collection.UnaggGrid = Ext.extend(Ext.grid.GridPanel, {
             dataIndex: 'name',
             sortable: true,
             filter: { type: 'string' },
-            renderer: renderReviewAction
+            renderer: renderWithToolbar
           },
           {
             header: "Labels",
@@ -402,7 +435,7 @@ SM.Collection.UnaggGrid = Ext.extend(Ext.grid.GridPanel, {
     }
 
     function cellclick (grid, rowIndex, columnIndex, e) {
-      if (e.target.className === "sm-grid-row-toolbar") {
+      if (e.target.className === "sm-grid-cell-toolbar-edit") {
         const r = grid.getStore().getAt(rowIndex)
         const leaf = {
           collectionId: grid.collectionId, 
@@ -427,6 +460,7 @@ SM.Collection.UnaggGrid = Ext.extend(Ext.grid.GridPanel, {
         emptyText: this.emptyText || 'No records to display',
         deferEmptyText: false,
         forceFit: true,
+        cellSelectorDepth: 5,
         // custom row height
         rowHeight: 21,
         borderHeight: 2,

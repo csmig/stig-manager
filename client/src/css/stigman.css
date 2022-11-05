@@ -26,6 +26,35 @@
 	hsl(5deg 90% 25%);
 }
 
+.sm-grid-cell-with-toolbar {
+	position: relative;
+}
+.sm-grid-cell-with-toolbar .sm-dynamic-width {
+	margin-right: 0px;
+}
+.sm-grid-cell-with-toolbar .sm-info {
+	text-overflow: ellipsis;
+	overflow: hidden;
+	white-space: nowrap;
+}
+.sm-grid-cell-with-toolbar .sm-static-width {
+	position: absolute;
+	visibility: hidden;
+	top: 0;
+	right: 0;
+	width: 18px;
+}
+
+.x-grid3-row-over .sm-grid-cell-with-toolbar .sm-dynamic-width {
+	margin-right: 28px;
+}
+
+.x-grid3-row-over .sm-grid-cell-with-toolbar .sm-static-width {
+	visibility: visible;
+}
+
+
+
 .sm-metrics-no-assessments-body {
 	color: #bbb;
     display: flex;
