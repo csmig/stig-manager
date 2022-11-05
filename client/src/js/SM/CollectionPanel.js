@@ -240,13 +240,12 @@ SM.Collection.AggGrid = Ext.extend(Ext.grid.GridPanel, {
         direction: 'ASC' // or 'DESC' (case sensitive for local sorting)
       }
     })
-    _this.totalTextCmp = new SM.RowCountTextItem({
+    this.totalTextCmp = new SM.RowCountTextItem({
       store
     })
 
     const config = {
       layout: 'fit',
-      loadMask: {msg:null, msgCls:null},
       store,
       sm,
       cm: new Ext.grid.ColumnModel({
@@ -272,18 +271,11 @@ SM.Collection.AggGrid = Ext.extend(Ext.grid.GridPanel, {
       bbar: new Ext.Toolbar({
         items: [
           {
-            xtype: 'tbbutton',
-            grid: this,
-            iconCls: 'icon-refresh',
-            tooltip: 'Reload the metrics',
-            width: 20,
-            handler: this.reloadBtnHandler ?? function (btn) {
-              const savedSmMaskDelay = btn.grid.store.smMaskDelay
-              btn.grid.store.smMaskDelay = 0
-              btn.grid.store.reload();
-              btn.grid.store.smMaskDelay = savedSmMaskDelay
-            }
-          }, {
+            xtype: 'sm-reload-store-button',
+            store,
+            handler: this.reloadBtnHandler
+          },
+          {
             xtype: 'tbseparator'
           }, {
             xtype: 'exportbutton',
@@ -417,7 +409,7 @@ SM.Collection.UnaggGrid = Ext.extend(Ext.grid.GridPanel, {
         direction: 'ASC' // or 'DESC' (case sensitive for local sorting)
       }
     })
-    _this.totalTextCmp = new SM.RowCountTextItem({
+    this.totalTextCmp = new SM.RowCountTextItem({
       store
     })
 
@@ -451,7 +443,6 @@ SM.Collection.UnaggGrid = Ext.extend(Ext.grid.GridPanel, {
     
     const config = {
       layout: 'fit',
-      loadMask: {msg:null, msgCls:null},
       store,
       cm: new Ext.grid.ColumnModel({
         columns
@@ -476,29 +467,25 @@ SM.Collection.UnaggGrid = Ext.extend(Ext.grid.GridPanel, {
       bbar: new Ext.Toolbar({
         items: [
           {
-            xtype: 'tbbutton',
-            grid: this,
-            iconCls: 'icon-refresh',
-            tooltip: 'Reload the metrics',
-            width: 20,
-            handler: this.reloadBtnHandler ?? function (btn) {
-              const savedSmMaskDelay = btn.grid.store.smMaskDelay
-              btn.grid.store.smMaskDelay = 0
-              btn.grid.store.reload();
-              btn.grid.store.smMaskDelay = savedSmMaskDelay
-            }
-          }, {
+            xtype: 'sm-reload-store-button',
+            store,
+            handler: this.reloadBtnHandler
+          },
+          {
             xtype: 'tbseparator'
-          }, {
+          },
+          {
             xtype: 'exportbutton',
             hasMenu: false,
             grid: this,
             gridBasename: this.exportName || this.title || 'unaggregated',
             iconCls: 'sm-export-icon',
             text: 'CSV'
-          }, {
+          },
+          {
             xtype: 'tbfill'
-          }, {
+          }, 
+          {
             xtype: 'tbseparator'
           },
           this.totalTextCmp
@@ -545,12 +532,6 @@ SM.Collection.AggStigPanel = Ext.extend(Ext.Panel, {
       //   ]
       // })
     })
-    // aggStigGrid.getSelectionModel().on('selectionchange', (sm)=> {
-    //   modifyBtn.setDisabled(sm.getCount() !== 1)
-    //   deleteBtn.setDisabled(sm.getCount() !== 1)
-    //   exportBtn.setDisabled(!sm.hasSelection())
-    //   SM.SetCheckboxSelModelHeaderState(sm)
-    // })
 
     const unaggGrid = new SM.Collection.UnaggGrid({
       title: 'Checklists',
