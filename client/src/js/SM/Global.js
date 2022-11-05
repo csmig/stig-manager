@@ -305,3 +305,30 @@ SM.RuleContentTpl = new Ext.XTemplate(
     })
     fpwindow.show()
   }
+
+  SM.ReloadStoreButton = Ext.extend(Ext.Button, {
+    initComponent: function () {
+        const _this = this
+
+        this.showLoadingIcon = () => _this.setIconClass('icon-loading')
+        this.showRefreshIcon = () => _this.setIconClass('icon-refresh')
+
+
+        if (this.store) {
+            this.store.on('beforeload', this.showLoadingIcon)
+            this.store.on('load', this.showRefreshIcon)
+        }
+        const config = {
+            grid: this.grid,
+            iconCls: 'icon-refresh',
+            tooltip: 'Reload the grid',
+            width: 20
+        }
+        if (!this.handler && this.store) {
+            this.handler = () =>  _this.store.reload()
+        }
+        Ext.apply(this, Ext.apply(this.initialConfig, config))
+        this.superclass().initComponent.call(this)
+    }
+  })
+  Ext.reg('sm-reload-store-button', SM.ReloadStoreButton)

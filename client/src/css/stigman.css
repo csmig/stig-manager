@@ -1284,6 +1284,11 @@ td.x-grid3-hd-over .x-grid3-hd-inner, td.sort-desc .x-grid3-hd-inner, td.sort-as
 	background:url(../img/reload.svg);
 	background-size: 16px 16px;
 }
+.icon-loading
+{
+	background:url(../img/loading.gif);
+	background-size: 16px 16px;
+}
 .icon-add 
 {
 	background:url(../img/add.svg);
