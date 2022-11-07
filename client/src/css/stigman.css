@@ -840,7 +840,7 @@ body {
 	margin-top: -32px;
 }
 .ext-el-mask-msg div {
-    background: url(../img/loading.svg);
+    background: url(../img/loading-light.svg);
     background-repeat: no-repeat;
     background-size: 64px 64px;
     padding: 0;
