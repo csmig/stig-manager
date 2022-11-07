@@ -19,8 +19,8 @@ newman run postman_collection.json -e postman_environment.json -d collectionRunn
 #   ./newman/GetsReport.html | grep -A18 '┌─────'
 
 echo "batch-test"
-newman run postman_collection.json -e postman_environment.json -d collectionRunnerData.json -n 1 \
-  --folder "engine-test" -r cli,htmlextra \
+newman run postman_collection.json -e postman_environment.json -d collectionRunnerData.json -n 6 \
+  --folder "Batch Review Editing" -r cli,htmlextra \
   --reporter-cli-no-assertions \
   --reporter-cli-no-console \
   --reporter-htmlextra-showOnlyFails \
