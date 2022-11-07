@@ -548,7 +548,7 @@ async function addReview( params ) {
 
     ],
     autoExpandColumn: 'ruleTitle' + idAppend,
-    loadMask: true,
+    loadMask: {msg: ''},
     tbar: new Ext.Toolbar({
       items: [
         {
@@ -868,7 +868,7 @@ async function addReview( params ) {
 			}
     ],
     // width: 300,
-    loadMask: true,
+    loadMask: {msg: ''},
     autoExpandColumn: 'target' + idAppend,
     emptyText: 'No other assets to display'
   });

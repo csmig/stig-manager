@@ -436,7 +436,7 @@ SM.StigAssetsGrid = Ext.extend(Ext.grid.GridPanel, {
                 }    
             ],
             border: true,
-            loadMask: true,
+            loadMask: {msg: ''},
             stripeRows: true,
             sm: sm,
             view: new SM.ColumnFilters.GridView({
