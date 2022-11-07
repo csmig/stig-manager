@@ -312,27 +312,48 @@ SM.RuleContentTpl = new Ext.XTemplate(
 
         this.showLoadingIcon = () => _this.setIconClass('icon-loading')
         this.showRefreshIcon = () => _this.setIconClass('icon-refresh')
+        this.onBeforeLoad = (store) => {
+            const grid = _this.ownerCt?.ownerCt || _this.grid || store.grid
+            const emptyEl = grid?.view.mainBody.dom.querySelector('.x-grid-empty')
+            if (emptyEl) {
+                emptyEl.innerHTML = `<div class="icon-loading" style="padding-left:20px;">Loading</div>`
+            }
+            _this.showLoadingIcon()
+        }
 
 
         if (this.store) {
-            this.store.on('beforeload', function (store) {
-                const grid = _this.ownerCt?.ownerCt || _this.grid || store.grid
-                const emptyEl = grid?.view.mainBody.dom.querySelector('.x-grid-empty')
-                if (emptyEl) {
-                    emptyEl.innerHTML = `<div class="icon-loading" style="padding-left:20px;">Loading</div>`
-                }
-                _this.showLoadingIcon()
-            })
-            this.store.on('load', this.showRefreshIcon)
+            this.store.on('beforeload', this.onBeforeLoad, this)
+            this.store.on('load', this.showRefreshIcon, this)
+        }
+
+        const destroy = () => {
+            if (_this.store) {
+                _this.store.un('beforeload', _this.onBeforeLoad, _this);
+                _this.store.un('load', _this.showRefreshIcon, _this);
+            }
         }
         const config = {
             grid: this.grid,
             iconCls: 'icon-refresh',
             tooltip: 'Reload the grid',
-            width: 20
+            width: 20,
+            listeners: {
+                destroy
+            }
         }
         if (!this.handler && this.store) {
-            this.handler = () =>  _this.store.reload()
+            this.handler = async () =>  {
+                const grid = _this.ownerCt?.ownerCt || _this.grid || store.grid
+                if (grid && grid.loadMask) {
+                    grid.loadMask.disabled = false
+                }
+                await _this.store.reloadPromise()
+                if (grid && grid.loadMask) {
+                    grid.loadMask.disabled = true
+                }
+
+            }
         }
         Ext.apply(this, Ext.apply(this.initialConfig, config))
         this.superclass().initComponent.call(this)

@@ -488,7 +488,7 @@ async function addCollectionReview ( params ) {
 			autoExpandColumn:'ruleTitle' + idAppend,
 			//width: '33%',
 			height: '50%',
-			// loadMask: {msg: null, msgCls: null},
+			loadMask: {msg: '', msgCls: null},
 			tbar: new Ext.Toolbar({
 				items: [
 					{
