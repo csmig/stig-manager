@@ -954,11 +954,50 @@ body {
 .x-fieldset {
     border-radius: 3px;
 }
-.ext-el-mask {
-    background-color: rgb(0 0 0 / 35%);
-    backdrop-filter: blur(1px) saturate(50%);
-    opacity: 1;
+.ext-el-mask-modal {
+	background-color: rgb(0 0 0 / 50%);
+	backdrop-filter: blur(3px) grayscale();
+	animation: fadein 0.25s;
+	animation-fill-mode: forwards;
+	position: absolute;
+	top: 0;
+	left: 0;
 }
+.ext-el-mask {
+	background-color: rgb(0 0 0 / 0%);
+	backdrop-filter: blur(3px) grayscale();
+	animation: fadein 0.25s;
+	animation-fill-mode: forwards;
+}
+@keyframes fadein {
+    from {
+        opacity:0;
+    }
+    to {
+        opacity:1;
+    }
+}
+
+.ext-el-mask-msg {
+	background-image: none;
+	background-color: unset;
+	border:  none;
+	position: absolute;
+	top: 50%;
+	left: 50%;
+	margin-left: -32px;
+	margin-top: -32px;
+}
+.ext-el-mask-msg div {
+    background: url(../img/loading.svg);
+    background-repeat: no-repeat;
+    background-size: 64px 64px;
+    padding: 0;
+    border: none;
+    width: 64px;
+    height: 64px;
+}
+
 .sm-round-panel .x-window-header {
 	color: #111;
     font-weight: bold;

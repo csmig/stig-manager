@@ -316,7 +316,8 @@ SM.RuleContentTpl = new Ext.XTemplate(
 
         if (this.store) {
             this.store.on('beforeload', function (store) {
-                const emptyEl = store.grid.view.mainBody.dom.querySelector('.x-grid-empty')
+                const grid = _this.ownerCt?.ownerCt || _this.grid || store.grid
+                const emptyEl = grid?.view.mainBody.dom.querySelector('.x-grid-empty')
                 if (emptyEl) {
                     emptyEl.innerHTML = `<div class="icon-loading" style="padding-left:20px;">Loading</div>`
                 }

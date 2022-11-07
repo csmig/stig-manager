@@ -293,14 +293,18 @@ async function addCollectionReview ( params ) {
 			title: 'Checklist',
 			split:true,
 			titleColumnDataIndex: 'ruleTitle', // STIG Manager defined property
-			//collapsible: true,
+			emptyText: 'No records to display',
 			store: groupStore,
 			stripeRows:true,
 			listeners: {
-				afterrender: {
-					fn: function (grid) {
-						var test = '1';
-					}
+				viewready: () => {
+					groupGrid.getStore().load({
+						preselect: {
+							ruleId: selectedRule,
+							assetId: selectedAsset
+						}		
+					});
+					loadRevisionMenu(leaf.benchmarkId, 'latest', idAppend)				
 				}
 			},
 			sm: new Ext.grid.RowSelectionModel ({
@@ -315,7 +319,7 @@ async function addCollectionReview ( params ) {
 			}),
 			view: new SM.ColumnFilters.GridView({
 				forceFit:false,
-				emptyText: '',
+				emptyText: 'No records to display',
 				// These listeners keep the grid in the same scroll position after the store is reloaded
 				holdPosition: true, // HACK to be used with override
 				lastHide: new Date(),
@@ -484,7 +488,7 @@ async function addCollectionReview ( params ) {
 			autoExpandColumn:'ruleTitle' + idAppend,
 			//width: '33%',
 			height: '50%',
-			loadMask: {msg: null, msgCls: null},
+			// loadMask: {msg: null, msgCls: null},
 			tbar: new Ext.Toolbar({
 				items: [
 					{
@@ -498,10 +502,8 @@ async function addCollectionReview ( params ) {
 			bbar: new Ext.Toolbar({
 				items: [
 				{
-					xtype: 'tbbutton',
-					iconCls: 'icon-refresh',
-					tooltip: 'Reload this grid',
-					width: 20,
+					xtype: 'sm-reload-store-button',
+					store: groupStore,
 					handler: function(btn){
 						groupGrid.getStore().reload();
 						Ext.getCmp('content-panel' + idAppend).update('')
@@ -1164,7 +1166,7 @@ async function addCollectionReview ( params ) {
 					new SM.RowCountTextItem({store:reviewsStore})
 				]
 			}),
-			loadMask: true,
+			// loadMask: true,
 			emptyText: 'No data to display'
 		});
 
@@ -1210,7 +1212,7 @@ async function addCollectionReview ( params ) {
 			try {
 				// Reviews grid
 				reviewsGrid = Ext.getCmp('reviewsGrid' + idAppend);
-				maskTimer = setTimeout(() => reviewsGrid.getEl().mask(), 150)
+				maskTimer = setTimeout(() => reviewsGrid.bwrap.mask(''), 150)
 				let reviewsReq = await Ext.Ajax.requestPromise({
 					url: `${STIGMAN.Env.apiBase}/collections/${collectionId}/reviews`,
 					method: 'GET',
@@ -1244,7 +1246,7 @@ async function addCollectionReview ( params ) {
 			}
 			finally {
 				clearTimeout(maskTimer)
-				reviewsGrid.getEl().unmask()
+				reviewsGrid.bwrap.unmask()
 			}
 		}
 		
@@ -1782,7 +1784,7 @@ async function addCollectionReview ( params ) {
 				beforedestroy: () => {
 					SM.Dispatcher.removeListener('fieldsettingschanged', onFieldSettingsChanged)
 					SM.Dispatcher.removeListener('statussettingschanged', onStatusSettingsChanged)
-				}
+				},
 			}			
 		})
 		colReviewTab.updateTitle = function () {
@@ -1806,13 +1808,6 @@ async function addCollectionReview ( params ) {
 		thisTab.updateTitle.call(thisTab)
 		thisTab.show();
 
-		groupGrid.getStore().load({
-			preselect: {
-				ruleId: selectedRule,
-				assetId: selectedAsset
-			}		
-		});
-		loadRevisionMenu(leaf.benchmarkId, 'latest', idAppend)
 	}
 	catch (e) {
 		alert (e.message)
