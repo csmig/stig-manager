@@ -191,7 +191,35 @@ Ext.override(Ext.Window, {
     cls: 'sm-round-panel',
     frame: false,
     resizable: false,
-    shadow: false
+    shadow: false,
+    // private
+    onRender : function(ct, position){
+        Ext.Window.superclass.onRender.call(this, ct, position);
+
+        if(this.plain){
+            this.el.addClass('x-window-plain');
+        }
+
+        // this element allows the Window to be focused for keyboard events
+        this.focusEl = this.el.createChild({
+                    tag: 'a', href:'#', cls:'x-dlg-focus',
+                    tabIndex:'-1', html: '&#160;'});
+        this.focusEl.swallowEvent('click', true);
+
+        this.proxy = this.el.createProxy('x-window-proxy');
+        this.proxy.enableDisplayMode('block');
+
+        if(this.modal){
+            this.mask = this.container.createChild({cls:'ext-el-mask-modal'}, this.el.dom);
+            this.mask.enableDisplayMode('block');
+            this.mask.hide();
+            this.mon(this.mask, 'click', this.focus, this);
+        }
+        if(this.maximizable){
+            this.mon(this.header, 'dblclick', this.toggleMaximize, this);
+        }
+    },
+
 })
 
 // Form.getFieldValues
