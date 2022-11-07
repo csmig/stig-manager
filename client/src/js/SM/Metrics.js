@@ -576,7 +576,6 @@ SM.Metrics.UnaggGrid = Ext.extend(Ext.grid.GridPanel, {
     
     const config = {
       layout: 'fit',
-      loadMask: {msg:null, msgCls:null},
       store,
       cm: new Ext.grid.ColumnModel({
         columns
