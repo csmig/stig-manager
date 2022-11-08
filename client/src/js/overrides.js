@@ -1086,3 +1086,51 @@ Ext.override(Ext.data.JsonStore, {
     }
 
 })
+
+// replace the Ext.Element.mask() method
+Ext.Element.addMethods({
+    mask : function(msg, msgCls) {
+        var me  = this,
+            dom = me.dom,
+            dh  = Ext.DomHelper,
+            EXTELMASKMSG = "ext-el-mask-msg",
+            XMASKED = "x-masked",
+            XMASKEDRELATIVE = "x-masked-relative",
+            el,
+            mask,
+            data = Ext.Element.data;
+
+        if (!/^body/i.test(dom.tagName) && me.getStyle('position') == 'static') {
+            me.addClass(XMASKEDRELATIVE);
+        }
+        if (el = data(dom, 'maskMsg')) {
+            el.remove();
+        }
+        if (el = data(dom, 'mask')) {
+            el.remove();
+        }
+
+        mask = dh.append(dom, {cls : "ext-el-mask"}, true);
+        data(dom, 'mask', mask);
+
+        me.addClass(XMASKED);
+        mask.setDisplayed(true);
+        
+        if (typeof msg == 'string') {
+            // change the tag to <span> instead of <div>, to support CSS-only spinner
+            var mm = dh.append(dom, {cls : EXTELMASKMSG, cn:{tag:'span'}}, true);
+            data(dom, 'maskMsg', mm);
+            mm.dom.className = msgCls ? EXTELMASKMSG + " " + msgCls : EXTELMASKMSG;
+            mm.dom.firstChild.innerHTML = msg;
+            mm.setDisplayed(true);
+            mm.center(me);
+        }
+        
+        // ie will not expand full height automatically
+        if (Ext.isIE && !(Ext.isIE7 && Ext.isStrict) && me.getStyle('height') == 'auto') {
+            mask.setSize(undefined, me.getHeight());
+        }
+        
+        return mask;
+    }
+})
