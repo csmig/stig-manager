@@ -1419,7 +1419,7 @@ async function addCollectionReview ( params ) {
 				}
 			}
 
-			Ext.getBody().mask(`Updating ${records.length} Reviews`)
+			grid.bwrap.mask('')
 			const updatedReviews = []
 			try {
 				const result = await Ext.Ajax.requestPromise({
@@ -1430,6 +1430,7 @@ async function addCollectionReview ( params ) {
 				updatedReviews.push(JSON.parse(result.response.responseText))
 			}
 			catch (e) {
+				grid.bwrap.unmask()
 				alert(e)
 			}
 
@@ -1442,7 +1443,6 @@ async function addCollectionReview ( params ) {
 			sm.onRefresh()
 			sm.fireEvent('selectionchange', sm)
 
-			Ext.getBody().unmask()
 			grid.updateGroupStore(grid)
 			setReviewsGridButtonStates()
 		}
@@ -1475,7 +1475,7 @@ async function addCollectionReview ( params ) {
 							ruleIds
 						}
 					}
-					Ext.getBody().mask(`Updating ${selections.length} Reviews`)
+					grid.bwrap.mask('')
 					const updatedReviews = []
 					const result = await Ext.Ajax.requestPromise({
 						url: `${STIGMAN.Env.apiBase}/collections/${leaf.collectionId}/reviews`,
@@ -1504,7 +1504,7 @@ async function addCollectionReview ( params ) {
 				alert(e.message)
 			}
 			finally {
-				Ext.getBody().unmask()
+				grid.bwrap.unmask()
 			}
 		};
 
