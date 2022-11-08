@@ -329,23 +329,28 @@ select
         ELSE
           CASE WHEN cteCandidate.statusId > 0 -- submitted, rejected, accepted
             THEN
-              CASE WHEN (cteCollectionSetting.detailRequired = 'always' AND cteCandidate.detail = '')
-                THEN 
-                  'detail is empty and detail.required = always'
+              CASE WHEN (cteCandidate.resultId NOT IN (2,3,4))
+                THEN
+                  'status is not allowed for the result'
                 ELSE
-                  CASE WHEN (cteCollectionSetting.commentRequired = 'always' AND cteCandidate.comment = '')
+                  CASE WHEN (cteCollectionSetting.detailRequired = 'always' AND cteCandidate.detail = '')
                     THEN 
-                      'comment is empty and comment.required = always'
+                      'detail is empty and detail.required = always'
                     ELSE
-                      CASE WHEN cteCandidate.resultId = 4 -- fail
-                        THEN
-                          CASE WHEN (cteCollectionSetting.detailRequired = 'findings' AND cteCandidate.detail = '')
-                            THEN 
-                              'detail is empty and detail.required = findings'
-                            ELSE
-                              CASE WHEN (cteCollectionSetting.commentRequired = 'findings' AND cteCandidate.comment = '')
+                      CASE WHEN (cteCollectionSetting.commentRequired = 'always' AND cteCandidate.comment = '')
+                        THEN 
+                          'comment is empty and comment.required = always'
+                        ELSE
+                          CASE WHEN cteCandidate.resultId = 4 -- fail
+                            THEN
+                              CASE WHEN (cteCollectionSetting.detailRequired = 'findings' AND cteCandidate.detail = '')
                                 THEN 
-                                  'comment is empty and comment.required = findings '
+                                  'detail is empty and detail.required = findings'
+                                ELSE
+                                  CASE WHEN (cteCollectionSetting.commentRequired = 'findings' AND cteCandidate.comment = '')
+                                    THEN 
+                                      'comment is empty and comment.required = findings '
+                                  END
                               END
                           END
                       END
