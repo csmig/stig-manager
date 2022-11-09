@@ -1089,6 +1089,13 @@ Ext.override(Ext.data.JsonStore, {
 
 // replace the Ext.Element.mask() method
 Ext.Element.addMethods({
+        /**
+     * Puts a mask over this element to disable user interaction. Requires core.css.
+     * This method can only be applied to elements which accept child nodes.
+     * @param {String} msg (optional) A message to display in the mask
+     * @param {String} msgCls (optional) A css class to apply to the msg element
+     * @return {Element} The mask element
+     */
     mask : function(msg, msgCls) {
         var me  = this,
             dom = me.dom,
@@ -1099,6 +1106,11 @@ Ext.Element.addMethods({
             el,
             mask,
             data = Ext.Element.data;
+
+        if (el = data(dom, 'maskMsgDiv')) {
+            el.innerHTML = msg
+            return
+        }
 
         if (!/^body/i.test(dom.tagName) && me.getStyle('position') == 'static') {
             me.addClass(XMASKEDRELATIVE);
@@ -1118,12 +1130,17 @@ Ext.Element.addMethods({
         
         if (typeof msg == 'string') {
             // change the tag to <span> instead of <div>, to support CSS-only spinner
-            var mm = dh.append(dom, {cls : EXTELMASKMSG, cn:{tag:'span'}}, true);
+            const cn = msg ? [{tag:'div'},{tag:'span'}] : {tag:'span'}
+            var mm = dh.append(dom, {cls : EXTELMASKMSG, cn}, true);
             data(dom, 'maskMsg', mm);
             mm.dom.className = msgCls ? EXTELMASKMSG + " " + msgCls : EXTELMASKMSG;
-            mm.dom.firstChild.innerHTML = msg;
+            if (msg) {
+                mm.dom.firstChild.innerHTML = msg;
+                data(dom, 'maskMsgDiv', mm.dom.firstChild);
+            }
             mm.setDisplayed(true);
-            mm.center(me);
+            // Don't calculate centering, let CSS take care of it
+            // mm.center(me);
         }
         
         // ie will not expand full height automatically
@@ -1132,5 +1149,33 @@ Ext.Element.addMethods({
         }
         
         return mask;
-    }
+    },
+    /**
+     * Removes a previously applied mask.
+     */
+    unmask : function() {
+        const data = Ext.Element.data
+        const me = this,
+        dom = me.dom,
+        mask = data(dom, 'mask'),
+        maskMsg = data(dom, 'maskMsg'),
+        maskMsgDiv = data(dom, 'maskMsgDiv'),
+        XMASKED = "x-masked",
+        XMASKEDRELATIVE = "x-masked-relative";
+
+        if (mask) {
+            if (maskMsg) {
+                maskMsg.remove();
+                data(dom, 'maskMsg', undefined);
+                if (maskMsgDiv) {
+                    data(dom, 'maskMsgDiv', undefined);
+                }
+            }
+            
+            mask.remove();
+            data(dom, 'mask', undefined);
+            me.removeClass([XMASKED, XMASKEDRELATIVE]);
+        }
+    },
+
 })
