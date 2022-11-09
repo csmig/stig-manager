@@ -1,7 +1,7 @@
 {
 	"info": {
 		"_postman_id": "6b7f1438-4c37-4a11-acd0-d7c351f67895",
-		"name": "STIGMan OSS - batch",
+		"name": "STIGMan OSS",
 		"description": "An API for managing evaluations of Security Technical Implementation Guide (STIG) assessments.\n\nContact Support:\n Name: Carl Smigielski\n Email: carl.a.smigielski@saic.com",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
 		"_exporter_id": "9301046"
