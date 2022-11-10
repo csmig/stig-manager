@@ -1079,8 +1079,8 @@ async function addCollectionReview ( params ) {
 				emptyText: 'No data to display.',
 				deferEmptyText:false,
 				// custom row height
-				rowHeight: (15*3)+6,
-				lineClamp: 3,
+				rowHeight: (15*1)+6,
+				lineClamp: 1,
 				borderHeight: 2,
 				// render rows as they come into viewable area.
 				scrollDelay: false,
@@ -1155,7 +1155,31 @@ async function addCollectionReview ( params ) {
 						}
 					},
 					'-',
-					batchEditBtn
+					batchEditBtn,
+					'->',
+					{
+						text: '+',
+						handler: function (btn) {
+							const curLineClamp = reviewsGrid.view.lineClamp
+							const newLineClamp = curLineClamp + 1
+							const newRowHeight = (15*newLineClamp)+6
+							reviewsGrid.view.rowHeight = newRowHeight
+							reviewsGrid.view.lineClamp = newLineClamp
+							reviewsGrid.view.refresh()
+						}
+					},
+					{
+						text: '-',
+						handler: function (btn) {
+							const curLineClamp = reviewsGrid.view.lineClamp
+							const newLineClamp = curLineClamp - 1
+							const newRowHeight = (15*newLineClamp)+6
+							reviewsGrid.view.rowHeight = newRowHeight
+							reviewsGrid.view.lineClamp = newLineClamp
+							reviewsGrid.view.refresh()
+						}
+					}
+
 				]
 			}),
 			bbar: new Ext.Toolbar({

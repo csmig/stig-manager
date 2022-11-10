@@ -1879,3 +1879,17 @@ td.x-grid3-hd-over .x-grid3-hd-inner {
   -webkit-box-orient: vertical;
   white-space: normal;
 }
+.sm-line-clamp-4 .x-grid3-cell-inner {
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 4;
+  -webkit-box-orient: vertical;
+  white-space: normal;
+}
+.sm-line-clamp-5 .x-grid3-cell-inner {
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 5;
+  -webkit-box-orient: vertical;
+  white-space: normal;
+}
