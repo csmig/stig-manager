@@ -58,17 +58,19 @@ Ext.ux.grid.BufferView = Ext.extend(Ext.grid.GridView, {
 		ts.rowHolder.compile();
 
 		const rowBodyText = [
-			'<table class="x-grid3-row-table sm-line-clamp-{lineClamp}" border="0" cellspacing="0" cellpadding="0" style="{tstyle}">',
+			'<table class="x-grid3-row-table',
+			'<tpl if="lineClamp &gt; 1"> sm-line-clamp-wrap</tpl>',
+			'" border="0" cellspacing="0" cellpadding="0" style="{tstyle}">',
 			'<tbody><tr>{cells}</tr>',
 			(this.enableRowBody ? '<tr class="x-grid3-row-body-tr" style="{bodyStyle}"><td colspan="{cols}" class="x-grid3-body-cell" tabIndex="0" hidefocus="on"><div class="x-grid3-row-body">{body}</div></td></tr>' : ''),
 			'</tbody></table>'
 		]
 
-		ts.row = new Ext.Template('<div class="x-grid3-row {alt}" style="{tstyle}">' + rowBodyText.join("") + '</div>')
+		ts.row = new Ext.XTemplate('<div class="x-grid3-row {alt}" style="{tstyle}">' + rowBodyText.join("") + '</div>')
 		ts.row.disableFormats = true;
 		ts.row.compile();
 
-		ts.rowBody = new Ext.Template(rowBodyText);
+		ts.rowBody = new Ext.XTemplate(rowBodyText);
 		ts.rowBody.disableFormats = true;
 		ts.rowBody.compile();
 	},
@@ -124,6 +126,9 @@ Ext.ux.grid.BufferView = Ext.extend(Ext.grid.GridView, {
 					p.id = c.id;
 					p.css = i === 0 ? 'x-grid3-cell-first ' : (i == last ? 'x-grid3-cell-last ' : '');
 					p.attr = p.cellAttr = "";
+					if (this.lineClamp > 1) {
+						p.attr += ` style="-webkit-line-clamp: ${this.lineClamp};"`
+					}
 					p.value = c.renderer.call(c.scope || c, r.data[c.name], p, r, rowIndex, i, ds);
 					p.style = c.style;
 					if (p.value === undefined || p.value === "") {
@@ -175,12 +180,12 @@ Ext.ux.grid.BufferView = Ext.extend(Ext.grid.GridView, {
 		}
 	},
     
-    onRemove : function(ds, record, index, isUpdate){
-        Ext.ux.grid.BufferView.superclass.onRemove.apply(this, arguments);
-        if(isUpdate !== true){
-            this.update();
-        }
-    },
+	onRemove : function(ds, record, index, isUpdate){
+			Ext.ux.grid.BufferView.superclass.onRemove.apply(this, arguments);
+			if(isUpdate !== true){
+					this.update();
+			}
+	},
 
 	doUpdate: function(){
 		if (this.getVisibleRowCount() > 0) {
@@ -231,23 +236,32 @@ Ext.ux.grid.BufferView = Ext.extend(Ext.grid.GridView, {
 		}
 	},
     
-    removeTask: function(name){
-        var task = this[name];
-        if(task && task.cancel){
-            task.cancel();
-            this[name] = null;
-        }
-    },
-    
-    destroy : function(){
-        this.removeTask('cleanTask');
-        this.removeTask('renderTask');  
-        Ext.ux.grid.BufferView.superclass.destroy.call(this);
-    },
+	removeTask: function(name){
+			var task = this[name];
+			if(task && task.cancel){
+					task.cancel();
+					this[name] = null;
+			}
+	},
+	
+	destroy : function(){
+			this.removeTask('cleanTask');
+			this.removeTask('renderTask');  
+			Ext.ux.grid.BufferView.superclass.destroy.call(this);
+	},
 
 	layout: function(){
 		Ext.ux.grid.BufferView.superclass.layout.call(this);
 		this.update();
 	},
-	isBufferView: true
+
+	isBufferView: true,
+
+	changeRowHeight: function (rowHeight, lineClamp) {
+		this.rowHeight = rowHeight
+		this.lineClamp = lineClamp ? lineClamp : this.lineClamp
+		const scrollTopPct = this.scroller.dom.scrollTop / this.scroller.dom.scrollHeight
+		this.refresh()
+		this.scroller.dom.scrollTop = this.scroller.dom.scrollHeight * scrollTopPct
+	}
 });
