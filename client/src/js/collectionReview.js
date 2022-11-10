@@ -1079,7 +1079,8 @@ async function addCollectionReview ( params ) {
 				emptyText: 'No data to display.',
 				deferEmptyText:false,
 				// custom row height
-				rowHeight: 21,
+				rowHeight: (15*3)+6,
+				lineClamp: 3,
 				borderHeight: 2,
 				// render rows as they come into viewable area.
 				scrollDelay: false,

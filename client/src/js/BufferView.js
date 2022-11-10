@@ -45,23 +45,30 @@ Ext.ux.grid.BufferView = Ext.extend(Ext.grid.GridView, {
 	 * cache.
 	 */
 	cleanDelay: 500,
+	lineClamp: 1,
 
 	initTemplates : function(){
 		Ext.ux.grid.BufferView.superclass.initTemplates.call(this);
 		var ts = this.templates;
 		// empty div to act as a place holder for a row
-	        ts.rowHolder = new Ext.Template(
-		        '<div class="x-grid3-row {alt}" style="{tstyle}"></div>'
+		ts.rowHolder = new Ext.Template(
+			'<div class="x-grid3-row {alt}" style="{tstyle}"></div>'
 		);
 		ts.rowHolder.disableFormats = true;
 		ts.rowHolder.compile();
 
-		ts.rowBody = new Ext.Template(
-		        '<table class="x-grid3-row-table" border="0" cellspacing="0" cellpadding="0" style="{tstyle}">',
+		const rowBodyText = [
+			'<table class="x-grid3-row-table sm-line-clamp-{lineClamp}" border="0" cellspacing="0" cellpadding="0" style="{tstyle}">',
 			'<tbody><tr>{cells}</tr>',
 			(this.enableRowBody ? '<tr class="x-grid3-row-body-tr" style="{bodyStyle}"><td colspan="{cols}" class="x-grid3-body-cell" tabIndex="0" hidefocus="on"><div class="x-grid3-row-body">{body}</div></td></tr>' : ''),
 			'</tbody></table>'
-		);
+		]
+
+		ts.row = new Ext.Template('<div class="x-grid3-row {alt}" style="{tstyle}">' + rowBodyText.join("") + '</div>')
+		ts.row.disableFormats = true;
+		ts.row.compile();
+
+		ts.rowBody = new Ext.Template(rowBodyText);
 		ts.rowBody.disableFormats = true;
 		ts.rowBody.compile();
 	},
@@ -105,7 +112,7 @@ Ext.ux.grid.BufferView = Ext.extend(Ext.grid.GridView, {
             cb, 
             c, 
             p = {}, 
-            rp = {tstyle: tstyle}, 
+            rp = {tstyle, lineClamp: this.lineClamp}, 
             r;
 		for (var j = 0, len = rs.length; j < len; j++) {
 			r = rs[j]; cb = [];
