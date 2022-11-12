@@ -13,7 +13,7 @@
    fill="none"
    version="1.1"
    id="svg4"
-   sodipodi:docname="line-height-down.svg"
+   sodipodi:docname="line-height-down-dark.svg"
    inkscape:version="1.0.2 (1.0.2+r75+1)">
   <metadata
      id="metadata10">
@@ -55,23 +55,23 @@
      fit-margin-right="0"
      fit-margin-bottom="0" />
   <path
-     style="stroke:#333333;stroke-width:1;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+     style="stroke:#c8c3bc;stroke-width:1;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
      d="M 7.0001728,12.976131 H 14.999846"
      id="path851" />
   <path
-     style="stroke:#333333;stroke-width:1;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+     style="stroke:#c8c3bc;stroke-width:1;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
      d="M 14.999846,7.983357 H 7.0001728"
      id="path849" />
   <path
-     style="stroke:#333333;stroke-width:1;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+     style="stroke:#c8c3bc;stroke-width:1;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
      d="M 7.0001728,2.9905838 H 14.999846"
      id="path847" />
   <path
      id="path841"
-     style="stroke:#333333;stroke-width:1;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+     style="stroke:#c8c3bc;stroke-width:1;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
      d="m 3.0004181,1.0005 v 4.992774 m 0,0 1.9999184,-1.957951 M 3.0004181,5.993274 1.0005,3.991269" />
   <path
      id="path2"
-     style="stroke:#333333;stroke-width:1;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+     style="stroke:#c8c3bc;stroke-width:1;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
      d="M 3.0004181,14.999274 V 10.0065 m 0,0 L 1.0005,11.96445 m 1.9999181,-1.95795 1.9999184,1.95795" />
 </svg>

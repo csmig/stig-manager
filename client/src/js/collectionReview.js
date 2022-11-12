@@ -1183,6 +1183,7 @@ async function addCollectionReview ( params ) {
 					batchEditBtn,
 					'->',
 					lineIncrementBtn,
+					{xtype: 'tbspacer', width: 10},
 					lineDecrementBtn
 				]
 			}),
