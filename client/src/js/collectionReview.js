@@ -953,9 +953,8 @@ async function addCollectionReview ( params ) {
 				const newLineClamp = reviewsGrid.view.lineClamp + 1
 				const newRowHeight = (15*newLineClamp)+6
 				reviewsGrid.view.changeRowHeight(newRowHeight, newLineClamp)
-				if (newLineClamp > 1) {
-					lineDecrementBtn.enable()
-				}
+				lineDecrementBtn.setDisabled(newLineClamp <= 1)
+				btn.setDisabled(newLineClamp >= 10)
 			}
 		})
 		const lineDecrementBtn = new Ext.Button({
@@ -965,9 +964,8 @@ async function addCollectionReview ( params ) {
 				const newLineClamp = reviewsGrid.view.lineClamp - 1
 				const newRowHeight = (15*newLineClamp)+6
 				reviewsGrid.view.changeRowHeight(newRowHeight, newLineClamp)
-				if (newLineClamp === 1) {
-					btn.disable()
-				}
+				btn.setDisabled(newLineClamp <= 1)
+				lineIncrementBtn.setDisabled(newLineClamp >= 10)
 			}
 		})
 
