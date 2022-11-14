@@ -45,7 +45,7 @@ function cteAssetGen({assetIds, benchmarkIds, labelIds, labelNames}) {
     cte = dbUtils.pool.format(sql,[json])
   }
   else if (benchmarkIds?.length) {
-    const sql = `select assetId 
+    const sql = `select distinct assetId 
     from
       asset a
       left join collection_grant cg on a.collectionId = cg.collectionId
@@ -122,6 +122,7 @@ const mergeFilterOperators = {
   beginsWith: 'LIKE',
   endsWith: 'LIKE',
   equals: '=',
+  notequal: '!=',
   greaterThan: '>',
   lessThan: '<',
 }
@@ -132,6 +133,11 @@ function genFilter(filter) {
     field = 'resultId'
     value = dbUtils.REVIEW_RESULT_API[value]
   }
+  if (field === 'status' || field === 'statusLabel') {
+    field = 'statusId'
+    value = dbUtils.REVIEW_STATUS_API[value]
+  }
+
   value = field === 'userId' || field === 'statusUserId' ? parseInt(value) : value
 
   const sqlOperator = mergeFilterOperators[condition]
