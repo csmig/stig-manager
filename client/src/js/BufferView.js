@@ -191,8 +191,10 @@ Ext.ux.grid.BufferView = Ext.extend(Ext.grid.GridView, {
 			rowIndex = store.indexOf(record);
 		}
 
+		const visible = rowIndex >= vr.first && rowIndex <= vr.last
+
 		//the record could not be found
-		if (!record || rowIndex < 0) {
+		if (!visible || !record || rowIndex < 0) {
 			return;
 		}
 
