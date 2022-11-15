@@ -80,10 +80,6 @@ Ext.ux.grid.BufferView = Ext.extend(Ext.grid.GridView, {
 		ts.rowInner = new Ext.XTemplate(innerText)
 		ts.rowInner.disableFormats = true;
 		ts.rowInner.compile();
-
-		ts.rowBody = new Ext.XTemplate(innerText);
-		ts.rowBody.disableFormats = true;
-		ts.rowBody.compile();
 	},
 
 	getStyleRowHeight: function () {
@@ -115,7 +111,7 @@ Ext.ux.grid.BufferView = Ext.extend(Ext.grid.GridView, {
 		var ts = this.templates,
 			ct = ts.cell,
 			rt = ts.row,
-			rb = ts.rowBody,
+			ri = ts.rowInner,
 			last = colCount - 1,
 			rh = this.getStyleRowHeight(),
 			vr = this.getVisibleRows(),
@@ -164,7 +160,7 @@ Ext.ux.grid.BufferView = Ext.extend(Ext.grid.GridView, {
 			}
 			rp.alt = alt.join(" ");
 			rp.cells = cb.join("");
-			buf[buf.length] = !visible ? ts.rowHolder.apply(rp) : (onlyBody ? rb.apply(rp) : rt.apply(rp));
+			buf[buf.length] = !visible ? ts.rowHolder.apply(rp) : (onlyBody ? ri.apply(rp) : rt.apply(rp));
 		}
 		return buf.join("");
 	},
