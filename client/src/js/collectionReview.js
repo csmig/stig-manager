@@ -1475,7 +1475,7 @@ async function addCollectionReview ( params ) {
 							ruleIds
 						}
 					}
-					grid.bwrap.mask('')
+					grid.bwrap.mask(`Updating ${selections.length} reviews`)
 					const updatedReviews = []
 					const result = await Ext.Ajax.requestPromise({
 						url: `${STIGMAN.Env.apiBase}/collections/${leaf.collectionId}/reviews`,
