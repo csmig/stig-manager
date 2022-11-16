@@ -692,7 +692,6 @@ async function addCollectionReview ( params ) {
 					} else {
 						historyData.store.removeAll();
 						historyData.grid.disable();
-						setRejectButtonState();
 						batchEditBtn.enable()
 
 					}
@@ -1133,7 +1132,7 @@ async function addCollectionReview ( params ) {
 						disabled: true,
 						iconCls: 'sm-rejected-icon',
 						id: 'reviewsGrid-rejectButton' + idAppend,
-						text: 'Reject',
+						text: 'Reject...',
 						hidden: !showAcceptBtn(),
 						handler: function (btn) {
 							var selModel = reviewsGrid.getSelectionModel();
@@ -1449,9 +1448,64 @@ async function addCollectionReview ( params ) {
 			grid.updateGroupStore(grid)
 			setReviewsGridButtonStates()
 		}
+
+		function promptForStatusText () {
+			return new Promise ((resolve, reject) => {
+				const textArea = new Ext.form.TextArea()
+				function handler (btn) {
+					if (btn.action === 'reject') {
+						const value = textArea.getValue()
+						fpwindow.close()
+						resolve(value)
+					}
+					fpwindow.close()
+					reject()
+				}
+				const fpwindow = new Ext.Window({
+					title: `Reject Reviews`,
+					modal: true,
+					resizable: false,
+					closable: false,
+					width: 300,
+					height: 200,
+					layout: 'fit',
+					plain: true,
+					bodyStyle: 'padding:5px;',
+					buttonAlign: 'right',
+					items: [
+						textArea
+					],
+					buttons: [
+						{
+							text: 'Cancel',
+							action: 'cancel',
+							handler
+						},
+						{
+							text: 'Reject with this feedback',
+							action: 'reject',
+							iconCls: 'sm-rejected-icon',
+							handler
+						}
+					]
+				})
+				fpwindow.show()
+	
+			})
+
+		}
 		
 		async function handleStatusChange (grid, sm, status) {
 			try {
+				if (status === 'rejected') {
+					try {
+						const text = await promptForStatusText()
+						status = {label: status, text}
+					}
+					catch (e) {
+						return
+					}
+				}
 				const selections = sm.getSelections()
 				if (selections.length === 1) {
 					const record = selections[0]
@@ -1562,12 +1616,7 @@ async function addCollectionReview ( params ) {
 					}
 					apiReview.history.push(currentReview)
 					Ext.getCmp('historyGrid' + idAppend).getStore().loadData(apiReview.history)
-	
-					// Reject text
-					const rejectFp = Ext.getCmp('rejectFormPanel' + idAppend)
-					rejectFp.getForm().setValues(apiReview)
-					setRejectButtonState()
-	
+		
 					// Attachments
 				attachmentsGrid.loadArtifacts()	
 				}
@@ -1600,115 +1649,6 @@ async function addCollectionReview ( params ) {
   /******************************************************/
   // END Attachments Panel
   /******************************************************/
-
-	/******************************************************/
-	// START Resources Panel/Feedback
-	/******************************************************/
-
-		var rejectOtherPanel = new Ext.Panel ({
-			layout: 'fit',
-			id: 'rejectOtherPanel' + idAppend,
-			title: 'Rejected review feedback',
-			bodyCssClass: 'sm-background-blue',
-			padding: '5',
-			flex: 50,
-			items: [{
-				xtype: 'textarea',
-				id: 'rejectTextArea' + idAppend,
-				enableKeyEvents: true,
-				emptyText: 'Provide feedback explaining this rejection.',
-				name: 'rejectText',
-				listeners: {
-					keyup: setRejectButtonState
-				}
-			}]
-		});
-		
-		var rejectFormPanel = new Ext.form.FormPanel({
-			baseCls: 'x-plain',
-			id: 'rejectFormPanel' + idAppend,
-			cls: 'sm-background-blue',
-			labelWidth: 95,
-			monitorValid: false,
-			items: [
-			{
-				layout: 'hbox',
-				anchor: '100% -1',
-				padding: '10',
-				baseCls: 'x-plain',
-				border: false,
-				layoutConfig: {
-					align: 'stretch'
-				},
-				items: [rejectOtherPanel]
-			}],
-			buttons: [{
-				text: 'Reject review with this feedback',
-				disabled: true,
-				id: 'rejectSubmitButton' + idAppend,
-				iconCls: 'sm-rejected-icon',
-				reviewsGrid: reviewsGrid,
-				hidden: !showAcceptBtn(),
-				handler: handleRejections
-			}]
-		});
-		
-		async function handleRejections() {
-			try {
-				Ext.getBody().mask('Rejecting')
-				const status = 'rejected'
-				const values = rejectFormPanel.getForm().getFieldValues()
-				const selections = reviewsGrid.getSelectionModel().getSelections()
-				const requests = []
-				for (const record of selections) {
-					requests.push(
-						Ext.Ajax.requestPromise({
-							url: `${STIGMAN.Env.apiBase}/collections/${leaf.collectionId}/reviews/${record.data.assetId}/${record.data.ruleId}`,
-							method: 'PATCH',
-							jsonData: {
-								status: {
-									label: status,
-									text: values.rejectText
-								}
-							}
-						})
-					)
-				}
-				let results = await Promise.allSettled(requests)
-				for (i=0, l=selections.length; i < l; i++) {
-					if (results[i].status === 'fulfilled') {
-						selections[i].data.status = status
-						selections[i].commit()
-					}
-				}
-				reviewsGrid.updateGroupStore(reviewsGrid)
-				setReviewsGridButtonStates()
-				Ext.getBody().unmask()
-			}
-			catch (e) {
-				alert(e.message)
-			}
-			finally {
-
-			}
-
-		}
-
-		function setRejectButtonState () {
-			var btn = Ext.getCmp('rejectSubmitButton' + idAppend);
-			var text = Ext.getCmp('rejectTextArea' + idAppend);
-			var reviewsCount = reviewsGrid.getSelectionModel().getCount();
-			if (reviewsCount > 1) {
-				btn.setText("Reject " + reviewsCount + " reviews with this feedback");
-			} else {
-				btn.setText("Reject review with this feedback");
-			}
-			if (!text.getValue()) {
-				btn.disable();
-			} else {
-				btn.enable();
-			}
-		}
 
 	/******************************************************/
 	// END Resources Panel
@@ -1766,28 +1706,20 @@ async function addCollectionReview ( params ) {
 						collapsible: false,
 						activeTab: 'history',
 						items: [
-						{
-							title: 'History',
-							itemId: 'history',
-							layout: 'fit',
-							id: 'history-tab' + idAppend,
-							items: historyData.grid
-						},
-						{
-							title: 'Attachments',
-							id: 'attachment-panel' + idAppend,
-							layout: 'fit',
-							items: attachmentsGrid
-						},
-						{
-							title: 'Reject',
-							itemId: 'reject',
-							iconCls: 'sm-rejected-icon',
-							disabled: true,
-							id: 'feedback-panel' + idAppend,
-							layout: 'fit',
-							items: rejectFormPanel
-						}]
+							{
+								title: 'History',
+								itemId: 'history',
+								layout: 'fit',
+								id: 'history-tab' + idAppend,
+								items: historyData.grid
+							},
+							{
+								title: 'Attachments',
+								id: 'attachment-panel' + idAppend,
+								layout: 'fit',
+								items: attachmentsGrid
+							}
+						]
 					}
 				]
 			}
