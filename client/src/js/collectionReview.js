@@ -945,6 +945,29 @@ async function addCollectionReview ( params ) {
 			}
 		})
 
+		const lineIncrementBtn = new Ext.Button({
+			iconCls: 'sm-line-height-up',
+			tooltip: 'Increase row height',
+			handler: function (btn) {
+				const newLineClamp = reviewsGrid.view.lineClamp + 1
+				const newRowHeight = (15*newLineClamp)+6
+				reviewsGrid.view.changeRowHeight(newRowHeight, newLineClamp)
+				lineDecrementBtn.setDisabled(newLineClamp <= 1)
+				btn.setDisabled(newLineClamp >= 10)
+			}
+		})
+		const lineDecrementBtn = new Ext.Button({
+			iconCls: 'sm-line-height-down',
+			tooltip: 'Decrease row height',
+			handler: function (btn) {
+				const newLineClamp = reviewsGrid.view.lineClamp - 1
+				const newRowHeight = (15*newLineClamp)+6
+				reviewsGrid.view.changeRowHeight(newRowHeight, newLineClamp)
+				btn.setDisabled(newLineClamp <= 1)
+				lineIncrementBtn.setDisabled(newLineClamp >= 10)
+			}
+		})
+
 		var reviewsGrid = new Ext.grid.EditorGridPanel({
 			cls: 'sm-round-panel',
 			margins: { top: SM.Margin.top, right: SM.Margin.edge, bottom: SM.Margin.adjacent, left: SM.Margin.adjacent },
@@ -1078,7 +1101,8 @@ async function addCollectionReview ( params ) {
 				emptyText: 'No data to display.',
 				deferEmptyText:false,
 				// custom row height
-				rowHeight: 21,
+				rowHeight: (15*2)+6,
+				lineClamp: 2,
 				borderHeight: 2,
 				// render rows as they come into viewable area.
 				scrollDelay: false,
@@ -1170,7 +1194,11 @@ async function addCollectionReview ( params ) {
 						}
 					},
 					'-',
-					batchEditBtn
+					batchEditBtn,
+					'->',
+					lineIncrementBtn,
+					{xtype: 'tbspacer', width: 10},
+					lineDecrementBtn
 				]
 			}),
 			bbar: new Ext.Toolbar({
