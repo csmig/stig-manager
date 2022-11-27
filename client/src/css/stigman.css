@@ -12,6 +12,32 @@
   --metrics-status-chart-unsaved-dark: hsl(0deg 0% 18%);
   --metrics-status-chart-rejected-dark: hsl(5deg 90% 25%)
 }
+
+.sm-grid-cell-with-toolbar {
+	position: relative;
+}
+.sm-grid-cell-with-toolbar .sm-dynamic-width {
+	margin-right: 0px;
+}
+.sm-grid-cell-with-toolbar .sm-info {
+	text-overflow: ellipsis;
+	overflow: hidden;
+	white-space: nowrap;
+}
+.sm-grid-cell-with-toolbar .sm-static-width {
+	position: absolute;
+	visibility: hidden;
+	top: 0;
+	right: 0;
+	width: 18px;
+}
+.x-grid3-row-over .sm-grid-cell-with-toolbar .sm-dynamic-width {
+	margin-right: 28px;
+}
+.x-grid3-row-over .sm-grid-cell-with-toolbar .sm-static-width {
+	visibility: visible;
+}
+
 .sm-metrics-no-assessments-body {
   color: #bbb;
   display: flex;
@@ -253,11 +279,11 @@
 }
 .x-tree-node-el:hover .sm-tree-toolbar,
 .x-tree-selected .sm-tree-toolbar {
-  display: inline;
-  position: absolute;
-  right: 10px;
-  margin-top: 2px;
-  cursor: pointer
+	display: inline;
+	position: absolute;
+	right: 10px;
+	margin-top: 2px;
+	cursor: pointer
 }
 .x-tree-node-el:not(.x-tree-selected):hover .sm-tree-toolbar {
   opacity: .5
@@ -1356,8 +1382,13 @@ td.x-grid3-hd-over .x-grid3-hd-inner {
   background-repeat: no-repeat;
   background-size: 16px 16px
 }
-.sm-collection-icon,
-.sm-collection-tab-icon {
+.sm-collection-color-icon {
+	background-image: url(../img/collection-color.svg) !important;
+	 background-repeat: no-repeat;
+	 background-size: 16px 16px;
+}
+ .sm-collection-icon,
+ .sm-collection-tab-icon {
   background-image: url(../img/collection.svg)!important;
   background-repeat: no-repeat;
   background-size: 16px 16px

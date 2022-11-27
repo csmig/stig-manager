@@ -113,6 +113,7 @@ function loadScripts() {
         "js/SM/CollectionForm.js",
         "js/SM/CollectionAsset.js",
         "js/SM/CollectionGrant.js",
+        "js/SM/CollectionPanel.js",
         "js/SM/ColumnFilters.js",
         "js/SM/FindingsPanel.js",
         "js/SM/Assignments.js",
