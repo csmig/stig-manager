@@ -642,10 +642,41 @@ SM.Collection.showCollectionTab = async function (options) {
       lastApiMetricsCollection = JSON.parse(results.response.responseText)
       return lastApiMetricsCollection
     }
-    
+
+    const labelsMenu = new SM.Collection.LabelsMenu({
+      labels: SM.Cache.CollectionMap.get(collectionId).labels,
+      showHeader: true,
+      showApply: true,
+      ignoreUnusedLabels: true,
+      listeners: {
+        // applied: function (labelIds) {
+        //     SM.Dispatcher.fireEvent('labelfilter', collectionId, labelIds)
+        // }
+      }
+    })
+      
     const overviewPanel = new SM.Metrics.OverviewPanel({
       cls: 'sm-round-panel sm-metrics-overview-panel',
       collapsible: true,
+      collapseFirst: false,
+      tools: [
+        {
+          id: 'label',
+          handler: (event, toolEl, panel, tc) => {
+            labelsMenu.showAt(event.xy)
+          }
+        },
+        {
+          id: 'manage',
+          handler: (event, toolEl, panel, tc) => {
+            addCollectionManager({
+              collectionId,
+              collectionName,
+              treePath
+            })
+          }
+        }
+      ],
       title: 'Overview',
       margins: { top: SM.Margin.top, right: SM.Margin.edge, bottom: SM.Margin.bottom, left: SM.Margin.edge },
       region: 'west',
