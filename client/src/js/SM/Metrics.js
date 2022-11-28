@@ -1092,6 +1092,11 @@ SM.Metrics.OverviewPanel = Ext.extend(Ext.Panel, {
       cls: 'sm-round-inner-panel',
       bodyStyle: 'padding: 10px;',
       title: 'Findings',
+      tools: [
+        {
+          id: 'report'
+        }
+      ],
       border: true
     })
     const exportPanel = new SM.Metrics.ExportPanel({

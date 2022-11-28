@@ -1906,9 +1906,13 @@ td.x-grid3-hd-over .x-grid3-hd-inner {
   background-repeat: no-repeat;
   background-size: 12px 16px
 }
-.x-tool.x-tool-manage:hover {
-  filter: brightness(125%)
+.x-tool.x-tool-report {
+  background-image: url(../img/grid.svg);
+  background-repeat: no-repeat;
+  background-size: 12px 16px
 }
-.x-tool.x-tool-label:hover {
+.x-tool.x-tool-manage:hover,
+.x-tool.x-tool-label:hover,
+.x-tool.x-tool-report:hover {
   filter: brightness(125%)
 }
