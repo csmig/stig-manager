@@ -1916,3 +1916,19 @@ td.x-grid3-hd-over .x-grid3-hd-inner {
 .x-tool.x-tool-report:hover {
   filter: brightness(125%)
 }
+.sm-line-clamp-wrap .x-grid3-cell-inner {
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
+  white-space: normal;
+  overflow-wrap: break-word;
+}
+.sm-line-height-up {
+  background-image: url(../img/line-height-up.svg);
+  background-size: 16px 16px;
+}
+.sm-line-height-down {
+  background-image: url(../img/line-height-down.svg);
+  background-size: 16px 16px;
+}

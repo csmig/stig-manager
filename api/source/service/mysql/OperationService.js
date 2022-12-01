@@ -119,7 +119,7 @@ exports.replaceAppData = async function (importOpts, appData, userObject, res ) 
               NESTED PATH '$.labelIds[*]' COLUMNS ( labelId VARCHAR(36) PATH '$')
             )
           ) as jt
-          INNER JOIN collection_label cl on cl.collectionId = jt.collectionId COLLATE utf8mb4_0900_ai_ci and cl.uuid = UUID_TO_BIN(jt.labelId,1)`,
+          INNER JOIN collection_label cl on cl.collectionId = jt.collectionId and cl.uuid = UUID_TO_BIN(jt.labelId,1)`,
         insertBinds: []
       },
       stigAssetMap: {
@@ -199,7 +199,7 @@ exports.replaceAppData = async function (importOpts, appData, userObject, res ) 
                 resultEngine JSON PATH "$.resultEngine"
               )
             ) as jt 
-            LEFT JOIN review r ON (jt.assetId = r.assetId COLLATE utf8mb4_0900_ai_ci and jt.ruleId = r.ruleId COLLATE utf8mb4_0900_ai_ci)`,
+            LEFT JOIN review r ON (jt.assetId = r.assetId and jt.ruleId = r.ruleId)`,
         insertBinds: []
       },
       review: {
@@ -333,7 +333,6 @@ exports.replaceAppData = async function (importOpts, appData, userObject, res ) 
       ])
     }
     dml.reviewHistory.insertBinds = JSON.stringify(historyRecords)
-
     return dml
   }
 
@@ -396,12 +395,16 @@ exports.replaceAppData = async function (importOpts, appData, userObject, res ) 
     for (const table of tableOrder) {
       if (dml[table].insertBinds.length > 0) {
         hrstart = process.hrtime()
-
-        let i, j, bindchunk, chunk = 5000;
-        for (i=0,j=dml[table].insertBinds.length; i<j; i+=chunk) {
-          res.write(`Inserting: ${table} chunk: ${i}\n`)
-          bindchunk = dml[table].insertBinds.slice(i,i+chunk);
-          ;[result] = await connection.query(dml[table].sqlInsert, [bindchunk])
+        if (typeof dml[table].insertBinds === 'string') { // reviewHistory
+          ;[result] = await connection.query(dml[table].sqlInsert, [dml[table].insertBinds])
+        }
+        else {
+          let i, j, bindchunk, chunk = 5000;
+          for (i=0,j=dml[table].insertBinds.length; i<j; i+=chunk) {
+            res.write(`Inserting: ${table} chunk: ${i}\n`)
+            bindchunk = dml[table].insertBinds.slice(i,i+chunk);
+            ;[result] = await connection.query(dml[table].sqlInsert, [bindchunk])
+          } 
         }
         hrend = process.hrtime(hrstart)
         stats[table].insert = `${result.affectedRows} in ${hrend[0]}s  ${hrend[1] / 1000000}ms`
