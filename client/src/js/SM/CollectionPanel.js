@@ -649,9 +649,9 @@ SM.Collection.showCollectionTab = async function (options) {
       showApply: true,
       ignoreUnusedLabels: true,
       listeners: {
-        // applied: function (labelIds) {
-        //     SM.Dispatcher.fireEvent('labelfilter', collectionId, labelIds)
-        // }
+        applied: function (labelIds) {
+            SM.Dispatcher.fireEvent('labelfilter', collectionId, labelIds)
+        }
       }
     })
       

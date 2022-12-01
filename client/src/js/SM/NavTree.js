@@ -762,11 +762,11 @@ SM.NavTree.TreePanel = Ext.extend(Ext.tree.TreePanel, {
       SM.Dispatcher.addListener('assetcreated', this.onAssetCreated, me)
       SM.Dispatcher.addListener('assetdeleted', this.onAssetDeleted, me)
       SM.Dispatcher.addListener('stigassetschanged', this.onStigAssetsChanged, me) 
-      SM.Dispatcher.addListener('labelcreated', this.onLabelCreated, me) 
-      SM.Dispatcher.addListener('labelchanged', this.onLabelChanged, me) 
-      SM.Dispatcher.addListener('labeldeleted', this.onLabelDeleted, me) 
-      SM.Dispatcher.addListener('labelfilter', this.onLabelFilter, me) 
-      SM.Dispatcher.addListener('labelassetschanged', this.onLabelAssetsChanged, me) 
+      // SM.Dispatcher.addListener('labelcreated', this.onLabelCreated, me) 
+      // SM.Dispatcher.addListener('labelchanged', this.onLabelChanged, me) 
+      // SM.Dispatcher.addListener('labeldeleted', this.onLabelDeleted, me) 
+      // SM.Dispatcher.addListener('labelfilter', this.onLabelFilter, me) 
+      // SM.Dispatcher.addListener('labelassetschanged', this.onLabelAssetsChanged, me) 
     },
     loadTree: async function (node, cb) {
         try {
