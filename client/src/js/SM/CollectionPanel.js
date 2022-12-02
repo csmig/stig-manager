@@ -662,12 +662,14 @@ SM.Collection.showCollectionTab = async function (options) {
       tools: [
         {
           id: 'label',
+          qtip: 'Label filtering',
           handler: (event, toolEl, panel, tc) => {
             labelsMenu.showAt(event.xy)
           }
         },
         {
           id: 'manage',
+          qtip: 'Manage collection',
           handler: (event, toolEl, panel, tc) => {
             addCollectionManager({
               collectionId,

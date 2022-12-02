@@ -464,6 +464,7 @@ SM.NavTree.TreePanel = Ext.extend(Ext.tree.TreePanel, {
           tools: [
             {
               id: 'logout',
+              qtip: 'Logout session',
               handler: window.oidcProvider.logout
             },
           ],
