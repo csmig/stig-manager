@@ -1032,7 +1032,7 @@ SM.NavTree.TreePanel = Ext.extend(Ext.tree.TreePanel, {
           return
         }
         if (n.attributes.leafType === 'collection') {
-          SM.Collection.showCollectionTab({
+          SM.CollectionPanel.showCollectionTab({
             collectionId: n.attributes.collectionId,
             collectionName: n.attributes.collectionName,
             treePath: n.getPath()
