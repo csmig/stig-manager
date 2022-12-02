@@ -229,7 +229,7 @@ SM.CollectionPanel.AggGrid = Ext.extend(Ext.grid.GridPanel, {
         <div class="sm-dynamic-width">
           <div class="sm-info">${v}</div>
         </div>
-        <div class="sm-static-width"><img class="sm-grid-cell-toolbar-edit" src="img/shield-grey-check.svg" width="14" height="14"></div>
+        <div class="sm-static-width"><img class="sm-grid-cell-toolbar-edit" ext:qtip="Open checklist" src="img/shield-grey-check.svg" width="14" height="14"></div>
       </div>`
     }
 
@@ -524,7 +524,7 @@ SM.CollectionPanel.UnaggGrid = Ext.extend(Ext.grid.GridPanel, {
         <div class="sm-dynamic-width">
           <div class="sm-info">${v}</div>
         </div>
-        <div class="sm-static-width"><img class="sm-grid-cell-toolbar-edit" src="img/shield-grey-check.svg" width="14" height="14"></div>
+        <div class="sm-static-width"><img class="sm-grid-cell-toolbar-edit" ext:qtip="Open checklist" src="img/shield-grey-check.svg" width="14" height="14"></div>
       </div>`
     }
 
@@ -1150,29 +1150,28 @@ SM.CollectionPanel.OverviewPanel = Ext.extend(Ext.Panel, {
       cls: 'sm-round-inner-panel',
       bodyStyle: 'padding: 10px;',
       title: 'Inventory',
+      tools: this.inventoryPanelTools || undefined,
       border: true
     })
     this.progressPanel = new SM.CollectionPanel.ProgressPanel({
       cls: 'sm-round-inner-panel',
       bodyStyle: 'padding: 10px;',
       title: 'Progress',
+      tools: this.progressPanelTools || undefined,
       border: true
     })
     this.agesPanel = new SM.CollectionPanel.AgesPanel({
       cls: 'sm-round-inner-panel',
       bodyStyle: 'padding: 10px;',
       title: 'Review Ages',
+      tools: this.agesPanelTools || undefined,
       border: true
     })
     this.findingsPanel = new SM.CollectionPanel.FindingsPanel({
       cls: 'sm-round-inner-panel',
       bodyStyle: 'padding: 10px;',
       title: 'Findings',
-      tools: [
-        {
-          id: 'report'
-        }
-      ],
+      tools: this.findingsPanelTools || undefined,
       border: true
     })
     this.exportPanel = new SM.CollectionPanel.ExportPanel({
@@ -1579,14 +1578,7 @@ SM.CollectionPanel.showCollectionTab = async function (options) {
       cls: 'sm-round-panel sm-metrics-overview-panel',
       collapsible: true,
       collapseFirst: false,
-      tools: [
-        {
-          id: 'label',
-          qtip: 'Label filtering',
-          handler: (event, toolEl, panel, tc) => {
-            labelsMenu.showAt(event.xy)
-          }
-        },
+      inventoryPanelTools: [
         {
           id: 'manage',
           qtip: 'Manage collection',
@@ -1596,6 +1588,28 @@ SM.CollectionPanel.showCollectionTab = async function (options) {
               collectionName,
               treePath
             })
+          }
+        }
+      ],
+      findingsPanelTools: [
+        {
+          id: 'report',
+          qtip: 'Open Findings report',
+          handler: (event, toolEl, panel, tc) => {
+            addFindingsSummary({
+              collectionId,
+              collectionName,
+              treePath
+            })
+          }
+        }
+      ],
+      tools: [
+        {
+          id: 'label',
+          qtip: 'Label filtering',
+          handler: (event, toolEl, panel, tc) => {
+            labelsMenu.showAt(event.xy)
           }
         }
       ],
