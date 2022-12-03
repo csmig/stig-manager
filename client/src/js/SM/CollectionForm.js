@@ -2119,6 +2119,9 @@ SM.Collection.LabelsMenu = Ext.extend(Ext.menu.Menu, {
         if (this.showHeader) {
             items.push(this.getTextItemConfig())
         }
+        if (this.hasUnlabeledItem) {
+            items.push(this.getLabelItemConfig(null)) 
+        }
         for (const label of this.initialConfig.labels) {
             if (label.uses === 0 && this.ignoreUnusedLabels) continue
             items.push(this.getLabelItemConfig(label))
@@ -2161,8 +2164,8 @@ SM.Collection.LabelsMenu = Ext.extend(Ext.menu.Menu, {
         return {
             xtype: 'menucheckitem',
             hideOnClick: false,
-            text: SM.Collection.LabelTpl.apply(label),
-            labelId: label.labelId,
+            text: label ? SM.Collection.LabelTpl.apply(label) : 'Unlabeled',
+            labelId: label?.labelId ?? null,
             label,
             checked,
             listeners: {
