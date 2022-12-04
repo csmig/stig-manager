@@ -9,7 +9,12 @@ module.exports.queryMetrics = async function ({
   returnType = 'json'
 }) {
 
-    // CTE processing
+  const predicates = {
+    statements: [],
+    binds: []
+  }
+
+  // CTE processing
   const cteProps = {
     columns: [
       'distinct c.collectionId',
@@ -43,19 +48,24 @@ module.exports.queryMetrics = async function ({
     const labelPredicates = []
     if (inPredicates.labelNames) {
       labelPredicates.push('cl.name IN ?')
+      if (aggregation === 'label')
+        predicates.binds.push([inPredicates.labelNames])
       cteProps.predicates.binds.push([inPredicates.labelNames])
     }
     if (inPredicates.labelIds) {
       const uuidBinds = inPredicates.labelIds.map( uuid => dbUtils.uuidToSqlString(uuid))
-      cteProps.predicates.binds.push([uuidBinds]) 
+      if (aggregation === 'label')
+        predicates.binds.push([uuidBinds])
+      cteProps.predicates.binds.push([uuidBinds])
       labelPredicates.push('cl.uuid IN ?')
     }
     if (inPredicates.labelMatch === 'null') {
       labelPredicates.push('cl.uuid IS NULL')
     }
-    cteProps.predicates.statements.push(
-      `(${labelPredicates.join(' OR ')})`
-    )
+    const labelPredicatesClause = `(${labelPredicates.join(' OR ')})`
+    if (aggregation === 'label')
+      predicates.statements.push(labelPredicatesClause)
+    cteProps.predicates.statements.push(labelPredicatesClause)
   }
   if (inPredicates.assetIds) {
     cteProps.predicates.statements.push(
@@ -87,10 +97,6 @@ module.exports.queryMetrics = async function ({
     'left join stig_asset_map sa on granted.saId = sa.saId',
     'left join current_rev cr on sa.benchmarkId = cr.benchmarkId'
   ]
-  const predicates = {
-    statements: [],
-    binds: []
-  }
   const groupBy = []
   const orderBy = []
 
@@ -155,7 +161,10 @@ module.exports.queryMetrics = async function ({
     orderBy
   })
 
-  let [rows] = await dbUtils.pool.query(query, cteProps.predicates.binds)
+  let [rows] = await dbUtils.pool.query(
+    query, 
+    [...cteProps.predicates.binds, ...predicates.binds]
+  )
   return (rows || [])
 }
 
