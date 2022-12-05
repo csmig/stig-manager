@@ -1899,17 +1899,32 @@ td.x-grid3-hd-over .x-grid3-hd-inner {
 .x-tool.x-tool-label {
   background-image: url(../img/label.svg);
   background-repeat: no-repeat;
-  background-size: 12px 16px
+  background-size: 12px 16px;
+  color: grey;
+  width: auto;
+  padding-left: 15px;
+  font-size: 10px;
+  line-height: 16px;
 }
 .x-tool.x-tool-manage {
   background-image: url(../img/gear.svg);
   background-repeat: no-repeat;
-  background-size: 12px 16px
+  background-size: 12px 16px;
+  color: grey;
+  width: auto;
+  padding-left: 15px;
+  font-size: 10px;
+  line-height: 16px;
 }
 .x-tool.x-tool-report {
   background-image: url(../img/grid.svg);
   background-repeat: no-repeat;
-  background-size: 12px 16px
+  background-size: 12px 16px;
+  color: grey;
+  width: auto;
+  padding-left: 15px;
+  font-size: 10px;
+  line-height: 16px;
 }
 .x-tool.x-tool-logout {
   background-image: url(../img/logout.svg);
@@ -1928,11 +1943,8 @@ td.x-grid3-hd-over .x-grid3-hd-inner {
   background-size: 10px 10px;
   background-position: 4px 4px;
 }
-.x-tool {
-	filter: brightness(50%)
-}
 .x-tool:hover {
-  filter: brightness(125%)
+  filter: brightness(50%)
 }
 .sm-line-clamp-wrap .x-grid3-cell-inner {
   overflow: hidden;

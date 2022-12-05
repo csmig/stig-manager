@@ -1145,12 +1145,22 @@ SM.CollectionPanel.InventoryPanel = Ext.extend(Ext.Panel, {
 SM.CollectionPanel.OverviewPanel = Ext.extend(Ext.Panel, {
   initComponent: function () {
     const _this = this
+    const toolTemplate = new Ext.XTemplate(
+      '<tpl if="!!values.text">',
+        '<div class="x-tool x-tool-{id}">{text}</div>',
+      '</tpl>',
+      '<tpl if="!!!values.text">',
+          '<div class="x-tool x-tool-{id}">&#160;</div>',
+      '</tpl>'
+  )
+
     const collectionId = this.collectionId
     this.inventoryPanel = new SM.CollectionPanel.InventoryPanel({
       cls: 'sm-round-inner-panel',
       bodyStyle: 'padding: 10px;',
       title: 'Inventory',
       tools: this.inventoryPanelTools || undefined,
+      toolTemplate,
       border: true
     })
     this.progressPanel = new SM.CollectionPanel.ProgressPanel({
@@ -1172,6 +1182,7 @@ SM.CollectionPanel.OverviewPanel = Ext.extend(Ext.Panel, {
       bodyStyle: 'padding: 10px;',
       title: 'Findings',
       tools: this.findingsPanelTools || undefined,
+      toolTemplate,
       border: true
     })
     this.exportPanel = new SM.CollectionPanel.ExportPanel({
@@ -1193,6 +1204,7 @@ SM.CollectionPanel.OverviewPanel = Ext.extend(Ext.Panel, {
     const config = {
       border: false,
       autoScroll: true,
+      toolTemplate,
       items: [
         this.progressPanel,
         this.inventoryPanel,
@@ -1561,7 +1573,7 @@ SM.CollectionPanel.showCollectionTab = async function (options) {
     }
 
     const overviewTitleTpl = new Ext.XTemplate(
-      `{[values.labels ? 'Filtered: ' + values.labels : 'Full Collection']}{[values.lastApiRefresh ? '&nbsp;&nbsp;<i>(' + durationToNow(values.lastApiRefresh, true) + ')</i>' : '']}`
+      `Collection: {[values.labels ? values.labels : 'all']}{[values.lastApiRefresh ? '&nbsp;&nbsp;<i>(' + durationToNow(values.lastApiRefresh, true) + ')</i>' : '']}`
     )
 
     const getMetricsAggCollection = async function (collectionId) {
@@ -1596,7 +1608,7 @@ SM.CollectionPanel.showCollectionTab = async function (options) {
       inventoryPanelTools: [
         {
           id: 'manage',
-          qtip: 'Manage collection',
+          text: 'Manage',
           handler: (event, toolEl, panel, tc) => {
             addCollectionManager({
               collectionId,
@@ -1609,7 +1621,7 @@ SM.CollectionPanel.showCollectionTab = async function (options) {
       findingsPanelTools: [
         {
           id: 'report',
-          qtip: 'Open Findings report',
+          text: 'Details',
           handler: (event, toolEl, panel, tc) => {
             addFindingsSummary({
               collectionId,
@@ -1622,7 +1634,7 @@ SM.CollectionPanel.showCollectionTab = async function (options) {
       tools: [
         {
           id: 'label',
-          qtip: 'Label filtering',
+          text: 'Filter &#9660;',
           handler: (event, toolEl, panel, tc) => {
             labelsMenu.showAt(event.xy)
           }
