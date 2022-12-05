@@ -314,7 +314,7 @@ SM.RuleContentTpl = new Ext.XTemplate(
         this.showRefreshIcon = () => _this.setIconClass('icon-refresh')
         this.onBeforeLoad = (store) => {
             const grid = _this.ownerCt?.ownerCt || _this.grid || store.grid
-            const emptyEl = grid?.view.mainBody.dom.querySelector('.x-grid-empty')
+            const emptyEl = grid?.view?.mainBody?.dom?.querySelector('.x-grid-empty')
             if (emptyEl) {
                 emptyEl.innerHTML = `<div class="icon-loading" style="padding-left:20px;">Loading</div>`
             }
