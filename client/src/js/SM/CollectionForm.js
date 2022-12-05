@@ -1698,7 +1698,13 @@ SM.getContrastYIQ = function (hexcolor){
 	return (yiq >= 128) ? '#080808' : '#f7f7f7';
 }
 
-SM.Collection.LabelSpriteHtml = `<span class=sm-label-sprite style="color:{[SM.getContrastYIQ(values.color)]};background-color: #{color};" ext:qtip="{[SM.he(SM.he(values.description))]}">{[SM.he(values.name)]}</span>`
+SM.Collection.LabelSpriteHtml = `<span class=sm-label-sprite style="color:
+    {[SM.getContrastYIQ(values.color)]};background-color: #{color};" 
+    ext:qtip="{[SM.he(SM.he(values.description))]}">
+    <tpl if="values.isUnlabeled===true"><i></tpl>
+    {[SM.he(values.name)]}
+    <tpl if="values.isUnlabeled===true"></i></tpl>
+    </span>`
 
 SM.Collection.LabelTpl = new Ext.XTemplate(
     SM.Collection.LabelSpriteHtml
@@ -1710,12 +1716,26 @@ SM.Collection.LabelArrayTpl = new Ext.XTemplate(
 )
 
 SM.Collection.LabelSpritesByCollectionLabelId = function (collectionId, labelIds) {
-    const labels = []
+    let labels = []
+    let includeUnlabeled = false
     for (const labelId of labelIds) {
-      const label = SM.Cache.CollectionMap.get(collectionId).labelMap.get(labelId)
-      if (label) labels.push(label)
+        if (labelId === null) {
+            includeUnlabeled = true
+        }
+        const label = SM.Cache.CollectionMap.get(collectionId).labelMap.get(labelId)
+        if (label) labels.push(label)
     }
     labels.sort((a, b) => a.name.localeCompare(b.name))
+    if (includeUnlabeled) {
+        labels = [
+            {
+                color: '000000',
+                name: 'no label',
+                isUnlabeled: true
+            },
+            ...labels
+        ]
+    }
     return SM.Collection.LabelArrayTpl.apply(labels)
 }
 
@@ -2120,7 +2140,11 @@ SM.Collection.LabelsMenu = Ext.extend(Ext.menu.Menu, {
             items.push(this.getTextItemConfig())
         }
         if (this.hasUnlabeledItem) {
-            items.push(this.getLabelItemConfig(null)) 
+            items.push(this.getLabelItemConfig({
+                color: '000000',
+                name: 'no label',
+                isUnlabeled: true
+            })) 
         }
         for (const label of this.initialConfig.labels) {
             if (label.uses === 0 && this.ignoreUnusedLabels) continue
@@ -2164,7 +2188,7 @@ SM.Collection.LabelsMenu = Ext.extend(Ext.menu.Menu, {
         return {
             xtype: 'menucheckitem',
             hideOnClick: false,
-            text: label ? SM.Collection.LabelTpl.apply(label) : 'Unlabeled',
+            text: SM.Collection.LabelTpl.apply(label),
             labelId: label?.labelId ?? null,
             label,
             checked,
