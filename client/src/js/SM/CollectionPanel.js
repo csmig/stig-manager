@@ -1561,7 +1561,7 @@ SM.CollectionPanel.showCollectionTab = async function (options) {
     }
 
     const overviewTitleTpl = new Ext.XTemplate(
-      `Overview{[values.labels ? ' ' + values.labels : '']} {[values.lastApiRefresh ? '<i>(' + durationToNow(values.lastApiRefresh, true) + ')</i>' : '']}`
+      `{[values.labels ? 'Filtered: ' + values.labels : 'Full Collection']}{[values.lastApiRefresh ? '&nbsp;&nbsp;<i>(' + durationToNow(values.lastApiRefresh, true) + ')</i>' : '']}`
     )
 
     const getMetricsAggCollection = async function (collectionId) {
@@ -1628,7 +1628,7 @@ SM.CollectionPanel.showCollectionTab = async function (options) {
           }
         }
       ],
-      title: 'Overview',
+      title: ' ',
       margins: { top: SM.Margin.top, right: SM.Margin.edge, bottom: SM.Margin.bottom, left: SM.Margin.edge },
       region: 'west',
       width: 430,
