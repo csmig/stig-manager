@@ -1578,7 +1578,8 @@ SM.CollectionPanel.showCollectionTab = async function (options) {
     }
 
     const overviewTitleTpl = new Ext.XTemplate(
-      `Collection: {[values.labels ? values.labels : 'all']}{[values.lastApiRefresh ? '&nbsp;&nbsp;<i>(' + durationToNow(values.lastApiRefresh, true) + ')</i>' : '']}`
+      // `Collection: {[values.labels ? values.labels : 'all']}{[values.lastApiRefresh ? '&nbsp;&nbsp;<i>(' + durationToNow(values.lastApiRefresh, true) + ')</i>' : '']}`
+      `Collection: {[values.labels ? values.labels : 'all']}`
     )
 
     const getMetricsAggCollection = async function (collectionId) {
