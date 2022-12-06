@@ -1324,6 +1324,7 @@ SM.CollectionPanel.AggStigPanel = Ext.extend(Ext.Panel, {
       aggregation: 'stig',
       stateId: `sm-collection-${collectionId}-agg-grid-stig`,
       stateful: true,
+      border: false,
       checkboxSelModel: false,
       collectionId,
       baseParams: this.baseParams,
@@ -1341,6 +1342,7 @@ SM.CollectionPanel.AggStigPanel = Ext.extend(Ext.Panel, {
       title: 'Checklists',
       stateId: `sm-collection-${collectionId}-unagg-grid-stig`,
       stateful: true,
+      border: false,
       parentAggregation: 'stig',
       collectionId,
       reloadBtnHandler: this.reloadBtnHandler,
@@ -1421,6 +1423,7 @@ SM.CollectionPanel.AggLabelPanel = Ext.extend(Ext.Panel, {
       aggregation: 'label',
       stateId: `sm-metrics-agg-grid-label-${collectionId}`,
       stateful: true,
+      border: false,
       collectionId,
       reloadBtnHandler: this.reloadBtnHandler,
       baseParams: this.baseParams,
@@ -1433,6 +1436,7 @@ SM.CollectionPanel.AggLabelPanel = Ext.extend(Ext.Panel, {
       title: 'Assets',
       stateId: `sm-metrics-agg-grid-label-asset-${collectionId}`,
       stateful: true,
+      border: false,
       reloadBtnHandler: this.reloadBtnHandler,
       aggregation: 'asset',
       storeAutoLoad: false,
@@ -1445,6 +1449,7 @@ SM.CollectionPanel.AggLabelPanel = Ext.extend(Ext.Panel, {
       title: 'STIGs',
       stateId: `sm-metrics-unagg-grid-label-${collectionId}`,
       stateful: true,
+      border: false,
       parentAggregation: 'asset',
       reloadBtnHandler: this.reloadBtnHandler,
       collectionId,
@@ -1646,7 +1651,15 @@ SM.CollectionPanel.showCollectionTab = async function (options) {
       width: 430,
       minWidth: 430,
       split: true,
-      collectionId
+      collectionId,
+      bbar: [
+        {
+          xtype: 'sm-reload-store-button',
+          handler: () => alert('reload')
+        },
+        '->','-',
+        'Refreshed: now'
+      ]
     })
 
     const updateOverviewTitle = () => {
