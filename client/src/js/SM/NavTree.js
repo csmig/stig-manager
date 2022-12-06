@@ -24,7 +24,7 @@ SM.NavTree.CollectionLeafConfig = function (collection) {
     text: SM.he(collection.name) + toolsEl,
     collectionId: collection.collectionId,
     collectionName: collection.name,
-    iconCls: 'sm-collection-color-icon',
+    iconCls: 'sm-collection-icon',
     listeners: {
       beforeclick: function (n, e) {
         if (e.target.className === "sm-tree-toolbar") {
@@ -823,20 +823,20 @@ SM.NavTree.TreePanel = Ext.extend(Ext.tree.TreePanel, {
               {
                 id: `collections2-root`,
                 node: 'collections2',
-                text: 'Collections<span class="sm-navtree-sprite">preview</span>',
-                iconCls: 'sm-collection-color-icon',
+                text: 'Collections',
+                iconCls: 'sm-collection-icon',
                 expanded: true
               }
             )
-            content.push(
-              {
-                id: `collections-root`,
-                node: 'collections',
-                text: 'Collections',
-                iconCls: 'sm-collection-icon',
-                expanded: false
-              }
-            )
+            // content.push(
+            //   {
+            //     id: `collections-root`,
+            //     node: 'collections',
+            //     text: 'Collections',
+            //     iconCls: 'sm-collection-icon',
+            //     expanded: false
+            //   }
+            // )
             content.push(
               {
                 id: `library-root`,

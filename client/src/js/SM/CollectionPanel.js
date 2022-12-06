@@ -1736,7 +1736,7 @@ SM.CollectionPanel.showCollectionTab = async function (options) {
       region: 'center',
       collectionId: collectionId,
       collectionName: collectionName,
-      iconCls: 'sm-collection-color-icon',
+      iconCls: 'sm-collection-icon',
       title: '',
       closable: true,
       layout: 'border',
