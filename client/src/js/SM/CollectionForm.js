@@ -2132,39 +2132,16 @@ SM.Collection.LabelsGrid = Ext.extend(Ext.grid.GridPanel, {
 SM.Collection.LabelsMenu = Ext.extend(Ext.menu.Menu, {
     initComponent: function () {
         const _this = this
-
         this.addEvents('applied')
-
-        const items = []
-        if (this.showHeader) {
-            items.push(this.getTextItemConfig())
-        }
-        if (this.hasUnlabeledItem) {
-            items.push(this.getLabelItemConfig({
-                color: '000000',
-                name: 'no label',
-                isUnlabeled: true
-            })) 
-        }
-        for (const label of this.initialConfig.labels) {
-            if (label.uses === 0 && this.ignoreUnusedLabels) continue
-            items.push(this.getLabelItemConfig(label))
-        }
-        if (this.showApply) {
-            items.push('-', this.getActionItemConfig())
-        }
         const config = {
-            items,
+            items: [],
             listeners: {
                 itemclick: this.onItemClick,
-                // hide: function (menu) {
-                //     const labelIds = menu.getCheckedLabelIds()
-                //     this.fireEvent('applied', labelIds)
-                // }
             }    
         }
         Ext.apply(this, Ext.apply(this.initialConfig, config))
         SM.Collection.LabelsMenu.superclass.initComponent.call(this)
+        this.refreshItems(this.labels)
     },
     onItemClick: function (item, e) {
         if (item.hideOnClick) { // only the Apply item
@@ -2260,7 +2237,16 @@ SM.Collection.LabelsMenu = Ext.extend(Ext.menu.Menu, {
         for (const label of labels) {
             if (label.uses === 0 && this.ignoreUnusedLabels) continue
             const checked = labelIdSet.has(label.labelId)
-            this.addItem(this.getLabelItemConfig(label, checked))
+            if (label.labelId === null) {
+                this.addItem(this.getLabelItemConfig({
+                    color: '000000',
+                    name: 'no label',
+                    isUnlabeled: true
+                }, checked))     
+            }
+            else {
+                this.addItem(this.getLabelItemConfig(label, checked))
+            }
         }
         if (this.showApply) {
             this.addItem('-')

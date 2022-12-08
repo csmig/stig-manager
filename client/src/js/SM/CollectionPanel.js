@@ -1594,12 +1594,16 @@ SM.CollectionPanel.showCollectionTab = async function (options) {
       return lastApiMetricsCollection
     }
 
+    const labelResult = await Ext.Ajax.requestPromise({
+      url: `${STIGMAN.Env.apiBase}/collections/${collectionId}/metrics/summary/label`,
+			method: 'GET'
+    })
+    const filterableLabels = JSON.parse(labelResult.response.responseText)
+
     const labelsMenu = new SM.Collection.LabelsMenu({
-      labels: SM.Cache.CollectionMap.get(collectionId).labels,
+      labels: filterableLabels,
       showHeader: true,
       showApply: true,
-      ignoreUnusedLabels: true,
-      hasUnlabeledItem: true,
       listeners: {
         applied: function (labelIds) {
             SM.Dispatcher.fireEvent('labelfilter', collectionId, labelIds)
