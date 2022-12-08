@@ -118,6 +118,7 @@ module.exports.queryMetrics = async function ({
       break
     case 'label':
       predicates.statements.push('a.assetId IS NOT NULL')
+      groupBy.push('cl.description', 'cl.color')
       joins.push(
         'left join collection_label_asset_map cla on a.assetId = cla.assetId',
         'left join collection_label cl on cla.clId = cl.clId'
@@ -432,6 +433,8 @@ const baseCols = {
   label: [
     'BIN_TO_UUID(cl.uuid,1) as labelId',
     'cl.name',
+    'cl.color',
+    'cl.description',
     'count(distinct a.assetId) as assets'
   ]
 }
