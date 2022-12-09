@@ -1566,6 +1566,7 @@ SM.CollectionPanel.showCollectionTab = async function (options) {
 
     let gCurrentBaseParams = setCurrentBaseParams(initialLabelIds)
     let gCurrentLabelIds = initialLabelIds
+    let gFilterableLabels = []
     let lastApiRefresh, lastApiMetricsCollection
     const updateDataDelay = 300000
     const updateOverviewTitleDelay = 60000
@@ -1583,7 +1584,6 @@ SM.CollectionPanel.showCollectionTab = async function (options) {
     )
 
     const getMetricsAggCollection = async function (collectionId) {
-      // API requests
       const results = await Ext.Ajax.requestPromise({
         url: `${STIGMAN.Env.apiBase}/collections/${collectionId}/metrics/summary/collection`,
         method: 'GET',
@@ -1594,14 +1594,23 @@ SM.CollectionPanel.showCollectionTab = async function (options) {
       return lastApiMetricsCollection
     }
 
-    const labelResult = await Ext.Ajax.requestPromise({
-      url: `${STIGMAN.Env.apiBase}/collections/${collectionId}/metrics/summary/label`,
-			method: 'GET'
-    })
-    const filterableLabels = JSON.parse(labelResult.response.responseText)
+    const setFilterableLabels = async function () {
+      try {
+        const results = await Ext.Ajax.requestPromise({
+          url: `${STIGMAN.Env.apiBase}/collections/${collectionId}/metrics/summary/label`,
+          method: 'GET'
+        })
+        gFilterableLabels = JSON.parse(results.response.responseText)
+        return gFilterableLabels
+      }
+      catch (e) {
+        console.error(e)
+        return []
+      }
+    }
 
     const labelsMenu = new SM.Collection.LabelsMenu({
-      labels: filterableLabels,
+      labels: gFilterableLabels,
       showHeader: true,
       showApply: true,
       listeners: {
@@ -1755,7 +1764,7 @@ SM.CollectionPanel.showCollectionTab = async function (options) {
             // console.log(`${collectionName}: hide tab ${panel.id}`)
             cancelTimers()
         },
-        beforeshow: (panel) => {
+        show: (panel) => {
             // console.log(`${collectionName}: show tab ${panel.id}`)
             updateData()
         }
@@ -1794,7 +1803,10 @@ SM.CollectionPanel.showCollectionTab = async function (options) {
           // console.log(`${collectionName}: cancelling updateData timer, id ${updateDataTimer}`)
           clearTimeout(updateDataTimer)
           updateDataTimer = refreshViewTimer = null
-          apiMetricsCollection = await getMetricsAggCollection(collectionId, gCurrentLabelIds)
+          ;[apiMetricsCollection] = await Promise.all([
+            getMetricsAggCollection(collectionId, gCurrentLabelIds),
+            setFilterableLabels()
+          ])
           updateDataTimer = setTimeout(updateData, updateDataDelay)
           // console.log(`${collectionName}: set updateData timer in ${updateDataDelay}, id ${updateDataTimer}`)
         }
@@ -1806,6 +1818,7 @@ SM.CollectionPanel.showCollectionTab = async function (options) {
         // console.log(`${collectionName}: set updateOverviewTitle interval every ${updateOverviewTitleDelay}, id ${updateOverviewTitleInterval}`)
 
         overviewPanel.updateMetrics(apiMetricsCollection)
+        labelsMenu.refreshItems(gFilterableLabels)
         const activePanel = aggTabPanel.getActiveTab()
         if (activePanel) {
           await activePanel.updateData(onlyRefreshView)
@@ -1873,4 +1886,3 @@ SM.CollectionPanel.showCollectionTab = async function (options) {
     alert(e)
   }
 }
-
