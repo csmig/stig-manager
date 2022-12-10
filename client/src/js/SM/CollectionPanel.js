@@ -1256,7 +1256,7 @@ SM.CollectionPanel.AggAssetPanel = Ext.extend(Ext.Panel, {
     aggAssetGrid.getSelectionModel().on('rowselect', onRowSelect)
     const updateBaseParams = function (params) {
       unaggGrid.store.baseParams = aggAssetGrid.store.baseParams = _this.baseParams = params
-      updateData()
+      // updateData()
     }
     const updateData = async function (onlyRefreshView = false) {
       try {
@@ -1365,7 +1365,7 @@ SM.CollectionPanel.AggStigPanel = Ext.extend(Ext.Panel, {
 
     const updateBaseParams = function (params) {
       unaggGrid.store.baseParams = aggStigGrid.store.baseParams = _this.baseParams = params
-      updateData()
+      // updateData()
     }
     const updateData = async function (onlyRefreshView = false) {
       try {
@@ -1480,7 +1480,7 @@ SM.CollectionPanel.AggLabelPanel = Ext.extend(Ext.Panel, {
     aggAssetGrid.getSelectionModel().on('rowselect', onRowSelectAsset)
     const updateBaseParams = function (params) {
       unaggGrid.store.baseParams = aggLabelGrid.store.baseParams = aggAssetGrid.store.baseParams = _this.baseParams = params
-      updateData()
+      // updateData()
     }
     const updateData = async function (onlyRefreshView = false) {
       try {
@@ -1549,9 +1549,9 @@ SM.CollectionPanel.AggLabelPanel = Ext.extend(Ext.Panel, {
 SM.CollectionPanel.showCollectionTab = async function (options) {
   try {
     const { collectionId, collectionName, treePath, initialLabelIds = [] } = options
-
+    let gCurrentBaseParams
     function setCurrentBaseParams (labelIds) {
-      if (!labelIds.length) return undefined
+      // if (!labelIds.length) return undefined
       const params = {}
       for (let x = 0, length = labelIds.length; x < length; x++) {
         if (labelIds[x] === null) {
@@ -1561,10 +1561,13 @@ SM.CollectionPanel.showCollectionTab = async function (options) {
           ;(params.labelId ??= []).push(labelIds[x])
         }
       }
+      aggAssetPanel?.updateBaseParams(params)
+      aggStigPanel?.updateBaseParams(params)
+      aggLabelPanel?.updateBaseParams(params)
+      gCurrentBaseParams = params
       return params
     }
 
-    let gCurrentBaseParams = setCurrentBaseParams(initialLabelIds)
     let gCurrentLabelIds = initialLabelIds
     let gFilterableLabels = []
     let lastApiRefresh, lastApiMetricsCollection
@@ -1594,13 +1597,19 @@ SM.CollectionPanel.showCollectionTab = async function (options) {
       return lastApiMetricsCollection
     }
 
-    const setFilterableLabels = async function () {
+    const updateFilterableLabels = async function () {
       try {
         const results = await Ext.Ajax.requestPromise({
           url: `${STIGMAN.Env.apiBase}/collections/${collectionId}/metrics/summary/label`,
           method: 'GET'
         })
         gFilterableLabels = JSON.parse(results.response.responseText)
+        const filterableLabelIds = gFilterableLabels.map( label => label.labelId)
+        // remove from gCurrentLabelIds any missing labelIds
+        gCurrentLabelIds = gCurrentLabelIds.filter( labelId => filterableLabelIds.includes(labelId))
+        // reset base parameters
+        setCurrentBaseParams(gCurrentLabelIds)
+        
         return gFilterableLabels
       }
       catch (e) {
@@ -1692,8 +1701,7 @@ SM.CollectionPanel.showCollectionTab = async function (options) {
       layout: 'fit',
       border: false,
       collectionId,
-      reloadBtnHandler,
-      baseParams: gCurrentBaseParams
+      reloadBtnHandler
     })
     const aggStigPanel = new SM.CollectionPanel.AggStigPanel({
       title: 'STIGs',
@@ -1701,8 +1709,7 @@ SM.CollectionPanel.showCollectionTab = async function (options) {
       layout: 'fit',
       border: false,
       collectionId,
-      reloadBtnHandler,
-      baseParams: gCurrentBaseParams
+      reloadBtnHandler
     })
     const aggLabelPanel = new SM.CollectionPanel.AggLabelPanel({
       title: 'Labels',
@@ -1710,9 +1717,11 @@ SM.CollectionPanel.showCollectionTab = async function (options) {
       layout: 'fit',
       border: false,
       collectionId,
-      reloadBtnHandler,
-      baseParams: gCurrentBaseParams
+      reloadBtnHandler
     })
+
+    setCurrentBaseParams(initialLabelIds)
+
 
     const aggTabPanel = new Ext.TabPanel({
       activeTab: 0,
@@ -1781,9 +1790,10 @@ SM.CollectionPanel.showCollectionTab = async function (options) {
           let apiMetricsCollection = await getMetricsAggCollection(collectionId)
           updateOverviewTitle()
           overviewPanel.updateMetrics(apiMetricsCollection)
-          aggAssetPanel.updateBaseParams(gCurrentBaseParams)
-          aggStigPanel.updateBaseParams(gCurrentBaseParams)
-          aggLabelPanel.updateBaseParams(gCurrentBaseParams)
+          const activePanel = aggTabPanel.getActiveTab()
+          if (activePanel) {
+            await activePanel.updateData()
+          } 
         }
       }
       catch (e) {
@@ -1803,10 +1813,8 @@ SM.CollectionPanel.showCollectionTab = async function (options) {
           // console.log(`${collectionName}: cancelling updateData timer, id ${updateDataTimer}`)
           clearTimeout(updateDataTimer)
           updateDataTimer = refreshViewTimer = null
-          ;[apiMetricsCollection] = await Promise.all([
-            getMetricsAggCollection(collectionId, gCurrentLabelIds),
-            setFilterableLabels()
-          ])
+          await updateFilterableLabels()
+          apiMetricsCollection = await getMetricsAggCollection(collectionId, gCurrentLabelIds)
           updateDataTimer = setTimeout(updateData, updateDataDelay)
           // console.log(`${collectionName}: set updateData timer in ${updateDataDelay}, id ${updateDataTimer}`)
         }
