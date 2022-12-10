@@ -29,7 +29,7 @@ async function getCollectionMetrics (req, res, next, {style, aggregation, firstR
       res.send(csvStringify(rows, {header: true}))
     }
     else {
-      res.json(firstRowOnly ? rows[0] || [] : rows)
+      res.json(firstRowOnly ? rows[0] : rows)
     }
   }
   catch (e) {

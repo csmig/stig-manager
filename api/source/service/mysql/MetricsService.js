@@ -36,6 +36,7 @@ module.exports.queryMetrics = async function ({
       ],
       binds: [
         inPredicates.collectionId,
+        inPredicates.collectionId,
         userId
       ]
     }
@@ -86,7 +87,8 @@ module.exports.queryMetrics = async function ({
     predicates: cteProps.predicates
   })
   const ctes = [
-    `granted as (${cteQuery})`
+    `granted as (select ? as collectionId, null as benchmarkId, null as assetId, null as saId
+      union all ${cteQuery} )`
   ]
 
   // Main query
@@ -162,10 +164,15 @@ module.exports.queryMetrics = async function ({
     orderBy
   })
 
-  let [rows] = await dbUtils.pool.query(
+  let [rows, fields] = await dbUtils.pool.query(
     query, 
     [...cteProps.predicates.binds, ...predicates.binds]
   )
+  // if (aggregation === 'collection' && !rows.length) {
+  //   rows[0] = {
+
+  //   }
+  // }
   return (rows || [])
 }
 
