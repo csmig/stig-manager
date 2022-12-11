@@ -1258,11 +1258,11 @@ SM.CollectionPanel.AggAssetPanel = Ext.extend(Ext.Panel, {
       unaggGrid.store.baseParams = aggAssetGrid.store.baseParams = _this.baseParams = params
       // updateData()
     }
-    const updateData = async function (onlyRefreshView = false) {
+    const updateData = async function (refreshViewsOnly = false) {
       try {
         const selectedRow = aggAssetGrid.getSelectionModel().getSelected()
 
-        if (onlyRefreshView) {
+        if (refreshViewsOnly) {
           aggAssetGrid.getView().refresh()
           if (selectedRow) {
             unaggGrid.getView().refresh()
@@ -1364,11 +1364,11 @@ SM.CollectionPanel.AggStigPanel = Ext.extend(Ext.Panel, {
       unaggGrid.store.baseParams = aggStigGrid.store.baseParams = _this.baseParams = params
       // updateData()
     }
-    const updateData = async function (onlyRefreshView = false) {
+    const updateData = async function (refreshViewsOnly = false) {
       try {
         const selectedRow = aggStigGrid.getSelectionModel().getSelected()
 
-        if (onlyRefreshView) {
+        if (refreshViewsOnly) {
           aggStigGrid.getView().refresh()
           if (selectedRow) {
             unaggGrid.getView().refresh()
@@ -1479,12 +1479,12 @@ SM.CollectionPanel.AggLabelPanel = Ext.extend(Ext.Panel, {
       unaggGrid.store.baseParams = aggLabelGrid.store.baseParams = aggAssetGrid.store.baseParams = _this.baseParams = params
       // updateData()
     }
-    const updateData = async function (onlyRefreshView = false) {
+    const updateData = async function (refreshViewsOnly = false) {
       try {
         const selectedRowLabel = aggLabelGrid.getSelectionModel().getSelected()
         const selectedRowAsset = aggAssetGrid.getSelectionModel().getSelected()
 
-        if (onlyRefreshView) {
+        if (refreshViewsOnly) {
           aggLabelGrid.getView().refresh()
           if (selectedRowLabel) {
             aggAssetGrid.getView().refresh()
@@ -1559,7 +1559,7 @@ SM.CollectionPanel.showCollectionTab = async function (options) {
     gState.lastApiMetricsCollection
     
     const UPDATE_DATA_DELAY = 300000
-    const UPDATE_OVERVIEW_TITLE_DELAY = 60000
+    const LAST_REFRESH_DELAY = 60000
     
     const overviewTitleTpl = new Ext.XTemplate(
       // `Collection: {[values.labels ? values.labels : 'all']}{[values.gState.lastApiRefresh ? '&nbsp;&nbsp;<i>(' + durationToNow(values.gState.lastApiRefresh, true) + ')</i>' : '']}`
@@ -1575,6 +1575,13 @@ SM.CollectionPanel.showCollectionTab = async function (options) {
             SM.Dispatcher.fireEvent('labelfilter', collectionId, labelIds)
         }
       }
+    })
+
+    const lastRefreshedTextItem = new Ext.Toolbar.TextItem({
+      text: '',
+      tpl: [
+        'Fetched: {duration}'
+      ]
     })
       
     const overviewPanel = new SM.CollectionPanel.OverviewPanel({
@@ -1629,7 +1636,7 @@ SM.CollectionPanel.showCollectionTab = async function (options) {
           handler: () => alert('reload')
         },
         '->','-',
-        'Refreshed: now'
+        lastRefreshedTextItem
       ]
     })
 
@@ -1777,13 +1784,17 @@ SM.CollectionPanel.showCollectionTab = async function (options) {
       }
     }
 
-    async function updateOverviewTitle () {
-      // console.log(`${collectionName}: Executing updateOverviewTitle with ${gState.labelIds} and ${gState.lastApiRefresh}`)
+    function updateOverviewTitle () {
       const overviewTitle = overviewTitleTpl.apply({
-        labels: SM.Collection.LabelSpritesByCollectionLabelId(collectionId, gState.labelIds),
-        lastApiRefresh: gState.lastApiRefresh
+        labels: SM.Collection.LabelSpritesByCollectionLabelId(collectionId, gState.labelIds)
       })
       overviewPanel.setTitle(overviewTitle)
+    }
+
+    function updateLastRefreshTextItem () {
+      lastRefreshedTextItem.update({
+        duration: durationToNow(gState.lastApiRefresh, true)
+      })
     }
 
     function reloadBtnHandler () { updateData() }
@@ -1809,32 +1820,32 @@ SM.CollectionPanel.showCollectionTab = async function (options) {
     }
 
     // handle periodic updates
-    async function updateData (onlyRefreshView = false) {
+    async function updateData (refreshViewsOnly = false) {
       try {
         let apiMetricsCollection = gState.lastApiMetricsCollection
-        if (!onlyRefreshView) {
-          clearTimeout(gState.refreshViewTimer)
-          clearTimeout(gState.updateDataTimer)
-          gState.updateDataTimer = gState.refreshViewTimer = null
+        if (!refreshViewsOnly) {
+          clearTimeout(gState.refreshViewTimerId)
+          clearTimeout(gState.updateDataTimerId)
+          gState.updateDataTimerId = gState.refreshViewTimerId = null
           await updateFilterableLabels()
           apiMetricsCollection = await getMetricsAggCollection(collectionId, gState.labelIds)
-          gState.updateDataTimer = setTimeout(updateData, UPDATE_DATA_DELAY)
+          gState.updateDataTimerId = setTimeout(updateData, UPDATE_DATA_DELAY)
         }
-        clearInterval(gState.updateOverviewTitleInterval)
-        gState.updateOverviewTitleInterval = null
-        updateOverviewTitle()
-        gState.updateOverviewTitleInterval = setInterval(updateOverviewTitle, UPDATE_OVERVIEW_TITLE_DELAY)
+        clearInterval(gState.updateLastRefreshIntervalId)
+        gState.updateLastRefreshIntervalId = null
+        updateLastRefreshTextItem()
+        gState.updateLastRefreshIntervalId = setInterval(updateLastRefreshTextItem, LAST_REFRESH_DELAY)
 
         overviewPanel.updateMetrics(apiMetricsCollection)
         labelsMenu.refreshItems(gState.filterableLabels)
         const activePanel = aggTabPanel.getActiveTab()
         if (activePanel) {
-          await activePanel.updateData(onlyRefreshView)
+          await activePanel.updateData(refreshViewsOnly)
         }
 
-        const refreshDelay = calcRefreshDelay(apiMetricsCollection.metrics.maxTouchTs)
-        if (refreshDelay < UPDATE_DATA_DELAY) {
-          gState.refreshViewTimer = setTimeout(updateData, refreshDelay, true)
+        const refreshViewsDelay = calcRefreshDelay(apiMetricsCollection.metrics.maxTouchTs)
+        if (refreshViewsDelay < UPDATE_DATA_DELAY) {
+          gState.refreshViewTimerId = setTimeout(updateData, refreshViewsDelay, true)
         }
       }
       catch (e) {
@@ -1842,10 +1853,10 @@ SM.CollectionPanel.showCollectionTab = async function (options) {
       }
     }
     function cancelTimers () {
-      clearTimeout(gState.refreshViewTimer)
-      clearTimeout(gState.updateDataTimer)
-      clearInterval(gState.updateOverviewTitleInterval)
-      gState.refreshViewTimer = gState.updateDataTimer = gState.updateOverviewTitleInterval = null
+      clearTimeout(gState.refreshViewTimerId)
+      clearTimeout(gState.updateDataTimerId)
+      clearInterval(gState.updateLastRefreshIntervalId)
+      gState.refreshViewTimerId = gState.updateDataTimerId = gState.updateLastRefreshIntervalId = null
     }
 
     function calcRefreshDelay (maxTouchTs) {
