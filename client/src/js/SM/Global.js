@@ -360,3 +360,17 @@ SM.RuleContentTpl = new Ext.XTemplate(
     }
   })
   Ext.reg('sm-reload-store-button', SM.ReloadStoreButton)
+
+  SM.AddPanelToMainTab = function (panel, tabMode = 'permanent') {
+    const tp = Ext.getCmp('main-tab-panel')
+    const ephTabIndex = tp.items.findIndex('sm_tabMode', 'ephemeral')
+    if (ephTabIndex !== -1) {
+      tp.remove(tp.items.itemAt(ephTabIndex))
+      tp.insert(ephTabIndex, panel);
+    } else {
+      tp.add(panel)
+    }
+    panel.sm_tabMode = tabMode
+    panel.updateTitle && panel.updateTitle.call(panel)
+    tp.setActiveTab(panel.id)
+  }

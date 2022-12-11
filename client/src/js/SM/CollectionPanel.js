@@ -1354,9 +1354,6 @@ SM.CollectionPanel.AggStigPanel = Ext.extend(Ext.Panel, {
       const params = {
         benchmarkId: record.data.benchmarkId
       }
-      if (_this.baseParams?.labelId.length) {
-        params.labelId = _this.baseParams.labelId
-      }
       await unaggGrid.store.loadPromise(params)
       unaggGrid.setTitle(`Checklists for ${record.data.benchmarkId}`)
     }
@@ -1549,77 +1546,28 @@ SM.CollectionPanel.AggLabelPanel = Ext.extend(Ext.Panel, {
 SM.CollectionPanel.showCollectionTab = async function (options) {
   try {
     const { collectionId, collectionName, treePath, initialLabelIds = [] } = options
-    let gCurrentBaseParams
-    function setCurrentBaseParams (labelIds) {
-      // if (!labelIds.length) return undefined
-      const params = {}
-      for (let x = 0, length = labelIds.length; x < length; x++) {
-        if (labelIds[x] === null) {
-          params.labelMatch = 'null'
-        }
-        else {
-          ;(params.labelId ??= []).push(labelIds[x])
-        }
-      }
-      aggAssetPanel?.updateBaseParams(params)
-      aggStigPanel?.updateBaseParams(params)
-      aggLabelPanel?.updateBaseParams(params)
-      gCurrentBaseParams = params
-      return params
-    }
-
-    let gCurrentLabelIds = initialLabelIds
-    let gFilterableLabels = []
-    let lastApiRefresh, lastApiMetricsCollection
-    const updateDataDelay = 300000
-    const updateOverviewTitleDelay = 60000
-    let updateDataTimer, refreshViewTimer, updateOverviewTitleInterval
-
     const tab = Ext.getCmp('main-tab-panel').getItem(`metrics-tab-${collectionId}`)
     if (tab) {
       Ext.getCmp('main-tab-panel').setActiveTab(tab.id)
       return
     }
+    
+    const gState = {}
 
+    gState.labelIds = initialLabelIds
+    gState.filterableLabels = []
+    gState.lastApiMetricsCollection
+    
+    const UPDATE_DATA_DELAY = 300000
+    const UPDATE_OVERVIEW_TITLE_DELAY = 60000
+    
     const overviewTitleTpl = new Ext.XTemplate(
-      // `Collection: {[values.labels ? values.labels : 'all']}{[values.lastApiRefresh ? '&nbsp;&nbsp;<i>(' + durationToNow(values.lastApiRefresh, true) + ')</i>' : '']}`
+      // `Collection: {[values.labels ? values.labels : 'all']}{[values.gState.lastApiRefresh ? '&nbsp;&nbsp;<i>(' + durationToNow(values.gState.lastApiRefresh, true) + ')</i>' : '']}`
       `Collection: {[values.labels ? values.labels : 'all']}`
     )
 
-    const getMetricsAggCollection = async function (collectionId) {
-      const results = await Ext.Ajax.requestPromise({
-        url: `${STIGMAN.Env.apiBase}/collections/${collectionId}/metrics/summary/collection`,
-        method: 'GET',
-        params: gCurrentBaseParams
-      })
-      lastApiRefresh = new Date()
-      lastApiMetricsCollection = JSON.parse(results.response.responseText)
-      return lastApiMetricsCollection
-    }
-
-    const updateFilterableLabels = async function () {
-      try {
-        const results = await Ext.Ajax.requestPromise({
-          url: `${STIGMAN.Env.apiBase}/collections/${collectionId}/metrics/summary/label`,
-          method: 'GET'
-        })
-        gFilterableLabels = JSON.parse(results.response.responseText)
-        const filterableLabelIds = gFilterableLabels.map( label => label.labelId)
-        // remove from gCurrentLabelIds any missing labelIds
-        gCurrentLabelIds = gCurrentLabelIds.filter( labelId => filterableLabelIds.includes(labelId))
-        // reset base parameters
-        setCurrentBaseParams(gCurrentLabelIds)
-        
-        return gFilterableLabels
-      }
-      catch (e) {
-        console.error(e)
-        return []
-      }
-    }
-
     const labelsMenu = new SM.Collection.LabelsMenu({
-      labels: gFilterableLabels,
+      labels: gState.filterableLabels,
       showHeader: true,
       showApply: true,
       listeners: {
@@ -1685,16 +1633,6 @@ SM.CollectionPanel.showCollectionTab = async function (options) {
       ]
     })
 
-    const updateOverviewTitle = () => {
-      // console.log(`${collectionName}: Executing updateOverviewTitle with ${gCurrentLabelIds} and ${lastApiRefresh}`)
-      const overviewTitle = overviewTitleTpl.apply({
-        labels: SM.Collection.LabelSpritesByCollectionLabelId(collectionId, gCurrentLabelIds),
-        lastApiRefresh
-      })
-      overviewPanel.setTitle(overviewTitle)
-    }
-
-    const reloadBtnHandler = () => { updateData() }
     const aggAssetPanel = new SM.CollectionPanel.AggAssetPanel({
       title: 'Assets',
       iconCls: 'sm-asset-icon',
@@ -1721,7 +1659,6 @@ SM.CollectionPanel.showCollectionTab = async function (options) {
     })
 
     setCurrentBaseParams(initialLabelIds)
-
 
     const aggTabPanel = new Ext.TabPanel({
       activeTab: 0,
@@ -1759,10 +1696,9 @@ SM.CollectionPanel.showCollectionTab = async function (options) {
       collectionId: collectionId,
       collectionName: collectionName,
       iconCls: 'sm-collection-icon',
-      title: '',
+      title: SM.he(collectionName),
       closable: true,
       layout: 'border',
-      sm_tabMode: 'permanent',
       sm_treePath: treePath,
       items: [
         overviewPanel,
@@ -1781,12 +1717,83 @@ SM.CollectionPanel.showCollectionTab = async function (options) {
       }
     })
 
+    SM.Dispatcher.addListener('labelfilter', onLabelFilter)
+    metricsTab.on('beforedestroy', () => { 
+      SM.Dispatcher.removeListener('labelfilter', onLabelFilter) 
+      cancelTimers()
+    })
+
+    SM.AddPanelToMainTab(metricsTab, 'permanent')
+    
+    // functions
+
+    function setCurrentBaseParams (labelIds) {
+      // if (!labelIds.length) return undefined
+      const params = {}
+      for (let x = 0, length = labelIds.length; x < length; x++) {
+        if (labelIds[x] === null) {
+          params.labelMatch = 'null'
+        }
+        else {
+          ;(params.labelId ??= []).push(labelIds[x])
+        }
+      }
+      aggAssetPanel?.updateBaseParams(params)
+      aggStigPanel?.updateBaseParams(params)
+      aggLabelPanel?.updateBaseParams(params)
+      gState.baseParams = params
+      return params
+    }
+
+    async function getMetricsAggCollection (collectionId) {
+      const results = await Ext.Ajax.requestPromise({
+        url: `${STIGMAN.Env.apiBase}/collections/${collectionId}/metrics/summary/collection`,
+        method: 'GET',
+        params: gState.baseParams
+      })
+      gState.lastApiRefresh = new Date()
+      gState.lastApiMetricsCollection = JSON.parse(results.response.responseText)
+      return gState.lastApiMetricsCollection
+    }
+
+    async function updateFilterableLabels () {
+      try {
+        const results = await Ext.Ajax.requestPromise({
+          url: `${STIGMAN.Env.apiBase}/collections/${collectionId}/metrics/summary/label`,
+          method: 'GET'
+        })
+        gState.filterableLabels = JSON.parse(results.response.responseText)
+        const filterableLabelIds = gState.filterableLabels.map( label => label.labelId)
+        // remove from gState.labelIds any missing labelIds
+        gState.labelIds = gState.labelIds.filter( labelId => filterableLabelIds.includes(labelId))
+        // reset base parameters
+        setCurrentBaseParams(gState.labelIds)
+        
+        return gState.filterableLabels
+      }
+      catch (e) {
+        console.error(e)
+        return []
+      }
+    }
+
+    async function updateOverviewTitle () {
+      // console.log(`${collectionName}: Executing updateOverviewTitle with ${gState.labelIds} and ${gState.lastApiRefresh}`)
+      const overviewTitle = overviewTitleTpl.apply({
+        labels: SM.Collection.LabelSpritesByCollectionLabelId(collectionId, gState.labelIds),
+        lastApiRefresh: gState.lastApiRefresh
+      })
+      overviewPanel.setTitle(overviewTitle)
+    }
+
+    function reloadBtnHandler () { updateData() }
+
     // handle change to label filters in NavTree
-    const onLabelFilter = async (srcCollectionId, srcLabelIds) => {
+    async function onLabelFilter (srcCollectionId, srcLabelIds) {
       try {
         if (srcCollectionId === collectionId) {
-          gCurrentLabelIds = srcLabelIds
-          gCurrentBaseParams = setCurrentBaseParams(gCurrentLabelIds)
+          gState.labelIds = srcLabelIds
+          gState.baseParams = setCurrentBaseParams(gState.labelIds)
           let apiMetricsCollection = await getMetricsAggCollection(collectionId)
           updateOverviewTitle()
           overviewPanel.updateMetrics(apiMetricsCollection)
@@ -1800,42 +1807,34 @@ SM.CollectionPanel.showCollectionTab = async function (options) {
         alert (e)
       }
     }
-    SM.Dispatcher.addListener('labelfilter', onLabelFilter)
 
     // handle periodic updates
     async function updateData (onlyRefreshView = false) {
       try {
-        // console.log(`${collectionName}: executing updateData(${onlyRefreshView})`)
-        let apiMetricsCollection = lastApiMetricsCollection
+        let apiMetricsCollection = gState.lastApiMetricsCollection
         if (!onlyRefreshView) {
-          // console.log(`${collectionName}: cancelling refreshView timer, id ${refreshViewTimer}`)
-          clearTimeout(refreshViewTimer)
-          // console.log(`${collectionName}: cancelling updateData timer, id ${updateDataTimer}`)
-          clearTimeout(updateDataTimer)
-          updateDataTimer = refreshViewTimer = null
+          clearTimeout(gState.refreshViewTimer)
+          clearTimeout(gState.updateDataTimer)
+          gState.updateDataTimer = gState.refreshViewTimer = null
           await updateFilterableLabels()
-          apiMetricsCollection = await getMetricsAggCollection(collectionId, gCurrentLabelIds)
-          updateDataTimer = setTimeout(updateData, updateDataDelay)
-          // console.log(`${collectionName}: set updateData timer in ${updateDataDelay}, id ${updateDataTimer}`)
+          apiMetricsCollection = await getMetricsAggCollection(collectionId, gState.labelIds)
+          gState.updateDataTimer = setTimeout(updateData, UPDATE_DATA_DELAY)
         }
-        // console.log(`${collectionName}: cancelling updateOverviewTitle interval, id ${updateOverviewTitleInterval}`)
-        clearInterval(updateOverviewTitleInterval)
-        updateOverviewTitleInterval = null
+        clearInterval(gState.updateOverviewTitleInterval)
+        gState.updateOverviewTitleInterval = null
         updateOverviewTitle()
-        updateOverviewTitleInterval = setInterval(updateOverviewTitle, updateOverviewTitleDelay)
-        // console.log(`${collectionName}: set updateOverviewTitle interval every ${updateOverviewTitleDelay}, id ${updateOverviewTitleInterval}`)
+        gState.updateOverviewTitleInterval = setInterval(updateOverviewTitle, UPDATE_OVERVIEW_TITLE_DELAY)
 
         overviewPanel.updateMetrics(apiMetricsCollection)
-        labelsMenu.refreshItems(gFilterableLabels)
+        labelsMenu.refreshItems(gState.filterableLabels)
         const activePanel = aggTabPanel.getActiveTab()
         if (activePanel) {
           await activePanel.updateData(onlyRefreshView)
         }
 
         const refreshDelay = calcRefreshDelay(apiMetricsCollection.metrics.maxTouchTs)
-        if (refreshDelay < updateDataDelay) {
-          refreshViewTimer = setTimeout(updateData, refreshDelay, true)
-          // console.log(`${collectionName}: set refreshView timer in ${refreshDelay}, id ${refreshViewTimer}`)
+        if (refreshDelay < UPDATE_DATA_DELAY) {
+          gState.refreshViewTimer = setTimeout(updateData, refreshDelay, true)
         }
       }
       catch (e) {
@@ -1843,16 +1842,13 @@ SM.CollectionPanel.showCollectionTab = async function (options) {
       }
     }
     function cancelTimers () {
-      // console.log(`${collectionName}: cancelling refreshView timer, id ${refreshViewTimer}`)
-      clearTimeout(refreshViewTimer)
-      // console.log(`${collectionName}: cancelling updateData timer, id ${updateDataTimer}`)
-      clearTimeout(updateDataTimer)
-      // console.log(`${collectionName}: cancelling updateOverview interval, id ${updateOverviewTitleInterval}`)
-      clearInterval(updateOverviewTitleInterval)
-      refreshViewTimer = updateDataTimer = updateOverviewTitleInterval = null
+      clearTimeout(gState.refreshViewTimer)
+      clearTimeout(gState.updateDataTimer)
+      clearInterval(gState.updateOverviewTitleInterval)
+      gState.refreshViewTimer = gState.updateDataTimer = gState.updateOverviewTitleInterval = null
     }
 
-    const calcRefreshDelay = (maxTouchTs) => {
+    function calcRefreshDelay (maxTouchTs) {
       const diffSecs = Math.ceil(Math.abs(new Date() - new Date(maxTouchTs))/1000)
       if ( diffSecs < 3600 ) {
         return 30 * 1000
@@ -1862,33 +1858,6 @@ SM.CollectionPanel.showCollectionTab = async function (options) {
       }
       return 86400 * 1000
     }
-    metricsTab.on('beforedestroy', () => { 
-      SM.Dispatcher.removeListener('labelfilter', onLabelFilter) 
-      cancelTimers()
-    })
-
-    metricsTab.updateTitle = function () {
-      metricsTab.setTitle(`${metricsTab.sm_tabMode === 'ephemeral' ? '<i>' : ''}${SM.he(metricsTab.collectionName)}${metricsTab.sm_tabMode === 'ephemeral' ? '</i>' : ''}`)
-    }
-    metricsTab.makePermanent = function () {
-      metricsTab.sm_tabMode = 'permanent'
-      metricsTab.updateTitle.call(metricsTab)
-    }
-
-    let tp = Ext.getCmp('main-tab-panel')
-    let ephTabIndex = tp.items.findIndex('sm_tabMode', 'ephemeral')
-    let thisTab
-    if (ephTabIndex !== -1) {
-      let ephTab = tp.items.itemAt(ephTabIndex)
-      tp.remove(ephTab)
-      thisTab = tp.insert(ephTabIndex, metricsTab);
-    } else {
-      thisTab = tp.add(metricsTab)
-    }
-    thisTab.updateTitle.call(thisTab)
-    tp.setActiveTab(metricsTab.id)
-
-
   }
   catch (e) {
     alert(e)
