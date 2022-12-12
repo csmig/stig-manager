@@ -1851,6 +1851,7 @@ SM.CollectionPanel.showCollectionTab = async function (options) {
         updateLastRefreshTextItem()
         gState.updateLastRefreshIntervalId = setInterval(updateLastRefreshTextItem, LAST_REFRESH_DELAY)
 
+        updateOverviewTitle()
         overviewPanel.updateMetrics(apiMetricsCollection)
         labelsMenu.refreshItems(gState.filterableLabels)
         const activePanel = aggTabPanel.getActiveTab()
