@@ -1277,6 +1277,7 @@ SM.CollectionPanel.AggAssetPanel = Ext.extend(Ext.Panel, {
 
         const currentRecord = aggAssetGrid.store.getById(selectedRow.data.assetId)
         if (!currentRecord) {
+          unaggGrid.setTitle('STIGs')
           unaggGrid.store.removeAll()
           return
         }
@@ -1383,6 +1384,7 @@ SM.CollectionPanel.AggStigPanel = Ext.extend(Ext.Panel, {
 
         const currentRecord = aggStigGrid.store.getById(selectedRow.data.benchmarkId)
         if (!currentRecord) {
+          unaggGrid.setTitle('Checklists')
           unaggGrid.store.removeAll()
           return
         }
@@ -1502,7 +1504,9 @@ SM.CollectionPanel.AggLabelPanel = Ext.extend(Ext.Panel, {
 
         const currentRecordLabel = aggLabelGrid.store.getById(selectedRowLabel.data.labelId)
         if (!currentRecordLabel) {
+          aggAssetGrid.setTitle('Assets')
           aggAssetGrid.store.removeAll()
+          unaggGrid.setTitle('STIGs')
           unaggGrid.store.removeAll()
           return
         }
@@ -1513,6 +1517,7 @@ SM.CollectionPanel.AggLabelPanel = Ext.extend(Ext.Panel, {
         })
         const currentRecordAsset = aggAssetGrid.store.getById(selectedRowAsset.data.assetId)
         if (!currentRecordAsset) {
+          unaggGrid.setTitle('STIGs')
           unaggGrid.store.removeAll()
           return
         }
