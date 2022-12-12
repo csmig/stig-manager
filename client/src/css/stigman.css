@@ -36,7 +36,14 @@
 }
 .x-grid3-row-over .sm-grid-cell-with-toolbar .sm-static-width {
 	visibility: visible;
+	filter: grayscale(100%) brightness(75%);
 }
+
+.x-grid3-row-over .sm-grid-cell-with-toolbar .sm-static-width:hover {
+	scale: 125%;
+	filter: brightness(100%);
+}
+
 
 .sm-metrics-no-assessments-body {
   color: #bbb;

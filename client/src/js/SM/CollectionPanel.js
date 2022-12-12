@@ -229,7 +229,7 @@ SM.CollectionPanel.AggGrid = Ext.extend(Ext.grid.GridPanel, {
         <div class="sm-dynamic-width">
           <div class="sm-info">${v}</div>
         </div>
-        <div class="sm-static-width"><img class="sm-grid-cell-toolbar-edit" ext:qtip="Open checklist" src="img/shield-grey-check.svg" width="14" height="14"></div>
+        <div class="sm-static-width"><img class="sm-grid-cell-toolbar-edit" ext:qtip="Open checklist" src="img/shield-green-check.svg" width="14" height="14"></div>
       </div>`
     }
 
@@ -524,7 +524,7 @@ SM.CollectionPanel.UnaggGrid = Ext.extend(Ext.grid.GridPanel, {
         <div class="sm-dynamic-width">
           <div class="sm-info">${v}</div>
         </div>
-        <div class="sm-static-width"><img class="sm-grid-cell-toolbar-edit" ext:qtip="Open checklist" src="img/shield-grey-check.svg" width="14" height="14"></div>
+        <div class="sm-static-width"><img class="sm-grid-cell-toolbar-edit" ext:qtip="Open checklist" src="img/shield-green-check.svg" width="14" height="14"></div>
       </div>`
     }
 
@@ -1583,6 +1583,17 @@ SM.CollectionPanel.showCollectionTab = async function (options) {
         'Fetched: {duration}'
       ]
     })
+
+    const overviewReloadBtn = new SM.ReloadStoreButton({
+      handler: async function () {
+        try {
+          await updateData()
+        }
+        catch (e) {
+          console.log(e)
+        }
+      } 
+    })
       
     const overviewPanel = new SM.CollectionPanel.OverviewPanel({
       cls: 'sm-round-panel sm-metrics-overview-panel',
@@ -1623,7 +1634,9 @@ SM.CollectionPanel.showCollectionTab = async function (options) {
           }
         }
       ],
-      title: ' ',
+      title: overviewTitleTpl.apply({
+        labels: SM.Collection.LabelSpritesByCollectionLabelId(collectionId, gState.labelIds)
+      }),
       margins: { top: SM.Margin.top, right: SM.Margin.edge, bottom: SM.Margin.bottom, left: SM.Margin.edge },
       region: 'west',
       width: 430,
@@ -1631,11 +1644,9 @@ SM.CollectionPanel.showCollectionTab = async function (options) {
       split: true,
       collectionId,
       bbar: [
-        {
-          xtype: 'sm-reload-store-button',
-          handler: () => alert('reload')
-        },
-        '->','-',
+        overviewReloadBtn,
+        '->',
+        '-',
         lastRefreshedTextItem
       ]
     })
@@ -1673,8 +1684,8 @@ SM.CollectionPanel.showCollectionTab = async function (options) {
       deferredRender: false,
       items: [
         aggStigPanel,
-        aggLabelPanel,
-        aggAssetPanel
+        aggAssetPanel,
+        aggLabelPanel
       ],
       listeners: {
         beforetabchange: function (tp, newTab, currentTab) {
@@ -1827,8 +1838,12 @@ SM.CollectionPanel.showCollectionTab = async function (options) {
           clearTimeout(gState.refreshViewTimerId)
           clearTimeout(gState.updateDataTimerId)
           gState.updateDataTimerId = gState.refreshViewTimerId = null
+
           await updateFilterableLabels()
+          overviewReloadBtn.showLoadingIcon()
           apiMetricsCollection = await getMetricsAggCollection(collectionId, gState.labelIds)
+          overviewReloadBtn.showRefreshIcon()
+          
           gState.updateDataTimerId = setTimeout(updateData, UPDATE_DATA_DELAY)
         }
         clearInterval(gState.updateLastRefreshIntervalId)
@@ -1849,7 +1864,7 @@ SM.CollectionPanel.showCollectionTab = async function (options) {
         }
       }
       catch (e) {
-        alert (e)
+        console.log(e)
       }
     }
     function cancelTimers () {
