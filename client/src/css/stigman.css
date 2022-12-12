@@ -36,7 +36,7 @@
 }
 .x-grid3-row-over .sm-grid-cell-with-toolbar .sm-static-width {
 	visibility: visible;
-	filter: grayscale(100%) brightness(75%);
+	filter: grayscale(100%) brightness(125%);
 }
 
 .x-grid3-row-over .sm-grid-cell-with-toolbar .sm-static-width:hover {
