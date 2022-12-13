@@ -1735,6 +1735,9 @@ SM.CollectionPanel.showCollectionTab = async function (options) {
       closable: true,
       layout: 'border',
       sm_treePath: treePath,
+      updateTitle: function () {
+        this.setTitle(SM.he(this.collectionName))
+      },
       items: [
         overviewPanel,
         centerPanel
