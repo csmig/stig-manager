@@ -1653,7 +1653,14 @@ SM.CollectionPanel.showCollectionTab = async function (options) {
         '->',
         '-',
         lastRefreshedTextItem
-      ]
+      ],
+      listeners: {
+        render: (panel) => {
+          if (panel.tools.label) {
+            panel.tools.label.setDisplayed(!!(gState.filterableLabels.length > 1))
+          }
+        }
+      }
     })
 
     const aggAssetPanel = new SM.CollectionPanel.AggAssetPanel({
@@ -1786,6 +1793,9 @@ SM.CollectionPanel.showCollectionTab = async function (options) {
           method: 'GET'
         })
         gState.filterableLabels = JSON.parse(results.response.responseText)
+        if (overviewPanel.tools.label) {
+          overviewPanel.tools.label.setDisplayed(!!(gState.filterableLabels.length > 1))
+        }
         const filterableLabelIds = gState.filterableLabels.map( label => label.labelId)
         // remove from gState.labelIds any missing labelIds
         gState.labelIds = gState.labelIds.filter( labelId => filterableLabelIds.includes(labelId))
