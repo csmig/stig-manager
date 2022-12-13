@@ -1585,7 +1585,7 @@ SM.CollectionPanel.showCollectionTab = async function (options) {
     const lastRefreshedTextItem = new Ext.Toolbar.TextItem({
       text: '',
       tpl: [
-        'Fetched: {duration}'
+        'Fetched: <i>{duration}</i>'
       ]
     })
 
@@ -1657,12 +1657,17 @@ SM.CollectionPanel.showCollectionTab = async function (options) {
       listeners: {
         render: (panel) => {
           if (panel.tools.label) {
-            panel.tools.label.setDisplayed(!!(gState.filterableLabels.length > 1))
+            panel.tools.label.setDisplayed(gState.filterableLabels.length > 1)
           }
         }
       }
     })
-
+    overviewPanel.inventoryPanel.on('render', (panel) => {
+      if (panel.tools.manage) {
+        const collectionGrant = curUser.collectionGrants.find( g => g.collection.collectionId === collectionId )
+        panel.tools.manage.setDisplayed(collectionGrant && collectionGrant.accessLevel >= 3)
+      }
+    })
     const aggAssetPanel = new SM.CollectionPanel.AggAssetPanel({
       title: 'Assets',
       iconCls: 'sm-asset-icon',
