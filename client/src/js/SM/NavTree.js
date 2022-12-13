@@ -121,7 +121,7 @@ SM.NavTree.TreePanel = Ext.extend(Ext.tree.TreePanel, {
           if (options.showManager) {
             me.selectPath(newLeaf.getPath(), undefined, (bSuccess, oSelNode) => {
               if (bSuccess) {
-                oSelNode.getUI().elNode.click()
+                oSelNode.getUI().elNode.querySelector('.sm-tree-toolbar')?.click()
               }
             })
           }
