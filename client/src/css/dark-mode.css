@@ -2120,9 +2120,9 @@ td.x-grid3-hd-over .x-grid3-hd-inner {
 .x-border-layout-ct {
   background-color: hsl(211deg 25% 7%)
 }
-/* .sm-round-panel {
+.sm-round-panel {
   background-color: #181a1b
-} */
+}
 .sm-round-panel .x-panel-header {
   background-color: #35393b;
   background-image: none
