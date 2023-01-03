@@ -433,7 +433,7 @@ SM.CollectionPanel.AggGrid = Ext.extend(Ext.grid.GridPanel, {
       grid: this,
       autoLoad: this.storeAutoLoad ?? false,
       baseParams: this.baseParams,
-      smMaskDelay: 250,
+      smMaskDelay: 50,
       proxy: this.proxy,
       root: '',
       fields,
@@ -450,6 +450,7 @@ SM.CollectionPanel.AggGrid = Ext.extend(Ext.grid.GridPanel, {
     const config = {
       layout: 'fit',
       store,
+      loadMask: {msg: ''},
       sm,
       cm: new Ext.grid.ColumnModel({
         columns
@@ -600,7 +601,7 @@ SM.CollectionPanel.UnaggGrid = Ext.extend(Ext.grid.GridPanel, {
     const store = new Ext.data.JsonStore({
       grid: this,
       autoLoad: false,
-      smMaskDelay: 250,
+      smMaskDelay: 50,
       proxy: this.proxy,
       root: '',
       fields,
@@ -647,6 +648,7 @@ SM.CollectionPanel.UnaggGrid = Ext.extend(Ext.grid.GridPanel, {
     const config = {
       layout: 'fit',
       store,
+      loadMask: {msg: ''},
       cm: new Ext.grid.ColumnModel({
         columns
       }),
@@ -1258,7 +1260,7 @@ SM.CollectionPanel.AggAssetPanel = Ext.extend(Ext.Panel, {
       unaggGrid.store.baseParams = aggAssetGrid.store.baseParams = _this.baseParams = params
       // updateData()
     }
-    const updateData = async function (refreshViewsOnly = false) {
+    const updateData = async function (refreshViewsOnly = false, loadMasksDisabled = false) {
       try {
         const selectedRow = aggAssetGrid.getSelectionModel().getSelected()
 
@@ -1269,8 +1271,11 @@ SM.CollectionPanel.AggAssetPanel = Ext.extend(Ext.Panel, {
           }
           return
         }
-
+        let savedLoadMaskDisabled =  aggAssetGrid.loadMask.disabled
+        aggAssetGrid.loadMask.disabled = loadMasksDisabled
         await aggAssetGrid.store.loadPromise()
+        aggAssetGrid.loadMask.disabled = savedLoadMaskDisabled
+
         if (!selectedRow) {
           return
         }
@@ -1283,9 +1288,14 @@ SM.CollectionPanel.AggAssetPanel = Ext.extend(Ext.Panel, {
         }
         const currentIndex = aggAssetGrid.store.indexOfId(selectedRow.data.assetId)
         aggAssetGrid.view.focusRow(currentIndex)
+
+        savedLoadMaskDisabled =  unaggGrid.loadMask.disabled
+        unaggGrid.loadMask.disabled = loadMasksDisabled
         await unaggGrid.store.loadPromise({
           assetId: currentRecord.data.assetId
         })
+        unaggGrid.loadMask.disabled = savedLoadMaskDisabled
+
       }
       catch (e) {
         console.log(e)
@@ -1365,7 +1375,7 @@ SM.CollectionPanel.AggStigPanel = Ext.extend(Ext.Panel, {
       unaggGrid.store.baseParams = aggStigGrid.store.baseParams = _this.baseParams = params
       // updateData()
     }
-    const updateData = async function (refreshViewsOnly = false) {
+    const updateData = async function (refreshViewsOnly = false, loadMasksDisabled = false) {
       try {
         const selectedRow = aggStigGrid.getSelectionModel().getSelected()
 
@@ -1376,11 +1386,14 @@ SM.CollectionPanel.AggStigPanel = Ext.extend(Ext.Panel, {
           }
           return
         }
-
+        let savedLoadMaskDisabled =  aggStigGrid.loadMask.disabled
+        aggStigGrid.loadMask.disabled = loadMasksDisabled
         await aggStigGrid.store.loadPromise()
+        aggStigGrid.loadMask.disabled = savedLoadMaskDisabled
         if (!selectedRow) {
           return
         }
+
 
         const currentRecord = aggStigGrid.store.getById(selectedRow.data.benchmarkId)
         if (!currentRecord) {
@@ -1390,9 +1403,13 @@ SM.CollectionPanel.AggStigPanel = Ext.extend(Ext.Panel, {
         }
         const currentIndex = aggStigGrid.store.indexOfId(selectedRow.data.benchmarkId)
         aggStigGrid.view.focusRow(currentIndex)
+        
+        savedLoadMaskDisabled =  unaggGrid.loadMask.disabled
+        unaggGrid.loadMask.disabled = loadMasksDisabled
         await unaggGrid.store.loadPromise({
           benchmarkId: currentRecord.data.benchmarkId
         })
+        unaggGrid.loadMask.disabled = savedLoadMaskDisabled
       }
       catch (e) {
         console.log(e)
@@ -1481,7 +1498,7 @@ SM.CollectionPanel.AggLabelPanel = Ext.extend(Ext.Panel, {
       unaggGrid.store.baseParams = aggLabelGrid.store.baseParams = aggAssetGrid.store.baseParams = _this.baseParams = params
       // updateData()
     }
-    const updateData = async function (refreshViewsOnly = false) {
+    const updateData = async function (refreshViewsOnly = false, loadMasksDisabled = false) {
       try {
         const selectedRowLabel = aggLabelGrid.getSelectionModel().getSelected()
         const selectedRowAsset = aggAssetGrid.getSelectionModel().getSelected()
@@ -1497,7 +1514,11 @@ SM.CollectionPanel.AggLabelPanel = Ext.extend(Ext.Panel, {
           return
         }
 
+        let savedLoadMaskDisabled =  aggLabelGrid.loadMask.disabled
+        aggLabelGrid.loadMask.disabled = loadMasksDisabled
         await aggLabelGrid.store.loadPromise()
+        aggLabelGrid.loadMask.disabled = savedLoadMaskDisabled
+
         if (!selectedRowLabel) {
           return
         }
@@ -1512,9 +1533,12 @@ SM.CollectionPanel.AggLabelPanel = Ext.extend(Ext.Panel, {
         }
         const currentIndexLabel = aggLabelGrid.store.indexOfId(selectedRowLabel.data.labelId)
         aggLabelGrid.view.focusRow(currentIndexLabel)
+        savedLoadMaskDisabled =  aggAssetGrid.loadMask.disabled
+        aggAssetGrid.loadMask.disabled = loadMasksDisabled
         await aggAssetGrid.store.loadPromise({
           labelId: currentRecordLabel.data.labelId
         })
+        aggAssetGrid.loadMask.disabled = savedLoadMaskDisabled
         const currentRecordAsset = aggAssetGrid.store.getById(selectedRowAsset.data.assetId)
         if (!currentRecordAsset) {
           unaggGrid.setTitle('STIGs')
@@ -1523,9 +1547,12 @@ SM.CollectionPanel.AggLabelPanel = Ext.extend(Ext.Panel, {
         }
         const currentIndexAsset = aggAssetGrid.store.indexOfId(selectedRowAsset.data.assetId)
         aggAssetGrid.view.focusRow(currentIndexAsset)
+        savedLoadMaskDisabled =  unaggGrid.loadMask.disabled
+        unaggGrid.loadMask.disabled = loadMasksDisabled
         await unaggGrid.store.loadPromise({
           assetId: currentRecordAsset.data.assetId
         })
+        unaggGrid.loadMask.disabled = savedLoadMaskDisabled
       }
       catch (e) {
         console.log(e)
@@ -1563,7 +1590,7 @@ SM.CollectionPanel.showCollectionTab = async function (options) {
     gState.filterableLabels = []
     gState.lastApiMetricsCollection
     
-    const UPDATE_DATA_DELAY = 300000
+    const UPDATE_DATA_DELAY = 60000
     const LAST_REFRESH_DELAY = 60000
     
     const overviewTitleTpl = new Ext.XTemplate(
@@ -1592,7 +1619,7 @@ SM.CollectionPanel.showCollectionTab = async function (options) {
     const overviewReloadBtn = new SM.ReloadStoreButton({
       handler: async function () {
         try {
-          await updateData()
+          await updateData(false, false)
         }
         catch (e) {
           console.log(e)
@@ -1707,7 +1734,7 @@ SM.CollectionPanel.showCollectionTab = async function (options) {
       listeners: {
         beforetabchange: function (tp, newTab, currentTab) {
           if (currentTab) { // after initial setup update the whole presentation
-            updateData()
+            updateData(false, true)
           }
         }
       }
@@ -1831,7 +1858,7 @@ SM.CollectionPanel.showCollectionTab = async function (options) {
       })
     }
 
-    function reloadBtnHandler () { updateData() }
+    function reloadBtnHandler () { updateData(false, false) }
 
     // handle change to label filters in NavTree
     async function onLabelFilter (srcCollectionId, srcLabelIds) {
@@ -1844,7 +1871,7 @@ SM.CollectionPanel.showCollectionTab = async function (options) {
           overviewPanel.updateMetrics(apiMetricsCollection)
           const activePanel = aggTabPanel.getActiveTab()
           if (activePanel) {
-            await activePanel.updateData()
+            await activePanel.updateData(false, false)
           } 
         }
       }
@@ -1854,7 +1881,7 @@ SM.CollectionPanel.showCollectionTab = async function (options) {
     }
 
     // handle periodic updates
-    async function updateData (refreshViewsOnly = false) {
+    async function updateData (refreshViewsOnly = false, loadMasksDisabled = false) {
       try {
         let apiMetricsCollection = gState.lastApiMetricsCollection
         if (!refreshViewsOnly) {
@@ -1867,7 +1894,7 @@ SM.CollectionPanel.showCollectionTab = async function (options) {
           apiMetricsCollection = await getMetricsAggCollection(collectionId, gState.labelIds)
           overviewReloadBtn.showRefreshIcon()
           
-          gState.updateDataTimerId = setTimeout(updateData, UPDATE_DATA_DELAY)
+          gState.updateDataTimerId = setTimeout(updateData, UPDATE_DATA_DELAY, false, true)
         }
         clearInterval(gState.updateLastRefreshIntervalId)
         gState.updateLastRefreshIntervalId = null
@@ -1879,12 +1906,12 @@ SM.CollectionPanel.showCollectionTab = async function (options) {
         labelsMenu.refreshItems(gState.filterableLabels)
         const activePanel = aggTabPanel.getActiveTab()
         if (activePanel) {
-          await activePanel.updateData(refreshViewsOnly)
+          await activePanel.updateData(refreshViewsOnly, loadMasksDisabled)
         }
 
         const refreshViewsDelay = calcRefreshDelay(apiMetricsCollection.metrics.maxTouchTs)
         if (refreshViewsDelay < UPDATE_DATA_DELAY) {
-          gState.refreshViewTimerId = setTimeout(updateData, refreshViewsDelay, true)
+          gState.refreshViewTimerId = setTimeout(updateData, refreshViewsDelay, true, true)
         }
       }
       catch (e) {
