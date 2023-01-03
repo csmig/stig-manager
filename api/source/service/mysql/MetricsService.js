@@ -168,11 +168,6 @@ module.exports.queryMetrics = async function ({
     query, 
     [...cteProps.predicates.binds, ...predicates.binds]
   )
-  // if (aggregation === 'collection' && !rows.length) {
-  //   rows[0] = {
-
-  //   }
-  // }
   return (rows || [])
 }
 
