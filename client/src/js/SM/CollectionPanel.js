@@ -220,10 +220,10 @@ SM.CollectionPanel.AggGrid = Ext.extend(Ext.grid.GridPanel, {
       columns.push(sm)
     }
     let idProperty, sortField = 'name', autoExpandColumn = Ext.id()
-    let rowdblclick = () => {}
-    let cellmousedown = () => {}
+    let rowdblclick = () => { }
+    let cellmousedown = () => { }
 
-    function renderWithToolbar (v) {
+    function renderWithToolbar(v) {
       return `
       <div class="sm-grid-cell-with-toolbar">
         <div class="sm-dynamic-width">
@@ -236,11 +236,11 @@ SM.CollectionPanel.AggGrid = Ext.extend(Ext.grid.GridPanel, {
     switch (this.aggregation) {
       case 'asset':
         fields.push(
-          {name: 'assetId', type: 'string'},
-          {name: 'name', type: 'string'},
-          {name: 'labelIds', type: 'string', convert: (v,r) => r.labels.map(l => l.labelId)},
+          { name: 'assetId', type: 'string' },
+          { name: 'name', type: 'string' },
+          { name: 'labelIds', type: 'string', convert: (v, r) => r.labels.map(l => l.labelId) },
           'benchmarkIds',
-          {name: 'stigCount', convert: (v, r) => r.benchmarkIds.length}
+          { name: 'stigCount', convert: (v, r) => r.benchmarkIds.length }
         )
         columns.push(
           {
@@ -285,10 +285,10 @@ SM.CollectionPanel.AggGrid = Ext.extend(Ext.grid.GridPanel, {
         break
       case 'collection':
         fields.push(
-          {name: 'collectionId', type: 'string'},
-          {name: 'name', type: 'string'},
-          {name: 'assets', type: 'integer'},
-          {name: 'checklists', type: 'integer'}
+          { name: 'collectionId', type: 'string' },
+          { name: 'name', type: 'string' },
+          { name: 'assets', type: 'integer' },
+          { name: 'checklists', type: 'integer' }
         )
         columns.push(
           {
@@ -320,8 +320,8 @@ SM.CollectionPanel.AggGrid = Ext.extend(Ext.grid.GridPanel, {
         break
       case 'label':
         fields.push(
-          {name: 'labelId', type: 'string'},
-          {name: 'name', type: 'string'},
+          { name: 'labelId', type: 'string' },
+          { name: 'name', type: 'string' },
           'assets'
         )
         columns.push(
@@ -359,7 +359,7 @@ SM.CollectionPanel.AggGrid = Ext.extend(Ext.grid.GridPanel, {
         break
       case 'stig':
         fields.push(
-          {name: 'benchmarkId', type: 'string'},
+          { name: 'benchmarkId', type: 'string' },
           'assets'
         )
         columns.push(
@@ -393,22 +393,22 @@ SM.CollectionPanel.AggGrid = Ext.extend(Ext.grid.GridPanel, {
         rowdblclick = (grid, rowIndex) => {
           const r = grid.getStore().getAt(rowIndex)
           const leaf = {
-            collectionId: grid.collectionId, 
+            collectionId: grid.collectionId,
             benchmarkId: r.data.benchmarkId
           }
-          addCollectionReview({leaf})
+          addCollectionReview({ leaf })
         }
         cellmousedown = (grid, rowIndex, columnIndex, e) => {
           if (e.target.className === "sm-grid-cell-toolbar-edit") {
             const r = grid.getStore().getAt(rowIndex)
             const leaf = {
-              collectionId: grid.collectionId, 
+              collectionId: grid.collectionId,
               benchmarkId: r.data.benchmarkId
             }
-            addCollectionReview({leaf})
+            addCollectionReview({ leaf })
           }
         }
-    
+
         break
     }
     columns.push(...SM.CollectionPanel.CommonColumns)
@@ -450,7 +450,7 @@ SM.CollectionPanel.AggGrid = Ext.extend(Ext.grid.GridPanel, {
     const config = {
       layout: 'fit',
       store,
-      loadMask: {msg: ''},
+      loadMask: { msg: '' },
       sm,
       cm: new Ext.grid.ColumnModel({
         columns
@@ -510,16 +510,16 @@ SM.CollectionPanel.UnaggGrid = Ext.extend(Ext.grid.GridPanel, {
   initComponent: function () {
     const _this = this
     const fields = [
-      {name: 'assetId', type: 'string'},
-      {name: 'name', type: 'string'},
-      {name: 'labelIds', type: 'string', convert: (v,r) => r.labels.map(l => l.labelId)},
+      { name: 'assetId', type: 'string' },
+      { name: 'name', type: 'string' },
+      { name: 'labelIds', type: 'string', convert: (v, r) => r.labels.map(l => l.labelId) },
       'benchmarkId',
       ...SM.CollectionPanel.CommonFields
     ]
     const columns = []
     let sortField, autoExpandColumn = Ext.id()
 
-    function renderWithToolbar (v) {
+    function renderWithToolbar(v) {
       return `
       <div class="sm-grid-cell-with-toolbar">
         <div class="sm-dynamic-width">
@@ -578,7 +578,7 @@ SM.CollectionPanel.UnaggGrid = Ext.extend(Ext.grid.GridPanel, {
           }
         )
         sortField = 'benchmarkId'
-        break        
+        break
     }
     columns.push(...SM.CollectionPanel.CommonColumns)
 
@@ -606,7 +606,7 @@ SM.CollectionPanel.UnaggGrid = Ext.extend(Ext.grid.GridPanel, {
       root: '',
       fields,
       idProperty: (v) => {
-				return `${v.assetId}-${v.benchmarkId}`
+        return `${v.assetId}-${v.benchmarkId}`
       },
       sortInfo: {
         field: sortField,
@@ -620,35 +620,35 @@ SM.CollectionPanel.UnaggGrid = Ext.extend(Ext.grid.GridPanel, {
     const rowdblclick = (grid, rowIndex) => {
       const r = grid.getStore().getAt(rowIndex)
       const leaf = {
-        collectionId: grid.collectionId, 
+        collectionId: grid.collectionId,
         assetId: r.data.assetId,
         assetName: r.data.name,
         assetLabelIds: r.data.labelIds,
         benchmarkId: r.data.benchmarkId,
         stigName: r.data.benchmarkId,
       }
-      addReview({leaf})
+      addReview({ leaf })
     }
 
-    function cellclick (grid, rowIndex, columnIndex, e) {
+    function cellclick(grid, rowIndex, columnIndex, e) {
       if (e.target.className === "sm-grid-cell-toolbar-edit") {
         const r = grid.getStore().getAt(rowIndex)
         const leaf = {
-          collectionId: grid.collectionId, 
+          collectionId: grid.collectionId,
           assetId: r.data.assetId,
           assetName: r.data.name,
           assetLabelIds: r.data.labelIds,
           benchmarkId: r.data.benchmarkId,
           stigName: r.data.benchmarkId,
         }
-        addReview({leaf})
+        addReview({ leaf })
       }
     }
-    
+
     const config = {
       layout: 'fit',
       store,
-      loadMask: {msg: ''},
+      loadMask: { msg: '' },
       cm: new Ext.grid.ColumnModel({
         columns
       }),
@@ -689,7 +689,7 @@ SM.CollectionPanel.UnaggGrid = Ext.extend(Ext.grid.GridPanel, {
           },
           {
             xtype: 'tbfill'
-          }, 
+          },
           {
             xtype: 'tbseparator'
           },
@@ -742,25 +742,25 @@ SM.CollectionPanel.ProgressBarsPanel = Ext.extend(Ext.Panel, {
     }
     const tpl = new Ext.XTemplate(
       '<div class="sm-metrics-progress-parent">',
-        '<div class="sm-metrics-progress-child">',
-          `<div class="sm-metrics-progress-label">Assessed</div>`,
-          `<div class="sm-metrics-progress-thermometer-wrap">{[renderPct(values.assessed)]}</div>`,
-        '</div>',
-        '<div class="sm-metrics-progress-child" >',
-          `<div class="sm-metrics-progress-label">Submitted</div>`,
-          `<div class="sm-metrics-progress-thermometer-wrap">{[renderPct(values.submitted)]}</div>`,
-        '</div>',
-        '<div class="sm-metrics-progress-child" >',
-          `<div class="sm-metrics-progress-label">Accepted</div>`,
-          `<div class="sm-metrics-progress-thermometer-wrap">{[renderPct(values.accepted)]}</div>`,
-        '</div>',
-        '<div class="sm-metrics-progress-child" >',
-          `<div class="sm-metrics-progress-label">Rejected</div>`,
-          `<div class="sm-metrics-progress-thermometer-wrap">{[renderPct(values.rejected)]}</div>`,
-        '</div>',
+      '<div class="sm-metrics-progress-child">',
+      `<div class="sm-metrics-progress-label">Assessed</div>`,
+      `<div class="sm-metrics-progress-thermometer-wrap">{[renderPct(values.assessed)]}</div>`,
+      '</div>',
+      '<div class="sm-metrics-progress-child" >',
+      `<div class="sm-metrics-progress-label">Submitted</div>`,
+      `<div class="sm-metrics-progress-thermometer-wrap">{[renderPct(values.submitted)]}</div>`,
+      '</div>',
+      '<div class="sm-metrics-progress-child" >',
+      `<div class="sm-metrics-progress-label">Accepted</div>`,
+      `<div class="sm-metrics-progress-thermometer-wrap">{[renderPct(values.accepted)]}</div>`,
+      '</div>',
+      '<div class="sm-metrics-progress-child" >',
+      `<div class="sm-metrics-progress-label">Rejected</div>`,
+      `<div class="sm-metrics-progress-thermometer-wrap">{[renderPct(values.rejected)]}</div>`,
+      '</div>',
       '</div>'
     )
-    const updateMetrics = function(metrics) {
+    const updateMetrics = function (metrics) {
       _this.update(calcData(metrics))
     }
     const config = {
@@ -774,13 +774,13 @@ SM.CollectionPanel.ProgressBarsPanel = Ext.extend(Ext.Panel, {
 
 SM.CollectionPanel.ProgressPanelColors = function (theme) {
   const style = getComputedStyle(document.documentElement)
-  const ordered = [  
+  const ordered = [
     'assessed',
     'submitted',
     'accepted',
     'unassessed',
     'rejected'
-  ].map( category => style.getPropertyValue(`--metrics-status-chart-${category}-${theme}`))
+  ].map(category => style.getPropertyValue(`--metrics-status-chart-${category}-${theme}`))
   return ordered
 }
 
@@ -798,12 +798,12 @@ SM.CollectionPanel.ProgressPanel = Ext.extend(Ext.Panel, {
         apiAssessed: metrics.assessed
       }
     }
-    
+
     const chartOptions = {
       type: 'doughnut',
       data: {
         datasets: [{
-          data: [0,0,0,0,0],
+          data: [0, 0, 0, 0, 0],
           backgroundColor: SM.CollectionPanel.ProgressPanelColors(localStorage.getItem('darkMode') === '1' ? 'dark' : 'light'),
           borderWidth: [1, 1],
           borderColor: '#bbbbbb'
@@ -834,10 +834,10 @@ SM.CollectionPanel.ProgressPanel = Ext.extend(Ext.Panel, {
     })
 
     const onThemeChanged = function (theme) {
-        if (chartPanel.chart) {
-          chartPanel.chart.config._config.data.datasets[0].backgroundColor = SM.CollectionPanel.ProgressPanelColors(theme)
-          chartPanel.chart.update() 
-        }
+      if (chartPanel.chart) {
+        chartPanel.chart.config._config.data.datasets[0].backgroundColor = SM.CollectionPanel.ProgressPanelColors(theme)
+        chartPanel.chart.update()
+      }
     }
     SM.Dispatcher.addListener('themechanged', onThemeChanged)
 
@@ -852,7 +852,7 @@ SM.CollectionPanel.ProgressPanel = Ext.extend(Ext.Panel, {
           metricCalcs.unassessed, // Unassessed
           metricCalcs.rejected // Rejected         
         ]
-        chartPanel.chart.update()  
+        chartPanel.chart.update()
       }
       progressBarsPanel.updateMetrics(metrics)
     }
@@ -896,9 +896,9 @@ SM.CollectionPanel.ProgressPanel = Ext.extend(Ext.Panel, {
             align: 'middle',
             pack: 'center'
           },
-          items: [chartPanel, {width: 30, border: false}, dataPanel]
+          items: [chartPanel, { width: 30, border: false }, dataPanel]
         },
-        {height: 20, border: false},
+        { height: 20, border: false },
         progressBarsPanel,
       ],
       updateMetrics,
@@ -919,15 +919,15 @@ SM.CollectionPanel.AgesPanel = Ext.extend(Ext.Panel, {
     let refreshTimer
     const tpl = new Ext.XTemplate(
       '<div class="sm-metrics-count-parent">',
-        `<div class="sm-metrics-count-child sm-metrics-age-box" ext:qwidth=130 ext:qtip="{[Ext.util.Format.date(values.minTs,'Y-m-d H:i T')]}">`,
-          `<div class="sm-metrics-count-label">Oldest</div><div class="sm-metrics-count-value">{[renderDurationToNow(values.minTs)]}</div>`,
-        '</div>',
-        `<div class="sm-metrics-count-child sm-metrics-age-box" ext:qwidth=130 ext:qtip="{[Ext.util.Format.date(values.maxTs,'Y-m-d H:i T')]}">`,
-          `<div class="sm-metrics-count-label">Newest</div><div class="sm-metrics-count-value">{[renderDurationToNow(values.maxTs)]}</div>`,
-        '</div>',
-        `<div class="sm-metrics-count-child sm-metrics-age-box" ext:qwidth=130 ext:qtip="{[Ext.util.Format.date(values.maxTouchTs,'Y-m-d H:i T')]}">`,
-          `<div class="sm-metrics-count-label">Updated</div><div class="sm-metrics-count-value">{[renderDurationToNow(values.maxTouchTs)]}</div>`,
-        '</div>',
+      `<div class="sm-metrics-count-child sm-metrics-age-box" ext:qwidth=130 ext:qtip="{[Ext.util.Format.date(values.minTs,'Y-m-d H:i T')]}">`,
+      `<div class="sm-metrics-count-label">Oldest</div><div class="sm-metrics-count-value">{[renderDurationToNow(values.minTs)]}</div>`,
+      '</div>',
+      `<div class="sm-metrics-count-child sm-metrics-age-box" ext:qwidth=130 ext:qtip="{[Ext.util.Format.date(values.maxTs,'Y-m-d H:i T')]}">`,
+      `<div class="sm-metrics-count-label">Newest</div><div class="sm-metrics-count-value">{[renderDurationToNow(values.maxTs)]}</div>`,
+      '</div>',
+      `<div class="sm-metrics-count-child sm-metrics-age-box" ext:qwidth=130 ext:qtip="{[Ext.util.Format.date(values.maxTouchTs,'Y-m-d H:i T')]}">`,
+      `<div class="sm-metrics-count-label">Updated</div><div class="sm-metrics-count-value">{[renderDurationToNow(values.maxTouchTs)]}</div>`,
+      '</div>',
       '</div>'
     )
     const updateMetrics = function (metrics) {
@@ -955,15 +955,15 @@ SM.CollectionPanel.FindingsPanel = Ext.extend(Ext.Panel, {
     const _this = this
     const tpl = new Ext.XTemplate(
       '<div class="sm-metrics-count-parent">',
-        '<div class="sm-metrics-count-child sm-metrics-low-box">',
-          `<div class="sm-metrics-count-label">CAT 3</div><div class="sm-metrics-count-value">{[values.low]}</div>`,
-        '</div>',
-        '<div class="sm-metrics-count-child sm-metrics-medium-box" >',
-          `<div class="sm-metrics-count-label">CAT 2</div><div class="sm-metrics-count-value">{[values.medium]}</div>`,
-        '</div>',
-        '<div class="sm-metrics-count-child sm-metrics-high-box" >',
-          `<div class="sm-metrics-count-label">CAT 1</div><div class="sm-metrics-count-value">{[values.high]}</div>`,
-        '</div>',
+      '<div class="sm-metrics-count-child sm-metrics-low-box">',
+      `<div class="sm-metrics-count-label">CAT 3</div><div class="sm-metrics-count-value">{[values.low]}</div>`,
+      '</div>',
+      '<div class="sm-metrics-count-child sm-metrics-medium-box" >',
+      `<div class="sm-metrics-count-label">CAT 2</div><div class="sm-metrics-count-value">{[values.medium]}</div>`,
+      '</div>',
+      '<div class="sm-metrics-count-child sm-metrics-high-box" >',
+      `<div class="sm-metrics-count-label">CAT 1</div><div class="sm-metrics-count-value">{[values.high]}</div>`,
+      '</div>',
       '</div>'
     )
     const updateMetrics = function (metrics) {
@@ -998,8 +998,8 @@ SM.CollectionPanel.ExportPanel = Ext.extend(Ext.Panel, {
           ['CSV', 'csv']
         ]
       }),
-      valueField:'valueStr',
-      displayField:'displayStr',
+      valueField: 'valueStr',
+      displayField: 'displayStr',
       value: localStorage.getItem('metricsExportFormat') || 'json',
       monitorValid: false,
       triggerAction: 'all',
@@ -1023,8 +1023,8 @@ SM.CollectionPanel.ExportPanel = Ext.extend(Ext.Panel, {
           ['Detail', 'detail']
         ]
       }),
-      valueField:'valueStr',
-      displayField:'displayStr',
+      valueField: 'valueStr',
+      displayField: 'displayStr',
       value: localStorage.getItem('metricsExportStyle') || 'summary',
       monitorValid: false,
       triggerAction: 'all',
@@ -1051,8 +1051,8 @@ SM.CollectionPanel.ExportPanel = Ext.extend(Ext.Panel, {
           ['Ungrouped', 'unagg']
         ]
       }),
-      valueField:'valueStr',
-      displayField:'displayStr',
+      valueField: 'valueStr',
+      displayField: 'displayStr',
       value: localStorage.getItem('metricsExportAgg') || 'collection',
       monitorValid: false,
       triggerAction: 'all',
@@ -1074,9 +1074,9 @@ SM.CollectionPanel.ExportPanel = Ext.extend(Ext.Panel, {
       handler: async function () {
         const format = formatComboBox.getValue()
         const style = styleComboBox.getValue()
-        const agg = aggComboBox.getValue() 
+        const agg = aggComboBox.getValue()
         const url = `${STIGMAN.Env.apiBase}/collections/${collectionId}/metrics/${style}${agg === 'unagg' ? '' : `/${agg}`}?format=${format}`
-        const attachment = `${agg}-${style}.${format}` 
+        const attachment = `${agg}-${style}.${format}`
         await window.oidcProvider.updateToken(10)
         const fetchInit = {
           method: 'GET',
@@ -1084,7 +1084,7 @@ SM.CollectionPanel.ExportPanel = Ext.extend(Ext.Panel, {
             'Authorization': `Bearer ${window.oidcProvider.token}`,
             'Accept': `${format === 'csv' ? 'text/csv' : 'application/json'}`
           },
-          attachment 
+          attachment
         }
         const href = await SM.ServiceWorker.getDownloadUrl({ url, ...fetchInit })
         if (href) {
@@ -1103,7 +1103,7 @@ SM.CollectionPanel.ExportPanel = Ext.extend(Ext.Panel, {
 
     const config = {
       layout: 'form',
-      items:[
+      items: [
         aggComboBox,
         styleComboBox,
         formatComboBox,
@@ -1120,15 +1120,15 @@ SM.CollectionPanel.InventoryPanel = Ext.extend(Ext.Panel, {
     const _this = this
     const tpl = new Ext.XTemplate(
       '<div class="sm-metrics-count-parent">',
-        '<div class="sm-metrics-count-child sm-metrics-inventory-box" >',
-          `<div class="sm-metrics-count-label">Assets</div><div class="sm-metrics-count-value">{assets}</div>`,
-        '</div>',
-        '<div class="sm-metrics-count-child sm-metrics-inventory-box">',
-        `<div class="sm-metrics-count-label">STIGs</div><div class="sm-metrics-count-value">{stigs}</div>`,
-        '</div>',
-        '<div class="sm-metrics-count-child sm-metrics-inventory-box">',
-        `<div class="sm-metrics-count-label">Checklists</div><div class="sm-metrics-count-value">{checklists}</div>`,
-        '</div>',
+      '<div class="sm-metrics-count-child sm-metrics-inventory-box" >',
+      `<div class="sm-metrics-count-label">Assets</div><div class="sm-metrics-count-value">{assets}</div>`,
+      '</div>',
+      '<div class="sm-metrics-count-child sm-metrics-inventory-box">',
+      `<div class="sm-metrics-count-label">STIGs</div><div class="sm-metrics-count-value">{stigs}</div>`,
+      '</div>',
+      '<div class="sm-metrics-count-child sm-metrics-inventory-box">',
+      `<div class="sm-metrics-count-label">Checklists</div><div class="sm-metrics-count-value">{checklists}</div>`,
+      '</div>',
       '</div>'
     )
     const updateMetrics = function (metrics) {
@@ -1149,12 +1149,12 @@ SM.CollectionPanel.OverviewPanel = Ext.extend(Ext.Panel, {
     const _this = this
     const toolTemplate = new Ext.XTemplate(
       '<tpl if="!!values.text">',
-        '<div class="x-tool x-tool-{id}">{text}</div>',
+      '<div class="x-tool x-tool-{id}">{text}</div>',
       '</tpl>',
       '<tpl if="!!!values.text">',
-          '<div class="x-tool x-tool-{id}">&#160;</div>',
+      '<div class="x-tool x-tool-{id}">&#160;</div>',
       '</tpl>'
-  )
+    )
 
     const collectionId = this.collectionId
     this.inventoryPanel = new SM.CollectionPanel.InventoryPanel({
@@ -1248,7 +1248,7 @@ SM.CollectionPanel.AggAssetPanel = Ext.extend(Ext.Panel, {
       split: true,
       height: '33%'
     })
-    async function onRowSelect (cm, index, record) {
+    async function onRowSelect(cm, index, record) {
       await unaggGrid.store.loadPromise({
         assetId: record.data.assetId
       })
@@ -1258,9 +1258,8 @@ SM.CollectionPanel.AggAssetPanel = Ext.extend(Ext.Panel, {
     aggAssetGrid.getSelectionModel().on('rowselect', onRowSelect)
     const updateBaseParams = function (params) {
       unaggGrid.store.baseParams = aggAssetGrid.store.baseParams = _this.baseParams = params
-      // updateData()
     }
-    const updateData = async function (refreshViewsOnly = false, loadMasksDisabled = false) {
+    const updateData = async function ({refreshViewsOnly = false, loadMasksDisabled = false} = {}) {
       try {
         const selectedRow = aggAssetGrid.getSelectionModel().getSelected()
 
@@ -1271,7 +1270,7 @@ SM.CollectionPanel.AggAssetPanel = Ext.extend(Ext.Panel, {
           }
           return
         }
-        let savedLoadMaskDisabled =  aggAssetGrid.loadMask.disabled
+        let savedLoadMaskDisabled = aggAssetGrid.loadMask.disabled
         aggAssetGrid.loadMask.disabled = loadMasksDisabled
         await aggAssetGrid.store.loadPromise()
         aggAssetGrid.loadMask.disabled = savedLoadMaskDisabled
@@ -1289,7 +1288,7 @@ SM.CollectionPanel.AggAssetPanel = Ext.extend(Ext.Panel, {
         const currentIndex = aggAssetGrid.store.indexOfId(selectedRow.data.assetId)
         aggAssetGrid.view.focusRow(currentIndex)
 
-        savedLoadMaskDisabled =  unaggGrid.loadMask.disabled
+        savedLoadMaskDisabled = unaggGrid.loadMask.disabled
         unaggGrid.loadMask.disabled = loadMasksDisabled
         await unaggGrid.store.loadPromise({
           assetId: currentRecord.data.assetId
@@ -1373,9 +1372,8 @@ SM.CollectionPanel.AggStigPanel = Ext.extend(Ext.Panel, {
 
     const updateBaseParams = function (params) {
       unaggGrid.store.baseParams = aggStigGrid.store.baseParams = _this.baseParams = params
-      // updateData()
     }
-    const updateData = async function (refreshViewsOnly = false, loadMasksDisabled = false) {
+    const updateData = async function ({refreshViewsOnly = false, loadMasksDisabled = false} = {}) {
       try {
         const selectedRow = aggStigGrid.getSelectionModel().getSelected()
 
@@ -1386,7 +1384,7 @@ SM.CollectionPanel.AggStigPanel = Ext.extend(Ext.Panel, {
           }
           return
         }
-        let savedLoadMaskDisabled =  aggStigGrid.loadMask.disabled
+        let savedLoadMaskDisabled = aggStigGrid.loadMask.disabled
         aggStigGrid.loadMask.disabled = loadMasksDisabled
         await aggStigGrid.store.loadPromise()
         aggStigGrid.loadMask.disabled = savedLoadMaskDisabled
@@ -1403,8 +1401,8 @@ SM.CollectionPanel.AggStigPanel = Ext.extend(Ext.Panel, {
         }
         const currentIndex = aggStigGrid.store.indexOfId(selectedRow.data.benchmarkId)
         aggStigGrid.view.focusRow(currentIndex)
-        
-        savedLoadMaskDisabled =  unaggGrid.loadMask.disabled
+
+        savedLoadMaskDisabled = unaggGrid.loadMask.disabled
         unaggGrid.loadMask.disabled = loadMasksDisabled
         await unaggGrid.store.loadPromise({
           benchmarkId: currentRecord.data.benchmarkId
@@ -1473,7 +1471,7 @@ SM.CollectionPanel.AggLabelPanel = Ext.extend(Ext.Panel, {
       split: true,
       height: '33%'
     })
-    async function onRowSelectLabel (cm, index, record) {
+    async function onRowSelectLabel(cm, index, record) {
       const params = {}
       if (record.data.labelId) {
         params.labelId = record.data.labelId
@@ -1485,7 +1483,7 @@ SM.CollectionPanel.AggLabelPanel = Ext.extend(Ext.Panel, {
       unaggGrid.store.removeAll()
       aggAssetGrid.setTitle(`Assets for ${record.data.name}`)
     }
-    async function onRowSelectAsset (cm, index, record) {
+    async function onRowSelectAsset(cm, index, record) {
       await unaggGrid.store.loadPromise({
         assetId: record.data.assetId
       })
@@ -1496,9 +1494,8 @@ SM.CollectionPanel.AggLabelPanel = Ext.extend(Ext.Panel, {
     aggAssetGrid.getSelectionModel().on('rowselect', onRowSelectAsset)
     const updateBaseParams = function (params) {
       unaggGrid.store.baseParams = aggLabelGrid.store.baseParams = aggAssetGrid.store.baseParams = _this.baseParams = params
-      // updateData()
     }
-    const updateData = async function (refreshViewsOnly = false, loadMasksDisabled = false) {
+    const updateData = async function ({refreshViewsOnly = false, loadMasksDisabled = false} = {}) {
       try {
         const selectedRowLabel = aggLabelGrid.getSelectionModel().getSelected()
         const selectedRowAsset = aggAssetGrid.getSelectionModel().getSelected()
@@ -1514,7 +1511,7 @@ SM.CollectionPanel.AggLabelPanel = Ext.extend(Ext.Panel, {
           return
         }
 
-        let savedLoadMaskDisabled =  aggLabelGrid.loadMask.disabled
+        let savedLoadMaskDisabled = aggLabelGrid.loadMask.disabled
         aggLabelGrid.loadMask.disabled = loadMasksDisabled
         await aggLabelGrid.store.loadPromise()
         aggLabelGrid.loadMask.disabled = savedLoadMaskDisabled
@@ -1533,7 +1530,7 @@ SM.CollectionPanel.AggLabelPanel = Ext.extend(Ext.Panel, {
         }
         const currentIndexLabel = aggLabelGrid.store.indexOfId(selectedRowLabel.data.labelId)
         aggLabelGrid.view.focusRow(currentIndexLabel)
-        savedLoadMaskDisabled =  aggAssetGrid.loadMask.disabled
+        savedLoadMaskDisabled = aggAssetGrid.loadMask.disabled
         aggAssetGrid.loadMask.disabled = loadMasksDisabled
         await aggAssetGrid.store.loadPromise({
           labelId: currentRecordLabel.data.labelId
@@ -1547,7 +1544,7 @@ SM.CollectionPanel.AggLabelPanel = Ext.extend(Ext.Panel, {
         }
         const currentIndexAsset = aggAssetGrid.store.indexOfId(selectedRowAsset.data.assetId)
         aggAssetGrid.view.focusRow(currentIndexAsset)
-        savedLoadMaskDisabled =  unaggGrid.loadMask.disabled
+        savedLoadMaskDisabled = unaggGrid.loadMask.disabled
         unaggGrid.loadMask.disabled = loadMasksDisabled
         await unaggGrid.store.loadPromise({
           assetId: currentRecordAsset.data.assetId
@@ -1578,21 +1575,21 @@ SM.CollectionPanel.AggLabelPanel = Ext.extend(Ext.Panel, {
 SM.CollectionPanel.showCollectionTab = async function (options) {
   try {
     const { collectionId, collectionName, treePath, initialLabelIds = [] } = options
-    const tab = Ext.getCmp('main-tab-panel').getItem(`metrics-tab-${collectionId}`)
+    const tab = Ext.getCmp('main-tab-panel').getItem(`collection-panel-${collectionId}`)
     if (tab) {
       Ext.getCmp('main-tab-panel').setActiveTab(tab.id)
       return
     }
-    
+
     const gState = {}
 
     gState.labelIds = initialLabelIds
     gState.filterableLabels = []
     gState.lastApiMetricsCollection
-    
+
     const UPDATE_DATA_DELAY = 60000
     const LAST_REFRESH_DELAY = 60000
-    
+
     const overviewTitleTpl = new Ext.XTemplate(
       // `Collection: {[values.labels ? values.labels : 'all']}{[values.gState.lastApiRefresh ? '&nbsp;&nbsp;<i>(' + durationToNow(values.gState.lastApiRefresh, true) + ')</i>' : '']}`
       `Collection: {[values.labels ? values.labels : 'all']}`
@@ -1604,7 +1601,7 @@ SM.CollectionPanel.showCollectionTab = async function (options) {
       showApply: true,
       listeners: {
         applied: function (labelIds) {
-            SM.Dispatcher.fireEvent('labelfilter', collectionId, labelIds)
+          SM.Dispatcher.fireEvent('labelfilter', collectionId, labelIds)
         }
       }
     })
@@ -1619,14 +1616,14 @@ SM.CollectionPanel.showCollectionTab = async function (options) {
     const overviewReloadBtn = new SM.ReloadStoreButton({
       handler: async function () {
         try {
-          await updateData(false, false)
+          await updateData()
         }
         catch (e) {
           console.log(e)
         }
-      } 
+      }
     })
-      
+
     const overviewPanel = new SM.CollectionPanel.OverviewPanel({
       cls: 'sm-round-panel sm-metrics-overview-panel',
       collapsible: true,
@@ -1691,7 +1688,7 @@ SM.CollectionPanel.showCollectionTab = async function (options) {
     })
     overviewPanel.inventoryPanel.on('render', (panel) => {
       if (panel.tools.manage) {
-        const collectionGrant = curUser.collectionGrants.find( g => g.collection.collectionId === collectionId )
+        const collectionGrant = curUser.collectionGrants.find(g => g.collection.collectionId === collectionId)
         panel.tools.manage.setDisplayed(collectionGrant && collectionGrant.accessLevel >= 3)
       }
     })
@@ -1734,7 +1731,7 @@ SM.CollectionPanel.showCollectionTab = async function (options) {
       listeners: {
         beforetabchange: function (tp, newTab, currentTab) {
           if (currentTab) { // after initial setup update the whole presentation
-            updateData(false, true)
+            updateData({loadMasksDisabled: true})
           }
         }
       }
@@ -1751,8 +1748,9 @@ SM.CollectionPanel.showCollectionTab = async function (options) {
       items: aggTabPanel
     })
 
-    const metricsTab = new Ext.Panel({
-      id: 'metrics-tab-' + collectionId,
+    const collectionTab = new Ext.Panel({
+      id: 'collection-panel-' + collectionId,
+      sm_unshown: true,
       border: false,
       region: 'center',
       collectionId: collectionId,
@@ -1771,28 +1769,26 @@ SM.CollectionPanel.showCollectionTab = async function (options) {
       ],
       listeners: {
         beforehide: (panel) => {
-            // console.log(`${collectionName}: hide tab ${panel.id}`)
-            cancelTimers()
+          cancelTimers()
         },
         show: (panel) => {
-            // console.log(`${collectionName}: show tab ${panel.id}`)
-            updateData()
+          updateData({loadMasksDisabled: !panel.sm_unshown})
+          panel.sm_unshown = false
         }
-
       }
     })
 
     SM.Dispatcher.addListener('labelfilter', onLabelFilter)
-    metricsTab.on('beforedestroy', () => { 
-      SM.Dispatcher.removeListener('labelfilter', onLabelFilter) 
+    collectionTab.on('beforedestroy', () => {
+      SM.Dispatcher.removeListener('labelfilter', onLabelFilter)
       cancelTimers()
     })
 
-    SM.AddPanelToMainTab(metricsTab, 'permanent')
-    
+    SM.AddPanelToMainTab(collectionTab, 'permanent')
+
     // functions
 
-    function setCurrentBaseParams (labelIds) {
+    function setCurrentBaseParams(labelIds) {
       // if (!labelIds.length) return undefined
       const params = {}
       for (let x = 0, length = labelIds.length; x < length; x++) {
@@ -1800,7 +1796,7 @@ SM.CollectionPanel.showCollectionTab = async function (options) {
           params.labelMatch = 'null'
         }
         else {
-          ;(params.labelId ??= []).push(labelIds[x])
+          ; (params.labelId ??= []).push(labelIds[x])
         }
       }
       aggAssetPanel?.updateBaseParams(params)
@@ -1810,7 +1806,7 @@ SM.CollectionPanel.showCollectionTab = async function (options) {
       return params
     }
 
-    async function getMetricsAggCollection (collectionId) {
+    async function getMetricsAggCollection(collectionId) {
       const results = await Ext.Ajax.requestPromise({
         url: `${STIGMAN.Env.apiBase}/collections/${collectionId}/metrics/summary/collection`,
         method: 'GET',
@@ -1821,7 +1817,7 @@ SM.CollectionPanel.showCollectionTab = async function (options) {
       return gState.lastApiMetricsCollection
     }
 
-    async function updateFilterableLabels () {
+    async function updateFilterableLabels() {
       try {
         const results = await Ext.Ajax.requestPromise({
           url: `${STIGMAN.Env.apiBase}/collections/${collectionId}/metrics/summary/label`,
@@ -1831,12 +1827,12 @@ SM.CollectionPanel.showCollectionTab = async function (options) {
         if (overviewPanel.tools.label) {
           overviewPanel.tools.label.setDisplayed(!!(gState.filterableLabels.length > 1))
         }
-        const filterableLabelIds = gState.filterableLabels.map( label => label.labelId)
+        const filterableLabelIds = gState.filterableLabels.map(label => label.labelId)
         // remove from gState.labelIds any missing labelIds
-        gState.labelIds = gState.labelIds.filter( labelId => filterableLabelIds.includes(labelId))
+        gState.labelIds = gState.labelIds.filter(labelId => filterableLabelIds.includes(labelId))
         // reset base parameters
         setCurrentBaseParams(gState.labelIds)
-        
+
         return gState.filterableLabels
       }
       catch (e) {
@@ -1845,23 +1841,23 @@ SM.CollectionPanel.showCollectionTab = async function (options) {
       }
     }
 
-    function updateOverviewTitle () {
+    function updateOverviewTitle() {
       const overviewTitle = overviewTitleTpl.apply({
         labels: SM.Collection.LabelSpritesByCollectionLabelId(collectionId, gState.labelIds)
       })
       overviewPanel.setTitle(overviewTitle)
     }
 
-    function updateLastRefreshTextItem () {
+    function updateLastRefreshTextItem() {
       lastRefreshedTextItem.update({
         duration: durationToNow(gState.lastApiRefresh, true)
       })
     }
 
-    function reloadBtnHandler () { updateData(false, false) }
+    function reloadBtnHandler() { updateData() }
 
     // handle change to label filters in NavTree
-    async function onLabelFilter (srcCollectionId, srcLabelIds) {
+    async function onLabelFilter(srcCollectionId, srcLabelIds) {
       try {
         if (srcCollectionId === collectionId) {
           gState.labelIds = srcLabelIds
@@ -1871,17 +1867,17 @@ SM.CollectionPanel.showCollectionTab = async function (options) {
           overviewPanel.updateMetrics(apiMetricsCollection)
           const activePanel = aggTabPanel.getActiveTab()
           if (activePanel) {
-            await activePanel.updateData(false, false)
-          } 
+            await activePanel.updateData()
+          }
         }
       }
       catch (e) {
-        alert (e)
+        alert(e)
       }
     }
 
     // handle periodic updates
-    async function updateData (refreshViewsOnly = false, loadMasksDisabled = false) {
+    async function updateData({refreshViewsOnly = false, loadMasksDisabled = false} = {}) {
       try {
         let apiMetricsCollection = gState.lastApiMetricsCollection
         if (!refreshViewsOnly) {
@@ -1893,8 +1889,12 @@ SM.CollectionPanel.showCollectionTab = async function (options) {
           overviewReloadBtn.showLoadingIcon()
           apiMetricsCollection = await getMetricsAggCollection(collectionId, gState.labelIds)
           overviewReloadBtn.showRefreshIcon()
-          
-          gState.updateDataTimerId = setTimeout(updateData, UPDATE_DATA_DELAY, false, true)
+
+          gState.updateDataTimerId = setTimeout(
+            updateData, 
+            UPDATE_DATA_DELAY, 
+            {loadMasksDisabled: true}
+          )
         }
         clearInterval(gState.updateLastRefreshIntervalId)
         gState.updateLastRefreshIntervalId = null
@@ -1906,31 +1906,35 @@ SM.CollectionPanel.showCollectionTab = async function (options) {
         labelsMenu.refreshItems(gState.filterableLabels)
         const activePanel = aggTabPanel.getActiveTab()
         if (activePanel) {
-          await activePanel.updateData(refreshViewsOnly, loadMasksDisabled)
+          await activePanel.updateData({refreshViewsOnly, loadMasksDisabled})
         }
 
         const refreshViewsDelay = calcRefreshDelay(apiMetricsCollection.metrics.maxTouchTs)
         if (refreshViewsDelay < UPDATE_DATA_DELAY) {
-          gState.refreshViewTimerId = setTimeout(updateData, refreshViewsDelay, true, true)
+          gState.refreshViewTimerId = setTimeout(
+            updateData, 
+            refreshViewsDelay, 
+            {refreshViewsOnly: true, loadMasksDisabled: true}
+          )
         }
       }
       catch (e) {
         console.log(e)
       }
     }
-    function cancelTimers () {
+    function cancelTimers() {
       clearTimeout(gState.refreshViewTimerId)
       clearTimeout(gState.updateDataTimerId)
       clearInterval(gState.updateLastRefreshIntervalId)
       gState.refreshViewTimerId = gState.updateDataTimerId = gState.updateLastRefreshIntervalId = null
     }
 
-    function calcRefreshDelay (maxTouchTs) {
-      const diffSecs = Math.ceil(Math.abs(new Date() - new Date(maxTouchTs))/1000)
-      if ( diffSecs < 3600 ) {
+    function calcRefreshDelay(maxTouchTs) {
+      const diffSecs = Math.ceil(Math.abs(new Date() - new Date(maxTouchTs)) / 1000)
+      if (diffSecs < 3600) {
         return 30 * 1000
       }
-      if ( diffSecs < 86400 ) {
+      if (diffSecs < 86400) {
         return 3600 * 1000
       }
       return 86400 * 1000
