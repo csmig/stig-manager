@@ -1904,7 +1904,12 @@ SM.CollectionPanel.showCollectionTab = async function (options) {
     async function onLabelFilter(srcCollectionId, srcLabelIds) {
       try {
         if (srcCollectionId === collectionId) {
-          gState.labelIds = srcLabelIds
+          if (gState.filterableLabels.every( i => srcLabelIds.includes(i.labelId) )) {
+            gState.labelIds = []
+          }
+          else {
+            gState.labelIds = srcLabelIds
+          }
           gState.baseParams = setCurrentBaseParams(gState.labelIds)
           await overviewPanel.updateData()
           updateOverviewTitle()
