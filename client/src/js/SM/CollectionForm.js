@@ -2245,7 +2245,10 @@ SM.Collection.LabelsMenu = Ext.extend(Ext.menu.Menu, {
         if (this.showHeader) {
             this.addItem(this.getTextItemConfig())
         }
-        labels.sort((a,b) => a.name.localeCompare(b.name))
+        labels.sort((a,b) => {
+            if (a.name === null) return -1 
+            return a.name.localeCompare(b.name)
+        })
         for (const label of labels) {
             if (label.uses === 0 && this.ignoreUnusedLabels) continue
             const checked = labelIdSet.has(label.labelId)

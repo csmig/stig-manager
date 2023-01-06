@@ -1157,6 +1157,16 @@ SM.CollectionPanel.OverviewPanel = Ext.extend(Ext.Panel, {
     )
 
     const collectionId = this.collectionId
+    this.lastRefreshedTextItem = new Ext.Toolbar.TextItem({
+      text: '',
+      tpl: [
+        `<span style="font-weight:600;">Fetched:</span> {[Ext.util.Format.date(values.date,'Y-m-d H:i:s T')]}`
+      ]
+    })
+    this.reloadBtn = new SM.ReloadStoreButton({
+      handler: this.reloadBtnHandler
+    })
+
     this.inventoryPanel = new SM.CollectionPanel.InventoryPanel({
       cls: 'sm-round-inner-panel',
       bodyStyle: 'padding: 10px;',
@@ -1196,12 +1206,44 @@ SM.CollectionPanel.OverviewPanel = Ext.extend(Ext.Panel, {
       collectionId
     })
 
-    const updateMetrics = function (data) {
-      _this.data = data
+    const updateBaseParams = function (params) {
+      _this.baseParams = params
+    }
+    const updatePanels = function (data) {
       _this.inventoryPanel.updateMetrics(data)
       _this.progressPanel.updateMetrics(data.metrics)
       _this.agesPanel.updateMetrics(data.metrics)
       _this.findingsPanel.updateMetrics(data.metrics.findings)
+      _this.lastRefreshedTextItem.update({
+        date: data.date
+      })
+    }
+    const updateData = async function({refreshViewsOnly = false, loadMasksDisabled = false} = {}) {
+      try {
+        const showMask = !refreshViewsOnly && !loadMasksDisabled
+        if (showMask) {
+          _this.bwrap?.mask('')
+        }
+        _this.reloadBtn.showLoadingIcon()
+        if (!refreshViewsOnly) {
+          const results = await Ext.Ajax.requestPromise({
+            url: `${STIGMAN.Env.apiBase}/collections/${_this.collectionId}/metrics/summary/collection`,
+            method: 'GET',
+            params: _this.baseParams
+          })
+          _this.data = JSON.parse(results.response.responseText)
+          _this.data.date = new Date ()
+        }
+        updatePanels(_this.data)
+        return _this.data
+      }
+      catch (e) {
+        console.log(e)
+      }
+      finally {
+        _this.bwrap?.unmask()
+        _this.reloadBtn.showRefreshIcon()
+      }
     }
     const config = {
       border: false,
@@ -1214,7 +1256,14 @@ SM.CollectionPanel.OverviewPanel = Ext.extend(Ext.Panel, {
         this.agesPanel,
         this.exportPanel
       ],
-      updateMetrics
+      bbar: [
+        this.reloadBtn,
+        '->',
+        '-',
+        this.lastRefreshedTextItem
+      ],
+      updateData,
+      updateBaseParams
     }
     Ext.apply(this, Ext.apply(this.initialConfig, config))
     this.superclass().initComponent.call(this)
@@ -1585,13 +1634,12 @@ SM.CollectionPanel.showCollectionTab = async function (options) {
 
     gState.labelIds = initialLabelIds
     gState.filterableLabels = []
-    gState.lastApiMetricsCollection
+    // gState.lastApiMetricsCollection
 
-    const UPDATE_DATA_DELAY = 60000
-    const LAST_REFRESH_DELAY = 60000
+    const UPDATE_DATA_DELAY = 300000
+    // const LAST_REFRESH_DELAY = 60000
 
     const overviewTitleTpl = new Ext.XTemplate(
-      // `Collection: {[values.labels ? values.labels : 'all']}{[values.gState.lastApiRefresh ? '&nbsp;&nbsp;<i>(' + durationToNow(values.gState.lastApiRefresh, true) + ')</i>' : '']}`
       `Collection: {[values.labels ? values.labels : 'all']}`
     )
 
@@ -1606,26 +1654,27 @@ SM.CollectionPanel.showCollectionTab = async function (options) {
       }
     })
 
-    const lastRefreshedTextItem = new Ext.Toolbar.TextItem({
-      text: '',
-      tpl: [
-        'Fetched: <i>{duration}</i>'
-      ]
-    })
+    // const lastRefreshedTextItem = new Ext.Toolbar.TextItem({
+    //   text: '',
+    //   tpl: [
+    //     'Fetched: <i>{duration}</i>'
+    //   ]
+    // })
 
-    const overviewReloadBtn = new SM.ReloadStoreButton({
-      handler: async function () {
-        try {
-          await updateData()
-        }
-        catch (e) {
-          console.log(e)
-        }
-      }
-    })
+    // const overviewReloadBtn = new SM.ReloadStoreButton({
+    //   handler: async function () {
+    //     try {
+    //       await updateData()
+    //     }
+    //     catch (e) {
+    //       console.log(e)
+    //     }
+    //   }
+    // })
 
     const overviewPanel = new SM.CollectionPanel.OverviewPanel({
       cls: 'sm-round-panel sm-metrics-overview-panel',
+      collectionId,
       collapsible: true,
       collapseFirst: false,
       inventoryPanelTools: [
@@ -1672,12 +1721,7 @@ SM.CollectionPanel.showCollectionTab = async function (options) {
       minWidth: 430,
       split: true,
       collectionId,
-      bbar: [
-        overviewReloadBtn,
-        '->',
-        '-',
-        lastRefreshedTextItem
-      ],
+      reloadBtnHandler,
       listeners: {
         render: (panel) => {
           if (panel.tools.label) {
@@ -1740,7 +1784,6 @@ SM.CollectionPanel.showCollectionTab = async function (options) {
     const centerPanel = new Ext.Panel({
       region: 'center',
       layout: 'fit',
-      // title: 'Checklists',
       cls: 'sm-round-panel',
       margins: { top: SM.Margin.top, right: SM.Margin.edge, bottom: SM.Margin.bottom, left: SM.Margin.adjacent },
       border: false,
@@ -1802,20 +1845,20 @@ SM.CollectionPanel.showCollectionTab = async function (options) {
       aggAssetPanel?.updateBaseParams(params)
       aggStigPanel?.updateBaseParams(params)
       aggLabelPanel?.updateBaseParams(params)
-      gState.baseParams = params
+      overviewPanel?.updateBaseParams(params)
       return params
     }
 
-    async function getMetricsAggCollection(collectionId) {
-      const results = await Ext.Ajax.requestPromise({
-        url: `${STIGMAN.Env.apiBase}/collections/${collectionId}/metrics/summary/collection`,
-        method: 'GET',
-        params: gState.baseParams
-      })
-      gState.lastApiRefresh = new Date()
-      gState.lastApiMetricsCollection = JSON.parse(results.response.responseText)
-      return gState.lastApiMetricsCollection
-    }
+    // async function getMetricsAggCollection(collectionId) {
+    //   const results = await Ext.Ajax.requestPromise({
+    //     url: `${STIGMAN.Env.apiBase}/collections/${collectionId}/metrics/summary/collection`,
+    //     method: 'GET',
+    //     params: gState.baseParams
+    //   })
+    //   gState.lastApiRefresh = new Date()
+    //   gState.lastApiMetricsCollection = JSON.parse(results.response.responseText)
+    //   return gState.lastApiMetricsCollection
+    // }
 
     async function updateFilterableLabels() {
       try {
@@ -1832,6 +1875,7 @@ SM.CollectionPanel.showCollectionTab = async function (options) {
         gState.labelIds = gState.labelIds.filter(labelId => filterableLabelIds.includes(labelId))
         // reset base parameters
         setCurrentBaseParams(gState.labelIds)
+        labelsMenu.refreshItems(gState.filterableLabels)
 
         return gState.filterableLabels
       }
@@ -1848,11 +1892,11 @@ SM.CollectionPanel.showCollectionTab = async function (options) {
       overviewPanel.setTitle(overviewTitle)
     }
 
-    function updateLastRefreshTextItem() {
-      lastRefreshedTextItem.update({
-        duration: durationToNow(gState.lastApiRefresh, true)
-      })
-    }
+    // function updateLastRefreshTextItem() {
+    //   overviewPanel.lastRefreshedTextItem.update({
+    //     duration: durationToNow(gState.lastApiRefresh, true)
+    //   })
+    // }
 
     function reloadBtnHandler() { updateData() }
 
@@ -1862,9 +1906,8 @@ SM.CollectionPanel.showCollectionTab = async function (options) {
         if (srcCollectionId === collectionId) {
           gState.labelIds = srcLabelIds
           gState.baseParams = setCurrentBaseParams(gState.labelIds)
-          let apiMetricsCollection = await getMetricsAggCollection(collectionId)
+          await overviewPanel.updateData()
           updateOverviewTitle()
-          overviewPanel.updateMetrics(apiMetricsCollection)
           const activePanel = aggTabPanel.getActiveTab()
           if (activePanel) {
             await activePanel.updateData()
@@ -1879,31 +1922,27 @@ SM.CollectionPanel.showCollectionTab = async function (options) {
     // handle periodic updates
     async function updateData({refreshViewsOnly = false, loadMasksDisabled = false} = {}) {
       try {
-        let apiMetricsCollection = gState.lastApiMetricsCollection
+        clearTimeout(gState.refreshViewTimerId)
         if (!refreshViewsOnly) {
-          clearTimeout(gState.refreshViewTimerId)
           clearTimeout(gState.updateDataTimerId)
           gState.updateDataTimerId = gState.refreshViewTimerId = null
 
           await updateFilterableLabels()
-          overviewReloadBtn.showLoadingIcon()
-          apiMetricsCollection = await getMetricsAggCollection(collectionId, gState.labelIds)
-          overviewReloadBtn.showRefreshIcon()
+          labelsMenu.refreshItems(gState.filterableLabels)
 
           gState.updateDataTimerId = setTimeout(
             updateData, 
             UPDATE_DATA_DELAY, 
             {loadMasksDisabled: true}
           )
+          // gState.lastApiRefresh = new Date()
         }
-        clearInterval(gState.updateLastRefreshIntervalId)
-        gState.updateLastRefreshIntervalId = null
-        updateLastRefreshTextItem()
-        gState.updateLastRefreshIntervalId = setInterval(updateLastRefreshTextItem, LAST_REFRESH_DELAY)
-
+        // clearInterval(gState.updateLastRefreshIntervalId)
+        // gState.updateLastRefreshIntervalId = null
+        // updateLastRefreshTextItem()
+        // gState.updateLastRefreshIntervalId = setInterval(updateLastRefreshTextItem, LAST_REFRESH_DELAY)
+        const apiMetricsCollection = await overviewPanel.updateData({refreshViewsOnly, loadMasksDisabled})
         updateOverviewTitle()
-        overviewPanel.updateMetrics(apiMetricsCollection)
-        labelsMenu.refreshItems(gState.filterableLabels)
         const activePanel = aggTabPanel.getActiveTab()
         if (activePanel) {
           await activePanel.updateData({refreshViewsOnly, loadMasksDisabled})
@@ -1925,18 +1964,23 @@ SM.CollectionPanel.showCollectionTab = async function (options) {
     function cancelTimers() {
       clearTimeout(gState.refreshViewTimerId)
       clearTimeout(gState.updateDataTimerId)
-      clearInterval(gState.updateLastRefreshIntervalId)
-      gState.refreshViewTimerId = gState.updateDataTimerId = gState.updateLastRefreshIntervalId = null
+      // clearInterval(gState.updateLastRefreshIntervalId)
+      // gState.refreshViewTimerId = gState.updateDataTimerId = gState.updateLastRefreshIntervalId = null
+      gState.refreshViewTimerId = gState.updateDataTimerId = null
     }
 
     function calcRefreshDelay(maxTouchTs) {
+      // given maxTouchTs, calculate the interval to refresh the grids/toolbars
       const diffSecs = Math.ceil(Math.abs(new Date() - new Date(maxTouchTs)) / 1000)
       if (diffSecs < 3600) {
+        // 30s when maxTouchTs is < 1h 
         return 30 * 1000
       }
       if (diffSecs < 86400) {
+        // 1h when maxTouchTs is < 1d
         return 3600 * 1000
       }
+      // 1d
       return 86400 * 1000
     }
   }
