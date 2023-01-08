@@ -320,6 +320,10 @@
   margin-left: 3px;
   white-space: nowrap
 }
+.sm-diff-sprite {
+  background-color: hsl(207deg 100% 84%);
+  color: #000;
+}
 .x-tip .x-tip-bc,
 .x-tip .x-tip-bl,
 .x-tip .x-tip-br,

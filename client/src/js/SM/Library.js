@@ -338,31 +338,65 @@ SM.Library.StigPanel = Ext.extend(Ext.Panel, {
   }
 })
 
-SM.Library.DiffSelectForm = Ext.extend(Ext.form.FormPanel, {
+// SM.Library.DiffSelectForm = Ext.extend(Ext.form.FormPanel, {
+//   initComponent: function () {
+//     const _this = this
+
+//     const stigSelectionField = new SM.StigSelectionField({
+//       autoLoad: false,
+//       name: 'benchmarkId',
+//       submitValue: false,
+//       fieldLabel: 'BenchmarkId',
+//       hideTrigger: false,
+//       anchor: '100%',
+//       allowBlank: false,
+//       // listeners: {
+//       //   select: this.onStigSelect || function () { }
+//       // }
+//     })
+//     stigSelectionField.store.loadData(this.apiStigs)
+
+//     const config = {
+//       items: [
+//         stigSelectionField
+//       ]
+//     }
+//     Ext.apply(this, Ext.apply(this.initialConfig, config))
+//     this.superclass().initComponent.call(this)
+//   }
+// })
+
+SM.Library.DiffRevisionComboBox = Ext.extend(Ext.form.ComboBox, {
   initComponent: function () {
     const _this = this
 
-    const stigSelectionField = new SM.StigSelectionField({
-      autoLoad: false,
-      name: 'benchmarkId',
-      submitValue: false,
-      fieldLabel: 'BenchmarkId',
-      hideTrigger: false,
-      anchor: '100%',
-      allowBlank: false,
-      listeners: {
-        select: this.onStigSelect || function () { }
-      }
+    this.store = new Ext.data.SimpleStore({
+      fields: ['value']
     })
-    stigSelectionField.store.loadData(this.apiStigs)
+
+    const data = []
 
     const config = {
-      items: [
-        stigSelectionField
-      ]
+      displayField: 'value',
+      valueField: 'value',
+      triggerAction: 'all',
+      mode: 'local',
+      editable: false
     }
+
+    this.store.on('load', function (store) {
+      const count = store.getCount()
+      if (count > 1) {
+        const offset = _this.side === 'left' ? count - 2 : count - 1
+        _this.setValue(store.getAt(offset).get('value'))
+      }
+    })
+
+
     Ext.apply(this, Ext.apply(this.initialConfig, config))
     this.superclass().initComponent.call(this)
+
+    this.store.loadData(data)
   }
 })
 
@@ -370,8 +404,75 @@ SM.Library.DiffRulesGrid = Ext.extend(Ext.grid.GridPanel, {
   initComponent: function () {
     const _this = this
 
+
+    const stigSelectionField = new SM.StigSelectionField({
+      autoLoad: false,
+      name: 'benchmarkId',
+      width: 360,
+      submitValue: false,
+      fieldLabel: 'BenchmarkId',
+      hideTrigger: false,
+      anchor: '100%',
+      allowBlank: false,
+      emptyText: 'Select a Benchmark to compare revisions',
+      listeners: {
+        // select: this.onStigSelect || function () { }
+        select: function (combo, record, index) {
+          const data = record.data.revisionStrs.map(i => [i])
+          leftRevisionComboBox.store.loadData(data)
+          rightRevisionComboBox.store.loadData(data)
+          _this.onStigSelect && _this.onStigSelect(combo, record, index)
+        }
+      }
+    })
+    stigSelectionField.store.loadData(this.apiStigs)
+
+    const onRevisionSelect = function () {
+      const benchmarkId = stigSelectionField.getValue()
+      const lhRevisionStr = leftRevisionComboBox.getValue()
+      const rhRevisionStr = rightRevisionComboBox.getValue()
+      _this.onRevisionSelect && _this.onRevisionSelect(benchmarkId, lhRevisionStr, rhRevisionStr)
+    }
+
+    const leftRevisionComboBox = new SM.Library.DiffRevisionComboBox({
+      emptyText: 'Select a Benchmark',
+      side: 'left',
+      listeners: {
+        select: onRevisionSelect
+      }
+    })
+    const rightRevisionComboBox = new SM.Library.DiffRevisionComboBox({
+      emptyText: 'Select a Benchmark',
+      listeners: {
+        select: onRevisionSelect
+      }
+    })
+
+    const tbar = new Ext.Toolbar({
+      height: 30,
+      items: [
+        {
+          xtype: 'tbtext',
+          text: 'Benchmark:&nbsp;'
+        },
+        stigSelectionField,
+        {
+          xtype: 'tbtext',
+          text: 'Left revision:&nbsp;'
+        },
+        leftRevisionComboBox,
+        {
+          xtype: 'tbtext',
+          text: 'Right revision:&nbsp;'
+        },
+        rightRevisionComboBox
+      ]
+    })
+
+
+
     const fields = [
-      'stigId', 'lRuleId', 'rRuleId', 'unified', 'checkUpdated'
+      'stigId', 'lRuleId', 'rRuleId', 'unified', 'updates'
     ]
     const columns = [
       {
@@ -396,15 +497,22 @@ SM.Library.DiffRulesGrid = Ext.extend(Ext.grid.GridPanel, {
         filter: { type: 'string' }
       },
       {
-        header: 'New check?',
-        width: 100,
-        align: 'center',
-        dataIndex: 'checkUpdated',
+        header: 'Updated properties',
+        id: 'diff-updated-props',
+        width: 200,
+        dataIndex: 'updates',
         sortable: true,
+        filter: { type: 'values' },
         renderer: function (value) {
-					return value ? 'x' : ''
-				}
-
+          if (!value?.length) {
+            return '<span style="color:grey;font-style:italic">No value</span>'
+          }
+          let spriteChain = ''
+          for (const item of value) {
+            spriteChain += `<span class="sm-label-sprite sm-diff-sprite">${item}</span> `
+          }
+          return spriteChain
+        }
       }
 
     ]
@@ -418,9 +526,35 @@ SM.Library.DiffRulesGrid = Ext.extend(Ext.grid.GridPanel, {
         direction: 'ASC' // or 'DESC' (case sensitive for local sorting)
       }
     })
+    this.totalTextCmp = new SM.RowCountTextItem({
+      store
+    })
+    const bbar = new Ext.Toolbar({
+      items: [
+        {
+          xtype: 'exportbutton',
+          grid: this,
+          hasMenu: false,
+          gridBasename: 'Changed Rules (grid)',
+          storeBasename: 'Changed Rules (store)',
+          iconCls: 'sm-export-icon',
+          text: 'CSV'
+        },
+        {
+          xtype: 'tbfill'
+        },
+        {
+          xtype: 'tbseparator'
+        },
+        this.totalTextCmp
+      ]
+    })
+
+
     const config = {
       layout: 'fit',
       loadMask: { msg: '' },
+      autoExpandColumn: 'diff-updated-props',
       store,
       cm: new Ext.grid.ColumnModel({
         columns
@@ -434,13 +568,14 @@ SM.Library.DiffRulesGrid = Ext.extend(Ext.grid.GridPanel, {
       view: new SM.ColumnFilters.GridView({
         emptyText: this.emptyText || 'No records to display',
         deferEmptyText: false,
-        forceFit: true,
         listeners: {
           filterschanged: function (view, item, value) {
             store.filter(view.getFilterFns())
           }
         }
-      })
+      }),
+      tbar,
+      bbar
     }
     Ext.apply(this, Ext.apply(this.initialConfig, config))
     this.superclass().initComponent.call(this)
@@ -451,111 +586,169 @@ SM.Library.DiffContentPanel = Ext.extend(Ext.Panel, {
   initComponent: function () {
     const _this = this
     const config = {
-      autoScroll: true
+      autoScroll: true,
+
+
     }
     Ext.apply(this, Ext.apply(this.initialConfig, config))
     this.superclass().initComponent.call(this)
   }
 })
 
+SM.Library.GenerateDiffData = function (lhs, rhs, { reportRuleId = false } = {}) {
+  const obj = {}
+  const data = []
+
+  for (const rule of lhs) {
+    const value = obj[rule.version] ?? {}
+    value.lhs = rule
+    obj[rule.version] = value
+  }
+  for (const rule of rhs) {
+    const value = obj[rule.version] ?? {}
+    value.rhs = rule
+    obj[rule.version] = value
+  }
+
+  const ruleProps = [
+    'title',
+    'groupId',
+    'groupTitle',
+    'severity',
+  ]
+  const detailProps = [
+    "weight",
+    "mitigations",
+    "documentable",
+    "falseNegatives",
+    "falsePositives",
+    "responsibility",
+    "vulnDiscussion",
+    "thirdPartyTools",
+    "potentialImpacts",
+    "mitigationControl",
+    "severityOverrideGuidance"
+  ]
+  const checkProps = [
+    'checkId',
+    'content'
+  ]
+  const fixProps = [
+    'fixId',
+    'text'
+  ]
+
+  for (const [key, value] of Object.entries(obj)) {
+    let thisUnified
+    const diffOptions = {
+      context: 999,
+      newlineIsToken: true,
+      ignoreWhitespace: false
+    }
+    let fullUnified = ''
+
+    // check if ruleId is changed
+    let lhsStr = value.lhs?.ruleId ?? ''
+    let rhsStr = value.rhs?.ruleId ?? ''
+    thisUnified = Diff.createPatch('ruleId', lhsStr, rhsStr, undefined, undefined, diffOptions)
+    if (thisUnified) {
+      const dataItem = {
+        stigId: key,
+        lRuleId: value.lhs?.ruleId,
+        rRuleId: value.rhs?.ruleId,
+        updates: [],
+        unified: ''
+      }
+      for (const prop of ruleProps) {
+        lhsStr = value.lhs?.[prop] ?? ''
+        rhsStr = value.rhs?.[prop] ?? ''
+        thisUnified = Diff.createPatch(prop, lhsStr, rhsStr, undefined, undefined, diffOptions)
+        if (thisUnified) {
+          dataItem.updates.push(prop)
+        }
+        fullUnified += thisUnified
+      }
+
+      for (const prop of detailProps) {
+        lhsStr = value.lhs?.detail[prop] ?? ''
+        rhsStr = value.rhs?.detail[prop] ?? ''
+        thisUnified = Diff.createPatch(prop, lhsStr, rhsStr, undefined, undefined, diffOptions)
+        if (thisUnified) {
+          dataItem.updates.push(prop)
+        }
+        fullUnified += thisUnified
+      }
+
+      for (let x = 0, l = Math.max(value.lhs?.checks.length ?? 0, value.rhs?.checks.length ?? 0); x < l; x++) {
+        for (const prop of checkProps) {
+          lhsStr = value.lhs?.checks[x][prop] ?? ''
+          rhsStr = value.rhs?.checks[x][prop] ?? ''
+          thisUnified = Diff.createPatch(`check-${x}.${prop}`, lhsStr, rhsStr, undefined, undefined, diffOptions)
+          if (thisUnified) {
+            dataItem.updates.push(prop === 'content' ? 'check' : prop)
+          }
+          fullUnified += thisUnified
+        }
+      }
+
+      for (let x = 0, l = Math.max(value.lhs?.fixes.length ?? 0, value.rhs?.fixes.length ?? 0); x < l; x++) {
+        for (const prop of fixProps) {
+          lhsStr = value.lhs?.fixes[x][prop] ?? ''
+          rhsStr = value.rhs?.fixes[x][prop] ?? ''
+          thisUnified = Diff.createPatch(`fix-${x}.${prop}`, lhsStr, rhsStr, undefined, undefined, diffOptions)
+          if (thisUnified) {
+            dataItem.updates.push(prop === 'text' ? 'fix' : prop)
+          }
+          fullUnified += thisUnified
+        }
+      }
+      if (fullUnified) {
+        dataItem.unified = fullUnified
+      }
+      data.push(dataItem)
+    }
+  }
+  return data
+}
+
+
 SM.Library.DiffPanel = Ext.extend(Ext.Panel, {
   initComponent: function () {
     const _this = this
 
-    function DiffObj(lhs, rhs) {
-      const ruleProps = [
-        'ruleId',
-        'title',
-        'groupId',
-        'groupTitle',
-        'severity',
-      ]
-      const detailProps = [
-        "weight",
-        "mitigations",
-        "documentable",
-        "falseNegatives",
-        "falsePositives",
-        "responsibility",
-        "vulnDiscussion",
-        "thirdPartyTools",
-        "potentialImpacts",
-        "mitigationControl",
-        "severityOverrideGuidance"
-      ]
-      const checkProps = [
-        'checkId',
-        'content'
-      ]
-      const fixProps = [
-        'fixId',
-        'text'
-      ]
-
-      const obj = {}
-      const data = []
-      for (const rule of lhs) {
-        const value = obj[rule.version] ?? {}
-        value.lhs = rule
-        obj[rule.version] = value
-      }
-      for (const rule of rhs) {
-        const value = obj[rule.version] ?? {}
-        value.rhs = rule
-        obj[rule.version] = value
-      }
-      for (const [key, value] of Object.entries(obj)) {
-        const dataItem = {
-          stigId: key,
-          lRuleId: value.lhs?.ruleId,
-          rRuleId: value.rhs?.ruleId,
-          checkUpdated: false
-        }
-        const diffOptions = {
-          context: 999,
-          newlineIsToken: true
-        }
-        let fullUnified = ''
-        let lhsStr, rhsStr
-        for (const prop of ruleProps) {
-          lhsStr = value.lhs?.[prop] ?? ''
-          rhsStr = value.rhs?.[prop] ?? ''
-          fullUnified += Diff.createPatch(prop, lhsStr, rhsStr, undefined, undefined, diffOptions)
-        }
-
-        for (const prop of detailProps) {
-          lhsStr = value.lhs?.detail[prop] ?? ''
-          rhsStr = value.rhs?.detail[prop] ?? ''
-          fullUnified += Diff.createPatch(prop, lhsStr, rhsStr, undefined, undefined, diffOptions)
-        }
-
-        for (let x = 0, l = Math.max(value.lhs?.checks.length ?? 0, value.rhs?.checks.length ?? 0); x < l; x++) {
-          for (const prop of checkProps) {
-            lhsStr = value.lhs?.checks[x][prop] ?? ''
-            rhsStr = value.rhs?.checks[x][prop] ?? ''
-            const thisUnified = Diff.createPatch(`check-${x}.${prop}`, lhsStr, rhsStr, undefined, undefined, diffOptions) 
-            if (prop === 'content' && thisUnified) {
-              dataItem.checkUpdated = true
-            }
-            fullUnified += thisUnified
+    const doDiff = async function (benchmarkId, lhRevisionStr, rhRevisionStr) {
+      try {
+        diffContentPanel.update('')
+        diffRulesGrid.bwrap.mask('')
+        const rhResult = await Ext.Ajax.requestPromise({
+          url: `${STIGMAN.Env.apiBase}/stigs/${benchmarkId}/revisions/${rhRevisionStr}/rules`,
+          method: 'GET',
+          params: {
+            projection: ['checks', 'fixes', 'detail', 'ccis']
           }
-        }
-
-        for (let x = 0, l = Math.max(value.lhs?.fixes.length ?? 0, value.rhs?.fixes.length ?? 0); x < l; x++) {
-          for (const prop of fixProps) {
-            lhsStr = value.lhs?.fixes[x][prop] ?? ''
-            rhsStr = value.rhs?.fixes[x][prop] ?? ''
-            fullUnified += Diff.createPatch(`fix-${x}.${prop}`, lhsStr, rhsStr, undefined, undefined, diffOptions)
+        })
+        const rhs = JSON.parse(rhResult.response.responseText)
+  
+        const lhResult = await Ext.Ajax.requestPromise({
+          url: `${STIGMAN.Env.apiBase}/stigs/${benchmarkId}/revisions/${lhRevisionStr}/rules`,
+          method: 'GET',
+          params: {
+            projection: ['checks', 'fixes', 'detail', 'ccis']
           }
-        }
-
-        if (fullUnified) {
-          dataItem.unified = fullUnified
-          data.push(dataItem)
-        }
-
+        })
+        const lhs = JSON.parse(lhResult.response.responseText)
+  
+        const diffData = SM.Library.GenerateDiffData(lhs, rhs)
+  
+        diffRulesGrid.store.loadData(diffData)  
       }
-      return data
+      catch (e) {
+        console.log(e)
+      }
+      finally {
+        diffRulesGrid.bwrap.unmask()
+      }
+
     }
 
     const onStigSelect = async function (combo, record, index) {
@@ -564,32 +757,10 @@ SM.Library.DiffPanel = Ext.extend(Ext.Panel, {
       const l = revisionStrs.length
       const rhRevisionStr = revisionStrs[l - 1]
       const lhRevisionStr = revisionStrs[l - 2]
-
-      const rhResult = await Ext.Ajax.requestPromise({
-        url: `${STIGMAN.Env.apiBase}/stigs/${benchmarkId}/revisions/${rhRevisionStr}/rules`,
-        method: 'GET',
-        params: {
-          projection: ['checks', 'fixes', 'detail']
-        }
-      })
-      const rhs = JSON.parse(rhResult.response.responseText)
-
-      const lhResult = await Ext.Ajax.requestPromise({
-        url: `${STIGMAN.Env.apiBase}/stigs/${benchmarkId}/revisions/${lhRevisionStr}/rules`,
-        method: 'GET',
-        params: {
-          projection: ['checks', 'fixes', 'detail']
-        }
-      })
-      const lhs = JSON.parse(lhResult.response.responseText)
-
-      _this.diffObj = DiffObj(lhs, rhs)
-
-      diffRulesGrid.store.loadData(_this.diffObj)
-
+      await doDiff(benchmarkId, lhRevisionStr, rhRevisionStr)
     }
 
-    const onRowSelect = function ( sm, index, record) {
+    const onRowSelect = function (sm, index, record) {
       // const dom = diffContentPanel.getEl().dom
       const configuration = {
         drawFileList: false,
@@ -602,20 +773,30 @@ SM.Library.DiffPanel = Ext.extend(Ext.Panel, {
       // diff2htmlUi.draw()
     }
 
-    const diffSelectForm = new SM.Library.DiffSelectForm({
-      region: 'north',
-      height: 100,
-      split: true,
-      apiStigs: this.multiRevisionStigs,
-      onStigSelect
-    })
+    const onRevisionSelect = async function (benchmarkId, lhRevisionStr, rhRevisionStr) {
+      await doDiff(benchmarkId, lhRevisionStr, rhRevisionStr)
+    }
 
     const diffRulesGrid = new SM.Library.DiffRulesGrid({
-      region: 'center',
-      onRowSelect 
+      title: 'Changed Rules',
+      border: false,
+      cls: 'sm-round-panel',
+      margins: { top: SM.Margin.top, right: SM.Margin.edge, bottom: SM.Margin.adjacent, left: SM.Margin.edge },
+      region: 'north',
+      split: true,
+      height: 500,
+      onRowSelect,
+      apiStigs: this.multiRevisionStigs,
+      onStigSelect,
+      onRevisionSelect
     })
 
     const diffContentPanel = new SM.Library.DiffContentPanel({
+      title: 'Unified diffs',
+      cls: 'sm-round-panel',
+      padding: 10,
+      border: false,
+      margins: { top: SM.Margin.adjacent, right: SM.Margin.edge, bottom: SM.Margin.edge, left: SM.Margin.edge },
       region: 'center'
     })
 
@@ -623,16 +804,7 @@ SM.Library.DiffPanel = Ext.extend(Ext.Panel, {
       layout: 'border',
       items: [
         diffContentPanel,
-        {
-          region: 'west',
-          width: 500,
-          split: true,
-          layout: 'border',
-          items: [
-            diffSelectForm,
-            diffRulesGrid
-          ]
-        }
+        diffRulesGrid
       ]
     }
     Ext.apply(this, Ext.apply(this.initialConfig, config))
@@ -651,6 +823,7 @@ SM.Library.showDiffPanel = async function (options) {
 
   const diffPanel = new SM.Library.DiffPanel({
     title: 'Compare STIG Revisions',
+    id: 'stig-diff',
     closable: true,
     iconCls: 'sm-diff-icon',
     multiRevisionStigs
