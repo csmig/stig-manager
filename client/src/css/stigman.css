@@ -1976,3 +1976,8 @@ td.x-grid3-hd-over .x-grid3-hd-inner {
 .sm-direction-rtl {
   direction: rtl;
 }
+.sm-diff-icon {
+  background-image: url(../img/diff.svg)!important;
+  background-repeat: no-repeat;
+  background-size: 16px 16px;
+}

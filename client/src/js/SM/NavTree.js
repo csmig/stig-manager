@@ -60,7 +60,17 @@ SM.NavTree.LibraryNodesConfig = function (stigs) {
   const fmRegEx = /^[f-m]/i
   const nvRegEx = /^[n-v]/i
   const wzRegEx = /^[w-z]/i
+  const multiRevisionStigs = stigs.filter( stig => stig.revisionStrs.length > 1 )
+
   const children = [
+    {
+      id: 'library-diff-leaf',
+      action: 'stig-diff',
+      text: 'Compare revisions',
+      iconCls: 'sm-diff-icon',
+      multiRevisionStigs,
+      leaf: true
+    },
     {
       id: `library-a-e-folder`,
       text: 'A-E',
@@ -354,6 +364,13 @@ SM.NavTree.TreePanel = Ext.extend(Ext.tree.TreePanel, {
         let tab;
         
         if (!n.leaf) {
+          return
+        }
+        if (n.attributes.action === 'stig-diff') {
+          SM.Library.showDiffPanel({
+            multiRevisionStigs: n.attributes.multiRevisionStigs,
+            treePath: n.getPath()
+          })
           return
         }
         if (n.attributes.leafType === 'collection') {
