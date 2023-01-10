@@ -470,7 +470,7 @@ SM.Library.DiffRulesGrid = Ext.extend(Ext.grid.GridPanel, {
         dataIndex: 'lRuleId',
         sortable: true,
         filter: { type: 'string' },
-        renderer: renderRule
+        // renderer: renderRule
       },
       {
         header: 'Right rule',

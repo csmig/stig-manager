@@ -2735,3 +2735,51 @@ embed[type="application/pdf"] {
   background-image: url(../img/line-height-down-dark.svg);
   background-size: 16px 16px;
 }
+
+.d2h-file-wrapper {
+  border-color: #444;
+}
+
+.d2h-file-header {
+  border-bottom-color: #444;
+  background-color: hsl(204deg 6% 16%);
+}
+
+.d2h-info {
+  background-color: hsl(216deg 56% 60%);
+  border-color: hsl(216deg 56% 55%);
+}
+.d2h-file-name-wrapper {
+  color: #999
+}
+
+.d2h-code-line del, .d2h-code-side-line del {
+  background-color: hsl(0 75% 23% / 1);
+}
+
+.d2h-file-diff .d2h-del.d2h-change {
+  background-color: hsl(0deg 59% 10%);
+}
+.d2h-file-diff .d2h-ins.d2h-change {
+  background-color: hsl(120deg 33% 14%);
+}
+.d2h-code-line ins, .d2h-code-side-line ins {
+  background-color: hsl(120 100% 25% / 1);
+}
+.d2h-code-linenumber {
+  background-color: transparent;
+  color: hsl(0deg 0% 50%);
+  border-right-color: hsl(0 0% 20%);
+}
+.d2h-del {
+  background-color: hsl(0deg 59% 10%);
+  border-right-color: hsl(0 59% 20%);
+}
+.d2h-file-diff {
+/*   color: hsl(36 34% 81% / 1); */
+  background-color: hsl(0deg 0% 8%);
+}
+.d2h-ins {
+  background-color: hsl(120deg 33% 14%);
+  border-right-color: hsl(120 33% 20%);
+}
