@@ -1997,6 +1997,15 @@ td.x-grid3-hd-over .x-grid3-hd-inner {
   background-size: 16px 16px;
 }
 
-.sm-ruleid-postfix {
+.sm-diff-ins {
   color: green;
+}
+.sm-diff-del {
+  color: red;
+}
+.sm-diff-rule-ins {
+  background-color: red
+}
+.sm-diff-rule-del {
+  background-color: green
 }

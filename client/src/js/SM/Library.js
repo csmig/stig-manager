@@ -445,15 +445,42 @@ SM.Library.DiffRulesGrid = Ext.extend(Ext.grid.GridPanel, {
       'stigId', 'severities', 'lRuleId', 'rRuleId', 'unified', 'updates'
     ]
 
-    const renderRule = function (value, metaData, record, rowIndex, colIndex) {
-      const re = /SV-(\d+)r(\d+)_rule/
-      const matches= value.match(re)
-      if (matches.length === 3) {
-        return `SV-${matches[1]}<span class="sm-ruleid-postfix">r${matches[2]}_rule</span>`
+    const renderRule = function (lhs, rhs, side) {
+      if (!lhs && !rhs) {
+        return ''
       }
-      else {
-        return value
-      }    
+
+      if (side === 'left') {
+        if (!lhs) {
+          return ''
+        }
+        if (!rhs) {
+          return `<span class="sm-diff-del">${lhs}</span>`
+        }
+      }
+      if (side === 'right') {
+        if (!lhs) {
+          return `<span class="sm-diff-ins">${rhs}</span>`
+        }
+        if (!rhs) {
+          return ''
+        }
+      }
+
+      const re = /SV-(\d+)r(\d+)_rule/
+      const lm = lhs.match(re)
+      const rm = rhs.match(re)
+
+      if (side === 'left') {
+        let prefix = lm[1]===rm[1] ? lm[1] : `<span class="sm-diff-del">${lm[1]}</span>`
+        let postfix = lm[2]===rm[2] ? `${lm[2]}` : `<span class="sm-diff-del">${lm[2]}</span>`
+        return `SV-${prefix}r${postfix}_rule`
+      }
+      if (side === 'right') {
+        let prefix = lm[1]===rm[1] ? rm[1] : `<span class="sm-diff-ins">${rm[1]}</span>`
+        let postfix = lm[2]===rm[2] ? `${rm[2]}` : `<span class="sm-diff-ins">${rm[2]}</span>`
+        return `SV-${prefix}r${postfix}_rule`
+      }
     }
 
     const columns = [
@@ -470,14 +497,19 @@ SM.Library.DiffRulesGrid = Ext.extend(Ext.grid.GridPanel, {
         dataIndex: 'lRuleId',
         sortable: true,
         filter: { type: 'string' },
-        // renderer: renderRule
+        renderer: function (value, metaData, record) {
+          return renderRule(record.data.lRuleId, record.data.rRuleId, 'left')
+        }
       },
       {
         header: 'Right rule',
         width: 175,
         dataIndex: 'rRuleId',
         sortable: true,
-        filter: { type: 'string' }
+        filter: { type: 'string' },
+        renderer: function (value, metaData, record) {
+          return renderRule(record.data.lRuleId, record.data.rRuleId, 'right')
+        }
       },
       {
         header: 'CAT',
@@ -522,13 +554,13 @@ SM.Library.DiffRulesGrid = Ext.extend(Ext.grid.GridPanel, {
         dataIndex: 'updates',
         sortable: true,
         filter: { type: 'values' },
-        renderer: function (value) {
+        renderer: function (value, md, record) {
           if (!value?.length) {
             return '<span style="color:grey;font-style:italic">No value</span>'
           }
           let spriteChain = ''
           for (const item of value) {
-            spriteChain += `<span class="sm-label-sprite ${item === 'check' ? 'sm-diff-sprite-check' : 'sm-diff-sprite'}">${item}</span> `
+            spriteChain += `<span class="sm-label-sprite ${item === 'check' || item === 'rule added' ? 'sm-diff-sprite-check' : 'sm-diff-sprite'}">${item}</span> `
           }
           return spriteChain
         }
@@ -732,6 +764,12 @@ SM.Library.GenerateDiffData = function (lhs, rhs, { reportRuleId = false } = {})
       }
       if (fullUnified) {
         dataItem.unified = fullUnified
+      }
+      if (value.lhs?.ruleId && !value.rhs?.ruleId) {
+        dataItem.updates = ['rule removed']
+      }
+      if (value.rhs?.ruleId && !value.lhs?.ruleId) {
+        dataItem.updates = ['rule added']
       }
       data.push(dataItem)
     }

@@ -2783,3 +2783,6 @@ embed[type="application/pdf"] {
   background-color: hsl(120deg 33% 14%);
   border-right-color: hsl(120 33% 20%);
 }
+.sm-diff-ins {
+  color: #78ff78;
+}
