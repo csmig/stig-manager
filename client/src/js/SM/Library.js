@@ -338,34 +338,6 @@ SM.Library.StigPanel = Ext.extend(Ext.Panel, {
   }
 })
 
-// SM.Library.DiffSelectForm = Ext.extend(Ext.form.FormPanel, {
-//   initComponent: function () {
-//     const _this = this
-
-//     const stigSelectionField = new SM.StigSelectionField({
-//       autoLoad: false,
-//       name: 'benchmarkId',
-//       submitValue: false,
-//       fieldLabel: 'BenchmarkId',
-//       hideTrigger: false,
-//       anchor: '100%',
-//       allowBlank: false,
-//       // listeners: {
-//       //   select: this.onStigSelect || function () { }
-//       // }
-//     })
-//     stigSelectionField.store.loadData(this.apiStigs)
-
-//     const config = {
-//       items: [
-//         stigSelectionField
-//       ]
-//     }
-//     Ext.apply(this, Ext.apply(this.initialConfig, config))
-//     this.superclass().initComponent.call(this)
-//   }
-// })
-
 SM.Library.DiffRevisionComboBox = Ext.extend(Ext.form.ComboBox, {
   initComponent: function () {
     const _this = this
@@ -469,11 +441,21 @@ SM.Library.DiffRulesGrid = Ext.extend(Ext.grid.GridPanel, {
       ]
     })
 
-
-
     const fields = [
-      'stigId', 'lRuleId', 'rRuleId', 'unified', 'updates'
+      'stigId', 'severities', 'lRuleId', 'rRuleId', 'unified', 'updates'
     ]
+
+    const renderRule = function (value, metaData, record, rowIndex, colIndex) {
+      const re = /SV-(\d+)r(\d+)_rule/
+      const matches= value.match(re)
+      if (matches.length === 3) {
+        return `SV-${matches[1]}<span class="sm-ruleid-postfix">r${matches[2]}_rule</span>`
+      }
+      else {
+        return value
+      }    
+    }
+
     const columns = [
       {
         header: "STIG Id",
@@ -487,7 +469,8 @@ SM.Library.DiffRulesGrid = Ext.extend(Ext.grid.GridPanel, {
         width: 175,
         dataIndex: 'lRuleId',
         sortable: true,
-        filter: { type: 'string' }
+        filter: { type: 'string' },
+        renderer: renderRule
       },
       {
         header: 'Right rule',
@@ -495,6 +478,42 @@ SM.Library.DiffRulesGrid = Ext.extend(Ext.grid.GridPanel, {
         dataIndex: 'rRuleId',
         sortable: true,
         filter: { type: 'string' }
+      },
+      {
+        header: 'CAT',
+        align: 'center',
+        width: 100,
+        dataIndex: 'severities',
+        filter: { type: 'values' },
+        renderer: function (value) {
+          let html = ''
+          switch (value[0]) {
+            case 'high':
+              html += '<span class="sm-grid-sprite sm-severity-high">CAT 1</span>'
+              break
+            case 'medium':
+              html += '<span class="sm-grid-sprite sm-severity-medium">CAT 2</span>'
+              break
+            case 'low':
+              html += '<span class="sm-grid-sprite sm-severity-low">CAT 3</span>'
+              break
+          }
+          if (value[0] && value[1] && value[0] !== value[1]) {
+            html += ' &gt;&gt; '
+            switch (value[1]) {
+              case 'high':
+                html += '<span class="sm-grid-sprite sm-severity-high">CAT 1</span>'
+                break
+              case 'medium':
+                html += '<span class="sm-grid-sprite sm-severity-medium">CAT 2</span>'
+                break
+              case 'low':
+                html += '<span class="sm-grid-sprite sm-severity-low">CAT 3</span>'
+                break
+            }
+          }
+          return html
+        }
       },
       {
         header: 'Updated properties',
@@ -509,7 +528,7 @@ SM.Library.DiffRulesGrid = Ext.extend(Ext.grid.GridPanel, {
           }
           let spriteChain = ''
           for (const item of value) {
-            spriteChain += `<span class="sm-label-sprite sm-diff-sprite">${item}</span> `
+            spriteChain += `<span class="sm-label-sprite ${item === 'check' ? 'sm-diff-sprite-check' : 'sm-diff-sprite'}">${item}</span> `
           }
           return spriteChain
         }
@@ -653,12 +672,21 @@ SM.Library.GenerateDiffData = function (lhs, rhs, { reportRuleId = false } = {})
     thisUnified = Diff.createPatch('ruleId', lhsStr, rhsStr, undefined, undefined, diffOptions)
     if (thisUnified) {
       const dataItem = {
+        severities: [],
         stigId: key,
         lRuleId: value.lhs?.ruleId,
         rRuleId: value.rhs?.ruleId,
         updates: [],
         unified: ''
       }
+
+      if (value.lhs?.severity) {
+        dataItem.severities.push(value.lhs.severity)
+      }
+      if (value.rhs?.severity) {
+        dataItem.severities.push(value.rhs.severity)
+      }
+
       for (const prop of ruleProps) {
         lhsStr = value.lhs?.[prop] ?? ''
         rhsStr = value.rhs?.[prop] ?? ''
@@ -711,7 +739,6 @@ SM.Library.GenerateDiffData = function (lhs, rhs, { reportRuleId = false } = {})
   return data
 }
 
-
 SM.Library.DiffPanel = Ext.extend(Ext.Panel, {
   initComponent: function () {
     const _this = this
@@ -728,7 +755,7 @@ SM.Library.DiffPanel = Ext.extend(Ext.Panel, {
           }
         })
         const rhs = JSON.parse(rhResult.response.responseText)
-  
+
         const lhResult = await Ext.Ajax.requestPromise({
           url: `${STIGMAN.Env.apiBase}/stigs/${benchmarkId}/revisions/${lhRevisionStr}/rules`,
           method: 'GET',
@@ -737,10 +764,10 @@ SM.Library.DiffPanel = Ext.extend(Ext.Panel, {
           }
         })
         const lhs = JSON.parse(lhResult.response.responseText)
-  
+
         const diffData = SM.Library.GenerateDiffData(lhs, rhs)
-  
-        diffRulesGrid.store.loadData(diffData)  
+
+        diffRulesGrid.store.loadData(diffData)
       }
       catch (e) {
         console.log(e)

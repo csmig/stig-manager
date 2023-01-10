@@ -324,6 +324,10 @@
   background-color: hsl(207deg 100% 84%);
   color: #000;
 }
+.sm-diff-sprite-check {
+  background-color: #F5A3A3;
+  color: #000;
+}
 .x-tip .x-tip-bc,
 .x-tip .x-tip-bl,
 .x-tip .x-tip-br,
@@ -1984,4 +1988,8 @@ td.x-grid3-hd-over .x-grid3-hd-inner {
   background-image: url(../img/diff.svg)!important;
   background-repeat: no-repeat;
   background-size: 16px 16px;
+}
+
+.sm-ruleid-postfix {
+  color: green;
 }
