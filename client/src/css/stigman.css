@@ -2009,3 +2009,11 @@ td.x-grid3-hd-over .x-grid3-hd-inner {
 .sm-diff-rule-del {
   background-color: green
 }
+.sm-toolbar-diff .x-toolbar-ct {
+  height: 100%;
+  margin-left: 3px;
+}
+
+.sm-toolbar-diff .xtb-spacer {
+  width: 12px;
+}

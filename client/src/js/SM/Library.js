@@ -376,6 +376,10 @@ SM.Library.DiffRulesGrid = Ext.extend(Ext.grid.GridPanel, {
   initComponent: function () {
     const _this = this
 
+    function disableRevisionComboBoxes(disable) {
+      leftRevisionComboBox.setDisabled(disable)
+      rightRevisionComboBox.setDisabled(disable)
+    }
 
     const stigSelectionField = new SM.StigSelectionField({
       autoLoad: false,
@@ -393,7 +397,14 @@ SM.Library.DiffRulesGrid = Ext.extend(Ext.grid.GridPanel, {
           const data = record.data.revisionStrs.map(i => [i])
           leftRevisionComboBox.store.loadData(data)
           rightRevisionComboBox.store.loadData(data)
+          disableRevisionComboBoxes(false)
           _this.onStigSelect && _this.onStigSelect(combo, record, index)
+        },
+        invalid: function (combo, msg) {
+          _this.store.removeAll()
+          leftRevisionComboBox.store.removeAll()
+          rightRevisionComboBox.store.removeAll()
+          disableRevisionComboBoxes(true)
         }
       }
     })
@@ -407,14 +418,18 @@ SM.Library.DiffRulesGrid = Ext.extend(Ext.grid.GridPanel, {
     }
 
     const leftRevisionComboBox = new SM.Library.DiffRevisionComboBox({
-      emptyText: 'Select a Benchmark',
+      // emptyText: 'Select a Benchmark',
+      width: 70,
+      disabled: true,
       side: 'left',
       listeners: {
         select: onRevisionSelect
       }
     })
     const rightRevisionComboBox = new SM.Library.DiffRevisionComboBox({
-      emptyText: 'Select a Benchmark',
+      // emptyText: 'Select a Benchmark',
+      width: 70,
+      disabled: true,
       listeners: {
         select: onRevisionSelect
       }
@@ -422,17 +437,20 @@ SM.Library.DiffRulesGrid = Ext.extend(Ext.grid.GridPanel, {
 
     const tbar = new Ext.Toolbar({
       height: 30,
+      cls: 'sm-toolbar-diff',
       items: [
         {
           xtype: 'tbtext',
           text: 'Benchmark:&nbsp;'
         },
         stigSelectionField,
+        ' ',
         {
           xtype: 'tbtext',
           text: 'Left revision:&nbsp;'
         },
         leftRevisionComboBox,
+        ' ',
         {
           xtype: 'tbtext',
           text: 'Right revision:&nbsp;'
@@ -472,13 +490,13 @@ SM.Library.DiffRulesGrid = Ext.extend(Ext.grid.GridPanel, {
       const rm = rhs.match(re)
 
       if (side === 'left') {
-        let prefix = lm[1]===rm[1] ? lm[1] : `<span class="sm-diff-del">${lm[1]}</span>`
-        let postfix = lm[2]===rm[2] ? `${lm[2]}` : `<span class="sm-diff-del">${lm[2]}</span>`
+        let prefix = lm[1] === rm[1] ? lm[1] : `<span class="sm-diff-del">${lm[1]}</span>`
+        let postfix = lm[2] === rm[2] ? `${lm[2]}` : `<span class="sm-diff-del">${lm[2]}</span>`
         return `SV-${prefix}r${postfix}_rule`
       }
       if (side === 'right') {
-        let prefix = lm[1]===rm[1] ? rm[1] : `<span class="sm-diff-ins">${rm[1]}</span>`
-        let postfix = lm[2]===rm[2] ? `${rm[2]}` : `<span class="sm-diff-ins">${rm[2]}</span>`
+        let prefix = lm[1] === rm[1] ? rm[1] : `<span class="sm-diff-ins">${rm[1]}</span>`
+        let postfix = lm[2] === rm[2] ? `${rm[2]}` : `<span class="sm-diff-ins">${rm[2]}</span>`
         return `SV-${prefix}r${postfix}_rule`
       }
     }
@@ -638,8 +656,7 @@ SM.Library.DiffContentPanel = Ext.extend(Ext.Panel, {
     const _this = this
     const config = {
       autoScroll: true,
-
-
+      emptyText: 'Select a row in the grid above'
     }
     Ext.apply(this, Ext.apply(this.initialConfig, config))
     this.superclass().initComponent.call(this)
@@ -781,26 +798,31 @@ SM.Library.DiffPanel = Ext.extend(Ext.Panel, {
   initComponent: function () {
     const _this = this
 
+    const diffContentPanelEmptyText = `<div class="x-grid-empty">Select a rule from the grid above</div>`
+
     const doDiff = async function (benchmarkId, lhRevisionStr, rhRevisionStr) {
       try {
-        diffContentPanel.update('')
+        diffContentPanel.update(diffContentPanelEmptyText)
         diffRulesGrid.bwrap.mask('')
-        const rhResult = await Ext.Ajax.requestPromise({
-          url: `${STIGMAN.Env.apiBase}/stigs/${benchmarkId}/revisions/${rhRevisionStr}/rules`,
-          method: 'GET',
-          params: {
-            projection: ['checks', 'fixes', 'detail', 'ccis']
-          }
-        })
+        
+        const [lhResult, rhResult] = await Promise.all([
+          Ext.Ajax.requestPromise({
+            url: `${STIGMAN.Env.apiBase}/stigs/${benchmarkId}/revisions/${rhRevisionStr}/rules`,
+            method: 'GET',
+            params: {
+              projection: ['checks', 'fixes', 'detail', 'ccis']
+            }
+          }),
+          Ext.Ajax.requestPromise({
+            url: `${STIGMAN.Env.apiBase}/stigs/${benchmarkId}/revisions/${lhRevisionStr}/rules`,
+            method: 'GET',
+            params: {
+              projection: ['checks', 'fixes', 'detail', 'ccis']
+            }
+          })
+        ])
+        
         const rhs = JSON.parse(rhResult.response.responseText)
-
-        const lhResult = await Ext.Ajax.requestPromise({
-          url: `${STIGMAN.Env.apiBase}/stigs/${benchmarkId}/revisions/${lhRevisionStr}/rules`,
-          method: 'GET',
-          params: {
-            projection: ['checks', 'fixes', 'detail', 'ccis']
-          }
-        })
         const lhs = JSON.parse(lhResult.response.responseText)
 
         const diffData = SM.Library.GenerateDiffData(lhs, rhs)
@@ -826,16 +848,13 @@ SM.Library.DiffPanel = Ext.extend(Ext.Panel, {
     }
 
     const onRowSelect = function (sm, index, record) {
-      // const dom = diffContentPanel.getEl().dom
       const configuration = {
         drawFileList: false,
         matching: 'lines',
         diffStyle: 'word'
       }
-      const html = Diff2Html.html(record.data.unified, configuration)
+      const html = record.data.unified ? Diff2Html.html(record.data.unified, configuration) : `<div class="x-grid-empty">No tracked properties were updated</div>`
       diffContentPanel.update(html)
-      // let diff2htmlUi = new Diff2HtmlUI(dom, record.data.unified, configuration)
-      // diff2htmlUi.draw()
     }
 
     const onRevisionSelect = async function (benchmarkId, lhRevisionStr, rhRevisionStr) {
@@ -843,13 +862,13 @@ SM.Library.DiffPanel = Ext.extend(Ext.Panel, {
     }
 
     const diffRulesGrid = new SM.Library.DiffRulesGrid({
-      title: 'Changed Rules',
+      title: 'Updated ruleIds',
       border: false,
       cls: 'sm-round-panel',
       margins: { top: SM.Margin.top, right: SM.Margin.edge, bottom: SM.Margin.adjacent, left: SM.Margin.edge },
       region: 'north',
       split: true,
-      height: 500,
+      height: 400,
       onRowSelect,
       apiStigs: this.multiRevisionStigs,
       onStigSelect,
@@ -857,7 +876,8 @@ SM.Library.DiffPanel = Ext.extend(Ext.Panel, {
     })
 
     const diffContentPanel = new SM.Library.DiffContentPanel({
-      title: 'Unified diffs',
+      title: 'Updated properties',
+      html: diffContentPanelEmptyText,
       cls: 'sm-round-panel',
       padding: 10,
       border: false,
@@ -870,7 +890,9 @@ SM.Library.DiffPanel = Ext.extend(Ext.Panel, {
       items: [
         diffContentPanel,
         diffRulesGrid
-      ]
+      ],
+      diffRulesGrid,
+      diffContentPanel
     }
     Ext.apply(this, Ext.apply(this.initialConfig, config))
     this.superclass().initComponent.call(this)
