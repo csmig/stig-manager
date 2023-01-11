@@ -566,7 +566,7 @@ SM.Library.DiffRulesGrid = Ext.extend(Ext.grid.GridPanel, {
         }
       },
       {
-        header: 'Updated properties',
+        header: 'Changed properties',
         id: 'diff-updated-props',
         width: 200,
         dataIndex: 'updates',
@@ -821,7 +821,7 @@ SM.Library.DiffPanel = Ext.extend(Ext.Panel, {
             }
           })
         ])
-        
+
         const rhs = JSON.parse(rhResult.response.responseText)
         const lhs = JSON.parse(lhResult.response.responseText)
 
@@ -862,7 +862,7 @@ SM.Library.DiffPanel = Ext.extend(Ext.Panel, {
     }
 
     const diffRulesGrid = new SM.Library.DiffRulesGrid({
-      title: 'Updated ruleIds',
+      title: 'Changed ruleIds',
       border: false,
       cls: 'sm-round-panel',
       margins: { top: SM.Margin.top, right: SM.Margin.edge, bottom: SM.Margin.adjacent, left: SM.Margin.edge },
@@ -876,7 +876,7 @@ SM.Library.DiffPanel = Ext.extend(Ext.Panel, {
     })
 
     const diffContentPanel = new SM.Library.DiffContentPanel({
-      title: 'Updated properties',
+      title: 'Changed properties detail',
       html: diffContentPanelEmptyText,
       cls: 'sm-round-panel',
       padding: 10,
