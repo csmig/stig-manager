@@ -807,14 +807,14 @@ SM.Library.DiffPanel = Ext.extend(Ext.Panel, {
         
         const [lhResult, rhResult] = await Promise.all([
           Ext.Ajax.requestPromise({
-            url: `${STIGMAN.Env.apiBase}/stigs/${benchmarkId}/revisions/${rhRevisionStr}/rules`,
+            url: `${STIGMAN.Env.apiBase}/stigs/${benchmarkId}/revisions/${lhRevisionStr}/rules`,
             method: 'GET',
             params: {
               projection: ['checks', 'fixes', 'detail', 'ccis']
             }
           }),
           Ext.Ajax.requestPromise({
-            url: `${STIGMAN.Env.apiBase}/stigs/${benchmarkId}/revisions/${lhRevisionStr}/rules`,
+            url: `${STIGMAN.Env.apiBase}/stigs/${benchmarkId}/revisions/${rhRevisionStr}/rules`,
             method: 'GET',
             params: {
               projection: ['checks', 'fixes', 'detail', 'ccis']
@@ -822,8 +822,8 @@ SM.Library.DiffPanel = Ext.extend(Ext.Panel, {
           })
         ])
 
-        const rhs = JSON.parse(rhResult.response.responseText)
         const lhs = JSON.parse(lhResult.response.responseText)
+        const rhs = JSON.parse(rhResult.response.responseText)
 
         const diffData = SM.Library.GenerateDiffData(lhs, rhs)
 
