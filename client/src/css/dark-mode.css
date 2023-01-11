@@ -1978,7 +1978,7 @@ a.x-menu-item {
   color: #e6e4e1!important
 }
 .sm-severity-high {
-  color: #ff7536;
+  color: hsl(0deg 50% 50%);
   background-color: #1e2021
 }
 .sm-severity-medium {
@@ -1986,7 +1986,7 @@ a.x-menu-item {
   background-color: transparent
 }
 .sm-severity-low {
-  color: #72ff72;
+  color: hsl(120deg 54% 46%);
   background-color: #1e2021
 }
 .sm-home-widget-text {
@@ -2754,17 +2754,17 @@ embed[type="application/pdf"] {
 }
 
 .d2h-code-line del, .d2h-code-side-line del {
-  background-color: hsl(0 75% 23% / 1);
+  background-color: hsl(0 63% 31% / 1);
 }
 
 .d2h-file-diff .d2h-del.d2h-change {
-  background-color: hsl(0deg 59% 10%);
+  background-color: hsl(0 60% 17% / 1);
 }
 .d2h-file-diff .d2h-ins.d2h-change {
-  background-color: hsl(120deg 33% 14%);
+  background-color: hsl(110deg 22% 22%);
 }
 .d2h-code-line ins, .d2h-code-side-line ins {
-  background-color: hsl(120 100% 25% / 1);
+  background-color: hsl(110deg 35% 30%);
 }
 .d2h-code-linenumber {
   background-color: transparent;
@@ -2772,17 +2772,19 @@ embed[type="application/pdf"] {
   border-right-color: hsl(0 0% 20%);
 }
 .d2h-del {
-  background-color: hsl(0deg 59% 10%);
+  background-color: hsl(0 60% 17% / 1);
   border-right-color: hsl(0 59% 20%);
 }
 .d2h-file-diff {
-/*   color: hsl(36 34% 81% / 1); */
-  background-color: hsl(0deg 0% 8%);
+  background-color: hsl(195deg 7% 11%);
 }
 .d2h-ins {
-  background-color: hsl(120deg 33% 14%);
+  background-color: hsl(110deg 22% 22%);
   border-right-color: hsl(120 33% 20%);
 }
 .sm-diff-ins {
-  color: #78ff78;
+  background-color: hsl(78deg 35% 26%);
+}
+.sm-diff-del {
+  background-color: hsl(0deg 71% 25%)
 }

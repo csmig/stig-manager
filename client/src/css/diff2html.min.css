@@ -156,7 +156,7 @@
 }
 
 .d2h-code-line del,.d2h-code-side-line del {
-    background-color: hsl(357deg 100% 77%);
+    background-color: hsl(0deg 63% 68%);
 }
 
 .d2h-code-line del,.d2h-code-line ins,.d2h-code-side-line del,.d2h-code-side-line ins {
@@ -168,7 +168,7 @@
 }
 
 .d2h-code-line ins,.d2h-code-side-line ins {
-    background-color: #97f295;
+    background-color: hsl(110 70% 75% / 1);
     text-align: left
 }
 
@@ -253,12 +253,12 @@
 }
 
 .d2h-del {
-    background-color: #fee8e9;
+    background-color: hsl(0 60% 85% / 1);
     border-right-color: #e9aeae;
 }
 
 .d2h-ins {
-    background-color: #dfd;
+    background-color: hsl(110 62% 90% / 1);
     border-right-color: hsl(120deg 44% 66%);
     /* border: none; */
 }
@@ -271,11 +271,11 @@
 }
 
 .d2h-file-diff .d2h-del.d2h-change {
-    background-color: hsl(0deg 100% 93%);
+    background-color: hsl(0deg 60% 85%);
 }
 
 .d2h-file-diff .d2h-ins.d2h-change {
-    background-color: #ded
+    background-color: hsl(110 62% 90% / 1);
 }
 
 .d2h-file-list-wrapper {
