@@ -117,10 +117,11 @@ See :ref:`manage-collection-workspace` for more info.
 -------------------------
 
 
-STIG Library 
+STIG Library Tools
 ----------------------
-
 The STIG Library node offers a browsable view of the contents of all the Reference STIGs and the various Revisions stored in the STIG Manager App.
+
+The "Compare Revisions" feature allows you to compare two Revisions of a STIG, and get a report of what exact Rules and fields changed between the two. 
 
 
 .. thumbnail:: /assets/images/stig-library.png
@@ -130,6 +131,13 @@ The STIG Library node offers a browsable view of the contents of all the Referen
 
 |
 
+
+.. thumbnail:: /assets/images/stig-compare-tool.png
+      :width: 50% 
+      :show_caption: True
+      :title: STIG Revision Compare Tool
+
+|
 
 
 Interface 
