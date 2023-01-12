@@ -635,10 +635,10 @@ SM.Library.DiffRulesGrid = Ext.extend(Ext.grid.GridPanel, {
   - potentialImpacts<br>
   - mitigationControl<br>
   - severityOverrideGuidance<br>
-  - check-ref<br>
-  - check-content<br>
-  - fix-ref<br>
-  - fix-text
+  - check.content-ref<br>
+  - check.content<br>
+  - fix.fixref<br>
+  - fix.fixtext
 `
     const config = {
       layout: 'fit',
@@ -713,7 +713,7 @@ SM.Library.DiffContentPanel = Ext.extend(Ext.Panel, {
   }
 })
 
-SM.Library.GenerateDiffData = function (lhs, rhs, { reportRuleId = false } = {}) {
+SM.Library.GenerateDiffData = function (lhs, rhs) {
   const obj = {}
   const data = []
 
@@ -806,11 +806,15 @@ SM.Library.GenerateDiffData = function (lhs, rhs, { reportRuleId = false } = {})
         fullUnified += thisUnified
       }
 
-      for (let x = 0, l = Math.max(value.lhs?.checks.length ?? 0, value.rhs?.checks.length ?? 0); x < l; x++) {
+      let l = Math.max(value.lhs?.checks.length ?? 0, value.rhs?.checks.length ?? 0)
+
+      for (let x = 0; x < l; x++) {
         for (const prop of checkProps) {
           lhsStr = value.lhs?.checks[x][prop] ?? ''
           rhsStr = value.rhs?.checks[x][prop] ?? ''
-          thisUnified = Diff.createPatch(`check-${x}.${prop}`, lhsStr, rhsStr, undefined, undefined, diffOptions)
+          const propName = prop === 'checkId' ? 'content-ref' : prop
+          const patchName = l > 1 ? `check-${x}.${propName}` : `check.${propName}`
+          thisUnified = Diff.createPatch(patchName, lhsStr, rhsStr, undefined, undefined, diffOptions)
           if (thisUnified) {
             dataItem.updates.push(prop === 'content' ? 'check' : prop)
           }
@@ -818,11 +822,14 @@ SM.Library.GenerateDiffData = function (lhs, rhs, { reportRuleId = false } = {})
         }
       }
 
-      for (let x = 0, l = Math.max(value.lhs?.fixes.length ?? 0, value.rhs?.fixes.length ?? 0); x < l; x++) {
+      l = Math.max(value.lhs?.fixes.length ?? 0, value.rhs?.fixes.length ?? 0)
+      for (let x = 0; x < l; x++) {
         for (const prop of fixProps) {
           lhsStr = value.lhs?.fixes[x][prop] ?? ''
           rhsStr = value.rhs?.fixes[x][prop] ?? ''
-          thisUnified = Diff.createPatch(`fix-${x}.${prop}`, lhsStr, rhsStr, undefined, undefined, diffOptions)
+          const propName = prop === 'fixId' ? 'fixref' : prop
+          const patchName = l > 1 ? `fix-${x}.${propName}` : `fix.${propName}`
+          thisUnified = Diff.createPatch(patchName, lhsStr, rhsStr, undefined, undefined, diffOptions)
           if (thisUnified) {
             dataItem.updates.push(prop === 'text' ? 'fix' : prop)
           }
