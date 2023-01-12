@@ -566,7 +566,7 @@ SM.Library.DiffRulesGrid = Ext.extend(Ext.grid.GridPanel, {
         }
       },
       {
-        header: 'Changed properties',
+        header: '<span exportvalue="Comment">Changed properties<i class= "fa fa-question-circle sm-question-circle"></i></span>',
         id: 'diff-updated-props',
         width: 200,
         dataIndex: 'updates',
@@ -619,7 +619,27 @@ SM.Library.DiffRulesGrid = Ext.extend(Ext.grid.GridPanel, {
       ]
     })
 
-
+    const tipHtml = `<b>Changes to these rule properties can be detected</b><br>
+  - title<br>
+  - groupId<br>
+  - groupTitle<br>
+  - severity<br>
+  - weight<br>
+  - mitigations<br>
+  - documentable<br>
+  - falseNegatives<br>
+  - falsePositives<br>
+  - responsibility<br>
+  - vulnDiscussion<br>
+  - thirdPartyTools<br>
+  - potentialImpacts<br>
+  - mitigationControl<br>
+  - severityOverrideGuidance<br>
+  - check-ref<br>
+  - check-content<br>
+  - fix-ref<br>
+  - fix-text
+`
     const config = {
       layout: 'fit',
       loadMask: { msg: '' },
@@ -640,11 +660,41 @@ SM.Library.DiffRulesGrid = Ext.extend(Ext.grid.GridPanel, {
         listeners: {
           filterschanged: function (view, item, value) {
             store.filter(view.getFilterFns())
+          },
+          refresh: function (view) {
+            // Setup the tooltip for column 'updates'
+            const index = view.grid.getColumnModel().findColumnIndex('updates')
+            const tipEl = view.getHeaderCell(index).getElementsByClassName('fa')[0]
+            if (tipEl) {
+              new Ext.ToolTip({
+                target: tipEl,
+                showDelay: 0,
+                dismissDelay: 0,
+                autoWidth: true,
+                html: tipHtml
+              })
+            }
           }
         }
       }),
       tbar,
-      bbar
+      bbar,
+      listeners: {
+        viewready: function (grid) {
+          // Setup the tooltip for column 'updates'
+          const index = grid.getColumnModel().findColumnIndex('updates')
+          const tipEl = grid.view.getHeaderCell(index).getElementsByClassName('fa')[0]
+          if (tipEl) {
+            new Ext.ToolTip({
+              target: tipEl,
+              showDelay: 0,
+              dismissDelay: 0,
+              autoWidth: true,
+              html: tipHtml
+            })
+          }
+        }
+      }
     }
     Ext.apply(this, Ext.apply(this.initialConfig, config))
     this.superclass().initComponent.call(this)
@@ -804,17 +854,17 @@ SM.Library.DiffPanel = Ext.extend(Ext.Panel, {
       try {
         diffContentPanel.update(diffContentPanelEmptyText)
         diffRulesGrid.bwrap.mask('')
-        
+
         const [lhResult, rhResult] = await Promise.all([
           Ext.Ajax.requestPromise({
-            url: `${STIGMAN.Env.apiBase}/stigs/${benchmarkId}/revisions/${rhRevisionStr}/rules`,
+            url: `${STIGMAN.Env.apiBase}/stigs/${benchmarkId}/revisions/${lhRevisionStr}/rules`,
             method: 'GET',
             params: {
               projection: ['checks', 'fixes', 'detail', 'ccis']
             }
           }),
           Ext.Ajax.requestPromise({
-            url: `${STIGMAN.Env.apiBase}/stigs/${benchmarkId}/revisions/${lhRevisionStr}/rules`,
+            url: `${STIGMAN.Env.apiBase}/stigs/${benchmarkId}/revisions/${rhRevisionStr}/rules`,
             method: 'GET',
             params: {
               projection: ['checks', 'fixes', 'detail', 'ccis']
