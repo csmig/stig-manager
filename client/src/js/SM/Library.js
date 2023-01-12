@@ -619,7 +619,7 @@ SM.Library.DiffRulesGrid = Ext.extend(Ext.grid.GridPanel, {
       ]
     })
 
-    const tipHtml = `<b>Changes to these rule properties can be detected</b><br>
+    const tipHtml = `<b>Changes to these rule properties are detected</b><br>
   - title<br>
   - groupId<br>
   - groupTitle<br>
@@ -635,10 +635,8 @@ SM.Library.DiffRulesGrid = Ext.extend(Ext.grid.GridPanel, {
   - potentialImpacts<br>
   - mitigationControl<br>
   - severityOverrideGuidance<br>
-  - check.content-ref<br>
-  - check.content<br>
-  - fix.fixref<br>
-  - fix.fixtext
+  - check<br>
+  - fix<br>
 `
     const config = {
       layout: 'fit',
@@ -747,14 +745,6 @@ SM.Library.GenerateDiffData = function (lhs, rhs) {
     "mitigationControl",
     "severityOverrideGuidance"
   ]
-  const checkProps = [
-    'checkId',
-    'content'
-  ]
-  const fixProps = [
-    'fixId',
-    'text'
-  ]
 
   for (const [key, value] of Object.entries(obj)) {
     let thisUnified
@@ -807,34 +797,27 @@ SM.Library.GenerateDiffData = function (lhs, rhs) {
       }
 
       let l = Math.max(value.lhs?.checks.length ?? 0, value.rhs?.checks.length ?? 0)
-
       for (let x = 0; x < l; x++) {
-        for (const prop of checkProps) {
-          lhsStr = value.lhs?.checks[x][prop] ?? ''
-          rhsStr = value.rhs?.checks[x][prop] ?? ''
-          const propName = prop === 'checkId' ? 'content-ref' : prop
-          const patchName = l > 1 ? `check-${x}.${propName}` : `check.${propName}`
-          thisUnified = Diff.createPatch(patchName, lhsStr, rhsStr, undefined, undefined, diffOptions)
-          if (thisUnified) {
-            dataItem.updates.push(prop === 'content' ? 'check' : prop)
-          }
-          fullUnified += thisUnified
+        lhsStr = value.lhs?.checks[x].content ?? ''
+        rhsStr = value.rhs?.checks[x].content ?? ''
+        const propName = `check${l > 1 ? `-${x}` : ''}`
+        thisUnified = Diff.createPatch(propName, lhsStr, rhsStr, undefined, undefined, diffOptions)
+        if (thisUnified) {
+          dataItem.updates.push(propName)
         }
+        fullUnified += thisUnified
       }
 
       l = Math.max(value.lhs?.fixes.length ?? 0, value.rhs?.fixes.length ?? 0)
       for (let x = 0; x < l; x++) {
-        for (const prop of fixProps) {
-          lhsStr = value.lhs?.fixes[x][prop] ?? ''
-          rhsStr = value.rhs?.fixes[x][prop] ?? ''
-          const propName = prop === 'fixId' ? 'fixref' : prop
-          const patchName = l > 1 ? `fix-${x}.${propName}` : `fix.${propName}`
-          thisUnified = Diff.createPatch(patchName, lhsStr, rhsStr, undefined, undefined, diffOptions)
-          if (thisUnified) {
-            dataItem.updates.push(prop === 'text' ? 'fix' : prop)
-          }
-          fullUnified += thisUnified
+        lhsStr = value.lhs?.fixes[x].text ?? ''
+        rhsStr = value.rhs?.fixes[x].text ?? ''
+        const propName = `fix${l > 1 ? `-${x}` : ''}`
+        thisUnified = Diff.createPatch(propName, lhsStr, rhsStr, undefined, undefined, diffOptions)
+        if (thisUnified) {
+          dataItem.updates.push(propName)
         }
+        fullUnified += thisUnified
       }
       if (fullUnified) {
         dataItem.unified = fullUnified
@@ -910,7 +893,7 @@ SM.Library.DiffPanel = Ext.extend(Ext.Panel, {
         matching: 'lines',
         diffStyle: 'word'
       }
-      const html = record.data.unified ? Diff2Html.html(record.data.unified, configuration) : `<div class="x-grid-empty">No tracked properties were updated</div>`
+      const html = record.data.unified ? Diff2Html.html(record.data.unified, configuration) : `<div class="x-grid-empty">No tracked properties were changed</div>`
       diffContentPanel.update(html)
     }
 
@@ -933,7 +916,7 @@ SM.Library.DiffPanel = Ext.extend(Ext.Panel, {
     })
 
     const diffContentPanel = new SM.Library.DiffContentPanel({
-      title: 'Changed properties detail',
+      title: 'Detailed changes',
       html: diffContentPanelEmptyText,
       cls: 'sm-round-panel',
       padding: 10,
