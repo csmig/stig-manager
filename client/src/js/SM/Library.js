@@ -620,6 +620,7 @@ SM.Library.DiffRulesGrid = Ext.extend(Ext.grid.GridPanel, {
     })
 
     const tipHtml = `<b>Changes to these rule properties are detected</b><br>
+  - ruleId<br>
   - title<br>
   - groupId<br>
   - groupTitle<br>
@@ -728,6 +729,7 @@ SM.Library.GenerateDiffData = function (lhs, rhs) {
   }
 
   const ruleProps = [
+    'ruleId',
     'title',
     'groupId',
     'groupTitle',
@@ -756,90 +758,85 @@ SM.Library.GenerateDiffData = function (lhs, rhs) {
     }
     let fullUnified = ''
 
-    // check if ruleId is changed
-    let lhsStr = value.lhs?.ruleId ?? ''
-    let rhsStr = value.rhs?.ruleId ?? ''
-    thisUnified = Diff.createPatch('ruleId', lhsStr, rhsStr, undefined, undefined, diffOptions)
+    const dataItem = {
+      severities: [],
+      stigId: key,
+      lRuleId: value.lhs?.ruleId,
+      rRuleId: value.rhs?.ruleId,
+      updates: [],
+      unified: ''
+    }
 
-    if (thisUnified) {
-      const dataItem = {
-        severities: [],
-        stigId: key,
-        lRuleId: value.lhs?.ruleId,
-        rRuleId: value.rhs?.ruleId,
-        updates: [],
-        unified: ''
-      }
+    if (value.lhs?.severity) {
+      dataItem.severities.push(value.lhs.severity)
+    }
+    if (value.rhs?.severity) {
+      dataItem.severities.push(value.rhs.severity)
+    }
 
-      if (value.lhs?.severity) {
-        dataItem.severities.push(value.lhs.severity)
-      }
-      if (value.rhs?.severity) {
-        dataItem.severities.push(value.rhs.severity)
-      }
-
-      for (const prop of ruleProps) {
-        lhsStr = value.lhs?.[prop] ?? ''
-        rhsStr = value.rhs?.[prop] ?? ''
-        thisUnified = Diff.createPatch(prop, lhsStr, rhsStr, undefined, undefined, diffOptions)
-        if (thisUnified) {
-          dataItem.updates.push(prop)
-          fullUnified += thisUnified
-        }
-      }
-
-      for (const prop of detailProps) {
-        lhsStr = value.lhs?.detail[prop] ?? ''
-        rhsStr = value.rhs?.detail[prop] ?? ''
-        thisUnified = Diff.createPatch(prop, lhsStr, rhsStr, undefined, undefined, diffOptions)
-        if (thisUnified) {
-          dataItem.updates.push(prop)
-          fullUnified += thisUnified
-        }
-      }
-
-      let l = Math.max(value.lhs?.checks.length ?? 0, value.rhs?.checks.length ?? 0)
-      for (let x = 0; x < l; x++) {
-        lhsStr = value.lhs?.checks[x].content ?? ''
-        rhsStr = value.rhs?.checks[x].content ?? ''
-        const propName = `check${l > 1 ? `-${x}` : ''}`
-        thisUnified = Diff.createPatch(propName, lhsStr, rhsStr, undefined, undefined, diffOptions)
-        if (thisUnified) {
-          dataItem.updates.push(propName)
-          fullUnified += thisUnified
-        }
-      }
-
-      l = Math.max(value.lhs?.fixes.length ?? 0, value.rhs?.fixes.length ?? 0)
-      for (let x = 0; x < l; x++) {
-        lhsStr = value.lhs?.fixes[x].text ?? ''
-        rhsStr = value.rhs?.fixes[x].text ?? ''
-        const propName = `fix${l > 1 ? `-${x}` : ''}`
-        thisUnified = Diff.createPatch(propName, lhsStr, rhsStr, undefined, undefined, diffOptions)
-        if (thisUnified) {
-          dataItem.updates.push(propName)
-          fullUnified += thisUnified
-        }
-      }
-
-      // ccis
-      const lCcis = value.lhs?.ccis.map(i=>i.cci).sort((a,b)=>a.localeCompare(b)) ?? []
-      const rCcis = value.rhs?.ccis.map(i=>i.cci).sort((a,b)=>a.localeCompare(b)) ?? []
-      thisUnified = Diff.createPatch('cci', JSON.stringify(lCcis), JSON.stringify(rCcis), undefined, undefined, diffOptions)
+    for (const prop of ruleProps) {
+      lhsStr = value.lhs?.[prop] ?? ''
+      rhsStr = value.rhs?.[prop] ?? ''
+      thisUnified = Diff.createPatch(prop, lhsStr, rhsStr, undefined, undefined, diffOptions)
       if (thisUnified) {
-        dataItem.updates.push('cci')
+        dataItem.updates.push(prop)
         fullUnified += thisUnified
       }
+    }
 
-      if (fullUnified) {
-        dataItem.unified = fullUnified
+    for (const prop of detailProps) {
+      lhsStr = value.lhs?.detail[prop] ?? ''
+      rhsStr = value.rhs?.detail[prop] ?? ''
+      thisUnified = Diff.createPatch(prop, lhsStr, rhsStr, undefined, undefined, diffOptions)
+      if (thisUnified) {
+        dataItem.updates.push(prop)
+        fullUnified += thisUnified
       }
-      if (value.lhs?.ruleId && !value.rhs?.ruleId) {
-        dataItem.updates = ['rule removed']
+    }
+
+    let l = Math.max(value.lhs?.checks.length ?? 0, value.rhs?.checks.length ?? 0)
+    for (let x = 0; x < l; x++) {
+      lhsStr = value.lhs?.checks[x].content ?? ''
+      rhsStr = value.rhs?.checks[x].content ?? ''
+      const propName = `check${l > 1 ? `-${x}` : ''}`
+      thisUnified = Diff.createPatch(propName, lhsStr, rhsStr, undefined, undefined, diffOptions)
+      if (thisUnified) {
+        dataItem.updates.push(propName)
+        fullUnified += thisUnified
       }
-      if (value.rhs?.ruleId && !value.lhs?.ruleId) {
-        dataItem.updates = ['rule added']
+    }
+
+    l = Math.max(value.lhs?.fixes.length ?? 0, value.rhs?.fixes.length ?? 0)
+    for (let x = 0; x < l; x++) {
+      lhsStr = value.lhs?.fixes[x].text ?? ''
+      rhsStr = value.rhs?.fixes[x].text ?? ''
+      const propName = `fix${l > 1 ? `-${x}` : ''}`
+      thisUnified = Diff.createPatch(propName, lhsStr, rhsStr, undefined, undefined, diffOptions)
+      if (thisUnified) {
+        dataItem.updates.push(propName)
+        fullUnified += thisUnified
       }
+    }
+
+    // ccis
+    const lCcis = value.lhs?.ccis.map(i => i.cci).sort((a, b) => a.localeCompare(b)) ?? []
+    const rCcis = value.rhs?.ccis.map(i => i.cci).sort((a, b) => a.localeCompare(b)) ?? []
+    thisUnified = Diff.createPatch('cci', JSON.stringify(lCcis), JSON.stringify(rCcis), undefined, undefined, diffOptions)
+    if (thisUnified) {
+      dataItem.updates.push('cci')
+      fullUnified += thisUnified
+    }
+
+    if (fullUnified) {
+      dataItem.unified = fullUnified
+    }
+    if (value.lhs?.ruleId && !value.rhs?.ruleId) {
+      dataItem.updates = ['rule removed']
+    }
+    if (value.rhs?.ruleId && !value.lhs?.ruleId) {
+      dataItem.updates = ['rule added']
+    }
+    if (dataItem.updates.length) {
       data.push(dataItem)
     }
   }
