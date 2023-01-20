@@ -492,7 +492,8 @@ exports.insertManualBenchmark = async function (b, svcStatus = {}) {
         sql: `CREATE TEMPORARY TABLE temp_check_import (
           checkId varchar(255) NOT NULL,
           content TEXT NOT NULL,
-          digest BINARY(32) GENERATED ALWAYS AS (UNHEX(SHA2(content, 256))) STORED)`
+          digest BINARY(32) GENERATED ALWAYS AS (UNHEX(SHA2(content, 256))) STORED,
+          INDEX (digest))`
       },
       tempCheckImportDrop: {
         sql: "drop temporary table if exists temp_check_import"
@@ -722,6 +723,11 @@ exports.insertManualBenchmark = async function (b, svcStatus = {}) {
     let pp = dbUtils.pool
     connection = await pp.getConnection()
     connection.config.namedPlaceholders = true
+
+    // create temporary table(s) outside the transaction
+    await connection.query(dml.tempCheckImportDrop.sql)
+    await connection.query(dml.tempCheckImportCreate.sql)
+
     async function transaction () {
       await connection.query('START TRANSACTION')
 
@@ -730,8 +736,6 @@ exports.insertManualBenchmark = async function (b, svcStatus = {}) {
         'revision',
         'group',
         'rule',
-        'tempCheckImportDrop',
-        'tempCheckImportCreate',
         'tempCheckImportInsert',
         'checkContent',
         'check',
@@ -740,8 +744,7 @@ exports.insertManualBenchmark = async function (b, svcStatus = {}) {
         'revGroupRuleMap',
         'revGroupRuleCheckMap',
         'revGroupRuleFixMap',
-        'ruleCciMap',
-        'tempCheckImportDrop'
+        'ruleCciMap'
       ]
   
       for (const table of tableOrder) {
