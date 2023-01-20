@@ -475,7 +475,30 @@ exports.insertManualBenchmark = async function (b, svcStatus = {}) {
         binds: []
       },
       check: {
-        sql: "insert ignore into `check` (checkId, content) VALUES ?",
+        sql: `insert into \`check\` (checkId, ccId)
+        select * from (select
+          tci.checkId,
+          cc.ccId as selectedCcId
+        from
+          temp_check_import tci
+          left join check_content cc on tci.digest = cc.digest) as dt
+        ON DUPLICATE KEY UPDATE
+          ccId = selectedCcId`
+      },
+      checkContent: {
+        sql: `insert ignore into check_content (content) select content from temp_check_import`
+      },
+      tempCheckImportCreate: {
+        sql: `CREATE TEMPORARY TABLE temp_check_import (
+          checkId varchar(255) NOT NULL,
+          content TEXT NOT NULL,
+          digest BINARY(32) GENERATED ALWAYS AS (UNHEX(SHA2(content, 256))) STORED)`
+      },
+      tempCheckImportDrop: {
+        sql: "drop temporary table if exists temp_check_import"
+      },
+      tempCheckImportInsert: {
+        sql: "insert into temp_check_import (checkId, content) VALUES ?",
         binds: []
       },
       rule: {
@@ -623,8 +646,8 @@ exports.insertManualBenchmark = async function (b, svcStatus = {}) {
         ])
         if (checks) {
           checks.forEach(check => {
-            // TABLE: check
-            dml.check.binds.push([
+            // TABLE: tempCheckImportInsert
+            dml.tempCheckImportInsert.binds.push([
               check.checkId,
               check.content
             ])
@@ -680,7 +703,7 @@ exports.insertManualBenchmark = async function (b, svcStatus = {}) {
 
     dml.revision.binds.groupCount = dml.group.binds.length
     dml.revision.binds.ruleCount = dml.rule.binds.length
-    dml.revision.binds.checkCount = dml.check.binds.length
+    dml.revision.binds.checkCount = dml.tempCheckImportInsert.binds.length
     dml.revision.binds.fixCount = dml.fix.binds.length
 
     return dml
@@ -707,13 +730,18 @@ exports.insertManualBenchmark = async function (b, svcStatus = {}) {
         'revision',
         'group',
         'rule',
+        'tempCheckImportDrop',
+        'tempCheckImportCreate',
+        'tempCheckImportInsert',
+        'checkContent',
         'check',
         'fix',
         'revGroupMap',
         'revGroupRuleMap',
         'revGroupRuleCheckMap',
         'revGroupRuleFixMap',
-        'ruleCciMap'
+        'ruleCciMap',
+        'tempCheckImportDrop'
       ]
   
       for (const table of tableOrder) {
