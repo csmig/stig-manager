@@ -239,8 +239,10 @@ exports.queryBenchmarkRules = async function ( benchmarkId, revisionStr, inProje
   if ( inProjection && inProjection.includes('checks') ) {
     columns.push(`(select json_arrayagg(json_object(
       'checkId', rck.checkId,
-      'content', chk.content))
-      from rev_group_rule_check_map rck left join \`check\` chk on chk.checkId = rck.checkId
+      'content', cc.content))
+      from rev_group_rule_check_map rck 
+      left join \`check\` chk on chk.checkId = rck.checkId
+      left join check_content cc on chk.ccId = cc.ccId
       where rck.rgrId = rgr.rgrId) as "checks"`)
   }
   if ( inProjection && inProjection.includes('fixes') ) {
@@ -372,9 +374,10 @@ exports.queryRules = async function ( ruleId, inProjection ) {
   if ( inProjection && inProjection.includes('checks') ) {
     columns.push(`(select json_arrayagg(json_object(
       'checkId', rck.checkId,
-      'content', chk.content))
+      'content', cc.content))
       from rev_group_rule_check_map rck 
         left join \`check\` chk on chk.checkId = rck.checkId
+        left join check_content cc on chk.ccId = cc.ccId
         left join rev_group_rule_map rgr on rck.rgrId = rgr.rgrId
       where rgr.ruleId = r.ruleId) as "checks"`)
   }
