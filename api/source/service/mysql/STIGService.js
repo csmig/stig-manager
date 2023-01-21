@@ -418,6 +418,129 @@ exports.queryRules = async function ( ruleId, inProjection ) {
 
 
 exports.insertManualBenchmark = async function (b, svcStatus = {}) {
+  
+  let connection
+  try {
+    const response = {}
+
+    const dml = dmlObjectFromBenchmarkData(b) // defined below
+
+    connection = await dbUtils.pool.getConnection()
+    connection.config.namedPlaceholders = true
+
+    // create temporary table(s) outside the transaction
+    await connection.query(dml.tempCheckImportDrop.sql)
+    await connection.query(dml.tempCheckImportCreate.sql)
+
+    async function transaction () {
+      let result
+      await connection.query('START TRANSACTION')
+
+      const tableOrder = [
+        'stig',
+        'revision',
+        'group',
+        'rule',
+        'tempCheckImportInsert',
+        'checkContent',
+        'check',
+        'fix',
+        'revGroupMap',
+        'revGroupRuleMap',
+        'revGroupRuleCheckMap',
+        'revGroupRuleFixMap',
+        'ruleCciMap'
+      ]
+  
+      for (const table of tableOrder) {
+        if (Array.isArray(dml[table].binds)) {
+          if (dml[table].binds.length === 0) { continue }
+          ;[result] = await connection.query(dml[ table ].sql, [ dml[ table ].binds ])
+        }
+        else {
+          ;[result] = await connection.query(dml[ table ].sql, dml[ table ].binds)
+        }
+      }
+  
+      // Update current_rev
+      let sqlDeleteCurrentRev = 'DELETE from current_rev where benchmarkId = ?'
+      let sqlUpdateCurrentRev = `INSERT INTO current_rev (
+        revId,
+        benchmarkId,
+        \`version\`, 
+        \`release\`, 
+        benchmarkDate,
+        benchmarkDateSql,
+        status,
+        statusDate,
+        description,
+        active,
+        groupCount,
+        ruleCount,
+        checkCount,
+        fixCount)
+        SELECT 
+          revId,
+          benchmarkId,
+          \`version\`,
+          \`release\`,
+          benchmarkDate,
+          benchmarkDateSql,
+          status,
+          statusDate,
+          description,
+          active,
+          groupCount,
+          ruleCount,
+          checkCount,
+          fixCount
+        FROM
+          v_current_rev
+        WHERE
+          v_current_rev.benchmarkId = ?`
+      ;[result] = await connection.query(sqlDeleteCurrentRev, [ dml.stig.binds.benchmarkId ])
+      ;[result] = await connection.query(sqlUpdateCurrentRev, [ dml.stig.binds.benchmarkId ])
+  
+      // update current_group_rule
+      let sqlDeleteCurrentGroupRule = 'DELETE FROM current_group_rule WHERE benchmarkId = ?'
+      let sqlInsertCurrentGroupRule = `INSERT INTO current_group_rule (groupId, ruleId, benchmarkId)
+        SELECT rg.groupId,
+          rgr.ruleId,
+          cr.benchmarkId
+        from
+          current_rev cr
+          left join rev_group_map rg on rg.revId=cr.revId
+          left join rev_group_rule_map rgr on rgr.rgId=rg.rgId
+        where
+          cr.benchmarkId = ?
+        order by
+          rg.groupId,rgr.ruleId,cr.benchmarkId`
+      ;[result] = await connection.query(sqlDeleteCurrentGroupRule, [ dml.stig.binds.benchmarkId ])
+      ;[result] = await connection.query(sqlInsertCurrentGroupRule, [ dml.stig.binds.benchmarkId ])
+  
+      // Stats
+      await dbUtils.updateStatsAssetStig( connection, {
+        benchmarkId: dml.stig.binds.benchmarkId
+      } )
+  
+      // await connection.rollback()
+      await connection.commit()
+      return response
+    }
+    return await dbUtils.retryOnDeadlock(transaction, svcStatus)
+  }
+  catch (err) {
+    if (typeof connection !== 'undefined') {
+      await connection.rollback()
+    }
+    throw err
+  }
+  finally {
+    if (typeof connection !== 'undefined') {
+      await connection.release()
+    }
+  }
+
   function dmlObjectFromBenchmarkData (b) {
     let dml = {
       stig: {
@@ -435,9 +558,11 @@ exports.insertManualBenchmark = async function (b, svcStatus = {}) {
           statusDate, 
           description,
           groupCount,
-          ruleCount,
           checkCount,
-          fixCount
+          fixCount,
+          lowCount,
+          mediumCount,
+          highCount
         ) VALUES (
           :revId, 
           :benchmarkId, 
@@ -449,9 +574,11 @@ exports.insertManualBenchmark = async function (b, svcStatus = {}) {
           :statusDate, 
           :description,
           :groupCount,
-          :ruleCount,
           :checkCount,
-          :fixCount
+          :fixCount,
+          :lowCount,
+          :mediumCount,
+          :highCount
         )`,
       },
       group: {
@@ -608,6 +735,7 @@ exports.insertManualBenchmark = async function (b, svcStatus = {}) {
     revisionBinds.revId = `${revisionBinds.benchmarkId}-${revisionBinds.version}-${revisionBinds.release}`
     revisionBinds.benchmarkDateSql = revisionBinds.benchmarkDate8601
     delete revisionBinds.benchmarkDate8601
+    revisionBinds.lowCount = revisionBinds.mediumCount = revisionBinds.highCount = 0
     // TABLE: revision
     dml.revision.binds = revisionBinds
 
@@ -703,153 +831,18 @@ exports.insertManualBenchmark = async function (b, svcStatus = {}) {
     }) // end groups.forEach
 
     dml.revision.binds.groupCount = dml.group.binds.length
-    dml.revision.binds.ruleCount = dml.rule.binds.length
     dml.revision.binds.checkCount = dml.tempCheckImportInsert.binds.length
     dml.revision.binds.fixCount = dml.fix.binds.length
+    // add rule severity counts to the revision binds. rule[3] is the index of the severity value
+    dml.rule.binds.reduce((binds, rule) => {
+      const prop = `${rule[3]}Count`
+      binds[prop] = (binds[prop] ?? 0) + 1
+      return binds
+    }, dml.revision.binds)
 
     return dml
   }
 
-  let connection
-  try {
-    let result, hrstart, hrend, tableOrder, dml, stats = {}
-    let totalstart = process.hrtime() 
-
-    hrstart = process.hrtime() 
-    dml = dmlObjectFromBenchmarkData(b)
-    hrend = process.hrtime(hrstart)
-    stats.dmlObject = `Built in ${hrend[0]}s  ${hrend[1] / 1000000}ms`
-
-    let pp = dbUtils.pool
-    connection = await pp.getConnection()
-    connection.config.namedPlaceholders = true
-
-    // create temporary table(s) outside the transaction
-    await connection.query(dml.tempCheckImportDrop.sql)
-    await connection.query(dml.tempCheckImportCreate.sql)
-
-    async function transaction () {
-      await connection.query('START TRANSACTION')
-
-      tableOrder = [
-        'stig',
-        'revision',
-        'group',
-        'rule',
-        'tempCheckImportInsert',
-        'checkContent',
-        'check',
-        'fix',
-        'revGroupMap',
-        'revGroupRuleMap',
-        'revGroupRuleCheckMap',
-        'revGroupRuleFixMap',
-        'ruleCciMap'
-      ]
-  
-      for (const table of tableOrder) {
-        hrstart = process.hrtime()
-        if (Array.isArray(dml[table].binds)) {
-          if (dml[table].binds.length === 0) { continue }
-          ;[result] = await connection.query(dml[ table ].sql, [ dml[ table ].binds ])
-        }
-        else {
-          ;[result] = await connection.query(dml[ table ].sql, dml[ table ].binds)
-        }
-        hrend = process.hrtime(hrstart)
-        stats[table] = `${result.affectedRows} in ${hrend[0]}s  ${hrend[1] / 1000000}ms`
-      }
-  
-      // Update current_rev
-      let sqlDeleteCurrentRev = 'DELETE from current_rev where benchmarkId = ?'
-      let sqlUpdateCurrentRev = `INSERT INTO current_rev (
-        revId,
-        benchmarkId,
-        \`version\`, 
-        \`release\`, 
-        benchmarkDate,
-        benchmarkDateSql,
-        status,
-        statusDate,
-        description,
-        active,
-        groupCount,
-        ruleCount,
-        checkCount,
-        fixCount)
-        SELECT 
-          revId,
-          benchmarkId,
-          \`version\`,
-          \`release\`,
-          benchmarkDate,
-          benchmarkDateSql,
-          status,
-          statusDate,
-          description,
-          active,
-          groupCount,
-          ruleCount,
-          checkCount,
-          fixCount
-        FROM
-          v_current_rev
-        WHERE
-          v_current_rev.benchmarkId = ?`
-      hrstart = process.hrtime()
-      ;[result] = await connection.query(sqlDeleteCurrentRev, [ dml.stig.binds.benchmarkId ])
-      ;[result] = await connection.query(sqlUpdateCurrentRev, [ dml.stig.binds.benchmarkId ])
-      hrend = process.hrtime(hrstart)
-      stats['currentRev'] = `${result.affectedRows} in ${hrend[0]}s  ${hrend[1] / 1000000}ms`
-  
-      // update current_group_rule
-      let sqlDeleteCurrentGroupRule = 'DELETE FROM current_group_rule WHERE benchmarkId = ?'
-      let sqlInsertCurrentGroupRule = `INSERT INTO current_group_rule (groupId, ruleId, benchmarkId)
-        SELECT rg.groupId,
-          rgr.ruleId,
-          cr.benchmarkId
-        from
-          current_rev cr
-          left join rev_group_map rg on rg.revId=cr.revId
-          left join rev_group_rule_map rgr on rgr.rgId=rg.rgId
-        where
-          cr.benchmarkId = ?
-        order by
-          rg.groupId,rgr.ruleId,cr.benchmarkId`
-      hrstart = process.hrtime()
-      ;[result] = await connection.query(sqlDeleteCurrentGroupRule, [ dml.stig.binds.benchmarkId ])
-      ;[result] = await connection.query(sqlInsertCurrentGroupRule, [ dml.stig.binds.benchmarkId ])
-      hrend = process.hrtime(hrstart)
-      stats['currentGroupRule'] = `${result.affectedRows} in ${hrend[0]}s  ${hrend[1] / 1000000}ms`
-  
-      // Stats
-      hrstart = process.hrtime() 
-      await dbUtils.updateStatsAssetStig( connection, {
-        benchmarkId: dml.stig.binds.benchmarkId
-      } )
-      hrend = process.hrtime(hrstart)
-      stats.stats = `${result.affectedRows} in ${hrend[0]}s  ${hrend[1] / 1000000}ms`
-        
-      hrend = process.hrtime(totalstart)
-      stats.totalTime = `Completed in ${hrend[0]}s  ${hrend[1] / 1000000}ms`
-  
-      // await connection.rollback()
-      await connection.commit()
-      return (stats)
-    }
-    return await dbUtils.retryOnDeadlock(transaction, svcStatus)
-  }
-  catch (err) {
-    if (typeof connection !== 'undefined') {
-      await connection.rollback()
-    }
-    throw err
-  }
-  finally {
-    if (typeof connection !== 'undefined') {
-      await connection.release()
-    }
-  }
 }
 
 /**
