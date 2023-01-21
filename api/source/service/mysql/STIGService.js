@@ -858,6 +858,7 @@ exports.deleteRevisionByString = async function(benchmarkId, revisionStr, svcSta
     "DELETE FROM revision WHERE benchmarkId = :benchmarkId and `version` = :version and `release` = :release",
     "DELETE FROM `rule` WHERE ruleId NOT IN (select ruleId from rev_group_rule_map )",
     "DELETE FROM `check` WHERE checkId NOT IN (select checkId from rev_group_rule_check_map)",
+    "DELETE FROM check_content WHERE ccId NOT IN (select ccId from `check`)",
     "DELETE FROM fix WHERE fixId NOT IN (select fixId from rev_group_rule_fix_map)",
     "DELETE FROM `group` WHERE groupId NOT IN (select groupId from rev_group_map)"
   ]
@@ -980,6 +981,7 @@ exports.deleteStigById = async function(benchmarkId, userObject, svcStatus = {})
     "DELETE from stig where benchmarkId = :benchmarkId",
     "DELETE FROM `rule` WHERE ruleId NOT IN (select ruleId from rev_group_rule_map )",
     "DELETE FROM `check` WHERE checkId NOT IN (select checkId from rev_group_rule_check_map)",
+    "DELETE FROM check_content WHERE ccId NOT IN (select ccId from `check`)",
     "DELETE FROM fix WHERE fixId NOT IN (select fixId from rev_group_rule_fix_map)",
     "DELETE FROM `group` WHERE groupId NOT IN (select groupId from rev_group_map)"
   ]
