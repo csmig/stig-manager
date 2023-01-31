@@ -421,7 +421,6 @@ exports.insertManualBenchmark = async function (b, svcStatus = {}) {
 
   let connection
   try {
-    const response = {}
 
     const dml = dmlObjectFromBenchmarkData(b) // defined below
 
@@ -551,7 +550,10 @@ exports.insertManualBenchmark = async function (b, svcStatus = {}) {
 
       // await connection.rollback()
       await connection.commit()
-      return response
+      return {
+        benchmarkId: dml.revision.binds.benchmarkId,
+        revisionStr: `V${dml.revision.binds.version}R${dml.revision.binds.release}`
+      }
     }
     return await dbUtils.retryOnDeadlock(transaction, svcStatus)
   }
@@ -1342,7 +1344,8 @@ exports.getRevisionByString = async function(benchmarkId, revisionStr, userObjec
       date_format(${ro.table_alias}.benchmarkDateSql,'%Y-%m-%d') as "benchmarkDate",
       ${ro.table_alias}.status,
       ${ro.table_alias}.statusDate,
-      ${ro.table_alias}.description
+      ${ro.table_alias}.description,
+      ${ro.table_alias}.ruleCount
     FROM
       ${ro.table}  ${ro.table_alias}
     WHERE
