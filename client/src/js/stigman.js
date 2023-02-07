@@ -62,6 +62,15 @@ async function loadApp () {
 			trackMouse: false
 		});
 		Ext.state.Manager.setProvider(new SM.State.LocalStorageProvider())
+
+		setTimeout(()=>{
+			try {
+				throw new Error('new error')
+			}
+			catch (e) {
+				SM.Error.displayError(e)
+			}
+		}, 3000)
 	
 		// Ext.get( 'loading-text' ).dom.innerHTML = "Getting configuration...";
 		let result = await Ext.Ajax.requestPromise({

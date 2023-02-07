@@ -91,6 +91,7 @@ function loadScripts() {
         "js/diff2html.min.js",
         "js/stigmanUtils.js",
         'js/SM/Global.js',
+        'js/SM/Error.js',
         'js/BufferView.js',
         'js/SM/EventDispatcher.js',
         'js/SM/Cache.js',

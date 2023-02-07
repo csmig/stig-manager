@@ -163,7 +163,7 @@ SM.AssignmentNavTree = Ext.extend(Ext.tree.TreePanel, {
           }
         }
         catch (e) {
-          Ext.Msg.alert('Status', 'AJAX request failed in loadTree()');
+          SM.Error.displayError(e)
         }
     },
     treeClick: function (tree, node) {

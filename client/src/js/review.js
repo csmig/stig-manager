@@ -1412,7 +1412,7 @@ async function addReview( params ) {
       reviewForm.setReviewFormItemStates(reviewForm)
     }
     catch (e) {
-      Ext.Msg.alert('Fail', `Failed to update review.\n${e.message}`)
+      SM.Error.displayError(e)
     }
     finally {
       // masktask.cancel()
