@@ -241,8 +241,7 @@ exports.queryBenchmarkRules = async function ( benchmarkId, revisionStr, inProje
       'checkId', rck.checkId,
       'content', cc.content))
       from rev_group_rule_check_map rck 
-      left join \`check\` chk on chk.checkId = rck.checkId
-      left join check_content cc on chk.ccId = cc.ccId
+      left join check_content cc on rck.ccId = cc.ccId
       where rck.rgrId = rgr.rgrId) as "checks"`)
   }
   if ( inProjection && inProjection.includes('fixes') ) {
@@ -376,8 +375,7 @@ exports.queryRules = async function ( ruleId, inProjection ) {
       'checkId', rck.checkId,
       'content', cc.content))
       from rev_group_rule_check_map rck 
-        left join \`check\` chk on chk.checkId = rck.checkId
-        left join check_content cc on chk.ccId = cc.ccId
+        left join check_content cc on rck.ccId = cc.ccId
         left join rev_group_rule_map rgr on rck.rgrId = rgr.rgrId
       where rgr.ruleId = r.ruleId) as "checks"`)
   }
@@ -437,8 +435,12 @@ exports.insertManualBenchmark = async function (b, svcStatus = {}) {
     const gExistingRevision = revision?.[0]?.revId
 
     // create temporary table(s) outside the transaction
-    await connection.query(dml.tempCheckImportDrop.sql)
-    await connection.query(dml.tempCheckImportCreate.sql)
+    await connection.query(dml.tempGroupRuleDrop.sql)
+    await connection.query(dml.tempRuleCheckDrop.sql)
+    await connection.query(dml.tempRuleFixDrop.sql)
+    await connection.query(dml.tempGroupRuleCreate.sql)
+    await connection.query(dml.tempRuleCheckCreate.sql)
+    await connection.query(dml.tempRuleFixCreate.sql)
 
     async function transaction() {
       let result
@@ -450,8 +452,7 @@ exports.insertManualBenchmark = async function (b, svcStatus = {}) {
         const cleanupDml = [
           "DELETE FROM `group` WHERE groupId NOT IN (select groupId from rev_group_map)",
           "DELETE FROM `rule` WHERE ruleId NOT IN (select ruleId from rev_group_rule_map )",
-          "DELETE FROM `check` WHERE checkId NOT IN (select checkId from rev_group_rule_check_map)",
-          "DELETE FROM check_content WHERE ccId NOT IN (select ccId from `check`)",
+          "DELETE FROM check_content WHERE ccId NOT IN (select ccId from rev_group_rule_check_map)",
           "DELETE FROM fix WHERE fixId NOT IN (select fixId from rev_group_rule_fix_map)"
         ]
         for (const query of cleanupDml) {
@@ -465,16 +466,16 @@ exports.insertManualBenchmark = async function (b, svcStatus = {}) {
         'revision',
         'group',
         'rule',
-        'tempCheckImportInsert',
+        'tempGroupRuleInsert',
+        'tempRuleCheckInsert',
+        'tempRuleFixInsert',
         'checkContent',
-        'check',
         'fix',
         'revGroupMap',
         'revGroupRuleMap',
         'revGroupRuleCheckMap',
         'revGroupRuleFixMap',
-        'ruleCciMap',
-        'ruleCcId'
+        'ruleCciMap'
       ]
 
       for (const query of queryOrder) {
@@ -552,7 +553,6 @@ exports.insertManualBenchmark = async function (b, svcStatus = {}) {
         benchmarkId: dml.stig.binds.benchmarkId
       })
 
-      // await connection.rollback()
       await connection.commit()
       return {
         benchmarkId: dml.revision.binds.benchmarkId,
@@ -633,71 +633,88 @@ exports.insertManualBenchmark = async function (b, svcStatus = {}) {
         sql: "insert into fix (fixId, text) VALUES ? as new on duplicate key update fix.text=new.text",
         binds: []
       },
-      check: {
-        sql: `insert into \`check\` (checkId, ccId)
-  select * from (select
-    tci.checkId,
-    cc.ccId as selectedCcId
-  from
-    temp_check_import tci
-    left join check_content cc on tci.digest = cc.digest) as dt
-  ON DUPLICATE KEY UPDATE
-    ccId = selectedCcId`
-      },
       checkContent: {
-        sql: `insert ignore into check_content (content) select content from temp_check_import`
+        sql: `insert ignore into check_content (content) select content from temp_rule_check`
       },
-      tempCheckImportCreate: {
-        sql: `CREATE TEMPORARY TABLE temp_check_import (
-  checkId varchar(255) NOT NULL,
-  content TEXT NOT NULL,
-  digest BINARY(32) GENERATED ALWAYS AS (UNHEX(SHA2(content, 256))) STORED,
-  INDEX (digest))`
+      tempGroupRuleDrop: {
+        sql: "drop table if exists temp_group_rule"
       },
-      tempCheckImportDrop: {
-        sql: "drop temporary table if exists temp_check_import"
+      tempGroupRuleCreate: {
+        sql: `CREATE TEMPORARY TABLE temp_group_rule (
+          groupId varchar(45) NOT NULL,
+          ruleId varchar(255) NOT NULL)`
       },
-      tempCheckImportInsert: {
-        sql: "insert into temp_check_import (checkId, content) VALUES ?",
+      tempGroupRuleInsert: {
+        sql: `insert into temp_group_rule (groupId, ruleId) VALUES ?`,
+        binds: []
+      },
+      tempRuleCheckDrop: {
+        sql: "drop table if exists temp_rule_check"
+      },
+      tempRuleCheckCreate: {
+        sql: `CREATE TEMPORARY TABLE temp_rule_check (
+          ruleId varchar(255) NOT NULL,
+          checkSystem varchar(255),
+          content TEXT,
+          digest BINARY(32) GENERATED ALWAYS AS (UNHEX(SHA2(content, 256))) STORED,
+          INDEX (digest))`
+      },
+      tempRuleCheckInsert: {
+        sql: `insert into temp_rule_check (ruleId, checkSystem, content) VALUES ?`,
+        binds: []
+      },
+      tempRuleFixDrop: {
+        sql: "drop table if exists temp_rule_fix"
+      },
+      tempRuleFixCreate: {
+        sql: `CREATE TEMPORARY TABLE temp_rule_fix (
+          ruleId varchar(255) NOT NULL,
+          fixRef VARCHAR(45),
+          fixText TEXT,
+          fixDigest BINARY(32) GENERATED ALWAYS AS (UNHEX(SHA2(fixText, 256))) STORED,
+          INDEX (fixDigest))`
+      },
+      tempRuleFixInsert: {
+        sql: `insert into temp_rule_fix (ruleId, fixRef, fixText) VALUES ?`,
         binds: []
       },
       rule: {
         sql: `insert into rule (
-  ruleId,
-  version,
-  title,
-  severity,
-  weight,
-  vulnDiscussion,
-  falsePositives,
-  falseNegatives,
-  documentable,
-  mitigations,
-  severityOverrideGuidance,
-  potentialImpacts,
-  thirdPartyTools,
-  mitigationControl,
-  responsibility,
-  iaControls,
-  ccId
-) VALUES ? as new
-on duplicate key update
-  rule.version = new.version,
-  rule.title = new.title,
-  rule.severity = new.severity,
-  rule.weight = new.weight,
-  rule.vulnDiscussion = new.vulnDiscussion,
-  rule.falsePositives = new.falsePositives,
-  rule.falseNegatives = new.falseNegatives,
-  rule.documentable = new.documentable,
-  rule.mitigations = new.mitigations,
-  rule.severityOverrideGuidance = new.severityOverrideGuidance,
-  rule.potentialImpacts = new.potentialImpacts,
-  rule.thirdPartyTools = new.thirdPartyTools,
-  rule.mitigationControl = new.mitigationControl,
-  rule.responsibility = new.responsibility,
-  rule.iaControls = new.iaControls,
-  rule.ccId = new.ccId`,
+          ruleId,
+          version,
+          title,
+          severity,
+          weight,
+          vulnDiscussion,
+          falsePositives,
+          falseNegatives,
+          documentable,
+          mitigations,
+          severityOverrideGuidance,
+          potentialImpacts,
+          thirdPartyTools,
+          mitigationControl,
+          responsibility,
+          iaControls,
+          ccId
+        ) VALUES ? as new
+        on duplicate key update
+          rule.version = new.version,
+          rule.title = new.title,
+          rule.severity = new.severity,
+          rule.weight = new.weight,
+          rule.vulnDiscussion = new.vulnDiscussion,
+          rule.falsePositives = new.falsePositives,
+          rule.falseNegatives = new.falseNegatives,
+          rule.documentable = new.documentable,
+          rule.mitigations = new.mitigations,
+          rule.severityOverrideGuidance = new.severityOverrideGuidance,
+          rule.potentialImpacts = new.potentialImpacts,
+          rule.thirdPartyTools = new.thirdPartyTools,
+          rule.mitigationControl = new.mitigationControl,
+          rule.responsibility = new.responsibility,
+          rule.iaControls = new.iaControls,
+          rule.ccId = new.ccId`,
         binds: []
       },
       ruleCcId: {
@@ -731,30 +748,18 @@ on duplicate key update
           sql: 'delete from rev_group_map where revId = ?',
           binds: []
         },
-        sql: "insert into rev_group_map (revId, groupId, rules) VALUES ?",
+        sql: "insert into rev_group_map (revId, groupId) VALUES ?",
         binds: []
       },
       revGroupRuleMap: {
-        sql: `INSERT INTO rev_group_rule_map
-  (rgId, ruleId, checks, fixes, ccis)
-  SELECT 
-    rg.rgId,
-    tt.ruleId,
-    tt.checks,
-    tt.fixes,
-    tt.ccis
-  FROM
-    rev_group_map rg,
-    JSON_TABLE(
-    rg.rules,
-    "$[*]"
-    COLUMNS(
-      ruleId VARCHAR(255) PATH "$.ruleId",
-        checks JSON PATH "$.checks",
-        fixes JSON PATH "$.fixes",
-        ccis JSON PATH "$.ccis"
-    )) AS tt
-  WHERE rg.revId = :revId`
+        sql: `INSERT INTO rev_group_rule_map (rgId, ruleId)
+          SELECT 
+            rg.rgId,
+            tt.ruleId
+          FROM
+            rev_group_map rg
+            left join temp_group_rule tt using (groupId)
+          WHERE rg.revId = :revId`
       },
       ruleCciMap: {
         sql: `INSERT IGNORE INTO rule_cci_map
@@ -763,40 +768,32 @@ on duplicate key update
         binds: []
       },
       revGroupRuleCheckMap: {
-        sql: `INSERT INTO rev_group_rule_check_map (rgrId, checkId)
-  SELECT 
-    rgr.rgrId,
-    tt.checkId
-  FROM
-    rev_group_map rg,
-    rev_group_rule_map rgr,
-    JSON_TABLE(
-      rgr.checks,
-      "$[*]" COLUMNS(
-        checkId VARCHAR(255) PATH "$"
-      )
-    ) AS tt
-  WHERE 
-    rg.revId = :revId
-    AND rg.rgId=rgr.rgId`
+        sql: `INSERT INTO rev_group_rule_check_map (rgrId, checkId, ccId)
+          SELECT 
+            rgr.rgrId,
+            tt.checkSystem,
+            cc.ccId
+          FROM
+            rev_group_map rg
+            left join rev_group_rule_map rgr using (rgId)
+            left join temp_rule_check tt using (ruleId)
+            left join check_content cc using (digest)
+          WHERE 
+            rg.revId = :revId
+            AND rg.rgId=rgr.rgId`
       },
       revGroupRuleFixMap: {
         sql: `INSERT INTO rev_group_rule_fix_map (rgrId, fixId)
-  SELECT 
-    rgr.rgrId,
-    tt.fixId
-  FROM
-    rev_group_map rg,
-    rev_group_rule_map rgr,
-    JSON_TABLE(
-      rgr.fixes,
-      "$[*]" COLUMNS(
-        fixId VARCHAR(255) PATH "$"
-      )
-    ) AS tt
-  WHERE 
-    rg.revId = :revId
-    AND rg.rgId=rgr.rgId`
+          SELECT 
+            rgr.rgrId,
+            tt.fixRef
+          FROM
+            rev_group_map rg
+            left join rev_group_rule_map rgr using (rgId)
+            left join temp_rule_fix tt using (ruleId)
+          WHERE 
+            rg.revId = :revId
+            AND rg.rgId=rgr.rgId`
       },
     }
 
@@ -834,6 +831,12 @@ on duplicate key update
         else if (groupSeverity !== ruleBinds.severity) {
           groupSeverity = 'mixed'
         }
+        // QUERY: tempGroupRuleInsert
+        dml.tempGroupRuleInsert.binds.push([
+          groupBinds.groupId,
+          ruleBinds.ruleId
+        ])
+
         // QUERY: rule
         dml.rule.binds.push([
           ruleBinds.ruleId,
@@ -856,8 +859,9 @@ on duplicate key update
         ])
         if (checks) {
           checks.forEach(check => {
-            // QUERY: tempCheckImportInsert
-            dml.tempCheckImportInsert.binds.push([
+            // QUERY: tempRuleCheckInsert
+            dml.tempRuleCheckInsert.binds.push([
+              ruleBinds.ruleId,
               check.checkId,
               check.content
             ])
@@ -865,6 +869,12 @@ on duplicate key update
         }
 
         fixes.forEach(fix => {
+          // QUERY: tempRuleFixInsert
+          dml.tempRuleFixInsert.binds.push([
+            ruleBinds.ruleId,
+            fix.fixId,
+            fix.text
+          ])
           // QUERY: fix
           dml.fix.binds.push([
             fix.fixId,
@@ -876,14 +886,6 @@ on duplicate key update
           if (ident.system === 'http://iase.disa.mil/cci' || ident.system === 'http://cyber.mil/cci') {
             dml.ruleCciMap.binds.push([rule.ruleId, ident.ident.replace('CCI-', '')])
           }
-        })
-
-        // JSON for rev_group_map.rules
-        ruleMap.push({
-          ruleId: rule.ruleId,
-          checks: checks ? checks.map(c => c.checkId) : null,
-          fixes: fixes ? fixes.map(f => f.fixId) : null,
-          ccis: identsMap
         })
 
       }) // end rules.forEach
@@ -898,10 +900,8 @@ on duplicate key update
       // QUERY: rev_group_map
       dml.revGroupMap.binds.push([
         revisionBinds.revId,
-        group.groupId,
-        JSON.stringify(ruleMap)
+        group.groupId
       ])
-      dml.revGroupMap.delete.binds.push(revisionBinds.revId)
 
       // QUERY: rev_group_rule_map
       dml.revGroupRuleMap.binds = { revId: revisionBinds.revId }
@@ -913,7 +913,7 @@ on duplicate key update
     }) // end groups.forEach
 
     dml.revision.binds.groupCount = dml.group.binds.length
-    dml.revision.binds.checkCount = dml.tempCheckImportInsert.binds.length
+    dml.revision.binds.checkCount = dml.tempRuleCheckInsert.binds.length
     dml.revision.binds.fixCount = dml.fix.binds.length
     // add rule severity counts to the revision binds. rule[3] is the index of the severity value
     dml.rule.binds.reduce((binds, rule) => {
@@ -938,8 +938,7 @@ exports.deleteRevisionByString = async function(benchmarkId, revisionStr, svcSta
   let dmls = [
     "DELETE FROM revision WHERE benchmarkId = :benchmarkId and `version` = :version and `release` = :release",
     "DELETE FROM `rule` WHERE ruleId NOT IN (select ruleId from rev_group_rule_map )",
-    "DELETE FROM `check` WHERE checkId NOT IN (select checkId from rev_group_rule_check_map)",
-    "DELETE FROM check_content WHERE ccId NOT IN (select ccId from `check`)",
+    "DELETE FROM check_content WHERE ccId NOT IN (select distinct ccId from rev_group_rule_check_map)",
     "DELETE FROM fix WHERE fixId NOT IN (select fixId from rev_group_rule_fix_map)",
     "DELETE FROM `group` WHERE groupId NOT IN (select groupId from rev_group_map)"
   ]
@@ -1065,8 +1064,7 @@ exports.deleteStigById = async function(benchmarkId, userObject, svcStatus = {})
     "DELETE FROM current_group_rule WHERE benchmarkId = :benchmarkId",
     "DELETE from stig where benchmarkId = :benchmarkId",
     "DELETE FROM `rule` WHERE ruleId NOT IN (select ruleId from rev_group_rule_map )",
-    "DELETE FROM `check` WHERE checkId NOT IN (select checkId from rev_group_rule_check_map)",
-    "DELETE FROM check_content WHERE ccId NOT IN (select ccId from `check`)",
+    "DELETE FROM check_content WHERE ccId NOT IN (select ccId from rev_group_rule_check_map)",
     "DELETE FROM fix WHERE fixId NOT IN (select fixId from rev_group_rule_fix_map)",
     "DELETE FROM `group` WHERE groupId NOT IN (select groupId from rev_group_map)"
   ]
