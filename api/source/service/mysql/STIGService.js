@@ -695,8 +695,7 @@ exports.insertManualBenchmark = async function (b, svcStatus = {}) {
           thirdPartyTools,
           mitigationControl,
           responsibility,
-          iaControls,
-          ccId
+          iaControls
         ) VALUES ? as new
         on duplicate key update
           rule.version = new.version,
@@ -713,8 +712,7 @@ exports.insertManualBenchmark = async function (b, svcStatus = {}) {
           rule.thirdPartyTools = new.thirdPartyTools,
           rule.mitigationControl = new.mitigationControl,
           rule.responsibility = new.responsibility,
-          rule.iaControls = new.iaControls,
-          rule.ccId = new.ccId`,
+          rule.iaControls = new.iaControls`,
         binds: []
       },
       ruleCcId: {
@@ -854,8 +852,7 @@ exports.insertManualBenchmark = async function (b, svcStatus = {}) {
           ruleBinds.thirdPartyTools,
           ruleBinds.mitigationControl,
           ruleBinds.responsibility,
-          ruleBinds.iaControls,
-          null // ccId
+          ruleBinds.iaControls
         ])
         if (checks) {
           checks.forEach(check => {
@@ -1350,7 +1347,6 @@ exports.getRevisionByString = async function(benchmarkId, revisionStr, userObjec
       date_format(${ro.table_alias}.benchmarkDateSql,'%Y-%m-%d') as "benchmarkDate",
       ${ro.table_alias}.status,
       ${ro.table_alias}.statusDate,
-      ${ro.table_alias}.description,
       ${ro.table_alias}.ruleCount
     FROM
       ${ro.table}  ${ro.table_alias}
@@ -1390,7 +1386,6 @@ exports.getRevisionsByBenchmarkId = async function(benchmarkId, userObject) {
       date_format(r.benchmarkDateSql,'%Y-%m-%d') as "benchmarkDate",
       r.status,
       r.statusDate,
-      r.description,
       r.ruleCount
     FROM
       revision r

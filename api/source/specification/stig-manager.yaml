@@ -5815,7 +5815,6 @@ components:
         - benchmarkDate
         - status
         - statusDate
-        - description
         - ruleCount
       additionalProperties: false
       properties:
@@ -5837,8 +5836,6 @@ components:
         statusDate:
           type: string
           format: date
-        description:
-          type: string
         ruleCount:
           type: integer
     RevisionBasic:
