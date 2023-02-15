@@ -415,10 +415,12 @@ exports.queryRules = async function ( ruleId, inProjection ) {
 }
 
 
-exports.insertManualBenchmark = async function (b, svcStatus = {}) {
+exports.insertManualBenchmark = async function (b, clobber, svcStatus = {}) {
 
   let connection
   try {
+    const stats = {}
+    let totalstart = process.hrtime() 
 
     const dml = dmlObjectFromBenchmarkData(b) // defined below
 
@@ -431,8 +433,14 @@ exports.insertManualBenchmark = async function (b, svcStatus = {}) {
       dml.revision.binds.version,
       dml.revision.binds.release
     ])
-
     const gExistingRevision = revision?.[0]?.revId
+    if (gExistingRevision && !clobber) {
+      return {
+        benchmarkId: dml.revision.binds.benchmarkId,
+        revisionStr: `V${dml.revision.binds.version}R${dml.revision.binds.release}`,
+        action: 'preserved'
+      }
+    }
 
     // create temporary table(s) outside the transaction
     await connection.query(dml.tempGroupRuleDrop.sql)
@@ -443,11 +451,12 @@ exports.insertManualBenchmark = async function (b, svcStatus = {}) {
     await connection.query(dml.tempRuleFixCreate.sql)
 
     async function transaction() {
-      let result
+      let result, hrstart, hrend, action = 'inserted'
       await connection.query('START TRANSACTION')
 
       // purge any exitsing records for this revision so we can replace
       if (gExistingRevision) {
+        hrstart = process.hrtime()
         await connection.query('DELETE FROM revision WHERE revId = ?', [gExistingRevision])
         const cleanupDml = [
           "DELETE FROM `group` WHERE groupId NOT IN (select groupId from rev_group_map)",
@@ -458,6 +467,9 @@ exports.insertManualBenchmark = async function (b, svcStatus = {}) {
         for (const query of cleanupDml) {
           await connection.query(query)
         }
+        hrend = process.hrtime(hrstart)
+        stats.delRev = `${hrend[0]}s  ${hrend[1] / 1000000}ms`
+        action = 'replaced'
       }
 
       // insert new records for this revision
@@ -479,6 +491,7 @@ exports.insertManualBenchmark = async function (b, svcStatus = {}) {
       ]
 
       for (const query of queryOrder) {
+        hrstart = process.hrtime()
         if (Array.isArray(dml[query].binds)) {
           if (dml[query].binds.length === 0) { continue }
           ;[result] = await connection.query(dml[query].sql, [dml[query].binds])
@@ -486,9 +499,12 @@ exports.insertManualBenchmark = async function (b, svcStatus = {}) {
         else {
           ;[result] = await connection.query(dml[query].sql, dml[query].binds)
         }
+        hrend = process.hrtime(hrstart)
+        stats[query] = `${result.affectedRows} in ${hrend[0]}s  ${hrend[1] / 1000000}ms`
       }
 
       // Update current_rev
+      hrstart = process.hrtime()
       let sqlDeleteCurrentRev = 'DELETE from current_rev where benchmarkId = ?'
       let sqlUpdateCurrentRev = `INSERT INTO current_rev (
         revId,
@@ -528,10 +544,14 @@ exports.insertManualBenchmark = async function (b, svcStatus = {}) {
           v_current_rev
         WHERE
           v_current_rev.benchmarkId = ?`
-        ;[result] = await connection.query(sqlDeleteCurrentRev, [dml.stig.binds.benchmarkId])
-        ;[result] = await connection.query(sqlUpdateCurrentRev, [dml.stig.binds.benchmarkId])
+      ;[result] = await connection.query(sqlDeleteCurrentRev, [dml.stig.binds.benchmarkId])
+      ;[result] = await connection.query(sqlUpdateCurrentRev, [dml.stig.binds.benchmarkId])
+      hrend = process.hrtime(hrstart)
+      stats.current_rev = `${hrend[0]}s  ${hrend[1] / 1000000}ms`
+
 
       // update current_group_rule
+      hrstart = process.hrtime()
       let sqlDeleteCurrentGroupRule = 'DELETE FROM current_group_rule WHERE benchmarkId = ?'
       let sqlInsertCurrentGroupRule = `INSERT INTO current_group_rule (groupId, ruleId, benchmarkId)
         SELECT rg.groupId,
@@ -545,18 +565,27 @@ exports.insertManualBenchmark = async function (b, svcStatus = {}) {
           cr.benchmarkId = ?
         order by
           rg.groupId,rgr.ruleId,cr.benchmarkId`
-        ;[result] = await connection.query(sqlDeleteCurrentGroupRule, [dml.stig.binds.benchmarkId])
-        ;[result] = await connection.query(sqlInsertCurrentGroupRule, [dml.stig.binds.benchmarkId])
+      ;[result] = await connection.query(sqlDeleteCurrentGroupRule, [dml.stig.binds.benchmarkId])
+      ;[result] = await connection.query(sqlInsertCurrentGroupRule, [dml.stig.binds.benchmarkId])
+      hrend = process.hrtime(hrstart)
+      stats.current_rev = `${hrend[0]}s  ${hrend[1] / 1000000}ms`
 
       // Stats
+      hrstart = process.hrtime()
       await dbUtils.updateStatsAssetStig(connection, {
         benchmarkId: dml.stig.binds.benchmarkId
       })
+      hrend = process.hrtime(hrstart)
+      stats.statistics = `${hrend[0]}s  ${hrend[1] / 1000000}ms`
 
       await connection.commit()
+      hrend = process.hrtime(totalstart)
+      stats.totalTime = `Completed in ${hrend[0]}s  ${hrend[1] / 1000000}ms`
+
       return {
         benchmarkId: dml.revision.binds.benchmarkId,
-        revisionStr: `V${dml.revision.binds.version}R${dml.revision.binds.release}`
+        revisionStr: `V${dml.revision.binds.version}R${dml.revision.binds.release}`,
+        action
       }
     }
     return await dbUtils.retryOnDeadlock(transaction, svcStatus)
@@ -641,11 +670,45 @@ exports.insertManualBenchmark = async function (b, svcStatus = {}) {
       },
       tempGroupRuleCreate: {
         sql: `CREATE TEMPORARY TABLE temp_group_rule (
-          groupId varchar(45) NOT NULL,
-          ruleId varchar(255) NOT NULL)`
+          groupId varchar(45) ,
+          ruleId varchar(255) ,
+          \`version\` varchar(45) ,
+          \`title\` varchar(1000) ,
+          \`severity\` varchar(45) ,
+          \`weight\` varchar(45) ,
+          \`vulnDiscussion\` text,
+          \`falsePositives\` text,
+          \`falseNegatives\` text,
+          \`documentable\` varchar(45) ,
+          \`mitigations\` text,
+          \`severityOverrideGuidance\` text,
+          \`potentialImpacts\` text,
+          \`thirdPartyTools\` text,
+          \`mitigationControl\` text,
+          \`responsibility\` varchar(255) ,
+          \`iaControls\` varchar(255) 
+          )`
       },
       tempGroupRuleInsert: {
-        sql: `insert into temp_group_rule (groupId, ruleId) VALUES ?`,
+        sql: `insert into temp_group_rule (
+          groupId, 
+          ruleId,
+          \`version\`,
+          title,
+          severity,
+          weight,
+          vulnDiscussion,
+          falsePositives,
+          falseNegatives,
+          documentable,
+          mitigations,
+          severityOverrideGuidance,
+          potentialImpacts,
+          thirdPartyTools,
+          mitigationControl,
+          responsibility,
+          iaControls
+          ) VALUES ?`,
         binds: []
       },
       tempRuleCheckDrop: {
@@ -750,10 +813,25 @@ exports.insertManualBenchmark = async function (b, svcStatus = {}) {
         binds: []
       },
       revGroupRuleMap: {
-        sql: `INSERT INTO rev_group_rule_map (rgId, ruleId)
+        sql: `INSERT INTO rev_group_rule_map (rgId, ruleId, \`version\`, severity, weight, vulnDiscussion, falsePositives, falseNegatives,
+        documentable, mitigations, severityOverrideGuidance, potentialImpacts, thirdPartyTools, mitigationControl, responsibility, iaControls)
           SELECT 
             rg.rgId,
-            tt.ruleId
+            tt.ruleId,
+            tt.\`version\`,
+            tt.severity,
+            tt.weight,
+            tt.vulnDiscussion,
+            tt.falsePositives,
+            tt.falseNegatives,
+            tt.documentable,
+            tt.mitigations,
+            tt.severityOverrideGuidance,
+            tt.potentialImpacts,
+            tt.thirdPartyTools,
+            tt.mitigationControl,
+            tt.responsibility,
+            tt.iaControls
           FROM
             rev_group_map rg
             left join temp_group_rule tt using (groupId)
@@ -817,8 +895,6 @@ exports.insertManualBenchmark = async function (b, svcStatus = {}) {
     groups.forEach(group => {
       let { rules, ...groupBinds } = group
 
-      let ruleMap = []
-      let identsMap = []
       let groupSeverity
       rules.forEach(rule => {
         let { checks, fixes, idents, ...ruleBinds } = rule
@@ -832,7 +908,22 @@ exports.insertManualBenchmark = async function (b, svcStatus = {}) {
         // QUERY: tempGroupRuleInsert
         dml.tempGroupRuleInsert.binds.push([
           groupBinds.groupId,
-          ruleBinds.ruleId
+          ruleBinds.ruleId,
+          ruleBinds.version,
+          ruleBinds.title,
+          ruleBinds.severity,
+          ruleBinds.weight,
+          ruleBinds.vulnDiscussion,
+          ruleBinds.falsePositives,
+          ruleBinds.falseNegatives,
+          ruleBinds.documentable,
+          ruleBinds.mitigations,
+          ruleBinds.severityOverrideGuidance,
+          ruleBinds.potentialImpacts,
+          ruleBinds.thirdPartyTools,
+          ruleBinds.mitigationControl,
+          ruleBinds.responsibility,
+          ruleBinds.iaControls          
         ])
 
         // QUERY: rule
