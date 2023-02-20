@@ -75,7 +75,7 @@ function cteRuleGen({ruleIds, benchmarkIds}) {
     cte = dbUtils.pool.format(sql,[json])
   }
   else if (benchmarkIds?.length) {
-    const sql = `select ruleId from current_group_rule where benchmarkId IN ?`
+    const sql = `select ruleId from v_current_group_rule where benchmarkId IN ?`
     cte = dbUtils.pool.format(sql,[[benchmarkIds]])
   }
   return `cteRule AS (${cte})`
@@ -787,7 +787,7 @@ exports.getReviews = async function (inProjection = [], inPredicates = {}, userO
     'r.assetId',
     'asset.name',
     'r.ruleId',
-    'rule.severity',
+    'rgr.severity',
     'r.resultId',
     'result.api',
     'r.resultEngine',
@@ -810,7 +810,6 @@ exports.getReviews = async function (inProjection = [], inPredicates = {}, userO
     'left join rev_group_map rg on rgr.rgId = rg.rgId',
     'left join revision on rg.revId = revision.revId',
     'left join current_rev on rg.revId = current_rev.revId',
-    'left join rule on r.ruleId = rule.ruleId',
     'left join result on r.resultId = result.resultId',
     'left join status on r.statusId = status.statusId',
     'left join user_data ud on r.userId = ud.userId',
@@ -833,10 +832,10 @@ exports.getReviews = async function (inProjection = [], inPredicates = {}, userO
   }
   if (inProjection.includes('rule')) {
     columns.push(`json_object(
-        'ruleId' , rule.ruleId,
-        'title' , rule.title,
-        'version' , rule.version,
-        'severity' , rule.severity) as "rule"`
+        'ruleId' , rgr.ruleId,
+        'title' , rgr.title,
+        'version' , rgr.version,
+        'severity' , rgr.severity) as "rule"`
     )
   }
   if (inProjection.includes('history')) {
@@ -933,9 +932,9 @@ exports.getReviews = async function (inProjection = [], inPredicates = {}, userO
   if (inPredicates.cci) {
     predicates.statements.push(`r.ruleId IN (
       SELECT
-        ruleId
+        distinct ruleId
       FROM
-        rule_cci_map
+        rev_group_rule_cci_map
       WHERE
         cci = ?
       )` )

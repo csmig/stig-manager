@@ -289,38 +289,10 @@ SM.Library.StigPanel = Ext.extend(Ext.Panel, {
       border: false,
       region: 'center'
     })
-    // const ruleContentPanel = new SM.Library.RuleContentPanel({
-    //   cls: 'sm-round-panel',
-    //   margins: { top: SM.Margin.top, right: SM.Margin.edge, bottom: SM.Margin.bottom, left: SM.Margin.adjacent },
-    //   border: false,
-    //   region: 'east',
-    //   split: true,
-    //   collapsible: true,
-    //   width: 400
-    // })
     this.load = async function () {
       await checklistGrid.loadStig(this.benchmarkId)
       await checklistGrid.loadRevisions(this.benchmarkId)
     }
-    async function onRowSelect(cm, index, record) {
-      try {
-        const contentReq = await Ext.Ajax.requestPromise({
-          url: `${STIGMAN.Env.apiBase}/stigs/rules/${record.data.ruleId}`,
-          method: 'GET',
-          params: {
-            projection: ['detail', 'ccis', 'checks', 'fixes']
-          }
-        })
-        let content = JSON.parse(contentReq.response.responseText)
-        // ruleContentPanel.update(content)
-        // ruleContentPanel.setTitle('Rule for Group ' + record.data.groupId)
-      }
-      catch (e) {
-        console.log(e)
-        alert(e.message)
-      }
-    }
-    checklistGrid.getSelectionModel().on('rowselect', onRowSelect)
     const config = {
       iconCls: 'sm-stig-icon',
       closable: true,
@@ -329,8 +301,7 @@ SM.Library.StigPanel = Ext.extend(Ext.Panel, {
         targetCls: 'sm-border-layout-ct'
       },
       items: [
-        checklistGrid,
-        // ruleContentPanel
+        checklistGrid
       ]
     }
     Ext.apply(this, Ext.apply(this.initialConfig, config))

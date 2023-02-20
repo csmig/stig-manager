@@ -255,7 +255,7 @@ module.exports.updateStatsAssetStig = async function(connection, { collectionId,
   let whereClause = ''
 
   if (rules && rules.length > 0) {
-    predicates.push(`sa.benchmarkId IN (SELECT DISTINCT benchmarkId from current_group_rule where ruleId IN ?)`)
+    predicates.push(`sa.benchmarkId IN (SELECT DISTINCT benchmarkId from v_current_group_rule where ruleId IN ?)`)
     binds.push( [rules] )
   }
 
@@ -305,9 +305,9 @@ module.exports.updateStatsAssetStig = async function(connection, { collectionId,
        sum(CASE WHEN review.statusId = 3 THEN 1 ELSE 0 END) as accepted,
        sum(CASE WHEN review.resultEngine is not null and review.statusId = 3 THEN 1 ELSE 0 END) as acceptedResultEngine,
 
-       sum(CASE WHEN review.resultId=4 and r.severity='high' THEN 1 ELSE 0 END) as highCount,
-       sum(CASE WHEN review.resultId=4 and r.severity='medium' THEN 1 ELSE 0 END) as mediumCount,
-       sum(CASE WHEN review.resultId=4 and r.severity='low' THEN 1 ELSE 0 END) as lowCount,
+       sum(CASE WHEN review.resultId=4 and cgr.severity='high' THEN 1 ELSE 0 END) as highCount,
+       sum(CASE WHEN review.resultId=4 and cgr.severity='medium' THEN 1 ELSE 0 END) as mediumCount,
+       sum(CASE WHEN review.resultId=4 and cgr.severity='low' THEN 1 ELSE 0 END) as lowCount,
        
        sum(CASE WHEN review.resultId = 1 THEN 1 ELSE 0 END) as notchecked,
        sum(CASE WHEN review.resultEngine is not null and review.resultId = 1 THEN 1 ELSE 0 END) as notcheckedResultEngine,
@@ -331,9 +331,8 @@ module.exports.updateStatsAssetStig = async function(connection, { collectionId,
        from
          asset a
          left join stig_asset_map sa using (assetId)
-         left join current_group_rule cgr using (benchmarkId)
-         left join rule r using (ruleId)
-         left join review on (r.ruleId=review.ruleId and review.assetId=sa.assetId)
+         left join v_current_group_rule cgr using (benchmarkId)
+         left join review on (cgr.ruleId=review.ruleId and review.assetId=sa.assetId)
     ${whereClause}
     group by
       sa.assetId,

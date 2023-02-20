@@ -61,8 +61,8 @@ Generalized queries for Groups
 **/
 exports.queryGroups = async function ( inProjection, inPredicates ) {
   let columns = [
-    'g.groupId as "groupId"',
-    'g.title as "title"',
+    'rg.groupId as "groupId"',
+    'rg.title as "title"',
   ]
 
   let joins
@@ -86,22 +86,20 @@ exports.queryGroups = async function ( inProjection, inPredicates ) {
   }
   
   joins.push('inner join rev_group_map rg on r.revId = rg.revId')
-  joins.push('inner join `group` g on rg.groupId = g.groupId')
 
   if (inPredicates.groupId) {
-    predicates.statements.push('g.groupId = ?')
+    predicates.statements.push('rg.groupId = ?')
     predicates.binds.push(inPredicates.groupId)
   }
 
   // PROJECTIONS
   if (inProjection && inProjection.includes('rules')) {
     joins.push('inner join rev_group_rule_map rgr on rg.rgId = rgr.rgId' )
-    joins.push('inner join rule rule on rgr.ruleId = rule.ruleId' )
     columns.push(`json_arrayagg(json_object(
-      'ruleId', rule.ruleId, 
-      'version', rule.version, 
-      'title', rule.title, 
-      'severity', rule.severity)) as "rules"`)
+      'ruleId', rgr.ruleId, 
+      'version', rgr.version, 
+      'title', rgr.title, 
+      'severity', rgr.severity)) as "rules"`)
   }
 
   // CONSTRUCT MAIN QUERY
@@ -115,7 +113,7 @@ exports.queryGroups = async function ( inProjection, inPredicates ) {
   if (inProjection && inProjection.includes('rules')) {
     sql += "\nGROUP BY g.groupId, g.title\n"
   }  
-  sql += ` order by substring(g.groupId from 3) + 0`
+  sql += ` order by substring(rg.groupId from 3) + 0`
 
   try {
     let [rows, fields] = await dbUtils.pool.query(sql, predicates.binds)
@@ -133,21 +131,21 @@ For specific Rule, allow for projections with Check and Fixes
 **/
 exports.queryBenchmarkRules = async function ( benchmarkId, revisionStr, inProjection, inPredicates ) {
   let columns = [
-    'r.ruleId',
-    'r.title',
-    'g.groupId',
-    'g.title as "groupTitle"',
-    'r.version',
-    'r.severity'
+    'rgr.ruleId',
+    'rgr.title',
+    'rg.groupId',
+    'rg.title as "groupTitle"',
+    'rgr.version',
+    'rgr.severity'
   ]
 
   let groupBy = [
-    'r.ruleId',
-    'r.title',
-    'g.groupId',
-    'g.title',
-    'r.version',
-    'r.severity',
+    'rgr.ruleId',
+    'rgr.title',
+    'rg.groupId',
+    'rg.title',
+    'rgr.version',
+    'rgr.severity',
     'rgr.rgrId'
   ]
 
@@ -172,45 +170,43 @@ exports.queryBenchmarkRules = async function ( benchmarkId, revisionStr, inProje
     joins = ['current_rev rev']
   }
   
-  if (inPredicates && inPredicates.ruleId) {
+  if (inPredicates?.ruleId) {
     predicates.statements.push('rgr.ruleId = ?')
     predicates.binds.push(inPredicates.ruleId)
   }
 
-  joins.push('left join rev_group_map rg on rev.revId = rg.revId')
-  joins.push('left join `group` g on rg.groupId = g.groupId')
-  joins.push('left join rev_group_rule_map rgr on rg.rgId = rgr.rgId' )
-  joins.push('left join rule r on rgr.ruleId = r.ruleId' )
+  joins.push('left join rev_group_map rg using (revId)')
+  joins.push('left join rev_group_rule_map rgr using (rgId)' )
 
   // PROJECTIONS
   if ( inProjection && inProjection.includes('detail') ) {
     columns.push(`json_object(
-      'weight', r.weight,
-      'vulnDiscussion', r.vulnDiscussion,
-      'falsePositives', r.falsePositives,
-      'falseNegatives', r.falseNegatives,
-      'documentable', r.documentable,
-      'mitigations', r.mitigations,
-      'severityOverrideGuidance', r.severityOverrideGuidance,
-      'potentialImpacts', r.potentialImpacts,
-      'thirdPartyTools', r.thirdPartyTools,
-      'mitigationControl', r.mitigationControl,
-      'responsibility', r.responsibility
+      'weight', rgr.weight,
+      'vulnDiscussion', rgr.vulnDiscussion,
+      'falsePositives', rgr.falsePositives,
+      'falseNegatives', rgr.falseNegatives,
+      'documentable', rgr.documentable,
+      'mitigations', rgr.mitigations,
+      'severityOverrideGuidance', rgr.severityOverrideGuidance,
+      'potentialImpacts', rgr.potentialImpacts,
+      'thirdPartyTools', rgr.thirdPartyTools,
+      'mitigationControl', rgr.mitigationControl,
+      'responsibility', rgr.responsibility
     ) as detail`)
     groupBy.push(
-      'r.version',
-      'r.weight',
-      'r.vulnDiscussion',
-      'r.falsePositives',
-      'r.falseNegatives',
-      'r.documentable',
-      'r.mitigations',
-      'r.severityOverrideGuidance',
-      'r.potentialImpacts',
-      'r.thirdPartyTools',
-      'r.mitigationControl',
-      'r.responsibility',
-      'r.iacontrols'
+      'rgr.version',
+      'rgr.weight',
+      'rgr.vulnDiscussion',
+      'rgr.falsePositives',
+      'rgr.falseNegatives',
+      'rgr.documentable',
+      'rgr.mitigations',
+      'rgr.severityOverrideGuidance',
+      'rgr.potentialImpacts',
+      'rgr.thirdPartyTools',
+      'rgr.mitigationControl',
+      'rgr.responsibility',
+      'rgr.iacontrols'
     )
   }
 
@@ -218,19 +214,19 @@ exports.queryBenchmarkRules = async function ( benchmarkId, revisionStr, inProje
     columns.push(`(select 
       coalesce
       (
-        (select json_arrayagg (
+        (select json_arrayagg(
           json_object(
-            'cci', rc.cci,
+            'cci', rgrcc.cci,
             'apAcronym', cci.apAcronym,
             'definition',  cci.definition
           )
         ) 
         from
-          rule_cci_map rc 
-          left join cci cci on rc.cci = cci.cci
-          left join cci_reference_map cr on cci.cci = cr.cci
+          rev_group_rule_cci_map rgrcc 
+          left join cci cci using (cci)
+          left join cci_reference_map cr using (cci)
         where 
-          rc.ruleId = r.ruleId
+          rgrcc.rgrId = rgr.rgrId
         ), 
         json_array()
       )
@@ -238,17 +234,19 @@ exports.queryBenchmarkRules = async function ( benchmarkId, revisionStr, inProje
   }
   if ( inProjection && inProjection.includes('checks') ) {
     columns.push(`(select json_arrayagg(json_object(
-      'checkId', rck.checkId,
+      'checkId', rck.system,
+      'system', rck.system,
       'content', cc.content))
       from rev_group_rule_check_map rck 
-      left join check_content cc on rck.ccId = cc.ccId
+      left join check_content cc using (ccId)
       where rck.rgrId = rgr.rgrId) as "checks"`)
   }
   if ( inProjection && inProjection.includes('fixes') ) {
     columns.push(`(select json_arrayagg(json_object(
-      'fixId', rf.fixId,
-      'text', fix.text))
-      from rev_group_rule_fix_map rf left join fix fix on fix.fixId = rf.fixId
+      'fixId', rf.fixref,
+      'fixref', rf.fixref,
+      'text', ft.text))
+      from rev_group_rule_fix_map rf left join fix_text ft using (ftId)
       where rf.rgrId = rgr.rgrId) as "fixes"`)
   }
 
@@ -264,7 +262,7 @@ exports.queryBenchmarkRules = async function ( benchmarkId, revisionStr, inProje
   if (inProjection && inProjection.includes('cci')) {
     sql += "\nGROUP BY " + groupBy.join(", ") + "\n"
   }  
-  sql += ` order by substring(r.ruleId from 4) + 0`
+  sql += ` order by substring(rgr.ruleId from 4) + 0`
 
   try {
     let [rows] = await dbUtils.pool.query(sql, predicates.binds)
@@ -281,28 +279,26 @@ Generalized queries for a single Rule, optionally with Check and Fix
 **/
 exports.queryRules = async function ( ruleId, inProjection ) {
   let columns = [
-    'r.ruleId',
-    'r.version',
-    'r.title',
-    'r.severity',
-    'g.groupId',
-    'g.Title as "groupTitle"'
+    'rgr.ruleId',
+    'rgr.version',
+    'rgr.title',
+    'rgr.severity',
+    'rg.groupId',
+    'rg.Title as "groupTitle"'
   ]
   
   let groupBy = [
-    'r.ruleId',
-    'r.version',
-    'r.title',
-    'r.severity',
-    'g.groupId',
-    'g.Title'
+    'rgr.ruleId',
+    'rgr.version',
+    'rgr.title',
+    'rgr.severity',
+    'rg.groupId',
+    'rg.Title'
   ]
 
   let joins = [
-    'rule r',
-    'left join rev_group_rule_map rgr on r.ruleId = rgr.ruleId',
-    'left join rev_group_map rg on rgr.rgId = rg.rgId',
-    'left join `group` g on rg.groupId = g.groupId'
+    'rev_group_rule_map rgr',
+    'left join rev_group_map rg on rgr.rgId = rg.rgId'
   ]
 
 
@@ -312,37 +308,37 @@ exports.queryRules = async function ( ruleId, inProjection ) {
   }
   
   // PREDICATES
-  predicates.statements.push('r.ruleId = ?')
+  predicates.statements.push('rgr.ruleId = ?')
   predicates.binds.push(ruleId)
   
 
   // PROJECTIONS
   if ( inProjection && inProjection.includes('detail') ) {
     columns.push(`json_object(
-      'weight', r.weight,
-      'vulnDiscussion', r.vulnDiscussion,
-      'falsePositives', r.falsePositives,
-      'falseNegatives', r.falseNegatives,
-      'documentable', r.documentable,
-      'mitigations', r.mitigations,
-      'severityOverrideGuidance', r.severityOverrideGuidance,
-      'potentialImpacts', r.potentialImpacts,
-      'thirdPartyTools', r.thirdPartyTools,
-      'mitigationControl', r.mitigationControl,
-      'responsibility', r.responsibility
+      'weight', rgr.weight,
+      'vulnDiscussion', rgr.vulnDiscussion,
+      'falsePositives', rgr.falsePositives,
+      'falseNegatives', rgr.falseNegatives,
+      'documentable', rgr.documentable,
+      'mitigations', rgr.mitigations,
+      'severityOverrideGuidance', rgr.severityOverrideGuidance,
+      'potentialImpacts', rgr.potentialImpacts,
+      'thirdPartyTools', rgr.thirdPartyTools,
+      'mitigationControl', rgr.mitigationControl,
+      'responsibility', rgr.responsibility
     ) as detail`)
     let detailColumns = [
-      'r.weight',
-      'r.vulnDiscussion',
-      'r.falsePositives',
-      'r.falseNegatives',
-      'r.documentable',
-      'r.mitigations',
-      'r.severityOverrideGuidance',
-      'r.potentialImpacts',
-      'r.thirdPartyTools',
-      'r.mitigationControl',
-      'r.responsibility'
+      'rgr.weight',
+      'rgr.vulnDiscussion',
+      'rgr.falsePositives',
+      'rgr.falseNegatives',
+      'rgr.documentable',
+      'rgr.mitigations',
+      'rgr.severityOverrideGuidance',
+      'rgr.potentialImpacts',
+      'rgr.thirdPartyTools',
+      'rgr.mitigationControl',
+      'rgr.responsibility'
     ]
     groupBy.push(...detailColumns)
   }
@@ -359,11 +355,11 @@ exports.queryRules = async function ( ruleId, inProjection ) {
           )
         ) 
         from
-          rule_cci_map rc 
+          rev_group_rule_cci_map rc 
           left join cci cci on rc.cci = cci.cci
           left join cci_reference_map cr on cci.cci = cr.cci
         where 
-          rc.ruleId = r.ruleId
+          rc.ruleId = rgr.ruleId
         ), 
         json_array()
       )
@@ -372,12 +368,11 @@ exports.queryRules = async function ( ruleId, inProjection ) {
 
   if ( inProjection && inProjection.includes('checks') ) {
     columns.push(`(select json_arrayagg(json_object(
-      'checkId', rck.checkId,
+      'system', rck.system,
       'content', cc.content))
       from rev_group_rule_check_map rck 
         left join check_content cc on rck.ccId = cc.ccId
-        left join rev_group_rule_map rgr on rck.rgrId = rgr.rgrId
-      where rgr.ruleId = r.ruleId) as "checks"`)
+      where rgr.ruleId = rgr.ruleId) as "checks"`)
   }
 
   if ( inProjection && inProjection.includes('fixes') ) {
@@ -422,7 +417,7 @@ exports.insertManualBenchmark = async function (b, clobber, svcStatus = {}) {
     const stats = {}
     let totalstart = process.hrtime() 
 
-    const dml = dmlObjectFromBenchmarkData(b) // defined below
+    const {ddl, dml} = queriesFromBenchmarkData(b) // defined below
 
     connection = await dbUtils.pool.getConnection()
     connection.config.namedPlaceholders = true
@@ -442,13 +437,11 @@ exports.insertManualBenchmark = async function (b, clobber, svcStatus = {}) {
       }
     }
 
-    // create temporary table(s) outside the transaction
-    await connection.query(dml.tempGroupRuleDrop.sql)
-    await connection.query(dml.tempRuleCheckDrop.sql)
-    await connection.query(dml.tempRuleFixDrop.sql)
-    await connection.query(dml.tempGroupRuleCreate.sql)
-    await connection.query(dml.tempRuleCheckCreate.sql)
-    await connection.query(dml.tempRuleFixCreate.sql)
+    // create temporary tables outside the transaction
+    for (const tempTable of Object.keys(ddl)) {
+      await connection.query(ddl[tempTable].drop)
+      await connection.query(ddl[tempTable].create)
+    }
 
     async function transaction() {
       let result, hrstart, hrend, action = 'inserted'
@@ -459,10 +452,8 @@ exports.insertManualBenchmark = async function (b, clobber, svcStatus = {}) {
         hrstart = process.hrtime()
         await connection.query('DELETE FROM revision WHERE revId = ?', [gExistingRevision])
         const cleanupDml = [
-          "DELETE FROM `group` WHERE groupId NOT IN (select groupId from rev_group_map)",
-          "DELETE FROM `rule` WHERE ruleId NOT IN (select ruleId from rev_group_rule_map )",
           "DELETE FROM check_content WHERE ccId NOT IN (select ccId from rev_group_rule_check_map)",
-          "DELETE FROM fix WHERE fixId NOT IN (select fixId from rev_group_rule_fix_map)"
+          "DELETE FROM fix_text WHERE ftId NOT IN (select ftId from rev_group_rule_fix_map)"
         ]
         for (const query of cleanupDml) {
           await connection.query(query)
@@ -476,18 +467,17 @@ exports.insertManualBenchmark = async function (b, clobber, svcStatus = {}) {
       const queryOrder = [
         'stig',
         'revision',
-        'group',
-        'rule',
-        'tempGroupRuleInsert',
-        'tempRuleCheckInsert',
-        'tempRuleFixInsert',
+        'tempGroupRule',
+        'tempRuleCheck',
+        'tempRuleFix',
+        'tempRuleCci',
         'checkContent',
-        'fix',
+        'fixText',
         'revGroupMap',
         'revGroupRuleMap',
         'revGroupRuleCheckMap',
         'revGroupRuleFixMap',
-        'ruleCciMap'
+        'revGroupRuleCciMap'
       ]
 
       for (const query of queryOrder) {
@@ -602,14 +592,58 @@ exports.insertManualBenchmark = async function (b, clobber, svcStatus = {}) {
     }
   }
 
-  function dmlObjectFromBenchmarkData(b) {
-    let dml = {
+  function queriesFromBenchmarkData(b) {
+    const ddl = {
+      tempGroupRule: {
+        drop: 'drop table if exists temp_group_rule',
+        create: `CREATE TEMPORARY TABLE temp_group_rule (
+          groupId varchar(45) ,
+          ruleId varchar(255) ,
+          \`version\` varchar(45) ,
+          \`title\` varchar(1000) ,
+          \`severity\` varchar(45) ,
+          \`weight\` varchar(45) ,
+          \`vulnDiscussion\` text,
+          \`falsePositives\` text,
+          \`falseNegatives\` text,
+          \`documentable\` varchar(45) ,
+          \`mitigations\` text,
+          \`severityOverrideGuidance\` text,
+          \`potentialImpacts\` text,
+          \`thirdPartyTools\` text,
+          \`mitigationControl\` text,
+          \`responsibility\` varchar(255) ,
+          \`iaControls\` varchar(255))`
+      },
+      tempRuleCheck: {
+        drop: 'drop table if exists temp_rule_check',
+        create: `CREATE TEMPORARY TABLE temp_rule_check (
+          ruleId varchar(255) NOT NULL,
+          \`system\` varchar(255),
+          content TEXT,
+          digest BINARY(32) GENERATED ALWAYS AS (UNHEX(SHA2(content, 256))) STORED,
+          INDEX (digest))`
+      },
+      tempRuleFix: {
+        drop: 'drop table if exists temp_rule_fix',
+        create: `CREATE TEMPORARY TABLE temp_rule_fix (
+          ruleId varchar(255) NOT NULL,
+          fixref VARCHAR(45),
+          \`text\` TEXT,
+          digest BINARY(32) GENERATED ALWAYS AS (UNHEX(SHA2(text, 256))) STORED,
+          INDEX (digest))`
+      },
+      tempRuleCci: {
+        drop: 'drop table if exists temp_rule_cci',
+        create: `CREATE TEMPORARY TABLE temp_rule_cci (
+          ruleId varchar(255) NOT NULL,
+          cci varchar(20),
+          INDEX (cci))`
+      }
+    }
+    const dml = {
       stig: {
         sql: "insert into stig (title, benchmarkId) VALUES (:title, :benchmarkId) as new on duplicate key update stig.title = new.title"
-      },
-      revisionDelete: {
-        sql: 'delete from revision where revId = ?',
-        binds: []
       },
       revision: {
         sql: `insert into revision (
@@ -645,51 +679,13 @@ exports.insertManualBenchmark = async function (b, clobber, svcStatus = {}) {
   :mediumCount,
   :highCount)`,
       },
-      group: {
-        sql: `INSERT into \`group\` (
-  groupId, 
-  title, 
-  severity
-  ) VALUES ? as new
-  ON DUPLICATE KEY UPDATE
-    \`group\`.groupId = new.groupId,
-    \`group\`.title = new.title,
-    \`group\`.severity = CASE WHEN \`group\`.severity <> new.severity THEN
-      'mixed' ELSE new.severity END`,
-        binds: []
-      },
-      fix: {
-        sql: "insert into fix (fixId, text) VALUES ? as new on duplicate key update fix.text=new.text",
-        binds: []
-      },
       checkContent: {
         sql: `insert ignore into check_content (content) select content from temp_rule_check`
       },
-      tempGroupRuleDrop: {
-        sql: "drop table if exists temp_group_rule"
+      fixText: {
+        sql: `insert ignore into fix_text (\`text\`) select text from temp_rule_fix`
       },
-      tempGroupRuleCreate: {
-        sql: `CREATE TEMPORARY TABLE temp_group_rule (
-          groupId varchar(45) ,
-          ruleId varchar(255) ,
-          \`version\` varchar(45) ,
-          \`title\` varchar(1000) ,
-          \`severity\` varchar(45) ,
-          \`weight\` varchar(45) ,
-          \`vulnDiscussion\` text,
-          \`falsePositives\` text,
-          \`falseNegatives\` text,
-          \`documentable\` varchar(45) ,
-          \`mitigations\` text,
-          \`severityOverrideGuidance\` text,
-          \`potentialImpacts\` text,
-          \`thirdPartyTools\` text,
-          \`mitigationControl\` text,
-          \`responsibility\` varchar(255) ,
-          \`iaControls\` varchar(255) 
-          )`
-      },
-      tempGroupRuleInsert: {
+      tempGroupRule: {
         sql: `insert into temp_group_rule (
           groupId, 
           ruleId,
@@ -711,97 +707,16 @@ exports.insertManualBenchmark = async function (b, clobber, svcStatus = {}) {
           ) VALUES ?`,
         binds: []
       },
-      tempRuleCheckDrop: {
-        sql: "drop table if exists temp_rule_check"
-      },
-      tempRuleCheckCreate: {
-        sql: `CREATE TEMPORARY TABLE temp_rule_check (
-          ruleId varchar(255) NOT NULL,
-          checkSystem varchar(255),
-          content TEXT,
-          digest BINARY(32) GENERATED ALWAYS AS (UNHEX(SHA2(content, 256))) STORED,
-          INDEX (digest))`
-      },
-      tempRuleCheckInsert: {
-        sql: `insert into temp_rule_check (ruleId, checkSystem, content) VALUES ?`,
+      tempRuleCheck: {
+        sql: `insert into temp_rule_check (ruleId, \`system\`, content) VALUES ?`,
         binds: []
       },
-      tempRuleFixDrop: {
-        sql: "drop table if exists temp_rule_fix"
-      },
-      tempRuleFixCreate: {
-        sql: `CREATE TEMPORARY TABLE temp_rule_fix (
-          ruleId varchar(255) NOT NULL,
-          fixRef VARCHAR(45),
-          fixText TEXT,
-          fixDigest BINARY(32) GENERATED ALWAYS AS (UNHEX(SHA2(fixText, 256))) STORED,
-          INDEX (fixDigest))`
-      },
-      tempRuleFixInsert: {
-        sql: `insert into temp_rule_fix (ruleId, fixRef, fixText) VALUES ?`,
+      tempRuleFix: {
+        sql: `insert into temp_rule_fix (ruleId, fixref, \`text\`) VALUES ?`,
         binds: []
       },
-      rule: {
-        sql: `insert into rule (
-          ruleId,
-          version,
-          title,
-          severity,
-          weight,
-          vulnDiscussion,
-          falsePositives,
-          falseNegatives,
-          documentable,
-          mitigations,
-          severityOverrideGuidance,
-          potentialImpacts,
-          thirdPartyTools,
-          mitigationControl,
-          responsibility,
-          iaControls
-        ) VALUES ? as new
-        on duplicate key update
-          rule.version = new.version,
-          rule.title = new.title,
-          rule.severity = new.severity,
-          rule.weight = new.weight,
-          rule.vulnDiscussion = new.vulnDiscussion,
-          rule.falsePositives = new.falsePositives,
-          rule.falseNegatives = new.falseNegatives,
-          rule.documentable = new.documentable,
-          rule.mitigations = new.mitigations,
-          rule.severityOverrideGuidance = new.severityOverrideGuidance,
-          rule.potentialImpacts = new.potentialImpacts,
-          rule.thirdPartyTools = new.thirdPartyTools,
-          rule.mitigationControl = new.mitigationControl,
-          rule.responsibility = new.responsibility,
-          rule.iaControls = new.iaControls`,
-        binds: []
-      },
-      ruleCcId: {
-        sql: `with cte1 as (
-  select
-    rgr.ruleId,
-    MAX(c.checkId) as checkId
-  from
-    rev_group_map rg
-    left join rev_group_rule_map rgr on rg.rgId = rgr.rgId
-    left join rev_group_rule_check_map rgrc on rgr.rgrId = rgrc.rgrId
-    left join \`check\` c on rgrc.checkId = c.checkId
-  where
-    rg.revId = ?
-  group by
-    rgr.ruleId),
-  cte2 as (
-    select
-      cte1.ruleId,
-      c.ccId
-    from
-      \`check\` c
-      inner join cte1 on c.checkId = cte1.checkId)
-  update rule
-  inner join cte2 on rule.ruleId = cte2.ruleId
-  set rule.ccId = cte2.ccId`,
+      tempRuleCci: {
+        sql: `insert into temp_rule_cci (ruleId, cci) VALUES ?`,
         binds: []
       },
       revGroupMap: {
@@ -809,15 +724,16 @@ exports.insertManualBenchmark = async function (b, clobber, svcStatus = {}) {
           sql: 'delete from rev_group_map where revId = ?',
           binds: []
         },
-        sql: "insert into rev_group_map (revId, groupId) VALUES ?",
+        sql: "insert into rev_group_map (revId, groupId, title, severity) VALUES ?",
         binds: []
       },
       revGroupRuleMap: {
-        sql: `INSERT INTO rev_group_rule_map (rgId, ruleId, \`version\`, severity, weight, vulnDiscussion, falsePositives, falseNegatives,
+        sql: `INSERT INTO rev_group_rule_map (rgId, ruleId, title, \`version\`, severity, weight, vulnDiscussion, falsePositives, falseNegatives,
         documentable, mitigations, severityOverrideGuidance, potentialImpacts, thirdPartyTools, mitigationControl, responsibility, iaControls)
           SELECT 
             rg.rgId,
             tt.ruleId,
+            tt.title,
             tt.\`version\`,
             tt.severity,
             tt.weight,
@@ -837,17 +753,11 @@ exports.insertManualBenchmark = async function (b, clobber, svcStatus = {}) {
             left join temp_group_rule tt using (groupId)
           WHERE rg.revId = :revId`
       },
-      ruleCciMap: {
-        sql: `INSERT IGNORE INTO rule_cci_map
-        (ruleId, cci)
-        VALUES ?`,
-        binds: []
-      },
       revGroupRuleCheckMap: {
-        sql: `INSERT INTO rev_group_rule_check_map (rgrId, checkId, ccId)
+        sql: `INSERT INTO rev_group_rule_check_map (rgrId, \`system\`, ccId)
           SELECT 
             rgr.rgrId,
-            tt.checkSystem,
+            tt.system,
             cc.ccId
           FROM
             rev_group_map rg
@@ -859,14 +769,29 @@ exports.insertManualBenchmark = async function (b, clobber, svcStatus = {}) {
             AND rg.rgId=rgr.rgId`
       },
       revGroupRuleFixMap: {
-        sql: `INSERT INTO rev_group_rule_fix_map (rgrId, fixId)
+        sql: `INSERT INTO rev_group_rule_fix_map (rgrId, fixref, ftId)
           SELECT 
             rgr.rgrId,
-            tt.fixRef
+            tt.fixref,
+            ft.ftId
           FROM
             rev_group_map rg
             left join rev_group_rule_map rgr using (rgId)
             left join temp_rule_fix tt using (ruleId)
+            left join fix_text ft using (digest)
+          WHERE 
+            rg.revId = :revId
+            AND rg.rgId=rgr.rgId`
+      },
+      revGroupRuleCciMap: {
+        sql: `INSERT INTO rev_group_rule_cci_map (rgrId, cci)
+          SELECT 
+            rgr.rgrId,
+            tt.cci
+          FROM
+            rev_group_map rg
+            left join rev_group_rule_map rgr using (rgId)
+            left join temp_rule_cci tt using (ruleId)
           WHERE 
             rg.revId = :revId
             AND rg.rgId=rgr.rgId`
@@ -887,16 +812,12 @@ exports.insertManualBenchmark = async function (b, clobber, svcStatus = {}) {
     revisionBinds.lowCount = revisionBinds.mediumCount = revisionBinds.highCount = 0
     // QUERY: revision
     dml.revision.binds = revisionBinds
-    // QUERY: revisionDelete
-    dml.revisionDelete.binds.push(revisionBinds.revId)
-    // QUERY: ruleCcId
-    dml.ruleCcId.binds.push(revisionBinds.revId)
 
-    groups.forEach(group => {
+    for (const group of groups) {
       let { rules, ...groupBinds } = group
 
       let groupSeverity
-      rules.forEach(rule => {
+      for (const rule of rules) {
         let { checks, fixes, idents, ...ruleBinds } = rule
         // Group severity calculation
         if (!groupSeverity) {
@@ -905,8 +826,8 @@ exports.insertManualBenchmark = async function (b, clobber, svcStatus = {}) {
         else if (groupSeverity !== ruleBinds.severity) {
           groupSeverity = 'mixed'
         }
-        // QUERY: tempGroupRuleInsert
-        dml.tempGroupRuleInsert.binds.push([
+        // QUERY: tempGroupRule
+        dml.tempGroupRule.binds.push([
           groupBinds.groupId,
           ruleBinds.ruleId,
           ruleBinds.version,
@@ -925,92 +846,61 @@ exports.insertManualBenchmark = async function (b, clobber, svcStatus = {}) {
           ruleBinds.responsibility,
           ruleBinds.iaControls          
         ])
-
-        // QUERY: rule
-        dml.rule.binds.push([
-          ruleBinds.ruleId,
-          ruleBinds.version,
-          ruleBinds.title,
-          ruleBinds.severity,
-          ruleBinds.weight,
-          ruleBinds.vulnDiscussion,
-          ruleBinds.falsePositives,
-          ruleBinds.falseNegatives,
-          ruleBinds.documentable,
-          ruleBinds.mitigations,
-          ruleBinds.severityOverrideGuidance,
-          ruleBinds.potentialImpacts,
-          ruleBinds.thirdPartyTools,
-          ruleBinds.mitigationControl,
-          ruleBinds.responsibility,
-          ruleBinds.iaControls
-        ])
-        if (checks) {
-          checks.forEach(check => {
-            // QUERY: tempRuleCheckInsert
-            dml.tempRuleCheckInsert.binds.push([
-              ruleBinds.ruleId,
-              check.checkId,
-              check.content
-            ])
-          })
-        }
-
-        fixes.forEach(fix => {
-          // QUERY: tempRuleFixInsert
-          dml.tempRuleFixInsert.binds.push([
+        for (const check of checks) {
+          // QUERY: tempRuleCheck
+          dml.tempRuleCheck.binds.push([
             ruleBinds.ruleId,
-            fix.fixId,
+            check.system,
+            check.content
+          ])
+        }
+        for (const fix of fixes) {
+          // QUERY: tempRuleFix
+          dml.tempRuleFix.binds.push([
+            ruleBinds.ruleId,
+            fix.fixref,
             fix.text
           ])
-          // QUERY: fix
-          dml.fix.binds.push([
-            fix.fixId,
-            fix.text
-          ])
-        })
-
-        idents.forEach(ident => {
+        }
+        for (const ident of idents) {
           if (ident.system === 'http://iase.disa.mil/cci' || ident.system === 'http://cyber.mil/cci') {
-            dml.ruleCciMap.binds.push([rule.ruleId, ident.ident.replace('CCI-', '')])
+            dml.tempRuleCci.binds.push([
+              rule.ruleId,
+              ident.ident.replace('CCI-', '')])
           }
-        })
+        }
+      }
 
-      }) // end rules.forEach
-
-      // QUERY: group
-      dml.group.binds.push([
+      // QUERY: rev_group_map
+      dml.revGroupMap.binds.push([
+        revisionBinds.revId,
         groupBinds.groupId,
         groupBinds.title,
         groupSeverity
       ])
 
-      // QUERY: rev_group_map
-      dml.revGroupMap.binds.push([
-        revisionBinds.revId,
-        group.groupId
-      ])
-
-      // QUERY: rev_group_rule_map
-      dml.revGroupRuleMap.binds = { revId: revisionBinds.revId }
+      // QUERY: rev_group_rule_map      
       // QUERY: rev_group_rule_check_map
-      dml.revGroupRuleCheckMap.binds = { revId: revisionBinds.revId }
       // QUERY: rev_group_rule_fix_map
-      dml.revGroupRuleFixMap.binds = { revId: revisionBinds.revId }
+      // QUERY: rev_group_rule_cci_map
+      dml.revGroupRuleMap.binds = 
+      dml.revGroupRuleCheckMap.binds =
+      dml.revGroupRuleFixMap.binds =
+      dml.revGroupRuleCciMap.binds = { revId: revisionBinds.revId }
+    }
 
-    }) // end groups.forEach
+    dml.revision.binds.groupCount = dml.revGroupMap.binds.length
+    dml.revision.binds.checkCount = dml.tempRuleCheck.binds.length
+    dml.revision.binds.fixCount = dml.tempRuleFix.binds.length
 
-    dml.revision.binds.groupCount = dml.group.binds.length
-    dml.revision.binds.checkCount = dml.tempRuleCheckInsert.binds.length
-    dml.revision.binds.fixCount = dml.fix.binds.length
-    // add rule severity counts to the revision binds. rule[3] is the index of the severity value
-    dml.rule.binds.reduce((binds, rule) => {
-      const prop = `${rule[3]}Count`
+    // add rule severity counts to the revision binds. groupRule[3] is the location of the severity value
+    dml.tempGroupRule.binds.reduce((binds, groupRule) => {
+      const prop = `${groupRule[4]}Count`
       binds[prop] = (binds[prop] ?? 0) + 1
       return binds
     }, dml.revision.binds)
 
-    return dml
+    return {ddl, dml}
   }
 }
 

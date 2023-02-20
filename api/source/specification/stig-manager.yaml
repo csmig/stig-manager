@@ -3931,6 +3931,9 @@ components:
       properties:
         checkId:
           type: string
+          description: 'DEPRECATED: Use system property'
+        system:
+          type: string
         content:
           type: string
     ChecklistAssetStig:
@@ -4697,6 +4700,9 @@ components:
       additionalProperties: false
       properties:
         fixId:
+          type: string
+          description: 'DEPRECATED: Use fixref property'
+        fixref:
           type: string
         text:
           type: string

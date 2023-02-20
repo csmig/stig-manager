@@ -419,12 +419,12 @@ exports.queryChecklist = async function (inProjection, inPredicates, elevate, us
   try {
     const columns = [
       'CAST(:assetId as char) as "assetId"',
-      'r.ruleId',
-      'r.title as "ruleTitle"',
-      'r.version',
-      'g.groupId',
-      'g.title as "groupTitle"',
-      'r.severity',
+      'rgr.ruleId',
+      'rgr.title as "ruleTitle"',
+      'rgr.version',
+      'rg.groupId',
+      'rg.title as "groupTitle"',
+      'rgr.severity',
       `result.api as "result"`,
       `CASE WHEN review.resultEngine = 0 THEN NULL ELSE review.resultEngine END as resultEngine`,
       `review.autoResult`,
@@ -432,11 +432,9 @@ exports.queryChecklist = async function (inProjection, inPredicates, elevate, us
     ]
     const joins = [
       'current_rev rev',
-      'left join rev_group_map rg on rev.revId = rg.revId',
-      'left join `group` g on rg.groupId=g.groupId',
-      'left join rev_group_rule_map rgr on rg.rgId=rgr.rgId',
-      'left join rule r on rgr.ruleId=r.ruleId',
-      'left join review on r.ruleId = review.ruleId and review.assetId = :assetId',
+      'left join rev_group_map rg using (revId)',
+      'left join rev_group_rule_map rgr using (rgId)',
+      'left join review on rgr.ruleId = review.ruleId and review.assetId = :assetId',
       'left join result on review.resultId=result.resultId',
       'left join status on review.statusId=status.statusId'
     ]
@@ -459,11 +457,12 @@ exports.queryChecklist = async function (inProjection, inPredicates, elevate, us
       predicates.binds.revId = revId
     }
     const groupBy = [
-      'r.ruleId',
-      'r.title',
-      'g.groupId',
-      'g.title',
-      'r.severity',
+      'rgr.ruleId',
+      'rgr.title',
+      'rg.groupId',
+      'rg.title',
+      'rgr.version',
+      'rgr.severity',
       'result.api',
       'review.autoResult',
       'status.api',
@@ -473,7 +472,7 @@ exports.queryChecklist = async function (inProjection, inPredicates, elevate, us
       'review.comment'
     ]
     const orderBy = [
-      'substring(g.groupId from 3) + 0'
+      'substring(rg.groupId from 3) + 0'
     ]
 
     const sql = dbUtils.makeQueryString({columns, joins, predicates, groupBy, orderBy}) 
@@ -591,77 +590,75 @@ exports.cklFromAssetStigs = async function cklFromAssetStigs (assetId, stigs, el
 
     const sqlGetAsset = "select name, fqdn, ip, mac, noncomputing, metadata from asset where assetId = ?"
     const sqlGetChecklist =`SELECT 
-      g.groupId,
-      r.severity,
-      g.title as "groupTitle",
-      r.ruleId,
-      r.title as "ruleTitle",
-      r.weight,
-      r.version,
-      r.vulnDiscussion,
-      r.iaControls,
-      r.falsePositives,
-      r.falseNegatives,
-      r.documentable,
-      r.mitigations,
-      r.potentialImpacts,
-      r.thirdPartyTools,
-      r.mitigationControl,
-      r.responsibility,
-      r.severityOverrideGuidance,
+      rg.groupId,
+      rgr.severity,
+      rg.title as "groupTitle",
+      rgr.ruleId,
+      rgr.title as "ruleTitle",
+      rgr.weight,
+      rgr.version,
+      rgr.vulnDiscussion,
+      rgr.iaControls,
+      rgr.falsePositives,
+      rgr.falseNegatives,
+      rgr.documentable,
+      rgr.mitigations,
+      rgr.potentialImpacts,
+      rgr.thirdPartyTools,
+      rgr.mitigationControl,
+      rgr.responsibility,
+      rgr.severityOverrideGuidance,
       result.ckl as "result",
       LEFT(review.detail,32767) as "detail",
       LEFT(review.comment,32767) as "comment",
-      MAX(cc.content) as "checkContent",
-      MAX(fix.text) as "fixText",
-      group_concat(rcc.cci ORDER BY rcc.cci) as "ccis"
+      group_concat(cc.content separator "*** AND ***") as "checkContent",
+      group_concat(ft.text separator "*** AND ***") as "fixText",
+      group_concat(rgrcc.cci ORDER BY rgrcc.cci) as "ccis"
     FROM
       revision rev 
       left join rev_group_map rg on rev.revId = rg.revId 
-      left join \`group\` g on rg.groupId = g.groupId 
 
       left join rev_group_rule_map rgr on rg.rgId = rgr.rgId 
-      left join rule r on rgr.ruleId = r.ruleId 
-      left join severity_cat_map sc on r.severity = sc.severity 
+      left join severity_cat_map sc on rgr.severity = sc.severity 
       
-      left join rule_cci_map rcc on rgr.ruleId = rcc.ruleId 
+      left join rev_group_rule_cci_map rgrcc on rgr.rgId = rgrcc.rgId
 
       left join rev_group_rule_check_map rgrc on rgr.rgrId = rgrc.rgrId
       left join check_content cc on rgrc.ccId = cc.ccId
 
       left join rev_group_rule_fix_map rgrf on rgr.rgrId = rgrf.rgrId
-      left join fix on rgrf.fixId = fix.fixId
+      left join fix_text ft on rgrf.ftId = ft.ftId
 
-      left join review on r.ruleId = review.ruleId and review.assetId = ?
+      left join review on rgr.ruleId = review.ruleId and review.assetId = ?
       left join result on review.resultId = result.resultId 
       left join status on review.statusId = status.statusId 
 
     WHERE
       rev.revId = ?
     GROUP BY
-      g.groupId,
-      r.severity,
-      g.title,
-      r.ruleId,
-      r.title,
-      r.weight,
-      r.version,
-      r.vulnDiscussion,
-      r.iaControls,
-      r.falsePositives,
-      r.falseNegatives,
-      r.documentable,
-      r.mitigations,
-      r.potentialImpacts,
-      r.thirdPartyTools,
-      r.mitigationControl,
-      r.responsibility,
-      r.severityOverrideGuidance,
+      rg.groupId,
+      rgr.severity,
+      rg.title,
+      rgr.ruleId,
+      rgr.title,
+      rgr.weight,
+      rgr.version,
+      rgr.vulnDiscussion,
+      rgr.iaControls,
+      rgr.falsePositives,
+      rgr.falseNegatives,
+      rgr.documentable,
+      rgr.mitigations,
+      rgr.potentialImpacts,
+      rgr.thirdPartyTools,
+      rgr.mitigationControl,
+      rgr.responsibility,
+      rgr.severityOverrideGuidance,
       result.ckl,
       review.detail,
       review.comment
     order by
-      substring(g.groupId from 3) + 0 asc
+      substring(rg.groupId from 3) + 0 asc
     `
     connection = await dbUtils.pool.getConnection()
 
@@ -832,11 +829,11 @@ exports.xccdfFromAssetStig = async function (assetId, benchmarkId, revisionStr =
   const sqlGetChecklist =`SELECT 
     g.groupId,
     g.title as "groupTitle",
-    r.ruleId,
-    r.title as "ruleTitle",
-    r.severity,
-    r.weight,
-    r.version,
+    rgr.ruleId,
+    rgr.title as "ruleTitle",
+    rgr.severity,
+    rgr.weight,
+    rgr.version,
     c.checkId,
     cc.content as "checkContent",
     result.api as "result",
@@ -849,10 +846,9 @@ exports.xccdfFromAssetStig = async function (assetId, benchmarkId, revisionStr =
     left join rev_group_map rg on rev.revId = rg.revId
     left join \`group\` g on rg.groupId = g.groupId 
     left join rev_group_rule_map rgr on rg.rgId = rgr.rgId 
-    left join rule r on rgr.ruleId = r.ruleId 
     left join rev_group_rule_check_map rgrc on rgr.rgrId = rgrc.rgrId
     left join check_content cc on rgrc.ccId = cc.ccId
-    left join review on r.ruleId = review.ruleId and review.assetId = ?
+    left join review on rgr.ruleId = review.ruleId and review.assetId = ?
     left join result on review.resultId = result.resultId 
     left join status on review.statusId = status.statusId 
   WHERE
