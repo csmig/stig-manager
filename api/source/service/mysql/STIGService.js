@@ -904,11 +904,9 @@ exports.deleteRevisionByString = async function(benchmarkId, revisionStr, svcSta
 
   let dmls = [
     "DELETE FROM revision WHERE benchmarkId = :benchmarkId and `version` = :version and `release` = :release",
-    "DELETE FROM `rule` WHERE ruleId NOT IN (select ruleId from rev_group_rule_map )",
-    "DELETE FROM check_content WHERE ccId NOT IN (select distinct ccId from rev_group_rule_check_map)",
-    "DELETE FROM fix WHERE fixId NOT IN (select fixId from rev_group_rule_fix_map)",
-    "DELETE FROM `group` WHERE groupId NOT IN (select groupId from rev_group_map)"
-  ]
+    "DELETE FROM check_content WHERE ccId NOT IN (select ccId from rev_group_rule_check_map)",
+    "DELETE FROM fix_text WHERE ftId NOT IN (select ftId from rev_group_rule_fix_map)"
+]
   let currentRevDmls = [
     "DELETE from current_rev where benchmarkId = :benchmarkId",
     `INSERT INTO current_rev (
@@ -949,19 +947,19 @@ exports.deleteRevisionByString = async function(benchmarkId, revisionStr, svcSta
         v_current_rev
       WHERE
         v_current_rev.benchmarkId = :benchmarkId`,
-    "DELETE FROM current_group_rule WHERE benchmarkId = :benchmarkId",
-    `INSERT INTO current_group_rule (groupId, ruleId, benchmarkId)
-    SELECT rg.groupId,
-      rgr.ruleId,
-      cr.benchmarkId
-    from
-      current_rev cr
-      left join rev_group_map rg on rg.revId=cr.revId
-      left join rev_group_rule_map rgr on rgr.rgId=rg.rgId
-    where
-      cr.benchmarkId = :benchmarkId
-    order by
-      rg.groupId,rgr.ruleId,cr.benchmarkId`,     
+    // "DELETE FROM current_group_rule WHERE benchmarkId = :benchmarkId",
+    // `INSERT INTO current_group_rule (groupId, ruleId, benchmarkId)
+    // SELECT rg.groupId,
+    //   rgr.ruleId,
+    //   cr.benchmarkId
+    // from
+    //   current_rev cr
+    //   left join rev_group_map rg on rg.revId=cr.revId
+    //   left join rev_group_rule_map rgr on rgr.rgId=rg.rgId
+    // where
+    //   cr.benchmarkId = :benchmarkId
+    // order by
+    //   rg.groupId,rgr.ruleId,cr.benchmarkId`,     
     "DELETE FROM stig WHERE benchmarkId NOT IN (select benchmarkId FROM current_rev)"
   ]
 
@@ -1026,14 +1024,10 @@ exports.deleteRevisionByString = async function(benchmarkId, revisionStr, svcSta
 exports.deleteStigById = async function(benchmarkId, userObject, svcStatus = {}) {
 
   let dmls = [
-    "DELETE FROM revision WHERE benchmarkId = :benchmarkId",
-    "DELETE from current_rev where benchmarkId = :benchmarkId",
-    "DELETE FROM current_group_rule WHERE benchmarkId = :benchmarkId",
     "DELETE from stig where benchmarkId = :benchmarkId",
-    "DELETE FROM `rule` WHERE ruleId NOT IN (select ruleId from rev_group_rule_map )",
+    "DELETE from current_rev where benchmarkId = :benchmarkId",
     "DELETE FROM check_content WHERE ccId NOT IN (select ccId from rev_group_rule_check_map)",
-    "DELETE FROM fix WHERE fixId NOT IN (select fixId from rev_group_rule_fix_map)",
-    "DELETE FROM `group` WHERE groupId NOT IN (select groupId from rev_group_map)"
+    "DELETE FROM fix_text WHERE ftId NOT IN (select ftId from rev_group_rule_fix_map)"
   ]
 
   let connection;
@@ -1143,10 +1137,10 @@ exports.getCci = async function(cci, inProjection, userObject) {
               'revisionStr', concat('V', rv.version, 'R', rv.release)
           ) as stig
           from cci ci
-            left join rule_cci_map as rcm on rcm.cci = ci.cci
-            left join rev_group_rule_map as rgrm on rgrm.ruleId = rcm.ruleId
-            left join rev_group_map as rgm on rgm.rgId = rgrm.rgId
-            left join revision as rv on rv.revId = rgm.revId
+            left join rev_group_rule_cci_map rgrcc using (cci)
+            left join rev_group_rule_map rgr using (rgrId)
+            left join rev_group_map rg using (rgId)
+            left join revision rv using (revId)
           where ci.cci = c.cci and benchmarkId is not null
           ) as agg), 
         json_array()
