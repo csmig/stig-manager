@@ -787,7 +787,6 @@ exports.getReviews = async function (inProjection = [], inPredicates = {}, userO
     'r.assetId',
     'asset.name',
     'r.ruleId',
-    'rgr.severity',
     'r.resultId',
     'result.api',
     'r.resultEngine',
@@ -837,6 +836,7 @@ exports.getReviews = async function (inProjection = [], inPredicates = {}, userO
         'version' , rgr.version,
         'severity' , rgr.severity) as "rule"`
     )
+    groupBy.push('rgr.severity','rgr.title','rgr.version','rgr.ruleId')
   }
   if (inProjection.includes('history')) {
     // OVER clauses and subquery needed to order the json_arrayagg
@@ -932,11 +932,12 @@ exports.getReviews = async function (inProjection = [], inPredicates = {}, userO
   if (inPredicates.cci) {
     predicates.statements.push(`r.ruleId IN (
       SELECT
-        distinct ruleId
+        distinct rgr.ruleId
       FROM
-        rev_group_rule_cci_map
+        rev_group_rule_cci_map rgrcc
+        left join rev_group_rule_map rgr using (rgrId)
       WHERE
-        cci = ?
+        rgrcc.cci = ?
       )` )
       predicates.binds.push(inPredicates.cci)
   }

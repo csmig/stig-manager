@@ -111,7 +111,7 @@ exports.queryGroups = async function ( inProjection, inPredicates ) {
     sql += "\nWHERE " + predicates.statements.join(" and ")
   }
   if (inProjection && inProjection.includes('rules')) {
-    sql += "\nGROUP BY g.groupId, g.title\n"
+    sql += "\nGROUP BY rg.groupId, rg.title\n"
   }  
   sql += ` order by substring(rg.groupId from 3) + 0`
 
@@ -288,12 +288,8 @@ exports.queryRules = async function ( ruleId, inProjection ) {
   ]
   
   let groupBy = [
-    'rgr.ruleId',
-    'rgr.version',
-    'rgr.title',
-    'rgr.severity',
-    'rg.groupId',
-    'rg.Title'
+    'rgr.rgrId',
+    'rg.rgId'
   ]
 
   let joins = [
@@ -327,63 +323,55 @@ exports.queryRules = async function ( ruleId, inProjection ) {
       'mitigationControl', rgr.mitigationControl,
       'responsibility', rgr.responsibility
     ) as detail`)
-    let detailColumns = [
-      'rgr.weight',
-      'rgr.vulnDiscussion',
-      'rgr.falsePositives',
-      'rgr.falseNegatives',
-      'rgr.documentable',
-      'rgr.mitigations',
-      'rgr.severityOverrideGuidance',
-      'rgr.potentialImpacts',
-      'rgr.thirdPartyTools',
-      'rgr.mitigationControl',
-      'rgr.responsibility'
-    ]
-    groupBy.push(...detailColumns)
+    // let detailColumns = [
+    //   'rgr.weight',
+    //   'rgr.vulnDiscussion',
+    //   'rgr.falsePositives',
+    //   'rgr.falseNegatives',
+    //   'rgr.documentable',
+    //   'rgr.mitigations',
+    //   'rgr.severityOverrideGuidance',
+    //   'rgr.potentialImpacts',
+    //   'rgr.thirdPartyTools',
+    //   'rgr.mitigationControl',
+    //   'rgr.responsibility'
+    // ]
+    // groupBy.push(...detailColumns)
   }
 
   if ( inProjection && inProjection.includes('ccis') ) {
-    columns.push(`(select 
-      coalesce
-      (
-        (select json_arrayagg (
-          json_object(
-            'cci', rc.cci,
-            'apAcronym', cci.apAcronym,
-            'definition',  cci.definition
-          )
-        ) 
-        from
-          rev_group_rule_cci_map rc 
-          left join cci cci on rc.cci = cci.cci
-          left join cci_reference_map cr on cci.cci = cr.cci
-        where 
-          rc.ruleId = rgr.ruleId
-        ), 
-        json_array()
-      )
-    ) as "ccis"`)
+    columns.push(`CASE WHEN count(rgrcc.cci) = 0 
+    THEN json_array()
+    ELSE CAST(CONCAT('[', GROUP_CONCAT(distinct json_object('cci', rgrcc.cci,'apAcronym',cci.apAcronym,'definition',cci.definition)), ']') as json) 
+    END as ccis`)
+    joins.push(
+      'left join rev_group_rule_cci_map rgrcc using (rgrId)',
+      'left join cci using (cci)'
+    )
   }
 
   if ( inProjection && inProjection.includes('checks') ) {
-    columns.push(`(select json_arrayagg(json_object(
-      'system', rck.system,
-      'content', cc.content))
-      from rev_group_rule_check_map rck 
-        left join check_content cc on rck.ccId = cc.ccId
-      where rgr.ruleId = rgr.ruleId) as "checks"`)
+    columns.push(`CASE WHEN count(rgrc.system) = 0 
+    THEN json_array()
+    ELSE CAST(CONCAT('[', GROUP_CONCAT(distinct json_object('system', rgrc.system,'content', cc.content)), ']') as json) 
+    END as checks`)
+  joins.push(
+    'left join rev_group_rule_check_map rgrc using (rgrId)',
+    'left join check_content cc using (ccId)'
+  )
+
   }
 
   if ( inProjection && inProjection.includes('fixes') ) {
-    columns.push(`(select json_arrayagg(json_object(
-      'fixId', rf.fixId,
-      'text', fix.text))
-      from rev_group_rule_fix_map rf 
-        left join fix fix on fix.fixId = rf.fixId
-        left join rev_group_rule_map rgr on rf.rgrId = rgr.rgrId
-      where rgr.ruleId = r.ruleId) as "fixes"`)
+    columns.push(`CASE WHEN count(rgrf.fixref) = 0 
+    THEN json_array()
+    ELSE CAST(CONCAT('[', GROUP_CONCAT(distinct json_object('fixref', rgrf.fixref,'text', ft.text)), ']') as json) 
+    END as fixes`)
   }  
+  joins.push(
+    'left join rev_group_rule_fix_map rgrf using (rgrId)',
+    'left join fix_text ft using (ftId)'
+  )
 
 
   // CONSTRUCT MAIN QUERY
@@ -398,7 +386,7 @@ exports.queryRules = async function ( ruleId, inProjection ) {
 
   sql += "\nGROUP BY " + groupBy.join(", ") + "\n"
 
-  sql += ` ORDER BY substring(r.ruleId from 4) + 0`
+  sql += ` ORDER BY substring(rgr.ruleId from 4) + 0`
 
   try {
     let [rows, fields] = await dbUtils.pool.query(sql, predicates.binds)
@@ -593,10 +581,11 @@ exports.insertManualBenchmark = async function (b, clobber, svcStatus = {}) {
   }
 
   function queriesFromBenchmarkData(b) {
+    const tempFlag = true
     const ddl = {
       tempGroupRule: {
         drop: 'drop table if exists temp_group_rule',
-        create: `CREATE TEMPORARY TABLE temp_group_rule (
+        create: `CREATE${tempFlag ? ' TEMPORARY' : ''} TABLE temp_group_rule (
           groupId varchar(45) ,
           ruleId varchar(255) ,
           \`version\` varchar(45) ,
@@ -617,7 +606,7 @@ exports.insertManualBenchmark = async function (b, clobber, svcStatus = {}) {
       },
       tempRuleCheck: {
         drop: 'drop table if exists temp_rule_check',
-        create: `CREATE TEMPORARY TABLE temp_rule_check (
+        create: `CREATE${tempFlag ? ' TEMPORARY' : ''} TABLE temp_rule_check (
           ruleId varchar(255) NOT NULL,
           \`system\` varchar(255),
           content TEXT,
@@ -626,7 +615,7 @@ exports.insertManualBenchmark = async function (b, clobber, svcStatus = {}) {
       },
       tempRuleFix: {
         drop: 'drop table if exists temp_rule_fix',
-        create: `CREATE TEMPORARY TABLE temp_rule_fix (
+        create: `CREATE${tempFlag ? ' TEMPORARY' : ''} TABLE temp_rule_fix (
           ruleId varchar(255) NOT NULL,
           fixref VARCHAR(45),
           \`text\` TEXT,
@@ -635,7 +624,7 @@ exports.insertManualBenchmark = async function (b, clobber, svcStatus = {}) {
       },
       tempRuleCci: {
         drop: 'drop table if exists temp_rule_cci',
-        create: `CREATE TEMPORARY TABLE temp_rule_cci (
+        create: `CREATE${tempFlag ? ' TEMPORARY' : ''} TABLE temp_rule_cci (
           ruleId varchar(255) NOT NULL,
           cci varchar(20),
           INDEX (cci))`
@@ -762,8 +751,8 @@ exports.insertManualBenchmark = async function (b, clobber, svcStatus = {}) {
           FROM
             rev_group_map rg
             left join rev_group_rule_map rgr using (rgId)
-            left join temp_rule_check tt using (ruleId)
-            left join check_content cc using (digest)
+            inner join temp_rule_check tt using (ruleId)
+            inner join check_content cc using (digest)
           WHERE 
             rg.revId = :revId
             AND rg.rgId=rgr.rgId`
@@ -777,8 +766,8 @@ exports.insertManualBenchmark = async function (b, clobber, svcStatus = {}) {
           FROM
             rev_group_map rg
             left join rev_group_rule_map rgr using (rgId)
-            left join temp_rule_fix tt using (ruleId)
-            left join fix_text ft using (digest)
+            inner join temp_rule_fix tt using (ruleId)
+            inner join fix_text ft using (digest)
           WHERE 
             rg.revId = :revId
             AND rg.rgId=rgr.rgId`
@@ -791,7 +780,7 @@ exports.insertManualBenchmark = async function (b, clobber, svcStatus = {}) {
           FROM
             rev_group_map rg
             left join rev_group_rule_map rgr using (rgId)
-            left join temp_rule_cci tt using (ruleId)
+            inner join temp_rule_cci tt using (ruleId)
           WHERE 
             rg.revId = :revId
             AND rg.rgId=rgr.rgId`
@@ -1237,11 +1226,11 @@ exports.getCcisByRevision = async function(benchmarkId, revisionStr, userObject)
     joins = ['current_rev r']
   }
   
-  joins.push('LEFT JOIN rev_group_map rgm on r.revId = rgm.revId')
-  joins.push('LEFT JOIN rev_group_rule_map AS rgrm ON rgrm.rgId = rgm.rgId')
-  joins.push('LEFT JOIN rule_cci_map AS rcm ON rgrm.ruleId = rcm.ruleId')
-  joins.push('LEFT JOIN cci AS c ON rcm.cci = c.cci')
-  joins.push('LEFT JOIN cci_reference_map AS crm ON crm.cci = c.cci')
+  joins.push('LEFT JOIN rev_group_map rg using (revId)')
+  joins.push('LEFT JOIN rev_group_rule_map rgr using (rgId)')
+  joins.push('LEFT JOIN rev_group_rule_cci_map rgrcc using (rgrId)')
+  joins.push('LEFT JOIN cci c using (cci)')
+  // joins.push('LEFT JOIN cci_reference_map crm using (cci)')
 
 
   // CONSTRUCT MAIN QUERY

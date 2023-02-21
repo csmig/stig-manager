@@ -621,7 +621,7 @@ exports.cklFromAssetStigs = async function cklFromAssetStigs (assetId, stigs, el
       left join rev_group_rule_map rgr on rg.rgId = rgr.rgId 
       left join severity_cat_map sc on rgr.severity = sc.severity 
       
-      left join rev_group_rule_cci_map rgrcc on rgr.rgId = rgrcc.rgId
+      left join rev_group_rule_cci_map rgrcc on rgr.rgrId = rgrcc.rgrId
 
       left join rev_group_rule_check_map rgrc on rgr.rgrId = rgrc.rgrId
       left join check_content cc on rgrc.ccId = cc.ccId
