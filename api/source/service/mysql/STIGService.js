@@ -602,7 +602,8 @@ exports.insertManualBenchmark = async function (b, clobber, svcStatus = {}) {
           \`thirdPartyTools\` text,
           \`mitigationControl\` text,
           \`responsibility\` varchar(255) ,
-          \`iaControls\` varchar(255))`
+          \`iaControls\` varchar(255),
+          UNIQUE KEY (ruleId))`
       },
       tempRuleCheck: {
         drop: 'drop table if exists temp_rule_check',
@@ -611,6 +612,7 @@ exports.insertManualBenchmark = async function (b, clobber, svcStatus = {}) {
           \`system\` varchar(255),
           content TEXT,
           digest BINARY(32) GENERATED ALWAYS AS (UNHEX(SHA2(content, 256))) STORED,
+          UNIQUE KEY (\`system\`),
           INDEX (digest))`
       },
       tempRuleFix: {
@@ -620,6 +622,7 @@ exports.insertManualBenchmark = async function (b, clobber, svcStatus = {}) {
           fixref VARCHAR(45),
           \`text\` TEXT,
           digest BINARY(32) GENERATED ALWAYS AS (UNHEX(SHA2(text, 256))) STORED,
+          UNIQUE KEY (fixref),
           INDEX (digest))`
       },
       tempRuleCci: {
@@ -627,7 +630,7 @@ exports.insertManualBenchmark = async function (b, clobber, svcStatus = {}) {
         create: `CREATE${tempFlag ? ' TEMPORARY' : ''} TABLE temp_rule_cci (
           ruleId varchar(255) NOT NULL,
           cci varchar(20),
-          INDEX (cci))`
+          UNIQUE KEY (cci))`
       }
     }
     const dml = {
@@ -675,7 +678,7 @@ exports.insertManualBenchmark = async function (b, clobber, svcStatus = {}) {
         sql: `insert ignore into fix_text (\`text\`) select text from temp_rule_fix`
       },
       tempGroupRule: {
-        sql: `insert into temp_group_rule (
+        sql: `insert ignore into temp_group_rule (
           groupId, 
           ruleId,
           \`version\`,
@@ -697,15 +700,15 @@ exports.insertManualBenchmark = async function (b, clobber, svcStatus = {}) {
         binds: []
       },
       tempRuleCheck: {
-        sql: `insert into temp_rule_check (ruleId, \`system\`, content) VALUES ?`,
+        sql: `insert ignore into temp_rule_check (ruleId, \`system\`, content) VALUES ?`,
         binds: []
       },
       tempRuleFix: {
-        sql: `insert into temp_rule_fix (ruleId, fixref, \`text\`) VALUES ?`,
+        sql: `insert ignore into temp_rule_fix (ruleId, fixref, \`text\`) VALUES ?`,
         binds: []
       },
       tempRuleCci: {
-        sql: `insert into temp_rule_cci (ruleId, cci) VALUES ?`,
+        sql: `insert ignore into temp_rule_cci (ruleId, cci) VALUES ?`,
         binds: []
       },
       revGroupMap: {
