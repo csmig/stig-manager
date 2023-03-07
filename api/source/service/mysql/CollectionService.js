@@ -232,17 +232,17 @@ exports.queryFindings = async function (aggregator, inProjection = [], inPredica
       break
     case 'groupId':
       columns = [
-        'rg.groupId',
-        'rg.title',
-        'rg.severity',
+        'rgr.groupId',
+        'rgr.groupTitle as title',
+        'rgr.severity',
         'count(distinct a.assetId) as assetCount'
       ]
       groupBy = [
-        'rg.groupId',
-        'rg.title',
-        'rg.severity'
+        'rgr.groupId',
+        'rgr.title',
+        'rgr.severity'
       ]
-      orderBy = 'substring(rg.groupId from 3) + 0'
+      orderBy = 'substring(rgr.groupId from 3) + 0'
       break
     case 'cci':
       columns = [
@@ -266,13 +266,9 @@ exports.queryFindings = async function (aggregator, inProjection = [], inPredica
     'inner join stig_asset_map sa on a.assetId = sa.assetId',
     'left join user_stig_asset_map usa on sa.saId = usa.saId',
     'inner join current_rev cr on sa.benchmarkId = cr.benchmarkId',
-    'inner join rev_group_map rg using (revId)',
-    'inner join rev_group_rule_map rgr using (rgId)',
+    'inner join rev_group_rule_map rgr using (revId)',
     'inner join rev_group_rule_cci_map rgrcc using (rgrId)',
     'inner join review rv on (rgr.ruleId = rv.ruleId and a.assetId = rv.assetId and rv.resultId = 4)',
-    // 'inner join `group` g on cgr.groupId = g.groupId',
-    // 'inner join rule ru on rv.ruleId = ru.ruleId',
-    // 'left join rule_cci_map rulecci on ru.ruleId = rulecci.ruleId',
     'left join cci on rgrcc.cci = cci.cci'
   ]
 
@@ -303,9 +299,9 @@ exports.queryFindings = async function (aggregator, inProjection = [], inPredica
   }
   if (inProjection.includes('groups')) {
     columns.push(`cast(concat('[', group_concat(distinct json_object (
-      'groupId', rg.groupId,
-      'title', rg.title,
-      'severity', rg.severity) order by rg.groupId), ']') as json) as "groups"`)
+      'groupId', rgr.groupId,
+      'title', rgr.groupTitle,
+      'severity', rgr.groupSeverity) order by rgr.groupId), ']') as json) as "groups"`)
   }
   if (inProjection.includes('assets')) {
     columns.push(`cast(concat('[', group_concat(distinct json_object (
@@ -717,8 +713,7 @@ exports.getChecklistByCollectionStig = async function (collectionId, benchmarkId
       'asset a',
       'left join stig_asset_map sa using (assetId)',
       'left join current_rev rev using (benchmarkId)',
-      'left join rev_group_map rg using (revId)',
-      'left join rev_group_rule_map rgr using (rgId)',
+      'left join rev_group_rule_map rgr using (revId)',
       'left join review r on (rgr.ruleId=r.ruleId and sa.assetId=r.assetId)'
     ]
 
@@ -786,8 +781,8 @@ exports.getChecklistByCollectionStig = async function (collectionId, benchmarkId
           ,rgr.title as ruleTitle
           ,rgr.severity
           ,rgr.version
-          ,rg.groupId
-          ,rg.title as groupTitle
+          ,rgr.groupId
+          ,rgr.groupTitle
           ,r.resultId
           ,r.statusId
         from
@@ -796,12 +791,7 @@ exports.getChecklistByCollectionStig = async function (collectionId, benchmarkId
           ${predicates.statements.join(' and ')}
         group by
           a.assetId
-          ,rgr.ruleId
-          ,rgr.title
-          ,rgr.severity
-          ,rgr.version
-          ,rg.groupId
-          ,rg.title
+          ,rgr.rgrId
           ,r.resultId
           ,r.statusId          
         ) innerR
@@ -1545,9 +1535,9 @@ async function queryUnreviewedByCollection ({
         `json_arrayagg(json_object(
           'result', result.api,
           'ruleId', rgr.ruleId,
-          'groupId', rg.groupId,
+          'groupId', rgr.groupId,
           ${projections.includes('ruleTitle') ? "'ruleTitle', rgr.title," : ''}
-          ${projections.includes('groupTitle') ? "'groupTitle', `group`.title," : ''}
+          ${projections.includes('groupTitle') ? "'groupTitle', rgr.title," : ''}
           'severity', rgr.severity,
           'benchmarkId', cr.benchmarkId
         )) as unreviewed`       
@@ -1561,10 +1551,10 @@ async function queryUnreviewedByCollection ({
       ]
       break
     case 'rule':
-      const projectionMap = projections.map( p => `${p === 'groupTitle' ? '`group`' : 'rgr'}.title`)
+      const projectionMap = projections.map( p => `${p === 'groupTitle' ? 'rgr.groupTitle' : 'rgr.title'}`)
       columns = [
         'rgr.ruleId',
-        'rg.groupId',
+        'rgr.groupId',
         'cr.benchmarkId',
         'rgr.severity',
         ...projectionMap,
@@ -1588,7 +1578,7 @@ async function queryUnreviewedByCollection ({
       ]
       groupBy = [
         'rgr.ruleId',
-        'rg.groupId',
+        'rgr.groupId',
         'cr.benchmarkId',
         'rgr.severity',
         ...projectionMap
@@ -1605,9 +1595,7 @@ async function queryUnreviewedByCollection ({
     'left join stig_asset_map sa on a.assetId = sa.assetId',
     'left join user_stig_asset_map usa on sa.saId = usa.saId',
     'left join current_rev cr on sa.benchmarkId = cr.benchmarkId',
-    'left join rev_group_map rg on cr.revId = rg.revId',
-    'left join `group` on rg.groupId = `group`.groupId',
-	  'left join rev_group_rule_map rgr on rg.rgId = rgr.rgId',
+	  'left join rev_group_rule_map rgr on cr.revId = rgr.revId',
 	  'left join review r on (a.assetId = r.assetId and rgr.ruleId = r.ruleId)',
     'left join result on r.resultId = result.resultId'
   ]

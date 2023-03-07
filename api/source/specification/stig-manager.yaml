@@ -2922,7 +2922,7 @@ paths:
     get:
       tags:
         - STIG
-      summary: Return the defintion and associated checks and fixes for the specified Rule
+      summary: Return the defintion and associated check and fix for the specified Rule
       operationId: getRuleByRuleId
       parameters:
         - $ref: '#/components/parameters/RuleProjectionQuery'
@@ -3929,9 +3929,6 @@ components:
       type: object
       additionalProperties: false
       properties:
-        checkId:
-          type: string
-          description: 'DEPRECATED: Use system property'
         system:
           type: string
         content:
@@ -4699,9 +4696,6 @@ components:
       type: object
       additionalProperties: false
       properties:
-        fixId:
-          type: string
-          description: 'DEPRECATED: Use fixref property'
         fixref:
           type: string
         text:
@@ -5961,14 +5955,10 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/CciBasic'
-        checks:
-          type: array
-          items:
-            $ref: '#/components/schemas/Check'
-        fixes:
-          type: array
-          items:
-            $ref: '#/components/schemas/Fix'
+        check:
+          $ref: '#/components/schemas/Check'
+        fix:
+          $ref: '#/components/schemas/Fix'
     RuleSeverity:
       type: string
       enum:
@@ -6429,7 +6419,7 @@ components:
     ChecklistProjectionQuery:
       name: projection
       in: query
-      description: Optional properties to return. Selecting "checks" or "fixes" will also select "fullrules"
+      description: Optional properties to return. Selecting "check" or "fix" will also select "fullrules"
       style: form
       explode: true
       schema:
@@ -6441,8 +6431,8 @@ components:
           enum:
             - cci
             - fullrules
-            - checks
-            - fixes
+            - check
+            - fix
     CklModeQuery:
       name: mode
       in: query
@@ -6801,8 +6791,8 @@ components:
           enum:
             - detail
             - ccis
-            - checks
-            - fixes
+            - check
+            - fix
     RuleSeverityQuery:
       name: severity
       in: query

@@ -36,11 +36,11 @@ SM.Library.ChecklistGrid = Ext.extend(Ext.grid.GridPanel, {
       },
       {
         name: 'check',
-        mapping: 'checks[0]?.content'
+        mapping: 'check?.content'
       },
       {
         name: 'fix',
-        mapping: 'fixes[0]?.text'
+        mapping: 'fix?.text'
       },
       {
         name: 'discussion',
@@ -218,7 +218,7 @@ SM.Library.ChecklistGrid = Ext.extend(Ext.grid.GridPanel, {
         url: `${STIGMAN.Env.apiBase}/stigs/${benchmarkId}/revisions/${revisionStr}/rules`,
         method: 'GET',
         params: {
-          projection: ['checks', 'fixes', 'detail']
+          projection: ['check', 'fix', 'detail']
         }
       })
       return JSON.parse(result.response.responseText)
@@ -769,28 +769,22 @@ SM.Library.GenerateDiffData = function (lhs, rhs) {
         }
       }
 
-      let l = Math.max(value.lhs?.checks.length ?? 0, value.rhs?.checks.length ?? 0)
-      for (let x = 0; x < l; x++) {
-        lhsStr = value.lhs?.checks[x].content ?? ''
-        rhsStr = value.rhs?.checks[x].content ?? ''
-        const propName = `check${l > 1 ? `-${x}` : ''}`
-        thisUnified = Diff.createPatch(propName, lhsStr, rhsStr, undefined, undefined, diffOptions)
-        if (thisUnified) {
-          dataItem.updates.push(propName)
-          fullUnified += thisUnified
-        }
+      // check
+      lhsStr = value.lhs?.check?.content ?? ''
+      rhsStr = value.rhs?.check?.content ?? ''
+      thisUnified = Diff.createPatch('check', lhsStr, rhsStr, undefined, undefined, diffOptions)
+      if (thisUnified) {
+        dataItem.updates.push('check')
+        fullUnified += thisUnified
       }
 
-      l = Math.max(value.lhs?.fixes.length ?? 0, value.rhs?.fixes.length ?? 0)
-      for (let x = 0; x < l; x++) {
-        lhsStr = value.lhs?.fixes[x].text ?? ''
-        rhsStr = value.rhs?.fixes[x].text ?? ''
-        const propName = `fix${l > 1 ? `-${x}` : ''}`
-        thisUnified = Diff.createPatch(propName, lhsStr, rhsStr, undefined, undefined, diffOptions)
-        if (thisUnified) {
-          dataItem.updates.push(propName)
-          fullUnified += thisUnified
-        }
+      // fix
+      lhsStr = value.lhs?.fix?.text ?? ''
+      rhsStr = value.rhs?.fix?.text ?? ''
+      thisUnified = Diff.createPatch('fix', lhsStr, rhsStr, undefined, undefined, diffOptions)
+      if (thisUnified) {
+        dataItem.updates.push('fix')
+        fullUnified += thisUnified
       }
 
       // ccis
@@ -833,14 +827,14 @@ SM.Library.DiffPanel = Ext.extend(Ext.Panel, {
             url: `${STIGMAN.Env.apiBase}/stigs/${benchmarkId}/revisions/${lhRevisionStr}/rules`,
             method: 'GET',
             params: {
-              projection: ['checks', 'fixes', 'detail', 'ccis']
+              projection: ['check', 'fix', 'detail', 'ccis']
             }
           }),
           Ext.Ajax.requestPromise({
             url: `${STIGMAN.Env.apiBase}/stigs/${benchmarkId}/revisions/${rhRevisionStr}/rules`,
             method: 'GET',
             params: {
-              projection: ['checks', 'fixes', 'detail', 'ccis']
+              projection: ['check', 'fix', 'detail', 'ccis']
             }
           })
         ])

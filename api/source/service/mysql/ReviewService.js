@@ -91,8 +91,7 @@ from
   left join stig_asset_map sa using (assetId)
   left join user_stig_asset_map usa on sa.saId = usa.saId
   left join revision rev using (benchmarkId)
-  left join rev_group_map rg using (revId)
-  left join rev_group_rule_map rgr using (rgId)
+  left join rev_group_rule_map rgr using (revId)
 where 
   cg.collectionId =  @collectionId
   and a.assetId IN (select assetId from cteAsset)
@@ -806,9 +805,8 @@ exports.getReviews = async function (inProjection = [], inPredicates = {}, userO
   const joins = [
     'review r',
     'left join rev_group_rule_map rgr on r.ruleId = rgr.ruleId',
-    'left join rev_group_map rg on rgr.rgId = rg.rgId',
-    'left join revision on rg.revId = revision.revId',
-    'left join current_rev on rg.revId = current_rev.revId',
+    'left join revision on rgr.revId = revision.revId',
+    'left join current_rev on rgr.revId = current_rev.revId',
     'left join result on r.resultId = result.resultId',
     'left join status on r.statusId = status.statusId',
     'left join user_data ud on r.userId = ud.userId',
@@ -926,7 +924,7 @@ exports.getReviews = async function (inProjection = [], inPredicates = {}, userO
     predicates.binds.push(inPredicates.ruleId)
   }
   if (inPredicates.groupId) {
-    predicates.statements.push(`rg.groupId = ?`)
+    predicates.statements.push(`rgr.groupId = ?`)
     predicates.binds.push(inPredicates.groupId)
   }
   if (inPredicates.cci) {
@@ -1233,8 +1231,7 @@ exports.getRulesByAssetUser = async function ( assetId, userObject ) {
         left join stig_asset_map sa using (assetId)
         left join user_stig_asset_map usa on sa.saId = usa.saId
         left join revision rev using (benchmarkId)
-        left join rev_group_map rg using (revId)
-        left join rev_group_rule_map rgr using (rgId)
+        left join rev_group_rule_map rgr using (revId)
       where 
         a.assetid = ?
         and cg.userId = ?
@@ -1261,8 +1258,7 @@ exports.checkRuleByAssetUser = async function (ruleId, assetId, userObject) {
         left join stig_asset_map sa using (assetId)
         left join user_stig_asset_map usa on sa.saId = usa.saId
         left join revision rev using (benchmarkId)
-        left join rev_group_map rg using (revId)
-        left join rev_group_rule_map rgr using (rgId)
+        left join rev_group_rule_map rgr using (revId)
       where 
         a.assetId = ?
         and rgr.ruleId = ?

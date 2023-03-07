@@ -198,8 +198,7 @@ module.exports.scrubReviewsByUser = async function(reviews, elevate, userObject)
       inner join asset a on cg.collectionId = a.collectionId
       inner join stig_asset_map sa on a.assetId = sa.assetId
       inner join revision rev on sa.benchmarkId = rev.benchmarkId
-      inner join rev_group_map rg on rev.revId = rg.revId
-      inner join rev_group_rule_map rgr on rg.rgId = rgr.rgId
+      inner join rev_group_rule_map rgr on rev.revId = rgr.revId
     WHERE
       cg.userId = ?
       and cg.accessLevel != 1
@@ -214,8 +213,7 @@ module.exports.scrubReviewsByUser = async function(reviews, elevate, userObject)
       inner join stig_asset_map sa on a.assetId = sa.assetId
       inner join user_stig_asset_map usa on (sa.saId = usa.saId and cg.userId = usa.userId)
       inner join revision rev on sa.benchmarkId = rev.benchmarkId
-      inner join rev_group_map rg on rev.revId = rg.revId
-      inner join rev_group_rule_map rgr on rg.rgId = rgr.rgId
+      inner join rev_group_rule_map rgr on rev.revId = rgr.revId
     WHERE
       cg.userId = ?
       and cg.accessLevel = 1
