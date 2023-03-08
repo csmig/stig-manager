@@ -239,7 +239,7 @@ exports.queryFindings = async function (aggregator, inProjection = [], inPredica
       ]
       groupBy = [
         'rgr.groupId',
-        'rgr.title',
+        'rgr.groupTitle',
         'rgr.severity'
       ]
       orderBy = 'substring(rgr.groupId from 3) + 0'

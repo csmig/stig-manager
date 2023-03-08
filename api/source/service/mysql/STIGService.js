@@ -419,8 +419,8 @@ exports.insertManualBenchmark = async function (b, clobber, svcStatus = {}) {
         hrstart = process.hrtime()
         await connection.query('DELETE FROM revision WHERE revId = ?', [gExistingRevision])
         const cleanupDml = [
-          "DELETE FROM check_content WHERE ccId NOT IN (select ccId from rev_group_rule_check_map)",
-          "DELETE FROM fix_text WHERE ftId NOT IN (select ftId from rev_group_rule_fix_map)"
+          "DELETE FROM check_content WHERE digest NOT IN (select checkDigest from rev_group_rule_map)",
+          "DELETE FROM fix_text WHERE digest NOT IN (select digest from rev_group_rule_map)"
         ]
         for (const query of cleanupDml) {
           await connection.query(query)
@@ -434,16 +434,16 @@ exports.insertManualBenchmark = async function (b, clobber, svcStatus = {}) {
       const queryOrder = [
         'stig',
         'revision',
-        'tempGroupRule',
-        'tempRuleCheck',
-        'tempRuleFix',
+        // 'tempGroupRule',
+        // 'tempRuleCheck',
+        // 'tempRuleFix',
         'tempRuleCci',
         'checkContent',
         'fixText',
-        'revGroupMap',
+        // 'revGroupMap',
         'revGroupRuleMap',
-        'revGroupRuleCheckMap',
-        'revGroupRuleFixMap',
+        // 'revGroupRuleCheckMap',
+        // 'revGroupRuleFixMap',
         'revGroupRuleCciMap'
       ]
 
@@ -559,51 +559,51 @@ exports.insertManualBenchmark = async function (b, clobber, svcStatus = {}) {
   function queriesFromBenchmarkData(b) {
     const tempFlag = true
     const ddl = {
-      tempGroupRule: {
-        drop: 'drop table if exists temp_group_rule',
-        create: `CREATE${tempFlag ? ' TEMPORARY' : ''} TABLE temp_group_rule (
-          groupId varchar(45) ,
-          ruleId varchar(255) ,
-          \`version\` varchar(45) ,
-          \`title\` varchar(1000) ,
-          \`severity\` varchar(45) ,
-          \`weight\` varchar(45) ,
-          \`vulnDiscussion\` text,
-          \`falsePositives\` text,
-          \`falseNegatives\` text,
-          \`documentable\` varchar(45) ,
-          \`mitigations\` text,
-          \`severityOverrideGuidance\` text,
-          \`potentialImpacts\` text,
-          \`thirdPartyTools\` text,
-          \`mitigationControl\` text,
-          \`responsibility\` varchar(255) ,
-          \`iaControls\` varchar(255),
-          \`checkSystem\` varchar(255),
-          \`fixref\` varchar(255),
-          \`checkDigest\` varchar(255),
-          UNIQUE KEY (ruleId))`
-      },
-      tempRuleCheck: {
-        drop: 'drop table if exists temp_rule_check',
-        create: `CREATE${tempFlag ? ' TEMPORARY' : ''} TABLE temp_rule_check (
-          ruleId varchar(255) NOT NULL,
-          \`system\` varchar(255),
-          content TEXT,
-          digest BINARY(32) GENERATED ALWAYS AS (UNHEX(SHA2(content, 256))) STORED,
-          UNIQUE KEY (\`system\`),
-          INDEX (digest))`
-      },
-      tempRuleFix: {
-        drop: 'drop table if exists temp_rule_fix',
-        create: `CREATE${tempFlag ? ' TEMPORARY' : ''} TABLE temp_rule_fix (
-          ruleId varchar(255) NOT NULL,
-          fixref VARCHAR(45),
-          \`text\` TEXT,
-          digest BINARY(32) GENERATED ALWAYS AS (UNHEX(SHA2(text, 256))) STORED,
-          UNIQUE KEY (fixref),
-          INDEX (digest))`
-      },
+      // tempGroupRule: {
+      //   drop: 'drop table if exists temp_group_rule',
+      //   create: `CREATE${tempFlag ? ' TEMPORARY' : ''} TABLE temp_group_rule (
+      //     groupId varchar(45) ,
+      //     ruleId varchar(255) ,
+      //     \`version\` varchar(45) ,
+      //     \`title\` varchar(1000) ,
+      //     \`severity\` varchar(45) ,
+      //     \`weight\` varchar(45) ,
+      //     \`vulnDiscussion\` text,
+      //     \`falsePositives\` text,
+      //     \`falseNegatives\` text,
+      //     \`documentable\` varchar(45) ,
+      //     \`mitigations\` text,
+      //     \`severityOverrideGuidance\` text,
+      //     \`potentialImpacts\` text,
+      //     \`thirdPartyTools\` text,
+      //     \`mitigationControl\` text,
+      //     \`responsibility\` varchar(255) ,
+      //     \`iaControls\` varchar(255),
+      //     \`checkSystem\` varchar(255),
+      //     \`fixref\` varchar(255),
+      //     \`checkDigest\` varchar(255),
+      //     UNIQUE KEY (ruleId))`
+      // },
+      // tempRuleCheck: {
+      //   drop: 'drop table if exists temp_rule_check',
+      //   create: `CREATE${tempFlag ? ' TEMPORARY' : ''} TABLE temp_rule_check (
+      //     ruleId varchar(255) NOT NULL,
+      //     \`system\` varchar(255),
+      //     content TEXT,
+      //     digest BINARY(32) GENERATED ALWAYS AS (UNHEX(SHA2(content, 256))) STORED,
+      //     UNIQUE KEY (\`system\`),
+      //     INDEX (digest))`
+      // },
+      // tempRuleFix: {
+      //   drop: 'drop table if exists temp_rule_fix',
+      //   create: `CREATE${tempFlag ? ' TEMPORARY' : ''} TABLE temp_rule_fix (
+      //     ruleId varchar(255) NOT NULL,
+      //     fixref VARCHAR(45),
+      //     \`text\` TEXT,
+      //     digest BINARY(32) GENERATED ALWAYS AS (UNHEX(SHA2(text, 256))) STORED,
+      //     UNIQUE KEY (fixref),
+      //     INDEX (digest))`
+      // },
       tempRuleCci: {
         drop: 'drop table if exists temp_rule_cci',
         create: `CREATE${tempFlag ? ' TEMPORARY' : ''} TABLE temp_rule_cci (
@@ -651,10 +651,12 @@ exports.insertManualBenchmark = async function (b, clobber, svcStatus = {}) {
   :highCount)`,
       },
       checkContent: {
-        sql: `insert ignore into check_content (content) select content from temp_rule_check`
+        sql: `insert ignore into check_content (content) VALUES ?`,
+        binds: []
       },
       fixText: {
-        sql: `insert ignore into fix_text (\`text\`) select text from temp_rule_fix`
+        sql: `insert ignore into fix_text (\`text\`) VALUES ?`,
+        binds: []
       },
       tempGroupRule: {
         sql: `insert ignore into temp_group_rule (
@@ -693,30 +695,15 @@ exports.insertManualBenchmark = async function (b, clobber, svcStatus = {}) {
         binds: []
       },
       revGroupRuleMap: {
-        sql: `INSERT INTO rev_group_rule_map (rgId, ruleId, title, \`version\`, severity, weight, vulnDiscussion, falsePositives, falseNegatives,
-        documentable, mitigations, severityOverrideGuidance, potentialImpacts, thirdPartyTools, mitigationControl, responsibility, iaControls)
-          SELECT 
-            rg.rgId,
-            tt.ruleId,
-            tt.title,
-            tt.\`version\`,
-            tt.severity,
-            tt.weight,
-            tt.vulnDiscussion,
-            tt.falsePositives,
-            tt.falseNegatives,
-            tt.documentable,
-            tt.mitigations,
-            tt.severityOverrideGuidance,
-            tt.potentialImpacts,
-            tt.thirdPartyTools,
-            tt.mitigationControl,
-            tt.responsibility,
-            tt.iaControls
-          FROM
-            rev_group_map rg
-            left join temp_group_rule tt using (groupId)
-          WHERE rg.revId = :revId`
+        sql: `INSERT INTO rev_group_rule_map (
+          revId,
+          groupId, groupTitle, groupSeverity,
+          ruleId, \`version\`, title, severity, weight, vulnDiscussion, 
+          falsePositives, falseNegatives, documentable, mitigations, 
+          severityOverrideGuidance, potentialImpacts, thirdPartyTools, mitigationControl,
+          responsibility, iaControls, checkSystem, checkDigest, fixref, fixDigest)
+          VALUES ?`,
+        binds: []
       },
       revGroupRuleCciMap: {
         sql: `INSERT INTO rev_group_rule_cci_map (rgrId, cci)
@@ -746,11 +733,15 @@ exports.insertManualBenchmark = async function (b, clobber, svcStatus = {}) {
     // QUERY: revision
     dml.revision.binds = revisionBinds
 
+    let ruleCount = 0
+    let checkCount = 0
+    let fixCount = 0
     for (const group of groups) {
       let { rules, ...groupBinds } = group
 
       let groupSeverity
       for (const rule of rules) {
+        ruleCount++
         let { checks, fixes, idents, ...ruleBinds } = rule
         // Group severity calculation
         if (!groupSeverity) {
@@ -759,13 +750,29 @@ exports.insertManualBenchmark = async function (b, clobber, svcStatus = {}) {
         else if (groupSeverity !== ruleBinds.severity) {
           groupSeverity = 'mixed'
         }
+        checkCount += checks.length
+        fixCount += fixes.length
+        const checkSystem = checks.map( check => check.system).join(',')
+        const checkContent = checks.map( check => check.content).join('\n\n-----AND-----\n\n')
+        const checkDigest = createHash('sha256').update(checkContent).digest()
+        const fixref = fixes.map( fix => fix.fixref).join(',')
+        const fixText = fixes.map( fix => fix.text).join('\n\n-----AND-----\n\n')
+        const fixDigest = createHash('sha256').update(fixText).digest()
+
+        // QUERY: checkContent
+        dml.checkContent.binds.push([checkContent])
+        // QUERY: fixText
+        dml.fixText.binds.push([fixText])
         // QUERY: revGroupRuleMap
 
 
 
         // QUERY: tempGroupRule
-        dml.tempGroupRule.binds.push([
+        dml.revGroupRuleMap.binds.push([
+          revisionBinds.revId,
           groupBinds.groupId,
+          groupBinds.title,
+          ruleBinds.severity, // groupSeverity hack
           ruleBinds.ruleId,
           ruleBinds.version,
           ruleBinds.title,
@@ -781,24 +788,13 @@ exports.insertManualBenchmark = async function (b, clobber, svcStatus = {}) {
           ruleBinds.thirdPartyTools,
           ruleBinds.mitigationControl,
           ruleBinds.responsibility,
-          ruleBinds.iaControls          
+          ruleBinds.iaControls,
+          checkSystem,
+          checkDigest,
+          fixref,
+          fixDigest
         ])
-        for (const check of checks) {
-          // QUERY: tempRuleCheck
-          dml.tempRuleCheck.binds.push([
-            ruleBinds.ruleId,
-            check.system,
-            check.content
-          ])
-        }
-        for (const fix of fixes) {
-          // QUERY: tempRuleFix
-          dml.tempRuleFix.binds.push([
-            ruleBinds.ruleId,
-            fix.fixref,
-            fix.text
-          ])
-        }
+        
         for (const ident of idents) {
           if (ident.system === 'http://iase.disa.mil/cci' || ident.system === 'http://cyber.mil/cci') {
             dml.tempRuleCci.binds.push([
@@ -808,31 +804,17 @@ exports.insertManualBenchmark = async function (b, clobber, svcStatus = {}) {
         }
       }
 
-      // QUERY: rev_group_map
-      dml.revGroupMap.binds.push([
-        revisionBinds.revId,
-        groupBinds.groupId,
-        groupBinds.title,
-        groupSeverity
-      ])
-
-      // QUERY: rev_group_rule_map      
-      // QUERY: rev_group_rule_check_map
-      // QUERY: rev_group_rule_fix_map
       // QUERY: rev_group_rule_cci_map
-      dml.revGroupRuleMap.binds = 
-      dml.revGroupRuleCheckMap.binds =
-      dml.revGroupRuleFixMap.binds =
       dml.revGroupRuleCciMap.binds = { revId: revisionBinds.revId }
     }
 
-    dml.revision.binds.groupCount = dml.revGroupMap.binds.length
-    dml.revision.binds.checkCount = dml.tempRuleCheck.binds.length
-    dml.revision.binds.fixCount = dml.tempRuleFix.binds.length
+    dml.revision.binds.groupCount = groups.length
+    dml.revision.binds.checkCount = checkCount
+    dml.revision.binds.fixCount = fixCount
 
-    // add rule severity counts to the revision binds. groupRule[3] is the location of the severity value
-    dml.tempGroupRule.binds.reduce((binds, groupRule) => {
-      const prop = `${groupRule[4]}Count`
+    // add rule severity counts to the revision binds. groupRule[7] is the location of the severity value
+    dml.revGroupRuleMap.binds.reduce((binds, groupRule) => {
+      const prop = `${groupRule[7]}Count`
       binds[prop] = (binds[prop] ?? 0) + 1
       return binds
     }, dml.revision.binds)

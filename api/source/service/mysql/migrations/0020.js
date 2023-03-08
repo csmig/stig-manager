@@ -121,6 +121,7 @@ const upMigration = [
       `ALTER TABLE rev_group_rule_map DROP COLUMN rgId`,
       `ALTER TABLE rev_group_rule_map ADD INDEX index4 (checkDigest ASC) VISIBLE, ADD INDEX index5 (fixDigest ASC) VISIBLE`,
       `ALTER TABLE rev_group_rule_map ADD UNIQUE INDEX rev_group_rule_UNIQUE (revId ASC, groupId ASC, ruleId ASC) VISIBLE`,
+      `ALTER TABLE rev_group_rule_map ADD CONSTRAINT fk_rev_group_rule_map_1 FOREIGN KEY (revId) REFERENCES revision (revId) ON DELETE CASCADE ON UPDATE CASCADE`,
 
   // rev_group_rule_cci_map
   `CREATE TABLE rev_group_rule_cci_map (
