@@ -36635,7 +36635,7 @@
 																"method": "GET",
 																"header": [],
 																"url": {
-																	"raw": "{{baseUrl}}/stigs/:benchmarkId/revisions/:revisionStr/rules?projection=detail&projection=ccis&projection=checks&projection=fixes",
+																	"raw": "{{baseUrl}}/stigs/:benchmarkId/revisions/:revisionStr/rules?projection=detail&projection=ccis&projection=check&projection=fix",
 																	"host": [
 																		"{{baseUrl}}"
 																	],
@@ -36659,11 +36659,11 @@
 																		},
 																		{
 																			"key": "projection",
-																			"value": "checks"
+																			"value": "check"
 																		},
 																		{
 																			"key": "projection",
-																			"value": "fixes"
+																			"value": "fix"
 																		},
 																		{
 																			"key": "projection",
@@ -36738,7 +36738,7 @@
 																"method": "GET",
 																"header": [],
 																"url": {
-																	"raw": "{{baseUrl}}/stigs/:benchmarkId/revisions/:revisionStr/rules?projection=detail&projection=ccis&projection=checks&projection=fixes",
+																	"raw": "{{baseUrl}}/stigs/:benchmarkId/revisions/:revisionStr/rules?projection=detail&projection=ccis&projection=check&projection=fix",
 																	"host": [
 																		"{{baseUrl}}"
 																	],
@@ -36762,11 +36762,11 @@
 																		},
 																		{
 																			"key": "projection",
-																			"value": "checks"
+																			"value": "check"
 																		},
 																		{
 																			"key": "projection",
-																			"value": "fixes"
+																			"value": "fix"
 																		}
 																	],
 																	"variable": [
@@ -36831,7 +36831,7 @@
 																"method": "GET",
 																"header": [],
 																"url": {
-																	"raw": "{{baseUrl}}/stigs/:benchmarkId/revisions/:revisionStr/rules/:ruleId?projection=detail&projection=ccis&projection=checks&projection=fixes",
+																	"raw": "{{baseUrl}}/stigs/:benchmarkId/revisions/:revisionStr/rules/:ruleId?projection=detail&projection=ccis&projection=check&projection=fix",
 																	"host": [
 																		"{{baseUrl}}"
 																	],
@@ -36856,11 +36856,11 @@
 																		},
 																		{
 																			"key": "projection",
-																			"value": "checks"
+																			"value": "check"
 																		},
 																		{
 																			"key": "projection",
-																			"value": "fixes"
+																			"value": "fix"
 																		},
 																		{
 																			"key": "projection",
@@ -38177,7 +38177,7 @@
 								"method": "GET",
 								"header": [],
 								"url": {
-									"raw": "{{baseUrl}}/stigs/:benchmarkId/revisions/:revisionStr/rules?projection=detail&projection=ccis&projection=checks&projection=fixes",
+									"raw": "{{baseUrl}}/stigs/:benchmarkId/revisions/:revisionStr/rules?projection=detail&projection=ccis&projection=check&projection=fix",
 									"host": [
 										"{{baseUrl}}"
 									],
@@ -38201,11 +38201,11 @@
 										},
 										{
 											"key": "projection",
-											"value": "checks"
+											"value": "check"
 										},
 										{
 											"key": "projection",
-											"value": "fixes"
+											"value": "fix"
 										}
 									],
 									"variable": [
@@ -38288,7 +38288,7 @@
 								"method": "GET",
 								"header": [],
 								"url": {
-									"raw": "{{baseUrl}}/stigs/:benchmarkId/revisions/:revisionStr/rules/:ruleId?projection=detail&projection=ccis&projection=checks&projection=fixes",
+									"raw": "{{baseUrl}}/stigs/:benchmarkId/revisions/:revisionStr/rules/:ruleId?projection=detail&projection=ccis&projection=check&projection=fix",
 									"host": [
 										"{{baseUrl}}"
 									],
@@ -38313,11 +38313,11 @@
 										},
 										{
 											"key": "projection",
-											"value": "checks"
+											"value": "check"
 										},
 										{
 											"key": "projection",
-											"value": "fixes"
+											"value": "fix"
 										}
 									],
 									"variable": [
@@ -38652,7 +38652,7 @@
 								"method": "GET",
 								"header": [],
 								"url": {
-									"raw": "{{baseUrl}}/stigs/:benchmarkId/revisions/:revisionStr/rules?projection=checks",
+									"raw": "{{baseUrl}}/stigs/:benchmarkId/revisions/:revisionStr/rules?projection=check",
 									"host": [
 										"{{baseUrl}}"
 									],
@@ -38678,11 +38678,11 @@
 										},
 										{
 											"key": "projection",
-											"value": "checks"
+											"value": "check"
 										},
 										{
 											"key": "projection",
-											"value": "fixes",
+											"value": "fix",
 											"disabled": true
 										},
 										{
@@ -38807,7 +38807,7 @@
 								"method": "GET",
 								"header": [],
 								"url": {
-									"raw": "{{baseUrl}}/stigs/:benchmarkId/revisions/:revisionStr/rules?projection=checks",
+									"raw": "{{baseUrl}}/stigs/:benchmarkId/revisions/:revisionStr/rules?projection=check",
 									"host": [
 										"{{baseUrl}}"
 									],
@@ -38833,11 +38833,11 @@
 										},
 										{
 											"key": "projection",
-											"value": "checks"
+											"value": "check"
 										},
 										{
 											"key": "projection",
-											"value": "fixes",
+											"value": "fix",
 											"disabled": true
 										},
 										{
@@ -38970,12 +38970,12 @@
 										},
 										{
 											"key": "projection",
-											"value": "checks",
+											"value": "check",
 											"disabled": true
 										},
 										{
 											"key": "projection",
-											"value": "fixes",
+											"value": "fix",
 											"disabled": true
 										},
 										{
