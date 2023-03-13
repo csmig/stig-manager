@@ -2,12 +2,11 @@ const config = require('./config')
 const logger = require('./logger')
 const jwksClient = require('jwks-rsa')
 const jwt = require('jsonwebtoken')
-const got = require('got')
 const retry = require('async-retry')
 const _ = require('lodash')
 const {promisify} = require('util')
 const User = require(`../service/${config.database.type}/UserService`)
-const SmError = require('./error')
+const axios = require('axios')
 
 let jwksUri
 let client
@@ -15,6 +14,7 @@ let client
 const privilegeGetter = new Function("obj", "return obj?." + config.oauth.claims.privileges + " || [];");
 
 const verifyRequest = async function (req, requiredScopes, securityDefinition) {
+    
         const token = getBearerToken(req)
         if (!token) {
             throw({status: 401, message: 'OIDC bearer token must be provided'})
@@ -110,7 +110,9 @@ async function initializeAuth() {
     const wellKnown = `${config.oauth.authority}/.well-known/openid-configuration`
     async function getJwks() {
         logger.writeDebug('oidc', 'discovery', { metadataUri: wellKnown, attempt: ++initAttempt })
-        const openidConfig = await got(wellKnown).json()
+
+        const openidConfig = (await axios.get(wellKnown)).data
+
         logger.writeDebug('oidc', 'discovery', { metadataUri: wellKnown, metadata: openidConfig})
         if (!openidConfig.jwks_uri) {
             throw( new Error('No jwks_uri property found') )

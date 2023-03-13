@@ -157,16 +157,12 @@ SM.RuleContentTpl = new Ext.XTemplate(
     '<div class=cs-home-header-sub>{[SM.he(values.title)]}</div>',
     '<div class=cs-home-body-title>Manual Check',
     '<div class=cs-home-body-text>',
-    '<tpl for="checks">',
-      '<pre>{[SM.he(values.content?.trim())]}</pre>',
-    '</tpl>',
+      '<pre>{[SM.he(values.check?.content?.trim())]}</pre>',
     '</div>',
     '</div>',
     '<div class=cs-home-body-title>Fix',
     '<div class=cs-home-body-text>',
-    '<tpl for="fixes">',
-    '<pre>{[SM.he(values.text?.trim())]}</pre>',
-    '</tpl>',
+    '<pre>{[SM.he(values.fix?.text?.trim())]}</pre>',
     '</div>',
     '</div>',
     '<div class=cs-home-header-sub></div>',
@@ -374,4 +370,23 @@ SM.RuleContentTpl = new Ext.XTemplate(
     panel.sm_tabMode = tabMode
     panel.updateTitle && panel.updateTitle.call(panel)
     tp.setActiveTab(panel.id)
+  }
+
+
+  SM.CreateAlertBodyFromErrorResponse = function(errorResponse) {
+    if (errorResponse?.hasOwnProperty('options')){
+        let alertBody = `request: <br>
+        ${errorResponse.options.method}   ${errorResponse.options.url} <br>
+        response:  <br>
+        status: ${errorResponse.response?.status}`
+        let responseObject = SM.safeJSONParse(errorResponse.response?.responseText)
+        for (const property in responseObject) {
+            alertBody += ` <br> ${property}: ${responseObject[property]}`;
+        }
+        return alertBody
+    }
+    else{
+        return JSON.stringify(errorResponse)
+    }
+
   }
