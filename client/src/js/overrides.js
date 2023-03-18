@@ -267,26 +267,35 @@ Ext.override(Ext.form.BasicForm, {
 // Promisfied Ajax.request() method
 // Source: Carl Smigielski
 Ext.override(Ext.Ajax, {
-    requestPromise : function (options) {
-        return new Promise ( (resolve, reject) => {
-
-            this.request({
-                ...options,        
-                success: function (response, options) {
-                    resolve ({
-                        response: response,
-                        options: options
-                    })
-                },
-                failure: function (response, options) {
-                    reject ({
-                        message: `${options.method} ${options.url}\n${response.responseText}`,
-                        response: response,
-                        options: options
-                    })
-                },
+    requestPromise : async function (optionsIn) {
+        const _this = this
+        function requestPromisfied (options) {
+            return new Promise ( (resolve, reject) => {
+                _this.request({
+                    ...options,        
+                    success: function (response, options) {
+                        resolve ({
+                            response: response,
+                            options: options
+                        })
+                    },
+                    failure: function (response, options) {
+                        reject ({
+                            message: `${options.method} ${options.url}\n${response.responseText}`,
+                            response: response,
+                            options: options
+                        })
+                    },
+                })
             })
-        })
+        }
+        try {
+            const {response, options} = await requestPromisfied(optionsIn)
+            return {response, options}   
+        }
+        catch (e) {
+            throw new SM.Error.ExtRequestError(e)
+        }
     }
 })
 

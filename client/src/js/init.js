@@ -86,11 +86,13 @@ function loadScripts() {
         'ext/adapter/ext/ext-base-debug.js',
         'ext/ext-all-debug-w-comments.js',
         "ext/ux/GroupSummary.js",
+        "js/modules/source-map.js",
         "js/chart.min.js",
         "js/diff.js",
         "js/diff2html.min.js",
         "js/stigmanUtils.js",
         'js/SM/Global.js',
+        'js/SM/StackTrace.js',
         'js/SM/Error.js',
         'js/BufferView.js',
         'js/SM/EventDispatcher.js',
@@ -147,7 +149,10 @@ function loadScripts() {
         "js/jsonview.bundle.js",
         "js/stigman.js"
     ].forEach(function(src) {
-        var script = document.createElement('script');
+        const script = document.createElement('script')
+        // if (src === 'js/modules/stack-trace-parser.esm.js') {
+            // script.type = 'module'
+        // }
         script.src = src;
         script.async = false;
         document.head.appendChild(script);

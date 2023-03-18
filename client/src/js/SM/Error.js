@@ -1,5 +1,93 @@
 Ext.ns('SM.Error')
 
+class NonError extends Error {
+  name = 'NonError';
+
+  constructor(message) {
+    super(NonError._prepareSuperMessage(message));
+  }
+
+  static _prepareSuperMessage(message) {
+    try {
+      return JSON.stringify(message);
+    } catch {
+      return String(message);
+    }
+  }
+}
+
+class SmError extends Error {
+  constructor({message}) {
+    super(message)
+    this.name = this.constructor.name
+    this.env = STIGMAN.Env
+    this.stack = this.stack
+    // this.toJSON = () => { 
+    //   const { name, message, stack } = this
+    //   return { name, message, stack, ...this }
+    // }
+  }
+}
+
+class PrivilegeError extends SmError {
+  constructor(detail) {
+    super('User has insufficient privilege to complete this request.')
+    this.status = 403
+    this.detail = detail
+  }
+}
+
+class ClientError extends SmError {
+  constructor(detail) {
+    super({message:'Incorrect request.'})
+    // this.message = 'Inc request'
+    this.detail = detail
+  }
+}
+class ExtRequestError extends SmError {
+  constructor(detail) {
+    super({message:'Ext.Ajax.requestPromise() failed'})
+    // this.message = 'Inc request'
+    this.detail = detail
+  }
+}
+
+class NotFoundError extends SmError {
+  constructor(detail) {
+    super('Resource not found.')
+    this.status = 404
+    this.detail = detail
+  }
+}
+
+class UnprocessableError extends SmError {
+  constructor(detail) {
+    super('Unprocessable Entity.')
+    this.status = 422
+    this.detail = detail
+  }
+}
+
+class InternalError extends SmError {
+  constructor(error) {
+    super(error.message)
+    this.detail = { error }
+  }
+}
+
+Object.assign(SM.Error, {
+  SmError,
+  PrivilegeError,
+  NotFoundError,
+  ClientError,
+  ExtRequestError,
+  UnprocessableError,
+  InternalError 
+})
+
+
+// serialize-error follows
+
 const list = [
   // Native ES errors https://262.ecma-international.org/12.0/#sec-well-known-intrinsic-objects
   EvalError,
@@ -25,21 +113,6 @@ const list = [
 
 const errorConstructors = new Map(list);
 
-SM.Error.NonError = class NonError extends Error {
-  name = 'NonError';
-
-  constructor(message) {
-    super(NonError._prepareSuperMessage(message));
-  }
-
-  static _prepareSuperMessage(message) {
-    try {
-      return JSON.stringify(message);
-    } catch {
-      return String(message);
-    }
-  }
-}
 
 const commonProperties = [
   {
@@ -227,20 +300,138 @@ function isMinimumViableSerializedError(value) {
     && !Array.isArray(value);
 }
 
-
+// not serialize-error
 
 SM.Error.FormPanel = Ext.extend(Ext.form.FormPanel, {
+  initComponent: function () {
+    const _this = this
 
+    this.displayField = new Ext.form.DisplayField({
+      fieldLabel: 'Message',
+      value: 'display field text',
+      height: 50
+    })
+  
+
+    this.jsonViewDisplayField = new Ext.form.DisplayField({
+      allowBlank: true,
+      style: 'border: 1px solid #C1C1C1',
+      fieldLabel: 'Detail',
+      autoScroll: true,
+      border: true,
+      name: 'errorObj',
+      // height: 150,
+      anchor: '100% -80',
+      setValue: function (v) {
+          if (Object.keys(v).length === 0 && v.constructor === Object) {
+              return
+          }
+          const tree = JsonView.createTree(v)
+          tree.key = 'error'
+          tree.isExpanded = true
+          tree.children[0].isExpanded = true
+          const el = this.getEl().dom
+          JsonView.render(tree, el)
+          // JsonView.expandChildren(tree)
+          this.value = v
+      }
+    })
+    
+    const config = {
+      border: false,
+      labelWidth: 65,
+      items: [
+        this.displayField,
+        this.jsonViewDisplayField
+      ],
+      buttons: [{
+        text: 'Copy',
+        handler: async function (btn) {
+          await navigator.clipboard.writeText(JSON.stringify(_this.jsonViewDisplayField.value))
+        }
+      }]
+    }
+    Ext.apply(this, Ext.apply(this.initialConfig, config))
+    this.superclass().initComponent.call(this)
+  }
 })
 
+SM.Error.displayError = function (data) {
+  const fp = new SM.Error.FormPanel()
+  const appwindow = new Ext.Window({
+    title: 'Unhandled Error',
+    cls: 'sm-dialog-window sm-round-panel',
+    modal: true,
+    hidden: true,
+    width: 660,
+    height: 650,
+    layout: 'fit',
+    plain:true,
+    bodyStyle:'padding:15px;',
+    buttonAlign:'right',
+    items: fp
+  })
+  appwindow.render(document.body)
+  fp.getForm().setValues(data)
+  appwindow.show(document.body)
+}
 
-SM.Error.displayError = async function (e) {
+
+SM.Error.handleError = async function (e) {
   try {
-    const text = JSON.stringify(SM.Error.serializeError(e))
-    await SM.confirmPromise('Confirm', text)
-    console.log('after alert')
+    if (SM.isMinimizedSource && !SM.Error.sourceMapConsumer) {
+      await SM.Error.initSourceMap()
+    }
+    let errorObj
+    if (e instanceof Error) {
+      if (SM.isMinimizedSource) {
+        e.sourceStack = SM.Error.getOriginalSource(e.stack)
+      }
+      // errorObj = SM.Error.serializeError(e.error ? e.error : e)
+      errorObj = e.error ? e.error : e
+    }
+    else {
+      errorObj = e
+    }
+    SM.Error.displayError({errorObj})
   }
   catch (e) {
-    alert(e.message ?? 'error in SM.Error.displayError()!')
+    alert(e.message ?? 'error in SM.Error.handleError()!')
   }
+}
+
+SM.Error.initSourceMap = async function () {
+  try {
+    sourceMap.SourceMapConsumer.initialize({
+      "lib/mappings.wasm": "js/modules/mappings.wasm"
+    })
+    const response = await fetch ('js/stig-manager.min.js.map')
+    const text = await response.text()
+    SM.Error.sourceMapConsumer = await new sourceMap.SourceMapConsumer(JSON.parse(text))
+
+  }
+  catch (e) {
+    SM.Error.handleError(e)
+  }
+
+}
+
+SM.Error.getOriginalSource = function (stackTrace) {
+  let output = ''
+  const stack = SM.StackTrace.parse(stackTrace)
+  stack.forEach(({ methodName, lineNumber, column }) => {
+    try {
+      if (lineNumber == null || lineNumber < 1) {
+        output += `    at ${methodName || ''}\n`
+      } else {
+        const pos = SM.Error.sourceMapConsumer.originalPositionFor({ line: lineNumber, column });
+        if (pos && pos.line != null) {
+          output += `    at ${pos.name || ''} (${pos.source}:${pos.line}:${pos.column})\n`
+        }
+      }
+    } catch (err) {
+      output += `    at FAILED_TO_PARSE_LINE\n`
+    }
+  })
+  return output
 }

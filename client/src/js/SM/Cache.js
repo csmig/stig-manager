@@ -4,7 +4,7 @@ SM.Cache.CollectionMap = new Map()
 
 SM.Cache.getCollections = async function () {
   const result = await Ext.Ajax.requestPromise({
-    url: `${STIGMAN.Env.apiBase}/collections`,
+    url: `${STIGMAN.Env.apiBase}/collectionsX`,
     method: 'GET',
     params: {
       projection: 'labels'

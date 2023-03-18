@@ -91,6 +91,7 @@ mkdir $DistDir/js
 cp $SrcDir/js/init-dist.js $DistDir/js/init.js
 cp $SrcDir/js/oidcProvider.js $DistDir/js
 cp $SrcDir/js/Env.js.example $DistDir/js
+cp -r $SrcDir/js/modules $DistDir/js/modules
 cd $SrcDir/js
 uglifyjs \
 'chart.min.js' \
@@ -98,6 +99,8 @@ uglifyjs \
 'diff2html.min.js' \
 'stigmanUtils.js' \
 'SM/Global.js' \
+'SM/StackTrace.js' \
+'SM/Error.js' \
 'BufferView.js' \
 'SM/EventDispatcher.js' \
 'SM/Cache.js' \

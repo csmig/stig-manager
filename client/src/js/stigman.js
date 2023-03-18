@@ -1,6 +1,8 @@
 Ext.Ajax.timeout = 30000000
 Ext.Msg.minWidth = 300
 Ext.USE_NATIVE_JSON = true
+SM.ScriptPath = document.currentScript.src
+SM.isMinimizedSource = document.currentScript.src.endsWith('stig-manager.min.js')
 
 function GetXmlHttpObject() {
 	if (window.XMLHttpRequest)
@@ -63,14 +65,14 @@ async function loadApp () {
 		});
 		Ext.state.Manager.setProvider(new SM.State.LocalStorageProvider())
 
-		setTimeout(()=>{
-			try {
-				throw new Error('new error')
-			}
-			catch (e) {
-				SM.Error.displayError(e)
-			}
-		}, 3000)
+		// setTimeout(()=>{
+		// 	try {
+		// 		throw new SM.Error.ClientError('new error')
+		// 	}
+		// 	catch (e) {
+		// 		throw(e)
+		// 	}
+		// }, 3000)
 	
 		// Ext.get( 'loading-text' ).dom.innerHTML = "Getting configuration...";
 		let result = await Ext.Ajax.requestPromise({
@@ -217,6 +219,10 @@ async function loadApp () {
 					e.preventDefault()
 				}
 			}
+		})
+
+		window.addEventListener('error', function (e) {
+			SM.Error.handleError(e)
 		})
 		
 	}
