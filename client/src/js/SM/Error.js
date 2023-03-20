@@ -17,11 +17,10 @@ class NonError extends Error {
 }
 
 class SmError extends Error {
-  constructor({message}) {
+  constructor(message) {
     super(message)
     this.name = this.constructor.name
     this.env = STIGMAN.Env
-    this.stack = this.stack
     // this.toJSON = () => { 
     //   const { name, message, stack } = this
     //   return { name, message, stack, ...this }
@@ -31,58 +30,42 @@ class SmError extends Error {
 
 class PrivilegeError extends SmError {
   constructor(detail) {
-    super('User has insufficient privilege to complete this request.')
-    this.status = 403
+    super('User has insufficient privilege to use this app.')
     this.detail = detail
   }
 }
 
-class ClientError extends SmError {
-  constructor(detail) {
-    super({message:'Incorrect request.'})
-    // this.message = 'Inc request'
-    this.detail = detail
-  }
-}
 class ExtRequestError extends SmError {
-  constructor(detail) {
-    super({message:'Ext.Ajax.requestPromise() failed'})
-    // this.message = 'Inc request'
+  constructor(detail, message = 'Ext.Ajax.request() failed') {
+    super(message)
+    this.method = detail?.options?.method
+    this.url = detail?.options?.url
+    this.status = detail?.response?.status
+    this.responseText = detail?.response?.responseText
+    this.responseHeaders = detail?.response?.getAllResponseHeaders()
+    const tokenParsed = { ...window.oidcProvider.tokenParsed }
+    let expDate = new Date(tokenParsed.exp*1000)
+    let iatDate = new Date(tokenParsed.iat*1000)
+    let authTimeDate = new Date(tokenParsed.auth_time*1000)
+    tokenParsed.exp = `${tokenParsed.exp} (${expDate.format('Y-m-d H:i:s')})`
+    tokenParsed.iat = `${tokenParsed.iat} (${iatDate.format('Y-m-d H:i:s')})`
+    tokenParsed.auth_time = `${tokenParsed.auth_time} (${authTimeDate.format('Y-m-d H:i:s')})`
+    this.tokenParsed = tokenParsed
     this.detail = detail
   }
 }
 
-class NotFoundError extends SmError {
+class NonJsonResponse extends ExtRequestError {
   constructor(detail) {
-    super('Resource not found.')
-    this.status = 404
-    this.detail = detail
-  }
-}
-
-class UnprocessableError extends SmError {
-  constructor(detail) {
-    super('Unprocessable Entity.')
-    this.status = 422
-    this.detail = detail
-  }
-}
-
-class InternalError extends SmError {
-  constructor(error) {
-    super(error.message)
-    this.detail = { error }
+    super(detail, 'The response is not JSON.')
   }
 }
 
 Object.assign(SM.Error, {
   SmError,
   PrivilegeError,
-  NotFoundError,
-  ClientError,
   ExtRequestError,
-  UnprocessableError,
-  InternalError 
+  NonJsonResponse 
 })
 
 
@@ -308,8 +291,8 @@ SM.Error.FormPanel = Ext.extend(Ext.form.FormPanel, {
 
     this.displayField = new Ext.form.DisplayField({
       fieldLabel: 'Message',
-      value: 'display field text',
-      height: 50
+      value: '<b>An unhandled error has occurred. You can review the error details below and copy the details to your clipboard.</b>',
+      height: 40
     })
   
 
@@ -340,12 +323,13 @@ SM.Error.FormPanel = Ext.extend(Ext.form.FormPanel, {
     const config = {
       border: false,
       labelWidth: 65,
+      hideLabels: true,
       items: [
         this.displayField,
         this.jsonViewDisplayField
       ],
       buttons: [{
-        text: 'Copy',
+        text: 'Copy to clipboard',
         handler: async function (btn) {
           await navigator.clipboard.writeText(JSON.stringify(_this.jsonViewDisplayField.value))
         }
@@ -387,8 +371,11 @@ SM.Error.handleError = async function (e) {
       if (SM.isMinimizedSource) {
         e.sourceStack = SM.Error.getOriginalSource(e.stack)
       }
-      // errorObj = SM.Error.serializeError(e.error ? e.error : e)
-      errorObj = e.error ? e.error : e
+      if (e?.detail?.options?.headers?.Authorization) {
+        e.detail.options.headers.Authorization = '<removed>'
+      }
+      errorObj = SM.Error.serializeError(e.error ? e.error : e)
+      // errorObj = e.error ? e.error : e
     }
     else {
       errorObj = e

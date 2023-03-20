@@ -289,12 +289,21 @@ Ext.override(Ext.Ajax, {
                 })
             })
         }
+        let response, options
         try {
-            const {response, options} = await requestPromisfied(optionsIn)
-            return {response, options}   
+            ;({response, options} = await requestPromisfied(optionsIn))
         }
         catch (e) {
             throw new SM.Error.ExtRequestError(e)
+        }
+        if (optionsIn.responseType !== 'json') {
+            return {response, options}   
+        }
+        try {
+            return JSON.parse(response.responseText)
+        }
+        catch (e) {
+            throw new SM.Error.NonJsonResponse({response, options, parseError: e})
         }
     }
 })
