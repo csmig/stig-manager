@@ -1,3 +1,5 @@
+import OP2 from './oidcProvider2.js'
+
 async function authorizeOidc() {
     let oidcProvider = OidcProvider({
         oidcProvider: STIGMAN.Env.oauth.authority,
@@ -57,6 +59,15 @@ async function authorizeOidc() {
     catch(errorData) {
         document.getElementById("loading-text").innerHTML = "Authentication Error";
     } 
+}
+
+async function authorizeOidc2() {
+    await OP2.authenticate({
+        oidcProvider: STIGMAN.Env.oauth.authority,
+        clientId: STIGMAN.Env.oauth.clientId
+    })
+    console.log(OP2.state.openIdConfiguration)
+    authorizeOidc()
 }
 
 function loadScripts() {
@@ -155,4 +166,4 @@ function loadScripts() {
 
 document.getElementById("loading-text").innerHTML = `Loading ${STIGMAN?.Env?.version}`;
 
-authorizeOidc()
+authorizeOidc2()
