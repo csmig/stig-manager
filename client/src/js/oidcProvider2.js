@@ -3,10 +3,11 @@ const state = {}
 let token, tokenParsed, refreshToken, refreshTokenParsed
 let refreshQueue = []
 
-async function authenticate({clientId, oidcProvider, autoRefresh}) {
+async function authenticate({clientId, oidcProvider, scope, autoRefresh}) {
   state.clientId = clientId
   state.oidcProvider = oidcProvider
   state.autoRefresh = autoRefresh
+  state.scope = scope
   state.oidcConfiguration = await getOpenIdConfiguration(oidcProvider)
 
   // check our URL for fragment
@@ -20,11 +21,13 @@ async function authenticate({clientId, oidcProvider, autoRefresh}) {
     let clientTime = (beforeTime + new Date().getTime()) / 2
     setTokens(tokens, clientTime)
     window.history.replaceState(window.history.state, '', redirectUrl)
+    return true
   }
   else {
     // redirect to OP with authorization request
     const authUrl = await getAuthorizationUrl()
     window.location.href = authUrl
+    return false
   }
 }
 
@@ -194,23 +197,23 @@ function processRedirectParams(paramStr) {
 }
 
 async function getAuthorizationUrl() {
-  const nonce = crypto.randomUUID()
-  const stateVal = crypto.randomUUID()
   const pkce = await getPkce()
-  const scopes = getScopes()
+
+  const params = new URLSearchParams()
+  params.append('client_id', state.clientId)
+  params.append('redirect_uri', window.location.href)
+  params.append('state', crypto.randomUUID())
+  params.append('response_mode', 'fragment')
+  params.append('response_type', 'code')
+  params.append('scope', state.scope)
+  params.append('nonce', crypto.randomUUID())
+  params.append('code_challenge', pkce.codeChallenge)
+  params.append('code_challenge_method', 'S256')
+
   const authEndpoint = state.oidcConfiguration.authorization_endpoint
   localStorage.setItem('oidc-code-verifier', pkce.codeVerifier)
 
-  return authEndpoint
-    + '?client_id=' + encodeURIComponent(state.clientId)
-    + '&redirect_uri=' + encodeURIComponent(window.location.href)
-    + '&state=' + encodeURIComponent(stateVal)
-    + '&response_mode=fragment'
-    + '&response_type=code'
-    + '&scope=' + encodeURIComponent(scopes)
-    + '&nonce=' + encodeURIComponent(nonce)
-    + '&code_challenge=' + pkce.codeChallenge
-    + '&code_challenge_method=S256'
+  return `${authEndpoint}?${params.toString()}`
 }
 
 async function getPkce() {  
@@ -252,22 +255,6 @@ async function getPkce() {
   const codeVerifier = generateRandomString()
   const codeChallenge = await challengeFromVerifier(codeVerifier)
   return {codeChallenge, codeVerifier}
-}
-
-function getScopes() {
-  const scopePrefix = STIGMAN.Env.oauth.scopePrefix
-  let scopes = [
-      `${scopePrefix}stig-manager:stig`,
-      `${scopePrefix}stig-manager:stig:read`,
-      `${scopePrefix}stig-manager:collection`,
-      `${scopePrefix}stig-manager:user`,
-      `${scopePrefix}stig-manager:user:read`,
-      `${scopePrefix}stig-manager:op`
-  ]
-  if (STIGMAN.Env.oauth.extraScopes) {
-      scopes.push(...STIGMAN.Env.oauth.extraScopes.split(" "))
-  }
-  return scopes.join(" ")
 }
 
 async function getOpenIdConfiguration(baseUrl) {
