@@ -846,30 +846,23 @@ SM.Collection.ManagePanel = Ext.extend(Ext.form.FormPanel, {
         let _this = this
         this.canModifyOwners = !!this.canModifyOwners
         async function apiPatchSettings(value) {
-            const result = await Ext.Ajax.requestPromise({
+            const apiCollection = await Ext.Ajax.requestPromise({
+                responseType: 'json',
                 url: `${STIGMAN.Env.apiBase}/collections/${_this.collectionId}`,
                 method: 'PATCH',
                 jsonData: {
                     settings: value
                 }
             })
-            return result.response.responseText ? JSON.parse(result.response.responseText) : undefined
-        }
-        async function apiGetImportOptions(key, value) {
-            const result = await Ext.Ajax.requestPromise({
-                url: `${STIGMAN.Env.apiBase}/collections/${_this.collectionId}/metadata/keys/${key}`,
-                method: 'GET'
-            })
-            return result.response.responseText ? JSON.parse(result.response.responseText) : undefined
+            return apiCollection || undefined
         }
         async function apiPutImportOptions(value) {
-            const result = await Ext.Ajax.requestPromise({
+            await Ext.Ajax.requestPromise({
                 url: `${STIGMAN.Env.apiBase}/collections/${_this.collectionId}/metadata/keys/importOptions`,
                 method: 'PUT',
                 jsonData: JSON.stringify(value)
             })
             SM.Dispatcher.fireEvent('importoptionschanged', _this.collectionId, value)
-            return result.response.responseText ? JSON.parse(result.response.responseText) : undefined
         }
         async function updateSettings() {
             const apiCollection =  await apiPatchSettings({
@@ -909,7 +902,8 @@ SM.Collection.ManagePanel = Ext.extend(Ext.form.FormPanel, {
                         return
                     }
                     try {
-                        let result = await Ext.Ajax.requestPromise({
+                        let apiCollection = await Ext.Ajax.requestPromise({
+                            responseType: 'json',
                             url: `${STIGMAN.Env.apiBase}/collections/${_this.collectionId}`,
                             method: 'PATCH',
                             params: {
@@ -919,7 +913,6 @@ SM.Collection.ManagePanel = Ext.extend(Ext.form.FormPanel, {
                                 name: newValue.trim()
                             }
                         })
-                        let apiCollection = JSON.parse(result.response.responseText)
                         SM.Dispatcher.fireEvent('collectionchanged', apiCollection)
                     }
                     catch (e) {
@@ -1025,7 +1018,7 @@ SM.Collection.ManagePanel = Ext.extend(Ext.form.FormPanel, {
                     SM.Dispatcher.fireEvent('collectionchanged', apiCollection)
                 }
                 catch (e) {
-                    alert(e.message)
+                    SM.Error.handleError(e)
                 }
             }
         })
@@ -1041,7 +1034,7 @@ SM.Collection.ManagePanel = Ext.extend(Ext.form.FormPanel, {
                     SM.Dispatcher.fireEvent('collectionchanged', apiCollection)
                 }
                 catch (e) {
-                    alert(e.message)
+                    SM.Error.handleError(e)
                 }
             }
         })
@@ -1056,7 +1049,7 @@ SM.Collection.ManagePanel = Ext.extend(Ext.form.FormPanel, {
                     SM.Dispatcher.fireEvent('collectionchanged', apiCollection)
                 }
                 catch (e) {
-                    alert(e.message)
+                    SM.Error.handleError(e)
                 }
             }
         })
@@ -1069,7 +1062,7 @@ SM.Collection.ManagePanel = Ext.extend(Ext.form.FormPanel, {
                     await apiPutImportOptions(JSON.stringify(fieldset.getOptions()))
                 }
                 catch (e) {
-                    alert(e.message)
+                    SM.Error.handleError(e)
                 }
             }
         })
@@ -2485,7 +2478,7 @@ SM.Collection.showLabelAssetsWindow = async function ( collectionId, labelId ) {
               e = JSON.stringify(e);
             }
           }        
-        alert(e)
+        SM.Error.handleError(e)
         Ext.getBody().unmask()
     }	
 }

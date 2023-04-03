@@ -1920,7 +1920,7 @@ SM.CollectionPanel.showCollectionTab = async function (options) {
         }
       }
       catch (e) {
-        alert(e)
+        SM.Error.handleError(e)
       }
     }
 
@@ -1990,6 +1990,6 @@ SM.CollectionPanel.showCollectionTab = async function (options) {
     }
   }
   catch (e) {
-    alert(e)
+    SM.Error.handleError(e)
   }
 }

@@ -1023,7 +1023,7 @@ SM.ReviewsImport.SelectFilesGrid = Ext.extend(Ext.grid.GridPanel, {
                 }
             }
             catch (e) {
-                alert(e)
+                SM.Error.handleError(e)
             }
 
             async function getAllFileEntries(dataTransferItemList, el) {
@@ -1051,7 +1051,7 @@ SM.ReviewsImport.SelectFilesGrid = Ext.extend(Ext.grid.GridPanel, {
                     return fileEntries
                 }
                 catch (e) {
-                    alert(e)
+                    SM.Error.handleError(e)
                 }
             }
 
@@ -1068,7 +1068,7 @@ SM.ReviewsImport.SelectFilesGrid = Ext.extend(Ext.grid.GridPanel, {
                     return entries;   
                 }
                 catch (e) {
-                    alert(e)
+                    SM.Error.handleError(e)
                 }
             }
 
@@ -1081,7 +1081,7 @@ SM.ReviewsImport.SelectFilesGrid = Ext.extend(Ext.grid.GridPanel, {
                         directoryReader.readEntries(resolve, reject)
                     })
                 } catch (e) {
-                    alert(e)
+                    SM.Error.handleError(e)
                 }
             }
 
@@ -1097,7 +1097,7 @@ SM.ReviewsImport.SelectFilesGrid = Ext.extend(Ext.grid.GridPanel, {
                         }, reject)
                     })
                 } catch (e) {
-                    alert(e)
+                    SM.Error.handleError(e)
                 }
             }
         }
@@ -2425,7 +2425,7 @@ async function showImportResultFiles(collectionId) {
                 }
             }
             catch (e) {
-                alert(e)
+                SM.Error.handleError(e)
             }
         }
 
@@ -2643,7 +2643,7 @@ async function showImportResultFiles(collectionId) {
             }
             catch (e) {
                 SM.Dispatcher.fireEvent('assetchanged', {collection:{collectionId}})
-                alert(e.message)
+                SM.Error.handleError(e)
             }
 
             function updateProgress(value, text) {
@@ -2735,7 +2735,7 @@ async function showImportResultFiles(collectionId) {
                 e = JSON.stringify(e)
             }
         }
-        alert(e)
+        SM.Error.handleError(e)
         Ext.getBody().unmask()
     }
 }
@@ -3018,7 +3018,7 @@ async function showImportResultFile(params) {
                 params.store.reload()
             }
             catch (e) {
-                alert(e.message)
+                SM.Error.handleError(e)
             }
 
             function updateProgress(value, text) {
@@ -3065,7 +3065,7 @@ async function showImportResultFile(params) {
                 e = JSON.stringify(e)
             }
         }
-        alert(e)
+        SM.Error.handleError(e)
         Ext.getBody().unmask()
 
     }

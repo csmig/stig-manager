@@ -579,7 +579,7 @@ SM.Exports.showExportTree = async function (collectionId, collectionName, treeba
         e = JSON.stringify(e);
       }
     }
-    alert(e)
+    SM.Error.handleError(e)
     Ext.getBody().unmask()
   }
 }
@@ -644,7 +644,7 @@ SM.Exports.exportArchiveStreaming = async function ({collectionId, checklists, f
     saveAs(blob, filename)
   }
   catch (e) {
-    alert(e)
+    SM.Error.handleError(e)
   }
 }
 

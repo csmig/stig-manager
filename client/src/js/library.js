@@ -38,6 +38,6 @@ async function addLibraryStig( params ) {
   }
   catch (e) {
     console.error(e)
-    alert(e.message)
+    SM.Error.handleError(e)
   }
 }

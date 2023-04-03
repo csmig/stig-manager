@@ -680,7 +680,7 @@ async function showCollectionStigProps( benchmarkId, parentGrid ) {
               e = JSON.stringify(e);
             }
           }        
-        alert(e)
+        SM.Error.handleError(e)
         Ext.getBody().unmask()
     }	
 }

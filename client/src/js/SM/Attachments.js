@@ -77,11 +77,11 @@ SM.Attachments.Grid = Ext.extend(Ext.grid.GridPanel, {
       }
     }
     const getMetadataValue = async function (key) {
-      const result = await Ext.Ajax.requestPromise({
+      return Ext.Ajax.requestPromise({
+        responseType: 'json',
         url: `${STIGMAN.Env.apiBase}/collections/${me.collectionId}/reviews/${me.assetId}/${me.ruleId}/metadata/keys/${key}`,
         method: 'GET'
       })
-      return JSON.parse(result.response.responseText)  
     }
     const onFileSelected = async function (uploadField) {
       try {
@@ -92,7 +92,7 @@ SM.Attachments.Grid = Ext.extend(Ext.grid.GridPanel, {
       }
       catch (e) {
         uploadField.reset()
-        alert(e.message)
+        SM.Error.handleError(e)
       }
     }
 
@@ -145,12 +145,12 @@ SM.Attachments.Grid = Ext.extend(Ext.grid.GridPanel, {
       }
     }
     const putMetadataValue = async function (key, value) {
-      const result = await Ext.Ajax.requestPromise({
+      return Ext.Ajax.requestPromise({
+        responseType: 'json',
         url: `${STIGMAN.Env.apiBase}/collections/${me.collectionId}/reviews/${me.assetId}/${me.ruleId}/metadata/keys/${key}`,
         method: 'PUT',
         jsonData: JSON.stringify(value)
       })
-      return result.response.responseText ? JSON.parse(result.response.responseText) : ""
     }
     const removeArtifact = async function (record) {
       const confirm = await SM.confirmPromise('Confirm',`Remove ${record.data.name}?`)

@@ -75,11 +75,11 @@ async function loadApp () {
 		// }, 3000)
 	
 		// Ext.get( 'loading-text' ).dom.innerHTML = "Getting configuration...";
-		let result = await Ext.Ajax.requestPromise({
+		let appConfig = await Ext.Ajax.requestPromise({
+			responseType: 'json',
 			url: `${STIGMAN.Env.apiBase}/op/configuration`,
 			method: 'GET'
 		})
-		appConfig = JSON.parse(result.response.responseText);
 		
 		const mainNavTree = new SM.NavTree.TreePanel({
 			id: 'app-nav-tree',
@@ -231,9 +231,5 @@ async function loadApp () {
 	}
 
 } //end loadApp()
-
-function showAbout() {
-	alert(copyrightStr + '\n\n' + licenseStr);
-}
 
 start()

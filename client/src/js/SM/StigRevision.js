@@ -480,7 +480,7 @@ SM.StigRevision.ImportStigs = function ( grid ) {
           }
         }
         catch (e) {
-          alert(e)
+          SM.Error.handleError(e)
         }
         finally {
           grid?.getStore()?.reload()

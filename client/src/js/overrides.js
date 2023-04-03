@@ -300,7 +300,7 @@ Ext.override(Ext.Ajax, {
             return {response, options}   
         }
         try {
-            return JSON.parse(response.responseText)
+            return JSON.parse(response.responseText || '""')
         }
         catch (e) {
             throw new SM.Error.NonJsonResponse({response, options, parseError: e})

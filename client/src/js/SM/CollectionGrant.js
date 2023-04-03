@@ -553,7 +553,7 @@ async function showUserProps( userId ) {
                     }
                 }
                 catch (e) {
-                    alert(e.message)
+                    SM.Error.handleError(e)
                 }
             }
         })
@@ -623,7 +623,7 @@ async function showUserProps( userId ) {
               e = JSON.stringify(e);
             }
           }        
-        alert(e)
+        SM.Error.handleError(e)
         Ext.getBody().unmask()
     }	
 }

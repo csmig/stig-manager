@@ -14,11 +14,11 @@ async function addReview( params ) {
   }
 
 
-  const result = await Ext.Ajax.requestPromise({
+  const apiCollection = await Ext.Ajax.requestPromise({
+    responseType: 'json',
     url: `${STIGMAN.Env.apiBase}/collections/${leaf.collectionId}`,
     method: 'GET'
   })
-  const apiCollection = JSON.parse(result.response.responseText)
   const apiFieldSettings = apiCollection.settings.fields
   const apiStatusSettings = apiCollection.settings.status
   const accessLevel = curUser.collectionGrants.filter(g => g.collection.collectionId == apiCollection.collectionId)[0].accessLevel
@@ -95,7 +95,7 @@ async function addReview( params ) {
 
   var groupStore = new Ext.data.JsonStore({
     proxy: new Ext.data.HttpProxy({
-      url: `${STIGMAN.Env.apiBase}/assets/${leaf.assetId}/checklists/${leaf.benchmarkId}/latest`,
+      url: `${STIGMAN.Env.apiBase}/assets/${leaf.assetId}/checklists/${leaf.benchmarkId}/latestX`,
       method: 'GET'
     }),
     root: '',
@@ -215,7 +215,7 @@ async function addReview( params ) {
                   document.body.style.cursor = 'default'
                 }
                 catch (e) {
-                  alert(e.message)
+                  SM.Error.handleError(e)
                 }
               },
               getCkl: function (leaf) {
@@ -262,7 +262,7 @@ async function addReview( params ) {
                   document.body.style.cursor = 'default'
                 }
                 catch (e) {
-                  alert(e.message)
+                  SM.Error.handleError(e)
                 }
               },
               getXccdf: async function (leaf) {
@@ -282,7 +282,7 @@ async function addReview( params ) {
                   saveAs(blob, filename)
                 }
                 else {
-                  throw new Error('No Content-Disposition header')
+                  throw new SM.Error.SmError('No Content-Disposition header')
                 }           
               }
             }      
@@ -617,11 +617,11 @@ async function addReview( params ) {
 
   async function loadRevisionMenu(benchmarkId, activeRevisionStr, idAppend) {
     try {
-      let result = await Ext.Ajax.requestPromise({
+      let revisions = await Ext.Ajax.requestPromise({
+        responseType: 'json',
         url: `${STIGMAN.Env.apiBase}/stigs/${benchmarkId}/revisions`,
         method: 'GET'
       })
-      let revisions = JSON.parse(result.response.responseText)
       let revisionObject = getRevisionObj(revisions, activeRevisionStr, idAppend)
       if (groupChecklistMenu.revisionMenuItem === undefined) {
         groupChecklistMenu.addItem(revisionObject.menu);
@@ -629,7 +629,7 @@ async function addReview( params ) {
       groupGrid.setTitle(SM.he(revisionObject.activeRevisionLabel));
     }
     catch (e) {
-      alert(e.message)
+      SM.Error.handleError(e)
     }
   }
 
@@ -1073,6 +1073,7 @@ async function addReview( params ) {
 
       const requests = [
         Ext.Ajax.requestPromise({
+          responseType: 'json',
           url: `${STIGMAN.Env.apiBase}/stigs/${benchmarkId}/revisions/${revisionStr}/rules/${groupGridRecord.data.ruleId}`,
           method: 'GET',
           params: {
@@ -1080,6 +1081,7 @@ async function addReview( params ) {
           }
         }),
         Ext.Ajax.requestPromise({
+          responseType: 'json',
           url: `${STIGMAN.Env.apiBase}/collections/${collectionId}/reviews`,
           method: 'GET',
           params: {
@@ -1088,6 +1090,7 @@ async function addReview( params ) {
           }
         }),
         Ext.Ajax.requestPromise({
+          responseType: 'json',
           url: `${STIGMAN.Env.apiBase}/collections/${collectionId}/reviews/${assetId}/${groupGridRecord.data.ruleId}`,
           method: 'GET',
           params: { 
@@ -1096,15 +1099,13 @@ async function addReview( params ) {
         })      
       ]
 
-      const [contentReq, reviewsReq, historyMetaReq] = await Promise.all(requests)
+      const [content, reviews, reviewProjected] = await Promise.all(requests)
 
       // CONTENT
-      let content = JSON.parse(contentReq.response.responseText)
       reviewTab.contentPanel.update(content)
       reviewTab.contentPanel.setTitle('Rule for Group ' + SM.he(groupGridRecord.data.groupId))
   
       // REVIEW
-      let reviews = JSON.parse(reviewsReq.response.responseText)
       let review = reviews.filter(review => review.assetId == assetId)[0] || {}
       let otherReviews = reviews.filter(review => review.assetId != assetId)
   
@@ -1124,7 +1125,6 @@ async function addReview( params ) {
   
       // Log, Feedback 
   
-      let reviewProjected = JSON.parse(historyMetaReq.response.responseText || '""')
       if (! reviewProjected) {
         historyData.store.removeAll()
         attachmentsGrid.getStore().removeAll()
@@ -1154,12 +1154,7 @@ async function addReview( params ) {
       attachmentsGrid.loadArtifacts()
     }
     catch (e) {
-      if (e.response) {
-        alert (e.response.responseText)
-      }
-      else {
-        alert (e)
-      }
+      SM.Error.handleError(e)
     }
     finally {
       clearTimeout(maskTimer)
@@ -1303,71 +1298,90 @@ async function addReview( params ) {
       // })
       // masktask.delay(100)
 
-      let fvalues = fp.getForm().getFieldValues(false, true) // dirtyOnly=false, getDisabled=true
-      let jsonData = {
+      const fvalues = fp.getForm().getFieldValues(false, true) // dirtyOnly=false, getDisabled=true
+      const jsonData = {
         result: fvalues.result,
         detail: fvalues.detail,
         comment: fvalues.comment,
         resultEngine: fp.resultChanged() ? null : fvalues.resultEngine
       }
-      let result, reviewFromApi
+      let method
       switch (saveParams.type) {
         case 'accept':
         case 'submit':
         case 'unsubmit':
-          result = await Ext.Ajax.requestPromise({
-            url: `${STIGMAN.Env.apiBase}/collections/${leaf.collectionId}/reviews/${leaf.assetId}/${fp.groupGridRecord.data.ruleId}`,
-            method: 'PATCH',
-            params: {
-              projection: 'history'
-            },
-            headers: { 'Content-Type': 'application/json;charset=utf-8' },
-            jsonData: {
-              status: saveParams.type == 'submit' ? 'submitted' : saveParams.type === 'accept' ? 'accepted' : 'saved'
-            }
-          })
-          reviewFromApi = JSON.parse(result.response.responseText)
+          jsonData.status = saveParams.type == 'submit' ? 'submitted' : saveParams.type === 'accept' ? 'accepted' : 'saved'
+          method = 'PATCH'
+          // reviewFromApi = await Ext.Ajax.requestPromise({
+          //   responseType: 'json',
+          //   url: `${STIGMAN.Env.apiBase}/collections/${leaf.collectionId}/reviews/${leaf.assetId}/${fp.groupGridRecord.data.ruleId}`,
+          //   method: 'PATCH',
+          //   params: {
+          //     projection: 'history'
+          //   },
+          //   headers: { 'Content-Type': 'application/json;charset=utf-8' },
+          //   jsonData: {
+          //     status: saveParams.type == 'submit' ? 'submitted' : saveParams.type === 'accept' ? 'accepted' : 'saved'
+          //   }
+          // })
           break
         case 'save and unsubmit':
           jsonData.status = 'saved'
-          result = await Ext.Ajax.requestPromise({
-            url: `${STIGMAN.Env.apiBase}/collections/${leaf.collectionId}/reviews/${leaf.assetId}/${fp.groupGridRecord.data.ruleId}`,
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json;charset=utf-8' },
-            params: {
-              projection: 'history'
-            },
-            jsonData
-          })
-          reviewFromApi = JSON.parse(result.response.responseText)
+          method = 'PUT'
+          // reviewFromApi = await Ext.Ajax.requestPromise({
+          //   responseType: 'json',
+          //   url: `${STIGMAN.Env.apiBase}/collections/${leaf.collectionId}/reviews/${leaf.assetId}/${fp.groupGridRecord.data.ruleId}`,
+          //   method: 'PUT',
+          //   headers: { 'Content-Type': 'application/json;charset=utf-8' },
+          //   params: {
+          //     projection: 'history'
+          //   },
+          //   jsonData
+          // })
           break
         case 'save and submit':
           jsonData.status = 'submitted'
-          result = await Ext.Ajax.requestPromise({
-            url: `${STIGMAN.Env.apiBase}/collections/${leaf.collectionId}/reviews/${leaf.assetId}/${fp.groupGridRecord.data.ruleId}`,
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json;charset=utf-8' },
-            params: {
-              projection: 'history'
-            },
-            jsonData
-          })
+          method = 'PUT'
+          // reviewFromApi = await Ext.Ajax.requestPromise({
+          //   responseType: 'json',
+          //   url: `${STIGMAN.Env.apiBase}/collections/${leaf.collectionId}/reviews/${leaf.assetId}/${fp.groupGridRecord.data.ruleId}`,
+          //   method: 'PUT',
+          //   headers: { 'Content-Type': 'application/json;charset=utf-8' },
+          //   params: {
+          //     projection: 'history'
+          //   },
+          //   jsonData
+          // })
           reviewFromApi = JSON.parse(result.response.responseText)
           break
         case 'save':
           jsonData.status = 'saved'
-          result = await Ext.Ajax.requestPromise({
-            url: `${STIGMAN.Env.apiBase}/collections/${leaf.collectionId}/reviews/${leaf.assetId}/${fp.groupGridRecord.data.ruleId}`,
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json;charset=utf-8' },
-            params: {
-              projection: 'history'
-            },
-            jsonData
-          })
-          reviewFromApi = JSON.parse(result.response.responseText)
+          method = 'PUT'
+
+          // reviewFromApi = await Ext.Ajax.requestPromise({
+          //   responseType: 'json',
+          //   url: `${STIGMAN.Env.apiBase}/collections/${leaf.collectionId}/reviews/${leaf.assetId}/${fp.groupGridRecord.data.ruleId}`,
+          //   method: 'PUT',
+          //   headers: { 'Content-Type': 'application/json;charset=utf-8' },
+          //   params: {
+          //     projection: 'history'
+          //   },
+          //   jsonData
+          // })
           break
       }
+
+      const reviewFromApi = await Ext.Ajax.requestPromise({
+        responseType: 'json',
+        url: `${STIGMAN.Env.apiBase}/collections/${leaf.collectionId}/reviews/${leaf.assetId}/${fp.groupGridRecord.data.ruleId}`,
+        headers: { 'Content-Type': 'application/json;charset=utf-8' },
+        params: {
+          projection: 'history'
+        },
+        method,
+        jsonData
+      })
+
       // Update group grid
       fp.groupGridRecord.data.result = reviewFromApi.result
       fp.groupGridRecord.data.reviewComplete = reviewFromApi.reviewComplete
@@ -1412,7 +1426,7 @@ async function addReview( params ) {
       reviewForm.setReviewFormItemStates(reviewForm)
     }
     catch (e) {
-      SM.Error.displayError(e)
+      SM.Error.handleError(e)
     }
     finally {
       // masktask.cancel()

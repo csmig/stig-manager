@@ -20,7 +20,7 @@ class SmError extends Error {
   constructor(message) {
     super(message)
     this.name = this.constructor.name
-    this.env = STIGMAN.Env
+    // this.env = STIGMAN.Env
     // this.toJSON = () => { 
     //   const { name, message, stack } = this
     //   return { name, message, stack, ...this }
@@ -308,6 +308,9 @@ SM.Error.FormPanel = Ext.extend(Ext.form.FormPanel, {
       setValue: function (v) {
           if (Object.keys(v).length === 0 && v.constructor === Object) {
               return
+          }
+          if (!v.env) {
+            v.env = STIGMAN.Env
           }
           const tree = JsonView.createTree(v)
           tree.key = 'error'

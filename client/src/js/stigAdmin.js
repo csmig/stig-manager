@@ -113,7 +113,7 @@ function addStigAdmin( params ) {
 						}
 					}
 					catch (e) {
-						alert(e)
+						SM.Error.handleError(e)
 					}
 					finally {
 						Ext.getCmp('stigGrid').getStore().reload()
