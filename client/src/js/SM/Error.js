@@ -395,12 +395,12 @@ SM.Error.displayError = function (data) {
 
 SM.Error.handleError = async function (e) {
   try {
-    if (SM.isMinimizedSource && !SM.Error.sourceMapConsumer) {
+    if (STIGMAN.isMinimizedSource && !SM.Error.sourceMapConsumer) {
       await SM.Error.initSourceMap()
     }
     let errorObj
     if (e instanceof Error) {
-      if (SM.isMinimizedSource) {
+      if (STIGMAN.isMinimizedSource) {
         e.sourceStack = SM.Error.getOriginalSource(e.stack)
       }
       if (e?.detail?.options?.headers?.Authorization) {
@@ -421,12 +421,12 @@ SM.Error.handleError = async function (e) {
 
 SM.Error.initSourceMap = async function () {
   try {
-    sourceMap.SourceMapConsumer.initialize({
-      "lib/mappings.wasm": "js/modules/mappings.wasm"
+    window.sourceMap.SourceMapConsumer.initialize({
+      "lib/mappings.wasm": "js/third-party/source-map/mappings.wasm"
     })
     const response = await fetch ('js/stig-manager.min.js.map')
     const text = await response.text()
-    SM.Error.sourceMapConsumer = await new sourceMap.SourceMapConsumer(JSON.parse(text))
+    SM.Error.sourceMapConsumer = await new window.sourceMap.SourceMapConsumer(JSON.parse(text))
 
   }
   catch (e) {

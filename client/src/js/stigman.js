@@ -1,8 +1,6 @@
 Ext.Ajax.timeout = 30000000
 Ext.Msg.minWidth = 300
 Ext.USE_NATIVE_JSON = true
-SM.ScriptPath = document.currentScript.src
-SM.isMinimizedSource = document.currentScript.src.endsWith('stig-manager.min.js')
 
 function GetXmlHttpObject() {
 	if (window.XMLHttpRequest)

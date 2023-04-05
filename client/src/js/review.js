@@ -95,7 +95,7 @@ async function addReview( params ) {
 
   var groupStore = new Ext.data.JsonStore({
     proxy: new Ext.data.HttpProxy({
-      url: `${STIGMAN.Env.apiBase}/assets/${leaf.assetId}/checklists/${leaf.benchmarkId}/latest`,
+      url: `${STIGMAN.Env.apiBase}/assets/${leaf.assetId}/checklists/${leaf.benchmarkId}/latestX`,
       method: 'GET'
     }),
     root: '',

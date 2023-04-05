@@ -88,10 +88,11 @@ cp -r $SrcDir/serviceWorker.js $DistDir/serviceWorker.js
 # JS
 echo "Preparing JavaScript resources"
 mkdir $DistDir/js
-cp $SrcDir/js/init-dist.js $DistDir/js/init.js
+cp $SrcDir/js/resources-dist.js $DistDir/js/resources.js
+cp $SrcDir/js/init.js $DistDir/js/init.js
 cp $SrcDir/js/oidcProvider.js $DistDir/js
 cp $SrcDir/js/Env.js.example $DistDir/js
-cp -r $SrcDir/js/modules $DistDir/js/modules
+cp -r $SrcDir/js/third-party $DistDir/js/third-party
 cd $SrcDir/js
 uglifyjs \
 'chart.min.js' \
