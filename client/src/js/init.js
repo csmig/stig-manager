@@ -54,14 +54,14 @@ async function authorizeOidc() {
             },
             enableLogging: true
         })
-        loadResources()
+        await loadResources()
     }
     catch(errorData) {
         document.getElementById("loading-text").innerHTML = `Authentication Error<br>${errorData}`;
     } 
 }
 
-function loadResources() {
+async function loadResources() {
     for (const href of stylesheets) {
       const link = document.createElement('link')
       link.href = href
@@ -79,8 +79,11 @@ function loadResources() {
       script.async = false
       document.head.appendChild(script)
     }
+    const { serializeError } = await import('./third-party/node_modules/serialize-error/index.js')
+    STIGMAN.serializeError = serializeError
+
     STIGMAN.isMinimizedSource = isMinimizedSource
-  }
+}
   
 document.getElementById("loading-text").innerHTML = `Loading ${STIGMAN?.Env?.version}`;
 
