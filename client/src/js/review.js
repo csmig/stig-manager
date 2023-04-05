@@ -95,7 +95,7 @@ async function addReview( params ) {
 
   var groupStore = new Ext.data.JsonStore({
     proxy: new Ext.data.HttpProxy({
-      url: `${STIGMAN.Env.apiBase}/assets/${leaf.assetId}/checklists/${leaf.benchmarkId}/latestX`,
+      url: `${STIGMAN.Env.apiBase}/assets/${leaf.assetId}/checklists/${leaf.benchmarkId}/latest`,
       method: 'GET'
     }),
     root: '',
@@ -131,16 +131,6 @@ async function addReview( params ) {
       },
       datachanged: function (store) {
         groupGrid?.totalText.setText(getStatsString(store));
-      },
-      exception: function (misc) {
-        var ourView = groupGrid.getView();
-        var response = misc.events.exception.listeners[1].fn.arguments[4];
-        if (response.status != 0) {
-          ourView.emptyText = 'Load failed: ' + response.responseText;
-        } else {
-          ourView.emptyText = 'HTTP Server Error: ' + response.statusText;
-        }
-        ourView.refresh();
       }
     }
   });
@@ -734,27 +724,6 @@ async function addReview( params ) {
     sortInfo: {
       field: 'assetName',
       direction: 'ASC' // or 'DESC' (case sensitive for local sorting)
-    },
-    listeners: {
-      // load: function (store, records) {
-      //   otherTotalTextCmp.setText(records.length + ' rows');
-      // },
-      // datachanged: function (store) {
-      //   otherTotalTextCmp.setText(`${store.getCount()}${store.isFiltered() ? ' of ' + store.getTotalCount() : ''} rows`);
-      // },
-      exception: function (misc) {
-        var ourView = otherGrid.getView();
-        var response = misc.events.exception.listeners[1].fn.arguments[4];
-        if (response.status != 0) {
-          var maskStr = 'Load failed: ' + response.responseText;
-          //ourView.emptyText = 'Load failed: ' + response.responseText;
-        } else {
-          //ourView.emptyText = 'HTTP Server Error: ' + response.statusText;
-          var maskStr = 'HTTP Server Error: ' + response.statusText;
-        }
-        //ourView.refresh();
-        otherGrid.getEl().mask(maskStr);
-      }
     },
     idProperty: 'reviewId'
   });

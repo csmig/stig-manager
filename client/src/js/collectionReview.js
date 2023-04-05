@@ -134,16 +134,6 @@ async function addCollectionReview ( params ) {
 				},
 				datachanged: function(store) {
 					Ext.getCmp('groupGrid-totalText' + idAppend)?.setText(getStatsString(store));
-				},
-				exception: function(misc) {
-					var ourView = groupGrid.getView();
-					var response = misc.events.exception.listeners[1].fn.arguments[4];
-					if (response.status != 0) {
-						ourView.emptyText = 'Load failed: ' + response.responseText;
-					} else {
-						ourView.emptyText = 'HTTP Server Error: ' + response.statusText;
-					}
-					ourView.refresh();
 				}
 			}
 		});

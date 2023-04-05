@@ -55,6 +55,34 @@ class ExtRequestError extends SmError {
   }
 }
 
+class ExtDataProxyError extends SmError {
+  constructor(exception, message = 'Ext.data.DataProxy fired an exception') {
+    super(message)
+    const options = exception?.callback?.arguments?.[0]
+    const response = exception?.callback?.arguments?.[2]
+    this.method = options?.method
+    this.url = options?.url
+    this.status = response?.status
+    this.responseText = response?.responseText
+    this.responseHeaders = response?.getAllResponseHeaders()
+    const tokenParsed = { ...window.oidcProvider.tokenParsed }
+    let expDate = new Date(tokenParsed.exp*1000)
+    let iatDate = new Date(tokenParsed.iat*1000)
+    let authTimeDate = new Date(tokenParsed.auth_time*1000)
+    tokenParsed.exp = `${tokenParsed.exp} (${expDate.format('Y-m-d H:i:s')})`
+    tokenParsed.iat = `${tokenParsed.iat} (${iatDate.format('Y-m-d H:i:s')})`
+    tokenParsed.auth_time = `${tokenParsed.auth_time} (${authTimeDate.format('Y-m-d H:i:s')})`
+    this.tokenParsed = tokenParsed
+    this.detail = {
+      options: {
+        method: options.method,
+        url: options.url,
+        params: options.params,
+        headers: options.headers
+      }, response}
+  }
+}
+
 class NonJsonResponse extends ExtRequestError {
   constructor(detail) {
     super(detail, 'The response is not JSON.')
@@ -65,6 +93,7 @@ Object.assign(SM.Error, {
   SmError,
   PrivilegeError,
   ExtRequestError,
+  ExtDataProxyError,
   NonJsonResponse 
 })
 

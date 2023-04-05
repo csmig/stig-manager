@@ -9,18 +9,7 @@ SM.CollectionSelectionField = Ext.extend( Ext.form.ComboBox, {
             restful: true,
             url: this.url || `${STIGMAN.Env.apiBase}/collections`,
             method: 'GET',
-            headers: { 'Content-Type': 'application/json;charset=utf-8' },
-            listeners: {
-                exception: function ( proxy, type, action, options, response, arg ) {
-                    let message
-                    if (response.responseText) {
-                        message = response.responseText
-                    } else {
-                        message = "Unknown error"
-                    }
-                    Ext.Msg.alert('Error', message);
-                }
-            }
+            headers: { 'Content-Type': 'application/json;charset=utf-8' }
         })
         const collectionStore = new Ext.data.JsonStore({
             fields: [
@@ -162,18 +151,7 @@ SM.CollectionGrantsGrid = Ext.extend(Ext.grid.GridPanel, {
         this.proxy = new Ext.data.HttpProxy({
             restful: true,
             url: this.url,
-            headers: { 'Content-Type': 'application/json;charset=utf-8' },
-            listeners: {
-                exception: function ( proxy, type, action, options, response, arg ) {
-                    let message
-                    if (response.responseText) {
-                        message = response.responseText
-                    } else {
-                        message = "Unknown error"
-                    }
-                    Ext.Msg.alert('Error', message);
-                }
-            }
+            headers: { 'Content-Type': 'application/json;charset=utf-8' }
         })
         const grantStore = new Ext.data.JsonStore({
             grid: this,

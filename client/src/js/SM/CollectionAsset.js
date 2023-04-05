@@ -88,12 +88,7 @@ SM.CollectionAssetGrid = Ext.extend(Ext.grid.GridPanel, {
         this.proxy = new Ext.data.HttpProxy({
             restful: true,
             url: this.url,
-            headers: { 'Content-Type': 'application/json;charset=utf-8' },
-            listeners: {
-                exception: function ( proxy, type, action, options, response, arg ) {
-                    SM.Error.handleError(response)
-                }
-            }
+            headers: { 'Content-Type': 'application/json;charset=utf-8' }
         })
         const assetStore = new Ext.data.JsonStore({
             grid: this,

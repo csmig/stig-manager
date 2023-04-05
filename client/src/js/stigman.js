@@ -64,17 +64,10 @@ async function loadApp () {
 			trackMouse: false
 		});
 		Ext.state.Manager.setProvider(new SM.State.LocalStorageProvider())
-
-		// setTimeout(()=>{
-		// 	try {
-		// 		throw new SM.Error.ClientError('new error')
-		// 	}
-		// 	catch (e) {
-		// 		throw(e)
-		// 	}
-		// }, 3000)
+		Ext.data.DataProxy.on('exception', function(proxy, type, action, e) {
+			SM.Error.handleError(new SM.Error.ExtDataProxyError(e))
+		})
 	
-		// Ext.get( 'loading-text' ).dom.innerHTML = "Getting configuration...";
 		let appConfig = await Ext.Ajax.requestPromise({
 			responseType: 'json',
 			url: `${STIGMAN.Env.apiBase}/op/configuration`,
