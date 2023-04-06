@@ -103,7 +103,7 @@ SM.Attachments.Grid = Ext.extend(Ext.grid.GridPanel, {
         await putMetadataValue(md.attachment.digest, md.data)
       }
       catch (e) {
-        SM.Error.displayError(e)
+        SM.Error.handleError(e)
         return
       }
       try {
@@ -117,7 +117,7 @@ SM.Attachments.Grid = Ext.extend(Ext.grid.GridPanel, {
         }
         catch (e2) {
           console.log(e2)
-          SM.Error.displayError(e2)
+          SM.Error.handleError(e2)
         }
       }
     }
@@ -159,7 +159,7 @@ SM.Attachments.Grid = Ext.extend(Ext.grid.GridPanel, {
           await deleteMetadataKey(record.data.digest)
         }
         catch (e) {
-          SM.Error.displayError(e)
+          SM.Error.handleError(e)
           return
         }
         try {
@@ -168,7 +168,7 @@ SM.Attachments.Grid = Ext.extend(Ext.grid.GridPanel, {
           await putMetadataValue('artifacts', JSON.stringify(data))  
         }
         catch (e) {
-          SM.Error.displayError(e)
+          SM.Error.handleError(e)
         }
       }
     }
@@ -205,8 +205,7 @@ SM.Attachments.Grid = Ext.extend(Ext.grid.GridPanel, {
         imagePanel.update(`<img style='height: 100%; width: 100%; object-fit: contain' src='data:${artifactObj.type};base64,${encodeURI(imageB64)}'></img>`) 
       }
       catch (e) {
-      //  Ext.Msg.alert("Error", "File data not available")
-       SM.Error.displayError(e)
+       SM.Error.handleError(e)
       }
     }
     const fileUploadField = new Ext.ux.form.FileUploadField({

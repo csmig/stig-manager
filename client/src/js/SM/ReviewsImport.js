@@ -1012,7 +1012,7 @@ SM.ReviewsImport.SelectFilesGrid = Ext.extend(Ext.grid.GridPanel, {
                 }
                 entries = await getAllFileEntries(e.dataTransfer.items, e.currentTarget)
                 if (!entries.length) {
-                    alert('no entries error')
+                   throw new Error('no entries error')
                 }
                 else {
                     const files = _this.store.getRange().map(r=>r.json)
@@ -2630,7 +2630,7 @@ async function showImportResultFiles(collectionId) {
                         }
                     }
                     catch (e) {
-                        alert(` ERROR (${e.message})`)
+                        SM.Error.handleError(e)
                     }
                     finally {
                         processedCount++
@@ -2690,12 +2690,8 @@ async function showImportResultFiles(collectionId) {
                     }
                 }
                 catch (e) {
-                    alert(result.response.responseText)
+                    SM.Error.handleError(e)
                 }
-                // if (apiAsset) {
-                //     let event = method === 'POST' ? 'assetcreated' : 'assetchanged'
-                //     SM.Dispatcher.fireEvent(event, apiAsset)
-                // }
 
                 return robj
             }

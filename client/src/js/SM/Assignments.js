@@ -163,7 +163,7 @@ SM.AssignmentNavTree = Ext.extend(Ext.tree.TreePanel, {
           }
         }
         catch (e) {
-          SM.Error.displayError(e)
+          SM.Error.handleError(e)
         }
     },
     treeClick: function (tree, node) {

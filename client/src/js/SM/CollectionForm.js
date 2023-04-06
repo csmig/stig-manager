@@ -905,8 +905,8 @@ SM.Collection.ManagePanel = Ext.extend(Ext.form.FormPanel, {
                         SM.Dispatcher.fireEvent('collectionchanged', apiCollection)
                     }
                     catch (e) {
-                        alert("Name update failed")
                         field.setValue(oldValue)
+                        SM.Error.handleError(e)
                     }
                 }
             }
@@ -937,7 +937,7 @@ SM.Collection.ManagePanel = Ext.extend(Ext.form.FormPanel, {
                     })
                 }
                 catch (e) {
-                    alert(e.mes)
+                    SM.Error.handleError(e)
                 }
             }
         })
@@ -959,8 +959,8 @@ SM.Collection.ManagePanel = Ext.extend(Ext.form.FormPanel, {
                         })
                     }
                     catch (e) {
-                        alert("Description update failed")
                         field.setValue(oldValue)
+                        SM.Error.handleError(e)
                     }
                 }
             }
@@ -987,7 +987,7 @@ SM.Collection.ManagePanel = Ext.extend(Ext.form.FormPanel, {
                         grid.store.sort([sortstate])
                     }
                     catch (e) {
-                        alert ('Metadata save failed')
+                        SM.Error.handleError(e)
                     }
                 }
             }
@@ -1083,7 +1083,7 @@ SM.Collection.ManagePanel = Ext.extend(Ext.form.FormPanel, {
                 grid.setValue(collection.grants)
             }
             catch (e) {
-                Ext.Msg.alert('Error: Grants save failed', SM.CreateAlertBodyFromErrorResponse(e))
+                SM.Error.handleError(e)
             }
         }
 
@@ -1122,7 +1122,7 @@ SM.Collection.ManagePanel = Ext.extend(Ext.form.FormPanel, {
                         SM.Dispatcher.fireEvent('labeldeleted', _this.apiCollection.collectionId, labelId)
                     }
                     catch (e) {
-                        alert ('Label delete failed')
+                        SM.Error.handleError(e)
                     }
 				},
 				labelchanged: async (grid, record) => {
@@ -1141,7 +1141,7 @@ SM.Collection.ManagePanel = Ext.extend(Ext.form.FormPanel, {
                         SM.Dispatcher.fireEvent('labelchanged',  _this.apiCollection.collectionId, newlabel)
                     }
                     catch (e) {
-                        alert ('Label update failed')
+                        SM.Error.handleError(e)
                     }
 				},
                 labelcreated: async (grid, record) => {
@@ -1166,7 +1166,7 @@ SM.Collection.ManagePanel = Ext.extend(Ext.form.FormPanel, {
                         
                     }
                     catch (e) {
-                        alert ('Label create failed')
+                        SM.Error.handleError(e)
                     }
                 }
             }
@@ -2390,7 +2390,7 @@ SM.Collection.LabelAssetsForm = Ext.extend(Ext.form.FormPanel, {
             await this.assetsGrid.store.loadPromise()
         }
         catch (e) {
-            alert (e)
+            SM.Error.handleError(e)
         }
     }
 })
@@ -2416,7 +2416,7 @@ SM.Collection.showLabelAssetsWindow = async function ( collectionId, labelId ) {
                     }
                 }
                 catch (e) {
-                    alert(e.stack)
+                    SM.Error.handleError(e)
                 }
             }
         })

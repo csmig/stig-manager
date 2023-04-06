@@ -108,7 +108,7 @@ SM.Exports.AssetTree = Ext.extend(Ext.tree.TreePanel, {
       }
     }
     catch (e) {
-      Ext.Msg.alert('Status', 'AJAX request failed in loadTree()');
+      SM.Error.handleError(e)
     }
   },
   onCheckChange: function (node, checked) {
@@ -342,7 +342,7 @@ SM.Exports.StigTree = Ext.extend(Ext.tree.TreePanel, {
       }
     }
     catch (e) {
-      Ext.Msg.alert('Status', 'AJAX request failed in loadTree()');
+      SM.Error.handleError(e)
     }
   },
   onCheckChange: function (node, checked) {

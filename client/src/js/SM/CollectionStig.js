@@ -208,7 +208,7 @@ SM.CollectionStigsGrid = Ext.extend(Ext.grid.GridPanel, {
                     })
                 }
                 catch (e) {
-                    alert('Error removing STIG mapping')
+                    SM.Error.handleError(e)
                 }
             }
         })
@@ -580,7 +580,7 @@ SM.CollectionStigProperties = Ext.extend(Ext.form.FormPanel, {
             await this.stigAssetsGrid.store.loadPromise()
         }
         catch (e) {
-            alert (e)
+            SM.Error.handleError(e)
         }
     }
 })
@@ -611,7 +611,7 @@ async function showCollectionStigProps( benchmarkId, parentGrid ) {
                     }
                 }
                 catch (e) {
-                    alert(e.stack)
+                    SM.Error.handleError(e)
                 }
             }
         })
