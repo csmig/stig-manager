@@ -2458,18 +2458,9 @@ SM.Collection.showLabelAssetsWindow = async function ( collectionId, labelId ) {
         appwindow.show(document.body);
     }
     catch (e) {
-        if(typeof e === 'object') {
-            if (e instanceof Error) {
-              e = JSON.stringify(e, Object.getOwnPropertyNames(e), 2);
-            }
-            else {
-              // payload = JSON.stringify(payload, null, 2);
-              e = JSON.stringify(e);
-            }
-          }        
-        SM.Error.handleError(e)
         Ext.getBody().unmask()
-    }	
+        SM.Error.handleError(e)
+    }
 }
 
 

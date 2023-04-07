@@ -571,16 +571,8 @@ SM.Exports.showExportTree = async function (collectionId, collectionName, treeba
     appwindow.show(document.body)
   }
   catch (e) {
-    if (typeof e === 'object') {
-      if (e instanceof Error) {
-        e = JSON.stringify(e, Object.getOwnPropertyNames(e), 2);
-      }
-      else {
-        e = JSON.stringify(e);
-      }
-    }
-    SM.Error.handleError(e)
     Ext.getBody().unmask()
+    SM.Error.handleError(e)
   }
 }
 

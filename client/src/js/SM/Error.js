@@ -4,11 +4,6 @@ class SmError extends Error {
   constructor(message) {
     super(message)
     this.name = this.constructor.name
-    // this.env = STIGMAN.Env
-    // this.toJSON = () => { 
-    //   const { name, message, stack } = this
-    //   return { name, message, stack, ...this }
-    // }
   }
 }
 
@@ -80,11 +75,6 @@ Object.assign(SM.Error, {
   ExtDataProxyError,
   NonJsonResponse 
 })
-
-
-// serialize-error follows
-
-// not serialize-error
 
 SM.Error.FormPanel = Ext.extend(Ext.form.FormPanel, {
   initComponent: function () {

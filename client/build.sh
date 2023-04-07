@@ -85,6 +85,10 @@ cp -r $SrcDir/index.html $DistDir/index.html
 echo "Preparing Service Worker resources"
 cp -r $SrcDir/serviceWorker.js $DistDir/serviceWorker.js
 
+# npm
+echo "Preparing npm resources"
+npm --prefix $SrcDir/js/third-party ci
+
 # JS
 echo "Preparing JavaScript resources"
 mkdir $DistDir/js

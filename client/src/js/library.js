@@ -37,7 +37,6 @@ async function addLibraryStig( params ) {
     libraryStigTab.load(benchmarkId)
   }
   catch (e) {
-    console.error(e)
     SM.Error.handleError(e)
   }
 }
