@@ -37,7 +37,7 @@ function logout() {
 
 async function updateCallback() {
   try {
-    await window.oidcProvider.updateToken(-1)
+    await updateToken(-1)
   }
   catch (e) {
       console.log('[OIDCPROVIDER] Error in updateCallback')
