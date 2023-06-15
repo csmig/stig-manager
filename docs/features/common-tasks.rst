@@ -33,6 +33,16 @@ Many Collections will contain Assets that are assigned the same STIG.  The Colle
 See the User Guide's section on the :ref:`Collection Review Workspace` for more information. 
 
 
+Pin a specific STIG Revision to a Collection
+===============================================
+
+Many Collections will contain Assets that are assigned the same STIG.  The Collection Review Workspace allows Evaluators and Validators to step through each Rule in the STIG and view each Asset's Review and Status in one place. Restricted Users will only see the Assets they have been assigned, while Users with higher grants to the Collection will see every Asset.  Comments, Evaluations, and Statuses can all be edited via this interface, which also offers bulk actions for Submitting and Accepting Reviews.  This interface also provides an export option that will produce a .zip archive of .ckls representing the state of every Asset in the Collection that has this STIG. 
+
+See the User Guide's section on the :ref:`Collection Management` for more information. 
+Transfer Assets with the :ref:`"Transfer To" button in the Manage Collection Workspace.<transfer-asset>`
+
+
+
 Accept and Reject STIG Reviews
 ====================================
 

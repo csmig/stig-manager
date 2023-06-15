@@ -1210,8 +1210,7 @@ To alter an Asset's properties or tag it with Labels, select an Asset and click 
 
 STIGs Panel
 -------------------
-This panel lists all the STIGs that have been assigned to at least one Asset in the Collection.
-STIG Assignments can also be added or removed from Assets with the buttons at the top of this panel.
+This panel lists all the STIGs that have been assigned to at least one Asset in the Collection. STIG Assignments can also be added or removed from Assets with the buttons at the top of this panel. You can also "pin" a specific Revision of a STIG to the Collection. This will lock this Collection to that specific Revision of a STIG, rather than use the default behavior of always using the latest Revision of a STIG.
 
 .. thumbnail:: /assets/images/stigs-panel.png
       :width: 50% 
@@ -1220,6 +1219,18 @@ STIG Assignments can also be added or removed from Assets with the buttons at th
 
 
 -------------------------------
+
+
+Pin a STIG Revision
+~~~~~~~~~~~~~~~~~~~~~
+
+You can "Pin" a specific Revision of a STIG to the Collection. This will lock this Collection to that specific Revision of a STIG, rather than use the default behavior of always using the latest Revision of a STIG. This will affect the metrics as well as the default Revision of a STIG presented in all Review interfaces. 
+
+STIG Manager calculates all metrics based on the latest Revision of a STIG.  If you would like to "pin" a specific Revision of a STIG to the Collection, click the "Pin" button next to the STIG you would like to pin.  This will lock this Collection to that specific Revision of a STIG, rather than use the default behavior of always using the latest Revision of a STIG.
+
+This action may take a moment, as STIG Manager will need to recalculate all metrics based on the pinned Revision.
+
+
 
 
 Assign STIG
@@ -1238,8 +1249,6 @@ Remove STIG
 ~~~~~~~~~~~~~~~~~~~~~
 The Remove STIG button will remove the selected STIG from all Assets that are assigned it in this Collection.
 
-.. note::
-   Reviews for Rules in the deleted STIG will also be deleted!
 
 
 Change Assigned Assets
