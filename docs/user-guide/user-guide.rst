@@ -1233,19 +1233,26 @@ Select Assign STIG to add a new STIG to the Collection. A popup will allow you t
 
 -------------------------------
 
+
+.. _pin-revision:
+
 Set a Default STIG Revision
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-You can "Pin" a specific Revision of a STIG to the Collection. This will lock this Collection to that specific Revision of a STIG, rather than use the default behavior of always using the latest Revision of a STIG. This will affect all calculated Metrics as well as the initial Revision of a STIG presented in all Review interfaces. 
+You can "Pin" a specific Revision of a STIG to the Collection. This will lock this Collection to that specific Revision of a STIG, rather than use the default behavior of always using the latest Revision of a STIG. This will affect all calculated Metrics as well as the initial Revision of a STIG presented in all Workspaces. 
 
-To set a specific Revision of a STIG for a Collection, open the STIG Assignment window with the "Assign STIG" button or double-click on the Revision. Select the desired Revision from the "Default revision" dropdown menu, and click "Update."  To revert to the default behavior, select "Most Recent Revision" from the dropdown menu and click "Update."
+To set a specific default Revision of a STIG for a Collection, open the STIG Assignment window with the "Assign STIG" button or double-click on the Revision in the STIGs panel. Select the desired Revision from the "Default revision" dropdown menu, and click "Update."  To revert to the default behavior, select "Most Recent Revision" from the dropdown menu and click "Update."
 
 The Update action may take a moment, as STIG Manager will need to recalculate all metrics based on the new Revision.
 
 The "pinned" Revision is indicated with a pin icon in the STIGs Panel and Collection Dashboard.
 
+.. note::
+    A STIG must be assigned to at least one Asset in a Collection in order to be Pinned!
 
-.. thumbnail:: /assets/images/stig-pin.png
+
+
+.. thumbnail:: /assets/images/collection-manage-revision-pinning.png
       :width: 50% 
       :show_caption: True
       :title: Pin a STIG Revision
