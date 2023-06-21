@@ -1236,11 +1236,11 @@ Select Assign STIG to add a new STIG to the Collection. A popup will allow you t
 Set a Default STIG Revision
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-You can "Pin" a specific Revision of a STIG to the Collection. This will lock this Collection to that specific Revision of a STIG, rather than use the default behavior of always using the latest Revision of a STIG. This will affect the metrics as well as the initial Revision of a STIG presented in all Review interfaces. 
+You can "Pin" a specific Revision of a STIG to the Collection. This will lock this Collection to that specific Revision of a STIG, rather than use the default behavior of always using the latest Revision of a STIG. This will affect all calculated Metrics as well as the initial Revision of a STIG presented in all Review interfaces. 
 
-Without setting a "pin," STIG Manager calculates all metrics based on the latest Revision of a STIG in the system.  If you would like to set a specific Revision of a STIG for a Collection, open the STIG Assignment window with the "Assign STIG" button or double-click on the Revision. Select the desired Revision from the "Default revision" dropdown menu, and click "Update."  To revert to the default behavior, select "Most Recent Revision" from the dropdown menu.  
+To set a specific Revision of a STIG for a Collection, open the STIG Assignment window with the "Assign STIG" button or double-click on the Revision. Select the desired Revision from the "Default revision" dropdown menu, and click "Update."  To revert to the default behavior, select "Most Recent Revision" from the dropdown menu and click "Update."
 
-The Update action may take a moment, as STIG Manager will need to recalculate all metrics based on the pinned Revision.
+The Update action may take a moment, as STIG Manager will need to recalculate all metrics based on the new Revision.
 
 The "pinned" Revision is indicated with a pin icon in the STIGs Panel and Collection Dashboard.
 

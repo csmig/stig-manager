@@ -4,9 +4,14 @@ SM.WhatsNew.Sources = [
 
 {
     date: '2023-6-20',
-    header: `Tally Sprites for Most Display Grids`,
+    header: `Set the Default STIG Revision for a Collection`,
     body: `
-    <p>New tally sprites have been added to the bottom toolbars of grids that display Review data. These sprites show the relevant counts for the various rows, results, and statuses displayed in the grids above.</p>
+    <p>Collection Managers and Owners can now "pin" their Collection to a specific STIG Revision.</p>
+
+<b>Set the default revision for this Collection.</b> <br><br>
+All Metrics and Review Workspaces for this Collection will default to the "pinned" STIG Revision specified here. <br><br>
+- <b>Most Recent Revision:</b> The Collection Metrics and Workspaces will default to the latest STIG in the system as they are updated. <br><br>
+- <b>Revision String (Date):</b> Pin the default to the specified Revision<br><br>
 
     <p>These sprites respond to filters you have active on your view of the grid data. For example, if you have a filter active that only shows CAT 1 Rules with a Result of "Open", the tally sprite will only count Reviews for CAT 1 Rules with a Result of "Open". </p>
 
