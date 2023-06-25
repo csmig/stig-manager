@@ -1730,7 +1730,17 @@ exports.doesCollectionIncludeStig = async function ({collectionId, benchmarkId})
   }
 }
 
-exports.cloneCollection = async function ({collectionId, userObject, name, description, options, svcStatus = {}}) {
+exports.cloneCollectionX = async function ({collectionId, userObject, name, description, options, svcStatus = {}, progressCb}) {
+  for (let x =0; x<4; x++) {
+    await new Promise(r => setTimeout(r, 10000))
+
+    progressCb(`line ${x}`)
+  }
+
+  return {destCollectionId: 1}
+}
+
+exports.cloneCollection = async function ({collectionId, userObject, name, description, options, svcStatus = {}, progressCb = () => {}}) {
   let connection
   try {
 
@@ -1749,7 +1759,19 @@ exports.cloneCollection = async function ({collectionId, userObject, name, descr
       createLabelMap: `CREATE TEMPORARY TABLE t_clid_map SELECT cl1.clId as srcClId, cl2.clId as destClId FROM collection_label cl1 left join collection_label cl2 on (cl1.collectionId = @srcCollectionId and cl1.name = cl2.name) WHERE cl2.collectionId = @destCollectionId`,
       dropAssetMap: `DROP TEMPORARY TABLE IF EXISTS t_assetid_map`,
       createAssetMap: `CREATE TEMPORARY TABLE t_assetid_map SELECT a1.assetId as srcAssetId, a2.assetId as destAssetId FROM asset a1 left join asset a2 on (a1.collectionId =  @srcCollectionId and a1.name = a2.name) WHERE a2.collectionId = @destCollectionId`,
-      cloneReviews: `INSERT INTO review (assetId, ruleId, resultId, detail, comment, autoResult, ts, userId, statusId, statusText, statusUserId, statusTs, metadata, resultEngine, version, checkDigest) SELECT am.destAssetId, r.ruleId, r.resultId, r.detail, r.comment, r.autoResult, r.ts, r.userId, r.statusId, r.statusText, r.statusUserId, r.statusTs, r.metadata, r.resultEngine, r.version, r.checkDigest FROM asset a inner join t_assetid_map am on a.assetId = am.srcAssetId inner join review r on am.srcAssetId = r.assetId`,
+      countReviewIds: `SELECT count(seq) as reviewCount from t_reviewId_list`,
+      dropReviewIdList: `DROP TEMPORARY TABLE IF EXISTS t_reviewId_list`,
+      createReviewIdList: `CREATE TEMPORARY TABLE t_reviewId_list (seq INT AUTO_INCREMENT PRIMARY KEY)
+      SELECT r.reviewId, am.destAssetId FROM asset a inner join t_assetid_map am on a.assetId = am.srcAssetId inner join review r on am.srcAssetId = r.assetId `,
+      
+      cloneReviews: `INSERT INTO review (assetId, ruleId, resultId, detail, comment, autoResult, ts, userId, statusId, statusText, statusUserId, statusTs, metadata, resultEngine, version, checkDigest)
+      SELECT rl.destAssetId, r.ruleId, r.resultId, r.detail, r.comment, r.autoResult, r.ts, r.userId, r.statusId, r.statusText, r.statusUserId, r.statusTs, r.metadata, r.resultEngine, r.version, r.checkDigest
+      FROM
+      t_reviewId_list rl
+      left join review r using (reviewId)
+      WHERE
+      rl.seq >= ? and rl.seq <= ?`,
+
       cloneRevisionsMatchSource: `INSERT INTO collection_rev_map (collectionId, benchmarkId, revId) SELECT @destCollectionId, benchmarkId, revId FROM collection_rev_map where collectionId = @srcCollectionId`,
       cloneRevisionsSourceDefaults: `INSERT INTO collection_rev_map (collectionId, benchmarkId, revId) SELECT @destCollectionId, benchmarkId, revId FROM v_default_rev where collectionId = @srcCollectionId`
     }
@@ -1762,38 +1784,59 @@ exports.cloneCollection = async function ({collectionId, userObject, name, descr
       description
     ])
 
-    const dmls = [sql.cloneCollection, sql.selectLastInsertId]
+    const dmls = ['cloneCollection', 'selectLastInsertId']
 
     if (options.grants) {
-      dmls.push(sql.cloneGrants)
+      dmls.push('cloneGrants')
     }
-    dmls.push(sql.insertOwnerGrant)
+    dmls.push('insertOwnerGrant')
 
     if (options.labels) {
-      dmls.push(sql.cloneLabels)
+      dmls.push('cloneLabels')
     }
 
     if (options.assets) {
-      dmls.push(sql.cloneAssets, sql.dropAssetMap, sql.createAssetMap)
+      dmls.push('cloneAssets', 'dropAssetMap', 'createAssetMap')
       if (options.labels) {
-        dmls.push(sql.dropLabelMap, sql.createLabelMap, sql.cloneAssetLabels)
+        dmls.push('dropLabelMap', 'createLabelMap', 'cloneAssetLabels')
       }
       if (options.stigMappings !== 'no') {
-        dmls.push(options.stigMappings === 'withReviews' ? sql.cloneStigMappingsWithReviews : sql.cloneStigMappingsWithoutReviews)
+        dmls.push(options.stigMappings === 'withReviews' ? 'cloneStigMappingsWithReviews' : 'cloneStigMappingsWithoutReviews')
         if (options.grants) {
-          dmls.push(sql.cloneRestrictedUserGrants)
+          dmls.push('cloneRestrictedUserGrants')
         }
-        dmls.push(options.pinRevisions === 'matchSource' ? sql.cloneRevisionsMatchSource : sql.cloneRevisionsSourceDefaults)
+        dmls.push(options.pinRevisions === 'matchSource' ? 'cloneRevisionsMatchSource' : 'cloneRevisionsSourceDefaults')
       }
       if (options.stigMappings === 'withReviews') {
-        dmls.push(sql.cloneReviews)
+        dmls.push('dropReviewIdList', 'createReviewIdList', 'cloneReviews')
       }
     }
 
     async function transaction () {
       await connection.query('START TRANSACTION')
       for (const dml of dmls) {
-        await connection.query(dml)
+        if (dml === 'cloneReviews') {
+          // await connection.commit()
+          // await connection.query('START TRANSACTION')
+          let offset = 1
+          const chunkSize = 5000
+          let clonedCount = 0
+          let [result] = await connection.query(sql.countReviewIds)
+          const numberToClone = result[0].reviewCount
+          do {
+            [result] = await connection.query(sql[dml], [offset, offset + chunkSize - 1])
+            if (result.affectedRows != 0) {
+              clonedCount += result.affectedRows
+              progressCb(`cloned reviews: ${clonedCount} of ${numberToClone}\n`)
+            }
+            offset += chunkSize
+          } while (result.affectedRows != 0)
+        }
+        else {
+          progressCb(`${dml}: ...`) 
+          const [result] = await connection.query(sql[dml])
+          progressCb(` success\n`) 
+        }
       }
       await connection.commit()
     }

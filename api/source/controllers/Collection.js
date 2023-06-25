@@ -939,8 +939,21 @@ module.exports.writeStigPropsByCollectionStig = async function (req, res, next) 
   }
 }
 
+module.exports.cloneCollectionX = async function (req, res, next) {
+  req.noCompression = true
+  function progressCb(text) {
+    res.write(`${text}`)
+  }
+  res.setHeader('Content-Type', 'text/plain; charset=utf-8');
+  await CollectionSvc.cloneCollectionX({progressCb})
+  res.end()
+}
+
 module.exports.cloneCollection = async function (req, res, next) {
   try {
+    function progressCb(text) {
+      res.write(`${text}`)
+    }
     if ( req.userObject.privileges.canCreateCollection ) {
       const collectionId = getCollectionIdAndCheckPermission(req, Security.ACCESS_LEVEL.Manage)
       const options = {
@@ -951,16 +964,22 @@ module.exports.cloneCollection = async function (req, res, next) {
         pinRevisions: 'matchSource',
         ...req.body.options
       }
+
+      res.setHeader('Content-Type', 'text/plain; charset=utf-8');
+      req.noCompression = true
+
       const cloned = await CollectionSvc.cloneCollection({
         collectionId, 
         userObject: req.userObject, 
         name: req.body.name,
         description: req.body.description,
         options, 
-        svcStatus: res.svcStatus
+        svcStatus: res.svcStatus,
+        progressCb
       })
       const response = await CollectionSvc.getCollection(cloned.destCollectionId, req.query.projection, false, req.userObject )
-      res.json(response)
+      res.write(JSON.stringify(response) + '\n')
+      res.end()
     }
     else {
       throw new SmError.PrivilegeError('User has not been granted createCollection privilege')

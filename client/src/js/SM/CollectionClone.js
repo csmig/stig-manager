@@ -165,13 +165,43 @@ SM.CollectionClone.showCollectionClone = function ({collectionId, sourceName}) {
     async function btnHandler (btn) {
       try {
         const jsonData = fp.getApiValues()
-        await Ext.Ajax.requestPromise({
-          responseType: 'json',
-          url: `${STIGMAN.Env.apiBase}/collections/${collectionId}/clone`,
+        fpwindow.close()
+        initProgress("Cloning", "Waiting for response...");
+        updateStatusText ('Waiting for API response...')
+
+        await window.oidcProvider.updateToken(10)
+        let response = await fetch(`${STIGMAN.Env.apiBase}/collections/${collectionId}/clone?projection=owners&projection=labels&projection=statistics`, {
           method: 'POST',
-          jsonData
-        }) 
-      }
+          headers: new Headers({
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${window.oidcProvider.token}`
+          }),
+          body: JSON.stringify(jsonData)
+        })
+        const reader = response.body.getReader()
+        const td = new TextDecoder("utf-8")
+        let isdone = false
+        const jsons = []
+        do {
+          const {value, done} = await reader.read()
+          const text = td.decode(value)
+          updateStatusText (text, true)
+          console.log(`chunk: ${text}`)
+          const json = SM.safeJSONParse(text)
+          if (json) jsons.push(json)
+          isdone = done
+        } while (!isdone)
+        updateProgress(0, 'Done')
+        
+        // Refresh the curUser global
+        await SM.GetUserObject()
+
+        SM.Dispatcher.fireEvent( 'collectioncreated', jsons[0], {
+          elevate: false,
+          showManager: false
+        })
+
+}
       catch (e) {
         SM.Error.handleError(e)
       }
