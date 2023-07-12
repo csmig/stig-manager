@@ -302,14 +302,21 @@ async function showCollectionProps(collectionId) {
           let values = fp.getForm().getFieldValues()
           await addOrUpdateCollection(collectionId, values, {
             elevate: true,
-            showManager: false
+            showManager: true
           })
+          appwindow.close()
         }
         catch (e) {
-          SM.Error.handleError(e)
-        }
-        finally {
-          appwindow.close()
+          if (e.responseText) {
+            const response = SM.safeJSONParse(e.responseText)
+            if (response?.detail === 'Duplicate name exists.') {
+              Ext.Msg.alert('Name unavailable', 'The Collection name is unavailable. Please try a different name.')
+            }
+            else {
+              appwindow.close()
+              await SM.Error.handleError(e)
+            }
+          }
         }
       }
     })
