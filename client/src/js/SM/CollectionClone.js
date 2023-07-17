@@ -154,6 +154,47 @@ SM.CollectionClone.CloneForm = Ext.extend(Ext.form.FormPanel, {
   }
 })
 
+class NDJSONTransformStream {
+  buffer = ''
+  constructor(separator = '\n') {
+    const _this = this
+    return new TransformStream({
+      transform(chunk, controller) {
+        if (_this.buffer) {
+          chunk = _this.buffer + chunk
+        }
+        const segments = chunk.split(separator)
+        for (const segment of segments) {
+          const jsonObj = SM.safeJSONParse(segment)
+          if (jsonObj) {
+            controller.enqueue(jsonObj)
+          }
+        }
+        if (!chunk.endsWith(separator)) {
+          _this.buffer = segments[segments.length - 1]
+        }
+      }
+    })
+  }
+}
+
+function NDJSONStream(separator = '\n') {
+  let buffer = ''
+  return new TransformStream({
+    transform(chunk, controller) {
+      buffer = buffer ? buffer + chunk : chunk
+      const segments = buffer.split(separator)
+      for (const segment of segments) {
+        const jsonObj = SM.safeJSONParse(segment)
+        if (jsonObj) {
+          controller.enqueue(jsonObj)
+        }
+      }
+      buffer = buffer.endsWith(separator) ? '' : segments[segments.length - 1]
+    }
+  })
+}
+
 SM.CollectionClone.showCollectionClone = function ({collectionId, sourceName}) {
   try {
     const width = 420
@@ -178,17 +219,22 @@ SM.CollectionClone.showCollectionClone = function ({collectionId, sourceName}) {
           }),
           body: JSON.stringify(jsonData)
         })
-        const reader = response.body.getReader()
+        // const reader = response.body.getReader()
+        const reader = response.body
+          .pipeThrough(new TextDecoderStream())
+          .pipeThrough(NDJSONStream())
+          .getReader()
+
         const td = new TextDecoder("utf-8")
         let isdone = false
         const jsons = []
         do {
           const {value, done} = await reader.read()
-          const text = td.decode(value)
-          updateStatusText (text, true)
-          console.log(`chunk: ${text}`)
-          const json = SM.safeJSONParse(text)
-          if (json) jsons.push(json)
+          if (value) {
+            updateStatusText (JSON.stringify(value), true)
+            jsons.push(value)
+            console.log(`chunk: ${JSON.stringify(value)}`)
+          }
           isdone = done
         } while (!isdone)
         updateProgress(0, 'Done')
@@ -196,9 +242,9 @@ SM.CollectionClone.showCollectionClone = function ({collectionId, sourceName}) {
         // Refresh the curUser global
         await SM.GetUserObject()
 
-        SM.Dispatcher.fireEvent( 'collectioncreated', jsons[0], {
+        SM.Dispatcher.fireEvent( 'collectioncreated', jsons[jsons.length - 1], {
           elevate: false,
-          showManager: false
+          showManager: true
         })
 
 }

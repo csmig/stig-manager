@@ -955,8 +955,8 @@ module.exports.cloneCollectionX = async function (req, res, next) {
 
 module.exports.cloneCollection = async function (req, res, next) {
   try {
-    function progressCb(text) {
-      res.write(`${text}`)
+    function progressCb(json) {
+      res.write(JSON.stringify(json) + '\n')
     }
     if ( req.userObject.privileges.canCreateCollection ) {
       const collectionId = getCollectionIdAndCheckPermission(req, Security.ACCESS_LEVEL.Manage)

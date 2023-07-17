@@ -1745,8 +1745,8 @@ exports.cloneCollectionX = async function ({collectionId, userObject, name, desc
 exports.cloneCollection = async function ({collectionId, userObject, name, description, options, svcStatus = {}, progressCb = () => {}}) {
   let connection
   try {
-
     const sql = {
+      // cloneCollection: `INSERT INTO collection (name, description, settings, metadata, state) SELECT @name,@description,settings, metadata, "cloning" from collection WHERE collectionId = @srcCollectionId`,
       cloneCollection: `INSERT INTO collection (name, description, settings, metadata) SELECT @name,@description,settings, metadata from collection WHERE collectionId = @srcCollectionId`,
       selectLastInsertId: 'SELECT last_insert_id() into @destCollectionId',
       cloneGrants: `INSERT INTO collection_grant (collectionId, userId, accessLevel) SELECT @destCollectionId, userId, accessLevel FROM collection_grant where collectionId = @srcCollectionId`,
@@ -1775,7 +1775,9 @@ exports.cloneCollection = async function ({collectionId, userObject, name, descr
       rl.seq >= ? and rl.seq <= ?`,
 
       cloneRevisionsMatchSource: `INSERT INTO collection_rev_map (collectionId, benchmarkId, revId) SELECT @destCollectionId, benchmarkId, revId FROM collection_rev_map where collectionId = @srcCollectionId`,
-      cloneRevisionsSourceDefaults: `INSERT INTO collection_rev_map (collectionId, benchmarkId, revId) SELECT @destCollectionId, benchmarkId, revId FROM v_default_rev where collectionId = @srcCollectionId`
+      cloneRevisionsSourceDefaults: `INSERT INTO collection_rev_map (collectionId, benchmarkId, revId) SELECT @destCollectionId, benchmarkId, revId FROM default_rev where collectionId = @srcCollectionId`,
+      insertDefaultRev: `INSERT INTO default_rev(collectionId, benchmarkId, revId, revisionPinned) SELECT collectionId, benchmarkId, revId, revisionPinned FROM v_default_rev WHERE collectionId = @destCollectionId`,
+      enableCollection: `UPDATE collection SET state = "enabled" WHERE collectionId = @destCollectionId`
     }
     connection = await dbUtils.pool.getConnection()
     connection.config.namedPlaceholders = false
@@ -1786,64 +1788,89 @@ exports.cloneCollection = async function ({collectionId, userObject, name, descr
       description
     ])
 
-    const dmls = ['cloneCollection', 'selectLastInsertId']
+    const collectionQueries = ['cloneCollection', 'selectLastInsertId']
+    const reviewQueries = []
 
     if (options.grants) {
-      dmls.push('cloneGrants')
+      collectionQueries.push('cloneGrants')
     }
-    dmls.push('insertOwnerGrant')
+    collectionQueries.push('insertOwnerGrant')
 
     if (options.labels) {
-      dmls.push('cloneLabels')
+      collectionQueries.push('cloneLabels')
     }
 
     if (options.assets) {
-      dmls.push('cloneAssets', 'dropAssetMap', 'createAssetMap')
+      collectionQueries.push('cloneAssets', 'dropAssetMap', 'createAssetMap')
       if (options.labels) {
-        dmls.push('dropLabelMap', 'createLabelMap', 'cloneAssetLabels')
+        collectionQueries.push('dropLabelMap', 'createLabelMap', 'cloneAssetLabels')
       }
       if (options.stigMappings !== 'no') {
-        dmls.push(options.stigMappings === 'withReviews' ? 'cloneStigMappingsWithReviews' : 'cloneStigMappingsWithoutReviews')
+        collectionQueries.push(options.stigMappings === 'withReviews' ? 'cloneStigMappingsWithReviews' : 'cloneStigMappingsWithoutReviews')
         if (options.grants) {
-          dmls.push('cloneRestrictedUserGrants')
+          collectionQueries.push('cloneRestrictedUserGrants')
         }
-        dmls.push(options.pinRevisions === 'matchSource' ? 'cloneRevisionsMatchSource' : 'cloneRevisionsSourceDefaults')
+        collectionQueries.push(options.pinRevisions === 'matchSource' ? 'cloneRevisionsMatchSource' : 'cloneRevisionsSourceDefaults')
+        collectionQueries.push('insertDefaultRev')
       }
       if (options.stigMappings === 'withReviews') {
-        dmls.push('dropReviewIdList', 'createReviewIdList', 'cloneReviews')
+        reviewQueries.push('dropReviewIdList', 'createReviewIdList', 'cloneReviews')
       }
     }
 
-    async function transaction () {
+    async function transactionCollection () {
       await connection.query('START TRANSACTION')
-      for (const dml of dmls) {
-        if (dml === 'cloneReviews') {
-          // await connection.commit()
-          // await connection.query('START TRANSACTION')
+      for (const query of collectionQueries) {
+        progressCb({query, status: 'starting'}) 
+        const [result] = await connection.query(sql[query])
+        progressCb({query, status: 'finished'}) 
+      }
+      await connection.commit()
+    }
+
+    async function transactionReviews () {
+      await connection.query('START TRANSACTION')
+      for (const query of reviewQueries) {
+        if (query === 'cloneReviews') {
           let offset = 1
           const chunkSize = 5000
           let clonedCount = 0
           let [result] = await connection.query(sql.countReviewIds)
           const numberToClone = result[0].reviewCount
+          progressCb({
+            query,
+            status: 'starting',
+            numberToClone,
+            chunkSize,
+            clonedCount
+          })
           do {
-            [result] = await connection.query(sql[dml], [offset, offset + chunkSize - 1])
+            [result] = await connection.query(sql[query], [offset, offset + chunkSize - 1])
             if (result.affectedRows != 0) {
               clonedCount += result.affectedRows
-              progressCb(`cloned reviews: ${clonedCount} of ${numberToClone}\n`)
+              progressCb({
+                query,
+                status: 'starting',
+                numberToClone,
+                chunkSize,
+                clonedCount
+              })
             }
             offset += chunkSize
           } while (result.affectedRows != 0)
         }
         else {
-          progressCb(`${dml}: ...`) 
-          const [result] = await connection.query(sql[dml])
-          progressCb(` success\n`) 
-        }
+          progressCb({query, status: 'starting'}) 
+          const [result] = await connection.query(sql[query])
+          progressCb({query, status: 'finished'}) 
+          }
       }
       await connection.commit()
     }
 
-    await dbUtils.retryOnDeadlock(transaction, svcStatus)
+    await dbUtils.retryOnDeadlock(transactionCollection, svcStatus)
+    await dbUtils.retryOnDeadlock(transactionReviews, svcStatus)
+    // await connection.query(sql.enableCollection)
     const [rows] = await connection.query(`SELECT @destCollectionId as destCollectionId`)
     return rows[0]
   }
