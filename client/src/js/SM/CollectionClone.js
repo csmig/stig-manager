@@ -242,7 +242,7 @@ SM.CollectionClone.showCollectionClone = function ({collectionId, sourceName}) {
         // Refresh the curUser global
         await SM.GetUserObject()
 
-        SM.Dispatcher.fireEvent( 'collectioncreated', jsons[jsons.length - 1], {
+        SM.Dispatcher.fireEvent( 'collectioncreated', jsons[jsons.length - 1].collection, {
           elevate: false,
           showManager: true
         })

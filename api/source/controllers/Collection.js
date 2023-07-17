@@ -981,8 +981,8 @@ module.exports.cloneCollection = async function (req, res, next) {
         svcStatus: res.svcStatus,
         progressCb
       })
-      const response = await CollectionSvc.getCollection(cloned.destCollectionId, req.query.projection, false, req.userObject )
-      res.write(JSON.stringify(response) + '\n')
+      const collection = await CollectionSvc.getCollection(cloned.destCollectionId, req.query.projection, false, req.userObject )
+      res.write(JSON.stringify({stage: 'result', collection}) + '\n')
       res.end()
     }
     else {

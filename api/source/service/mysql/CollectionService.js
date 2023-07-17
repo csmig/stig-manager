@@ -1819,53 +1819,81 @@ exports.cloneCollection = async function ({collectionId, userObject, name, descr
     }
 
     async function transactionCollection () {
+      const stage = 'collection'
+      const stepCount = collectionQueries.length + 1
+      const progressJson = {stage, stepCount, step: 0}
+
       await connection.query('START TRANSACTION')
+
       for (const query of collectionQueries) {
-        progressCb({query, status: 'starting'}) 
+        progressJson.stepName = query
+        progressJson.step++
+        progressJson.status = 'running'
+        // progressCb(progressJson) 
+
         const [result] = await connection.query(sql[query])
-        progressCb({query, status: 'finished'}) 
+
+        progressJson.status = 'finished'
+        progressCb(progressJson) 
       }
+
+      progressJson.step++
+      progressJson.stepName = 'commit'
+      progressJson.status = 'running'
+      progressCb(progressJson) 
+
       await connection.commit()
+
+      progressJson.status = 'finished'
+      progressCb(progressJson) 
     }
 
     async function transactionReviews () {
+      const stage = 'reviews'
+      const stepCount = reviewQueries.length + 1
+      const progressJson = {stage, stepCount, step: 0}
+
       await connection.query('START TRANSACTION')
       for (const query of reviewQueries) {
+        progressJson.stepName = query
+        progressJson.step++
+
         if (query === 'cloneReviews') {
           let offset = 1
-          const chunkSize = 5000
-          let clonedCount = 0
+          const chunkSize = 10000
           let [result] = await connection.query(sql.countReviewIds)
-          const numberToClone = result[0].reviewCount
-          progressCb({
-            query,
-            status: 'starting',
-            numberToClone,
-            chunkSize,
-            clonedCount
-          })
+
+          progressJson.status = 'running'
+          progressJson.reviewsTotal = result[0].reviewCount
+          progressJson.reviewsCopied = 0
+          progressCb(progressJson) 
+
           do {
             [result] = await connection.query(sql[query], [offset, offset + chunkSize - 1])
             if (result.affectedRows != 0) {
-              clonedCount += result.affectedRows
-              progressCb({
-                query,
-                status: 'starting',
-                numberToClone,
-                chunkSize,
-                clonedCount
-              })
+              progressJson.reviewsCopied += result.affectedRows
+              progressCb(progressJson) 
             }
             offset += chunkSize
           } while (result.affectedRows != 0)
         }
         else {
-          progressCb({query, status: 'starting'}) 
+          progressJson.status = 'starting'
+          // progressCb(progressJson) 
           const [result] = await connection.query(sql[query])
-          progressCb({query, status: 'finished'}) 
-          }
+          progressJson.status = 'finished'
+          progressCb(progressJson) 
+        }
       }
+      progressJson.step++
+      progressJson.stepName = 'commit'
+      progressJson.status = 'running'
+      progressCb(progressJson) 
+
       await connection.commit()
+
+      progressJson.status = 'finished'
+      progressCb(progressJson) 
     }
 
     await dbUtils.retryOnDeadlock(transactionCollection, svcStatus)
