@@ -185,9 +185,9 @@ function NDJSONStream(separator = '\n') {
       buffer = buffer ? buffer + chunk : chunk
       const segments = buffer.split(separator)
       for (const segment of segments) {
-        const jsonObj = SM.safeJSONParse(segment)
-        if (jsonObj) {
-          controller.enqueue(jsonObj)
+        const jsObj = SM.safeJSONParse(segment)
+        if (jsObj) {
+          controller.enqueue(jsObj)
         }
       }
       buffer = buffer.endsWith(separator) ? '' : segments[segments.length - 1]
