@@ -154,29 +154,28 @@ SM.CollectionClone.CloneForm = Ext.extend(Ext.form.FormPanel, {
   }
 })
 
-class NDJSONTransformStream {
-  buffer = ''
-  constructor(separator = '\n') {
+SM.CollectionClone.CloneProgressPanel = Ext.extend(Ext.Panel, {
+  initComponent: function () {
     const _this = this
-    return new TransformStream({
-      transform(chunk, controller) {
-        if (_this.buffer) {
-          chunk = _this.buffer + chunk
-        }
-        const segments = chunk.split(separator)
-        for (const segment of segments) {
-          const jsonObj = SM.safeJSONParse(segment)
-          if (jsonObj) {
-            controller.enqueue(jsonObj)
-          }
-        }
-        if (!chunk.endsWith(separator)) {
-          _this.buffer = segments[segments.length - 1]
-        }
-      }
+    const pb = new Ext.ProgressBar({
+      flex: 0
     })
+    const config = {
+      baseCls: 'x-plain',
+      cls: 'sm-collection-manage-layout sm-round-panel',
+      bodyStyle: 'padding: 9px;',
+      border: false,
+      items: [pb],
+      pb
+      // buttons: [
+      //   minBtn
+      // ]
+    }
+    Ext.apply(this, Ext.apply(this.initialConfig, config))
+    this.superclass().initComponent.call(this);
   }
-}
+})
+
 
 function NDJSONStream(separator = '\n') {
   let buffer = ''
@@ -206,9 +205,16 @@ SM.CollectionClone.showCollectionClone = function ({collectionId, sourceName}) {
     async function btnHandler (btn) {
       try {
         const jsonData = fp.getApiValues()
-        fpwindow.close()
-        initProgress("Cloning", "Waiting for response...");
-        updateStatusText ('Waiting for API response...')
+        fpwindow.removeAll()
+        fpwindow.getTool('close').hide()
+        fpwindow.getTool('minimize').show()
+        const progressPanel = new SM.CollectionClone.CloneProgressPanel()
+        fpwindow.add(progressPanel)
+        fpwindow.setHeight(80)
+        // fpwindow.center()
+        fpwindow.minimize()
+
+        progressPanel.pb.updateProgress(0, "Cloning")
 
         await window.oidcProvider.updateToken(10)
         let response = await fetch(`${STIGMAN.Env.apiBase}/collections/${collectionId}/clone?projection=owners&projection=labels&projection=statistics`, {
@@ -225,19 +231,31 @@ SM.CollectionClone.showCollectionClone = function ({collectionId, sourceName}) {
           .pipeThrough(NDJSONStream())
           .getReader()
 
-        const td = new TextDecoder("utf-8")
         let isdone = false
         const jsons = []
         do {
           const {value, done} = await reader.read()
           if (value) {
-            updateStatusText (JSON.stringify(value), true)
+            const text = JSON.stringify(value)
+            if (value.stage === 'collection' && !fpwindow.isDestroyed) {
+              const progress = value.step/value.stepCount
+              progressPanel.pb.updateProgress(progress, value.stepName)
+            }
+            else if (value.stage === 'reviews' && value.stepName === "cloneReviews" && !fpwindow.isDestroyed) {
+              const progress = value.reviewsCopied/value.reviewsTotal
+              progressPanel.pb.updateProgress(progress, `Cloned reviews (${value.reviewsCopied} of ${value.reviewsTotal})`)
+            }
             jsons.push(value)
-            console.log(`chunk: ${JSON.stringify(value)}`)
+            console.log(`chunk: ${text}`)
           }
           isdone = done
         } while (!isdone)
-        updateProgress(0, 'Done')
+        if (!fpwindow.isDestroyed) {
+          progressPanel.pb.updateProgress(1, 'Completed')
+          fpwindow.getTool('minimize').hide()
+          fpwindow.getTool('close').show()
+        }
+
         
         // Refresh the curUser global
         await SM.GetUserObject()
@@ -250,9 +268,20 @@ SM.CollectionClone.showCollectionClone = function ({collectionId, sourceName}) {
 }
       catch (e) {
         SM.Error.handleError(e)
+        fpwindow.close()
       }
       finally {
-        fpwindow.close()
+        // fpwindow.close()
+      }
+    }
+
+    function vpResize (vp, adjWidth, adjHeight) {
+      if (fpwindow.minimized) {
+        const offset = 20
+        fpwindow.setPosition(adjWidth - fpwindow.getWidth()- offset, adjHeight - fpwindow.getHeight() - offset) 
+      }
+      else {
+        fpwindow.center()
       }
     }
 
@@ -261,6 +290,9 @@ SM.CollectionClone.showCollectionClone = function ({collectionId, sourceName}) {
       cls: 'sm-dialog-window sm-round-panel',
       modal: true,
       resizable: false,
+      closable: true,
+      minimizable: true,
+      maximizable: true,
       width,
       height,
       layout: 'fit',
@@ -268,11 +300,31 @@ SM.CollectionClone.showCollectionClone = function ({collectionId, sourceName}) {
       bodyStyle: 'padding:5px;',
       buttonAlign: 'right',
       items: fp,
+      listeners: {
+        minimize: function() {
+          const offset = 20
+          fpwindow.mask.hide()
+          fpwindow.getTool('minimize').hide()
+          const vpSize = Ext.getCmp('app-viewport').getSize()
+          fpwindow.setPosition(vpSize.width - fpwindow.getWidth()- offset, vpSize.height - fpwindow.getHeight() - offset)
+          fpwindow.minimized = true
+        },
+        destroy: function () {
+          Ext.getCmp('app-viewport').removeListener('resize', vpResize)
+        }
+      }
+
       // buttons: [
       //   cloneBtn
       // ]
     })
-    fpwindow.show(document.body)
+    fpwindow.render(document.body)
+    
+    fpwindow.getTool('minimize').hide()
+    fpwindow.getTool('maximize').hide()
+    fpwindow.show()
+    Ext.getCmp('app-viewport').addListener('resize', vpResize)
+
   }
   catch (e) {
     SM.Error.handleError(e)
