@@ -28,11 +28,15 @@ SM.CollectionClone.CloneForm = Ext.extend(Ext.form.FormPanel, {
     const _this = this
     const nameField = new Ext.form.TextField({
       fieldLabel: 'Name',
+      enableKeyEvents: true,
       labelStyle: 'font-weight: 600;',
       name: 'name',
       allowBlank: false,
       value: this.sourceName ? `Clone of ${this.sourceName}` : '',
-      anchor: '100%'
+      anchor: '100%',
+      listeners: {
+        keyup: handleInput
+      }
     })
     const descriptionField = new Ext.form.TextArea({
       fieldLabel: 'Description',
@@ -47,7 +51,7 @@ SM.CollectionClone.CloneForm = Ext.extend(Ext.form.FormPanel, {
       checked: true,
       helpText: 'Clone grants',
       listeners: {
-        check: handleCheck
+        check: handleInput
       }
 
     })
@@ -57,7 +61,7 @@ SM.CollectionClone.CloneForm = Ext.extend(Ext.form.FormPanel, {
       checked: true,
       helpText: 'Clone labels',
       listeners: {
-        check: handleCheck,
+        check: handleInput,
       }
     })
     const assetsCb = new SM.Global.HelperCheckbox({
@@ -66,7 +70,7 @@ SM.CollectionClone.CloneForm = Ext.extend(Ext.form.FormPanel, {
       checked: true,
       helpText: 'Clone assets',
       listeners: {
-        check: handleCheck,
+        check: handleInput,
       }
     })
     const cbGroup = new Ext.form.CheckboxGroup({
@@ -99,6 +103,12 @@ SM.CollectionClone.CloneForm = Ext.extend(Ext.form.FormPanel, {
         ['sourceDefaults', "Pin the source's default revisions"]
       ]
     })
+    const manageCb = new SM.Global.HelperCheckbox({
+      boxLabel: 'Open Collection Manager after cloning',
+      hideLabel: true,
+      checked: true,
+      helpText: 'Open Collection Manager after cloning'
+    })
     const cloneBtn = new Ext.Button({
       text: 'Clone',
       iconCls: 'sm-clone-icon',
@@ -118,10 +128,10 @@ SM.CollectionClone.CloneForm = Ext.extend(Ext.form.FormPanel, {
         }
       }
     }
-    function handleCheck (cb, checked) {
+    function handleInput (cb, checked) {
       stigMappingsComboBox.setDisabled(!assetsCb.checked)
       pinRevisionsComboBox.setDisabled(!assetsCb.checked)
-      cloneBtn.setDisabled(!assetsCb.checked && !labelsCb.checked && !grantsCb.checked)
+      cloneBtn.setDisabled(nameField.getValue() === '' || (!assetsCb.checked && !labelsCb.checked && !grantsCb.checked))
     }
     const config = {
       baseCls: 'x-plain',
@@ -133,17 +143,15 @@ SM.CollectionClone.CloneForm = Ext.extend(Ext.form.FormPanel, {
       items: [
         {
           xtype: 'fieldset',
-          // height: 200,
-          split: false,
           title: 'New Collection information',
           items: [nameField, descriptionField]
         },
         {
           xtype: 'fieldset',
-          region: 'center',
           title: 'Cloning Options',
           items: [cbGroup, stigMappingsComboBox, pinRevisionsComboBox]
-        }
+        },
+        // manageCb
       ],
       buttons: [
         cloneBtn
@@ -167,9 +175,40 @@ SM.CollectionClone.CloneProgressPanel = Ext.extend(Ext.Panel, {
       border: false,
       items: [pb],
       pb
-      // buttons: [
-      //   minBtn
-      // ]
+    }
+    Ext.apply(this, Ext.apply(this.initialConfig, config))
+    this.superclass().initComponent.call(this);
+  }
+})
+
+SM.CollectionClone.PostClonePanel = Ext.extend(Ext.Panel, {
+  initComponent: function () {
+    const _this = this
+    const manageBtn = new Ext.Button({
+      action: 'manage', 
+      text: 'Manage the Collection',
+      iconCls: 'sm-setting-icon',
+      margins: '0 5 0 0',
+      handler: this.btnHandler
+    })
+    const viewBtn = new Ext.Button({
+      action: 'view', 
+      text: 'View the Collection',
+      iconCls: 'sm-collection-icon',
+      margins: '0 0 0 5',
+      handler: this.btnHandler
+    })
+
+    const config = {
+      // baseCls: 'x-plain',
+      // cls: 'sm-collection-manage-layout sm-round-panel',
+      bodyStyle: 'padding: 9px;',
+      border: false,
+      layout: 'hbox',
+      layoutConfig: {
+        pack: 'center'
+      },
+      items: [manageBtn, viewBtn]
     }
     Ext.apply(this, Ext.apply(this.initialConfig, config))
     this.superclass().initComponent.call(this);
@@ -197,7 +236,7 @@ function NDJSONStream(separator = '\n') {
 SM.CollectionClone.showCollectionClone = function ({collectionId, sourceName}) {
   try {
     const width = 420
-    const height = 450
+    const height = 405
     const fp = new SM.CollectionClone.CloneForm({
       sourceName,
       btnHandler
@@ -206,6 +245,7 @@ SM.CollectionClone.showCollectionClone = function ({collectionId, sourceName}) {
       try {
         const jsonData = fp.getApiValues()
         fpwindow.removeAll()
+        fpwindow.setTitle(`Creating "${jsonData.name}"`)
         fpwindow.getTool('close').hide()
         fpwindow.getTool('minimize').show()
         const progressPanel = new SM.CollectionClone.CloneProgressPanel()
@@ -232,7 +272,7 @@ SM.CollectionClone.showCollectionClone = function ({collectionId, sourceName}) {
           .getReader()
 
         let isdone = false
-        const jsons = []
+        let apiCollection
         do {
           const {value, done} = await reader.read()
           if (value) {
@@ -243,35 +283,49 @@ SM.CollectionClone.showCollectionClone = function ({collectionId, sourceName}) {
             }
             else if (value.stage === 'reviews' && value.stepName === "cloneReviews" && !fpwindow.isDestroyed) {
               const progress = value.reviewsCopied/value.reviewsTotal
-              progressPanel.pb.updateProgress(progress, `Cloned reviews (${value.reviewsCopied} of ${value.reviewsTotal})`)
+              progressPanel.pb.updateProgress(progress, `Cloning reviews (${value.reviewsCopied.toLocaleString()} of ${value.reviewsTotal.toLocaleString()})`)
             }
-            jsons.push(value)
+            else if (value.stage === 'result') {
+              apiCollection = value.collection
+            }
             console.log(`chunk: ${text}`)
           }
           isdone = done
         } while (!isdone)
         if (!fpwindow.isDestroyed) {
-          progressPanel.pb.updateProgress(1, 'Completed')
+          // progressPanel.pb.updateProgress(1, 'Completed')
+          fpwindow.removeAll()
+          fpwindow.setTitle(`Created "${apiCollection.name}"`)
+          fpwindow.add(new SM.CollectionClone.PostClonePanel({ 
+            btnHandler: function (btn) {
+              if (apiCollection) {
+                const openMethod = btn.action === 'manage' ? addCollectionManager : SM.CollectionPanel.showCollectionTab
+                openMethod({
+                  collectionId: apiCollection.collectionId,
+                  collectionName: apiCollection.name,
+                  treePath: SM.Global.mainNavTree.getCollectionLeaf(apiCollection.collectionId)?.getPath()
+                })
+                fpwindow.close()
+              }
+            }
+           }))
           fpwindow.getTool('minimize').hide()
           fpwindow.getTool('close').show()
+          fpwindow.doLayout()
         }
 
         
         // Refresh the curUser global
         await SM.GetUserObject()
 
-        SM.Dispatcher.fireEvent( 'collectioncreated', jsons[jsons.length - 1].collection, {
+        SM.Dispatcher.fireEvent( 'collectioncreated', apiCollection, {
           elevate: false,
-          showManager: true
+          showManager: false
         })
-
 }
       catch (e) {
         SM.Error.handleError(e)
         fpwindow.close()
-      }
-      finally {
-        // fpwindow.close()
       }
     }
 
@@ -293,6 +347,7 @@ SM.CollectionClone.showCollectionClone = function ({collectionId, sourceName}) {
       closable: true,
       minimizable: true,
       maximizable: true,
+      constrain: true,
       width,
       height,
       layout: 'fit',
