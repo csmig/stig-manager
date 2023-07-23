@@ -140,6 +140,7 @@ SM.CollectionClone.CloneForm = Ext.extend(Ext.form.FormPanel, {
       border: false,
       labelWidth: 100,
       getApiValues,
+      nameField,
       items: [
         {
           xtype: 'fieldset',
@@ -214,7 +215,6 @@ SM.CollectionClone.PostClonePanel = Ext.extend(Ext.Panel, {
     this.superclass().initComponent.call(this);
   }
 })
-
 
 function NDJSONStream(separator = '\n') {
   let buffer = ''
@@ -366,6 +366,9 @@ SM.CollectionClone.showCollectionClone = function ({collectionId, sourceName}) {
         },
         destroy: function () {
           Ext.getCmp('app-viewport').removeListener('resize', vpResize)
+        },
+        show: function () {
+          fp.nameField.focus(true, true)
         }
       }
 
