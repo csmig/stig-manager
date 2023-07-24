@@ -276,10 +276,9 @@ SM.CollectionClone.showCollectionClone = function ({collectionId, sourceName}) {
         do {
           const {value, done} = await reader.read()
           if (value) {
-            const text = JSON.stringify(value)
             if (value.stage === 'collection' && !fpwindow.isDestroyed) {
-              const progress = value.step/value.stepCount
-              progressPanel.pb.updateProgress(progress, value.stepName)
+              const progress = (value.step - 1)/value.stepCount
+              progressPanel.pb.updateProgress(progress, value.message)
             }
             else if (value.stage === 'reviews' && value.stepName === "cloneReviews" && !fpwindow.isDestroyed) {
               const progress = value.reviewsCopied/value.reviewsTotal
@@ -288,7 +287,7 @@ SM.CollectionClone.showCollectionClone = function ({collectionId, sourceName}) {
             else if (value.stage === 'result') {
               apiCollection = value.collection
             }
-            console.log(`chunk: ${text}`)
+            console.log(`chunk: ${JSON.stringify(value)}`)
           }
           isdone = done
         } while (!isdone)
