@@ -2093,6 +2093,10 @@ a.x-menu-item {
     border-color: initial
 }
 
+.sm-pb-error .x-progress-bar {
+    background-color: #602020
+}
+
 .x-progress-text {
     color: transparent
 }

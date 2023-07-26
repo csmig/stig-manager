@@ -2008,7 +2008,8 @@ exports.cloneCollection = async function ({collectionId, userObject, name, descr
     }
     let message
     if (err.message.match(/Duplicate entry .* for key 'collection.index2'/)) {
-      message = 'The requested Collection name is unavailable'
+      // message = 'The requested Collection name is unavailable'
+      message = 'Unhandled error'
     }
     else {
       message = 'Unhandled error'

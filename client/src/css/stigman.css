@@ -530,6 +530,9 @@ a.x-grid3-hd-btn:hover {
   background-color: #bdd0e5;
   border: none
 }
+.sm-pb-error .x-progress-bar {
+	background-color: #ebadad
+}
 .x-progress-text {
   color: transparent
 }

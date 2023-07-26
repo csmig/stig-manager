@@ -954,7 +954,7 @@ SM.Collection.ManagePanel = Ext.extend(Ext.form.FormPanel, {
             border: false,
             handler: async function () {
                 try {
-                    SM.CollectionClone.showCollectionClone({
+                    await SM.CollectionClone.showCollectionClone({
                         collectionId: _this.collectionId,
                         sourceName: nameField.getValue()
                     })
@@ -1080,16 +1080,15 @@ SM.Collection.ManagePanel = Ext.extend(Ext.form.FormPanel, {
         })
 
         let firstItem = nameField
-        if (this.allowDelete) {
+        if (this.allowDelete || this.allowClone) {
+            const items = [nameField]
+            if (this.allowClone) items.push(cloneButton)
+            if (this.allowDelete) items.push(delButton)
             nameField.flex = 1
             firstItem = {
                 xtype: 'compositefield',
                 labelStyle: 'font-weight: 600;',
-                items: [
-                    nameField,
-                    cloneButton,
-                    delButton
-                ]
+                items
             }
         }
 

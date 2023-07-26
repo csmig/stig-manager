@@ -274,8 +274,16 @@ function NDJSONStream(separator = '\n') {
   })
 }
 
-SM.CollectionClone.showCollectionClone = function ({collectionId, sourceName}) {
+SM.CollectionClone.showCollectionClone = async function ({collectionId, sourceName}) {
   try {
+    let showWarning = !curUser.noCloneWarning
+    // if (!curUser.noCloneWarning) {
+    //   const collectionSummary = await Ext.Ajax.requestPromise({
+    //     responseType: 'json',
+    //     url: `${STIGMAN.Env.apiBase}/collections/${collectionId}/metrics/summary/collection`
+    //   })
+    //   showWarning = collectionSummary.assets > 500 || collectionSummary.metrics.assessed > 50000
+    // }
     const width = 420
     const height = 405
     const fp = new SM.CollectionClone.CloneFormPanel({
@@ -322,12 +330,15 @@ SM.CollectionClone.showCollectionClone = function ({collectionId, sourceName}) {
         let isdone = false
         let iserror = false
         let apiCollection
+        const jsons = []
         do {
           const {value, done} = await reader.read()
           isdone = done
           if (value) {
             if (value.stage === 'error' && !fpwindow.isDestroyed) {
-              progressPanel.pb.updateProgress(0, value.message)
+              const message =  value.message === 'Unhandled error' ? `${value.message}. Click to copy details to the clipboard.` : value.message
+              progressPanel.pb.updateProgress(1, message)
+              progressPanel.pb.addClass('sm-pb-error')
               fpwindow.getTool('close').show()
               isdone = true
               iserror = true
@@ -343,6 +354,7 @@ SM.CollectionClone.showCollectionClone = function ({collectionId, sourceName}) {
             else if (value.stage === 'result') {
               apiCollection = value.collection
             }
+            jsons.push(value)
             console.log(`chunk: ${JSON.stringify(value)}`)
           }
         } while (!isdone)
@@ -409,7 +421,7 @@ SM.CollectionClone.showCollectionClone = function ({collectionId, sourceName}) {
       plain: true,
       bodyStyle: 'padding:5px;',
       buttonAlign: 'right',
-      items: curUser.noCloneWarning ? fp : wp,
+      items: showWarning ? wp : fp,
       listeners: {
         minimize: function() {
           const offset = 20
@@ -436,7 +448,7 @@ SM.CollectionClone.showCollectionClone = function ({collectionId, sourceName}) {
     fpwindow.getTool('minimize').hide()
     fpwindow.getTool('maximize').hide()
     fpwindow.show()
-    if (curUser.noCloneWarning) fp.nameField.focus(true, true)
+    if (!showWarning) fp.nameField.focus(true, true)
     Ext.getCmp('app-viewport').addListener('resize', vpResize)
 
   }
