@@ -1763,7 +1763,7 @@ exports.cloneCollection = async function ({collectionId, userObject, name, descr
         finishText: 'Creating Grants'
       },
       insertOwnerGrant: {
-        query: `INSERT IGNORE INTO collection_grant (collectionId, userId, accessLevel) VALUES (@destCollectionId, @userId, 4)`,
+        query: `INSERT INTO collection_grant (collectionId, userId, accessLevel) VALUES (@destCollectionId, @userId, 4) ON DUPLICATE KEY UPDATE accessLevel = 4`,
         startText: 'Creating Grants',
         finishText: 'Created Grants'
       },
