@@ -2006,7 +2006,19 @@ exports.cloneCollection = async function ({collectionId, userObject, name, descr
     if (typeof connection !== 'undefined') {
       await connection.rollback()
     }
-    throw (err)
+    let message
+    if (err.message.match(/Duplicate entry .* for key 'collection.index2'/)) {
+      message = 'The requested Collection name is unavailable'
+    }
+    else {
+      message = 'Unhandled error'
+    }
+    progressCb({
+      stage: 'error', 
+      message,
+      error: err
+    })
+    return null
   }
   finally {
     if (typeof connection !== 'undefined') {

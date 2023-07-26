@@ -1,5 +1,46 @@
 Ext.ns('SM.CollectionClone')
 
+
+SM.CollectionClone.WarningFormPanel = Ext.extend(Ext.form.FormPanel, {
+  initComponent: function () {
+    const _this = this
+    const displayField = new Ext.form.DisplayField({
+      value: `<b>WARNING</b><br><br>The warning text The warning text The warning text The warning text The warning text The warning text The warning text The warning text The warning text The warning text The warning text The warning text The warning text The warning text The warning text The warning text The warning text The warning text The warning text `
+    })
+    const disableCheckbox = new Ext.form.Checkbox({
+      boxLabel: `Don't show this warning again during this session`,
+      margins: '30 0 0 0',
+      listeners: {
+        check: function (cb, checked) {
+          curUser.noCloneWarning = checked
+        }
+      }
+    })
+    const continueBtn = new Ext.Button({
+      text: 'Continue',
+      // iconCls: 'sm-clone-icon',
+      handler: this.btnHandler
+    })
+    const config = {
+      baseCls: 'x-plain',
+      cls: 'sm-collection-manage-layout sm-round-panel',
+      bodyStyle: 'padding: 9px;',
+      border: false,
+      hideLabels: true,
+      layout: 'vbox',
+      items: [
+        displayField,
+        disableCheckbox
+      ],
+      buttons: [
+        continueBtn
+      ]
+    }
+    Ext.apply(this, Ext.apply(this.initialConfig, config))
+    this.superclass().initComponent.call(this);
+  }
+})
+
 SM.CollectionClone.ComboBox = Ext.extend(SM.Global.HelperComboBox, {
   initComponent: function () {
     const _this = this
@@ -23,7 +64,7 @@ SM.CollectionClone.ComboBox = Ext.extend(SM.Global.HelperComboBox, {
   }
 })
 
-SM.CollectionClone.CloneForm = Ext.extend(Ext.form.FormPanel, {
+SM.CollectionClone.CloneFormPanel = Ext.extend(Ext.form.FormPanel, {
   initComponent: function () {
     const _this = this
     const nameField = new Ext.form.TextField({
@@ -194,7 +235,7 @@ SM.CollectionClone.PostClonePanel = Ext.extend(Ext.Panel, {
     })
     const viewBtn = new Ext.Button({
       action: 'view', 
-      text: 'View the Collection',
+      text: 'View the Dashboard',
       iconCls: 'sm-collection-icon',
       margins: '0 0 0 5',
       handler: this.btnHandler
@@ -237,11 +278,19 @@ SM.CollectionClone.showCollectionClone = function ({collectionId, sourceName}) {
   try {
     const width = 420
     const height = 405
-    const fp = new SM.CollectionClone.CloneForm({
+    const fp = new SM.CollectionClone.CloneFormPanel({
       sourceName,
-      btnHandler
+      btnHandler: cloneBtnHandler
     })
-    async function btnHandler (btn) {
+    const wp = new SM.CollectionClone.WarningFormPanel({btnHandler: warnBtnHandler})
+
+    function warnBtnHandler () {
+      fpwindow.removeAll()
+      fpwindow.add(fp)
+      fpwindow.doLayout()
+      fp.nameField.focus(true, true)
+    }
+    async function cloneBtnHandler (btn) {
       try {
         const jsonData = fp.getApiValues()
         fpwindow.removeAll()
@@ -265,18 +314,25 @@ SM.CollectionClone.showCollectionClone = function ({collectionId, sourceName}) {
           }),
           body: JSON.stringify(jsonData)
         })
-        // const reader = response.body.getReader()
         const reader = response.body
           .pipeThrough(new TextDecoderStream())
           .pipeThrough(NDJSONStream())
           .getReader()
 
         let isdone = false
+        let iserror = false
         let apiCollection
         do {
           const {value, done} = await reader.read()
+          isdone = done
           if (value) {
-            if (value.stage === 'collection' && !fpwindow.isDestroyed) {
+            if (value.stage === 'error' && !fpwindow.isDestroyed) {
+              progressPanel.pb.updateProgress(0, value.message)
+              fpwindow.getTool('close').show()
+              isdone = true
+              iserror = true
+            }
+            else if (value.stage === 'collection' && !fpwindow.isDestroyed) {
               const progress = (value.step - 1)/value.stepCount
               progressPanel.pb.updateProgress(progress, value.message)
             }
@@ -289,10 +345,9 @@ SM.CollectionClone.showCollectionClone = function ({collectionId, sourceName}) {
             }
             console.log(`chunk: ${JSON.stringify(value)}`)
           }
-          isdone = done
         } while (!isdone)
-        if (!fpwindow.isDestroyed) {
-          // progressPanel.pb.updateProgress(1, 'Completed')
+
+        if (!fpwindow.isDestroyed && !iserror) {
           fpwindow.removeAll()
           fpwindow.setTitle(`Created "${apiCollection.name}"`)
           fpwindow.add(new SM.CollectionClone.PostClonePanel({ 
@@ -313,15 +368,16 @@ SM.CollectionClone.showCollectionClone = function ({collectionId, sourceName}) {
           fpwindow.doLayout()
         }
 
-        
-        // Refresh the curUser global
+       if (!iserror) {
+        // Refresh the curUser global to include any new grants
         await SM.GetUserObject()
 
         SM.Dispatcher.fireEvent( 'collectioncreated', apiCollection, {
           elevate: false,
           showManager: false
         })
-}
+       } 
+      }
       catch (e) {
         SM.Error.handleError(e)
         fpwindow.close()
@@ -353,7 +409,7 @@ SM.CollectionClone.showCollectionClone = function ({collectionId, sourceName}) {
       plain: true,
       bodyStyle: 'padding:5px;',
       buttonAlign: 'right',
-      items: fp,
+      items: curUser.noCloneWarning ? fp : wp,
       listeners: {
         minimize: function() {
           const offset = 20
@@ -366,9 +422,9 @@ SM.CollectionClone.showCollectionClone = function ({collectionId, sourceName}) {
         destroy: function () {
           Ext.getCmp('app-viewport').removeListener('resize', vpResize)
         },
-        show: function () {
-          fp.nameField.focus(true, true)
-        }
+        // show: function () {
+        //   fp.nameField.focus(true, true)
+        // }
       }
 
       // buttons: [
@@ -380,6 +436,7 @@ SM.CollectionClone.showCollectionClone = function ({collectionId, sourceName}) {
     fpwindow.getTool('minimize').hide()
     fpwindow.getTool('maximize').hide()
     fpwindow.show()
+    if (curUser.noCloneWarning) fp.nameField.focus(true, true)
     Ext.getCmp('app-viewport').addListener('resize', vpResize)
 
   }
