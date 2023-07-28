@@ -1,11 +1,11 @@
 Ext.ns('SM.CollectionClone')
 
 
-SM.CollectionClone.WarningFormPanel = Ext.extend(Ext.form.FormPanel, {
+SM.CollectionClone.ClickThruPanel = Ext.extend(Ext.form.FormPanel, {
   initComponent: function () {
     const _this = this
     const displayField = new Ext.form.DisplayField({
-      value: `<b>WARNING</b><br><br>The warning text The warning text The warning text The warning text The warning text The warning text The warning text The warning text The warning text The warning text The warning text The warning text The warning text The warning text The warning text The warning text The warning text The warning text The warning text `
+      value: SM.TipContent.CloneOptions.ClickThru
     })
     const disableCheckbox = new Ext.form.Checkbox({
       boxLabel: `Don't show this warning again during this session`,
@@ -90,7 +90,7 @@ SM.CollectionClone.CloneFormPanel = Ext.extend(Ext.form.FormPanel, {
       boxLabel: 'Grants',
       name: 'grants',
       checked: true,
-      helpText: 'Clone grants',
+      helpText: SM.TipContent.CloneOptions.Grants,
       listeners: {
         check: handleInput
       }
@@ -100,7 +100,7 @@ SM.CollectionClone.CloneFormPanel = Ext.extend(Ext.form.FormPanel, {
       boxLabel: 'Labels',
       name: 'labels',
       checked: true,
-      helpText: 'Clone labels',
+      helpText: SM.TipContent.CloneOptions.Labels,
       listeners: {
         check: handleInput,
       }
@@ -109,7 +109,7 @@ SM.CollectionClone.CloneFormPanel = Ext.extend(Ext.form.FormPanel, {
       boxLabel: 'Assets',
       name: 'assets',
       checked: true,
-      helpText: 'Clone assets',
+      helpText: SM.TipContent.CloneOptions.Assets,
       listeners: {
         check: handleInput,
       }
@@ -129,6 +129,7 @@ SM.CollectionClone.CloneFormPanel = Ext.extend(Ext.form.FormPanel, {
       name: 'stigMappings',
       width: 220,
       fieldLabel: 'STIGs',
+      helpText: SM.TipContent.CloneOptions.Stigs,
       data: [
         ['withReviews', 'Assignments and Reviews'],
         ['withoutReviews', 'Assignments but not Reviews'],
@@ -139,6 +140,7 @@ SM.CollectionClone.CloneFormPanel = Ext.extend(Ext.form.FormPanel, {
       name: 'pinRevisions',
       width: 220,
       fieldLabel: 'Pin Revisions',
+      helpText: SM.TipContent.CloneOptions.Revisions,
       data: [
         ['matchSource', "Match the source's pinned revisions"],
         ['sourceDefaults', "Pin the source's default revisions"]
@@ -223,6 +225,30 @@ SM.CollectionClone.CloneProgressPanel = Ext.extend(Ext.Panel, {
   }
 })
 
+SM.CollectionClone.CloneErrorPanel = Ext.extend(Ext.Panel, {
+  initComponent: function () {
+    const _this = this
+    const copyBtn = new Ext.Button({
+      text: 'Unexpected Error. Click to copy the log to the clipboard.',
+      iconCls: 'sm-error-icon',
+      margins: '0 5 0 0',
+      handler: function () {
+        navigator.clipboard.writeText(_this.log)
+      }
+    })
+    const config = {
+      baseCls: 'x-plain',
+      cls: 'sm-collection-manage-layout sm-round-panel',
+      bodyStyle: 'padding: 9px;',
+      border: false,
+      items: [copyBtn],
+      copyBtn
+    }
+    Ext.apply(this, Ext.apply(this.initialConfig, config))
+    this.superclass().initComponent.call(this);
+  }
+})
+
 SM.CollectionClone.PostClonePanel = Ext.extend(Ext.Panel, {
   initComponent: function () {
     const _this = this
@@ -290,7 +316,7 @@ SM.CollectionClone.showCollectionClone = async function ({collectionId, sourceNa
       sourceName,
       btnHandler: cloneBtnHandler
     })
-    const wp = new SM.CollectionClone.WarningFormPanel({btnHandler: warnBtnHandler})
+    const wp = new SM.CollectionClone.ClickThruPanel({btnHandler: warnBtnHandler})
 
     function warnBtnHandler () {
       fpwindow.removeAll()
@@ -304,7 +330,6 @@ SM.CollectionClone.showCollectionClone = async function ({collectionId, sourceNa
         fpwindow.removeAll()
         fpwindow.setTitle(`Creating "${jsonData.name}"`)
         fpwindow.getTool('close').hide()
-        fpwindow.getTool('minimize').show()
         const progressPanel = new SM.CollectionClone.CloneProgressPanel()
         fpwindow.add(progressPanel)
         fpwindow.setHeight(80)
@@ -335,11 +360,24 @@ SM.CollectionClone.showCollectionClone = async function ({collectionId, sourceNa
           const {value, done} = await reader.read()
           isdone = done
           if (value) {
+            jsons.push(value)
+            console.log(`chunk: ${JSON.stringify(value)}`)
             if (value.stage === 'error' && !fpwindow.isDestroyed) {
-              const message =  value.message === 'Unhandled error' ? `${value.message}. Click to copy details to the clipboard.` : value.message
-              progressPanel.pb.updateProgress(1, message)
-              progressPanel.pb.addClass('sm-pb-error')
-              fpwindow.getTool('close').show()
+              if (value.message === 'Unhandled error') {
+                fpwindow.removeAll()
+                fpwindow.setTitle(`Error creating "${jsonData.name}"`)
+                fpwindow.getTool('close').show()
+                const errorPanel = new SM.CollectionClone.CloneErrorPanel({
+                  log: JSON.stringify(jsons, null, 2)
+                })
+                fpwindow.add(errorPanel)
+                fpwindow.doLayout()
+              }
+              else {
+                progressPanel.pb.updateProgress(1, value.message)
+                progressPanel.pb.addClass('sm-pb-error')
+                fpwindow.getTool('close').show()
+              }
               isdone = true
               iserror = true
             }
@@ -354,8 +392,6 @@ SM.CollectionClone.showCollectionClone = async function ({collectionId, sourceNa
             else if (value.stage === 'result') {
               apiCollection = value.collection
             }
-            jsons.push(value)
-            console.log(`chunk: ${JSON.stringify(value)}`)
           }
         } while (!isdone)
 
