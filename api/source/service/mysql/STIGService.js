@@ -16,7 +16,8 @@ exports.queryStigs = async function ( inPredicates, inProjections, userObject, e
       cast(concat('[', group_concat(distinct concat('"',a.collectionId,'"')),']') as json) as collectionIds
       FROM
       stig_asset_map sa
-      left join asset a using (assetId)
+      inner join asset a on a.assetId=sa.assetId and a.state = "enabled"
+      inner join collection c on c.collectionId=a.collectionId and c.state = "enabled"
       ${elevate ? '' : `left join collection_grant cg on a.collectionId = cg.collectionId
       left join user_stig_asset_map usa on sa.saId = usa.saId
       where  (cg.userId = ? AND CASE WHEN cg.accessLevel = 1 THEN usa.userId = cg.userId ELSE TRUE END)`}
@@ -1434,3 +1435,41 @@ exports.getStigById = async function(benchmarkId, userObject, elevate) {
   }
 }
 
+exports.getRevisionStrsByBenchmarkId = async function (benchmarkId) {
+  try {
+    const sql = `SELECT
+      concat('V', r.version, 'R', r.release) as "revisionStr"
+    FROM
+      revision r
+    WHERE
+      r.benchmarkId = ?`
+    const [rows] = await dbUtils.pool.query(sql, [benchmarkId])
+    return rows.map( row => row.revisionStr)
+  }
+  catch(err) {
+    throw ( {status: 500, message: err.message, stack: err.stack} )
+  }
+}
+
+exports.getRevisionStrsByBenchmarkIds = async function (benchmarkIds) {
+  try {
+    const sql = `SELECT
+      r.benchmarkId,
+      json_arrayagg(concat('V', r.version, 'R', r.release)) as "revisionStrs"
+    FROM
+      revision r
+    WHERE
+      r.benchmarkId IN ?
+    GROUP BY
+      r.benchmarkId`
+    const [rows] = await dbUtils.pool.query(sql, [[benchmarkIds]])
+    const returnObj = {}
+    for (const row of rows) {
+      returnObj[row.benchmarkId] = row.revisionStrs
+    }
+    return returnObj
+  }
+  catch(err) {
+    throw ( {status: 500, message: err.message, stack: err.stack} )
+  }
+}
