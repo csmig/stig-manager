@@ -371,7 +371,7 @@ SM.CollectionClone.showCollectionClone = async function ({collectionId, sourceNa
               haveResult = true
             }
             if (!fpwindow.isDestroyed) {
-              if (value.stage === 'error') {
+              if (value.status === 'error') {
                 if (value.message === 'Unhandled error') {
                   fpwindow.removeAll()
                   fpwindow.setTitle(`Error creating "${jsonData.name}"`)

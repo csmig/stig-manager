@@ -1743,7 +1743,7 @@ exports.cloneCollectionX = async function ({collectionId, userObject, name, desc
 }
 
 exports.cloneCollection = async function ({collectionId, userObject, name, description, options, svcStatus = {}, progressCb = () => {}}) {
-  let connection
+  let connection, progressJson
   try {
     const sql = {
       // cloneCollection: `INSERT INTO collection (name, description, settings, metadata, state) SELECT @name,@description,settings, metadata, "cloning" from collection WHERE collectionId = @srcCollectionId`,
@@ -1907,7 +1907,7 @@ exports.cloneCollection = async function ({collectionId, userObject, name, descr
     async function transactionCollection () {
       const stage = 'collection'
       const stepCount = collectionQueries.length + 1
-      const progressJson = {stage, stepCount, step: 0}
+      progressJson = {stage, stepCount, step: 0}
 
       await connection.query('START TRANSACTION')
 
@@ -1942,7 +1942,7 @@ exports.cloneCollection = async function ({collectionId, userObject, name, descr
     async function transactionReviews () {
       const stage = 'reviews'
       const stepCount = reviewQueries.length + 1
-      const progressJson = {stage, stepCount, step: 0}
+      progressJson = {stage, stepCount, step: 0}
 
       await connection.query('START TRANSACTION')
       for (const query of reviewQueries) {
@@ -1980,9 +1980,7 @@ exports.cloneCollection = async function ({collectionId, userObject, name, descr
           // REMOVE LINE BELOW FOR PRODUCTION
           // await new Promise(r => setTimeout(r, 1000))
 
-          const [result] = await connection.query(sql[query].query)
-          // progressJson.status = 'finished'
-          // progressCb(progressJson) 
+          await connection.query(sql[query].query)
         }
       }
       progressJson.step++
@@ -2006,20 +2004,16 @@ exports.cloneCollection = async function ({collectionId, userObject, name, descr
     if (typeof connection !== 'undefined') {
       await connection.rollback()
     }
-    let message
+    progressJson.status = 'error'
     if (err.message.match(/Duplicate entry .* for key 'collection.index2'/)) {
-      message = 'The requested Collection name is unavailable'
-      progressCb({stage: 'error', message})
+      progressJson.message = 'The requested Collection name is unavailable'
     }
     else {
-      message = 'Unhandled error'
-      progressCb({
-        stage: 'error', 
-        message,
-        error: err,
-        stack: err?.stack
-      })
+      progressJson.message = 'Unhandled error'
+      progressJson.error = err
+      progressJson.stack = err?.stack
     }
+    progressCb(progressJson)
     return null
   }
   finally {
