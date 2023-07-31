@@ -252,6 +252,11 @@ fieldset.x-panel-collapsed {
     outline-color: initial
 }
 
+.x-btn button.sm-error-icon {
+    background-color: #602020;
+    background-image: url("../img/remove.svg")
+}
+
 .x-btn-bc, .x-btn-bl, .x-btn-br, .x-btn-mc, .x-btn-ml, .x-btn-mr, .x-btn-tc, .x-btn-tl, .x-btn-tr {
     background-color: initial
 }

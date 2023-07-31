@@ -241,6 +241,10 @@ SM.CollectionClone.CloneErrorPanel = Ext.extend(Ext.Panel, {
       cls: 'sm-collection-manage-layout sm-round-panel',
       bodyStyle: 'padding: 9px;',
       border: false,
+      layout: 'hbox',
+      layoutConfig: {
+        pack: 'center'
+      },
       items: [copyBtn],
       copyBtn
     }
@@ -302,13 +306,13 @@ function NDJSONStream(separator = '\n') {
 
 SM.CollectionClone.showCollectionClone = async function ({collectionId, sourceName}) {
   try {
-    let showWarning = !curUser.noCloneWarning
+    let showClickThru = !curUser.noCloneWarning
     // if (!curUser.noCloneWarning) {
     //   const collectionSummary = await Ext.Ajax.requestPromise({
     //     responseType: 'json',
     //     url: `${STIGMAN.Env.apiBase}/collections/${collectionId}/metrics/summary/collection`
     //   })
-    //   showWarning = collectionSummary.assets > 500 || collectionSummary.metrics.assessed > 50000
+    //   showClickThru = collectionSummary.assets > 500 || collectionSummary.metrics.assessed > 50000
     // }
     const width = 420
     const height = 405
@@ -316,9 +320,9 @@ SM.CollectionClone.showCollectionClone = async function ({collectionId, sourceNa
       sourceName,
       btnHandler: cloneBtnHandler
     })
-    const wp = new SM.CollectionClone.ClickThruPanel({btnHandler: warnBtnHandler})
+    const wp = new SM.CollectionClone.ClickThruPanel({btnHandler: clickThruHandler})
 
-    function warnBtnHandler () {
+    function clickThruHandler () {
       fpwindow.removeAll()
       fpwindow.add(fp)
       fpwindow.doLayout()
@@ -333,7 +337,6 @@ SM.CollectionClone.showCollectionClone = async function ({collectionId, sourceNa
         const progressPanel = new SM.CollectionClone.CloneProgressPanel()
         fpwindow.add(progressPanel)
         fpwindow.setHeight(80)
-        // fpwindow.center()
         fpwindow.minimize()
 
         progressPanel.pb.updateProgress(0, "Cloning")
@@ -352,50 +355,59 @@ SM.CollectionClone.showCollectionClone = async function ({collectionId, sourceNa
           .pipeThrough(NDJSONStream())
           .getReader()
 
-        let isdone = false
-        let iserror = false
+        let isDone = false
+        let isError = false
+        let haveResult = false
         let apiCollection
         const jsons = []
         do {
           const {value, done} = await reader.read()
-          isdone = done
+          isDone = done
           if (value) {
             jsons.push(value)
             console.log(`chunk: ${JSON.stringify(value)}`)
-            if (value.stage === 'error' && !fpwindow.isDestroyed) {
-              if (value.message === 'Unhandled error') {
-                fpwindow.removeAll()
-                fpwindow.setTitle(`Error creating "${jsonData.name}"`)
-                fpwindow.getTool('close').show()
-                const errorPanel = new SM.CollectionClone.CloneErrorPanel({
-                  log: JSON.stringify(jsons, null, 2)
-                })
-                fpwindow.add(errorPanel)
-                fpwindow.doLayout()
-              }
-              else {
-                progressPanel.pb.updateProgress(1, value.message)
-                progressPanel.pb.addClass('sm-pb-error')
-                fpwindow.getTool('close').show()
-              }
-              isdone = true
-              iserror = true
-            }
-            else if (value.stage === 'collection' && !fpwindow.isDestroyed) {
-              const progress = (value.step - 1)/value.stepCount
-              progressPanel.pb.updateProgress(progress, value.message)
-            }
-            else if (value.stage === 'reviews' && value.stepName === "cloneReviews" && !fpwindow.isDestroyed) {
-              const progress = value.reviewsCopied/value.reviewsTotal
-              progressPanel.pb.updateProgress(progress, `Cloning reviews (${value.reviewsCopied.toLocaleString()} of ${value.reviewsTotal.toLocaleString()})`)
-            }
-            else if (value.stage === 'result') {
+            if (value.stage === 'result') {
               apiCollection = value.collection
+              haveResult = true
+            }
+            if (!fpwindow.isDestroyed) {
+              if (value.stage === 'error') {
+                if (value.message === 'Unhandled error') {
+                  fpwindow.removeAll()
+                  fpwindow.setTitle(`Error creating "${jsonData.name}"`)
+                  fpwindow.getTool('close').show()
+                  const errorPanel = new SM.CollectionClone.CloneErrorPanel({
+                    log: JSON.stringify(jsons, null, 2)
+                  })
+                  fpwindow.add(errorPanel)
+                  fpwindow.doLayout()
+                }
+                else {
+                  progressPanel.pb.updateProgress(1, value.message)
+                  progressPanel.pb.addClass('sm-pb-error')
+                  fpwindow.getTool('close').show()
+                }
+                isDone = true
+                isError = true
+              }
+              else if (value.stage === 'collection') {
+                const progress = (value.step - 1)/value.stepCount
+                progressPanel.pb.updateProgress(progress, value.message)
+              }
+              else if (value.stage === 'reviews') {
+                if (value.stepName !== 'cloneReviews') {
+                  progressPanel.pb.updateProgress(1, 'Preparing to clone reviews...')
+                }
+                else {
+                  const progress = value.reviewsCopied/value.reviewsTotal
+                  progressPanel.pb.updateProgress(progress, `Cloning reviews (${value.reviewsCopied.toLocaleString()} of ${value.reviewsTotal.toLocaleString()})`)
+                }
+              }
             }
           }
-        } while (!isdone)
+        } while (!isDone)
 
-        if (!fpwindow.isDestroyed && !iserror) {
+        if (!fpwindow.isDestroyed && !isError) {
           fpwindow.removeAll()
           fpwindow.setTitle(`Created "${apiCollection.name}"`)
           fpwindow.add(new SM.CollectionClone.PostClonePanel({ 
@@ -416,14 +428,10 @@ SM.CollectionClone.showCollectionClone = async function ({collectionId, sourceNa
           fpwindow.doLayout()
         }
 
-       if (!iserror) {
-        // Refresh the curUser global to include any new grants
+       if (haveResult) {
+        // Refresh the curUser global to include any new grants and fire the collectioncreated event
         await SM.GetUserObject()
-
-        SM.Dispatcher.fireEvent( 'collectioncreated', apiCollection, {
-          elevate: false,
-          showManager: false
-        })
+        SM.Dispatcher.fireEvent( 'collectioncreated', apiCollection, {elevate: false, showManager: false})
        } 
       }
       catch (e) {
@@ -457,7 +465,7 @@ SM.CollectionClone.showCollectionClone = async function ({collectionId, sourceNa
       plain: true,
       bodyStyle: 'padding:5px;',
       buttonAlign: 'right',
-      items: showWarning ? wp : fp,
+      items: showClickThru ? wp : fp,
       listeners: {
         minimize: function() {
           const offset = 20
@@ -469,22 +477,14 @@ SM.CollectionClone.showCollectionClone = async function ({collectionId, sourceNa
         },
         destroy: function () {
           Ext.getCmp('app-viewport').removeListener('resize', vpResize)
-        },
-        // show: function () {
-        //   fp.nameField.focus(true, true)
-        // }
+        }
       }
-
-      // buttons: [
-      //   cloneBtn
-      // ]
     })
     fpwindow.render(document.body)
-    
     fpwindow.getTool('minimize').hide()
     fpwindow.getTool('maximize').hide()
     fpwindow.show()
-    if (!showWarning) fp.nameField.focus(true, true)
+    if (!showClickThru) fp.nameField.focus(true, true)
     Ext.getCmp('app-viewport').addListener('resize', vpResize)
 
   }

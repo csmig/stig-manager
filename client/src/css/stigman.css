@@ -595,6 +595,12 @@ a.x-grid3-hd-btn:hover {
   font-weight: 600;
   padding: 0 3px 3px 3px
 }
+
+.x-btn button.sm-error-icon {
+  background-color: #ebadad;
+  background-image: url("../img/remove.svg")
+}
+
 .sm-export-sprite {
   font: 10px Open Sans,helvetica,sans-serif;
   position: relative;
