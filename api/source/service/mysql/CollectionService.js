@@ -1739,23 +1739,12 @@ exports.doesCollectionIncludeStig = async function ({collectionId, benchmarkId})
   }
 }
 
-exports.cloneCollectionX = async function ({collectionId, userObject, name, description, options, svcStatus = {}, progressCb}) {
-  for (let x =0; x<4; x++) {
-    await new Promise(r => setTimeout(r, 10000))
-
-    progressCb(`line ${x}`)
-  }
-
-  return {destCollectionId: 1}
-}
-
 exports.cloneCollection = async function ({collectionId, userObject, name, description, options, svcStatus = {}, progressCb = () => {}}) {
   let connection, progressJson
   try {
     const sql = {
-      // cloneCollection: `INSERT INTO collection (name, description, settings, metadata, state) SELECT @name,@description,settings, metadata, "cloning" from collection WHERE collectionId = @srcCollectionId`,
       cloneCollection: {
-        query: `INSERT INTO collection (name, description, settings, metadata) SELECT @name,@description,settings, metadata from collection WHERE collectionId = @srcCollectionId`,
+        query: `INSERT INTO collection (name, description, settings, metadata, state) SELECT @name,@description,settings, metadata, "cloning" from collection WHERE collectionId = @srcCollectionId`,
         startText: 'Creating core properties',
         finishText: 'Creating core properties'
       },
@@ -1780,7 +1769,7 @@ exports.cloneCollection = async function ({collectionId, userObject, name, descr
         finishText: 'Created Labels'
       },
       cloneAssets: {
-        query: `INSERT INTO asset (name, fqdn, collectionId, ip, mac, description, noncomputing, metadata) SELECT name,fqdn,@destCollectionId,ip,mac,description,noncomputing,metadata from asset where collectionId = @srcCollectionId`,
+        query: `INSERT INTO asset (name, fqdn, collectionId, ip, mac, description, noncomputing, metadata) SELECT name,fqdn,@destCollectionId,ip,mac,description,noncomputing,metadata from asset where state = "enabled" and collectionId = @srcCollectionId`,
         startText: 'Creating Assets',
         finishText: 'Creating Assets'
       },
@@ -1790,7 +1779,7 @@ exports.cloneCollection = async function ({collectionId, userObject, name, descr
         finishText: 'Creating Assets'
       },
       createAssetMap: {
-        query: `CREATE TEMPORARY TABLE t_assetid_map SELECT a1.assetId as srcAssetId, a2.assetId as destAssetId FROM asset a1 left join asset a2 on (a1.collectionId =  @srcCollectionId and a1.name = a2.name) WHERE a2.collectionId = @destCollectionId`,
+        query: `CREATE TEMPORARY TABLE t_assetid_map SELECT a1.assetId as srcAssetId, a2.assetId as destAssetId FROM asset a1 left join asset a2 on (a1.collectionId =  @srcCollectionId and a1.name = a2.name and a1.state = "enabled") WHERE a2.collectionId = @destCollectionId`,
         startText: 'Creating Assets',
         finishText: 'Created Assets'
       },
@@ -1925,12 +1914,7 @@ exports.cloneCollection = async function ({collectionId, userObject, name, descr
         progressJson.message = sql[query].startText
         progressCb(progressJson) 
 
-        // REMOVE LINE BELOW FOR PRODUCTION
-        // await new Promise(r => setTimeout(r, 1000))
-        const [result] = await connection.query(sql[query].query)
-
-        // progressJson.status = 'finished'
-        // progressCb(progressJson) 
+        await connection.query(sql[query].query)
       }
 
       progressJson.step++
@@ -1961,9 +1945,6 @@ exports.cloneCollection = async function ({collectionId, userObject, name, descr
           let offset = 1
           const chunkSize = 10000
 
-          // REMOVE LINE BELOW FOR PRODUCTION
-          // await new Promise(r => setTimeout(r, 1000))
-
           let [result] = await connection.query(sql.countReviewIds.query)
 
           progressJson.status = 'running'
@@ -1983,10 +1964,6 @@ exports.cloneCollection = async function ({collectionId, userObject, name, descr
         else {
           progressJson.status = 'running'
           progressCb(progressJson)
-          
-          // REMOVE LINE BELOW FOR PRODUCTION
-          // await new Promise(r => setTimeout(r, 1000))
-
           await connection.query(sql[query].query)
         }
       }
@@ -2003,7 +1980,7 @@ exports.cloneCollection = async function ({collectionId, userObject, name, descr
 
     await dbUtils.retryOnDeadlock(transactionCollection, svcStatus)
     await dbUtils.retryOnDeadlock(transactionReviews, svcStatus)
-    // await connection.query(sql.enableCollection)
+    await connection.query(sql.enableCollection)
     const [rows] = await connection.query(`SELECT @destCollectionId as destCollectionId`)
     return rows[0]
   }

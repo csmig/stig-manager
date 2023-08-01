@@ -972,16 +972,6 @@ module.exports.writeStigPropsByCollectionStig = async function (req, res, next) 
   }
 }
 
-module.exports.cloneCollectionX = async function (req, res, next) {
-  req.noCompression = true
-  function progressCb(jsObj) {
-    res.write(JSON.stringify(jsObj) + '\n')
-  }
-  res.setHeader('Content-Type', 'text/plain; charset=utf-8');
-  await CollectionSvc.cloneCollectionX({progressCb})
-  res.end()
-}
-
 module.exports.cloneCollection = async function (req, res, next) {
   try {
     function progressCb(json) {
