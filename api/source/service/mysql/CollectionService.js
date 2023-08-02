@@ -1989,7 +1989,7 @@ exports.cloneCollection = async function ({collectionId, userObject, name, descr
       await connection.rollback()
     }
     progressJson.status = 'error'
-    if (err.message.match(/Duplicate entry .* for key 'collection.index2'/)) {
+    if (err.message.match(/Duplicate entry .* for key 'collection.index[2|3]'/)) {
       progressJson.message = 'The requested Collection name is unavailable'
     }
     else {
