@@ -2006,3 +2006,65 @@ exports.cloneCollection = async function ({collectionId, userObject, name, descr
     }
   }
 }
+
+exports.getSapByCollection = async function (collectionId, benchmarkId, userObject) {
+  const columns = [
+    'distinct sa.benchmarkId',
+    'stig.title',
+    'rev.revisionStr',
+    'CAST(a.assetId as char) as assetId',
+    'a.name'
+  ]
+  const joins = [
+    // 'asset a',
+    // 'left join stig_asset_map sa on a.assetId = sa.assetId',
+    // 'left join stig on sa.benchmarkId = stig.benchmarkId',
+    // 'left join default_rev dr on sa.benchmarkId = dr.benchmarkId',
+    // 'left join revision rev on dr.revId = rev.revId',
+
+    'default_rev dr',
+    'left join stig_asset_map sa on dr.benchmarkId = sa.benchmarkId',
+    'left join user_stig_asset_map usa on sa.saId = usa.saId',
+    'left join asset a on (sa.assetId = a.assetId and dr.collectionId = a.collectionId)',
+    'left join collection_grant cg on a.collectionId = cg.collectionId',
+    'left join stig on dr.benchmarkId = stig.benchmarkId',
+    'left join revision rev on dr.revId = rev.revId'
+  
+  ]
+  const predicates = {
+    statements: [
+      'a.state = "enabled"',
+      'dr.collectionId = ?',
+      '(cg.userId = ? AND CASE WHEN cg.accessLevel = 1 THEN usa.userId = cg.userId ELSE TRUE END)',
+
+    ],
+    binds: [ collectionId, userObject.userId ]
+  }
+  if (benchmarkId) {
+    predicates.statements.push('dr.benchmarkId = ?')
+    predicates.binds.push(benchmarkId)
+  }
+  const orderBy = [
+    'sa.benchmarkId',
+    'a.name'
+  ]
+  const sql = dbUtils.makeQueryString({columns, joins, predicates, orderBy})
+  const [rows] = await dbUtils.pool.query(sql, predicates.binds)
+  const benchmarkMap = rows.reduce((map, row) => {
+    const value = map.get(row.benchmarkId) ?? {
+      benchmarkId: row.benchmarkId,
+      title: row.title,
+      revisionStr: row.revisionStr,
+      assets: []
+    }
+    // value.assets.push({
+    //   assetId: row.assetId,
+    //   name: row.name
+    // })
+    value.assets.push(row.name)
+    map.set(row.benchmarkId, value)
+    return map
+  }, new Map())
+
+  return [...benchmarkMap.values()]
+}

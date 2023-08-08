@@ -2413,6 +2413,33 @@ paths:
       security:
         - oauth:
             - 'stig-manager:collection:read'            
+  '/collections/{collectionId}/sap':
+    parameters:
+      - $ref: '#/components/parameters/CollectionIdPath'
+      - $ref: '#/components/parameters/BenchmarkIdArrayQuery'
+    get:
+      tags:
+        - Collection
+      summary: Get an idealized SAP
+      operationId: getSapByCollection
+      responses:
+        '200':
+          description: SAP response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/CollectionSap'
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      security:
+        - oauth:
+            - 'stig-manager:collection:read'
   '/collections/{collectionId}/status':
     parameters:
       - $ref: '#/components/parameters/CollectionIdPath'
@@ -4442,6 +4469,20 @@ components:
             $ref: '#/components/schemas/Label'
         statistics:
           $ref: '#/components/schemas/CollectionStatistics'
+    CollectionSap:
+      type: object
+      additionalProperties: false
+      properties:
+        benchmarkId:
+          $ref: '#/components/schemas/String255'
+        title:
+          $ref: '#/components/schemas/String255'
+        revisionStr:
+          $ref: '#/components/schemas/RevisionStrRaw'
+        assets:
+          type: array
+          items:
+            $ref: '#/components/schemas/String255'
     CollectionSettings:
       type: object
       additionalProperties: false

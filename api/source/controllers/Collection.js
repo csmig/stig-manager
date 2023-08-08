@@ -1015,3 +1015,15 @@ module.exports.cloneCollection = async function (req, res, next) {
     next(err)
   }
 }
+
+module.exports.getSapByCollection = async function (req, res, next) {
+  try {
+    const collectionId = getCollectionIdAndCheckPermission(req, Security.ACCESS_LEVEL.Restricted)
+    const benchmarkId = req.query.benchmarkId
+    const result = await CollectionSvc.getSapByCollection(collectionId, benchmarkId, req.userObject)
+    res.json(result)
+  }
+  catch (err) {
+    next(err)
+  }
+}
