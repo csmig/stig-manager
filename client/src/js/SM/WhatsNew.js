@@ -2,6 +2,29 @@ Ext.ns('SM.WhatsNew')
 
 SM.WhatsNew.Sources = [
 
+  {
+    date: '2023-8-8',
+    header: `Collection Cloning`,
+    body: `
+    <p>Collection Owners and Managers can now clone their Collections! Cloning a Collection can create a new Collection that is substantially the same as the source Collection, but must have a different name. 
+    </p>
+
+    <p>Users can choose to copy the Assets, their STIGs, Labels, and/or Reviews from the original Collection into the new one. They can also choose to copy the User Grants from the original Collection into the new one, and pin STIG Revisions to their current values. The User who created the cloned Collection will always be made an Owner of the new Collection.
+    </p>
+    
+    <p><img src="img/whatsnew/2023-08-08-collection-clone-button.png"/></p>
+
+    <p><img src="img/whatsnew/2023-08-08-collection-clone-options.png"/></p>
+
+    <p><b>Note:</b><b> Large Collections can take several minutes to clone! During this time, Users will likely see a performance impact when accessing the source Collection. Making changes to the source Collection while it is being cloned may lead to inconsistent results in the cloned Collection. You may want to alert your users before cloning a large Collection!</b></p>
+
+    <p>Once the clone operation has started, a status bar will appear at the bottom of the screen.  Users can continue to use STIG Manager while the clone operation is in progress, but performance may be impacted when accessing the source Collection. The status bar will update when the clone is complete.</p>
+
+    <p><img src="img/whatsnew/2023-08-08-collection-clone-status-bar.png"/></p>
+
+`    
+},  
+
 {
     date: '2023-6-20',
     header: `Set the Default STIG Revision for a Collection`,
