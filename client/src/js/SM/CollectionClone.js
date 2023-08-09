@@ -342,7 +342,7 @@ SM.CollectionClone.showCollectionClone = async function ({collectionId, sourceNa
         progressPanel.pb.updateProgress(0, "Cloning")
 
         await window.oidcProvider.updateToken(10)
-        let response = await fetch(`${STIGMAN.Env.apiBase}/collections/${collectionId}/clone?projection=owners&projection=labels&projection=statistics`, {
+        const response = await fetch(`${STIGMAN.Env.apiBase}/collections/${collectionId}/clone?projection=owners&projection=labels&projection=statistics`, {
           method: 'POST',
           headers: new Headers({
             'Content-Type': 'application/json',
@@ -350,6 +350,10 @@ SM.CollectionClone.showCollectionClone = async function ({collectionId, sourceNa
           }),
           body: JSON.stringify(jsonData)
         })
+        if (!response.ok) {
+          const json = await response.json()
+          throw(new Error(`API responded with status ${response.status} ${JSON.stringify(json)}`))
+        }
         const reader = response.body
           .pipeThrough(new TextDecoderStream())
           .pipeThrough(NDJSONStream())
