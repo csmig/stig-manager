@@ -1038,8 +1038,8 @@ exports.cklbFromAssetStigs = async function cklbFromAssetStigs (assetId, stigs) 
           STIGUuid: stigUuid,
           status: row.result || 'not_reviewed',
           overrides: {},
-          comments: row.comment,
-          finding_details: row.detail
+          comments: row.comment ?? '',
+          finding_details: row.detail ?? ''
         }
 
         // CCI_REFs
