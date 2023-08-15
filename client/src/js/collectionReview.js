@@ -196,14 +196,14 @@ async function addCollectionReview ( params ) {
 					}
 				}
 				,{ 
-					text: 'Export Results',
+					text: 'Export result archive',
 					disabled: false,
 					iconCls: 'sm-export-icon',
 					hideOnClick: false,
 					menu: {
 						items: [ 
 							{
-								text: 'CKL (Zip archive)',
+								text: 'CKL (STIG Viewer v2)',
 								iconCls: 'sm-export-icon',
 								tooltip: 'Download an archive with results in DISA STIG Viewer format for each asset in the collection',
 								handler: function () {
@@ -224,7 +224,7 @@ async function addCollectionReview ( params ) {
 								}
 							},
 							{
-								text: 'CKLB (Zip archive)',
+								text: 'CKLB (STIG Viewer v3)',
 								iconCls: 'sm-export-icon',
 								tooltip: 'Download an archive with results in DISA STIG Viewer v3 format for each asset in the collection',
 								handler: function () {
@@ -245,7 +245,7 @@ async function addCollectionReview ( params ) {
 								}
 							},
 							{
-								text: 'XCCDF (Zip archive)',
+								text: 'XCCDF',
 								iconCls: 'sm-export-icon',
 								tooltip: 'Download an archive with results in XCCDF format for each asset in the collection',
 								handler: function () {
