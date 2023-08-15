@@ -224,6 +224,27 @@ async function addCollectionReview ( params ) {
 								}
 							},
 							{
+								text: 'CKLB (Zip archive)',
+								iconCls: 'sm-export-icon',
+								tooltip: 'Download an archive with results in DISA STIG Viewer v3 format for each asset in the collection',
+								handler: function () {
+									const checklists = apiAssets.map( asset => ({
+										assetId: asset.assetId,
+										stigs: [
+											{
+												benchmarkId:leaf.benchmarkId,
+												revisionStr: groupGrid.sm_revisionStr
+											}
+										]
+									}))
+									SM.Exports.exportArchiveStreaming({
+										format: 'cklb-mono',
+										collectionId: leaf.collectionId,
+										checklists
+									})
+								}
+							},
+							{
 								text: 'XCCDF (Zip archive)',
 								iconCls: 'sm-export-icon',
 								tooltip: 'Download an archive with results in XCCDF format for each asset in the collection',
