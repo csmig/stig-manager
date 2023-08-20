@@ -1,12 +1,10 @@
 const MigrationHandler = require('./lib/MigrationHandler')
 
 const upMigration = [
-  `ALTER TABLE result 
-  ADD COLUMN cklb VARCHAR(32) NOT NULL AFTER ckl`,
-  `UPDATE result set cklb = 'not_reviewed' where resultId in (1, 5, 6, 7, 8)`,
-  `UPDATE result set cklb = 'not_applicable' where resultId = 2`,
-  `UPDATE result set cklb = 'not_a_finding' where resultId in (3, 9)`,
-  `UPDATE result set cklb = 'open' where resultId = 4`
+
+  // table: collection
+  `ALTER TABLE collection 
+  CHANGE COLUMN isCloning isNameUnavailable TINYINT GENERATED ALWAYS AS ((case when (state = _utf8mb4'cloning') or (state = _utf8mb4'enabled') then 1 else NULL end)) VIRTUAL ;`,
 ]
 
 const downMigration = [
@@ -21,4 +19,3 @@ module.exports = {
     await migrationHandler.down(pool, __filename)
   }
 }
-
