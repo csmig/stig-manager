@@ -199,9 +199,10 @@ paths:
           content:
             application/xml:
               schema:
-                oneOf:
-                  - $ref: '#/components/schemas/ChecklistCkl'
-                  - $ref: '#/components/schemas/ChecklistCklb'
+                $ref: '#/components/schemas/ChecklistCkl'
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChecklistCklb'
         default:
           description: unexpected error
           content:
@@ -4089,6 +4090,8 @@ components:
           type: object
         stigs: 
           type: array
+          items:
+            type: object
     ChecklistCollectionStig:
       type: object
       additionalProperties: false
