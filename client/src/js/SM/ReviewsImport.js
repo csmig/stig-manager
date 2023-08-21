@@ -1005,7 +1005,7 @@ SM.ReviewsImport.SelectFilesGrid = Ext.extend(Ext.grid.GridPanel, {
                 SM.Error.handleError(e)
             }
 
-            async function getAllFileEntries(dataTransferItemList, el) {
+            async function getAllFileEntries(dataTransferItemList) {
                 try {
                     let searched = 0, found = 0
                     let fileEntries = []
@@ -1021,12 +1021,10 @@ SM.ReviewsImport.SelectFilesGrid = Ext.extend(Ext.grid.GridPanel, {
                         if (entry.isFile && (entry.name.toLowerCase().endsWith('.ckl') || entry.name.toLowerCase().endsWith('.cklb') || entry.name.toLowerCase().endsWith('.xml'))) {
                             fileEntries.push(entry)
                             found++
-                            // el.innerText = `Searching... Searched ${searched} files, found ${found} results files`
                         } else if (entry.isDirectory) {
                             queue.push(...await readAllDirectoryEntries(entry.createReader()))
                         }
                     }
-                    // el.innerText = `Finished. Searched ${searched} files, found ${found} results files`
                     return fileEntries
                 }
                 catch (e) {

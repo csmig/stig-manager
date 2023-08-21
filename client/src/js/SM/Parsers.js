@@ -705,11 +705,28 @@
     catch (e) {
       throw(new Error('Cannot parse as JSON'))
     }
-    const validateCklb = (obj) => ({valid: true})
+    const validateCklb = (obj) => {
+      try {
+        if (!obj.target_data?.host_name) {
+          throw('No target_data.host_name found')
+        }
+        if (!Array.isArray(obj.stigs)) {
+          throw('No stigs array found')
+        }
+        return {valid: true}
+      }
+      catch (e) {
+        let error = e
+        if (e instanceof Error) {
+          error = e.message
+        }
+        return {valid: false, error}
+      }
+    }
 
     const validationResult = validateCklb(cklb)
     if (!validationResult.valid) {
-      throw(new Error('Invalid CKLB object'))
+      throw(new Error(`Invalid CKLB object: ${validationResult.error}`))
     }
 
     const resultEngineCommon = cklb.stig_manager_engine ||  null
@@ -755,14 +772,17 @@
     function processStigs(stigs) {
       const checklistArray = []
       for (const stig of stigs) {
+        // checklist = {
+        //   benchmarkId: 'string',
+        //   revisionStr: 'string',
+        //   reviews: [],
+        //   stats: {}
+        // }
         const checklist = {}
-        // get benchmarkId
-        checklist.benchmarkId = stig.stig_id.replace('xccdf_mil.disa.stig_benchmark_', '')
-        // get revision data. Extract digits from version and release fields to create revisionStr, if possible.
+        checklist.benchmarkId = stig.stigId instanceof String ? stig.stig_id.replace('xccdf_mil.disa.stig_benchmark_', '') : ''
         const stigVersion = '0'
-        const stigRelease = stig.release_info.match(/Release:\s*(.+?)\s/)?.[1]
-        const stigRevisionStr = stigVersion && stigRelease ? `V${stigVersion}R${stigRelease}` : null
-        checklist.revisionStr = stigRevisionStr
+        const stigRelease = stig.release_info instanceof String ? stig.release_info.match(/Release:\s*(.+?)\s/)?.[1] : ''
+        checklist.revisionStr = stigVersion && stigRelease ? `V${stigVersion}R${stigRelease}` : null
   
         if (checklist.benchmarkId) {
           const result = processRules(stig.rules)
@@ -818,14 +838,14 @@
         }
       }
   
-      let detail = rule.finding_details.length > maxCommentLength ? rule.finding_details.slice(0, maxCommentLength) : rule.finding_details
+      let detail = rule.finding_details?.length > maxCommentLength ? rule.finding_details.slice(0, maxCommentLength) : rule.finding_details
       if (!rule.finding_details) {
         switch (importOptions.emptyDetail) {
           case 'ignore':
             detail= null
             break
           case 'import':
-            detail = rule.finding_details
+            detail = rule.finding_details ?? ''
             break
           case 'replace':
             detail = 'There is no detail provided for the assessment'
@@ -833,14 +853,14 @@
         }
       }
   
-      let comment = rule.comments.length > maxCommentLength ? rule.comments.slice(0, maxCommentLength) : rule.comments
+      let comment = rule.comments?.length > maxCommentLength ? rule.comments.slice(0, maxCommentLength) : rule.comments
       if (!rule.comments) {
         switch (importOptions.emptyComment) {
           case 'ignore':
             comment = null
             break
           case 'import':
-            comment = rule.comments
+            comment = rule.comments ?? ''
             break
           case 'replace':
             comment = 'There is no comment provided for the assessment'
