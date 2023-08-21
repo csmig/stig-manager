@@ -1018,7 +1018,7 @@ SM.ReviewsImport.SelectFilesGrid = Ext.extend(Ext.grid.GridPanel, {
                     while (queue.length > 0) {
                         let entry = queue.shift()
                         searched++
-                        if (entry.isFile && (entry.name.toLowerCase().endsWith('.ckl') || entry.name.toLowerCase().endsWith('.xml'))) {
+                        if (entry.isFile && (entry.name.toLowerCase().endsWith('.ckl') || entry.name.toLowerCase().endsWith('.cklb') || entry.name.toLowerCase().endsWith('.xml'))) {
                             fileEntries.push(entry)
                             found++
                             // el.innerText = `Searching... Searched ${searched} files, found ${found} results files`
