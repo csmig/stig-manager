@@ -199,7 +199,9 @@ paths:
           content:
             application/xml:
               schema:
-                $ref: '#/components/schemas/ChecklistCkl'
+                oneOf:
+                  - $ref: '#/components/schemas/ChecklistCkl'
+                  - $ref: '#/components/schemas/ChecklistCklb'
         default:
           description: unexpected error
           content:
@@ -4079,6 +4081,14 @@ components:
                           type: string
                         SEVERITY_JUSTIFICATION:
                           type: string
+    ChecklistCklb:
+      type: object
+      description: The CKLB format generated and read by DISA STIG VIewer 3
+      properties:
+        target_data:
+          type: object
+        stigs: 
+          type: array
     ChecklistCollectionStig:
       type: object
       additionalProperties: false
