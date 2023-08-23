@@ -2055,13 +2055,14 @@ exports.getSapByCollection = async function (collectionId, benchmarkId, userObje
       benchmarkId: row.benchmarkId,
       title: row.title,
       revisionStr: row.revisionStr,
-      assets: []
+      assetNames: [],
+      // assets: []
     }
     // value.assets.push({
     //   assetId: row.assetId,
     //   name: row.name
     // })
-    value.assets.push(row.name)
+    value.assetNames.push(row.name)
     map.set(row.benchmarkId, value)
     return map
   }, new Map())

@@ -1695,6 +1695,16 @@ SM.CollectionPanel.showCollectionTab = async function (options) {
       collapseFirst: false,
       inventoryPanelTools: [
         {
+          id: 'download',
+          text: 'SAP...',
+          handler: (event, toolEl, panel, tc) => {
+            SM.SAP.showSAPOptions(collectionId)
+          }
+        },
+        {
+          id: 'spacer'
+        },
+        {
           id: 'manage',
           text: 'Manage',
           handler: (event, toolEl, panel, tc) => {

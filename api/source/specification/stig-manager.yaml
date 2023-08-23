@@ -4479,7 +4479,7 @@ components:
           $ref: '#/components/schemas/String255'
         revisionStr:
           $ref: '#/components/schemas/RevisionStrRaw'
-        assets:
+        assetNames:
           type: array
           items:
             $ref: '#/components/schemas/String255'
