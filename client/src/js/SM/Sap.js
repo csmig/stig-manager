@@ -3,6 +3,7 @@ Ext.ns('SM.SAP')
 SM.SAP.optionsWindow = Ext.extend(Ext.Window, {
   initComponent: function () {
     const _this = this
+    if (!this.collectionId) throw ('Missing collectionId')
     const benchmarkIdCheckbox = new Ext.form.Checkbox({
       boxLabel: 'Benchmark',
       name: 'benchmarkId',
@@ -12,36 +13,68 @@ SM.SAP.optionsWindow = Ext.extend(Ext.Window, {
       }
     })
     const stigTitleCheckbox = new Ext.form.Checkbox({
-      boxLabel: 'STIG title',
-      name: 'benchmarkId',
+      boxLabel: 'Title',
+      name: 'title',
       checked: true,
       listeners: {
         check: handleInput
       }
     })
-    const assetNamesCheckbox = new Ext.form.Checkbox({
-      boxLabel: 'Asset names',
-      name: 'assetNames',
+    const revisionCheckbox = new Ext.form.Checkbox({
+      boxLabel: 'Revision',
+      name: 'revisionStr',
       checked: true,
       listeners: {
         check: handleInput
       }
     })
-    const checkboxGroup = new Ext.form.CheckboxGroup({
-      fieldLabel: 'Columns',
+    const stigCheckboxGroup = new Ext.form.CheckboxGroup({
+      fieldLabel: 'STIG fields',
       items: [
           benchmarkIdCheckbox,
           stigTitleCheckbox,
-          assetNamesCheckbox
+          revisionCheckbox
       ]
     })
+    const namesPerRowSlider = new Ext.form.SliderField({
+      fieldLabel: 'Assets/row',
+      value: 253,
+      increment: 1,
+      minValue: 1,
+      maxValue: 253
+    })
+
+    function getValues() {
+      return {
+        benchmarkId: benchmarkIdCheckbox.getValue(),
+        title: stigTitleCheckbox.getValue(),
+        revisionStr: revisionCheckbox.getValue(),
+        assetsPerRow: namesPerRowSlider.getValue()
+      }
+    }
+
+    async function exportHandler () {
+      try {
+        const apiSap = await Ext.Ajax.requestPromise({
+          responseType: 'json',
+          url: `${STIGMAN.Env.apiBase}/collections/${_this.collectionId}/sap`,
+          method: 'GET'
+        })
+        SM.SAP.apiToCsv(apiSap, getValues())
+      }
+      catch(e) {
+        SM.Error.handleError(e)
+      }
+      finally {
+        _this.close()
+      }
+    }
+
     const exportButton = new Ext.Button({
       text: 'Download',
       iconCls: 'sm-export-icon',
       disabled: false,
-      handler: function () {
-        _this.close()
-      }
+      handler: exportHandler
     })
 
     function handleInput () {
@@ -51,7 +84,7 @@ SM.SAP.optionsWindow = Ext.extend(Ext.Window, {
     const config = {
       title: 'SAP CSV options',
       layout: 'form',
-      items: checkboxGroup,
+      items: [stigCheckboxGroup, namesPerRowSlider],
       buttons: [exportButton]
     }
     Ext.apply(this, Ext.apply(this.initialConfig, config))
@@ -59,10 +92,15 @@ SM.SAP.optionsWindow = Ext.extend(Ext.Window, {
   }
 })
 
+SM.SAP.apiToCsv = function (apiSap, {benchmarkId, title, revisionStr, assetsPerRow}) {
+  const one = 1
+}
+
 SM.SAP.showSAPOptions = function (collectionId) {
   const sapWindow = new SM.SAP.optionsWindow({
     modal: true,
-    width: 400
+    width: 400,
+    collectionId
   })
   sapWindow.show(document.body)
 }
