@@ -2007,7 +2007,7 @@ exports.cloneCollection = async function ({collectionId, userObject, name, descr
   }
 }
 
-exports.getSapByCollection = async function (collectionId, benchmarkId, userObject) {
+exports.getSapByCollection = async function (collectionId, benchmarkIds, userObject) {
   const columns = [
     'distinct sa.benchmarkId',
     'stig.title',
@@ -2040,10 +2040,11 @@ exports.getSapByCollection = async function (collectionId, benchmarkId, userObje
     ],
     binds: [ collectionId, userObject.userId ]
   }
-  if (benchmarkId) {
-    predicates.statements.push('dr.benchmarkId = ?')
-    predicates.binds.push(benchmarkId)
+  if (benchmarkIds) { 
+    predicates.statements.push('sa.benchmarkId IN ?')
+    predicates.binds.push( [benchmarkIds] )
   }
+
   const orderBy = [
     'sa.benchmarkId',
     'a.name'
