@@ -13,7 +13,7 @@ SM.SAP.optionsWindow = Ext.extend(Ext.Window, {
       }
     })
     const stigTitleCheckbox = new Ext.form.Checkbox({
-      boxLabel: 'Title',
+      boxLabel: 'STIG title',
       name: 'title',
       checked: true,
       listeners: {
@@ -30,6 +30,7 @@ SM.SAP.optionsWindow = Ext.extend(Ext.Window, {
     })
     const stigCheckboxGroup = new Ext.form.CheckboxGroup({
       fieldLabel: 'STIG fields',
+      columns: 1,
       items: [
           benchmarkIdCheckbox,
           stigTitleCheckbox,
@@ -84,6 +85,7 @@ SM.SAP.optionsWindow = Ext.extend(Ext.Window, {
     const config = {
       title: 'SAP CSV options',
       layout: 'form',
+      padding: 10,
       items: [stigCheckboxGroup, namesPerRowSlider],
       buttons: [exportButton]
     }
@@ -102,5 +104,5 @@ SM.SAP.showSAPOptions = function (collectionId) {
     width: 400,
     collectionId
   })
-  sapWindow.show(document.body)
+  sapWindow.show()
 }
