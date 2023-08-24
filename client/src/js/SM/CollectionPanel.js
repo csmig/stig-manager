@@ -1696,7 +1696,7 @@ SM.CollectionPanel.showCollectionTab = async function (options) {
       inventoryPanelTools: [
         {
           id: 'download',
-          text: 'SAP...',
+          text: 'Export',
           handler: (event, toolEl, panel, tc) => {
             SM.SAP.showSAPOptions(collectionId)
           }

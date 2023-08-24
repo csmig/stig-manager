@@ -9,7 +9,7 @@ SM.SAP.optionsWindow = Ext.extend(Ext.Window, {
       name: 'benchmarkId',
       checked: true,
       listeners: {
-        check: handleInput
+        check: handleCheckboxes
       }
     })
     const stigTitleCheckbox = new Ext.form.Checkbox({
@@ -17,7 +17,7 @@ SM.SAP.optionsWindow = Ext.extend(Ext.Window, {
       name: 'title',
       checked: true,
       listeners: {
-        check: handleInput
+        check: handleCheckboxes
       }
     })
     const revisionCheckbox = new Ext.form.Checkbox({
@@ -25,7 +25,7 @@ SM.SAP.optionsWindow = Ext.extend(Ext.Window, {
       name: 'revisionStr',
       checked: true,
       listeners: {
-        check: handleInput
+        check: handleCheckboxes
       }
     })
     const stigCheckboxGroup = new Ext.form.CheckboxGroup({
@@ -37,12 +37,16 @@ SM.SAP.optionsWindow = Ext.extend(Ext.Window, {
           revisionCheckbox
       ]
     })
-    const namesPerRowSlider = new Ext.form.SliderField({
+    const assetsPerRowSlider = new Ext.form.SliderField({
       fieldLabel: 'Assets/row',
       value: 253,
       increment: 1,
       minValue: 1,
-      maxValue: 253
+      maxValue: 253,
+    })
+
+    assetsPerRowSlider.slider.on('change', function(slider, newValue) {
+      assetsPerRowSlider.label.dom.innerHTML = `${newValue} Assets/row`
     })
 
     function getValues() {
@@ -50,7 +54,7 @@ SM.SAP.optionsWindow = Ext.extend(Ext.Window, {
         benchmarkId: benchmarkIdCheckbox.getValue(),
         title: stigTitleCheckbox.getValue(),
         revisionStr: revisionCheckbox.getValue(),
-        assetsPerRow: namesPerRowSlider.getValue()
+        assetsPerRow: assetsPerRowSlider.getValue()
       }
     }
 
@@ -78,15 +82,15 @@ SM.SAP.optionsWindow = Ext.extend(Ext.Window, {
       handler: exportHandler
     })
 
-    function handleInput () {
-
+    function handleCheckboxes () {
+      exportButton.setDisabled(!benchmarkIdCheckbox.getValue() && !stigTitleCheckbox.getValue())
     }
 
     const config = {
       title: 'SAP CSV options',
       layout: 'form',
       padding: 10,
-      items: [stigCheckboxGroup, namesPerRowSlider],
+      items: [stigCheckboxGroup, assetsPerRowSlider],
       buttons: [exportButton]
     }
     Ext.apply(this, Ext.apply(this.initialConfig, config))
