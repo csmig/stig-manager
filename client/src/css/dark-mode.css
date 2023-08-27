@@ -2000,6 +2000,10 @@ a.x-menu-item {
     border-color: #3d4245
 }
 
+.x-slider {
+    filter: invert(100%) contrast(90%)
+}
+
 .x-slider-horz, .x-slider-horz .x-slider-end, .x-slider-horz .x-slider-inner {
     background-image: url("../ext/resources/images/default/slider/slider-bg.png")
 }
