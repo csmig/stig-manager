@@ -872,8 +872,8 @@ exports.getStigAssetsByCollectionUser = async function (collectionId, userId, el
   return (rows)
 }
 
-exports.getStigsByCollection = async function( collectionId, labelIds, userObject, benchmarkId ) {
-  let columns = [
+exports.getStigsByCollection = async function( {collectionId, labelIds, userObject, benchmarkId, projections} ) {
+  const columns = [
     'sa.benchmarkId',
     'revision.revisionStr',
     `date_format(revision.benchmarkDateSql,'%Y-%m-%d') as benchmarkDate`,
@@ -882,7 +882,7 @@ exports.getStigsByCollection = async function( collectionId, labelIds, userObjec
     'count(sa.assetId) as assetCount'
   ]
 
-  let joins = [
+  const joins = [
     'collection c',
     'left join collection_grant cg on c.collectionId = cg.collectionId',
     'left join asset a on c.collectionId = a.collectionId',
@@ -892,7 +892,7 @@ exports.getStigsByCollection = async function( collectionId, labelIds, userObjec
   ]
 
   // PREDICATES
-  let predicates = {
+  const predicates = {
     statements: [
       'a.state = "enabled"'
     ],
@@ -911,6 +911,11 @@ exports.getStigsByCollection = async function( collectionId, labelIds, userObjec
   if (benchmarkId) {
     predicates.statements.push('sa.benchmarkId = ?')
     predicates.binds.push( benchmarkId )
+  }
+  if (projections?.includes('assets')) {
+    columns.push(`cast(concat('[', group_concat(distinct json_object (
+      'assetId', CAST(a.assetId as char),
+      'name', a.name) order by a.name), ']') as json) as "assets"`)
   }
 
   joins.push('left join user_stig_asset_map usa on sa.saId = usa.saId')
