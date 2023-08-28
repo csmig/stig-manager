@@ -213,14 +213,40 @@ SM.Inventory.OptionsWindow = Ext.extend(Ext.Window, {
       }
     }
 
+    async function fetchApiData(groupBy, queryParams = {}) {
+      const requests = {
+        asset: {
+          url: `${STIGMAN.Env.apiBase}/assets`,
+          params: {
+            collectionId: _this.collectionId,
+            projection: 'stigs'
+          }
+        },
+        stig: {
+          url: `${STIGMAN.Env.apiBase}/collections/${_this.collectionId}/stigs`,
+          params: {
+            projection: 'assets'
+          }
+        }
+      }
+      const apiData = await Ext.Ajax.requestPromise({
+        responseType: 'json',
+        method: 'GET',
+        url: requests[groupBy].url,
+        params: requests[groupBy].params
+      })
+      return apiData
+    } 
+
     async function exportHandler () {
       try {
-        // const apiSap = await Ext.Ajax.requestPromise({
-        //   responseType: 'json',
-        //   url: `${STIGMAN.Env.apiBase}/collections/${_this.collectionId}/sap`,
-        //   method: 'GET'
-        // })
-        // SM.Inventory.apiToCsv(apiSap, getValues())
+        const groupedBy = groupByRadioGroup.getValue().groupBy
+        const format = formatRadioGroup.getValue().format
+        const apiData = await fetchApiData(groupedBy)
+        let downloadData = apiData // json will remain unchanged
+        if (format === 'csv') {
+          downloadData = SM.Inventory.apiToCsv({groupedBy, apiData, fieldOptions: getValues()})
+        }
       }
       catch(e) {
         SM.Error.handleError(e)
@@ -287,7 +313,7 @@ SM.Inventory.OptionsWindow = Ext.extend(Ext.Window, {
   }
 })
 
-SM.Inventory.apiToCsv = function (apiSap, {benchmarkId, title, revisionStr, assetsPerRow}) {
+SM.Inventory.apiToCsv = function ({groupedBy, apiData, fieldOptions}) {
   const one = 1
 }
 
