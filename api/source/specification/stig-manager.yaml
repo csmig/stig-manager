@@ -4672,6 +4672,8 @@ components:
       properties:
         benchmarkId:
           type: string
+        title:
+          type: string
         revisionStr:
           $ref: '#/components/schemas/RevisionStr'   
         benchmarkDate:
@@ -4684,6 +4686,10 @@ components:
           type: integer
         assetCount:
           type: integer
+        assets:
+          type: array
+          items:
+            $ref: '#/components/schemas/AssetForCollection'
     CollectionStigWithIsDefault:
       type: object
       additionalProperties: false

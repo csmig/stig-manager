@@ -1807,7 +1807,7 @@ a.x-menu-item {
 
 .x-panel-body {
     border-color: #3d4245;
-    background-color: hsl(200deg 6% 11%)
+    background-color: transparent;
 }
 
 .x-panel-bbar .x-toolbar, .x-panel-tbar .x-toolbar {

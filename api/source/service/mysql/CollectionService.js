@@ -875,6 +875,7 @@ exports.getStigAssetsByCollectionUser = async function (collectionId, userId, el
 exports.getStigsByCollection = async function( {collectionId, labelIds, userObject, benchmarkId, projections} ) {
   const columns = [
     'sa.benchmarkId',
+    'stig.title',
     'revision.revisionStr',
     `date_format(revision.benchmarkDateSql,'%Y-%m-%d') as benchmarkDate`,
     'CASE WHEN dr.revisionPinned = 1 THEN CAST(true as json) ELSE CAST(false as json) END as revisionPinned',
@@ -888,7 +889,8 @@ exports.getStigsByCollection = async function( {collectionId, labelIds, userObje
     'left join asset a on c.collectionId = a.collectionId',
     'inner join stig_asset_map sa on a.assetId = sa.assetId',
     'left join default_rev dr on (sa.benchmarkId = dr.benchmarkId and c.collectionId = dr.collectionId)',
-    'left join revision on dr.revId = revision.revId'
+    'left join revision on dr.revId = revision.revId',
+    'left join stig on revision.benchmarkId = stig.benchmarkId'
   ]
 
   // PREDICATES
@@ -929,7 +931,7 @@ exports.getStigsByCollection = async function( {collectionId, labelIds, userObje
   if (predicates.statements.length > 0) {
     sql += "\nWHERE " + predicates.statements.join(" and ")
   }
-  sql += ' group by sa.benchmarkId, revision.revId, dr.revisionPinned'
+  sql += ' group by sa.benchmarkId, revision.revId, dr.revisionPinned, stig.benchmarkId'
   sql += ' order by sa.benchmarkId'
   
   let [rows] = await dbUtils.pool.query(sql, predicates.binds)
