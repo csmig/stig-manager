@@ -1698,7 +1698,7 @@ SM.CollectionPanel.showCollectionTab = async function (options) {
           id: 'download',
           text: 'Export...',
           handler: function (event, toolEl, panel, tc) {
-            SM.Inventory.showInventoryDownloadOptions(collectionId, {event, toolEl, panel, tc})
+            SM.Inventory.showInventoryExportOptions(collectionId, collectionName)
           }
         },
         {
