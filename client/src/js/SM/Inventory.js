@@ -1,68 +1,8 @@
 Ext.ns('SM.Inventory')
 
-// SM.Inventory.CsvItemsPerRowFieldSet = Ext.extend(Ext.form.FieldSet, {
-SM.Inventory.CsvItemsPerRowFieldSet = Ext.extend(Ext.form.FormPanel, {
-  initComponent: function () {
-    const _this = this
-    const numberField = new Ext.form.NumberField({
-      fieldLabel: `Max NL-delimited ${this.itemName ?? 'items'}/row (0 = unlimited)`,
-      value: this.initialValue ?? 253,
-      width: 50,
-      maxValue: 253,
-      enableKeyEvents: true,
-      // setItemName: function (name) {
-      //   numberField.label.dom.innerHTML = `Max NL-delimited ${name}/row (0 = unlimited)`
-      // },
-      listeners: {
-        keyup: function (field, event) {
-          slider.suspendEvents()
-          slider.setValue(this.getValue())
-          slider.resumeEvents()
-        }
-      }
-    })
-    function setItemName(name) {
-      _this.itemName = name
-      numberField.label.dom.innerHTML = `Max NL-delimited ${_this.itemName}/row (0 = unlimited)`
-    }
-    const slider = new Ext.slider.SingleSlider({
-      value: this.initialValue ?? 253,
-      increment: 1,
-      disabledClass: 'sm-disabled',
-      minValue: 0,
-      maxValue: 253,
-      listeners: {
-        change: function (slider, newValue) {
-          numberField.suspendEvents()
-          numberField.setValue(newValue)
-          numberField.resumeEvents()
-        }
-      }
-    })
-
-    const config = {
-      // header: false,
-      // layout: 'form',
-      border: false,
-      labelWidth: 240,
-      autoHeight: true,
-      maskDisabled: false,
-      setItemName,
-      getValue: numberField.getValue.bind(numberField),
-      items: [
-        numberField,
-        slider
-      ]
-    }
-    Ext.apply(this, Ext.apply(this.initialConfig, config))
-    this.superclass().initComponent.call(this)
-  }
-})
-
-SM.Inventory.ArrayDelimiterComboBox = Ext.extend(Ext.form.ComboBox, {
+SM.Inventory.CsvArrayDelimiterComboBox = Ext.extend(Ext.form.ComboBox, {
 	initComponent: function () {
-		const _this = this
-		let config = {
+		const config = {
 			width: 120,
 			forceSelection: true,
 			editable: false,
@@ -81,11 +21,276 @@ SM.Inventory.ArrayDelimiterComboBox = Ext.extend(Ext.form.ComboBox, {
 	}
 })
 
-SM.Inventory.OptionsWindow = Ext.extend(Ext.Window, {
+SM.Inventory.CsvAssetFieldSet = Ext.extend(Ext.form.FieldSet, {
   initComponent: function () {
     const _this = this
-    if (!this.collectionId) throw ('Missing collectionId')
 
+    const nameCheckbox = new Ext.form.Checkbox({
+      boxLabel: 'Name',
+      csvField: {
+        apiProperty: 'name',
+        header: 'Name'
+      },
+      checked: this.state.name,
+      listeners: {
+        check: handleCheckboxes
+      }
+    })
+    const fqdnCheckbox = new Ext.form.Checkbox({
+      boxLabel: 'FQDN',
+      csvField: {
+        apiProperty: 'fqdn',
+        header: 'FQDN'
+      },
+      checked: this.state.fqdn,
+      listeners: {
+        check: handleCheckboxes
+      }
+    })
+    const ipCheckbox = new Ext.form.Checkbox({
+      boxLabel: 'IP',
+      csvField: {
+        apiProperty: 'ip',
+        header: 'IP'
+      },
+      checked: this.state.ip,
+      listeners: {
+        check: handleCheckboxes
+      }
+    })
+    const macCheckbox = new Ext.form.Checkbox({
+      boxLabel: 'MAC',
+      csvField: {
+        apiProperty: 'mac',
+        header: 'MAC'
+      },
+      checked: this.state.mac,
+      listeners: {
+        check: handleCheckboxes
+      }
+    })
+    const descriptionCheckbox = new Ext.form.Checkbox({
+      boxLabel: 'Description',
+      csvField: {
+        apiProperty: 'description',
+        header: 'Description'
+      },
+      checked: this.state.description,
+      listeners: {
+        check: handleCheckboxes
+      }
+    })
+    const stigsCheckbox = new Ext.form.Checkbox({
+      boxLabel: 'STIGs',
+      csvField: {
+        apiProperty: 'stigs',
+        header: 'STIGs',
+        delimitedProperty: 'benchmarkId',
+        delimiter: ','
+      },
+      checked: this.state.stigs,
+      listeners: {
+        check: handleCheckboxes
+      }
+    })
+    const checkboxGroup = new Ext.form.CheckboxGroup({
+      hideLabel: true,
+      columns: [70, 70, 50, 60, 100, 60],
+      items: [
+        nameCheckbox,
+        fqdnCheckbox,
+        ipCheckbox,
+        macCheckbox,
+        descriptionCheckbox,
+        stigsCheckbox
+      ]
+    })
+    const delimiterComboBox = new SM.Inventory.CsvArrayDelimiterComboBox({
+      fieldLabel: 'STIGs delimited by',
+      value: this.state.stigsDelimiter,
+      listeners: {
+        select: (cb) => stigsCheckbox.csvField.delimiter = cb.getValue()
+      }
+    })
+
+    function getFieldOptions () {
+      return checkboxGroup.getValue().map(cb => cb.csvField)
+    }
+
+    function handleCheckboxes() {
+      delimiterComboBox.setDisabled(!stigsCheckbox.getValue())
+      const event = nameCheckbox.getValue() || fqdnCheckbox.getValue() ? 'valid' : 'invalid'
+      _this.fireEvent(event, _this)
+    }
+
+    const config = {
+      title: this.title || 'CSV fields',
+      labelWidth: 120,
+      autoHeight: true,
+      getFieldOptions,
+      nameCheckbox,
+      fqdnCheckbox,
+      ipCheckbox,
+      macCheckbox,
+      descriptionCheckbox,
+      stigsCheckbox,
+      checkboxGroup,
+      delimiterComboBox,
+      items: [
+        checkboxGroup,
+        delimiterComboBox
+      ]
+}
+    Ext.apply(this, Ext.apply(this.initialConfig, config))
+    this.superclass().initComponent.call(this)
+  }
+})
+
+SM.Inventory.CsvStigFieldSet = Ext.extend(Ext.form.FieldSet, {
+  initComponent: function () {
+    const _this = this
+
+    const benchmarkCheckbox = new Ext.form.Checkbox({
+      boxLabel: 'Benchmark',
+      csvField: {
+        apiProperty: 'benchmarkId',
+        header: 'Benchmark'
+      },
+      checked: this.state.benchmarkId,
+      listeners: {
+        check: handleCheckboxes
+      }
+    })
+    const titleCheckbox = new Ext.form.Checkbox({
+      boxLabel: 'Title',
+      csvField: {
+        apiProperty: 'title',
+        header: 'Title'
+      },
+      checked: this.state.title,
+      listeners: {
+        check: handleCheckboxes
+      }
+    })
+    const revisionCheckbox = new Ext.form.Checkbox({
+      boxLabel: 'Revision',
+      csvField: {
+        apiProperty: 'revisionStr',
+        header: 'Revision'
+      },
+      checked: this.state.revisionStr,
+      listeners: {
+        check: handleCheckboxes
+      }
+    })
+    const dateCheckbox = new Ext.form.Checkbox({
+      boxLabel: 'Date',
+      csvField: {
+        apiProperty: 'benchmarkDate',
+        header: 'Date'
+      },
+      checked: this.state.date,
+      listeners: {
+        check: handleCheckboxes
+      }
+    })
+    const assetsCheckbox = new Ext.form.Checkbox({
+      boxLabel: 'Assets',
+      csvField: {
+        apiProperty: 'assets',
+        header: 'Assets',
+        delimitedProperty: 'name',
+        delimiter: ','
+      },
+      checked: this.state.assets,
+      listeners: {
+        check: handleCheckboxes
+      }
+    })
+    const checkboxGroup = new Ext.form.CheckboxGroup({
+      hideLabel: true,
+      columns: [100, 70, 85, 70, 70],
+      items: [
+        benchmarkCheckbox,
+        titleCheckbox,
+        revisionCheckbox,
+        dateCheckbox,
+        assetsCheckbox
+      ]
+    })
+    const delimiterComboBox = new SM.Inventory.CsvArrayDelimiterComboBox({
+      fieldLabel: 'Assets delimited by',
+      value: this.state.assetsDelimiter,
+      listeners: {
+        select: (cb) => assetsCheckbox.csvField.delimiter = cb.getValue()
+      }
+    })
+
+    function getFieldOptions () {
+      return checkboxGroup.getValue().map(cb => cb.csvField)
+    }
+
+    function handleCheckboxes() {
+      delimiterComboBox.setDisabled(!assetsCheckbox.getValue())
+      const event = benchmarkCheckbox.getValue() || titleCheckbox.getValue() ? 'valid' : 'invalid'
+      _this.fireEvent(event, _this)
+    }
+
+    const config = {
+      title: this.title || 'CSV fields',
+      labelWidth: 120,
+      autoHeight: true,
+      getFieldOptions,
+      benchmarkCheckbox,
+      titleCheckbox,
+      revisionCheckbox,
+      dateCheckbox,
+      assetsCheckbox,
+      checkboxGroup,
+      delimiterComboBox,
+      items: [
+        checkboxGroup,
+        delimiterComboBox
+      ]
+    }
+    Ext.apply(this, Ext.apply(this.initialConfig, config))
+    this.superclass().initComponent.call(this)
+  }
+})
+
+SM.Inventory.JsonProjectionFieldSet = Ext.extend(Ext.form.FieldSet, {
+  initComponent: function () {
+    const _this = this
+
+    const boxLabel = `Include list of ${this.projection === 'assets' ? 'Assets' : 'STIGs'} for each ${this.projection === 'assets' ? 'STIG' : 'Asset'}`
+    const projectionCheckbox = new Ext.form.Checkbox({
+      boxLabel,
+      hideLabel: true,
+      checked: this.checked ?? true
+    })
+    function getFieldOptions () {
+      return projectionCheckbox.getValue()
+    }
+
+    const config = {
+      title: this.title || 'JSON options',
+      hideLabel: true,
+      autoHeight: true,
+      getFieldOptions,
+      projectionCheckbox,
+      items: [projectionCheckbox]
+    }
+    Ext.apply(this, Ext.apply(this.initialConfig, config))
+    this.superclass().initComponent.call(this)
+  }
+})
+
+SM.Inventory.ExportOptionsWindow = Ext.extend(Ext.Window, {
+  initComponent: function () {
+    const _this = this
+    if (!this.collectionId || !this.collectionName) throw ('Missing collectionId or collectionName')
+    const localStorageItem = 'inventoryExportOptions'
+    const state = getState()
     // Group by: and Format:
     const groupByRadioGroup = new Ext.form.RadioGroup({
       fieldLabel: 'Group by',
@@ -96,12 +301,13 @@ SM.Inventory.OptionsWindow = Ext.extend(Ext.Window, {
           name: 'groupBy',
           groupBy: 'stig',
           itemField: 'asset',
-          checked: true
+          checked: state.groupBy === 'stig'
         },
         {
           boxLabel: 'Asset',
           name: 'groupBy',
-          groupBy: 'asset'
+          groupBy: 'asset',
+          checked: state.groupBy === 'asset'
         }
       ],
       listeners: {
@@ -116,211 +322,45 @@ SM.Inventory.OptionsWindow = Ext.extend(Ext.Window, {
           boxLabel: 'CSV',
           name: 'format',
           format: 'csv',
-          checked: true
+          checked: state.format === 'csv'
         },
         {
           boxLabel: 'JSON',
           name: 'format',
-          format: 'json'
+          format: 'json',
+          checked: state.format === 'json'
         }
       ],
       listeners: {
         change: updateDisplay
       }
     })
-
     // CSV fields for group by asset
-    const nameCheckbox = new Ext.form.Checkbox({
-      boxLabel: 'Name',
-      csvField: {
-        apiProperty: 'name',
-        header: 'Name'
-      },
-      checked: true,
+    const csvAssetFieldSet = new SM.Inventory.CsvAssetFieldSet({
+      state,
       listeners: {
-        check: handleAssetCheckboxes
+        valid: () => exportButton.enable(),
+        invalid: () => exportButton.disable()
       }
     })
-    const fqdnCheckbox = new Ext.form.Checkbox({
-      boxLabel: 'FQDN',
-      csvField: {
-        apiProperty: 'fqdn',
-        header: 'FQDN'
-      },
-      checked: true,
-      listeners: {
-        check: handleAssetCheckboxes
-      }
-    })
-    const ipCheckbox = new Ext.form.Checkbox({
-      boxLabel: 'IP',
-      csvField: {
-        apiProperty: 'ip',
-        header: 'IP'
-      },
-      checked: true,
-      listeners: {
-        check: handleAssetCheckboxes
-      }
-    })
-    const macCheckbox = new Ext.form.Checkbox({
-      boxLabel: 'MAC',
-      csvField: {
-        apiProperty: 'mac',
-        header: 'MAC'
-      },
-      checked: true,
-      listeners: {
-        check: handleAssetCheckboxes
-      }
-    })
-    const descriptionCheckBox = new Ext.form.Checkbox({
-      boxLabel: 'Description',
-      csvField: {
-        apiProperty: 'description',
-        header: 'Description'
-      },
-      checked: true,
-      listeners: {
-        check: handleAssetCheckboxes
-      }
-    })
-    const stigBenchmarksCheckBox = new Ext.form.Checkbox({
-      boxLabel: 'STIGs',
-      csvField: {
-        apiProperty: 'stigs',
-        header: 'STIGs',
-        delimitedProperty: 'benchmarkId',
-        delimiter: ','
-      },
-      checked: true,
-      listeners: {
-        check: handleAssetCheckboxes
-      }
-    })
-    const assetCheckboxGroup = new Ext.form.CheckboxGroup({
-      hideLabel: true,
-      columns: [70, 70, 50, 60, 100, 60],
-      items: [
-        nameCheckbox,
-        fqdnCheckbox,
-        ipCheckbox,
-        macCheckbox,
-        descriptionCheckBox,
-        stigBenchmarksCheckBox
-      ]
-    })
-    const stigsDelimiterComboBox = new SM.Inventory.ArrayDelimiterComboBox({
-      fieldLabel: 'STIGs delimited by',
-      listeners: {
-        select: function (cb) {
-          stigBenchmarksCheckBox.csvField.delimiter = cb.getValue()
-        }
-      }
-    })
-    const csvAssetFieldSet = new Ext.form.FieldSet({
-      title: 'CSV fields',
-      labelWidth: 120,
-      autoHeight: true,
-      getFieldOptions: function () {
-        return assetCheckboxGroup.getValue().map(cb => cb.csvField)
-      },
-      items: [
-        assetCheckboxGroup,
-        stigsDelimiterComboBox
-      ]
-    })
-
     // CSV fields for group by stig
-    const benchmarkIdCheckbox = new Ext.form.Checkbox({
-      boxLabel: 'Benchmark',
-      csvField: {
-        apiProperty: 'benchmarkId',
-        header: 'Benchmark'
-      },
-      checked: true,
+    const csvStigFieldSet = new SM.Inventory.CsvStigFieldSet({
+      state,
       listeners: {
-        check: handleSTIGCheckboxes
+        valid: () => exportButton.enable(),
+        invalid: () => exportButton.disable()
       }
     })
-    const stigTitleCheckbox = new Ext.form.Checkbox({
-      boxLabel: 'Title',
-      csvField: {
-        apiProperty: 'title',
-        header: 'Title'
-      },
-      checked: true,
-      listeners: {
-        check: handleSTIGCheckboxes
-      }
+    // JSON options for group by asset
+    const jsonAssetFieldSet = new SM.Inventory.JsonProjectionFieldSet({
+      checked: state.stigProjection,
+      projection: 'stigs'
     })
-    const revisionCheckbox = new Ext.form.Checkbox({
-      boxLabel: 'Revision',
-      csvField: {
-        apiProperty: 'revisionStr',
-        header: 'Revision'
-      },
-      checked: true,
-      listeners: {
-        check: handleSTIGCheckboxes
-      }
+    // JSON options for group by stig
+    const jsonStigFieldSet = new SM.Inventory.JsonProjectionFieldSet({
+      checked: state.assetProjection,
+      projection: 'assets'
     })
-    const dateCheckbox = new Ext.form.Checkbox({
-      boxLabel: 'Date',
-      csvField: {
-        apiProperty: 'benchmarkDate',
-        header: 'Date'
-      },
-      checked: true,
-      listeners: {
-        check: handleSTIGCheckboxes
-      }
-    })
-    const assetNamesCheckBox = new Ext.form.Checkbox({
-      boxLabel: 'Assets',
-      csvField: {
-        apiProperty: 'assets',
-        header: 'Assets',
-        delimitedProperty: 'name',
-        delimiter: ','
-      },
-      checked: true,
-      listeners: {
-        check: handleSTIGCheckboxes
-      }
-    })
-    const stigCheckboxGroup = new Ext.form.CheckboxGroup({
-      hideLabel: true,
-      columns: [100, 70, 85, 70, 70],
-      items: [
-        benchmarkIdCheckbox,
-        stigTitleCheckbox,
-        revisionCheckbox,
-        dateCheckbox,
-        assetNamesCheckBox
-      ]
-    })
-    const assetsDelimiterComboBox = new SM.Inventory.ArrayDelimiterComboBox({
-      fieldLabel: 'Assets delimited by',
-      listeners: {
-        select: function (cb) {
-          assetNamesCheckBox.csvField.delimiter = cb.getValue()
-        }
-      }
-    })
-    const csvStigFieldSet = new Ext.form.FieldSet({
-      title: 'CSV fields',
-      labelWidth: 120,
-      autoHeight: true,
-      getFieldOptions: function () {
-        return stigCheckboxGroup.getValue().map(cb => cb.csvField)
-      },
-      items: [
-        stigCheckboxGroup,
-        assetsDelimiterComboBox
-      ]
-    })
-
     // Button
     const exportButton = new Ext.Button({
       text: 'Export',
@@ -328,23 +368,21 @@ SM.Inventory.OptionsWindow = Ext.extend(Ext.Window, {
       disabled: false,
       handler: exportHandler
     })
-
     // Functions
-    async function fetchApiDataAsText(groupBy, queryParams = {}) {
+    async function fetchApiDataAsText(groupBy, includeProjection) {
       const requests = {
         asset: {
           url: `${STIGMAN.Env.apiBase}/assets`,
-          params: {
-            collectionId: _this.collectionId,
-            projection: 'stigs'
-          }
+          params: {collectionId: _this.collectionId}
         },
         stig: {
           url: `${STIGMAN.Env.apiBase}/collections/${_this.collectionId}/stigs`,
-          params: {
-            projection: 'assets'
-          }
+          params: {}
         }
+      }
+      if (includeProjection) {
+        requests.asset.params.projection = 'stigs'
+        requests.stig.params.projection = 'assets'
       }
       const result = await Ext.Ajax.requestPromise({
         method: 'GET',
@@ -353,19 +391,22 @@ SM.Inventory.OptionsWindow = Ext.extend(Ext.Window, {
       })
       return result.response.responseText
     }
-
     async function exportHandler() {
       try {
         _this.getEl().mask('')
+        setState()
         const groupItem = groupByRadioGroup.getValue()
         const formatItem = formatRadioGroup.getValue()
-        const apiText = await fetchApiDataAsText(groupItem.groupBy)
         let downloadData
         if (formatItem.format === 'csv') {
           const csvFields = groupItem.groupBy === 'asset' ? csvAssetFieldSet.getFieldOptions() : csvStigFieldSet.getFieldOptions()
+          const requestProjection = csvFields.some(item => item.apiProperty === 'stigs' || item.apiProperty === 'assets')
+          const apiText = await fetchApiDataAsText(groupItem.groupBy, requestProjection)
           downloadData = new Blob([SM.Inventory.apiToCsv(JSON.parse(apiText), csvFields)])
         }
         else {
+          const requestProjection = groupItem.groupBy === 'asset' ? jsonAssetFieldSet.getFieldOptions() : jsonStigFieldSet.getFieldOptions()
+          const apiText = await fetchApiDataAsText(groupItem.groupBy, requestProjection)
           downloadData = new Blob([apiText])
         }
         const timestamp = Ext.util.Format.date((new Date), 'Y-m-d_His')
@@ -378,35 +419,76 @@ SM.Inventory.OptionsWindow = Ext.extend(Ext.Window, {
         _this.close()
       }
     }
-
-    function handleSTIGCheckboxes() {
-      exportButton.setDisabled(!benchmarkIdCheckbox.getValue() && !stigTitleCheckbox.getValue())
-      assetsDelimiterComboBox.setDisabled(!assetNamesCheckBox.getValue())
-    }
-
-    function handleAssetCheckboxes() {
-      exportButton.setDisabled(!nameCheckbox.getValue() && !fqdnCheckbox.getValue())
-      stigsDelimiterComboBox.setDisabled(!stigBenchmarksCheckBox.getValue())
-
-    }
-
     function updateDisplay() {
       if (formatRadioGroup.getValue().format === 'json') {
         csvAssetFieldSet.hide()
         csvStigFieldSet.hide()
+        if (groupByRadioGroup.getValue().groupBy === 'stig') {
+          jsonAssetFieldSet.hide()
+          jsonStigFieldSet.show()
+        }
+        else {
+          jsonAssetFieldSet.show()
+          jsonStigFieldSet.hide()
+        }
       }
       else {
+        jsonAssetFieldSet.hide()
+        jsonStigFieldSet.hide()
         if (groupByRadioGroup.getValue().groupBy === 'stig') {
           csvAssetFieldSet.hide()
           csvStigFieldSet.show()
-          handleSTIGCheckboxes()
         }
         else {
           csvAssetFieldSet.show()
           csvStigFieldSet.hide()
-          handleAssetCheckboxes()
         }
       }
+    }
+    function getState() {
+      const defaults = {
+        groupBy: 'stig',
+        format: 'csv',
+        benchmarkId: true,
+        title: true,
+        revisionStr: true,
+        date: true,
+        assets: true,
+        assetsDelimiter: ',',
+        name: true,
+        fqdn: true,
+        ip: true,
+        mac: true,
+        description: true,
+        stigs: true,
+        stigsDelimiter: ',',
+        assetProjection: true,
+        stigProjection: true
+      }
+      const storageValue = SM.safeJSONParse(localStorage.getItem(localStorageItem))
+      return storageValue ? Object.assign({}, defaults, storageValue) : defaults
+    }
+    function setState() {
+      const state = {
+        groupBy: groupByRadioGroup.getValue().groupBy,
+        format: formatRadioGroup.getValue().format,
+        benchmarkId: csvStigFieldSet.benchmarkCheckbox.checked,
+        title: csvStigFieldSet.titleCheckbox.checked,
+        revisionStr: csvStigFieldSet.revisionCheckbox.checked,
+        date: csvStigFieldSet.dateCheckbox.checked,
+        assets: csvStigFieldSet.assetsCheckbox.checked,
+        assetsDelimiter: csvStigFieldSet.delimiterComboBox.getValue(),
+        name: csvAssetFieldSet.nameCheckbox.checked,
+        fqdn: csvAssetFieldSet.fqdnCheckbox.checked,
+        ip: csvAssetFieldSet.ipCheckbox.checked,
+        mac: csvAssetFieldSet.macCheckbox.checked,
+        description: csvAssetFieldSet.descriptionCheckbox.checked,
+        stigs: csvAssetFieldSet.stigsCheckbox.checked,
+        stigsDelimiter: csvAssetFieldSet.delimiterComboBox.getValue(),
+        assetProjection: jsonStigFieldSet.projectionCheckbox.checked,
+        stigProjection: jsonAssetFieldSet.projectionCheckbox.checked
+      }
+      localStorage.setItem(localStorageItem, JSON.stringify(state))
     }
 
     const config = {
@@ -416,7 +498,9 @@ SM.Inventory.OptionsWindow = Ext.extend(Ext.Window, {
         groupByRadioGroup,
         formatRadioGroup,
         csvAssetFieldSet,
-        csvStigFieldSet
+        csvStigFieldSet,
+        jsonAssetFieldSet,
+        jsonStigFieldSet
       ],
       buttons: [exportButton],
       listeners: {
@@ -429,10 +513,9 @@ SM.Inventory.OptionsWindow = Ext.extend(Ext.Window, {
 })
 
 SM.Inventory.apiToCsv = function (apiData, csvFields) {
-  const quotify = (string) => {
-    return `"${string.replace(/"/g,'""')}"`
-  }
-  
+  // Function to apply double-quote escaping
+  const quotify = (string) => `"${string.replace(/"/g,'""')}"`
+  // Initialize data
   const csvData = []
   // Header
   const header = []
@@ -440,8 +523,7 @@ SM.Inventory.apiToCsv = function (apiData, csvFields) {
     header.push(quotify(field.header))
   }
   csvData.push(header.join(','))
-  
-  // Data
+  // Rows
   for (const data of apiData) {
     const row = []
     for (const field of csvFields) {
@@ -454,11 +536,11 @@ SM.Inventory.apiToCsv = function (apiData, csvFields) {
     }
     csvData.push(row.join(','))
   }
-   return csvData.join('\n')
+  return csvData.join('\n')
 }
 
 SM.Inventory.showInventoryExportOptions = function (collectionId, collectionName) {
-  const optionsWindow = new SM.Inventory.OptionsWindow({
+  const optionsWindow = new SM.Inventory.ExportOptionsWindow({
     title: 'Inventory export options',
     modal: true,
     width: 460,
