@@ -462,8 +462,60 @@ SM.Exports.showExportTree = async function (collectionId, collectionName, treeba
   try {
     let appwindow
 
+    const exportToComboBox = new Ext.form.ComboBox({
+      mode: 'local',
+      width: 110,
+      fieldLabel: "Export to",
+      forceSelection: true,
+      autoSelect: true,
+      editable: false,
+      store: new Ext.data.SimpleStore({
+        fields: ['displayStr', 'valueStr'],
+        data: [
+          ['ZIP archive', 'zip'],
+          ['Collection', 'collection']
+        ]
+      }),
+      valueField:'valueStr',
+      displayField:'displayStr',
+      value: localStorage.getItem('exportTo') || 'zip',
+      monitorValid: false,
+      triggerAction: 'all',
+      listeners: {
+        select: function (combo, record, index) {
+          localStorage.setItem('exportTo', combo.getValue())
+        }
+      }
+    })
+
+    const collectionComboBox = new Ext.form.ComboBox({
+      mode: 'local',
+      width: 110,
+      fieldLabel: "Export to",
+      forceSelection: true,
+      autoSelect: true,
+      editable: false,
+      store: new Ext.data.SimpleStore({
+        fields: ['displayStr', 'valueStr'],
+        data: [
+          ['Name', 'id'],
+          ['Name2', 'id2']
+        ]
+      }),
+      valueField:'valueStr',
+      displayField:'displayStr',
+      // value: localStorage.getItem('exportTo') || 'zip',
+      monitorValid: false,
+      triggerAction: 'all',
+      listeners: {
+        // select: function (combo, record, index) {
+        //   localStorage.setItem('exportTo', combo.getValue())
+        // }
+      }
+    })
+
     const exportButton = new Ext.Button({
-      text: 'Download',
+      text: 'Export',
       iconCls: 'sm-export-icon',
       disabled: false,
       handler: function () {
@@ -471,11 +523,16 @@ SM.Exports.showExportTree = async function (collectionId, collectionName, treeba
         const checklists = navTree.getCheckedForStreaming()
         appwindow.close()
         
-        SM.Exports.exportArchiveStreaming({
+        SM.Exports.exportToCollection({
           collectionId,
-          checklists, 
-          format: formatComboBox.getValue()
+          dstCollectionId: 1,
+          checklists
         })
+        // SM.Exports.exportArchiveStreaming({
+        //   collectionId,
+        //   checklists, 
+        //   format: formatComboBox.getValue()
+        // })
       }
     })
 
@@ -547,7 +604,7 @@ SM.Exports.showExportTree = async function (collectionId, collectionName, treeba
       buttonAlign: 'left',
       items: [
         {
-          html: `<div class="sm-dialog-panel-title">Select ZIP members</div>
+          html: `<div class="sm-dialog-panel-title">Select Assets and STIGs</div>
           <div class="sm-dialog-panel-text">Badges: 
             <span class="sm-export-sprite sm-export-sprite-high">Accepted: &lt; 100%</span>
             <span class="sm-export-sprite sm-export-sprite-low">Accepted: 100%</span>
@@ -559,10 +616,11 @@ SM.Exports.showExportTree = async function (collectionId, collectionName, treeba
       fbar: [
         { 
           xtype: 'form',
-          labelWidth: 50,
+          labelWidth: 75,
           bodyStyle: 'padding:0 5px 0 15px;',
           border: false,
           items: [
+            exportToComboBox,
             formatComboBox
           ]
         },
@@ -642,6 +700,28 @@ SM.Exports.exportArchiveStreaming = async function ({collectionId, checklists, f
   catch (e) {
     SM.Error.handleError(e)
   }
+}
+
+SM.Exports.exportToCollection = async function ({collectionId, dstCollectionId, checklists}) {
+  try {
+    const url = `${STIGMAN.Env.apiBase}/collections/${collectionId}/export-to/${dstCollectionId}`
+    await window.oidcProvider.updateToken(10)
+    const fetchInit = {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${window.oidcProvider.token}`
+      },
+      body: JSON.stringify(checklists)     
+    }
+    let response = await fetch(url, fetchInit)
+
+
+  }
+  catch (e) {
+    SM.Error.handleError(e)
+  }
+
 }
 
 

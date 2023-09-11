@@ -1039,3 +1039,17 @@ module.exports.cloneCollection = async function (req, res, next) {
     next(err)
   }
 }
+
+module.exports.postExportToCollection = async function (req, res, next) {
+  try {
+    const srcCollectionId = getCollectionIdAndCheckPermission(req, Security.ACCESS_LEVEL.Restricted)
+    req.params.collectionId = req.params.dstCollectionId
+    const dstCollectionId = getCollectionIdAndCheckPermission(req, Security.ACCESS_LEVEL.Manage)
+    req.params.collectionId = srcCollectionId
+    const parsedRequest = await processAssetStigRequests (req.body, srcCollectionId, 'multi', req.userObject)
+    res.json(parsedRequest)
+  }
+  catch (err) {
+    next(err)
+  }
+}
