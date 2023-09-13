@@ -951,7 +951,7 @@ paths:
       tags:
         - Collection
       summary: The summary
-      operationId: postExportToCollection
+      operationId: exportToCollection
       parameters:
         - $ref: '#/components/parameters/CollectionIdPath'
         - $ref: '#/components/parameters/DstCollectionIdPath'       

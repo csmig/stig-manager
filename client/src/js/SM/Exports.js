@@ -462,6 +462,12 @@ SM.Exports.showExportTree = async function (collectionId, collectionName, treeba
   try {
     let appwindow
 
+    const dstCollectionData = curUser.collectionGrants
+    .filter(grant => grant.accessLevel >= 3 && grant.collection.collectionId != collectionId)
+    .map(grant => [grant.collection.name, grant.collection.collectionId])
+
+    const exportToData = dstCollectionData.length ? [['ZIP archive', 'zip'],['Collection', 'collection']] : [['ZIP archive', 'zip']]
+
     const exportToComboBox = new Ext.form.ComboBox({
       mode: 'local',
       width: 110,
@@ -471,10 +477,7 @@ SM.Exports.showExportTree = async function (collectionId, collectionName, treeba
       editable: false,
       store: new Ext.data.SimpleStore({
         fields: ['displayStr', 'valueStr'],
-        data: [
-          ['ZIP archive', 'zip'],
-          ['Collection', 'collection']
-        ]
+        data: exportToData
       }),
       valueField:'valueStr',
       displayField:'displayStr',
@@ -483,24 +486,31 @@ SM.Exports.showExportTree = async function (collectionId, collectionName, treeba
       triggerAction: 'all',
       listeners: {
         select: function (combo, record, index) {
-          localStorage.setItem('exportTo', combo.getValue())
+          if (combo.getValue() === 'zip') {
+            collectionComboBox.hide()
+            formatComboBox.show()
+          }
+          else {
+            collectionComboBox.show()
+            formatComboBox.hide()
+          }
+          // localStorage.setItem('exportTo', combo.getValue())
         }
       }
     })
 
     const collectionComboBox = new Ext.form.ComboBox({
       mode: 'local',
-      width: 110,
-      fieldLabel: "Export to",
+      width: 160,
+      hidden: true,
+      allowBlank: false,
+      fieldLabel: "Destination",
       forceSelection: true,
       autoSelect: true,
       editable: false,
       store: new Ext.data.SimpleStore({
         fields: ['displayStr', 'valueStr'],
-        data: [
-          ['Name', 'id'],
-          ['Name2', 'id2']
-        ]
+        data: dstCollectionData
       }),
       valueField:'valueStr',
       displayField:'displayStr',
@@ -523,16 +533,20 @@ SM.Exports.showExportTree = async function (collectionId, collectionName, treeba
         const checklists = navTree.getCheckedForStreaming()
         appwindow.close()
         
-        SM.Exports.exportToCollection({
-          collectionId,
-          dstCollectionId: 1,
-          checklists
-        })
-        // SM.Exports.exportArchiveStreaming({
-        //   collectionId,
-        //   checklists, 
-        //   format: formatComboBox.getValue()
-        // })
+        if (exportToComboBox.getValue() === 'collection') {
+          SM.Exports.exportToCollection({
+            collectionId,
+            dstCollectionId: collectionComboBox.getValue(),
+            checklists
+          })
+        }
+        else {
+          SM.Exports.exportArchiveStreaming({
+            collectionId,
+            checklists, 
+            format: formatComboBox.getValue()
+          })
+        }
       }
     })
 
@@ -621,7 +635,8 @@ SM.Exports.showExportTree = async function (collectionId, collectionName, treeba
           border: false,
           items: [
             exportToComboBox,
-            formatComboBox
+            formatComboBox,
+            collectionComboBox
           ]
         },
         '->',

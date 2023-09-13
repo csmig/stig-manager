@@ -2027,3 +2027,197 @@ exports.cloneCollection = async function ({collectionId, userObject, name, descr
     }
   }
 }
+
+exports.exportToCollection = async function ({srcCollectionId, dstCollectionId, assetStigArguments, userObject, svcStatus = {}, progressCb = () => {}}) {
+//   srcCollectionId = 1
+//   dstCollectionId = 152
+//   assetStigArguments = [
+//     {
+//         "assetId": "1",
+//         "assetName": "Asset_Windows_0001",
+//         "stigs": [
+//             {
+//                 "benchmarkId": "Google_Chrome_Current_Windows",
+//                 "revisionStr": "V2R6"
+//             },
+//             {
+//                 "benchmarkId": "Microsoft_Access_2016",
+//                 "revisionStr": "V1R1"
+//             }
+//         ]
+//     },
+//     {
+//         "assetId": "2",
+//         "assetName": "Asset_Windows_0002",
+//         "stigs": [
+//             {
+//                 "benchmarkId": "Microsoft_Excel_2016",
+//                 "revisionStr": "V1R2"
+//             },
+//             {
+//                 "benchmarkId": "Microsoft_Office_System_2016",
+//                 "revisionStr": "V2R2"
+//             }
+//         ]
+//     },
+//     {
+//         "assetId": "3",
+//         "assetName": "Asset_Windows_0003",
+//         "stigs": [
+//             {
+//                 "benchmarkId": "Google_Chrome_Current_Windows",
+//                 "revisionStr": "V2R6"
+//             },
+//             {
+//                 "benchmarkId": "Microsoft_Excel_2016",
+//                 "revisionStr": "V1R2"
+//             }
+//         ]
+//     },
+//     {
+//         "assetId": "301",
+//         "assetName": "Asset_Windows_0301",
+//         "stigs": [
+//             {
+//                 "benchmarkId": "Microsoft_Access_2016",
+//                 "revisionStr": "V1R1"
+//             }
+//         ]
+//     }
+// ]
+  function cteCollectionSettingGen () {
+    const cte = `SELECT 
+    c.settings->>"$.fields.detail.required" as detailRequired,
+    c.settings->>"$.fields.comment.required" as commentRequired,
+    c.settings->>"$.status.canAccept" as canAccept,
+    c.settings->>"$.status.resetCriteria" as resetCriteria,
+    c.settings->>"$.status.minAcceptGrant" as minAcceptGrant
+  FROM
+    collection c
+  where
+    collectionId = @dstCollectionId`
+    return `cteCollectionSetting AS (${cte})`
+  }
+
+  let connection
+  try {
+    const sql = {
+      insertAssets: {
+        query: `
+          INSERT into asset (name, fqdn, collectionId, ip, mac, description, noncomputing, metadata, state, stateDate, stateUserId)
+            SELECT
+              srcAsset.name,
+              srcAsset.fqdn,
+              @dstCollectionId,
+              srcAsset.ip,
+              srcAsset.mac,
+              srcAsset.description,
+              srcAsset.noncomputing,
+              srcAsset.metadata,
+              'enabled',
+              NOW(),
+              @userId
+            FROM
+              json_table(@json, "$[*]" COLUMNS(
+                assetId INT path "$.assetId",
+                assetName VARCHAR(255) path "$.assetName")
+              ) as requested
+              left join asset srcAsset on (requested.assetId = srcAsset.assetId and srcAsset.isEnabled = 1)
+              left join asset dstAsset on (requested.assetName = dstAsset.name and dstAsset.collectionId = @dstCollectionId and dstAsset.isEnabled = 1)
+            WHERE
+              dstAsset.assetId is null
+          `,
+        runningText: "Creating Assets",
+        finishedText: "Created Assets"
+      },
+      insertStigMaps: {
+        query: `INSERT into stig_asset_map (assetId, benchmarkId)
+        select
+        a.assetId,
+        requested.benchmarkId
+        from
+        json_table(
+          @json, 
+          "$[*]"
+          COLUMNS(
+          assetId INT path "$.assetId",
+            assetName VARCHAR(255) path "$.assetName",
+            nested path "$.stigs[*]" COLUMNS(
+              benchmarkId VARCHAR(255) path "$.benchmarkId",
+              revisionStr VARCHAR(255) path "$.revisionStr"
+            )
+          )
+        ) as requested
+        left join asset a on (requested.assetName = a.name and a.collectionId = @dstCollectionId and a.isEnabled = 1)
+        left join stig_asset_map sa on (requested.benchmarkId collate utf8mb4_0900_as_cs = sa.benchmarkId and a.assetId = sa.assetId)
+        where sa.saId is null`,
+        runningText: 'Creating Asset/STIG maps',
+        finishText: 'Creating Asset/STIG maps'
+      },
+      deleteDefaultRev: {
+        query: `DELETE FROM default_rev where collectionId = @dstCollectionId`
+      },
+      insertDefaultRev: {
+        query: `INSERT INTO default_rev(collectionId, benchmarkId, revId, revisionPinned) SELECT collectionId, benchmarkId, revId, revisionPinned FROM v_default_rev where collectionId = @dstCollectionId`,
+        finishText: 'Created Asset/STIG maps'
+      }
+    }
+    connection = await dbUtils.pool.getConnection()
+    connection.config.namedPlaceholders = false
+    connection.query('set @srcCollectionId = ?, @dstCollectionId = ?, @userId = ?, @json = ?', [
+      parseInt(srcCollectionId),
+      parseInt(dstCollectionId),
+      parseInt(userObject.userId),
+      JSON.stringify(assetStigArguments)
+    ])
+    const assetQueries = ['insertAssets', 'insertStigMaps', 'deleteDefaultRev', 'insertDefaultRev']
+
+    async function transaction () {
+      const stage = 'export-to'
+      const stepCount = queries.length + 1
+      const progressJson = {stage, stepCount, step: 0}
+      await connection.query('START TRANSACTION')
+      for (const query of assetQueries) {
+        progressJson.step++
+        progressJson.stepName = query
+        progressJson.status = 'running'
+        progressJson.message = sql[query].runningText
+        progressCb(progressJson) 
+
+        const [result] = await connection.query(sql[query].query)
+
+        progressJson.status = 'finished'
+        progressJson.affectedRows = result.affectedRows
+        progressJson.message = sql[query].finishedText
+        progressCb(progressJson) 
+      }
+      progressJson.step++; progressJson.stepName = 'commit'; progressJson.status = 'running';
+      progressCb(progressJson) 
+
+      await connection.commit()
+
+      progressJson.status = 'finished'
+      progressCb(progressJson) 
+
+    }
+    await dbUtils.retryOnDeadlock(transaction, svcStatus)
+
+
+  }
+  catch (err) {
+    if (typeof connection !== 'undefined') {
+      await connection.rollback()
+    }
+    progressJson.status = 'error'
+    progressJson.message = 'Unhandled error'
+    progressJson.error = err
+    progressJson.stack = err?.stack
+    progressCb(progressJson)
+    return null
+  }
+  finally {
+    if (typeof connection !== 'undefined') {
+      await connection.release()
+    }
+  }
+}
