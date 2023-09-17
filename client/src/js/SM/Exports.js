@@ -460,7 +460,7 @@ SM.Exports.StigTree = Ext.extend(Ext.tree.TreePanel, {
 
 SM.Exports.showExportTree = async function (collectionId, collectionName, treebase = 'asset', data) {
   try {
-    let appwindow
+    let fpwindow
 
     const dstCollectionData = curUser.collectionGrants
     .filter(grant => grant.accessLevel >= 3 && grant.collection.collectionId != collectionId)
@@ -531,16 +531,20 @@ SM.Exports.showExportTree = async function (collectionId, collectionName, treeba
       handler: function () {
 
         const checklists = navTree.getCheckedForStreaming()
-        appwindow.close()
         
         if (exportToComboBox.getValue() === 'collection') {
+          const dstCollectionId  = collectionComboBox.getValue()
+          const dstCollectionName = collectionComboBox.findRecord.call(collectionComboBox, 'valueStr', dstCollectionId)
           SM.Exports.exportToCollection({
             collectionId,
-            dstCollectionId: collectionComboBox.getValue(),
-            checklists
+            dstCollectionId,
+            dstCollectionName,
+            checklists,
+            fpwindow: fpwindow
           })
         }
         else {
+          fpwindow.close()
           SM.Exports.exportArchiveStreaming({
             collectionId,
             checklists, 
@@ -600,7 +604,7 @@ SM.Exports.showExportTree = async function (collectionId, collectionName, treeba
     /******************************************************/
     // Form window
     /******************************************************/
-    appwindow = new Ext.Window({
+    fpwindow = new Ext.Window({
       title: 'Export results',
       cls: 'sm-dialog-window sm-round-panel',
       modal: true,
@@ -627,6 +631,15 @@ SM.Exports.showExportTree = async function (collectionId, collectionName, treeba
         },
         navTree
       ],
+      listeners: {
+        minimize: function() {
+          const offset = 20
+          fpwindow.mask.hide()
+          const vpSize = Ext.getCmp('app-viewport').getSize()
+          fpwindow.setPosition(vpSize.width - fpwindow.getWidth()- offset, vpSize.height - fpwindow.getHeight() - offset)
+          fpwindow.minimized = true
+        }
+      },
       fbar: [
         { 
           xtype: 'form',
@@ -643,7 +656,7 @@ SM.Exports.showExportTree = async function (collectionId, collectionName, treeba
         exportButton
       ]
     })
-    appwindow.show(document.body)
+    fpwindow.show(document.body)
   }
   catch (e) {
     Ext.getBody().unmask()
@@ -717,8 +730,18 @@ SM.Exports.exportArchiveStreaming = async function ({collectionId, checklists, f
   }
 }
 
-SM.Exports.exportToCollection = async function ({collectionId, dstCollectionId, checklists}) {
+SM.Exports.exportToCollection = async function ({collectionId, dstCollectionId, dstCollectionName, checklists, fpwindow}) {
   try {
+    fpwindow.removeAll()
+    fpwindow.setTitle(`Exporting to "${dstCollectionName}"`)
+    fpwindow.getTool('close').hide()
+    const progressPanel = new SM.CollectionClone.CloneProgressPanel()
+    fpwindow.add(progressPanel)
+    fpwindow.setHeight(80)
+    fpwindow.minimize()
+
+    progressPanel.pb.updateProgress(0, "Exporting")
+
     const url = `${STIGMAN.Env.apiBase}/collections/${collectionId}/export-to/${dstCollectionId}`
     await window.oidcProvider.updateToken(10)
     const fetchInit = {
@@ -729,9 +752,62 @@ SM.Exports.exportToCollection = async function ({collectionId, dstCollectionId, 
       },
       body: JSON.stringify(checklists)     
     }
-    let response = await fetch(url, fetchInit)
+    const response = await fetch(url, fetchInit)
+    if (!response.ok) {
+      const json = await response.json()
+      throw(new Error(`API responded with status ${response.status} ${JSON.stringify(json)}`))
+    }
+    const reader = response.body
+    .pipeThrough(new TextDecoderStream())
+    .pipeThrough(NDJSONStream())
+    .getReader()
 
-
+    let isDone = false
+    let isError = false
+    let haveResult = false
+    let apiCollection
+    const jsons = []
+    do {
+      const {value, done} = await reader.read()
+      isDone = done
+      if (value) {
+        jsons.push(value)
+        console.log(`chunk: ${JSON.stringify(value)}`)
+        // if (value.stage === 'result') {
+        //   apiCollection = value.collection
+        //   haveResult = true
+        // }
+        // if (!fpwindow.isDestroyed) {
+        //   if (value.status === 'error') {
+        //     if (value.message === 'Unhandled error') {
+        //       fpwindow.removeAll()
+        //       fpwindow.setTitle(`Error exporting to "${dstCollectionName}"`)
+        //       fpwindow.getTool('close').show()
+        //       const errorPanel = new SM.CollectionClone.CloneErrorPanel({
+        //         log: JSON.stringify(jsons, null, 2)
+        //       })
+        //       fpwindow.add(errorPanel)
+        //       fpwindow.doLayout()
+        //     }
+        //     else {
+        //       progressPanel.pb.updateProgress(1, value.message)
+        //       progressPanel.pb.addClass('sm-pb-error')
+        //       fpwindow.getTool('close').show()
+        //     }
+        //     isDone = true
+        //     isError = true
+        //   }
+        //   else if (value.stage === 'prepare' || value.stage === 'assets') {
+        //     const progress = (value.step - 1)/value.stepCount
+        //     progressPanel.pb.updateProgress(progress, value.message)
+        //   }
+        //   else if (value.stage === 'reviews') {
+        //     const progress = value.reviewsExported/value.reviewsTotal
+        //     progressPanel.pb.updateProgress(progress, `Exporting reviews (${value.reviewsCopied.toLocaleString()} of ${value.reviewsTotal.toLocaleString()})`)
+        //   }
+        // }
+      }
+    } while (!isDone)
   }
   catch (e) {
     SM.Error.handleError(e)

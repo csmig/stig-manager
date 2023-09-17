@@ -968,11 +968,11 @@ paths:
                 $ref: '#/components/schemas/AssetStigSelection'
       responses:
         '200':
-          description: ZIP file stream
+          description: Export to collection response
           content:
-            application/json:
+            application/x-ndjson:
               schema:
-                type: object
+                $ref: '#/components/schemas/CollectionCloneResponse'
         default:
           description: unexpected error
           content:

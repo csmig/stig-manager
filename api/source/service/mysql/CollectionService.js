@@ -2085,19 +2085,6 @@ exports.exportToCollection = async function ({srcCollectionId, dstCollectionId, 
 //         ]
 //     }
 // ]
-  function cteCollectionSettingGen () {
-    const cte = `SELECT 
-    c.settings->>"$.fields.detail.required" as detailRequired,
-    c.settings->>"$.fields.comment.required" as commentRequired,
-    c.settings->>"$.status.canAccept" as canAccept,
-    c.settings->>"$.status.resetCriteria" as resetCriteria,
-    c.settings->>"$.status.minAcceptGrant" as minAcceptGrant
-  FROM
-    collection c
-  where
-    collectionId = @dstCollectionId`
-    return `cteCollectionSetting AS (${cte})`
-  }
 
   let connection, progressJson
   try {
