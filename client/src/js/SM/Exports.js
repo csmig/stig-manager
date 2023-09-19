@@ -494,7 +494,7 @@ SM.Exports.showExportTree = async function (collectionId, collectionName, treeba
             collectionComboBox.show()
             formatComboBox.hide()
           }
-          // localStorage.setItem('exportTo', combo.getValue())
+          localStorage.setItem('exportTo', combo.getValue())
         }
       }
     })
@@ -502,7 +502,7 @@ SM.Exports.showExportTree = async function (collectionId, collectionName, treeba
     const collectionComboBox = new Ext.form.ComboBox({
       mode: 'local',
       width: 160,
-      hidden: true,
+      hidden: exportToComboBox.getValue() === 'zip',
       allowBlank: false,
       fieldLabel: "Destination",
       forceSelection: true,
@@ -514,13 +514,13 @@ SM.Exports.showExportTree = async function (collectionId, collectionName, treeba
       }),
       valueField:'valueStr',
       displayField:'displayStr',
-      // value: localStorage.getItem('exportTo') || 'zip',
+      value: localStorage.getItem('exportCollection') || '',
       monitorValid: false,
       triggerAction: 'all',
       listeners: {
-        // select: function (combo, record, index) {
-        //   localStorage.setItem('exportTo', combo.getValue())
-        // }
+        select: function (combo, record, index) {
+          localStorage.setItem('exportCollection', combo.getValue())
+        }
       }
     })
 
@@ -531,17 +531,16 @@ SM.Exports.showExportTree = async function (collectionId, collectionName, treeba
       handler: function () {
 
         const checklists = navTree.getCheckedForStreaming()
-        
         if (exportToComboBox.getValue() === 'collection') {
           const dstCollectionId  = collectionComboBox.getValue()
-          const dstCollectionName = collectionComboBox.findRecord.call(collectionComboBox, 'valueStr', dstCollectionId)
+          const dstCollectionName = collectionComboBox.findRecord.call(collectionComboBox, 'valueStr', dstCollectionId).data.displayStr
           SM.Exports.exportToCollection({
             collectionId,
             dstCollectionId,
             dstCollectionName,
-            checklists,
-            fpwindow: fpwindow
+            checklists
           })
+          fpwindow.close()
         }
         else {
           fpwindow.close()
@@ -558,6 +557,7 @@ SM.Exports.showExportTree = async function (collectionId, collectionName, treeba
       mode: 'local',
       width: 110,
       fieldLabel: "Format",
+      hidden: exportToComboBox.getValue() === 'collection',
       forceSelection: true,
       autoSelect: true,
       editable: false,
@@ -732,15 +732,26 @@ SM.Exports.exportArchiveStreaming = async function ({collectionId, checklists, f
 
 SM.Exports.exportToCollection = async function ({collectionId, dstCollectionId, dstCollectionName, checklists, fpwindow}) {
   try {
-    fpwindow.removeAll()
-    fpwindow.setTitle(`Exporting to "${dstCollectionName}"`)
-    fpwindow.getTool('close').hide()
     const progressPanel = new SM.CollectionClone.CloneProgressPanel()
-    fpwindow.add(progressPanel)
-    fpwindow.setHeight(80)
-    fpwindow.minimize()
+    const vpSize = Ext.getCmp('app-viewport').getSize()
+    const width = 420
+    const height = 80
+    const offset = 20
+    const fpwindow = new Ext.Window({
+      title: `Exporting to "${dstCollectionName}"`,
+      closable: true,
+      bodyStyle: 'padding:5px;',
+      layout: 'fit',
+      width,
+      height,
+      pageX: vpSize.width - width - offset,
+      pageY: vpSize.height - height - offset,
+      items: [progressPanel]
+    })
+    fpwindow.show()
+    fpwindow.getTool('close').hide()
 
-    progressPanel.pb.updateProgress(0, "Exporting")
+    progressPanel.pb.updateProgress(0, "Sending request")
 
     const url = `${STIGMAN.Env.apiBase}/collections/${collectionId}/export-to/${dstCollectionId}`
     await window.oidcProvider.updateToken(10)
@@ -773,41 +784,76 @@ SM.Exports.exportToCollection = async function ({collectionId, dstCollectionId, 
       if (value) {
         jsons.push(value)
         console.log(`chunk: ${JSON.stringify(value)}`)
-        // if (value.stage === 'result') {
-        //   apiCollection = value.collection
-        //   haveResult = true
-        // }
-        // if (!fpwindow.isDestroyed) {
-        //   if (value.status === 'error') {
-        //     if (value.message === 'Unhandled error') {
-        //       fpwindow.removeAll()
-        //       fpwindow.setTitle(`Error exporting to "${dstCollectionName}"`)
-        //       fpwindow.getTool('close').show()
-        //       const errorPanel = new SM.CollectionClone.CloneErrorPanel({
-        //         log: JSON.stringify(jsons, null, 2)
-        //       })
-        //       fpwindow.add(errorPanel)
-        //       fpwindow.doLayout()
-        //     }
-        //     else {
-        //       progressPanel.pb.updateProgress(1, value.message)
-        //       progressPanel.pb.addClass('sm-pb-error')
-        //       fpwindow.getTool('close').show()
-        //     }
-        //     isDone = true
-        //     isError = true
-        //   }
-        //   else if (value.stage === 'prepare' || value.stage === 'assets') {
-        //     const progress = (value.step - 1)/value.stepCount
-        //     progressPanel.pb.updateProgress(progress, value.message)
-        //   }
-        //   else if (value.stage === 'reviews') {
-        //     const progress = value.reviewsExported/value.reviewsTotal
-        //     progressPanel.pb.updateProgress(progress, `Exporting reviews (${value.reviewsCopied.toLocaleString()} of ${value.reviewsTotal.toLocaleString()})`)
-        //   }
-        // }
+        if (value.stage === 'result') {
+          apiCollection = value.collection
+          haveResult = true
+        }
+        if (!fpwindow.isDestroyed) {
+          if (value.status === 'error') {
+            if (value.message === 'Unhandled error') {
+              fpwindow.removeAll()
+              fpwindow.setTitle(`Error exporting to "${dstCollectionName}"`)
+              fpwindow.getTool('close').show()
+              const errorPanel = new SM.CollectionClone.CloneErrorPanel({
+                log: JSON.stringify(jsons, null, 2)
+              })
+              fpwindow.add(errorPanel)
+              fpwindow.doLayout()
+            }
+            else {
+              progressPanel.pb.updateProgress(1, value.message)
+              progressPanel.pb.addClass('sm-pb-error')
+              fpwindow.getTool('close').show()
+            }
+            isDone = true
+            isError = true
+          }
+          else if (value.stage === 'prepare' || value.stage === 'assets') {
+            const progress = (value.step - 1)/value.stepCount
+            progressPanel.pb.updateProgress(progress, value.message)
+          }
+          else if (value.stage === 'reviews') {
+            const progress = value.reviewsExported/value.reviewsTotal
+            progressPanel.pb.updateProgress(progress, `Exporting reviews (${value.reviewsExported.toLocaleString()} of ${value.reviewsTotal.toLocaleString()})`)
+          }
+          else if (value.stage === 'metrics') {
+            progressPanel.pb.wait({
+              text: 'Updating Collection metrics',
+              animate: true,
+              interval: 100
+            })
+          }
+          else if (value.stage === 'commit') {
+            progressPanel.pb.wait({
+              text: 'Committing',
+              animate: true,
+              interval: 100
+            })
+          }
+        }
       }
     } while (!isDone)
+
+    if (!fpwindow.isDestroyed && !isError) {
+      fpwindow.removeAll()
+      fpwindow.setTitle(`Export finished`)
+      fpwindow.add(new SM.CollectionClone.PostClonePanel({ 
+        btnHandler: function (btn) {
+          if (apiCollection) {
+            const openMethod = btn.action === 'manage' ? addCollectionManager : SM.CollectionPanel.showCollectionTab
+            openMethod({
+              collectionId: apiCollection.collectionId,
+              collectionName: apiCollection.name,
+              treePath: SM.Global.mainNavTree.getCollectionLeaf(apiCollection.collectionId)?.getPath()
+            })
+            fpwindow.close()
+          }
+        }
+       }))
+      fpwindow.getTool('close').show()
+      fpwindow.doLayout()
+    }
+
   }
   catch (e) {
     SM.Error.handleError(e)

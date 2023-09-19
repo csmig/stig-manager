@@ -2090,7 +2090,8 @@ exports.exportToCollection = async function ({srcCollectionId, dstCollectionId, 
   try {
     const sql = {
       dropArg: {
-        query: `drop temporary table if exists t_arg`
+        query: `drop temporary table if exists t_arg`,
+        runningText: 'Preparing for export'
       },
       createArg: {
         query: `create temporary table t_arg (
@@ -2113,10 +2114,12 @@ exports.exportToCollection = async function ({srcCollectionId, dstCollectionId, 
               revisionStr VARCHAR(255) path "$.revisionStr"
             )
           )
-        ) as arg`
+        ) as arg`,
+        runningText: 'Preparing for export'
       },
       dropCollectionSetting: {
-        query: `drop temporary table if exists t_collection_setting`
+        query: `drop temporary table if exists t_collection_setting`,
+        runningText: 'Preparing for export'
       },
       createCollectionSetting: {
         query: `create temporary table t_collection_setting
@@ -2130,10 +2133,12 @@ exports.exportToCollection = async function ({srcCollectionId, dstCollectionId, 
         FROM
           collection c
         where
-          collectionId = @dstCollectionId`
+          collectionId = @dstCollectionId`,
+          runningText: 'Preparing for export'
       },
       dropSrcReviewId: {
-        query: `drop temporary table if exists t_src_reviewId`
+        query: `drop temporary table if exists t_src_reviewId`,
+        runningText: 'Preparing for export'
       },
       createSrcReviewId: {
         query: `create temporary table t_src_reviewId (seq INT AUTO_INCREMENT PRIMARY KEY, reviewId INT UNIQUE )
@@ -2144,12 +2149,12 @@ exports.exportToCollection = async function ({srcCollectionId, dstCollectionId, 
           left join revision rev on (t_arg.benchmarkId collate utf8mb4_0900_as_cs = rev.benchmarkId and t_arg.revisionStr = rev.revisionStr)
           left join rev_group_rule_map rgr on (rev.revId = rgr.revId)
           left join rule_version_check_digest rvcd on rgr.ruleId = rvcd.ruleId
-          inner join review r on (rvcd.version = r.version and rvcd.checkDigest = r.checkDigest and t_arg.assetId = r.assetId)`
+          inner join review r on (rvcd.version = r.version and rvcd.checkDigest = r.checkDigest and t_arg.assetId = r.assetId)`,
+          runningText: 'Preparing for export'
       },
       countSrcReviewId: {
         query: `select count(*) as total from t_src_reviewId`,
-        runningText: `Preparing reviews`,
-        finishText: `Preparing reviews`
+        runningText: 'Preparing for export'
       },
       insertAsset: {
         query: `INSERT into asset (name, fqdn, collectionId, ip, mac, description, noncomputing, metadata, state, stateDate, stateUserId)
@@ -2177,7 +2182,8 @@ exports.exportToCollection = async function ({srcCollectionId, dstCollectionId, 
         finishedText: "Created Assets"
       },
       dropAssetIdMap: {
-        query: `drop temporary table if exists t_assetId_map`
+        query: `drop temporary table if exists t_assetId_map`,
+        runningText: "Creating Assets"
       },
       createAssetIdMap: {
         query: `create temporary table t_assetId_map (
@@ -2194,7 +2200,8 @@ exports.exportToCollection = async function ({srcCollectionId, dstCollectionId, 
           inner join asset srcAsset on (t_arg.assetId = srcAsset.assetId)
           inner join asset dstAsset on (t_arg.assetName = dstAsset.name and dstAsset.collectionId = @dstCollectionId)
         group by
-          srcAsset.assetId, dstAsset.assetId`
+          srcAsset.assetId, dstAsset.assetId`,
+          runningText: "Creating Assets"
       },
       insertStigAssetMap: {
         query: `INSERT into stig_asset_map (assetId, benchmarkId)
@@ -2211,11 +2218,13 @@ exports.exportToCollection = async function ({srcCollectionId, dstCollectionId, 
         finishText: 'Creating Asset/STIG maps'
       },
       deleteDefaultRev: {
-        query: `DELETE FROM default_rev where collectionId = @dstCollectionId`
+        query: `DELETE FROM default_rev where collectionId = @dstCollectionId`,
+        runningText: 'Creating Asset/STIG maps'
       },
       insertDefaultRev: {
         query: `INSERT INTO default_rev(collectionId, benchmarkId, revId, revisionPinned) SELECT collectionId, benchmarkId, revId, revisionPinned FROM v_default_rev where collectionId = @dstCollectionId`,
-        finishText: 'Created Asset/STIG maps'
+        finishText: 'Created Asset/STIG maps',
+        runningText: 'Creating Asset/STIG maps'
       },
       dropIncomingReview: {
         query: `drop temporary table if exists t_incoming_review`,
@@ -2287,6 +2296,11 @@ exports.exportToCollection = async function ({srcCollectionId, dstCollectionId, 
           t_src_reviewId.seq >= ? and t_src_reviewId.seq <= ?`,
         runningText: `Preparing reviews`,
         finishText: `Preparing reviews`
+      },
+      countIncomingReview: {
+        query: `select sum(reviewId is null) as inserted, sum(reviewId is not null) as updated from t_incoming_review`,
+        runningText: `Preparing reviews`,
+
       },
       pruneHistory: {
         query: `with historyRecs AS (
@@ -2373,6 +2387,12 @@ exports.exportToCollection = async function ({srcCollectionId, dstCollectionId, 
     const prepQueries = ['dropArg', 'createArg', 'dropCollectionSetting', 'createCollectionSetting', 'dropSrcReviewId', 'createSrcReviewId']
     const assetQueries = ['insertAsset', 'dropAssetIdMap', 'createAssetIdMap', 'insertStigAssetMap', 'deleteDefaultRev', 'insertDefaultRev']
     const reviewExportQueries = ['pruneHistory', 'insertHistory', 'upsertReview']
+    const counts = {
+      assetsCreated: 0,
+      stigsMapped: 0,
+      reviewsInserted: 0,
+      reviewsUpdated: 0
+    }
 
     async function transaction () {
       progressJson = {
@@ -2402,7 +2422,13 @@ exports.exportToCollection = async function ({srcCollectionId, dstCollectionId, 
         progressJson.message = sql[query].runningText
         progressCb(progressJson)
 
-        await connection.query(sql[query].query)
+        const [result] = await connection.query(sql[query].query)
+        if (query === 'insertAsset') {
+          counts.assetsCreated = result.affectedRows
+        }
+        if (query === 'insertStigAssetMap') {
+          counts.stigsMapped = result.affectedRows
+        }
       }
 
       const [count] = await connection.query(sql.countSrcReviewId.query)
@@ -2421,6 +2447,9 @@ exports.exportToCollection = async function ({srcCollectionId, dstCollectionId, 
         await connection.query(sql.dropIncomingReview.query)
         ;[result] = await connection.query(sql.createIncomingReview.query, [offset, offset + chunkSize - 1])
         if (result.affectedRows != 0) {
+          const [count] = await connection.query(sql.countIncomingReview.query)
+          counts.reviewsInserted += count[0].inserted
+          counts.reviewsUpdated += count[0].updated
           for (const query of reviewExportQueries) {
             await connection.query(sql[query].query)
           }
@@ -2431,7 +2460,9 @@ exports.exportToCollection = async function ({srcCollectionId, dstCollectionId, 
       } while (result.affectedRows != 0)
 
       progressJson.stage = 'metrics'
-      progressJson.status = 'running';
+      progressJson.status = 'running'
+      delete progressJson.reviewsTotal
+      delete progressJson.reviewsExported
       progressCb(progressJson) 
       await dbUtils.updateStatsAssetStig(connection, {collectionId: dstCollectionId})
 
@@ -2440,8 +2471,11 @@ exports.exportToCollection = async function ({srcCollectionId, dstCollectionId, 
       progressCb(progressJson) 
       await connection.commit()
 
-      progressJson.status = 'finished'
-      progressCb(progressJson) 
+      progressJson.status = 'result'
+      progressCb({
+        status: 'result',
+        counts
+      }) 
     }
     await dbUtils.retryOnDeadlock(transaction, svcStatus)
   }
