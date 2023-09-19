@@ -2085,13 +2085,13 @@ exports.exportToCollection = async function ({srcCollectionId, dstCollectionId, 
 //         ]
 //     }
 // ]
-
+  const sleep = ms => new Promise(r => setTimeout(r, ms))
   let connection, progressJson
   try {
     const sql = {
       dropArg: {
         query: `drop temporary table if exists t_arg`,
-        runningText: 'Preparing for export'
+        runningText: 'Preparing data'
       },
       createArg: {
         query: `create temporary table t_arg (
@@ -2115,11 +2115,11 @@ exports.exportToCollection = async function ({srcCollectionId, dstCollectionId, 
             )
           )
         ) as arg`,
-        runningText: 'Preparing for export'
+        runningText: 'Preparing data'
       },
       dropCollectionSetting: {
         query: `drop temporary table if exists t_collection_setting`,
-        runningText: 'Preparing for export'
+        runningText: 'Preparing data'
       },
       createCollectionSetting: {
         query: `create temporary table t_collection_setting
@@ -2134,11 +2134,11 @@ exports.exportToCollection = async function ({srcCollectionId, dstCollectionId, 
           collection c
         where
           collectionId = @dstCollectionId`,
-          runningText: 'Preparing for export'
+          runningText: 'Preparing data'
       },
       dropSrcReviewId: {
         query: `drop temporary table if exists t_src_reviewId`,
-        runningText: 'Preparing for export'
+        runningText: 'Preparing data'
       },
       createSrcReviewId: {
         query: `create temporary table t_src_reviewId (seq INT AUTO_INCREMENT PRIMARY KEY, reviewId INT UNIQUE )
@@ -2150,11 +2150,11 @@ exports.exportToCollection = async function ({srcCollectionId, dstCollectionId, 
           left join rev_group_rule_map rgr on (rev.revId = rgr.revId)
           left join rule_version_check_digest rvcd on rgr.ruleId = rvcd.ruleId
           inner join review r on (rvcd.version = r.version and rvcd.checkDigest = r.checkDigest and t_arg.assetId = r.assetId)`,
-          runningText: 'Preparing for export'
+          runningText: 'Preparing data'
       },
       countSrcReviewId: {
         query: `select count(*) as total from t_src_reviewId`,
-        runningText: 'Preparing for export'
+        runningText: 'Preparing data'
       },
       insertAsset: {
         query: `INSERT into asset (name, fqdn, collectionId, ip, mac, description, noncomputing, metadata, state, stateDate, stateUserId)
@@ -2178,12 +2178,11 @@ exports.exportToCollection = async function ({srcCollectionId, dstCollectionId, 
           dstAsset.assetId is null
         GROUP BY
           t_arg.assetId`,
-        runningText: "Creating Assets",
-        finishedText: "Created Assets"
+        runningText: "Preparing Assets"
       },
       dropAssetIdMap: {
         query: `drop temporary table if exists t_assetId_map`,
-        runningText: "Creating Assets"
+        runningText: "Preparing Assets"
       },
       createAssetIdMap: {
         query: `create temporary table t_assetId_map (
@@ -2201,7 +2200,7 @@ exports.exportToCollection = async function ({srcCollectionId, dstCollectionId, 
           inner join asset dstAsset on (t_arg.assetName = dstAsset.name and dstAsset.collectionId = @dstCollectionId)
         group by
           srcAsset.assetId, dstAsset.assetId`,
-          runningText: "Creating Assets"
+          runningText: "Preparing Assets"
       },
       insertStigAssetMap: {
         query: `INSERT into stig_asset_map (assetId, benchmarkId)
@@ -2214,17 +2213,24 @@ exports.exportToCollection = async function ({srcCollectionId, dstCollectionId, 
           left join stig_asset_map sa on (t_arg.benchmarkId collate utf8mb4_0900_as_cs = sa.benchmarkId and a.assetId = sa.assetId)
         where
           sa.saId is null`,
-        runningText: 'Creating Asset/STIG maps',
-        finishText: 'Creating Asset/STIG maps'
+          runningText: "Preparing Assets"
+      },
+      selectStigAssetMap: {
+        query: `select
+          sa.saId
+        from
+          t_arg
+          left join asset a on (t_arg.assetName = a.name and a.collectionId = @dstCollectionId and a.isEnabled = 1)
+          left join stig_asset_map sa on (t_arg.benchmarkId collate utf8mb4_0900_as_cs = sa.benchmarkId and a.assetId = sa.assetId)`
       },
       deleteDefaultRev: {
         query: `DELETE FROM default_rev where collectionId = @dstCollectionId`,
-        runningText: 'Creating Asset/STIG maps'
+        runningText: "Preparing Assets"
       },
       insertDefaultRev: {
         query: `INSERT INTO default_rev(collectionId, benchmarkId, revId, revisionPinned) SELECT collectionId, benchmarkId, revId, revisionPinned FROM v_default_rev where collectionId = @dstCollectionId`,
         finishText: 'Created Asset/STIG maps',
-        runningText: 'Creating Asset/STIG maps'
+        runningText: "Preparing Assets"
       },
       dropIncomingReview: {
         query: `drop temporary table if exists t_incoming_review`,
@@ -2410,6 +2416,7 @@ exports.exportToCollection = async function ({srcCollectionId, dstCollectionId, 
         progressCb(progressJson) 
 
         await connection.query(sql[query].query)
+        // await sleep(3000)
       }
 
       progressJson.stage = 'assets'
@@ -2429,6 +2436,7 @@ exports.exportToCollection = async function ({srcCollectionId, dstCollectionId, 
         if (query === 'insertStigAssetMap') {
           counts.stigsMapped = result.affectedRows
         }
+        // await sleep(3000)
       }
 
       const [count] = await connection.query(sql.countSrcReviewId.query)
@@ -2463,8 +2471,9 @@ exports.exportToCollection = async function ({srcCollectionId, dstCollectionId, 
       progressJson.status = 'running'
       delete progressJson.reviewsTotal
       delete progressJson.reviewsExported
-      progressCb(progressJson) 
-      await dbUtils.updateStatsAssetStig(connection, {collectionId: dstCollectionId})
+      progressCb(progressJson)
+      const [saIdResult]  = await connection.query(sql.selectStigAssetMap.query)
+      await dbUtils.updateStatsAssetStig(connection, {saIds: saIdResult.map(row => row.saId)})
 
       progressJson.stage = 'commit'
       progressJson.status = 'running';

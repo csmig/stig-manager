@@ -751,7 +751,7 @@ SM.Exports.exportToCollection = async function ({collectionId, dstCollectionId, 
     fpwindow.show()
     fpwindow.getTool('close').hide()
 
-    progressPanel.pb.updateProgress(0, "Sending request")
+    progressPanel.pb.updateProgress(1, "Sending request")
 
     const url = `${STIGMAN.Env.apiBase}/collections/${collectionId}/export-to/${dstCollectionId}`
     await window.oidcProvider.updateToken(10)
@@ -809,7 +809,7 @@ SM.Exports.exportToCollection = async function ({collectionId, dstCollectionId, 
             isError = true
           }
           else if (value.stage === 'prepare' || value.stage === 'assets') {
-            const progress = (value.step - 1)/value.stepCount
+            const progress = (value.step)/value.stepCount
             progressPanel.pb.updateProgress(progress, value.message)
           }
           else if (value.stage === 'reviews') {
@@ -839,15 +839,13 @@ SM.Exports.exportToCollection = async function ({collectionId, dstCollectionId, 
       fpwindow.setTitle(`Export finished`)
       fpwindow.add(new SM.CollectionClone.PostClonePanel({ 
         btnHandler: function (btn) {
-          if (apiCollection) {
-            const openMethod = btn.action === 'manage' ? addCollectionManager : SM.CollectionPanel.showCollectionTab
-            openMethod({
-              collectionId: apiCollection.collectionId,
-              collectionName: apiCollection.name,
-              treePath: SM.Global.mainNavTree.getCollectionLeaf(apiCollection.collectionId)?.getPath()
-            })
-            fpwindow.close()
-          }
+          const openMethod = btn.action === 'manage' ? addCollectionManager : SM.CollectionPanel.showCollectionTab
+          openMethod({
+            collectionId: dstCollectionId,
+            collectionName: dstCollectionName,
+            treePath: SM.Global.mainNavTree.getCollectionLeaf(dstCollectionId)?.getPath()
+          })
+          fpwindow.close()
         }
        }))
       fpwindow.getTool('close').show()
