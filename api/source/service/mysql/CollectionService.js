@@ -2029,62 +2029,6 @@ exports.cloneCollection = async function ({collectionId, userObject, name, descr
 }
 
 exports.exportToCollection = async function ({srcCollectionId, dstCollectionId, assetStigArguments, userObject, svcStatus = {}, progressCb = () => {}}) {
-//   srcCollectionId = 1
-//   dstCollectionId = 152
-//   assetStigArguments = [
-//     {
-//         "assetId": "1",
-//         "assetName": "Asset_Windows_0001",
-//         "stigs": [
-//             {
-//                 "benchmarkId": "Google_Chrome_Current_Windows",
-//                 "revisionStr": "V2R6"
-//             },
-//             {
-//                 "benchmarkId": "Microsoft_Access_2016",
-//                 "revisionStr": "V1R1"
-//             }
-//         ]
-//     },
-//     {
-//         "assetId": "2",
-//         "assetName": "Asset_Windows_0002",
-//         "stigs": [
-//             {
-//                 "benchmarkId": "Microsoft_Excel_2016",
-//                 "revisionStr": "V1R2"
-//             },
-//             {
-//                 "benchmarkId": "Microsoft_Office_System_2016",
-//                 "revisionStr": "V2R2"
-//             }
-//         ]
-//     },
-//     {
-//         "assetId": "3",
-//         "assetName": "Asset_Windows_0003",
-//         "stigs": [
-//             {
-//                 "benchmarkId": "Google_Chrome_Current_Windows",
-//                 "revisionStr": "V2R6"
-//             },
-//             {
-//                 "benchmarkId": "Microsoft_Excel_2016",
-//                 "revisionStr": "V1R2"
-//             }
-//         ]
-//     },
-//     {
-//         "assetId": "301",
-//         "assetName": "Asset_Windows_0301",
-//         "stigs": [
-//             {
-//                 "benchmarkId": "Microsoft_Access_2016",
-//                 "revisionStr": "V1R1"
-//             }
-//         ]
-//     }
-// ]
   const sleep = ms => new Promise(r => setTimeout(r, ms))
   let connection, progressJson
   try {
