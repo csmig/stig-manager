@@ -481,7 +481,7 @@ SM.Exports.showExportTree = async function (collectionId, collectionName, treeba
       }),
       valueField:'valueStr',
       displayField:'displayStr',
-      value: localStorage.getItem('exportTo') || 'zip',
+      value: localStorage.getItem(`exportTo-${collectionId}`) || 'zip',
       monitorValid: false,
       triggerAction: 'all',
       listeners: {
@@ -489,12 +489,14 @@ SM.Exports.showExportTree = async function (collectionId, collectionName, treeba
           if (combo.getValue() === 'zip') {
             collectionComboBox.hide()
             formatComboBox.show()
+            exportButton.enable()
           }
           else {
             collectionComboBox.show()
             formatComboBox.hide()
+            exportButton.setDisabled(!collectionComboBox.getValue())
           }
-          localStorage.setItem('exportTo', combo.getValue())
+          localStorage.setItem(`exportTo-${collectionId}`, combo.getValue())
         }
       }
     })
@@ -514,12 +516,13 @@ SM.Exports.showExportTree = async function (collectionId, collectionName, treeba
       }),
       valueField:'valueStr',
       displayField:'displayStr',
-      value: localStorage.getItem('exportCollection') || '',
+      value: localStorage.getItem(`exportCollection-${collectionId}`) || '',
       monitorValid: false,
       triggerAction: 'all',
       listeners: {
         select: function (combo, record, index) {
-          localStorage.setItem('exportCollection', combo.getValue())
+          localStorage.setItem(`exportCollection-${collectionId}`, combo.getValue())
+          exportButton.enable()
         }
       }
     })
@@ -573,12 +576,12 @@ SM.Exports.showExportTree = async function (collectionId, collectionName, treeba
       }),
       valueField:'valueStr',
       displayField:'displayStr',
-      value: localStorage.getItem('exportFormat') || 'ckl-mono',
+      value: localStorage.getItem(`exportFormat-${collectionId}`) || 'ckl-mono',
       monitorValid: false,
       triggerAction: 'all',
       listeners: {
         select: function (combo, record, index) {
-          localStorage.setItem('exportFormat', combo.getValue())
+          localStorage.setItem(`exportFormat-${collectionId}`, combo.getValue())
         }
       }
     })

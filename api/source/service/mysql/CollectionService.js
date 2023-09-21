@@ -2424,9 +2424,8 @@ exports.exportToCollection = async function ({srcCollectionId, dstCollectionId, 
       progressCb(progressJson) 
       await connection.commit()
 
-      progressJson.status = 'result'
       progressCb({
-        status: 'result',
+        stage: 'result',
         counts
       }) 
     }
