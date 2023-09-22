@@ -461,6 +461,8 @@ SM.Exports.StigTree = Ext.extend(Ext.tree.TreePanel, {
 SM.Exports.showExportTree = async function (collectionId, collectionName, treebase = 'asset', data) {
   try {
     let fpwindow
+    const maxExportToCollection = STIGMAN.apiDefinition.paths['/collections/{collectionId}/export-to/{dstCollectionId}'].post.requestBody.content['application/json'].schema.maxItems
+    const allowExportToCollection = data.length <= maxExportToCollection
 
     const dstCollectionData = curUser.collectionGrants
     .filter(grant => grant.accessLevel >= 3 && grant.collection.collectionId != collectionId)
@@ -497,6 +499,44 @@ SM.Exports.showExportTree = async function (collectionId, collectionName, treeba
             exportButton.setDisabled(!collectionComboBox.getValue())
           }
           localStorage.setItem(`exportTo-${collectionId}`, combo.getValue())
+        }
+      }
+    })
+
+    const initialExportTo = localStorage.getItem(`exportTo-${collectionId}`) === 'collection' && allowExportToCollection ? 'collection' : 'zip'
+    const exportToRadioGroup = new Ext.form.RadioGroup({
+      fieldLabel: 'Export to',
+      columns: [90, 90],
+      items: [
+        {
+          boxLabel: 'Zip archive',
+          name: 'exportTo',
+          exportTo: 'zip',
+          itemField: 'asset',
+          checked: initialExportTo === 'zip'
+        },
+        {
+          // boxLabel: `Collection (for ${maxExportToCollection} or less Assets)`,
+          boxLabel: `Collection`,
+          name: 'exportTo',
+          exportTo: 'collection',
+          disabled: !allowExportToCollection,
+          checked: initialExportTo === 'collection'
+        }
+      ],
+      listeners: {
+        change: function (rg, checkedItem) {
+          if (checkedItem.exportTo === 'zip') {
+            collectionComboBox.hide()
+            formatComboBox.show()
+            exportButton.enable()
+          }
+          else {
+            collectionComboBox.show()
+            formatComboBox.hide()
+            exportButton.setDisabled(!collectionComboBox.getValue())
+          }
+          localStorage.setItem(`exportTo-${collectionId}`, checkedItem.exportTo)
         }
       }
     })
@@ -650,7 +690,7 @@ SM.Exports.showExportTree = async function (collectionId, collectionName, treeba
           bodyStyle: 'padding:0 5px 0 15px;',
           border: false,
           items: [
-            exportToComboBox,
+            exportToRadioGroup,
             formatComboBox,
             collectionComboBox
           ]
