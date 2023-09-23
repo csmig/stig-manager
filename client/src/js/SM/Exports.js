@@ -506,6 +506,7 @@ SM.Exports.showExportTree = async function (collectionId, collectionName, treeba
     const initialExportTo = localStorage.getItem(`exportTo-${collectionId}`) === 'collection' && allowExportToCollection ? 'collection' : 'zip'
     const exportToRadioGroup = new Ext.form.RadioGroup({
       fieldLabel: 'Export to',
+      style: 'padding-top: 1px',
       columns: [90, 90],
       items: [
         {
