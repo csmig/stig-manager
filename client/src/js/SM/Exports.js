@@ -464,24 +464,24 @@ SM.Exports.showExportTree = async function (collectionId, collectionName, treeba
   try {
     let fpwindow
     const maxExportToCollection = STIGMAN.apiDefinition.paths['/collections/{collectionId}/export-to/{dstCollectionId}'].post.requestBody.content['application/json'].schema.maxItems
-
     const dstCollectionData = curUser.collectionGrants
     .filter(grant => grant.accessLevel >= 3 && grant.collection.collectionId != collectionId)
     .map(grant => [grant.collection.name, grant.collection.collectionId])
-
-    const initialExportTo = localStorage.getItem(`exportTo-${collectionId}`) ?? 'zip'
+    
+    const initialState = getInitialOptions(dstCollectionData)
     const zipRadio = new Ext.form.Radio({
       boxLabel: 'Zip archive',
       name: 'exportTo',
       exportTo: 'zip',
       itemField: 'asset',
-      checked: initialExportTo === 'zip'
+      checked: initialState.exportTo === 'zip'
     })
     const collectionRadio = new Ext.form.Radio({
       boxLabel: `Collection`,
+      disabled: !(initialState.exportCollectionId),
       name: 'exportTo',
       exportTo: 'collection',
-      checked: initialExportTo === 'collection'
+      checked: initialState.exportTo === 'collection'
     })
     const exportToRadioGroup = new Ext.form.RadioGroup({
       fieldLabel: 'Export to',
@@ -501,21 +501,15 @@ SM.Exports.showExportTree = async function (collectionId, collectionName, treeba
             collectionComboBox.show()
             formatComboBox.hide()
           }
-          localStorage.setItem(`exportTo-${collectionId}`, checkedItem.exportTo)
           checkStateHandler()
         }
       }
     })
 
-    let initialCollectionComboBoxValue = localStorage.getItem(`exportCollection-${collectionId}`) || ''
-    if (initialCollectionComboBoxValue && !(dstCollectionData.map(data => data[1]).includes(initialCollectionComboBoxValue))) {
-      initialCollectionComboBoxValue = ''
-    }
     const collectionComboBox = new Ext.form.ComboBox({
       mode: 'local',
       width: 160,
-      hidden: initialExportTo === 'zip',
-      allowBlank: false,
+      hidden: initialState.exportTo === 'zip',
       fieldLabel: "Destination",
       forceSelection: true,
       autoSelect: true,
@@ -526,15 +520,34 @@ SM.Exports.showExportTree = async function (collectionId, collectionName, treeba
       }),
       valueField:'valueStr',
       displayField:'displayStr',
-      value: initialCollectionComboBoxValue,
+      value: initialState.exportCollectionId,
       monitorValid: false,
       triggerAction: 'all',
-      listeners: {
-        select: function (combo, record, index) {
-          localStorage.setItem(`exportCollection-${collectionId}`, combo.getValue())
-          exportButton.enable()
-        }
-      }
+    })
+
+    const formatComboBox = new Ext.form.ComboBox({
+      mode: 'local',
+      width: 110,
+      fieldLabel: "Format",
+      hidden: initialState.exportTo === 'collection',
+      forceSelection: true,
+      autoSelect: true,
+      editable: false,
+      store: new Ext.data.SimpleStore({
+        fields: ['displayStr', 'valueStr'],
+        data: [
+          ['CKL', 'ckl-mono'],
+          ['CKL (multi-STIG)', 'ckl-multi'],
+          ['CKLB', 'cklb-mono'],
+          ['CKLB (multi-STIG)', 'cklb-multi'],
+          ['XCCDF', 'xccdf']
+        ]
+      }),
+      valueField:'valueStr',
+      displayField:'displayStr',
+      value: initialState.exportFormat,
+      monitorValid: false,
+      triggerAction: 'all',
     })
 
     const exportButton = new Ext.Button({
@@ -542,7 +555,7 @@ SM.Exports.showExportTree = async function (collectionId, collectionName, treeba
       iconCls: 'sm-export-icon',
       disabled: true,
       handler: function () {
-
+        saveOptions()
         const checklists = navTree.getCheckedForStreaming()
         if (exportToRadioGroup.getValue().exportTo === 'collection') {
           const dstCollectionId  = collectionComboBox.getValue()
@@ -565,37 +578,6 @@ SM.Exports.showExportTree = async function (collectionId, collectionName, treeba
         }
       }
     })
-
-    const formatComboBox = new Ext.form.ComboBox({
-      mode: 'local',
-      width: 110,
-      fieldLabel: "Format",
-      hidden: initialExportTo === 'collection',
-      forceSelection: true,
-      autoSelect: true,
-      editable: false,
-      store: new Ext.data.SimpleStore({
-        fields: ['displayStr', 'valueStr'],
-        data: [
-          ['CKL', 'ckl-mono'],
-          ['CKL (multi-STIG)', 'ckl-multi'],
-          ['CKLB', 'cklb-mono'],
-          ['CKLB (multi-STIG)', 'cklb-multi'],
-          ['XCCDF', 'xccdf']
-        ]
-      }),
-      valueField:'valueStr',
-      displayField:'displayStr',
-      value: localStorage.getItem(`exportFormat-${collectionId}`) || 'ckl-mono',
-      monitorValid: false,
-      triggerAction: 'all',
-      listeners: {
-        select: function (combo, record, index) {
-          localStorage.setItem(`exportFormat-${collectionId}`, combo.getValue())
-        }
-      }
-    })
-
     function checkStateHandler() {
       const assetCount = Object.keys(navTree.getCheckedForStreaming()).length
       let btnText = 'Export'
@@ -612,7 +594,6 @@ SM.Exports.showExportTree = async function (collectionId, collectionName, treeba
     }
     const treeConfig = {
       panel: this,
-      // title: 'Collection Resources',
       width: 400,
       flex: 1,
       collectionId,
@@ -682,6 +663,34 @@ SM.Exports.showExportTree = async function (collectionId, collectionName, treeba
     })
     fpwindow.render(Ext.getBody())
     fpwindow.show(document.body)
+
+    // functions
+    function getInitialOptions (dstCollectionData) {
+      // default options
+      let state = {
+        exportTo: 'zip',
+        exportFormat: 'ckl-mono',
+      }
+      // merge saved options
+      const storage = SM.safeJSONParse(localStorage.getItem(`exportTo-${collectionId}`))
+      if (storage) {
+         state = {...state, ...storage}
+      }
+      state.exportCollectionId = dstCollectionData.map(data => data[1]).includes(state.exportCollectionId) ? 
+        state.exportCollectionId : dstCollectionData[0]?.[1]
+      state.exportTo = state.exportTo === 'collection' && dstCollectionData.length ? 'collection' : 'zip'
+      return state
+    }
+
+    function saveOptions() {
+      const state = {
+        exportTo: zipRadio.checked ? 'zip' : 'collection',
+        exportFormat: formatComboBox.getValue(),
+        exportCollectionId: collectionComboBox.getValue()
+      }
+      localStorage.setItem(`exportTo-${collectionId}`, JSON.stringify(state))
+    }
+
   }
   catch (e) {
     Ext.getBody().unmask()
