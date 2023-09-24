@@ -2388,13 +2388,13 @@ exports.exportToCollection = async function ({srcCollectionId, dstCollectionId, 
       const chunkSize = 10000
       let result
 
-      progressJson.stage = 'reviews'
-      progressJson.reviewsTotal = count[0].total
-      progressJson.reviewsExported = 0
-      delete progressJson.stepCount
-      delete progressJson.stepName
-      delete progressJson.step
-
+      progressJson = {
+        stage: 'reviews',
+        status: 'running',
+        reviewsTotal: count[0].total,
+        reviewsExported: 0
+      }
+      progressCb(progressJson)
       do {
         await connection.query(sql.dropIncomingReview.query)
         ;[result] = await connection.query(sql.createIncomingReview.query, [offset, offset + chunkSize - 1])
@@ -2411,16 +2411,26 @@ exports.exportToCollection = async function ({srcCollectionId, dstCollectionId, 
         offset += chunkSize
       } while (result.affectedRows != 0)
 
-      progressJson.stage = 'metrics'
-      progressJson.status = 'running'
-      delete progressJson.reviewsTotal
-      delete progressJson.reviewsExported
-      progressCb(progressJson)
       const [saIdResult]  = await connection.query(sql.selectStigAssetMap.query)
-      await dbUtils.updateStatsAssetStig(connection, {saIds: saIdResult.map(row => row.saId)})
+      progressJson = {
+        stage: 'metrics',
+        status: 'running',
+        metricsTotal: saIdResult.length,
+        metricsUpdated: 0
+      }
+      progressCb(progressJson)
+      const increment = 1000
+      for (let i = 0; i < saIdResult.length; i+=increment) {
+        const saIds = saIdResult.slice(i, i + increment).map(row => row.saId)
+        await dbUtils.updateStatsAssetStig(connection, {saIds})
+        progressJson.metricsUpdated += saIds.length
+        progressCb(progressJson)
+      }
 
-      progressJson.stage = 'commit'
-      progressJson.status = 'running';
+      progressJson = {
+        stage: 'commit',
+        status: 'running'
+      }
       progressCb(progressJson) 
       await connection.commit()
 

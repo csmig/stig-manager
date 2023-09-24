@@ -851,11 +851,8 @@ SM.Exports.exportToCollection = async function ({collectionId, dstCollectionId, 
           progressPanel.pb.updateProgress(progress, `Exporting reviews (${value.reviewsExported.toLocaleString()} of ${value.reviewsTotal.toLocaleString()})`)
         }
         else if (value.stage === 'metrics') {
-          progressPanel.pb.wait({
-            text: 'Updating Collection metrics',
-            animate: true,
-            interval: 100
-          })
+          const progress = value.metricsUpdated/value.metricsTotal
+          progressPanel.pb.updateProgress(progress, `Updating metrics (${value.metricsUpdated.toLocaleString()} of ${value.metricsTotal.toLocaleString()})`)
         }
         else if (value.stage === 'commit') {
           progressPanel.pb.wait({
