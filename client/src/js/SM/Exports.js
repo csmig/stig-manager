@@ -71,6 +71,7 @@ SM.Exports.AssetTree = Ext.extend(Ext.tree.TreePanel, {
         })
         this.getOwnerTree().assetsNode = this
         cb(content, { status: true })
+        this.getOwnerTree().fireEvent('treeloaded')
         return
       }
       // Collection-Assets-STIG node
@@ -338,6 +339,7 @@ SM.Exports.StigTree = Ext.extend(Ext.tree.TreePanel, {
           this.renderChildren()
         }
         this.cascade(doPreload)
+        this.getOwnerTree().fireEvent('treeloaded')
         return
       }
     }
@@ -462,90 +464,57 @@ SM.Exports.showExportTree = async function (collectionId, collectionName, treeba
   try {
     let fpwindow
     const maxExportToCollection = STIGMAN.apiDefinition.paths['/collections/{collectionId}/export-to/{dstCollectionId}'].post.requestBody.content['application/json'].schema.maxItems
-    const allowExportToCollection = data.length <= maxExportToCollection
 
     const dstCollectionData = curUser.collectionGrants
     .filter(grant => grant.accessLevel >= 3 && grant.collection.collectionId != collectionId)
     .map(grant => [grant.collection.name, grant.collection.collectionId])
 
-    const exportToData = dstCollectionData.length ? [['ZIP archive', 'zip'],['Collection', 'collection']] : [['ZIP archive', 'zip']]
-
-    const exportToComboBox = new Ext.form.ComboBox({
-      mode: 'local',
-      width: 110,
-      fieldLabel: "Export to",
-      forceSelection: true,
-      autoSelect: true,
-      editable: false,
-      store: new Ext.data.SimpleStore({
-        fields: ['displayStr', 'valueStr'],
-        data: exportToData
-      }),
-      valueField:'valueStr',
-      displayField:'displayStr',
-      value: localStorage.getItem(`exportTo-${collectionId}`) || 'zip',
-      monitorValid: false,
-      triggerAction: 'all',
-      listeners: {
-        select: function (combo, record, index) {
-          if (combo.getValue() === 'zip') {
-            collectionComboBox.hide()
-            formatComboBox.show()
-            exportButton.enable()
-          }
-          else {
-            collectionComboBox.show()
-            formatComboBox.hide()
-            exportButton.setDisabled(!collectionComboBox.getValue())
-          }
-          localStorage.setItem(`exportTo-${collectionId}`, combo.getValue())
-        }
-      }
+    const initialExportTo = localStorage.getItem(`exportTo-${collectionId}`) ?? 'zip'
+    const zipRadio = new Ext.form.Radio({
+      boxLabel: 'Zip archive',
+      name: 'exportTo',
+      exportTo: 'zip',
+      itemField: 'asset',
+      checked: initialExportTo === 'zip'
     })
-
-    const initialExportTo = localStorage.getItem(`exportTo-${collectionId}`) === 'collection' && allowExportToCollection ? 'collection' : 'zip'
+    const collectionRadio = new Ext.form.Radio({
+      boxLabel: `Collection`,
+      name: 'exportTo',
+      exportTo: 'collection',
+      checked: initialExportTo === 'collection'
+    })
     const exportToRadioGroup = new Ext.form.RadioGroup({
       fieldLabel: 'Export to',
       style: 'padding-top: 1px',
       columns: [90, 90],
       items: [
-        {
-          boxLabel: 'Zip archive',
-          name: 'exportTo',
-          exportTo: 'zip',
-          itemField: 'asset',
-          checked: initialExportTo === 'zip'
-        },
-        {
-          // boxLabel: `Collection (for ${maxExportToCollection} or less Assets)`,
-          boxLabel: `Collection`,
-          name: 'exportTo',
-          exportTo: 'collection',
-          disabled: !allowExportToCollection,
-          checked: initialExportTo === 'collection'
-        }
+        zipRadio,
+        collectionRadio
       ],
       listeners: {
         change: function (rg, checkedItem) {
           if (checkedItem.exportTo === 'zip') {
             collectionComboBox.hide()
             formatComboBox.show()
-            exportButton.enable()
           }
           else {
             collectionComboBox.show()
             formatComboBox.hide()
-            exportButton.setDisabled(!collectionComboBox.getValue())
           }
           localStorage.setItem(`exportTo-${collectionId}`, checkedItem.exportTo)
+          checkStateHandler()
         }
       }
     })
 
+    let initialCollectionComboBoxValue = localStorage.getItem(`exportCollection-${collectionId}`) || ''
+    if (initialCollectionComboBoxValue && !(dstCollectionData.map(data => data[1]).includes(initialCollectionComboBoxValue))) {
+      initialCollectionComboBoxValue = ''
+    }
     const collectionComboBox = new Ext.form.ComboBox({
       mode: 'local',
       width: 160,
-      hidden: exportToComboBox.getValue() === 'zip',
+      hidden: initialExportTo === 'zip',
       allowBlank: false,
       fieldLabel: "Destination",
       forceSelection: true,
@@ -557,7 +526,7 @@ SM.Exports.showExportTree = async function (collectionId, collectionName, treeba
       }),
       valueField:'valueStr',
       displayField:'displayStr',
-      value: localStorage.getItem(`exportCollection-${collectionId}`) || '',
+      value: initialCollectionComboBoxValue,
       monitorValid: false,
       triggerAction: 'all',
       listeners: {
@@ -569,13 +538,13 @@ SM.Exports.showExportTree = async function (collectionId, collectionName, treeba
     })
 
     const exportButton = new Ext.Button({
-      text: 'Export',
+      text: 'Loading...',
       iconCls: 'sm-export-icon',
-      disabled: false,
+      disabled: true,
       handler: function () {
 
         const checklists = navTree.getCheckedForStreaming()
-        if (exportToComboBox.getValue() === 'collection') {
+        if (exportToRadioGroup.getValue().exportTo === 'collection') {
           const dstCollectionId  = collectionComboBox.getValue()
           const dstCollectionName = collectionComboBox.findRecord.call(collectionComboBox, 'valueStr', dstCollectionId).data.displayStr
           SM.Exports.exportToCollection({
@@ -601,7 +570,7 @@ SM.Exports.showExportTree = async function (collectionId, collectionName, treeba
       mode: 'local',
       width: 110,
       fieldLabel: "Format",
-      hidden: exportToComboBox.getValue() === 'collection',
+      hidden: initialExportTo === 'collection',
       forceSelection: true,
       autoSelect: true,
       editable: false,
@@ -628,8 +597,18 @@ SM.Exports.showExportTree = async function (collectionId, collectionName, treeba
     })
 
     function checkStateHandler() {
-      const assetCount = Object.keys(navTree.getChecked()).length
-      exportButton.setDisabled( assetCount === 0)
+      const assetCount = Object.keys(navTree.getCheckedForStreaming()).length
+      let btnText = 'Export'
+      if (assetCount === 0 || (assetCount > maxExportToCollection && collectionRadio.checked)) {
+        btnText = assetCount === 0 ? 'No Assets' : `Assets > ${maxExportToCollection}`
+        exportButton.disable()
+        exportButton.setIconClass('sm-alert-icon')
+      }
+      else {
+        exportButton.enable()
+        exportButton.setIconClass('sm-export-icon')
+      }
+      exportButton.setText(btnText)
     }
     const treeConfig = {
       panel: this,
@@ -644,7 +623,7 @@ SM.Exports.showExportTree = async function (collectionId, collectionName, treeba
     }
     
     const navTree = treebase === 'asset' ? new SM.Exports.AssetTree(treeConfig) : new SM.Exports.StigTree(treeConfig)
-
+    navTree.on('treeloaded', checkStateHandler)
     /******************************************************/
     // Form window
     /******************************************************/
@@ -696,10 +675,12 @@ SM.Exports.showExportTree = async function (collectionId, collectionName, treeba
             collectionComboBox
           ]
         },
+        '-',
         '->',
         exportButton
       ]
     })
+    fpwindow.render(Ext.getBody())
     fpwindow.show(document.body)
   }
   catch (e) {
@@ -832,48 +813,47 @@ SM.Exports.exportToCollection = async function ({collectionId, dstCollectionId, 
           apiCollection = value.collection
           haveResult = true
         }
-        if (!fpwindow.isDestroyed) {
-          if (value.status === 'error') {
-            if (value.message === 'Unhandled error') {
-              fpwindow.removeAll()
-              fpwindow.setTitle(`Error exporting to "${dstCollectionName}"`)
-              fpwindow.getTool('close').show()
-              const errorPanel = new SM.CollectionClone.CloneErrorPanel({
-                log: JSON.stringify(jsons, null, 2)
-              })
-              fpwindow.add(errorPanel)
-              fpwindow.doLayout()
-            }
-            else {
-              progressPanel.pb.updateProgress(1, value.message)
-              progressPanel.pb.addClass('sm-pb-error')
-              fpwindow.getTool('close').show()
-            }
-            isDone = true
-            isError = true
-          }
-          else if (value.stage === 'prepare' || value.stage === 'assets') {
-            const progress = (value.step)/value.stepCount
-            progressPanel.pb.updateProgress(progress, value.message)
-          }
-          else if (value.stage === 'reviews') {
-            const progress = value.reviewsExported/value.reviewsTotal
-            progressPanel.pb.updateProgress(progress, `Exporting reviews (${value.reviewsExported.toLocaleString()} of ${value.reviewsTotal.toLocaleString()})`)
-          }
-          else if (value.stage === 'metrics') {
-            progressPanel.pb.wait({
-              text: 'Updating Collection metrics',
-              animate: true,
-              interval: 100
+        if (fpwindow.isDestroyed) return
+        if (value.status === 'error') {
+          if (value.message === 'Unhandled error') {
+            fpwindow.removeAll()
+            fpwindow.setTitle(`Error exporting to "${dstCollectionName}"`)
+            fpwindow.getTool('close').show()
+            const errorPanel = new SM.CollectionClone.CloneErrorPanel({
+              log: JSON.stringify(jsons, null, 2)
             })
+            fpwindow.add(errorPanel)
+            fpwindow.doLayout()
           }
-          else if (value.stage === 'commit') {
-            progressPanel.pb.wait({
-              text: 'Committing',
-              animate: true,
-              interval: 100
-            })
+          else {
+            progressPanel.pb.updateProgress(1, value.message)
+            progressPanel.pb.addClass('sm-pb-error')
+            fpwindow.getTool('close').show()
           }
+          isDone = true
+          isError = true
+        }
+        else if (value.stage === 'prepare' || value.stage === 'assets') {
+          const progress = (value.step-1)/value.stepCount
+          progressPanel.pb.updateProgress(progress, value.message)
+        }
+        else if (value.stage === 'reviews') {
+          const progress = value.reviewsExported/value.reviewsTotal
+          progressPanel.pb.updateProgress(progress, `Exporting reviews (${value.reviewsExported.toLocaleString()} of ${value.reviewsTotal.toLocaleString()})`)
+        }
+        else if (value.stage === 'metrics') {
+          progressPanel.pb.wait({
+            text: 'Updating Collection metrics',
+            animate: true,
+            interval: 100
+          })
+        }
+        else if (value.stage === 'commit') {
+          progressPanel.pb.wait({
+            text: 'Committing',
+            animate: true,
+            interval: 100
+          })
         }
       }
     } while (!isDone)
