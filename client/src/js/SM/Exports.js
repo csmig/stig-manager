@@ -463,30 +463,34 @@ SM.Exports.StigTree = Ext.extend(Ext.tree.TreePanel, {
 SM.Exports.showExportTree = async function (collectionId, collectionName, treebase = 'asset', data) {
   try {
     let fpwindow
-    const maxExportToCollection = STIGMAN.apiDefinition.paths['/collections/{collectionId}/export-to/{dstCollectionId}'].post.requestBody.content['application/json'].schema.maxItems
+    // const maxExportToCollection = STIGMAN.apiDefinition.paths['/collections/{collectionId}/export-to/{dstCollectionId}'].post.requestBody.content['application/json'].schema.maxItems
+    const {minItems, maxItems} = STIGMAN.apiDefinition.paths['/collections/{collectionId}/export-to/{dstCollectionId}'].post.requestBody.content['application/json'].schema
     const dstCollectionData = curUser.collectionGrants
     .filter(grant => grant.accessLevel >= 3 && grant.collection.collectionId != collectionId)
     .map(grant => [grant.collection.name, grant.collection.collectionId])
     
     const initialState = getInitialOptions(dstCollectionData)
-    const zipRadio = new Ext.form.Radio({
+    const zipRadio = new SM.Global.HelperRadio({
       boxLabel: 'Zip archive',
       name: 'exportTo',
       exportTo: 'zip',
       itemField: 'asset',
-      checked: initialState.exportTo === 'zip'
+      checked: initialState.exportTo === 'zip',
+      helpText: SM.TipContent.ExportOptions.ZipArchive
     })
-    const collectionRadio = new Ext.form.Radio({
+    const collectionRadio = new SM.Global.HelperRadio({
       boxLabel: `Collection`,
       disabled: !(initialState.exportCollectionId),
       name: 'exportTo',
       exportTo: 'collection',
-      checked: initialState.exportTo === 'collection'
+      checked: initialState.exportTo === 'collection',
+      helpTpl: SM.TipContent.ExportOptions.CollectionTpl,
+      helpData: {minItems, maxItems}
     })
     const exportToRadioGroup = new Ext.form.RadioGroup({
       fieldLabel: 'Export to',
       style: 'padding-top: 1px',
-      columns: [90, 90],
+      columns: [100, 100],
       items: [
         zipRadio,
         collectionRadio
@@ -581,8 +585,8 @@ SM.Exports.showExportTree = async function (collectionId, collectionName, treeba
     function checkStateHandler() {
       const assetCount = Object.keys(navTree.getCheckedForStreaming()).length
       let btnText = 'Export'
-      if (assetCount === 0 || (assetCount > maxExportToCollection && collectionRadio.checked)) {
-        btnText = assetCount === 0 ? 'No Assets' : `Assets > ${maxExportToCollection}`
+      if (assetCount < minItems || (assetCount > maxItems && collectionRadio.checked)) {
+        btnText = assetCount < minItems ? `Assets < ${minItems}` : `Assets > ${maxItems}`
         exportButton.disable()
         exportButton.setIconClass('sm-alert-icon')
       }
@@ -592,12 +596,16 @@ SM.Exports.showExportTree = async function (collectionId, collectionName, treeba
       }
       exportButton.setText(btnText)
     }
+    function navTreeClick(node, e) {
+      const one = 1
+    }
     const treeConfig = {
       panel: this,
       width: 400,
       flex: 1,
       collectionId,
       data,
+      selModel: new Ext.tree.MultiSelectionModel(),
       listeners: {
         checkstateschanged: checkStateHandler
       }
@@ -605,6 +613,7 @@ SM.Exports.showExportTree = async function (collectionId, collectionName, treeba
     
     const navTree = treebase === 'asset' ? new SM.Exports.AssetTree(treeConfig) : new SM.Exports.StigTree(treeConfig)
     navTree.on('treeloaded', checkStateHandler)
+    navTree.on('beforeclick', navTreeClick)
     /******************************************************/
     // Form window
     /******************************************************/
