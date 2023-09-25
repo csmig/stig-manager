@@ -665,7 +665,6 @@ SM.Exports.showExportTree = async function (collectionId, collectionName, treeba
             collectionComboBox
           ]
         },
-        '-',
         '->',
         exportButton
       ]
