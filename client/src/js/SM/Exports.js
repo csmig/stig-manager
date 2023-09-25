@@ -622,7 +622,7 @@ SM.Exports.showExportTree = async function (collectionId, collectionName, treeba
       cls: 'sm-dialog-window sm-round-panel',
       modal: true,
       hidden: true,
-      width: 450,
+      width: 460,
       height: 600,
       layout: 'vbox',
       layoutConfig: {
