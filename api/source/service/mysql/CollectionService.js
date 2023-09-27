@@ -2029,7 +2029,6 @@ exports.cloneCollection = async function ({collectionId, userObject, name, descr
 }
 
 exports.exportToCollection = async function ({srcCollectionId, dstCollectionId, assetStigArguments, userObject, svcStatus = {}, progressCb = () => {}}) {
-  const sleep = ms => new Promise(r => setTimeout(r, ms))
   let connection, progressJson
   try {
     const sql = {
@@ -2131,9 +2130,9 @@ exports.exportToCollection = async function ({srcCollectionId, dstCollectionId, 
       createAssetIdMap: {
         query: `create temporary table t_assetId_map (
           srcAssetId INT,
-            dstAssetId INT,
-            INDEX (srcAssetId),
-            INDEX (dstAssetId)
+          dstAssetId INT,
+          INDEX (srcAssetId),
+          INDEX (dstAssetId)
         )
         select
           srcAsset.assetId as srcAssetId,
@@ -2233,7 +2232,7 @@ exports.exportToCollection = async function ({srcCollectionId, dstCollectionId, 
             and (srcReview.resultId != rChangedAny.resultId or srcReview.detail != rChangedAny.detail or srcReview.comment != rChangedAny.comment)
           )
           left join review rStatusReset on (
-          dstReview.reviewId = rStatusReset.reviewId and (
+            dstReview.reviewId = rStatusReset.reviewId and (
               (t_collection_setting.resetCriteria = 'result' and rChangedResult.reviewId is not null)
             or (t_collection_setting.resetCriteria = 'any' and rChangedAny.reviewId is not null)
             or (t_collection_setting.detailRequired = 'always' and srcReview.detail = '')
@@ -2255,12 +2254,12 @@ exports.exportToCollection = async function ({srcCollectionId, dstCollectionId, 
       pruneHistory: {
         query: `with historyRecs AS (
           select
-          rh.historyId,
-          ROW_NUMBER() OVER (PARTITION BY r.assetId, r.version, r.checkDigest ORDER BY rh.historyId DESC) as rowNum
+            rh.historyId,
+            ROW_NUMBER() OVER (PARTITION BY r.assetId, r.version, r.checkDigest ORDER BY rh.historyId DESC) as rowNum
           from
-          review_history rh
-          inner join t_incoming_review r using (reviewId)
-        )
+            review_history rh
+            inner join t_incoming_review r using (reviewId)
+          )
         delete review_history
         FROM 
            review_history
@@ -2272,37 +2271,36 @@ exports.exportToCollection = async function ({srcCollectionId, dstCollectionId, 
       },
       insertHistory: {
         query: `INSERT INTO review_history (
-          reviewId,
-          ruleId,
-          resultId,
-          detail,
-          comment,
-          autoResult,
-          ts,
-          userId,
-          statusText,
-          statusUserId,
-          statusTs,
-          statusId,
-          touchTs,
-          resultEngine
-        )
-        SELECT 
-          r.reviewId,
-          r.ruleId,
-          r.resultId,
-          LEFT(r.detail,32767) as detail,
-          LEFT(r.comment,32767) as comment,
-          r.autoResult,
-          r.ts,
-          r.userId,
-          r.statusText,
-          r.statusUserId,
-          r.statusTs,
-          r.statusId,
-          r.touchTs,
-          r.resultEngine
-        FROM
+            reviewId,
+            ruleId,
+            resultId,
+            detail,
+            comment,
+            autoResult,
+            ts,
+            userId,
+            statusText,
+            statusUserId,
+            statusTs,
+            statusId,
+            touchTs,
+            resultEngine)
+          SELECT 
+            r.reviewId,
+            r.ruleId,
+            r.resultId,
+            LEFT(r.detail,32767) as detail,
+            LEFT(r.comment,32767) as comment,
+            r.autoResult,
+            r.ts,
+            r.userId,
+            r.statusText,
+            r.statusUserId,
+            r.statusTs,
+            r.statusId,
+            r.touchTs,
+            r.resultEngine
+          FROM
             review r
             inner join t_incoming_review using (reviewId)`,
           runningText: `Preparing reviews`,
@@ -2328,12 +2326,8 @@ exports.exportToCollection = async function ({srcCollectionId, dstCollectionId, 
     }
     connection = await dbUtils.pool.getConnection()
     connection.config.namedPlaceholders = false
-    connection.query('set @srcCollectionId = ?, @dstCollectionId = ?, @userId = ?, @json = ?', [
-      parseInt(srcCollectionId),
-      parseInt(dstCollectionId),
-      parseInt(userObject.userId),
-      JSON.stringify(assetStigArguments)
-    ])
+    connection.query('set @srcCollectionId = ?, @dstCollectionId = ?, @userId = ?, @json = ?',
+    [parseInt(srcCollectionId), parseInt(dstCollectionId), parseInt(userObject.userId), JSON.stringify(assetStigArguments)])
     const prepQueries = ['dropArg', 'createArg', 'dropCollectionSetting', 'createCollectionSetting', 'dropSrcReviewId', 'createSrcReviewId']
     const assetQueries = ['insertAsset', 'dropAssetIdMap', 'createAssetIdMap', 'insertStigAssetMap', 'deleteDefaultRev', 'insertDefaultRev']
     const reviewExportQueries = ['pruneHistory', 'insertHistory', 'upsertReview']
@@ -2358,9 +2352,7 @@ exports.exportToCollection = async function ({srcCollectionId, dstCollectionId, 
         progressJson.status = 'running'
         progressJson.message = sql[query].runningText
         progressCb(progressJson) 
-
         await connection.query(sql[query].query)
-        // await sleep(3000)
       }
 
       progressJson.stage = 'assets'
@@ -2380,7 +2372,6 @@ exports.exportToCollection = async function ({srcCollectionId, dstCollectionId, 
         if (query === 'insertStigAssetMap') {
           counts.stigsMapped = result.affectedRows
         }
-        // await sleep(3000)
       }
 
       const [count] = await connection.query(sql.countSrcReviewId.query)
@@ -2449,7 +2440,7 @@ exports.exportToCollection = async function ({srcCollectionId, dstCollectionId, 
     progressJson.message = 'Unhandled error'
     progressJson.error = err
     progressJson.stack = err?.stack
-    progressCb(progressJson)
+    progressCb({progressJson})
     return null
   }
   finally {
