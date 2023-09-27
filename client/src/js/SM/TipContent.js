@@ -88,5 +88,10 @@ SM.TipContent.CloneOptions.Revisions = `<b>Match the source's pinned Revisions:<
 <b>Pin the source's default revisions:</b> All STIGs in the clone will be pinned to a specific Revision. STIGs that are pinned to a specific Revision in the source Collection will be pinned to that Revision in the clone. STIGs that track the latest Revision in the source will be pinned to the current latest Revision in the clone.`
 
 Ext.ns('SM.TipContent.ExportOptions')
-SM.TipContent.ExportOptions.CollectionTpl = `minItems: {minItems}, maxItems: {maxItems}`
-SM.TipContent.ExportOptions.ZipArchive = `help text`
+
+SM.TipContent.ExportOptions.CollectionTpl = `Export results for selected Assets/STIGs to another Collection.<br><br>
+Assets or STIG Assignments that do not exist in the destination Collection will be created. Reviews for existing Assets will be updated in accordance with the destination Collection's import settings.<br><br>
+The user must have a "Manage" or "Owner" grant in the destination Collection.<br><br>
+<b>Exporting results to another Collection is limited to a maximum of {maxItems} Assets at a time.</b>`
+
+SM.TipContent.ExportOptions.ZipArchive = `Export a .zip archive of checklists for selected Assets/STIGs in the desired format.`
