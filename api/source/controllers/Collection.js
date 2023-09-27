@@ -1063,7 +1063,6 @@ module.exports.exportToCollection = async function (req, res, next) {
       progressCb,
       svcStatus: res.svcStatus
     })
-    // res.json(parsedRequest)
     res.end()
   }
   catch (err) {
