@@ -365,7 +365,7 @@ SM.StigAssetsGrid = Ext.extend(Ext.grid.GridPanel, {
             iconCls: 'sm-asset-icon'
         })
         let sm = new Ext.grid.CheckboxSelectionModel({
-            checkOnly: false,
+            checkOnly: true,
             onRefresh: function() {
                 // override to render selections properly after a grid refresh
                 var ds = this.grid.store, index;
@@ -542,12 +542,11 @@ SM.CollectionStigProperties = Ext.extend(Ext.form.FormPanel, {
         if (! this.collectionId) {
             throw ('missing property collectionId')
         }
-        const stigAssetsGrid = new SM.StigAssetsGrid({
+        const assetSelectionPanel = new SM.AssetSelection.SelectingPanel({
             name: 'assets',
             benchmarkId: this.benchmarkId,
             collectionId: this.collectionId
         })
-        stigAssetsGrid.getSelectionModel().addListener('selectionchange', setButtonState)
         const stigField = new SM.StigSelectionField({
             name: 'benchmarkId',
             submitValue: false,
@@ -586,20 +585,20 @@ SM.CollectionStigProperties = Ext.extend(Ext.form.FormPanel, {
         })
  
         function setButtonState () {
-            const currentAssetIds = stigAssetsGrid.getValue()
-            const currentBenchmarkId = stigField.getValue()
-            const currentRevisionStr = revisionComboBox.getValue()
-            const originalAssetIds = stigAssetsGrid.originalAssetIds
+            // const currentAssetIds = stigAssetsGrid.getValue()
+            // const currentBenchmarkId = stigField.getValue()
+            // const currentRevisionStr = revisionComboBox.getValue()
+            // const originalAssetIds = stigAssetsGrid.originalAssetIds
 
-            if (!currentAssetIds.length || currentBenchmarkId === '' || currentRevisionStr === '') {
-                saveBtn.disable()
-                return
-            }
+            // if (!currentAssetIds.length || currentBenchmarkId === '' || currentRevisionStr === '') {
+            //     saveBtn.disable()
+            //     return
+            // }
 
-            const revisionUnchanged = currentBenchmarkId === _this.benchmarkId && currentRevisionStr === _this.defaultRevisionStr
-            const assetsUnchanged = currentAssetIds.length === originalAssetIds.length && originalAssetIds.every( assetId => currentAssetIds.includes(assetId))
+            // const revisionUnchanged = currentBenchmarkId === _this.benchmarkId && currentRevisionStr === _this.defaultRevisionStr
+            // const assetsUnchanged = currentAssetIds.length === originalAssetIds.length && originalAssetIds.every( assetId => currentAssetIds.includes(assetId))
 
-            saveBtn.setDisabled(revisionUnchanged && assetsUnchanged)
+            // saveBtn.setDisabled(revisionUnchanged && assetsUnchanged)
         }
 
         let config = {
@@ -622,14 +621,14 @@ SM.CollectionStigProperties = Ext.extend(Ext.form.FormPanel, {
                     title: '<b>Asset Assignments</b>',
                     anchor: "100% -95",
                     layout: 'fit',
-                    items: [stigAssetsGrid]
+                    items: [assetSelectionPanel]
                 }
 
             ],
             buttons: [saveBtn],
             stigField,
             revisionComboBox,
-            stigAssetsGrid
+            assetSelectionPanel
         }
 
         Ext.apply(this, Ext.apply(this.initialConfig, config))
@@ -641,7 +640,7 @@ SM.CollectionStigProperties = Ext.extend(Ext.form.FormPanel, {
             this.el.mask('')
             const promises = [
                 this.stigField.store.loadPromise(),
-                this.stigAssetsGrid.store.loadPromise()
+                this.assetSelectionPanel.initPanel()
             ]
             if (benchmarkId) {
                 promises.push(Ext.Ajax.requestPromise({
@@ -709,10 +708,11 @@ async function showCollectionStigProps( benchmarkId, defaultRevisionStr, parentG
         /******************************************************/
         appwindow = new Ext.Window({
             title: 'STIG Assignments',
+            resizable: true,
             cls: 'sm-dialog-window sm-round-panel',
             modal: true,
             hidden: true,
-            width: 510,
+            width: 810,
             height:660,
             layout: 'fit',
             plain:true,
