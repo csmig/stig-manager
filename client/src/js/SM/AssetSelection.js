@@ -48,7 +48,7 @@ SM.AssetSelection.GridPanel = Ext.extend(Ext.grid.GridPanel, {
         dataIndex: 'benchmarkIds',
         sortable: true,
         hidden: true,
-        filter: {type: 'values'},
+        filter: { type: 'values' },
         renderer: function (value, metadata) {
           metadata.attr = 'style="white-space:normal;"'
           return value.join('<br>')
@@ -145,6 +145,7 @@ SM.AssetSelection.SelectingPanel = Ext.extend(Ext.Panel, {
     const _this = this
     const availableGrid = new SM.AssetSelection.GridPanel({
       title: 'Available',
+      headerCssClass: 'sm-available-panel-header',
       role: 'available',
       collectionId: this.collectionId,
       flex: 1,
@@ -164,7 +165,8 @@ SM.AssetSelection.SelectingPanel = Ext.extend(Ext.Panel, {
       }
     })
     const selectionsGrid = new SM.AssetSelection.GridPanel({
-      title: 'Assigned',
+      title: this.selectionsGridTitle || 'Assigned',
+      headerCssClass: 'sm-selections-panel-header',
       role: 'selections',
       collectionId: this.collectionId,
       flex: 1,
@@ -229,7 +231,7 @@ SM.AssetSelection.SelectingPanel = Ext.extend(Ext.Panel, {
       removeBtn.setDisabled(this.role === 'selections')
     }
 
-    async function initPanel(benchmarkId) { // need to handle no benchmarkId
+    async function initPanel({ benchmarkId, labelId }) { // need to handle no benchmarkId
       const promises = [
         Ext.Ajax.requestPromise({
           responseType: 'json',
@@ -247,6 +249,15 @@ SM.AssetSelection.SelectingPanel = Ext.extend(Ext.Panel, {
           url: `${STIGMAN.Env.apiBase}/collections/${_this.collectionId}/stigs/${benchmarkId}/assets`,
           method: 'GET'
         }))
+        _this.trackedProperty = {dataProperty: 'benchmarkIds', value: benchmarkId}
+      }
+      else if (labelId) {
+        promises.push(Ext.Ajax.requestPromise({
+          responseType: 'json',
+          url: `${STIGMAN.Env.apiBase}/collections/${_this.collectionId}/labels/${labelId}/assets`,
+          method: 'GET'
+        }))
+        _this.trackedProperty = {dataProperty: 'labelIds', value: labelId}
       }
       const [apiAvailableAssets, apiAssignedAssets = []] = await Promise.all(promises)
       const assignedAssetIds = apiAssignedAssets.map(apiAsset => apiAsset.assetId)
@@ -264,13 +275,31 @@ SM.AssetSelection.SelectingPanel = Ext.extend(Ext.Panel, {
     }
 
     function changeAssignments(srcGrid, records, dstGrid) {
-      srcGrid.store.remove(records)
-      dstGrid.store.add(records)
-      const { field, direction } = dstGrid.store.getSortState()
-      dstGrid.store.sort(field, direction)
-      dstGrid.getSelectionModel().selectRecords(records)
-      dstGrid.getView().focusRow(dstGrid.store.indexOfId(records[0].data.assetId))
-      _this.fireEvent('assignmentschanged')
+      // const maskTimer = setTimeout(() => _this.getEl().mask(''), 150)
+      _this.getEl().mask('')
+      try {
+        srcGrid.store.remove(records)
+        dstGrid.store.add(records)
+        // for (const record of records) {
+        //   if (srcGrid.role === 'available') {
+        //     record.data[_this.trackedProperty.dataProperty].push(_this.trackedProperty.value)
+        //     record.commit()
+        //   }
+        //   else {
+        //     record.data[_this.trackedProperty.dataProperty] = record.data[_this.trackedProperty.dataProperty].filter( i => i !== _this.trackedProperty.value)
+        //     record.commit()
+        //   }
+        // }
+        const { field, direction } = dstGrid.store.getSortState()
+        dstGrid.store.sort(field, direction)
+        dstGrid.getSelectionModel().selectRecords(records)
+        dstGrid.getView().focusRow(dstGrid.store.indexOfId(records[0].data.assetId))
+        _this.fireEvent('assignmentschanged') 
+      }
+      finally {
+				// clearTimeout(maskTimer)
+				_this.getEl().unmask()
+      }
     }
 
     function getValue() {

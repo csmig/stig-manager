@@ -544,7 +544,6 @@ SM.CollectionStigProperties = Ext.extend(Ext.form.FormPanel, {
         }
         const assetSelectionPanel = new SM.AssetSelection.SelectingPanel({
             name: 'assets',
-            benchmarkId: this.benchmarkId,
             collectionId: this.collectionId,
             isFormField: true,
             listeners: {
@@ -645,7 +644,7 @@ SM.CollectionStigProperties = Ext.extend(Ext.form.FormPanel, {
             this.el.mask('')
             const promises = [
                 this.stigField.store.loadPromise(),
-                this.assetSelectionPanel.initPanel(benchmarkId)
+                this.assetSelectionPanel.initPanel({benchmarkId})
             ]
             await Promise.all(promises)
             this.getForm().setValues({benchmarkId})

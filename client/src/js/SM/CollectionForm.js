@@ -2341,28 +2341,40 @@ SM.Collection.LabelsMenu = Ext.extend(Ext.menu.Menu, {
 
 SM.Collection.LabelAssetsForm = Ext.extend(Ext.form.FormPanel, {
     initComponent: function () {
-        let me = this
-        this.assetsGrid = new SM.StigAssetsGrid({
-            name: 'assets',
-            collectionId: this.collectionId,
-            isValid: () => {
-                // override of SM.StigAssetsGrid
-                return true
-            },
-        })
-        this.assetsGrid.getSelectionModel().addListener('rowselect', function (sm, rowIndex, record) {
-            if (!record.data.labelIds.includes(me.labelId)) {
-                record.data.labelIds.push(me.labelId)
-                record.commit()    
-            }
-        })
-        this.assetsGrid.getSelectionModel().addListener('rowdeselect', function (sm, rowIndex, record) {
-            record.data.labelIds = record.data.labelIds.filter( i => i !== me.labelId)
-            record.commit()
-        })
+        let _this = this
         if (! this.collectionId) {
             throw ('missing property collectionId')
         }
+        // this.assetsGrid = new SM.StigAssetsGrid({
+        //     name: 'assets',
+        //     collectionId: this.collectionId,
+        //     isValid: () => {
+        //         // override of SM.StigAssetsGrid
+        //         return true
+        //     },
+        // })
+        const assetSelectionPanel = new SM.AssetSelection.SelectingPanel({
+            name: 'assets',
+            collectionId: this.collectionId,
+            isFormField: true,
+            selectionsGridTitle: 'Tagged'
+            // listeners: {
+            //     assignmentschanged: function () {
+            //         setButtonState()
+            //     }
+            // }
+        })
+
+        // this.assetsGrid.getSelectionModel().addListener('rowselect', function (sm, rowIndex, record) {
+        //     if (!record.data.labelIds.includes(_this.labelId)) {
+        //         record.data.labelIds.push(_this.labelId)
+        //         record.commit()    
+        //     }
+        // })
+        // this.assetsGrid.getSelectionModel().addListener('rowdeselect', function (sm, rowIndex, record) {
+        //     record.data.labelIds = record.data.labelIds.filter( i => i !== _this.labelId)
+        //     record.commit()
+        // })
         const labelSpan = SM.Collection.LabelTpl.apply(SM.Cache.CollectionMap.get(this.collectionId).labelMap.get(this.labelId))
         const labelField = new Ext.form.DisplayField({
             fieldLabel: 'Label',
@@ -2391,17 +2403,18 @@ SM.Collection.LabelAssetsForm = Ext.extend(Ext.form.FormPanel, {
                     anchor: "100% -70",
                     layout: 'fit',
                     items: [
-                        this.assetsGrid
+                        assetSelectionPanel
                     ]
                 }
 
             ],
             buttons: [{
                 text: this.btnText || 'Save',
-                collectionId: me.collectionId,
+                collectionId: _this.collectionId,
                 formBind: true,
                 handler: this.btnHandler || function () {}
-            }]
+            }],
+            assetSelectionPanel
         }
 
         Ext.apply(this, Ext.apply(this.initialConfig, config))
@@ -2410,10 +2423,15 @@ SM.Collection.LabelAssetsForm = Ext.extend(Ext.form.FormPanel, {
     },
     initPanel: async function () {
         try {
-            await this.assetsGrid.store.loadPromise()
+            this.el.mask('')
+            await this.assetSelectionPanel.initPanel({labelId: this.labelId})
+            // this.getForm().setValues({labelId: this.labelId})
         }
         catch (e) {
             SM.Error.handleError(e)
+        }
+        finally {
+            this.el.unmask()
         }
     }
 })
@@ -2422,10 +2440,10 @@ SM.Collection.showLabelAssetsWindow = async function ( collectionId, labelId ) {
     try {
         let labelAssetsFormPanel = new SM.Collection.LabelAssetsForm({
             collectionId,
-            labelId: labelId,
+            labelId,
             btnHandler: async function( btn ){
                 try {
-                    if (labelAssetsFormPanel.getForm().isValid()) {
+                    // if (labelAssetsFormPanel.getForm().isValid()) {
                         let values = labelAssetsFormPanel.getForm().getFieldValues(false, true) // dirtyOnly=false, getDisabled=true
                         let result = await Ext.Ajax.requestPromise({
                             url: `${STIGMAN.Env.apiBase}/collections/${collectionId}/labels/${labelId}/assets`,
@@ -2436,7 +2454,7 @@ SM.Collection.showLabelAssetsWindow = async function ( collectionId, labelId ) {
                         const apiLabelAssets = JSON.parse(result.response.responseText)
                         SM.Dispatcher.fireEvent('labelassetschanged', collectionId, labelId, apiLabelAssets)
                         appwindow.close()
-                    }
+                    // }
                 }
                 catch (e) {
                     SM.Error.handleError(e)
@@ -2449,11 +2467,15 @@ SM.Collection.showLabelAssetsWindow = async function ( collectionId, labelId ) {
         /******************************************************/
         var appwindow = new Ext.Window({
             title: 'Tagged Assets, Label ID ' + labelId,
+            resizable: true,
             cls: 'sm-dialog-window sm-round-panel',
             modal: true,
             hidden: true,
-            width: 510,
-            height:660,
+            width: 810,
+            height: 660,
+            minWidth: 810,
+            minHeight: 660,
+            maximizable: true,
             layout: 'fit',
             plain:true,
             bodyStyle:'padding:10px;',
@@ -2461,22 +2483,22 @@ SM.Collection.showLabelAssetsWindow = async function ( collectionId, labelId ) {
             items: labelAssetsFormPanel
         });
         
-        appwindow.render(Ext.getBody())
+        appwindow.show(Ext.getBody())
         await labelAssetsFormPanel.initPanel() // Load asset grid store
 
-        let result = await Ext.Ajax.requestPromise({
-            url: `${STIGMAN.Env.apiBase}/assets`,
-            method: 'GET',
-            params: {
-                collectionId,
-                labelId
-            }
-        })
-        const apiLabelAssets = JSON.parse(result.response.responseText)            
-        labelAssetsFormPanel.getForm().setValues({
-            labelId,
-            assets: apiLabelAssets
-        })
+        // let result = await Ext.Ajax.requestPromise({
+        //     url: `${STIGMAN.Env.apiBase}/assets`,
+        //     method: 'GET',
+        //     params: {
+        //         collectionId,
+        //         labelId
+        //     }
+        // })
+        // const apiLabelAssets = JSON.parse(result.response.responseText)            
+        // labelAssetsFormPanel.getForm().setValues({
+        //     labelId,
+        //     assets: apiLabelAssets
+        // })
                 
         appwindow.show(document.body);
     }
