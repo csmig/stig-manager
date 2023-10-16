@@ -545,15 +545,20 @@ SM.CollectionStigProperties = Ext.extend(Ext.form.FormPanel, {
         const assetSelectionPanel = new SM.AssetSelection.SelectingPanel({
             name: 'assets',
             benchmarkId: this.benchmarkId,
-            collectionId: this.collectionId
+            collectionId: this.collectionId,
+            isFormField: true,
+            listeners: {
+                assignmentschanged: function () {
+                    setButtonState()
+                }
+            }
         })
         const stigField = new SM.StigSelectionField({
             name: 'benchmarkId',
             submitValue: false,
             fieldLabel: 'BenchmarkId',
             hideTrigger: false,
-            anchor: '100%',
-            // width: 350,
+            width: 350,
             autoLoad: false,
             allowBlank: false,
             filteringStore: this.stigFilteringStore,
@@ -585,20 +590,20 @@ SM.CollectionStigProperties = Ext.extend(Ext.form.FormPanel, {
         })
  
         function setButtonState () {
-            // const currentAssetIds = stigAssetsGrid.getValue()
-            // const currentBenchmarkId = stigField.getValue()
-            // const currentRevisionStr = revisionComboBox.getValue()
-            // const originalAssetIds = stigAssetsGrid.originalAssetIds
+            const currentAssetIds = assetSelectionPanel.getValue()
+            const currentBenchmarkId = stigField.getValue()
+            const currentRevisionStr = revisionComboBox.getValue()
+            const originalAssetIds = assetSelectionPanel.originalAssetIds
 
-            // if (!currentAssetIds.length || currentBenchmarkId === '' || currentRevisionStr === '') {
-            //     saveBtn.disable()
-            //     return
-            // }
+            if (!currentAssetIds.length || currentBenchmarkId === '' || currentRevisionStr === '') {
+                saveBtn.disable()
+                return
+            }
 
-            // const revisionUnchanged = currentBenchmarkId === _this.benchmarkId && currentRevisionStr === _this.defaultRevisionStr
-            // const assetsUnchanged = currentAssetIds.length === originalAssetIds.length && originalAssetIds.every( assetId => currentAssetIds.includes(assetId))
+            const revisionUnchanged = currentBenchmarkId === _this.benchmarkId && currentRevisionStr === _this.defaultRevisionStr
+            const assetsUnchanged = currentAssetIds.length === originalAssetIds.length && originalAssetIds.every( assetId => currentAssetIds.includes(assetId))
 
-            // saveBtn.setDisabled(revisionUnchanged && assetsUnchanged)
+            saveBtn.setDisabled(revisionUnchanged && assetsUnchanged)
         }
 
         let config = {
@@ -640,21 +645,10 @@ SM.CollectionStigProperties = Ext.extend(Ext.form.FormPanel, {
             this.el.mask('')
             const promises = [
                 this.stigField.store.loadPromise(),
-                this.assetSelectionPanel.initPanel()
+                this.assetSelectionPanel.initPanel(benchmarkId)
             ]
-            if (benchmarkId) {
-                promises.push(Ext.Ajax.requestPromise({
-                    responseType: 'json',
-                    url: `${STIGMAN.Env.apiBase}/collections/${collectionId}/stigs/${benchmarkId}/assets`,
-                    method: 'GET'
-                }))
-            }
-            const results = await Promise.all(promises)
-            
-            this.getForm().setValues({
-                benchmarkId,
-                assets: results[2] || []
-            })
+            await Promise.all(promises)
+            this.getForm().setValues({benchmarkId})
         }
         finally {
             this.el.unmask()
@@ -673,7 +667,7 @@ async function showCollectionStigProps( benchmarkId, defaultRevisionStr, parentG
             stigFilteringStore: parentGrid.store,
             btnHandler: async function( btn ){
                 try {
-                    if (stigPropsFormPanel.getForm().isValid()) {
+                    // if (stigPropsFormPanel.getForm().isValid()) {
                         stigPropsFormPanel.el.mask('Updating')
                         const values = stigPropsFormPanel.getForm().getFieldValues(false, true) // dirtyOnly=false, getDisabled=true
                         const jsonData = {}
@@ -692,7 +686,7 @@ async function showCollectionStigProps( benchmarkId, defaultRevisionStr, parentG
                         const apiStigAssets = JSON.parse(result.response.responseText)
                         SM.Dispatcher.fireEvent('stigassetschanged', btn.collectionId, values.benchmarkId, apiStigAssets)
                         appwindow.close()
-                    }
+                    // }
                 }
                 catch (e) {
                     SM.Error.handleError(e)
@@ -713,7 +707,10 @@ async function showCollectionStigProps( benchmarkId, defaultRevisionStr, parentG
             modal: true,
             hidden: true,
             width: 810,
-            height:660,
+            height: 660,
+            minWidth: 810,
+            minHeight: 660,
+            maximizable: true,
             layout: 'fit',
             plain:true,
             bodyStyle:'padding:10px;',

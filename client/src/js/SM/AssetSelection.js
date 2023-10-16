@@ -10,6 +10,7 @@ SM.AssetSelection.GridPanel = Ext.extend(Ext.grid.GridPanel, {
       { name: 'fqdn', type: 'string' },
       { name: 'mac', type: 'string' },
       'labelIds',
+      { name: 'benchmarkIds', convert: (v, r) => r.stigs.map(stig => stig.benchmarkId) },
       { name: 'collection' }
     ])
     const columns = [
@@ -39,6 +40,18 @@ SM.AssetSelection.GridPanel = Ext.extend(Ext.grid.GridPanel, {
           labels.sort((a, b) => a.name.localeCompare(b.name))
           metadata.attr = 'style="white-space:normal;"'
           return SM.Collection.LabelArrayTpl.apply(labels)
+        }
+      },
+      {
+        header: "STIGs",
+        width: 150,
+        dataIndex: 'benchmarkIds',
+        sortable: true,
+        hidden: true,
+        filter: {type: 'values'},
+        renderer: function (value, metadata) {
+          metadata.attr = 'style="white-space:normal;"'
+          return value.join('<br>')
         }
       },
       {
@@ -88,7 +101,7 @@ SM.AssetSelection.GridPanel = Ext.extend(Ext.grid.GridPanel, {
       columns,
       sm,
       enableDragDrop: true,
-      ddGroup: 'SM.AssetSelection.GridPanel',
+      ddGroup: `SM.AssetSelection.GridPanel-${this.role}`,
       border: true,
       loadMask: false,
       stripeRows: true,
@@ -105,6 +118,7 @@ SM.AssetSelection.GridPanel = Ext.extend(Ext.grid.GridPanel, {
         items: [
           {
             xtype: 'exportbutton',
+            grid: this,
             hasMenu: false,
             gridBasename: 'Assets (grid)',
             storeBasename: 'Assets (store)',
@@ -129,48 +143,94 @@ SM.AssetSelection.GridPanel = Ext.extend(Ext.grid.GridPanel, {
 SM.AssetSelection.SelectingPanel = Ext.extend(Ext.Panel, {
   initComponent: function () {
     const _this = this
-    if (!this.benchmarkId || !this.collectionId) throw new Error('SM.AssetSelection.SelectingPanel is missing a required property')
     const availableGrid = new SM.AssetSelection.GridPanel({
       title: 'Available',
       role: 'available',
       collectionId: this.collectionId,
-      flex: 1
+      flex: 1,
+      listeners: {
+        render: function (grid) {
+          const gridDropTargetEl = grid.getView().scroller.dom;
+          const gridDropTarget = new Ext.dd.DropTarget(gridDropTargetEl, {
+            ddGroup: selectionsGrid.ddGroup,
+            notifyDrop: function (ddSource, e, data) {
+              const selectedRecords = ddSource.dragData.selections;
+              changeAssignments(selectionsGrid, selectedRecords, availableGrid)
+              return true
+            }
+          })
+        },
+
+      }
     })
     const selectionsGrid = new SM.AssetSelection.GridPanel({
-      title: 'Selected',
+      title: 'Assigned',
       role: 'selections',
       collectionId: this.collectionId,
-      flex: 1
+      flex: 1,
+      listeners: {
+        render: function (grid) {
+          const gridDropTargetEl = grid.getView().scroller.dom;
+          const gridDropTarget = new Ext.dd.DropTarget(gridDropTargetEl, {
+            ddGroup: availableGrid.ddGroup,
+            notifyDrop: function (ddSource, e, data) {
+              const selectedRecords = ddSource.dragData.selections;
+              changeAssignments(availableGrid, selectedRecords, selectionsGrid)
+              return true
+            }
+          })
+        }
+      }
+
     })
+    availableGrid.getSelectionModel().on('rowselect', handleSelections, selectionsGrid)
+    selectionsGrid.getSelectionModel().on('rowselect', handleSelections, availableGrid)
+
     const addBtn = new Ext.Button({
-      text: 'Add Assignment ',
-      handler: function () {
+      iconCls: 'sm-add-assignment-icon',
+      margins: "0 10 10 10",
+      disabled: true,
+      handler: function (btn) {
         const selectedRecords = availableGrid.getSelectionModel().getSelections()
         changeAssignments(availableGrid, selectedRecords, selectionsGrid)
+        btn.disable()
       }
     })
     const removeBtn = new Ext.Button({
-      text: 'Remove Assignment ',
-      handler: function () {
+      iconCls: 'sm-remove-assignment-icon',
+      margins: "0 10 10 10",
+      disabled: true,
+      handler: function (btn) {
         const selectedRecords = selectionsGrid.getSelectionModel().getSelections()
         changeAssignments(selectionsGrid, selectedRecords, availableGrid)
+        btn.disable()
       }
     })
     const buttonPanel = new Ext.Panel({
       bodyStyle: 'background-color:transparent;border:none',
+      width: 60,
       layout: {
         type: 'vbox',
         pack: 'center',
+        align: 'center',
         padding: "10 10 10 10"
       },
       items: [
         addBtn,
-        removeBtn
+        removeBtn,
+        { xtype: 'panel', border: false, html: '<i>or drag</i>' }
       ]
     })
 
-    async function initPanel() {
-      const [apiAvailableAssets, apiAssignedAssets] = await Promise.all([
+    function handleSelections() {
+      const sm = this.getSelectionModel()
+      if (sm.getSelected()) sm.clearSelections()
+      addBtn.setDisabled(this.role === 'available')
+      removeBtn.setDisabled(this.role === 'selections')
+    }
+
+    async function initPanel(benchmarkId) { // need to handle no benchmarkId
+      const promises = [
         Ext.Ajax.requestPromise({
           responseType: 'json',
           url: `${STIGMAN.Env.apiBase}/assets`,
@@ -179,14 +239,18 @@ SM.AssetSelection.SelectingPanel = Ext.extend(Ext.Panel, {
             projection: ['stigs']
           },
           method: 'GET'
-        }),
-        Ext.Ajax.requestPromise({
-          responseType: 'json',
-          url: `${STIGMAN.Env.apiBase}/collections/${_this.collectionId}/stigs/${_this.benchmarkId}/assets`,
-          method: 'GET'
         })
-      ])
+      ]
+      if (benchmarkId) {
+        promises.push(Ext.Ajax.requestPromise({
+          responseType: 'json',
+          url: `${STIGMAN.Env.apiBase}/collections/${_this.collectionId}/stigs/${benchmarkId}/assets`,
+          method: 'GET'
+        }))
+      }
+      const [apiAvailableAssets, apiAssignedAssets = []] = await Promise.all(promises)
       const assignedAssetIds = apiAssignedAssets.map(apiAsset => apiAsset.assetId)
+      _this.originalAssetIds = assignedAssetIds
       const availableAssets = []
       const assignedAssets = []
       apiAvailableAssets.reduce((accumulator, asset) => {
@@ -204,6 +268,14 @@ SM.AssetSelection.SelectingPanel = Ext.extend(Ext.Panel, {
       dstGrid.store.add(records)
       const { field, direction } = dstGrid.store.getSortState()
       dstGrid.store.sort(field, direction)
+      dstGrid.getSelectionModel().selectRecords(records)
+      dstGrid.getView().focusRow(dstGrid.store.indexOfId(records[0].data.assetId))
+      _this.fireEvent('assignmentschanged')
+    }
+
+    function getValue() {
+      const records = selectionsGrid.store.snapshot?.items ?? selectionsGrid.store.getRange()
+      return records.map(record => record.data.assetId)
     }
 
     const config = {
@@ -211,6 +283,8 @@ SM.AssetSelection.SelectingPanel = Ext.extend(Ext.Panel, {
       layoutConfig: {
         align: 'stretch'
       },
+      name: 'assets',
+      border: false,
       items: [
         availableGrid,
         buttonPanel,
@@ -218,7 +292,15 @@ SM.AssetSelection.SelectingPanel = Ext.extend(Ext.Panel, {
       ],
       availableGrid,
       selectionsGrid,
-      initPanel
+      initPanel,
+      getValue,
+      // need fns below so Ext handles us like a form field
+      setValue: () => { },
+      markInvalid: function () { },
+      clearInvalid: function () { },
+      isValid: () => true,
+      getName: () => this.name,
+      validate: () => true
     }
     Ext.apply(this, Ext.apply(this.initialConfig, config))
     this.superclass().initComponent.call(this);

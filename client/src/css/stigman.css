@@ -2134,3 +2134,30 @@ td.x-grid3-hd-over .x-grid3-hd-inner {
     margin-top: 0px;
     margin-bottom: 0px;
 }
+.sm-add-assignment-icon {
+  background-image: url(../img/add-assignment.svg);
+  background-size: 32px 32px;
+  background-repeat: no-repeat;
+}
+.x-item-disabled .sm-add-assignment-icon, .x-item-disabled .sm-remove-assignment-icon {
+  filter: grayscale(1);
+}
+.sm-remove-assignment-icon {
+  background-image: url(../img/remove-assignment.svg);
+  background-size: 32px 32px;
+  background-repeat: no-repeat;
+}
+.x-dd-drop-nodrop .x-dd-drop-icon {
+  background-image: url("../img/remove.svg");
+  background-size: 16px 16px;
+}
+
+.x-dd-drop-ok .x-dd-drop-icon {
+  background-image: url("../img/add.svg");
+  background-size: 16px 16px;
+}
+
+.x-dd-drop-ok-add .x-dd-drop-icon {
+  background-image: url("../img/add.svg");
+  background-size: 16px 16px;
+}
