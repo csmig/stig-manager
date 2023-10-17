@@ -568,6 +568,7 @@ SM.CollectionStigProperties = Ext.extend(Ext.form.FormPanel, {
                     const revisions = [['latest', 'Most recent revision'], ...record.data.revisions.map( rev => [rev.revisionStr, `${rev.revisionStr} (${rev.benchmarkDate})`])]
                     revisionComboBox.store.loadData(revisions)
                     revisionComboBox.setValue(record.data.benchmarkId === _this.benchmarkId ? _this.defaultRevisionStr : 'latest')
+                    assetSelectionPanel.trackedProperty = { dataProperty: 'benchmarkIds', value: record.data.benchmarkId }
                     setButtonState()
                 }
             }
