@@ -278,6 +278,8 @@ SM.AssetSelection.SelectingPanel = Ext.extend(Ext.Panel, {
       dstGrid.store.resumeEvents()
       srcGrid.store.fireEvent('datachanged', srcGrid.store)
       dstGrid.store.fireEvent('datachanged', dstGrid.store)
+      srcGrid.store.fireEvent('update', srcGrid.store)
+      dstGrid.store.fireEvent('update', dstGrid.store)
       dstGrid.store.filter(dstGrid.getView().getFilterFns())
 
       dstGrid.getSelectionModel().selectRecords(records)
