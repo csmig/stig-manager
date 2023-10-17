@@ -3172,3 +3172,6 @@ embed[type="application/pdf"] {
 .sm-diff-del {
     background-color: hsl(0deg 71% 25%)
 }
+.sm-round-panel .x-panel-header.sm-selections-panel-header {
+	background-color: #425722;
+}

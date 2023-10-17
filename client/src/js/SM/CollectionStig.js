@@ -614,7 +614,7 @@ SM.CollectionStigProperties = Ext.extend(Ext.form.FormPanel, {
             items: [
                 {
                     xtype: 'fieldset',
-                    title: '<b>STIG information</b>',
+                    title: '<span class="sm-stig-information-title">STIG information</span>',
                     items: [
                         stigField,
                         revisionComboBox
@@ -622,7 +622,7 @@ SM.CollectionStigProperties = Ext.extend(Ext.form.FormPanel, {
                 },
                 {
                     xtype: 'fieldset',
-                    title: '<b>Asset Assignments</b>',
+                    title: '<span class="sm-asset-assignments-title">Asset assignments</span>',
                     anchor: "100% -95",
                     layout: 'fit',
                     items: [assetSelectionPanel]

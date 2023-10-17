@@ -2375,14 +2375,14 @@ SM.Collection.LabelAssetsForm = Ext.extend(Ext.form.FormPanel, {
             items: [
                 {
                     xtype: 'fieldset',
-                    title: '<b>Label</b>',
+                    title: '<span class="sm-label-title">Label</span>',
                     items: [
                         labelField
                     ]
                 },
                 {
                     xtype: 'fieldset',
-                    title: '<b>Tagged Assets</b>',
+                    title: '<span class="sm-asset-assignments-title">Tagged Assets</span>',
                     anchor: "100% -70",
                     layout: 'fit',
                     items: [
@@ -2451,7 +2451,7 @@ SM.Collection.showLabelAssetsWindow = async function ( collectionId, labelId ) {
         const height = Ext.getBody().getHeight() - 80
         const width = Ext.getBody().getWidth() - 320
         var appwindow = new Ext.Window({
-            title: 'Tagged Assets, Label ID ' + labelId,
+            title: 'Tagged Assets',
             resizable: true,
             cls: 'sm-dialog-window sm-round-panel',
             modal: true,

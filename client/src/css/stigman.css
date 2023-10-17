@@ -2164,9 +2164,27 @@ td.x-grid3-hd-over .x-grid3-hd-inner {
   background-image: url("../img/add.svg");
   background-size: 16px 16px;
 }
-.sm-round-panel .x-panel-header.sm-available-panel-header {
-	background-color: hsl(5deg 46% 40% / 25%);
-}
+/* .sm-round-panel .x-panel-header.sm-available-panel-header {
+	background-color: hsl(0deg 0% 80%);
+} */
 .sm-round-panel .x-panel-header.sm-selections-panel-header {
-	background-color: hsl(87deg 74% 20% / 17%);
+  background-color: #c3deab;
+}
+.sm-stig-information-title {
+  background-image: url(../img/shield-green-check.svg);
+  background-repeat: no-repeat;
+  background-size: 16px 16px;
+  padding-left: 20px;
+}
+.sm-asset-assignments-title {
+  background-image: url(../img/target.svg);
+  background-repeat: no-repeat;
+  background-size: 16px 16px;
+  padding-left: 20px;
+}
+.sm-label-title {
+  background-image: url(../img/label.svg);
+  background-repeat: no-repeat;
+  background-size: 16px 16px;
+  padding-left: 20px;
 }
