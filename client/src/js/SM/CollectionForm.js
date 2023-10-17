@@ -1769,7 +1769,7 @@ SM.getContrastYIQ = function (hexcolor){
 	return (yiq >= 128) ? '#080808' : '#f7f7f7';
 }
 
-SM.Collection.LabelSpriteHtml = `<span class=sm-label-sprite style="color:
+SM.Collection.LabelSpriteHtml = `<span class="sm-label-sprite {extraCls}" style="color:
     {[SM.getContrastYIQ(values.color)]};background-color: #{color};" 
     ext:qtip="{[SM.he(SM.he(values.description))]}">
     <tpl if="values.isUnlabeled===true"><i></tpl>
@@ -2345,37 +2345,20 @@ SM.Collection.LabelAssetsForm = Ext.extend(Ext.form.FormPanel, {
         if (! this.collectionId) {
             throw ('missing property collectionId')
         }
-        // this.assetsGrid = new SM.StigAssetsGrid({
-        //     name: 'assets',
-        //     collectionId: this.collectionId,
-        //     isValid: () => {
-        //         // override of SM.StigAssetsGrid
-        //         return true
-        //     },
-        // })
         const assetSelectionPanel = new SM.AssetSelection.SelectingPanel({
             name: 'assets',
             collectionId: this.collectionId,
             isFormField: true,
             selectionsGridTitle: 'Tagged'
             // listeners: {
-            //     assignmentschanged: function () {
+            //     assetselectionschanged: function () {
             //         setButtonState()
             //     }
             // }
         })
-
-        // this.assetsGrid.getSelectionModel().addListener('rowselect', function (sm, rowIndex, record) {
-        //     if (!record.data.labelIds.includes(_this.labelId)) {
-        //         record.data.labelIds.push(_this.labelId)
-        //         record.commit()    
-        //     }
-        // })
-        // this.assetsGrid.getSelectionModel().addListener('rowdeselect', function (sm, rowIndex, record) {
-        //     record.data.labelIds = record.data.labelIds.filter( i => i !== _this.labelId)
-        //     record.commit()
-        // })
-        const labelSpan = SM.Collection.LabelTpl.apply(SM.Cache.CollectionMap.get(this.collectionId).labelMap.get(this.labelId))
+        const labelData = {...SM.Cache.CollectionMap.get(this.collectionId).labelMap.get(this.labelId)}
+        labelData.extraCls = 'sm-jumbo-sprite'
+        const labelSpan = SM.Collection.LabelTpl.apply(labelData)
         const labelField = new Ext.form.DisplayField({
             fieldLabel: 'Label',
             hideLabel: true,
@@ -2465,16 +2448,18 @@ SM.Collection.showLabelAssetsWindow = async function ( collectionId, labelId ) {
         /******************************************************/
         // Form window
         /******************************************************/
+        const height = Ext.getBody().getHeight() - 80
+        const width = Ext.getBody().getWidth() - 320
         var appwindow = new Ext.Window({
             title: 'Tagged Assets, Label ID ' + labelId,
             resizable: true,
             cls: 'sm-dialog-window sm-round-panel',
             modal: true,
             hidden: true,
-            width: 810,
-            height: 660,
+            width,
+            height,
             minWidth: 810,
-            minHeight: 660,
+            minHeight: 460,
             maximizable: true,
             layout: 'fit',
             plain:true,

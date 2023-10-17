@@ -2,7 +2,7 @@ Ext.ns('SM.AssetSelection')
 
 SM.AssetSelection.GridPanel = Ext.extend(Ext.grid.GridPanel, {
   initComponent: function () {
-    const _this = this // verify we need this, only used once by Labels column renderer
+    const _this = this
     const fields = Ext.data.Record.create([
       { name: 'assetId', type: 'string' },
       { name: 'name', type: 'string' },
@@ -13,7 +13,17 @@ SM.AssetSelection.GridPanel = Ext.extend(Ext.grid.GridPanel, {
       { name: 'benchmarkIds', convert: (v, r) => r.stigs.map(stig => stig.benchmarkId) },
       { name: 'collection' }
     ])
+    const sm = new Ext.grid.CheckboxSelectionModel({
+      singleSelect: false,
+      checkOnly: false,
+      listeners: {
+        selectionchange: function (sm) {
+          SM.SetCheckboxSelModelHeaderState(sm)
+        }
+      }
+    })
     const columns = [
+      sm,
       {
         header: "Asset",
         width: 150,
@@ -31,27 +41,27 @@ SM.AssetSelection.GridPanel = Ext.extend(Ext.grid.GridPanel, {
           collectionId: this.collectionId,
           renderer: SM.ColumnFilters.Renderers.labels
         },
-        renderer: function (value, metadata, record) {
+        renderer: function (value) {
           const labels = []
           for (const labelId of value) {
             const label = SM.Cache.CollectionMap.get(_this.collectionId).labelMap.get(labelId)
             if (label) labels.push(label)
           }
           labels.sort((a, b) => a.name.localeCompare(b.name))
-          metadata.attr = 'style="white-space:normal;"'
           return SM.Collection.LabelArrayTpl.apply(labels)
         }
       },
       {
         header: "STIGs",
-        width: 150,
+        width: 50,
+        align: 'center',
         dataIndex: 'benchmarkIds',
         sortable: true,
-        hidden: true,
+        hidden: false,
         filter: { type: 'values' },
-        renderer: function (value, metadata) {
-          metadata.attr = 'style="white-space:normal;"'
-          return value.join('<br>')
+        renderer: function (value, metadata, record) {
+          metadata.attr = ` ext:qwidth=230 ext:qtip="<b>${record.data.name} STIGs</b><br>${value.join('<br>')}"`
+          return `<i>${value.length}</i>`
         }
       },
       {
@@ -95,17 +105,14 @@ SM.AssetSelection.GridPanel = Ext.extend(Ext.grid.GridPanel, {
       noun: 'asset',
       iconCls: 'sm-asset-icon'
     })
-    const sm = new Ext.grid.RowSelectionModel()
     const config = {
       store,
       columns,
       sm,
-      enableDragDrop: true,
-      ddGroup: `SM.AssetSelection.GridPanel-${this.role}`,
       border: true,
       loadMask: false,
       stripeRows: true,
-      view: new SM.ColumnFilters.GridView({
+      view: new SM.ColumnFilters.GridViewBuffered({
         forceFit: true,
         emptyText: 'No Assets to display',
         listeners: {
@@ -148,45 +155,17 @@ SM.AssetSelection.SelectingPanel = Ext.extend(Ext.Panel, {
       headerCssClass: 'sm-available-panel-header',
       role: 'available',
       collectionId: this.collectionId,
-      flex: 1,
-      listeners: {
-        render: function (grid) {
-          const gridDropTargetEl = grid.getView().scroller.dom;
-          const gridDropTarget = new Ext.dd.DropTarget(gridDropTargetEl, {
-            ddGroup: selectionsGrid.ddGroup,
-            notifyDrop: function (ddSource, e, data) {
-              const selectedRecords = ddSource.dragData.selections;
-              changeAssignments(selectionsGrid, selectedRecords, availableGrid)
-              return true
-            }
-          })
-        },
-
-      }
+      flex: 1
     })
     const selectionsGrid = new SM.AssetSelection.GridPanel({
       title: this.selectionsGridTitle || 'Assigned',
       headerCssClass: 'sm-selections-panel-header',
       role: 'selections',
       collectionId: this.collectionId,
-      flex: 1,
-      listeners: {
-        render: function (grid) {
-          const gridDropTargetEl = grid.getView().scroller.dom;
-          const gridDropTarget = new Ext.dd.DropTarget(gridDropTargetEl, {
-            ddGroup: availableGrid.ddGroup,
-            notifyDrop: function (ddSource, e, data) {
-              const selectedRecords = ddSource.dragData.selections;
-              changeAssignments(availableGrid, selectedRecords, selectionsGrid)
-              return true
-            }
-          })
-        }
-      }
-
+      flex: 1
     })
-    availableGrid.getSelectionModel().on('rowselect', handleSelections, selectionsGrid)
-    selectionsGrid.getSelectionModel().on('rowselect', handleSelections, availableGrid)
+    availableGrid.getSelectionModel().on('selectionchange', handleSelections, selectionsGrid)
+    selectionsGrid.getSelectionModel().on('selectionchange', handleSelections, availableGrid)
 
     const addBtn = new Ext.Button({
       iconCls: 'sm-add-assignment-icon',
@@ -194,7 +173,7 @@ SM.AssetSelection.SelectingPanel = Ext.extend(Ext.Panel, {
       disabled: true,
       handler: function (btn) {
         const selectedRecords = availableGrid.getSelectionModel().getSelections()
-        changeAssignments(availableGrid, selectedRecords, selectionsGrid)
+        changeSelectedAssets(availableGrid, selectedRecords, selectionsGrid)
         btn.disable()
       }
     })
@@ -204,7 +183,7 @@ SM.AssetSelection.SelectingPanel = Ext.extend(Ext.Panel, {
       disabled: true,
       handler: function (btn) {
         const selectedRecords = selectionsGrid.getSelectionModel().getSelections()
-        changeAssignments(selectionsGrid, selectedRecords, availableGrid)
+        changeSelectedAssets(selectionsGrid, selectedRecords, availableGrid)
         btn.disable()
       }
     })
@@ -219,19 +198,23 @@ SM.AssetSelection.SelectingPanel = Ext.extend(Ext.Panel, {
       },
       items: [
         addBtn,
-        removeBtn,
-        { xtype: 'panel', border: false, html: '<i>or drag</i>' }
+        removeBtn
       ]
     })
 
     function handleSelections() {
       const sm = this.getSelectionModel()
-      if (sm.getSelected()) sm.clearSelections()
+      if (sm.getSelected()) {
+        sm.suspendEvents()
+        sm.clearSelections()
+        sm.resumeEvents()
+        SM.SetCheckboxSelModelHeaderState(sm)
+      }
       addBtn.setDisabled(this.role === 'available')
       removeBtn.setDisabled(this.role === 'selections')
     }
 
-    async function initPanel({ benchmarkId, labelId }) { // need to handle no benchmarkId
+    async function initPanel({ benchmarkId, labelId }) {
       const promises = [
         Ext.Ajax.requestPromise({
           responseType: 'json',
@@ -249,7 +232,7 @@ SM.AssetSelection.SelectingPanel = Ext.extend(Ext.Panel, {
           url: `${STIGMAN.Env.apiBase}/collections/${_this.collectionId}/stigs/${benchmarkId}/assets`,
           method: 'GET'
         }))
-        _this.trackedProperty = {dataProperty: 'benchmarkIds', value: benchmarkId}
+        _this.trackedProperty = { dataProperty: 'benchmarkIds', value: benchmarkId }
       }
       else if (labelId) {
         promises.push(Ext.Ajax.requestPromise({
@@ -257,7 +240,7 @@ SM.AssetSelection.SelectingPanel = Ext.extend(Ext.Panel, {
           url: `${STIGMAN.Env.apiBase}/collections/${_this.collectionId}/labels/${labelId}/assets`,
           method: 'GET'
         }))
-        _this.trackedProperty = {dataProperty: 'labelIds', value: labelId}
+        _this.trackedProperty = { dataProperty: 'labelIds', value: labelId }
       }
       const [apiAvailableAssets, apiAssignedAssets = []] = await Promise.all(promises)
       const assignedAssetIds = apiAssignedAssets.map(apiAsset => apiAsset.assetId)
@@ -274,32 +257,32 @@ SM.AssetSelection.SelectingPanel = Ext.extend(Ext.Panel, {
       selectionsGrid.store.loadData(assignedAssets)
     }
 
-    function changeAssignments(srcGrid, records, dstGrid) {
-      // const maskTimer = setTimeout(() => _this.getEl().mask(''), 150)
-      _this.getEl().mask('')
-      try {
-        srcGrid.store.remove(records)
-        dstGrid.store.add(records)
-        // for (const record of records) {
-        //   if (srcGrid.role === 'available') {
-        //     record.data[_this.trackedProperty.dataProperty].push(_this.trackedProperty.value)
-        //     record.commit()
-        //   }
-        //   else {
-        //     record.data[_this.trackedProperty.dataProperty] = record.data[_this.trackedProperty.dataProperty].filter( i => i !== _this.trackedProperty.value)
-        //     record.commit()
-        //   }
-        // }
-        const { field, direction } = dstGrid.store.getSortState()
-        dstGrid.store.sort(field, direction)
-        dstGrid.getSelectionModel().selectRecords(records)
-        dstGrid.getView().focusRow(dstGrid.store.indexOfId(records[0].data.assetId))
-        _this.fireEvent('assignmentschanged') 
+    function changeSelectedAssets(srcGrid, records, dstGrid) {
+      srcGrid.store.suspendEvents()
+      dstGrid.store.suspendEvents()
+      srcGrid.store.remove(records)
+      dstGrid.store.add(records)
+      for (const record of records) {
+        if (srcGrid.role === 'available') {
+          record.data[_this.trackedProperty.dataProperty].push(_this.trackedProperty.value)
+          record.commit()
+        }
+        else {
+          record.data[_this.trackedProperty.dataProperty] = record.data[_this.trackedProperty.dataProperty].filter(i => i !== _this.trackedProperty.value)
+          record.commit()
+        }
       }
-      finally {
-				// clearTimeout(maskTimer)
-				_this.getEl().unmask()
-      }
+      const { field, direction } = dstGrid.store.getSortState()
+      dstGrid.store.sort(field, direction)
+      srcGrid.store.resumeEvents()
+      dstGrid.store.resumeEvents()
+      srcGrid.store.fireEvent('datachanged', srcGrid.store)
+      dstGrid.store.fireEvent('datachanged', dstGrid.store)
+      dstGrid.store.filter(dstGrid.getView().getFilterFns())
+
+      dstGrid.getSelectionModel().selectRecords(records)
+      dstGrid.getView().focusRow(dstGrid.store.indexOfId(records[0].data.assetId))
+      _this.fireEvent('assetselectionschanged')
     }
 
     function getValue() {

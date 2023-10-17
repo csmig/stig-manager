@@ -547,7 +547,7 @@ SM.CollectionStigProperties = Ext.extend(Ext.form.FormPanel, {
             collectionId: this.collectionId,
             isFormField: true,
             listeners: {
-                assignmentschanged: function () {
+                assetselectionschanged: function () {
                     setButtonState()
                 }
             }
@@ -699,16 +699,18 @@ async function showCollectionStigProps( benchmarkId, defaultRevisionStr, parentG
         /******************************************************/
         // Form window
         /******************************************************/
+        const height = Ext.getBody().getHeight() - 80
+        const width = Ext.getBody().getWidth() - 320
         appwindow = new Ext.Window({
             title: 'STIG Assignments',
             resizable: true,
             cls: 'sm-dialog-window sm-round-panel',
             modal: true,
             hidden: true,
-            width: 810,
-            height: 660,
+            width,
+            height,
             minWidth: 810,
-            minHeight: 660,
+            minHeight: 460,
             maximizable: true,
             layout: 'fit',
             plain:true,

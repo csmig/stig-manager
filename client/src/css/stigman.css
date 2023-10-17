@@ -330,6 +330,9 @@
   margin-left: 3px;
   white-space: nowrap
 }
+.sm-jumbo-sprite {
+	font-size: 12px;
+}
 .sm-diff-sprite {
   background-color: hsl(207deg 100% 84%);
   color: #000;
