@@ -701,7 +701,7 @@ async function showCollectionStigProps( benchmarkId, defaultRevisionStr, parentG
         // Form window
         /******************************************************/
         const height = Ext.getBody().getHeight() - 80
-        const width = Ext.getBody().getWidth() - 320
+        const width = Math.min(Math.floor(Ext.getBody().getWidth() * 0.75), 1280)
         appwindow = new Ext.Window({
             title: 'STIG Assignments',
             resizable: true,
