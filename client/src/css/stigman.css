@@ -2197,3 +2197,11 @@ td.x-grid3-hd-over .x-grid3-hd-inner {
   padding-left: 20px;
 
 }
+
+.sm-grid3-draggable .x-grid3-row-selected .x-grid3-td-checker *{
+    cursor: default;
+}
+
+.sm-grid3-draggable .x-grid3-row-selected *, .sm-grid3-draggable .x-grid3-row-selected {
+    cursor: grab;
+}

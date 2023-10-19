@@ -109,6 +109,9 @@ SM.AssetSelection.GridPanel = Ext.extend(Ext.grid.GridPanel, {
       store,
       columns,
       sm,
+      enableDragDrop: true,
+      bodyCssClass: 'sm-grid3-draggable',
+      ddGroup: `SM.AssetSelection.GridPanel-${this.role}`,
       border: true,
       loadMask: false,
       stripeRows: true,
@@ -155,14 +158,59 @@ SM.AssetSelection.SelectingPanel = Ext.extend(Ext.Panel, {
       headerCssClass: 'sm-available-panel-header',
       role: 'available',
       collectionId: this.collectionId,
-      flex: 1
+      flex: 1,
+      listeners: {
+        render: function (grid) {
+          const gridDragZone = grid.getView().dragZone
+          const originalGetDragData = gridDragZone.getDragData
+          gridDragZone.getDragData = function (e) {
+            const t = Ext.lib.Event.getTarget(e)
+            if (t.className === 'x-grid3-row-checker') {
+              return false
+            }
+            return originalGetDragData.call(gridDragZone, e)
+          }
+          const gridDropTargetEl = grid.getView().scroller.dom;
+          const gridDropTarget = new Ext.dd.DropTarget(gridDropTargetEl, {
+            ddGroup: selectionsGrid.ddGroup,
+            notifyDrop: function (ddSource, e, data) {
+              const selectedRecords = ddSource.dragData.selections;
+              changeSelectedAssets(selectionsGrid, selectedRecords, availableGrid)
+              return true
+            }
+          })
+        },
+
+      }
     })
     const selectionsGrid = new SM.AssetSelection.GridPanel({
       title: this.selectionsGridTitle || 'Assigned',
       headerCssClass: 'sm-selections-panel-header',
       role: 'selections',
       collectionId: this.collectionId,
-      flex: 1
+      flex: 1,
+      listeners: {
+        render: function (grid) {
+          const gridDragZone = grid.getView().dragZone
+          const originalGetDragData = gridDragZone.getDragData
+          gridDragZone.getDragData = function (e) {
+            const t = Ext.lib.Event.getTarget(e)
+            if (t.className === 'x-grid3-row-checker') {
+              return false
+            }
+            return originalGetDragData.call(gridDragZone, e)
+          }
+          const gridDropTargetEl = grid.getView().scroller.dom;
+          const gridDropTarget = new Ext.dd.DropTarget(gridDropTargetEl, {
+            ddGroup: availableGrid.ddGroup,
+            notifyDrop: function (ddSource, e, data) {
+              const selectedRecords = ddSource.dragData.selections;
+              changeSelectedAssets(availableGrid, selectedRecords, selectionsGrid)
+              return true
+            }
+          })
+        }
+      }
     })
     availableGrid.getSelectionModel().on('selectionchange', handleSelections, selectionsGrid)
     selectionsGrid.getSelectionModel().on('selectionchange', handleSelections, availableGrid)
@@ -198,7 +246,8 @@ SM.AssetSelection.SelectingPanel = Ext.extend(Ext.Panel, {
       },
       items: [
         addBtn,
-        removeBtn
+        removeBtn,
+        { xtype: 'panel', border: false, html: '<i>or drag</i>' }
       ]
     })
 
