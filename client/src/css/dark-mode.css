@@ -3175,3 +3175,7 @@ embed[type="application/pdf"] {
 .sm-round-panel .x-panel-header.sm-selections-panel-header {
 	background-color: #425722;
 }
+.sm-grabbing *, .sm-grabbing .sm-grid3-draggable .x-grid3-row-selected *, .sm-grabbing .sm-grid3-draggable .x-grid3-row-selected {
+    cursor: url("../img/drag-drop-dark.svg"), grabbing;
+}
+  

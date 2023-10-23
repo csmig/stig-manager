@@ -110,6 +110,7 @@ SM.AssetSelection.GridPanel = Ext.extend(Ext.grid.GridPanel, {
       columns,
       sm,
       enableDragDrop: true,
+      ddText : '{0} selected Asset{1}',
       bodyCssClass: 'sm-grid3-draggable',
       ddGroup: `SM.AssetSelection.GridPanel-${this.role}`,
       border: true,
@@ -153,6 +154,36 @@ SM.AssetSelection.GridPanel = Ext.extend(Ext.grid.GridPanel, {
 SM.AssetSelection.SelectingPanel = Ext.extend(Ext.Panel, {
   initComponent: function () {
     const _this = this
+    function setupDragZone (grid) {
+      const gridDragZone = grid.getView().dragZone
+      const originalGetDragData = gridDragZone.getDragData
+      gridDragZone.getDragData = function (e) {
+        const t = Ext.lib.Event.getTarget(e)
+        if (t.className === 'x-grid3-row-checker') {
+          return false
+        }
+        return originalGetDragData.call(gridDragZone, e)
+      }
+      
+      const originalStartDrag = gridDragZone.startDrag
+      gridDragZone.startDrag = function (x, y) {
+        Ext.getBody().addClass('sm-grabbing')
+        return originalStartDrag.call(gridDragZone, x, y)
+      }
+
+      const originalOnDragDrop = gridDragZone.onDragDrop
+      gridDragZone.onDragDrop = function (e, id) {
+        Ext.getBody().removeClass('sm-grabbing')
+        return originalOnDragDrop.call(gridDragZone, e, id)
+      }
+
+      const originalOnInvalidDrop = gridDragZone.onInvalidDrop
+      gridDragZone.onInvalidDrop = function (e, id) {
+        Ext.getBody().removeClass('sm-grabbing')
+        return originalOnInvalidDrop.call(gridDragZone, e)
+      }
+
+    }
     const availableGrid = new SM.AssetSelection.GridPanel({
       title: 'Available',
       headerCssClass: 'sm-available-panel-header',
@@ -161,15 +192,7 @@ SM.AssetSelection.SelectingPanel = Ext.extend(Ext.Panel, {
       flex: 1,
       listeners: {
         render: function (grid) {
-          const gridDragZone = grid.getView().dragZone
-          const originalGetDragData = gridDragZone.getDragData
-          gridDragZone.getDragData = function (e) {
-            const t = Ext.lib.Event.getTarget(e)
-            if (t.className === 'x-grid3-row-checker') {
-              return false
-            }
-            return originalGetDragData.call(gridDragZone, e)
-          }
+          setupDragZone(grid)
           const gridDropTargetEl = grid.getView().scroller.dom;
           const gridDropTarget = new Ext.dd.DropTarget(gridDropTargetEl, {
             ddGroup: selectionsGrid.ddGroup,
@@ -191,15 +214,7 @@ SM.AssetSelection.SelectingPanel = Ext.extend(Ext.Panel, {
       flex: 1,
       listeners: {
         render: function (grid) {
-          const gridDragZone = grid.getView().dragZone
-          const originalGetDragData = gridDragZone.getDragData
-          gridDragZone.getDragData = function (e) {
-            const t = Ext.lib.Event.getTarget(e)
-            if (t.className === 'x-grid3-row-checker') {
-              return false
-            }
-            return originalGetDragData.call(gridDragZone, e)
-          }
+          setupDragZone(grid)
           const gridDropTargetEl = grid.getView().scroller.dom;
           const gridDropTarget = new Ext.dd.DropTarget(gridDropTargetEl, {
             ddGroup: availableGrid.ddGroup,

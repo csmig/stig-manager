@@ -2199,9 +2199,12 @@ td.x-grid3-hd-over .x-grid3-hd-inner {
 }
 
 .sm-grid3-draggable .x-grid3-row-selected .x-grid3-td-checker *{
-    cursor: default;
+  cursor: default;
 }
 
 .sm-grid3-draggable .x-grid3-row-selected *, .sm-grid3-draggable .x-grid3-row-selected {
-    cursor: grab;
+  cursor: grab;
+}
+.sm-grabbing *, .sm-grabbing .sm-grid3-draggable .x-grid3-row-selected *, .sm-grabbing .sm-grid3-draggable .x-grid3-row-selected {
+  cursor: url("../img/drag-drop-light.svg"), grabbing;
 }
