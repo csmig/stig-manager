@@ -2449,7 +2449,7 @@ SM.Collection.showLabelAssetsWindow = async function ( collectionId, labelId ) {
         // Form window
         /******************************************************/
         const height = Ext.getBody().getHeight() - 80
-        const width = Ext.getBody().getWidth() - 320
+        const width = Math.min(Math.floor(Ext.getBody().getWidth() * 0.75), 1280)
         var appwindow = new Ext.Window({
             title: 'Tagged Assets',
             resizable: true,

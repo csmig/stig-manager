@@ -545,11 +545,10 @@ SM.CollectionStigProperties = Ext.extend(Ext.form.FormPanel, {
         const assetSelectionPanel = new SM.AssetSelection.SelectingPanel({
             name: 'assets',
             collectionId: this.collectionId,
+            disabled: !this.benchmarkId,
             isFormField: true,
             listeners: {
-                assetselectionschanged: function () {
-                    setButtonState()
-                }
+                assetselectionschanged: setButtonState
             }
         })
         const stigField = new SM.StigSelectionField({
@@ -563,6 +562,7 @@ SM.CollectionStigProperties = Ext.extend(Ext.form.FormPanel, {
             filteringStore: this.stigFilteringStore,
             initialBenchmarkId: this.benchmarkId,
             fireSelectOnSetValue: true,
+            enableKeyEvents: true,
             listeners: {
                 select: function (combo, record, index) {
                     const revisions = [['latest', 'Most recent revision'], ...record.data.revisions.map( rev => [rev.revisionStr, `${rev.revisionStr} (${rev.benchmarkDate})`])]
@@ -570,6 +570,20 @@ SM.CollectionStigProperties = Ext.extend(Ext.form.FormPanel, {
                     revisionComboBox.setValue(record.data.benchmarkId === _this.benchmarkId ? _this.defaultRevisionStr : 'latest')
                     assetSelectionPanel.trackedProperty = { dataProperty: 'benchmarkIds', value: record.data.benchmarkId }
                     setButtonState()
+                },
+                invalid: function (field) {
+                    field.valid = false
+                    setButtonState()
+                },
+                valid: function (field) {
+                    field.valid = true
+                    setButtonState()
+                },
+                blur: function (field) {
+                    this.setValue(this.getRawValue())
+                },
+                render: function (field) {
+                    field.el.dom.addEventListener('blur', () => field.fireEvent('blur'))
                 }
             }
         })
@@ -590,12 +604,18 @@ SM.CollectionStigProperties = Ext.extend(Ext.form.FormPanel, {
         })
  
         function setButtonState () {
-            const currentAssetIds = assetSelectionPanel.getValue()
-            const currentBenchmarkId = stigField.getValue()
+            if (!stigField.valid) {
+                assetFieldSet.disable()
+                saveBtn.disable()
+                return
+            }
+            assetFieldSet.enable()
+            const currentBenchmarkId = stigField.getRawValue()
             const currentRevisionStr = revisionComboBox.getValue()
+            const currentAssetIds = assetSelectionPanel.getValue()
             const originalAssetIds = assetSelectionPanel.originalAssetIds
 
-            if (!currentAssetIds.length || currentBenchmarkId === '' || currentRevisionStr === '') {
+            if (!currentAssetIds.length) {
                 saveBtn.disable()
                 return
             }
@@ -606,6 +626,12 @@ SM.CollectionStigProperties = Ext.extend(Ext.form.FormPanel, {
             saveBtn.setDisabled(revisionUnchanged && assetsUnchanged)
         }
 
+        const assetFieldSet = new Ext.form.FieldSet({
+            title: '<span class="sm-asset-assignments-title">Asset assignments</span>',
+            anchor: "100% -95",
+            layout: 'fit',
+            items: [assetSelectionPanel]
+        })
         let config = {
             baseCls: 'x-plain',
             // height: 400,
@@ -621,14 +647,7 @@ SM.CollectionStigProperties = Ext.extend(Ext.form.FormPanel, {
                         revisionComboBox
                     ]
                 },
-                {
-                    xtype: 'fieldset',
-                    title: '<span class="sm-asset-assignments-title">Asset assignments</span>',
-                    anchor: "100% -95",
-                    layout: 'fit',
-                    items: [assetSelectionPanel]
-                }
-
+                assetFieldSet
             ],
             buttons: [saveBtn],
             stigField,
