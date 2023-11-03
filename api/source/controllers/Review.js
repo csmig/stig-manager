@@ -96,32 +96,17 @@ async function normalizeAndValidateReviews( reviews, collectionId, assetId, user
 
 module.exports.postReviewsByAsset = async function postReviewsByAsset (req, res, next) {
   try {
-    let collectionId = req.params.collectionId
-    let assetId = req.params.assetId
-    let reviewsRequested = req.body
-
-    const collectionGrant = req.userObject.collectionGrants.find( g => g.collection.collectionId === collectionId )
-    if ( collectionGrant ) {
-      const {permitted, rejected, statusSettings, historySettings} = await normalizeAndValidateReviews(reviewsRequested, collectionId, assetId, req.userObject)
-      let affected = { updated: 0, inserted: 0 }
-      if (permitted.length > 0) {
-        affected = await ReviewService.putReviewsByAsset({
-          assetId,
-          reviews: permitted,
-          userObject: req.userObject,
-          resetCriteria: statusSettings.resetCriteria,
-          svcStatus: res.svcStatus,
-          maxHistory: historySettings.maxReviews
-        })
-      }
-      res.json({
-        rejected,
-        affected
-      })
-    }
-    else {
-      throw new SmError.PrivilegeError()
-    }
+    const collectionId = Collection.getCollectionIdAndCheckPermission(req, Security.ACCESS_LEVEL.Restricted)
+    const assetId = req.params.assetId
+    const reviews = req.body
+    const result = await ReviewService.putReviewsByAsset({
+      assetId,
+      reviews,
+      collectionId, 
+      userId: req.userObject.userId,
+      svcStatus: res.svcStatus
+    })
+    res.json(result)
   }
   catch(err) {
     next(err)
@@ -244,44 +229,23 @@ module.exports.getReviewsByAsset = async function (req, res, next) {
 
 module.exports.putReviewByAssetRule = async function (req, res, next) {
   try {
-    let collectionId = req.params.collectionId
-    let assetId = req.params.assetId
-    let ruleId = req.params.ruleId
-    let review = req.body
-    let projection = req.query.projection
-    const collectionGrant = req.userObject.collectionGrants.find( g => g.collection.collectionId === collectionId )
-    if ( collectionGrant ) {
-      review.assetId = assetId
-      review.ruleId = ruleId
-      const {permitted, rejected, statusSettings, historySettings} = await normalizeAndValidateReviews([review], collectionId, assetId, req.userObject)
-      if (permitted.length > 0) {
-        const affected = await ReviewService.putReviewsByAsset({
-          assetId,
-          reviews: permitted,
-          userObject: req.userObject,
-          resetCriteria: statusSettings.resetCriteria,
-          tryInsert: true,
-          svcStatus: res.svcStatus,
-          maxHistory: historySettings.maxReviews
-        })
-        const rows =  await ReviewService.getReviews(projection, {
-          assetId: assetId,
-          ruleId: ruleId
-        }, req.userObject)
-        
-        if (affected.inserted > 0) {
-          res.status(201).json(rows[0])
-        } else {
-          res.json(rows[0])
-        }
-      }
-      else {
-        throw new SmError.PrivilegeError(rejected[0].reason)
-      }
+    const collectionId = Collection.getCollectionIdAndCheckPermission(req, Security.ACCESS_LEVEL.Restricted)
+    const assetId = req.params.assetId
+    const ruleId = req.params.ruleId
+    const review = {...req.body, ruleId}
+    const projection = req.query.projection
+    const result = await ReviewService.putReviewsByAsset({
+      assetId,
+      reviews: [review],
+      collectionId, 
+      userId: req.userObject.userId,
+      svcStatus: res.svcStatus
+    })
+    if (result.rejected.length) {
+      throw new SmError.PrivilegeError(result.rejected[0].reason)
     }
-    else {
-      throw new SmError.PrivilegeError()
-    }
+    const rows =  await ReviewService.getReviews(projection, { assetId, ruleId }, req.userObject)
+    res.status(result.affected.inserted > 0 ? 201 : 200).json(rows[0])
   }
   catch (err) {
     next(err)
@@ -290,43 +254,28 @@ module.exports.putReviewByAssetRule = async function (req, res, next) {
 
 module.exports.patchReviewByAssetRule = async function (req, res, next) {
   try {
-    const collectionId = req.params.collectionId
+    const collectionId = Collection.getCollectionIdAndCheckPermission(req, Security.ACCESS_LEVEL.Restricted)
     const assetId = req.params.assetId
     const ruleId = req.params.ruleId
+    const currentReviews =  await ReviewService.getReviews([], { assetId, ruleId }, req.userObject)
+    if (currentReviews.length === 0) {
+      throw new SmError.NotFoundError('Review must exist to be patched')
+    }
     const incomingReview = {...req.body, ruleId}
     const projection = req.query.projection
-    const collectionGrant = req.userObject.collectionGrants.find( g => g.collection.collectionId === collectionId )
-    if ( collectionGrant) {
-      const currentReviews =  await ReviewService.getReviews([], { assetId, ruleId }, req.userObject)
-      if (currentReviews.length === 0) {
-        throw new SmError.NotFoundError('Review must exist to be patched')
-      }
-      normalizeReview(incomingReview)
-      const review = { ...currentReviews[0], ...incomingReview }
-      if (currentReviews[0].resultEngine && incomingReview.result != currentReviews[0].result) {
-        review.resultEngine = null
-      }
-      const {permitted, rejected, statusSettings, historySettings} = await normalizeAndValidateReviews([review], collectionId, assetId, req.userObject)
-      if (permitted.length > 0) {
-        await ReviewService.putReviewsByAsset( {
-          assetId,
-          reviews: [incomingReview],
-          userObject: req.userObject,
-          resetCriteria: statusSettings.resetCriteria,
-          tryInsert: false,
-          svcStatus: res.svcStatus,
-          maxHistory: historySettings.maxReviews
-        })
-        const rows =  await ReviewService.getReviews(projection, { assetId, ruleId }, req.userObject)
-        res.json(rows[0])
-      }
-      else {
-        throw new SmError.PrivilegeError(rejected[0].reason)
-      }
+    const review = { ...currentReviews[0], ...incomingReview }
+    const result = await ReviewService.putReviewsByAsset({
+      assetId,
+      reviews: [review],
+      collectionId, 
+      userId: req.userObject.userId,
+      svcStatus: res.svcStatus
+    })
+    if (result.rejected.length) {
+      throw new SmError.PrivilegeError(result.rejected[0].reason)
     }
-    else {
-      throw new SmError.PrivilegeError()
-    }
+    const rows =  await ReviewService.getReviews(projection, { assetId, ruleId }, req.userObject)
+    res.json(rows[0])
   }
   catch (err) {
     next(err)
