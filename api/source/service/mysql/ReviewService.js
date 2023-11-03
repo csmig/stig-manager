@@ -1238,7 +1238,7 @@ select
   rvcd.version,
   rvcd.checkDigest,
   
-  cteIncoming.resultId,
+  COALESCE(cteIncoming.resultId, review.resultId) as resultId,
   COALESCE(cteIncoming.detail, review.detail, '') as detail,
   COALESCE(cteIncoming.comment, review.comment, '') as comment,
   COALESCE(cteIncoming.metadata, review.metadata, '{}') as metadata,

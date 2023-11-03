@@ -261,9 +261,8 @@ module.exports.patchReviewByAssetRule = async function (req, res, next) {
     if (currentReviews.length === 0) {
       throw new SmError.NotFoundError('Review must exist to be patched')
     }
-    const incomingReview = {...req.body, ruleId}
+    const review = {...req.body, ruleId}
     const projection = req.query.projection
-    const review = { ...currentReviews[0], ...incomingReview }
     const result = await ReviewService.putReviewsByAsset({
       assetId,
       reviews: [review],
