@@ -1008,7 +1008,8 @@ FROM
   LEFT JOIN collection_grant cg ON (c.collectionId = cg.collectionId)
 WHERE
   c.collectionId = @collectionId
-  and cg.userId = @userId),
+  and cg.userId = @userId
+),
 cteIncoming AS (
 SELECT
   jt.ruleId,
@@ -1116,20 +1117,20 @@ select
   UTC_TIMESTAMP() as ts
 from
   cteIncoming
-    LEFT JOIN cteGrant on cteIncoming.ruleId = cteGrant.ruleId
-    LEFT JOIN rule_version_check_digest rvcd on cteGrant.ruleId = rvcd.ruleId
-    LEFT JOIN review on (@assetId = review.assetId and rvcd.version = review.version and rvcd.checkDigest = review.checkDigest)
-    LEFT JOIN cteCollectionSetting on true
-    LEFT JOIN review rChangedResult on (
-    review.reviewId = rChangedResult.reviewId
-      and rChangedResult.statusId != 0
-      and cteIncoming.resultId != rChangedResult.resultId
-    )
-    LEFT JOIN review rChangedAny on (
-      review.reviewId = rChangedAny.reviewId
-      and rChangedAny.statusId != 0
-      and (rChangedAny.resultId != cteIncoming.resultId or rChangedAny.detail != cteIncoming.detail or rChangedAny.comment != cteIncoming.comment)
-    )
+  LEFT JOIN cteGrant on cteIncoming.ruleId = cteGrant.ruleId
+  LEFT JOIN rule_version_check_digest rvcd on cteGrant.ruleId = rvcd.ruleId
+  LEFT JOIN review on (@assetId = review.assetId and rvcd.version = review.version and rvcd.checkDigest = review.checkDigest)
+  LEFT JOIN cteCollectionSetting on true
+  LEFT JOIN review rChangedResult on (
+  review.reviewId = rChangedResult.reviewId
+    and rChangedResult.statusId != 0
+    and cteIncoming.resultId != rChangedResult.resultId
+  )
+  LEFT JOIN review rChangedAny on (
+    review.reviewId = rChangedAny.reviewId
+    and rChangedAny.statusId != 0
+    and (rChangedAny.resultId != cteIncoming.resultId or rChangedAny.detail != cteIncoming.detail or rChangedAny.comment != cteIncoming.comment)
+  )
 )
 select
   CASE WHEN cteCandidate.granted IS NULL
@@ -1141,41 +1142,41 @@ select
           CASE WHEN (cteCollectionSetting.collectionCanAccept = 'false' and cteCandidate.statusId IN (2,3))
             THEN
               'status = accepted, rejected not allowed for this Collection'
-      ELSE
+            ELSE
               CASE WHEN (cteCollectionSetting.userCanAccept = 'false' and cteCandidate.statusId IN (2,3))
                 THEN
                   'status = accepted, rejected not allowed for this User'
                 ELSE
-          CASE WHEN (cteCandidate.resultId NOT IN (2,3,4))
-          THEN
-            'status is not allowed for the result'
-          ELSE
-            CASE WHEN (cteCollectionSetting.detailRequired = 'always' AND cteCandidate.detail = '')
-            THEN 
-              'empty detail is not allowed for status = submitted, accepted, rejected'
-            ELSE
-              CASE WHEN (cteCollectionSetting.commentRequired = 'always' AND cteCandidate.comment = '')
-              THEN 
-                'empty comment is not allowed for status = submitted, accepted, rejected'
-              ELSE
-                CASE WHEN cteCandidate.resultId = 4 -- fail
-                THEN
-                  CASE WHEN (cteCollectionSetting.detailRequired = 'findings' AND cteCandidate.detail = '')
-                  THEN 
-                    'result = fail and empty detail not allowed for status = submitted, accepted, rejected'
-                  ELSE
-                    CASE WHEN (cteCollectionSetting.commentRequired = 'findings' AND cteCandidate.comment = '')
-                    THEN 
-                      'result = fail and empty comment not allowed for status = submitted, accepted, rejected'
-                    END
+                  CASE WHEN (cteCandidate.resultId NOT IN (2,3,4))
+                    THEN
+                      'status is not allowed for the result'
+                    ELSE
+                      CASE WHEN (cteCollectionSetting.detailRequired = 'always' AND cteCandidate.detail = '')
+                        THEN 
+                          'empty detail is not allowed for status = submitted, accepted, rejected'
+                        ELSE
+                          CASE WHEN (cteCollectionSetting.commentRequired = 'always' AND cteCandidate.comment = '')
+                            THEN 
+                              'empty comment is not allowed for status = submitted, accepted, rejected'
+                            ELSE
+                              CASE WHEN cteCandidate.resultId = 4 -- fail
+                                THEN
+                                  CASE WHEN (cteCollectionSetting.detailRequired = 'findings' AND cteCandidate.detail = '')
+                                    THEN 
+                                      'result = fail and empty detail not allowed for status = submitted, accepted, rejected'
+                                    ELSE
+                                      CASE WHEN (cteCollectionSetting.commentRequired = 'findings' AND cteCandidate.comment = '')
+                                        THEN 
+                                          'result = fail and empty comment not allowed for status = submitted, accepted, rejected'
+                                      END
+                                  END
+                              END
+                          END
+                      END
                   END
-                END
               END
-            END
           END
-        END
       END
-    END
   END as error,
   cteCandidate.reviewId, 
   cteCandidate.assetId, 
