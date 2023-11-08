@@ -145,8 +145,7 @@ module.exports.getReviewsByAsset = async function (req, res, next) {
 module.exports.putReviewByAssetRule = async function (req, res, next) {
   try {
     const collectionId = Collection.getCollectionIdAndCheckPermission(req, Security.ACCESS_LEVEL.Restricted)
-    const assetId = req.params.assetId
-    const ruleId = req.params.ruleId
+    const {assetId, ruleId} = {...req.params}
     const review = {...req.body, ruleId}
     const projection = req.query.projection
     const result = await ReviewService.putReviewsByAsset({
@@ -170,8 +169,7 @@ module.exports.putReviewByAssetRule = async function (req, res, next) {
 module.exports.patchReviewByAssetRule = async function (req, res, next) {
   try {
     const collectionId = Collection.getCollectionIdAndCheckPermission(req, Security.ACCESS_LEVEL.Restricted)
-    const assetId = req.params.assetId
-    const ruleId = req.params.ruleId
+    const {assetId, ruleId} = {...req.params}
     const currentReviews =  await ReviewService.getReviews([], { assetId, ruleId }, req.userObject)
     if (currentReviews.length === 0) {
       throw new SmError.NotFoundError('Review must exist to be patched')
