@@ -1,5 +1,10 @@
 import { stylesheets, scripts, isMinimizedSource } from './resources.js'
-import * as OP from './oidcProvider.js'
+import * as OP from './modules/oidcProvider.js'
+// import * as ReviewParser from './modules/ReviewParser.js'
+
+// // attach imported values to the global window object for use by the global code
+// window.ReviewParser = ReviewParser
+window.oidcProvider = OP
 
 function getScopeStr() {
   const scopePrefix = STIGMAN.Env.oauth.scopePrefix
@@ -35,14 +40,14 @@ async function loadResources() {
     script.async = false
     document.head.appendChild(script)
   }
-  const { serializeError } = await import('./third-party/node_modules/serialize-error/index.js')
+  const { serializeError } = await import('./modules/node_modules/serialize-error/index.js')
   STIGMAN.serializeError = serializeError
+  window.ReviewParser = await import('./modules/ReviewParser.js')
 
   STIGMAN.isMinimizedSource = isMinimizedSource
 }
 
 async function authorizeOidc() {
-  window.oidcProvider = OP
   try {
     const tokens = await OP.authorize({
       oidcProvider: STIGMAN.Env.oauth.authority,
@@ -51,7 +56,7 @@ async function authorizeOidc() {
       scope: getScopeStr()
     })
     if (tokens) {
-      loadResources()
+      await loadResources()
     }
   }
   catch (e) {

@@ -2445,7 +2445,7 @@ async function showImportResultFiles(collectionId) {
                                 fieldSettings: cachedCollection.settings.fields, 
                                 allowAccept: canAccept,
                                 importOptions: fp.parseOptionsFieldSet.getOptions(),
-                                XMLParser: fxp.XMLParser,
+                                XMLParser,
                                 valueProcessor: tagValueProcessor
                             })
                             r.file = file
@@ -2483,7 +2483,7 @@ async function showImportResultFiles(collectionId) {
                                 fieldSettings: cachedCollection.settings.fields, 
                                 allowAccept: canAccept,
                                 importOptions: fp.parseOptionsFieldSet.getOptions(),
-                                XMLParser: fxp.XMLParser,
+                                XMLParser,
                                 valueProcessor: tagValueProcessor,
                                 scapBenchmarkMap
                             })
@@ -2919,7 +2919,7 @@ async function showImportResultFile(params) {
                     fieldSettings: cachedCollection.settings.fields, 
                     allowAccept: canAccept,
                     importOptions: fp.parseOptionsFieldSet.getOptions(),
-                    XMLParser: fxp.XMLParser,
+                    XMLParser,
                     valueProcessor: tagValueProcessor
                 })
             }
@@ -2938,7 +2938,7 @@ async function showImportResultFile(params) {
                     fieldSettings: cachedCollection.settings.fields, 
                     allowAccept: canAccept,
                     importOptions: fp.parseOptionsFieldSet.getOptions(),
-                    XMLParser: fxp.XMLParser,
+                    XMLParser,
                     valueProcessor: tagValueProcessor,
                     scapBenchmarkMap
                 })
