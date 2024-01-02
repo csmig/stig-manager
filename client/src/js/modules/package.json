@@ -1,5 +1,6 @@
 {
   "dependencies": {
-    "serialize-error": "^11.0.0"
+    "serialize-error": "^11.0.0",
+    "stigman-client-lib": "git+http://neo:3000/csmig/stigman-client-lib.git#v1.0.2"
   }
 }
