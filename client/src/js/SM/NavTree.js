@@ -364,9 +364,9 @@ SM.NavTree.TreePanel = Ext.extend(Ext.tree.TreePanel, {
         let idAppend;
         let tab;
         
-        if (!n.leaf) {
-          return
-        }
+        // if (!n.leaf) {
+        //   return
+        // }
         if (n.attributes.action === 'stig-diff') {
           SM.Library.showDiffPanel({
             multiRevisionStigs: n.attributes.multiRevisionStigs,
@@ -378,6 +378,12 @@ SM.NavTree.TreePanel = Ext.extend(Ext.tree.TreePanel, {
           SM.CollectionPanel.showCollectionTab({
             collectionId: n.attributes.collectionId,
             collectionName: n.attributes.collectionName,
+            treePath: n.getPath()
+          })
+          return
+        }
+        if (n.attributes.id === "collections-root") {
+          SM.MetaPanel.showMetaTab({
             treePath: n.getPath()
           })
           return
