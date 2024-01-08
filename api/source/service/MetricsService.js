@@ -250,7 +250,7 @@ module.exports.queryMetaMetrics = async function ({
       groupBy.push('c.collectionId')
       orderBy.push('c.name')
       break
-    case 'stig':
+    case 'metaStig':
       predicates.statements.push('sa.benchmarkId IS NOT NULL')
       groupBy.push('rev.revId', 'dr.revisionPinned')
       orderBy.push('rev.benchmarkId')
@@ -583,6 +583,15 @@ const baseCols = {
     'count(distinct a.assetId) as assets',
     'count(distinct sa.benchmarkId) as stigs',
     'count(sa.saId) as checklists'
+  ],
+  metaStig: [
+    'rev.benchmarkId',
+    'stig.title',
+    'rev.revisionStr',
+    'CASE WHEN dr.revisionPinned = 1 THEN CAST(true as json) ELSE CAST(false as json) END as revisionPinned',
+    'count(distinct granted.collectionId) as collections',
+    'count(distinct a.assetId) as assets',
+    'rev.ruleCount'
   ]
 }
 const baseColsFlat = {
@@ -624,5 +633,14 @@ const baseColsFlat = {
     'count(distinct a.assetId) as assets',
     'count(distinct sa.benchmarkId) as stigs',
     'count(sa.saId) as checklists'
+  ],
+  metaStig: [
+    'rev.benchmarkId',
+    'stig.title',
+    'rev.revisionStr',
+    'CASE WHEN dr.revisionPinned = 1 THEN CAST(true as json) ELSE CAST(false as json) END as revisionPinned',
+    'count(distinct granted.collectionId) as collections',
+    'count(distinct a.assetId) as assets',
+    'rev.ruleCount'
   ]
 }

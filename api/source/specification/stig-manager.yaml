@@ -5386,6 +5386,8 @@ components:
           $ref: '#/components/schemas/RevisionStrRaw'
         revisionPinned:
           type: boolean
+        collections:
+          type: integer
         assets:
           type: integer
         ruleCount:

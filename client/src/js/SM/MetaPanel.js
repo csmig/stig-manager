@@ -332,9 +332,9 @@ SM.MetaPanel.AggGrid = Ext.extend(Ext.grid.GridPanel, {
         idProperty = 'collectionId'
         break
       case 'label':
-          fields.push(
-            { name: 'labelId', type: 'string' },
-            { name: 'name', type: 'string' },
+        fields.push(
+          { name: 'labelId', type: 'string' },
+          { name: 'name', type: 'string' },
           'assets'
         )
         columns.push(
@@ -377,7 +377,7 @@ SM.MetaPanel.AggGrid = Ext.extend(Ext.grid.GridPanel, {
           { name: 'revisionStr', type: 'string' },
           { name: 'revisionPinned' },
           'assets',
-          { name: 'uniqueId', type: 'string', convert: (v, r) => `${r.benchmarkId}|${r.revisionStr}`}
+          { name: 'uniqueId', type: 'string', convert: (v, r) => `${r.benchmarkId}|${r.revisionStr}` }
         )
         idProperty = r => `${r.benchmarkId}|${r.revisionStr}`
         columns.push(
@@ -1372,6 +1372,7 @@ SM.MetaPanel.AggCollectionPanel = Ext.extend(Ext.Panel, {
       height: '33%'
     })
     async function onRowSelectNorth(cm, index, record) {
+      gridCenter.collectionId = record.data.collectionId
       gridCenter.store.proxy.setUrl(`${STIGMAN.Env.apiBase}/collections/${record.data.collectionId}/metrics/summary/stig`)
       await gridCenter.store.loadPromise()
       gridSouth.store.removeAll()
@@ -2005,9 +2006,10 @@ SM.MetaPanel.showMetaTab = async function (options) {
           }
         }
       ],
-      title: overviewTitleTpl.apply({
-        collections: `${gState.collectionIds.length ? gState.collectionIds.length : gState.filterableCollections.length} of ${gState.filterableCollections.length}`
-      }),
+      // title: overviewTitleTpl.apply({
+      //   collections: `Showing ${gState.collectionIds.length ? gState.collectionIds.length : gState.filterableCollections.length} of ${gState.filterableCollections.length}`
+      // }),
+      title: 'Initializing...',
       margins: { top: SM.Margin.top, right: SM.Margin.edge, bottom: SM.Margin.bottom, left: SM.Margin.edge },
       region: 'west',
       width: 430,
@@ -2146,7 +2148,7 @@ SM.MetaPanel.showMetaTab = async function (options) {
     function updateOverviewTitle() {
       const overviewTitle = overviewTitleTpl.apply({
         // collections: SM.Collection.LabelSpritesByCollectionLabelId(collectionId, gState.collectionIds)
-        collections: `${gState.collectionIds.length ? gState.collectionIds.length : gState.filterableCollections.length} of ${gState.filterableCollections.length}`
+        collections: `Showing ${gState.collectionIds.length ? gState.collectionIds.length : gState.filterableCollections.length} of ${gState.filterableCollections.length} <span class="sm-navtree-sprite">experimental</span>`
       })
       overviewPanel.setTitle(overviewTitle)
     }

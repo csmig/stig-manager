@@ -102,7 +102,7 @@ module.exports.getMetricsDetailByMetaAggCollection = async function (req, res, n
   await getMetaMetrics(req, res, next, {style: 'detail', aggregation: 'collection'})
 }
 module.exports.getMetricsDetailByMetaAggStig = async function (req, res, next) {
-  await getMetaMetrics(req, res, next, {style: 'detail', aggregation: 'stig'})
+  await getMetaMetrics(req, res, next, {style: 'detail', aggregation: 'metaStig'})
 }
 module.exports.getMetricsSummaryByMeta = async function (req, res, next) {
   await getMetaMetrics(req, res, next, {style: 'summary', aggregation: 'meta', firstRowOnly: true})
@@ -111,5 +111,5 @@ module.exports.getMetricsSummaryByMetaAggCollection = async function (req, res, 
   await getMetaMetrics(req, res, next, {style: 'summary', aggregation: 'collection'})
 }
 module.exports.getMetricsSummaryByMetaAggStig = async function (req, res, next) {
-  await getMetaMetrics(req, res, next, {style: 'summary', aggregation: 'stig'})
+  await getMetaMetrics(req, res, next, {style: 'summary', aggregation: 'metaStig'})
 }
