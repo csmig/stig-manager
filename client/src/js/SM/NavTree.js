@@ -274,9 +274,20 @@ SM.NavTree.TreePanel = Ext.extend(Ext.tree.TreePanel, {
               {
                 id: `collections-root`,
                 node: 'collections',
-                text: 'Collections',
+                text: 'Collections<img class="sm-tree-toolbar" src="img/grid.svg" width="12" height="12">',
                 iconCls: 'sm-collection-icon',
-                expanded: true
+                expanded: true,
+                listeners: {
+                  beforeclick: function (n, e) {
+                    if (e.target.className === "sm-tree-toolbar") {
+                      SM.MetaPanel.showMetaTab({
+                        treePath: n.getPath()
+                      })
+                      return false
+                    }
+                    return true
+                  }
+                }
               }
             )
             content.push(
@@ -364,9 +375,9 @@ SM.NavTree.TreePanel = Ext.extend(Ext.tree.TreePanel, {
         let idAppend;
         let tab;
         
-        // if (!n.leaf) {
-        //   return
-        // }
+        if (!n.leaf) {
+          return
+        }
         if (n.attributes.action === 'stig-diff') {
           SM.Library.showDiffPanel({
             multiRevisionStigs: n.attributes.multiRevisionStigs,

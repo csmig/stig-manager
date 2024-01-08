@@ -332,9 +332,9 @@ SM.MetaPanel.AggGrid = Ext.extend(Ext.grid.GridPanel, {
         idProperty = 'collectionId'
         break
       case 'label':
-        fields.push(
-          { name: 'labelId', type: 'string' },
-          { name: 'name', type: 'string' },
+          fields.push(
+            { name: 'labelId', type: 'string' },
+            { name: 'name', type: 'string' },
           'assets'
         )
         columns.push(
@@ -377,8 +377,9 @@ SM.MetaPanel.AggGrid = Ext.extend(Ext.grid.GridPanel, {
           { name: 'revisionStr', type: 'string' },
           { name: 'revisionPinned' },
           'assets',
-          { name: 'unqiueId', type: 'string', convert: (v, r) => {`${r.benchmarkId}:${r.revisionStr}`}}
+          { name: 'uniqueId', type: 'string', convert: (v, r) => `${r.benchmarkId}|${r.revisionStr}`}
         )
+        idProperty = r => `${r.benchmarkId}|${r.revisionStr}`
         columns.push(
           {
             header: "Benchmark",
@@ -424,7 +425,6 @@ SM.MetaPanel.AggGrid = Ext.extend(Ext.grid.GridPanel, {
             sortable: true
           }
         )
-        idProperty = 'uniqueId'
         sortField = 'benchmarkId'
         rowdblclick = (grid, rowIndex) => {
           const r = grid.getStore().getAt(rowIndex)
@@ -1335,13 +1335,11 @@ SM.MetaPanel.OverviewPanel = Ext.extend(Ext.Panel, {
 SM.MetaPanel.AggCollectionPanel = Ext.extend(Ext.Panel, {
   initComponent: function () {
     const _this = this
-    const collectionId = this.collectionId
     const gridNorth = new SM.MetaPanel.AggGrid({
       aggregation: 'collection',
       // stateId: `sm-metrics-agg-grid-label-${collectionId}`,
       // stateful: true,
       border: false,
-      collectionId,
       reloadBtnHandler: this.reloadBtnHandler,
       baseParams: this.baseParams,
       exportName: 'Labels',
@@ -1354,23 +1352,21 @@ SM.MetaPanel.AggCollectionPanel = Ext.extend(Ext.Panel, {
       title: 'STIGs',
       // stateId: `sm-metrics-agg-grid-label-asset-${collectionId}`,
       // stateful: true,
-      border: false, 
+      border: false,
       reloadBtnHandler: this.reloadBtnHandler,
       aggregation: 'stig',
       storeAutoLoad: false,
-      collectionId,
       baseParams: this.baseParams,
       exportName: 'STIGs',
       region: 'center'
     })
     const gridSouth = new SM.MetaPanel.UnaggGrid({
       title: 'Checklists',
-      // stateId: `sm-metrics-unagg-grid-label-${collectionId}`,
+      // stateId: `sm-metrics-unagg-grid-collection-${collectionId}`,
       // stateful: true,
       border: false,
       parentAggregation: 'stig',
       reloadBtnHandler: this.reloadBtnHandler,
-      collectionId,
       region: 'south',
       split: true,
       height: '33%'
@@ -1394,7 +1390,7 @@ SM.MetaPanel.AggCollectionPanel = Ext.extend(Ext.Panel, {
     gridNorth.getSelectionModel().on('rowselect', onRowSelectNorth)
     gridCenter.getSelectionModel().on('rowselect', onRowSelectCenter)
     const updateBaseParams = function (params) {
-      gridSouth.store.baseParams = gridNorth.store.baseParams = gridCenter.store.baseParams = _this.baseParams = params
+      gridNorth.store.baseParams = _this.baseParams = params
     }
     const updateData = async function ({ refreshViewsOnly = false, loadMasksDisabled = false } = {}) {
       try {
@@ -1437,20 +1433,20 @@ SM.MetaPanel.AggCollectionPanel = Ext.extend(Ext.Panel, {
         gridCenter.store.proxy.setUrl(`${STIGMAN.Env.apiBase}/collections/${currentRecordNorth.data.collectionId}/metrics/summary/stig`)
         await gridCenter.store.loadPromise()
         gridCenter.loadMask.disabled = savedLoadMaskDisabled
-        const currentRecordStig = gridCenter.store.getById(selectedRowCenter.data.benchmarkId)
-        if (!currentRecordStig) {
+        const currentRecordCenter = gridCenter.store.getById(selectedRowCenter.data.uniqueId)
+        if (!currentRecordCenter) {
           gridSouth.setTitle('Checklists')
           gridSouth.store.removeAll()
           return
         }
-        const currentIndexCenter = gridCenter.store.indexOfId(selectedRowCenter.data.benchmarkId)
+        const currentIndexCenter = gridCenter.store.indexOfId(selectedRowCenter.data.uniqueId)
         gridCenter.view.focusRow(currentIndexCenter)
         savedLoadMaskDisabled = gridSouth.loadMask.disabled
         gridSouth.loadMask.disabled = loadMasksDisabled
         gridSouth.store.proxy.setUrl(`${STIGMAN.Env.apiBase}/collections/${currentRecordLabel.data.collectionId}/metrics/summary`)
         gridSouth.collectionId = currentRecordLabel.data.collectionId
         await gridSouth.store.loadPromise({
-          benchmarkId: currentRecordStig.data.benchmarkId
+          benchmarkId: currentRecordCenter.data.benchmarkId
         })
         gridSouth.loadMask.disabled = savedLoadMaskDisabled
       }
@@ -1595,7 +1591,7 @@ SM.MetaPanel.AggStigPanel = Ext.extend(Ext.Panel, {
       title: 'Collections',
       // stateId: `sm-metrics-agg-grid-label-asset-${collectionId}`,
       // stateful: true,
-      border: false, 
+      border: false,
       reloadBtnHandler: this.reloadBtnHandler,
       aggregation: 'collection',
       storeAutoLoad: false,
@@ -1966,7 +1962,7 @@ SM.MetaPanel.AggLabelPanel = Ext.extend(Ext.Panel, {
 
 SM.MetaPanel.showMetaTab = async function (options) {
   try {
-    const { collectionId, collectionName, treePath, initialLabelIds = [] } = options
+    const { treePath, initialCollectionIds = [] } = options
     const tab = Ext.getCmp('main-tab-panel').getItem(`meta-panel`)
     if (tab) {
       Ext.getCmp('main-tab-panel').setActiveTab(tab.id)
@@ -1975,105 +1971,68 @@ SM.MetaPanel.showMetaTab = async function (options) {
 
     const gState = {}
 
-    gState.labelIds = initialLabelIds
-    gState.filterableLabels = []
+    gState.collectionIds = initialCollectionIds
+    gState.filterableCollections = []
 
     const UPDATE_DATA_DELAY = 300000
 
     const overviewTitleTpl = new Ext.XTemplate(
-      `Collection: {[values.labels ? values.labels : 'all']}`
+      `Collections: {[values.collections]}`
     )
 
-    const labelsMenu = new SM.Collection.LabelsMenu({
-      labels: gState.filterableLabels,
+    const filterMenu = new SM.MetaPanel.CollectionsMenu({
+      collections: gState.filterableCollections,
       showHeader: true,
       showApply: true,
       listeners: {
-        applied: function (labelIds) {
-          SM.Dispatcher.fireEvent('labelfilter', collectionId, labelIds)
+        applied: function (collectionIds) {
+          SM.Dispatcher.fireEvent('collectionfilter', collectionIds)
         }
       }
     })
     const overviewPanel = new SM.MetaPanel.OverviewPanel({
       cls: 'sm-round-panel sm-metrics-overview-panel',
-      collectionId,
       collapsible: true,
       collapseFirst: false,
-      inventoryPanelTools: [
-        {
-          id: 'download',
-          text: 'Export...',
-          handler: function (event, toolEl, panel, tc) {
-            SM.Inventory.showInventoryExportOptions(collectionId, collectionName, overviewPanel.baseParams)
-          }
-        },
-        {
-          id: 'spacer'
-        },
-        {
-          id: 'manage',
-          text: 'Manage',
-          handler: (event, toolEl, panel, tc) => {
-            addCollectionManager({
-              collectionId,
-              collectionName,
-              treePath
-            })
-          }
-        }
-      ],
-      findingsPanelTools: [
-        {
-          id: 'report',
-          text: 'Details',
-          handler: (event, toolEl, panel, tc) => {
-            addFindingsSummary({
-              collectionId,
-              collectionName,
-              treePath
-            })
-          }
-        }
-      ],
+      inventoryPanelTools: [],
+      findingsPanelTools: [],
       tools: [
         {
-          id: 'label',
+          id: 'collection',
           text: 'Filter &#9660;',
           handler: (event, toolEl, panel, tc) => {
-            labelsMenu.showAt(event.xy)
+            filterMenu.showAt(event.xy)
           }
         }
       ],
       title: overviewTitleTpl.apply({
-        labels: SM.Collection.LabelSpritesByCollectionLabelId(collectionId, gState.labelIds)
+        collections: `${gState.collectionIds.length ? gState.collectionIds.length : gState.filterableCollections.length} of ${gState.filterableCollections.length}`
       }),
       margins: { top: SM.Margin.top, right: SM.Margin.edge, bottom: SM.Margin.bottom, left: SM.Margin.edge },
       region: 'west',
       width: 430,
       minWidth: 430,
       split: true,
-      collectionId,
       reloadBtnHandler,
-      listeners: {
-        render: (panel) => {
-          if (panel.tools.label) {
-            panel.tools.label.setDisplayed(gState.filterableLabels.length > 1)
-          }
-        }
-      }
+      // listeners: {
+      //   render: (panel) => {
+      //     if (panel.tools.collection) {
+      //       panel.tools.collection.setDisplayed(gState.filterableLabels.length > 1)
+      //     }
+      //   }
+      // }
     })
-    overviewPanel.inventoryPanel.on('render', (panel) => {
-      const collectionGrant = curUser.collectionGrants.find(g => g.collection.collectionId === collectionId)
-      const isManager = !!(collectionGrant?.accessLevel >= 3)
-      panel.tools.manage.setDisplayed(isManager)
-      panel.tools.spacer.setDisplayed(isManager)
-    })
+    // overviewPanel.inventoryPanel.on('render', (panel) => {
+    //   const collectionGrant = curUser.collectionGrants.find(g => g.collection.collectionId === collectionId)
+    //   const isManager = !!(collectionGrant?.accessLevel >= 3)
+    //   panel.tools.manage.setDisplayed(isManager)
+    //   panel.tools.spacer.setDisplayed(isManager)
+    // })
     const aggStigPanel = new SM.MetaPanel.AggStigPanel({
       title: 'STIGs',
       iconCls: 'sm-stig-icon',
       layout: 'fit',
       border: false,
-      collectionId,
       reloadBtnHandler
     })
     const aggCollectionPanel = new SM.MetaPanel.AggCollectionPanel({
@@ -2081,11 +2040,10 @@ SM.MetaPanel.showMetaTab = async function (options) {
       iconCls: 'sm-collection-icon',
       layout: 'fit',
       border: false,
-      collectionId,
       reloadBtnHandler
     })
 
-    setCurrentBaseParams(initialLabelIds)
+    setCurrentBaseParams(initialCollectionIds)
 
     const aggTabPanel = new Ext.TabPanel({
       activeTab: 0,
@@ -2119,10 +2077,8 @@ SM.MetaPanel.showMetaTab = async function (options) {
       sm_unshown: true,
       border: false,
       region: 'center',
-      collectionId: collectionId,
-      collectionName: collectionName,
       iconCls: 'sm-collection-icon',
-      title: SM.he(collectionName),
+      title: "Meta dashboard",
       closable: true,
       layout: 'border',
       sm_treePath: treePath,
@@ -2144,9 +2100,9 @@ SM.MetaPanel.showMetaTab = async function (options) {
       }
     })
 
-    SM.Dispatcher.addListener('labelfilter', onLabelFilter)
+    SM.Dispatcher.addListener('collectionfilter', onCollectionFilter)
     metaTab.on('beforedestroy', () => {
-      SM.Dispatcher.removeListener('labelfilter', onLabelFilter)
+      SM.Dispatcher.removeListener('collectionfilter', onCollectionFilter)
       cancelTimers()
     })
 
@@ -2154,40 +2110,32 @@ SM.MetaPanel.showMetaTab = async function (options) {
 
     // functions
 
-    function setCurrentBaseParams(labelIds) {
+    function setCurrentBaseParams(collectionIds) {
       const params = {}
-      for (let x = 0, length = labelIds.length; x < length; x++) {
-        if (labelIds[x] === null) {
-          params.labelMatch = 'null'
-        }
-        else {
-          ; (params.labelId ??= []).push(labelIds[x])
-        }
+      if (collectionIds.length) {
+        params.collectionId = collectionIds
       }
+      aggCollectionPanel?.updateBaseParams(params)
       aggStigPanel?.updateBaseParams(params)
       overviewPanel?.updateBaseParams(params)
       return params
     }
 
-    async function updateFilterableLabels() {
-      return
+    async function updateFilterableCollections() {
       try {
-        const results = await Ext.Ajax.requestPromise({
-          url: `${STIGMAN.Env.apiBase}/collections/${collectionId}/metrics/summary/label`,
+        gState.filterableCollections = await Ext.Ajax.requestPromise({
+          responseType: 'json',
+          url: `${STIGMAN.Env.apiBase}/collections`,
           method: 'GET'
         })
-        gState.filterableLabels = JSON.parse(results.response.responseText)
-        if (overviewPanel.tools.label) {
-          overviewPanel.tools.label.setDisplayed(!!(gState.filterableLabels.length > 1))
-        }
-        const filterableLabelIds = gState.filterableLabels.map(label => label.labelId)
-        // remove from gState.labelIds any missing labelIds
-        gState.labelIds = gState.labelIds.filter(labelId => filterableLabelIds.includes(labelId))
+        const filterableCollectionIds = gState.filterableCollections.map(collection => collection.collectionId)
+        // remove from gState.collectionIds any missing collectionIds
+        gState.collectionIds = gState.collectionIds.filter(collectionId => filterableCollectionIds.includes(collectionId))
         // reset base parameters
-        setCurrentBaseParams(gState.labelIds)
-        labelsMenu.refreshItems(gState.filterableLabels)
+        setCurrentBaseParams(gState.collectionIds)
+        filterMenu.refreshItems(gState.filterableCollections)
 
-        return gState.filterableLabels
+        return gState.filterableCollections
       }
       catch (e) {
         console.error(e)
@@ -2197,30 +2145,29 @@ SM.MetaPanel.showMetaTab = async function (options) {
 
     function updateOverviewTitle() {
       const overviewTitle = overviewTitleTpl.apply({
-        labels: SM.Collection.LabelSpritesByCollectionLabelId(collectionId, gState.labelIds)
+        // collections: SM.Collection.LabelSpritesByCollectionLabelId(collectionId, gState.collectionIds)
+        collections: `${gState.collectionIds.length ? gState.collectionIds.length : gState.filterableCollections.length} of ${gState.filterableCollections.length}`
       })
       overviewPanel.setTitle(overviewTitle)
     }
 
     function reloadBtnHandler() { updateData({ event: 'reload' }) }
 
-    // handle change to label filters in NavTree
-    async function onLabelFilter(srcCollectionId, srcLabelIds) {
+    // handle change to collection filters in NavTree
+    async function onCollectionFilter(srcCollectionIds) {
       try {
-        if (srcCollectionId === collectionId) {
-          if (gState.filterableLabels.every(i => srcLabelIds.includes(i.labelId))) {
-            gState.labelIds = []
-          }
-          else {
-            gState.labelIds = srcLabelIds
-          }
-          gState.baseParams = setCurrentBaseParams(gState.labelIds)
-          await overviewPanel.updateData()
-          updateOverviewTitle()
-          const activePanel = aggTabPanel.getActiveTab()
-          if (activePanel) {
-            await activePanel.updateData()
-          }
+        if (gState.filterableCollections.every(i => srcCollectionIds.includes(i.collectionId))) {
+          gState.collectionIds = []
+        }
+        else {
+          gState.collectionIds = srcCollectionIds
+        }
+        gState.baseParams = setCurrentBaseParams(gState.collectionIds)
+        await overviewPanel.updateData()
+        updateOverviewTitle()
+        const activePanel = aggTabPanel.getActiveTab()
+        if (activePanel) {
+          await activePanel.updateData()
         }
       }
       catch (e) {
@@ -2242,7 +2189,7 @@ SM.MetaPanel.showMetaTab = async function (options) {
           clearTimeout(gState.updateDataTimerId)
           gState.updateDataTimerId = gState.refreshViewTimerId = null
 
-          promises.push(updateFilterableLabels())
+          promises.push(updateFilterableCollections())
 
           gState.updateDataTimerId = setTimeout(
             updateData,
@@ -2299,3 +2246,140 @@ SM.MetaPanel.showMetaTab = async function (options) {
     SM.Error.handleError(e)
   }
 }
+
+SM.MetaPanel.CollectionsMenu = Ext.extend(Ext.menu.Menu, {
+  initComponent: function () {
+    const _this = this
+    this.addEvents('applied')
+    const config = {
+      items: [],
+      listeners: {
+        itemclick: this.onItemClick,
+      }
+    }
+    Ext.apply(this, Ext.apply(this.initialConfig, config))
+    this.superclass().initComponent.call(this)
+    this.refreshItems(this.collections)
+  },
+  isExcluded: function (collection) {
+    return collection.metadata['app.metaExcluded'] === '1'
+  },
+  onItemClick: function (item, e) {
+    if (item.hideOnClick) { // only the Apply item
+      const ids = this.getCheckedIds()
+      this.fireEvent('applied', ids)
+    }
+  },
+  getCheckedIds: function () {
+    const checked = this.items.items.reduce(function (ids, item) {
+      if (item.checked) {
+        ids.push(item.collectionId)
+      }
+      return ids
+    }, [])
+    return checked
+  },
+  getCollectionItemConfig: function (collection, checked = false) {
+    return {
+      xtype: 'menucheckitem',
+      hideOnClick: false,
+      text: SM.MetaPanel.CollectionTpl.apply(collection),
+      collectionId: collection?.collectionId ?? null,
+      collection,
+      checked,
+      listeners: {
+        checkchange: function (item, checked) {
+          item.parentMenu.fireEvent('itemcheckchanged', item, checked)
+        }
+      }
+    }
+  },
+  getTextItemConfig: function (text = '<b>FILTER</b>') {
+    return {
+      hideOnClick: false,
+      activeClass: '',
+      text,
+      iconCls: 'sm-menuitem-filter-icon',
+      cls: 'sm-menuitem-filter-collection'
+    }
+  },
+
+  getActionItemConfig: function (text = '<b>Apply</b>') {
+    return {
+      xtype: 'menuitem',
+      text,
+      icon: 'img/change.svg'
+    }
+  },
+  setCollectionsChecked: function (collectionIds, checked) {
+    for (const collectionId of collectionIds) {
+      this.find('collectionId', collectionId)[0].setChecked(checked, true) //suppressEvent = true
+    }
+  },
+  updateCollection: function (collection) {
+    const item = this.find('collectionId', collection.collectionId)[0]
+    if (item) {
+      if (this.isExcluded(collection)) {
+        this.removeCollection(collection)
+      }
+      else {
+        item.collection = collection
+        item.setText(SM.MetaPanel.CollectionTpl.apply(collection))
+        this.items.sort('ASC', this.sorter)
+        this.rerender()
+      }
+    }
+  },
+  addCollection: function (collection) {
+    if (this.isExcluded(collection)) return
+    this.addItem(this.getCollectionItemConfig(collection))
+    this.items.sort('ASC', this.sorter)
+    this.rerender()
+  },
+  removeCollection: function (collectionId) {
+    const item = this.find('collectionId', collectionId)[0]
+    if (item) {
+      this.remove(item)
+    }
+  },
+  sorter: function (a, b) {
+    return a.name.localeCompare(b.name)
+  },
+  refreshItems: function (collections) {
+    const collectionIdSet = new Set(this.getCheckedIds())
+    this.removeAll()
+    if (this.showHeader) {
+      this.addItem(this.getTextItemConfig())
+    }
+    collections.sort(this.sorter)
+    for (const collection of collections) {
+      if (this.isExcluded(collection)) continue
+      const checked = collectionIdSet.has(collection.collectionId)
+      this.addItem(this.getCollectionItemConfig(collection, checked))
+    }
+    if (this.showApply) {
+      this.addItem('-')
+      this.addItem(this.getActionItemConfig())
+    }
+  },
+  rerender: function () {
+    if (this.rendered) {
+      this.el.remove()
+      delete this.el
+      delete this.ul
+      this.rendered = false
+      this.render()
+      this.doLayout.call(this, false, true)
+    }
+  }
+})
+
+SM.MetaPanel.SpriteHtml = `<span class="sm-collection-sprite {extraCls}"
+    ext:qtip="{[SM.he(SM.he(values.description))]}">
+    {[SM.he(values.name)]}
+    </span>`
+
+SM.MetaPanel.CollectionTpl = new Ext.XTemplate(
+  SM.MetaPanel.SpriteHtml
+)
+

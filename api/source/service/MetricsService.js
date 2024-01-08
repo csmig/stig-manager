@@ -219,7 +219,7 @@ module.exports.queryMetaMetrics = async function ({
     cteProps.predicates.statements.push(
       'c.collectionId IN ?'
     )
-    cteProps.predicates.binds.push([inPredicates.benchmarkIds])
+    cteProps.predicates.binds.push([inPredicates.collectionIds])
   }
   const cteQuery = dbUtils.makeQueryString({
     columns: cteProps.columns,
