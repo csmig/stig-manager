@@ -221,6 +221,16 @@ module.exports.queryMetaMetrics = async function ({
     )
     cteProps.predicates.binds.push([inPredicates.collectionIds])
   }
+  if (inPredicates.revisionIds) {
+    cteProps.joins.push(
+      'left join default_rev dr on c.collectionId = dr.collectionId and sa.benchmarkId = dr.benchmarkId',
+      'left join revision rev on dr.revId = rev.revId'
+    )
+    cteProps.predicates.statements.push(
+      'rev.revId IN ?'
+    )
+    cteProps.predicates.binds.push([inPredicates.revisionIds])
+  }
   const cteQuery = dbUtils.makeQueryString({
     columns: cteProps.columns,
     joins: cteProps.joins,

@@ -2787,6 +2787,7 @@ paths:
     parameters:
       - $ref: '#/components/parameters/CollectionIdArrayQuery'
       - $ref: '#/components/parameters/BenchmarkIdArrayQuery'
+      - $ref: '#/components/parameters/RevisionIdArrayQuery'
       - $ref: '#/components/parameters/MetricsFormatQuery'
     get:
       tags:
@@ -2878,6 +2879,7 @@ paths:
     parameters:
       - $ref: '#/components/parameters/CollectionIdArrayQuery'
       - $ref: '#/components/parameters/BenchmarkIdArrayQuery'
+      - $ref: '#/components/parameters/RevisionIdArrayQuery'
       - $ref: '#/components/parameters/MetricsFormatQuery'
     get:
       tags:
@@ -7298,6 +7300,16 @@ components:
       in: query
       schema:
         $ref: '#/components/schemas/ReviewStatusLabel'
+    RevisionIdArrayQuery:
+      name: revisionId
+      in: query
+      description: Filter by one or more revisionIds (benchmarkId-version-release)
+      schema:
+        type: array
+        uniqueItems: true
+        minLength: 1
+        items:
+          type: string
     RevisionStrPath:
       name: revisionStr
       in: path

@@ -42,7 +42,8 @@ async function getMetaMetrics (req, res, next, {style, aggregation, firstRowOnly
     const returnType = req.query.format || 'json'
     const inPredicates = {
       collectionIds: req.query.collectionId,
-      benchmarkIds: req.query.benchmarkId
+      benchmarkIds: req.query.benchmarkId,
+      revisionIds: req.query.revisionId
     }
     const rows = await MetricsService.queryMetaMetrics({
       inPredicates,

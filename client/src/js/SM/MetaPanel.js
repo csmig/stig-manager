@@ -204,6 +204,11 @@ SM.MetaPanel.CommonColumns = [
   },
 ]
 
+SM.MetaPanel.getRevisionId = function (benchmarkId, revisionStr) {
+  const [results, version, release] = /V(\d+)R(\d+(\.\d+)?)/.exec(revisionStr)
+  return `${benchmarkId}-${version}-${release}`
+}
+
 SM.MetaPanel.AggGrid = Ext.extend(Ext.grid.GridPanel, {
   initComponent: function () {
     const _this = this
@@ -376,10 +381,11 @@ SM.MetaPanel.AggGrid = Ext.extend(Ext.grid.GridPanel, {
           { name: 'title', type: 'string' },
           { name: 'revisionStr', type: 'string' },
           { name: 'revisionPinned' },
+          'collections',
           'assets',
-          { name: 'uniqueId', type: 'string', convert: (v, r) => `${r.benchmarkId}|${r.revisionStr}` }
+          { name: 'revisionId', type: 'string', convert: (v, r) => SM.MetaPanel.getRevisionId(r.benchmarkId, r.revisionStr) }
         )
-        idProperty = r => `${r.benchmarkId}|${r.revisionStr}`
+        idProperty = r => SM.MetaPanel.getRevisionId(r.benchmarkId, r.revisionStr)
         columns.push(
           {
             header: "Benchmark",
@@ -417,11 +423,19 @@ SM.MetaPanel.AggGrid = Ext.extend(Ext.grid.GridPanel, {
             }
           },
           {
+            header: "Collections",
+            width: 50,
+            dataIndex: 'collections',
+            align: "center",
+            tooltip: "Total Collections with this STIG assigned",
+            sortable: true
+          },
+          {
             header: "Assets",
             width: 50,
             dataIndex: 'assets',
             align: "center",
-            tooltip: "Total Assets Assigned",
+            tooltip: "Total Assets with this STIG assigned",
             sortable: true
           }
         )
@@ -1374,9 +1388,11 @@ SM.MetaPanel.AggCollectionPanel = Ext.extend(Ext.Panel, {
     async function onRowSelectNorth(cm, index, record) {
       gridCenter.collectionId = record.data.collectionId
       gridCenter.store.proxy.setUrl(`${STIGMAN.Env.apiBase}/collections/${record.data.collectionId}/metrics/summary/stig`)
-      await gridCenter.store.loadPromise()
-      gridSouth.store.removeAll()
-      gridCenter.setTitle(`STIGs for ${record.data.name}`)
+      // await gridCenter.store.loadPromise()
+      // gridSouth.store.removeAll()
+      // gridCenter.setTitle(`STIGs for ${record.data.name}`)
+      updateData({includeGridNorth: false})
+
     }
     async function onRowSelectCenter(cm, index, record) {
       const selectedRowNorth = gridNorth.getSelectionModel().getSelected()
@@ -1385,7 +1401,7 @@ SM.MetaPanel.AggCollectionPanel = Ext.extend(Ext.Panel, {
       await gridSouth.store.loadPromise({
         benchmarkId: record.data.benchmarkId
       })
-      gridSouth.setTitle(`Checklists for ${record.data.benchmarkId}`)
+      gridSouth.setTitle(`Checklists for ${record.data.benchmarkId} in ${selectedRowNorth.data.name}`)
     }
 
     gridNorth.getSelectionModel().on('rowselect', onRowSelectNorth)
@@ -1393,7 +1409,7 @@ SM.MetaPanel.AggCollectionPanel = Ext.extend(Ext.Panel, {
     const updateBaseParams = function (params) {
       gridNorth.store.baseParams = _this.baseParams = params
     }
-    const updateData = async function ({ refreshViewsOnly = false, loadMasksDisabled = false } = {}) {
+    const updateData = async function ({ refreshViewsOnly = false, loadMasksDisabled = false, includeGridNorth = true } = {}) {
       try {
         gridNorth.initialized = true
         const selectedRowNorth = gridNorth.getSelectionModel().getSelected()
@@ -1410,10 +1426,12 @@ SM.MetaPanel.AggCollectionPanel = Ext.extend(Ext.Panel, {
           return
         }
 
-        let savedLoadMaskDisabled = gridNorth.loadMask.disabled
-        gridNorth.loadMask.disabled = loadMasksDisabled
-        await gridNorth.store.loadPromise()
-        gridNorth.loadMask.disabled = savedLoadMaskDisabled
+        if (includeGridNorth) {
+          let savedLoadMaskDisabled = gridNorth.loadMask.disabled
+          gridNorth.loadMask.disabled = loadMasksDisabled
+          await gridNorth.store.loadPromise()
+          gridNorth.loadMask.disabled = savedLoadMaskDisabled
+        }
 
         if (!selectedRowNorth) {
           return
@@ -1423,33 +1441,38 @@ SM.MetaPanel.AggCollectionPanel = Ext.extend(Ext.Panel, {
         if (!currentRecordNorth) {
           gridCenter.setTitle('STIGs')
           gridCenter.store.removeAll()
-          gridSouth.setTitle('STIGs')
+          gridSouth.setTitle('Checklists')
           gridSouth.store.removeAll()
           return
         }
-        const currentIndexNorth = gridNorth.store.indexOfId(selectedRowNorth.data.collectionId)
+        const currentIndexNorth = gridNorth.store.indexOfId(currentRecordNorth.data.collectionId)
         gridNorth.view.focusRow(currentIndexNorth)
         savedLoadMaskDisabled = gridCenter.loadMask.disabled
         gridCenter.loadMask.disabled = loadMasksDisabled
         gridCenter.store.proxy.setUrl(`${STIGMAN.Env.apiBase}/collections/${currentRecordNorth.data.collectionId}/metrics/summary/stig`)
         await gridCenter.store.loadPromise()
         gridCenter.loadMask.disabled = savedLoadMaskDisabled
-        const currentRecordCenter = gridCenter.store.getById(selectedRowCenter.data.uniqueId)
+        gridCenter.setTitle(`STIGs in ${currentRecordNorth.data.name}`)
+
+        
+        const currentRecordCenter = gridCenter.store.getById(selectedRowCenter?.data.revisionId)
         if (!currentRecordCenter) {
           gridSouth.setTitle('Checklists')
           gridSouth.store.removeAll()
           return
         }
-        const currentIndexCenter = gridCenter.store.indexOfId(selectedRowCenter.data.uniqueId)
+        const currentIndexCenter = gridCenter.store.indexOfId(currentRecordCenter.data.revisionId)
         gridCenter.view.focusRow(currentIndexCenter)
         savedLoadMaskDisabled = gridSouth.loadMask.disabled
         gridSouth.loadMask.disabled = loadMasksDisabled
-        gridSouth.store.proxy.setUrl(`${STIGMAN.Env.apiBase}/collections/${currentRecordLabel.data.collectionId}/metrics/summary`)
-        gridSouth.collectionId = currentRecordLabel.data.collectionId
+        gridSouth.store.proxy.setUrl(`${STIGMAN.Env.apiBase}/collections/${currentRecordNorth.data.collectionId}/metrics/summary`)
+        gridSouth.collectionId = currentRecordNorth.data.collectionId
         await gridSouth.store.loadPromise({
           benchmarkId: currentRecordCenter.data.benchmarkId
         })
         gridSouth.loadMask.disabled = savedLoadMaskDisabled
+        gridSouth.setTitle(`Checklists for ${currentRecordCenter.data.benchmarkId} in ${currentRecordNorth.data.name}`)
+
       }
       catch (e) {
         console.log(e)
@@ -1569,7 +1592,6 @@ SM.MetaPanel.AggAssetPanel = Ext.extend(Ext.Panel, {
   }
 })
 
-
 SM.MetaPanel.AggStigPanel = Ext.extend(Ext.Panel, {
   initComponent: function () {
     const _this = this
@@ -1616,10 +1638,10 @@ SM.MetaPanel.AggStigPanel = Ext.extend(Ext.Panel, {
     async function onRowSelectNorth(cm, index, record) {
       gridCenter.store.proxy.setUrl(`${STIGMAN.Env.apiBase}/collections/meta/metrics/summary/collection`)
       await gridCenter.store.loadPromise({
-        benchmarkId: record.data.benchmarkId
+        revisionId: SM.MetaPanel.getRevisionId(record.data.benchmarkId, record.data.revisionStr)
       })
-      gridSouth.store.removeAll()
-      gridCenter.setTitle(`STIGs for ${record.data.name}`)
+      updateData({includeGridNorth: false})
+
     }
     async function onRowSelectCenter(cm, index, record) {
       const selectedRowNorth = gridNorth.getSelectionModel().getSelected()
@@ -1628,7 +1650,8 @@ SM.MetaPanel.AggStigPanel = Ext.extend(Ext.Panel, {
       await gridSouth.store.loadPromise({
         benchmarkId: selectedRowNorth.data.benchmarkId
       })
-      gridSouth.setTitle(`Checklists for ${record.data.name}`)
+      gridSouth.setTitle(`Checklists for ${selectedRowNorth.data.benchmarkId} in ${record.data.name}`)
+
     }
 
     gridNorth.getSelectionModel().on('rowselect', onRowSelectNorth)
@@ -1636,7 +1659,7 @@ SM.MetaPanel.AggStigPanel = Ext.extend(Ext.Panel, {
     const updateBaseParams = function (params) {
       gridSouth.store.baseParams = gridNorth.store.baseParams = gridCenter.store.baseParams = _this.baseParams = params
     }
-    const updateData = async function ({ refreshViewsOnly = false, loadMasksDisabled = false } = {}) {
+    const updateData = async function ({ refreshViewsOnly = false, loadMasksDisabled = false, includeGridNorth = true } = {}) {
       try {
         gridNorth.initialized = true
         const selectedRowNorth = gridNorth.getSelectionModel().getSelected()
@@ -1653,46 +1676,54 @@ SM.MetaPanel.AggStigPanel = Ext.extend(Ext.Panel, {
           return
         }
 
-        let savedLoadMaskDisabled = gridNorth.loadMask.disabled
-        gridNorth.loadMask.disabled = loadMasksDisabled
-        await gridNorth.store.loadPromise()
-        gridNorth.loadMask.disabled = savedLoadMaskDisabled
+        if (includeGridNorth) {
+          let savedLoadMaskDisabled = gridNorth.loadMask.disabled
+          gridNorth.loadMask.disabled = loadMasksDisabled
+          await gridNorth.store.loadPromise()
+          gridNorth.loadMask.disabled = savedLoadMaskDisabled
+        }
 
         if (!selectedRowNorth) {
           return
         }
 
-        const currentRecordNorth = gridNorth.store.getById(selectedRowNorth.data.collectionId)
+        const currentRecordNorth = gridNorth.store.getById(selectedRowNorth.data.revisionId)
         if (!currentRecordNorth) {
-          gridCenter.setTitle('STIGs')
+          gridCenter.setTitle('Collections')
           gridCenter.store.removeAll()
           gridSouth.setTitle('STIGs')
           gridSouth.store.removeAll()
           return
         }
-        const currentIndexNorth = gridNorth.store.indexOfId(selectedRowNorth.data.collectionId)
+        const currentIndexNorth = gridNorth.store.indexOfId(currentRecordNorth.data.revisionId)
         gridNorth.view.focusRow(currentIndexNorth)
         savedLoadMaskDisabled = gridCenter.loadMask.disabled
         gridCenter.loadMask.disabled = loadMasksDisabled
-        gridCenter.store.proxy.setUrl(`${STIGMAN.Env.apiBase}/collections/${currentRecordNorth.data.collectionId}/metrics/summary/stig`)
-        await gridCenter.store.loadPromise()
+        gridCenter.store.proxy.setUrl(`${STIGMAN.Env.apiBase}/collections/meta/metrics/summary/collection`)
+        await gridCenter.store.loadPromise({
+          revisionId: currentRecordNorth.data.revisionId
+        })
         gridCenter.loadMask.disabled = savedLoadMaskDisabled
-        const currentRecordStig = gridCenter.store.getById(selectedRowCenter.data.benchmarkId)
-        if (!currentRecordStig) {
+        gridCenter.setTitle(`Collections with ${currentRecordNorth.data.benchmarkId} ${currentRecordNorth.data.revisionStr}`)
+
+        
+        const currentRecordCenter = gridCenter.store.getById(selectedRowCenter?.data.collectionId)
+        if (!currentRecordCenter) {
           gridSouth.setTitle('Checklists')
           gridSouth.store.removeAll()
           return
         }
-        const currentIndexCenter = gridCenter.store.indexOfId(selectedRowCenter.data.benchmarkId)
+        const currentIndexCenter = gridCenter.store.indexOfId(currentRecordCenter.data.collectionId)
         gridCenter.view.focusRow(currentIndexCenter)
         savedLoadMaskDisabled = gridSouth.loadMask.disabled
         gridSouth.loadMask.disabled = loadMasksDisabled
-        gridSouth.store.proxy.setUrl(`${STIGMAN.Env.apiBase}/collections/${currentRecordLabel.data.collectionId}/metrics/summary`)
-        gridSouth.collectionId = currentRecordLabel.data.collectionId
+        gridSouth.store.proxy.setUrl(`${STIGMAN.Env.apiBase}/collections/${currentRecordCenter.data.collectionId}/metrics/summary`)
         await gridSouth.store.loadPromise({
-          benchmarkId: currentRecordStig.data.benchmarkId
+          benchmarkId: currentRecordNorth.data.benchmarkId
         })
         gridSouth.loadMask.disabled = savedLoadMaskDisabled
+        gridSouth.setTitle(`Checklists for ${currentRecordNorth.data.benchmarkId} in ${currentRecordCenter.data.name}`)
+
       }
       catch (e) {
         console.log(e)
@@ -1806,151 +1837,6 @@ SM.MetaPanel.AggStigPanelX = Ext.extend(Ext.Panel, {
       cls: 'sm-metric-agg-panel',
       items: [
         aggStigGrid,
-        unaggGrid
-      ],
-      updateBaseParams,
-      updateData
-    }
-    Ext.apply(this, Ext.apply(this.initialConfig, config))
-    this.superclass().initComponent.call(this)
-  }
-})
-
-SM.MetaPanel.AggLabelPanel = Ext.extend(Ext.Panel, {
-  initComponent: function () {
-    const _this = this
-    const collectionId = this.collectionId
-    const aggLabelGrid = new SM.MetaPanel.AggGrid({
-      aggregation: 'label',
-      stateId: `sm-metrics-agg-grid-label-${collectionId}`,
-      stateful: true,
-      border: false,
-      collectionId,
-      reloadBtnHandler: this.reloadBtnHandler,
-      baseParams: this.baseParams,
-      exportName: 'Labels',
-      region: 'north',
-      split: true,
-      height: '33%',
-      initialized: false
-    })
-    const aggAssetGrid = new SM.MetaPanel.AggGrid({
-      title: 'Assets',
-      stateId: `sm-metrics-agg-grid-label-asset-${collectionId}`,
-      stateful: true,
-      border: false,
-      reloadBtnHandler: this.reloadBtnHandler,
-      aggregation: 'asset',
-      storeAutoLoad: false,
-      collectionId,
-      baseParams: this.baseParams,
-      exportName: 'Assets',
-      region: 'center'
-    })
-    const unaggGrid = new SM.MetaPanel.UnaggGrid({
-      title: 'Checklists',
-      stateId: `sm-metrics-unagg-grid-label-${collectionId}`,
-      stateful: true,
-      border: false,
-      parentAggregation: 'asset',
-      reloadBtnHandler: this.reloadBtnHandler,
-      collectionId,
-      region: 'south',
-      split: true,
-      height: '33%'
-    })
-    async function onRowSelectLabel(cm, index, record) {
-      const params = {}
-      if (record.data.labelId) {
-        params.labelId = record.data.labelId
-      }
-      else {
-        params.labelMatch = 'null'
-      }
-      await aggAssetGrid.store.loadPromise(params)
-      unaggGrid.store.removeAll()
-      aggAssetGrid.setTitle(`Assets for ${record.data.name}`)
-    }
-    async function onRowSelectAsset(cm, index, record) {
-      await unaggGrid.store.loadPromise({
-        assetId: record.data.assetId
-      })
-      unaggGrid.setTitle(`Checklists for ${record.data.name}`)
-    }
-
-    aggLabelGrid.getSelectionModel().on('rowselect', onRowSelectLabel)
-    aggAssetGrid.getSelectionModel().on('rowselect', onRowSelectAsset)
-    const updateBaseParams = function (params) {
-      unaggGrid.store.baseParams = aggLabelGrid.store.baseParams = aggAssetGrid.store.baseParams = _this.baseParams = params
-    }
-    const updateData = async function ({ refreshViewsOnly = false, loadMasksDisabled = false } = {}) {
-      try {
-        aggLabelGrid.initialized = true
-        const selectedRowLabel = aggLabelGrid.getSelectionModel().getSelected()
-        const selectedRowAsset = aggAssetGrid.getSelectionModel().getSelected()
-
-        if (refreshViewsOnly) {
-          aggLabelGrid.getView().refresh()
-          if (selectedRowLabel) {
-            aggAssetGrid.getView().refresh()
-            if (selectedRowAsset) {
-              unaggGrid.getView().refresh()
-            }
-          }
-          return
-        }
-
-        let savedLoadMaskDisabled = aggLabelGrid.loadMask.disabled
-        aggLabelGrid.loadMask.disabled = loadMasksDisabled
-        await aggLabelGrid.store.loadPromise()
-        aggLabelGrid.loadMask.disabled = savedLoadMaskDisabled
-
-        if (!selectedRowLabel) {
-          return
-        }
-
-        const currentRecordLabel = aggLabelGrid.store.getById(selectedRowLabel.data.labelId)
-        if (!currentRecordLabel) {
-          aggAssetGrid.setTitle('Assets')
-          aggAssetGrid.store.removeAll()
-          unaggGrid.setTitle('STIGs')
-          unaggGrid.store.removeAll()
-          return
-        }
-        const currentIndexLabel = aggLabelGrid.store.indexOfId(selectedRowLabel.data.labelId)
-        aggLabelGrid.view.focusRow(currentIndexLabel)
-        savedLoadMaskDisabled = aggAssetGrid.loadMask.disabled
-        aggAssetGrid.loadMask.disabled = loadMasksDisabled
-        await aggAssetGrid.store.loadPromise({
-          labelId: currentRecordLabel.data.labelId
-        })
-        aggAssetGrid.loadMask.disabled = savedLoadMaskDisabled
-        const currentRecordAsset = aggAssetGrid.store.getById(selectedRowAsset.data.assetId)
-        if (!currentRecordAsset) {
-          unaggGrid.setTitle('STIGs')
-          unaggGrid.store.removeAll()
-          return
-        }
-        const currentIndexAsset = aggAssetGrid.store.indexOfId(selectedRowAsset.data.assetId)
-        aggAssetGrid.view.focusRow(currentIndexAsset)
-        savedLoadMaskDisabled = unaggGrid.loadMask.disabled
-        unaggGrid.loadMask.disabled = loadMasksDisabled
-        await unaggGrid.store.loadPromise({
-          assetId: currentRecordAsset.data.assetId
-        })
-        unaggGrid.loadMask.disabled = savedLoadMaskDisabled
-      }
-      catch (e) {
-        console.log(e)
-      }
-    }
-
-    const config = {
-      layout: 'border',
-      cls: 'sm-metric-agg-panel',
-      items: [
-        aggLabelGrid,
-        aggAssetGrid,
         unaggGrid
       ],
       updateBaseParams,
