@@ -202,7 +202,8 @@ module.exports.queryMetaMetrics = async function ({
     ],
     predicates: {
       statements: [
-        '(cg.userId = ? AND CASE WHEN cg.accessLevel = 1 THEN usa.userId = cg.userId ELSE TRUE END)'
+        '(cg.userId = ? AND CASE WHEN cg.accessLevel = 1 THEN usa.userId = cg.userId ELSE TRUE END)',
+        'c.state = "enabled"'
       ],
       binds: [
         userId
