@@ -209,6 +209,16 @@ SM.MetaPanel.getRevisionId = function (benchmarkId, revisionStr) {
   return `${benchmarkId}-${version}-${release}`
 }
 
+SM.MetaPanel.renderWithToolbar = function (v) {
+  return `
+  <div class="sm-grid-cell-with-toolbar">
+    <div class="sm-dynamic-width">
+      <div class="sm-info">${v}</div>
+    </div>
+    <div class="sm-static-width"><img class="sm-grid-cell-toolbar-edit" ext:qtip="Open checklist" src="img/shield-green-check.svg" width="14" height="14"></div>
+  </div>`
+}
+
 SM.MetaPanel.AggGrid = Ext.extend(Ext.grid.GridPanel, {
   initComponent: function () {
     const _this = this
@@ -227,16 +237,6 @@ SM.MetaPanel.AggGrid = Ext.extend(Ext.grid.GridPanel, {
     let idProperty, sortField = 'name', autoExpandColumn = Ext.id()
     let rowdblclick = () => { }
     let cellmousedown = () => { }
-
-    function renderWithToolbar(v) {
-      return `
-      <div class="sm-grid-cell-with-toolbar">
-        <div class="sm-dynamic-width">
-          <div class="sm-info">${v}</div>
-        </div>
-        <div class="sm-static-width"><img class="sm-grid-cell-toolbar-edit" ext:qtip="Open checklist" src="img/shield-green-check.svg" width="14" height="14"></div>
-      </div>`
-    }
 
     const rowCountCfg = {
       noun: this.aggregation,
@@ -307,7 +307,15 @@ SM.MetaPanel.AggGrid = Ext.extend(Ext.grid.GridPanel, {
             id: autoExpandColumn,
             dataIndex: 'name',
             sortable: true,
-            filter: { type: 'string' }
+            renderer: this.hideReviewTool ? undefined : SM.MetaPanel.renderWithToolbar,
+            filter: { type: 'string' },
+            listeners: {
+              mousedown: function (col, grid, index, e) {
+                if (e.target.className === "sm-grid-cell-toolbar-edit") {
+                  return false
+                }
+              }
+            }
           },
           {
             header: "Assets",
@@ -316,64 +324,51 @@ SM.MetaPanel.AggGrid = Ext.extend(Ext.grid.GridPanel, {
             align: "center",
             tooltip: "Total Assets in the Collection",
             sortable: true
-          },
-          {
-            header: "STIGs",
-            width: 50,
-            dataIndex: 'stigs',
-            align: "center",
-            tooltip: "Total STIGs in the Collection",
-            sortable: true
-          },
-          {
-            header: "Checklists",
-            width: 50,
-            dataIndex: 'checklists',
-            align: "center",
-            tooltip: "Total Asset/STIG in the Collection",
-            sortable: true
           }
         )
-        idProperty = 'collectionId'
-        break
-      case 'label':
-        fields.push(
-          { name: 'labelId', type: 'string' },
-          { name: 'name', type: 'string' },
-          'assets'
-        )
-        columns.push(
-          {
-            header: "Label",
-            width: 175,
-            id: autoExpandColumn,
-            dataIndex: 'labelId',
-            sortable: true,
-            filter: {
-              type: 'values',
-              collectionId: _this.collectionId,
-              renderer: SM.ColumnFilters.Renderers.labels
+        if (this.region === 'north') {
+          columns.push(
+            {
+              header: "STIGs",
+              width: 50,
+              dataIndex: 'stigs',
+              align: "center",
+              tooltip: "Total STIGs in the Collection",
+              sortable: true
             },
-            renderer: function (value, metadata) {
-              const labels = []
-              const labelId = value
-              const label = SM.Cache.CollectionMap.get(_this.collectionId).labelMap.get(labelId)
-              if (label) labels.push(label)
-              labels.sort((a, b) => a.name.localeCompare(b.name))
-              metadata.attr = 'style="white-space:normal;"'
-              return SM.styledEmptyRenderer(SM.Collection.LabelArrayTpl.apply(labels))
-            }
-          },
-          {
-            header: "Assets",
-            width: 50,
-            dataIndex: 'assets',
-            align: "center",
-            tooltip: "Total Assets Assigned",
-            sortable: true
+            {
+              header: "Checklists",
+              width: 50,
+              dataIndex: 'checklists',
+              align: "center",
+              tooltip: "Total Asset/STIG in the Collection",
+              sortable: true
+            }  
+          )
+        }
+        idProperty = 'collectionId'
+        sortField = 'name'
+        rowdblclick = (grid, rowIndex) => {
+          const r = grid.getStore().getAt(rowIndex)
+          const leaf = {
+            collectionId: r.data.collectionId,
+            benchmarkId: grid.benchmarkId,
+            revisionStr: grid.revisionStr
           }
-        )
-        idProperty = 'labelId'
+          addCollectionReview({ leaf })
+        }
+        cellmousedown = (grid, rowIndex, columnIndex, e) => {
+          if (e.target.className === "sm-grid-cell-toolbar-edit") {
+            const r = grid.getStore().getAt(rowIndex)
+            const leaf = {
+              collectionId: r.data.collectionId,
+              benchmarkId: grid.benchmarkId,
+              revisionStr: grid.revisionStr
+            }
+            addCollectionReview({ leaf })
+          }
+        }
+
         break
       case 'stig':
         fields.push(
@@ -393,7 +388,7 @@ SM.MetaPanel.AggGrid = Ext.extend(Ext.grid.GridPanel, {
             id: autoExpandColumn,
             dataIndex: 'benchmarkId',
             sortable: true,
-            renderer: renderWithToolbar,
+            renderer: this.hideReviewTool ? undefined : SM.MetaPanel.renderWithToolbar,
             filter: { type: 'string' },
             listeners: {
               mousedown: function (col, grid, index, e) {
@@ -421,15 +416,21 @@ SM.MetaPanel.AggGrid = Ext.extend(Ext.grid.GridPanel, {
             renderer: function (v, md, r) {
               return `${r.data.revisionStr}${r.data.revisionPinned ? '<img src="img/pin.svg" width="12" height="12" style="margin-left: 8px;">' : ''}`
             }
-          },
-          {
-            header: "Collections",
-            width: 50,
-            dataIndex: 'collections',
-            align: "center",
-            tooltip: "Total Collections with this STIG assigned",
-            sortable: true
-          },
+          }
+        )
+        if (this.region === 'north') {
+          columns.push(
+            {
+              header: "Collections",
+              width: 50,
+              dataIndex: 'collections',
+              align: "center",
+              tooltip: "Total Collections with this STIG assigned",
+              sortable: true
+            }
+          )
+        } 
+        columns.push(
           {
             header: "Assets",
             width: 50,
@@ -564,16 +565,6 @@ SM.MetaPanel.UnaggGrid = Ext.extend(Ext.grid.GridPanel, {
     const columns = []
     let sortField, autoExpandColumn = Ext.id()
 
-    function renderWithToolbar(v) {
-      return `
-      <div class="sm-grid-cell-with-toolbar">
-        <div class="sm-dynamic-width">
-          <div class="sm-info">${v}</div>
-        </div>
-        <div class="sm-static-width"><img class="sm-grid-cell-toolbar-edit" ext:qtip="Open checklist" src="img/shield-green-check.svg" width="14" height="14"></div>
-      </div>`
-    }
-
     switch (this.parentAggregation) {
       case 'stig':
         columns.push(
@@ -584,7 +575,7 @@ SM.MetaPanel.UnaggGrid = Ext.extend(Ext.grid.GridPanel, {
             dataIndex: 'name',
             sortable: true,
             filter: { type: 'string' },
-            renderer: renderWithToolbar
+            renderer: SM.MetaPanel.renderWithToolbar
           },
           {
             header: "Labels",
@@ -619,7 +610,7 @@ SM.MetaPanel.UnaggGrid = Ext.extend(Ext.grid.GridPanel, {
             dataIndex: 'benchmarkId',
             sortable: true,
             filter: { type: 'string' },
-            renderer: renderWithToolbar
+            renderer: SM.MetaPanel.renderWithToolbar
           },
           {
             header: "Title",
@@ -1351,6 +1342,7 @@ SM.MetaPanel.AggCollectionPanel = Ext.extend(Ext.Panel, {
     const _this = this
     const gridNorth = new SM.MetaPanel.AggGrid({
       aggregation: 'collection',
+      hideReviewTool: true,
       // stateId: `sm-metrics-agg-grid-label-${collectionId}`,
       // stateful: true,
       border: false,
@@ -1495,109 +1487,13 @@ SM.MetaPanel.AggCollectionPanel = Ext.extend(Ext.Panel, {
   }
 })
 
-SM.MetaPanel.AggAssetPanel = Ext.extend(Ext.Panel, {
-  initComponent: function () {
-    const _this = this
-    const collectionId = this.collectionId
-    const aggAssetGrid = new SM.MetaPanel.AggGrid({
-      aggregation: 'asset',
-      stateId: `sm-metrics-agg-grid-asset-${collectionId}`,
-      stateful: true,
-      collectionId,
-      border: false,
-      region: 'center',
-      exportName: 'Assets',
-      baseParams: this.baseParams,
-      reloadBtnHandler: this.reloadBtnHandler,
-      initialized: false
-    })
-    const unaggGrid = new SM.MetaPanel.UnaggGrid({
-      title: 'Checklists',
-      stateId: `sm-metrics-unagg-grid-asset-${collectionId}`,
-      stateful: true,
-      parentAggregation: 'asset',
-      reloadBtnHandler: this.reloadBtnHandler,
-      collectionId,
-      border: false,
-      region: 'south',
-      split: true,
-      height: '33%'
-    })
-    async function onRowSelect(cm, index, record) {
-      await unaggGrid.store.loadPromise({
-        assetId: record.data.assetId
-      })
-      unaggGrid.setTitle(`Checklists for ${record.data.name}`)
-    }
-
-    aggAssetGrid.getSelectionModel().on('rowselect', onRowSelect)
-    const updateBaseParams = function (params) {
-      unaggGrid.store.baseParams = aggAssetGrid.store.baseParams = _this.baseParams = params
-    }
-    const updateData = async function ({ refreshViewsOnly = false, loadMasksDisabled = false } = {}) {
-      try {
-        aggAssetGrid.initialized = true
-        const selectedRow = aggAssetGrid.getSelectionModel().getSelected()
-
-        if (refreshViewsOnly) {
-          aggAssetGrid.getView().refresh()
-          if (selectedRow) {
-            unaggGrid.getView().refresh()
-          }
-          return
-        }
-        let savedLoadMaskDisabled = aggAssetGrid.loadMask.disabled
-        aggAssetGrid.loadMask.disabled = loadMasksDisabled
-        await aggAssetGrid.store.loadPromise()
-        aggAssetGrid.loadMask.disabled = savedLoadMaskDisabled
-
-        if (!selectedRow) {
-          return
-        }
-
-        const currentRecord = aggAssetGrid.store.getById(selectedRow.data.assetId)
-        if (!currentRecord) {
-          unaggGrid.setTitle('Checklists')
-          unaggGrid.store.removeAll()
-          return
-        }
-        const currentIndex = aggAssetGrid.store.indexOfId(selectedRow.data.assetId)
-        aggAssetGrid.view.focusRow(currentIndex)
-
-        savedLoadMaskDisabled = unaggGrid.loadMask.disabled
-        unaggGrid.loadMask.disabled = loadMasksDisabled
-        await unaggGrid.store.loadPromise({
-          assetId: currentRecord.data.assetId
-        })
-        unaggGrid.loadMask.disabled = savedLoadMaskDisabled
-
-      }
-      catch (e) {
-        console.log(e)
-      }
-    }
-
-    const config = {
-      layout: 'border',
-      cls: 'sm-metric-agg-panel',
-      items: [
-        aggAssetGrid,
-        unaggGrid
-      ],
-      updateBaseParams,
-      updateData
-    }
-    Ext.apply(this, Ext.apply(this.initialConfig, config))
-    this.superclass().initComponent.call(this)
-  }
-})
-
 SM.MetaPanel.AggStigPanel = Ext.extend(Ext.Panel, {
   initComponent: function () {
     const _this = this
     const collectionId = this.collectionId
     const gridNorth = new SM.MetaPanel.AggGrid({
       aggregation: 'stig',
+      hideReviewTool: true,
       // stateId: `sm-metrics-agg-grid-label-${collectionId}`,
       // stateful: true,
       border: false,
@@ -1637,6 +1533,8 @@ SM.MetaPanel.AggStigPanel = Ext.extend(Ext.Panel, {
     })
     async function onRowSelectNorth(cm, index, record) {
       gridCenter.store.proxy.setUrl(`${STIGMAN.Env.apiBase}/collections/meta/metrics/summary/collection`)
+      gridCenter.benchmarkId = record.data.benchmarkId
+      gridCenter.revisionStr = record.data.revisionStr
       await gridCenter.store.loadPromise({
         revisionId: SM.MetaPanel.getRevisionId(record.data.benchmarkId, record.data.revisionStr)
       })
@@ -1657,7 +1555,7 @@ SM.MetaPanel.AggStigPanel = Ext.extend(Ext.Panel, {
     gridNorth.getSelectionModel().on('rowselect', onRowSelectNorth)
     gridCenter.getSelectionModel().on('rowselect', onRowSelectCenter)
     const updateBaseParams = function (params) {
-      gridSouth.store.baseParams = gridNorth.store.baseParams = gridCenter.store.baseParams = _this.baseParams = params
+      gridNorth.store.baseParams = _this.baseParams = params
     }
     const updateData = async function ({ refreshViewsOnly = false, loadMasksDisabled = false, includeGridNorth = true } = {}) {
       try {
@@ -1737,107 +1635,6 @@ SM.MetaPanel.AggStigPanel = Ext.extend(Ext.Panel, {
         gridNorth,
         gridCenter,
         gridSouth
-      ],
-      updateBaseParams,
-      updateData
-    }
-    Ext.apply(this, Ext.apply(this.initialConfig, config))
-    this.superclass().initComponent.call(this)
-  }
-})
-
-SM.MetaPanel.AggStigPanelX = Ext.extend(Ext.Panel, {
-  initComponent: function () {
-    const _this = this
-    const collectionId = this.collectionId
-
-    const aggStigGrid = new SM.MetaPanel.AggGrid({
-      aggregation: 'stig',
-      stateId: `sm-collection-${collectionId}-agg-grid-stig`,
-      stateful: true,
-      border: false,
-      checkboxSelModel: false,
-      collectionId,
-      baseParams: this.baseParams,
-      reloadBtnHandler: this.reloadBtnHandler,
-      exportName: 'STIGs',
-      region: 'center',
-      initialized: false
-    })
-
-    const unaggGrid = new SM.MetaPanel.UnaggGrid({
-      title: 'Checklists',
-      stateId: `sm-collection-${collectionId}-unagg-grid-stig`,
-      stateful: true,
-      border: false,
-      parentAggregation: 'stig',
-      collectionId,
-      reloadBtnHandler: this.reloadBtnHandler,
-      region: 'south',
-      split: true,
-      height: '66%'
-    })
-    async function onRowSelect(cm, index, record) {
-      const params = {
-        benchmarkId: record.data.benchmarkId
-      }
-      await unaggGrid.store.loadPromise(params)
-      unaggGrid.setTitle(`Checklists for ${record.data.benchmarkId}`)
-    }
-
-    aggStigGrid.getSelectionModel().on('rowselect', onRowSelect)
-
-    const updateBaseParams = function (params) {
-      unaggGrid.store.baseParams = aggStigGrid.store.baseParams = _this.baseParams = params
-    }
-    const updateData = async function ({ refreshViewsOnly = false, loadMasksDisabled = false } = {}) {
-      try {
-        aggStigGrid.initialized = true
-        const selectedRow = aggStigGrid.getSelectionModel().getSelected()
-
-        if (refreshViewsOnly) {
-          aggStigGrid.getView().refresh()
-          if (selectedRow) {
-            unaggGrid.getView().refresh()
-          }
-          return
-        }
-        let savedLoadMaskDisabled = aggStigGrid.loadMask.disabled
-        aggStigGrid.loadMask.disabled = loadMasksDisabled
-        await aggStigGrid.store.loadPromise()
-        aggStigGrid.loadMask.disabled = savedLoadMaskDisabled
-        if (!selectedRow) {
-          return
-        }
-
-
-        const currentRecord = aggStigGrid.store.getById(selectedRow.data.benchmarkId)
-        if (!currentRecord) {
-          unaggGrid.setTitle('Checklists')
-          unaggGrid.store.removeAll()
-          return
-        }
-        const currentIndex = aggStigGrid.store.indexOfId(selectedRow.data.benchmarkId)
-        aggStigGrid.view.focusRow(currentIndex)
-
-        savedLoadMaskDisabled = unaggGrid.loadMask.disabled
-        unaggGrid.loadMask.disabled = loadMasksDisabled
-        await unaggGrid.store.loadPromise({
-          benchmarkId: currentRecord.data.benchmarkId
-        })
-        unaggGrid.loadMask.disabled = savedLoadMaskDisabled
-      }
-      catch (e) {
-        console.log(e)
-      }
-    }
-
-    const config = {
-      layout: 'border',
-      cls: 'sm-metric-agg-panel',
-      items: [
-        aggStigGrid,
-        unaggGrid
       ],
       updateBaseParams,
       updateData
@@ -2034,7 +1831,7 @@ SM.MetaPanel.showMetaTab = async function (options) {
     function updateOverviewTitle() {
       const overviewTitle = overviewTitleTpl.apply({
         // collections: SM.Collection.LabelSpritesByCollectionLabelId(collectionId, gState.collectionIds)
-        collections: `Showing ${gState.collectionIds.length ? gState.collectionIds.length : gState.filterableCollections.length} of ${gState.filterableCollections.length} <span class="sm-navtree-sprite">experimental</span>`
+        collections: `${gState.collectionIds.length ? gState.collectionIds.length : gState.filterableCollections.length} of ${gState.filterableCollections.length} <span class="sm-navtree-sprite">experimental</span>`
       })
       overviewPanel.setTitle(overviewTitle)
     }
@@ -2143,6 +1940,8 @@ SM.MetaPanel.CollectionsMenu = Ext.extend(Ext.menu.Menu, {
       items: [],
       listeners: {
         itemclick: this.onItemClick,
+        hide: this.onMenuHide,
+        show: this.onMenuShow
       }
     }
     Ext.apply(this, Ext.apply(this.initialConfig, config))
@@ -2154,11 +1953,30 @@ SM.MetaPanel.CollectionsMenu = Ext.extend(Ext.menu.Menu, {
   },
   onItemClick: function (item, e) {
     if (item.hideOnClick) { // only the Apply item
-      const ids = this.getCheckedIds()
-      this.fireEvent('applied', ids)
+      this.isApplied = true
+      this.fireEvent('applied', this.getCheckedCollectionIds())
     }
   },
-  getCheckedIds: function () {
+  onMenuHide: function (menu) {
+    if (menu.isApplied) {
+      menu.isApplied = false
+      return
+    }
+    // if selections were not applied, reset items to their checked state when the menu was shown
+    for (const item of this.items.items) {
+      if (item.xtype === 'menucheckitem') item.setChecked(!!menu.lastCheckedStatesObject[item.collectionId], true)
+    }
+  },
+  onMenuShow: function (menu) {
+    menu.lastCheckedStatesObject = menu.getCheckedStatesObject()
+  },
+  getCheckedStatesObject: function () {
+    return this.items.items.reduce( (agg, item) => {
+      if (item.collectionId) agg[item.collectionId] = item.checked
+      return agg
+    }, {} )
+  },
+  getCheckedCollectionIds: function () {
     const checked = this.items.items.reduce(function (ids, item) {
       if (item.checked) {
         ids.push(item.collectionId)
@@ -2191,7 +2009,6 @@ SM.MetaPanel.CollectionsMenu = Ext.extend(Ext.menu.Menu, {
       cls: 'sm-menuitem-filter-collection'
     }
   },
-
   getActionItemConfig: function (text = '<b>Apply</b>') {
     return {
       xtype: 'menuitem',
@@ -2234,7 +2051,7 @@ SM.MetaPanel.CollectionsMenu = Ext.extend(Ext.menu.Menu, {
     return a.name.localeCompare(b.name)
   },
   refreshItems: function (collections) {
-    const collectionIdSet = new Set(this.getCheckedIds())
+    const collectionIdSet = new Set(this.getCheckedCollectionIds())
     this.removeAll()
     if (this.showHeader) {
       this.addItem(this.getTextItemConfig())
