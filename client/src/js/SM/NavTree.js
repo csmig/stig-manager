@@ -15,7 +15,7 @@ SM.NavTree.CollectionLeafConfig = function (collection) {
   const collectionGrant = curUser.collectionGrants.find( g => g.collection.collectionId === collection.collectionId )
   let toolsEl = ''
   if (collectionGrant && collectionGrant.accessLevel >= 3) {
-    toolsEl = '<img class="sm-tree-toolbar" src="img/gear.svg" width="12" height="12">'
+    toolsEl = '<img class="sm-tree-toolbar" src="img/gear.svg" width="12" height="12" ext:qtip="Manage Collection">'
   }
   return {
     id: `${collection.collectionId}-collection-leaf`,
@@ -274,7 +274,7 @@ SM.NavTree.TreePanel = Ext.extend(Ext.tree.TreePanel, {
               {
                 id: `collections-root`,
                 node: 'collections',
-                text: 'Collections<img class="sm-tree-toolbar" src="img/grid.svg" width="12" height="12">',
+                text: 'Collections<img class="sm-tree-toolbar" src="img/grid.svg" width="12" height="12" ext:qtip="Meta Dashboard">',
                 iconCls: 'sm-collection-icon',
                 expanded: true,
                 listeners: {

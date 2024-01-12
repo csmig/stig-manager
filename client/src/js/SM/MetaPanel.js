@@ -114,13 +114,16 @@ SM.MetaPanel.CommonFields = [
   }
 ]
 
+const numberFormater = new Intl.NumberFormat().format
+
 SM.MetaPanel.CommonColumns = [
   {
     header: "Checks",
     width: 50,
     dataIndex: 'assessments',
     align: "center",
-    sortable: true
+    sortable: true,
+    renderer: numberFormater
   },
   {
     header: 'Oldest',
@@ -209,13 +212,23 @@ SM.MetaPanel.getRevisionId = function (benchmarkId, revisionStr) {
   return `${benchmarkId}-${version}-${release}`
 }
 
-SM.MetaPanel.renderWithToolbar = function (v) {
+SM.MetaPanel.renderWithReviewTool = function (v) {
   return `
   <div class="sm-grid-cell-with-toolbar">
     <div class="sm-dynamic-width">
       <div class="sm-info">${v}</div>
     </div>
     <div class="sm-static-width"><img class="sm-grid-cell-toolbar-edit" ext:qtip="Open checklist" src="img/shield-green-check.svg" width="14" height="14"></div>
+  </div>`
+}
+
+SM.MetaPanel.renderWithDashboardTool = function (v) {
+  return `
+  <div class="sm-grid-cell-with-toolbar">
+    <div class="sm-dynamic-width">
+      <div class="sm-info">${v}</div>
+    </div>
+    <div class="sm-static-width"><img class="sm-grid-cell-toolbar-edit" ext:qtip="Open dashboard" src="img/grid.svg" width="14" height="14"></div>
   </div>`
 }
 
@@ -307,7 +320,7 @@ SM.MetaPanel.AggGrid = Ext.extend(Ext.grid.GridPanel, {
             id: autoExpandColumn,
             dataIndex: 'name',
             sortable: true,
-            renderer: this.hideReviewTool ? undefined : SM.MetaPanel.renderWithToolbar,
+            renderer: this.hideReviewTool ? SM.MetaPanel.renderWithDashboardTool : SM.MetaPanel.renderWithReviewTool,
             filter: { type: 'string' },
             listeners: {
               mousedown: function (col, grid, index, e) {
@@ -323,7 +336,8 @@ SM.MetaPanel.AggGrid = Ext.extend(Ext.grid.GridPanel, {
             dataIndex: 'assets',
             align: "center",
             tooltip: "Total Assets in the Collection",
-            sortable: true
+            sortable: true,
+            renderer: numberFormater
           }
         )
         if (this.region === 'north') {
@@ -342,7 +356,8 @@ SM.MetaPanel.AggGrid = Ext.extend(Ext.grid.GridPanel, {
               dataIndex: 'checklists',
               align: "center",
               tooltip: "Total Asset/STIG in the Collection",
-              sortable: true
+              sortable: true,
+              renderer: numberFormater
             }  
           )
         }
@@ -360,12 +375,21 @@ SM.MetaPanel.AggGrid = Ext.extend(Ext.grid.GridPanel, {
         cellmousedown = (grid, rowIndex, columnIndex, e) => {
           if (e.target.className === "sm-grid-cell-toolbar-edit") {
             const r = grid.getStore().getAt(rowIndex)
-            const leaf = {
-              collectionId: r.data.collectionId,
-              benchmarkId: grid.benchmarkId,
-              revisionStr: grid.revisionStr
+            if (e.target.src.endsWith('img/grid.svg')) {
+              SM.CollectionPanel.showCollectionTab({
+                collectionId: r.data.collectionId,
+                collectionName: r.data.name,
+
+              })
             }
-            addCollectionReview({ leaf })
+            else {
+              const leaf = {
+                collectionId: r.data.collectionId,
+                benchmarkId: grid.benchmarkId,
+                revisionStr: grid.revisionStr
+              }
+              addCollectionReview({ leaf }) 
+            }
           }
         }
 
@@ -388,7 +412,7 @@ SM.MetaPanel.AggGrid = Ext.extend(Ext.grid.GridPanel, {
             id: autoExpandColumn,
             dataIndex: 'benchmarkId',
             sortable: true,
-            renderer: this.hideReviewTool ? undefined : SM.MetaPanel.renderWithToolbar,
+            renderer: this.hideReviewTool ? undefined : SM.MetaPanel.renderWithReviewTool,
             filter: { type: 'string' },
             listeners: {
               mousedown: function (col, grid, index, e) {
@@ -437,7 +461,8 @@ SM.MetaPanel.AggGrid = Ext.extend(Ext.grid.GridPanel, {
             dataIndex: 'assets',
             align: "center",
             tooltip: "Total Assets with this STIG assigned",
-            sortable: true
+            sortable: true,
+            renderer: numberFormater
           }
         )
         sortField = 'benchmarkId'
@@ -575,7 +600,7 @@ SM.MetaPanel.UnaggGrid = Ext.extend(Ext.grid.GridPanel, {
             dataIndex: 'name',
             sortable: true,
             filter: { type: 'string' },
-            renderer: SM.MetaPanel.renderWithToolbar
+            renderer: SM.MetaPanel.renderWithReviewTool
           },
           {
             header: "Labels",
@@ -610,7 +635,7 @@ SM.MetaPanel.UnaggGrid = Ext.extend(Ext.grid.GridPanel, {
             dataIndex: 'benchmarkId',
             sortable: true,
             filter: { type: 'string' },
-            renderer: SM.MetaPanel.renderWithToolbar
+            renderer: SM.MetaPanel.renderWithReviewTool
           },
           {
             header: "Title",
@@ -889,6 +914,8 @@ SM.MetaPanel.ProgressPanel = Ext.extend(Ext.Panel, {
     }
     SM.Dispatcher.addListener('themechanged', onThemeChanged)
 
+    // const intlNumberFormat = new Intl.NumberFormat()
+
     const updateMetrics = function (metrics) {
       const metricCalcs = calcMetrics(metrics)
       dataPanel.update(metricCalcs)
@@ -909,12 +936,12 @@ SM.MetaPanel.ProgressPanel = Ext.extend(Ext.Panel, {
       `<div class="sm-metrics-status-pct">{[this.calcAssessedPct(values.apiAssessed, values.assessments)]}% assessed</div>`,
       '<table class="sm-metrics-status-table" style="margin: 0 auto;">',
       '<tbody>',
-      '<tr><td class="sm-metrics-label sm-metrics-unassessed">Unassessed</td><td class="sm-metrics-value">{unassessed}</td></tr>',
-      '<tr><td class="sm-metrics-label sm-metrics-assessed">Assessed</td><td class="sm-metrics-value">{assessed}</td></tr>',
-      '<tr><td class="sm-metrics-label sm-metrics-submitted">Submitted</td><td class="sm-metrics-value">{submitted}</td></tr>',
-      '<tr><td class="sm-metrics-label sm-metrics-accepted">Accepted</td><td class="sm-metrics-value">{accepted}</td></tr>',
-      '<tr><td class="sm-metrics-label sm-metrics-rejected">Rejected</td><td class="sm-metrics-value">{rejected}</td></tr>',
-      '<tr class="sm-metrics-total"><td>Total Checks</td><td class="sm-metrics-value">{assessments}</td></tr>',
+      '<tr><td class="sm-metrics-label sm-metrics-unassessed">Unassessed</td><td class="sm-metrics-value">{[this.intlNumberFormat(values.unassessed)]}</td></tr>',
+      '<tr><td class="sm-metrics-label sm-metrics-assessed">Assessed</td><td class="sm-metrics-value">{[this.intlNumberFormat(values.assessed)]}</td></tr>',
+      '<tr><td class="sm-metrics-label sm-metrics-submitted">Submitted</td><td class="sm-metrics-value">{[this.intlNumberFormat(values.submitted)]}</td></tr>',
+      '<tr><td class="sm-metrics-label sm-metrics-accepted">Accepted</td><td class="sm-metrics-value">{[this.intlNumberFormat(values.accepted)]}</td></tr>',
+      '<tr><td class="sm-metrics-label sm-metrics-rejected">Rejected</td><td class="sm-metrics-value">{[this.intlNumberFormat(values.rejected)]}</td></tr>',
+      '<tr class="sm-metrics-total"><td>Total Checks</td><td class="sm-metrics-value">{[this.intlNumberFormat(values.assessments)]}</td></tr>',
       '</tbody>',
       '</table>',
       {
@@ -926,14 +953,15 @@ SM.MetaPanel.ProgressPanel = Ext.extend(Ext.Panel, {
           else {
             return pct.toFixed(0).toString()
           }
-        }
+        },
+        intlNumberFormat: new Intl.NumberFormat().format
       }
     )
 
     const dataPanel = new Ext.Panel({
       border: false,
       tpl: dataTpl,
-      width: 150
+      width: 175
     })
     const progressBarsPanel = new SM.MetaPanel.ProgressBarsPanel({
       border: false,
@@ -1763,12 +1791,12 @@ SM.MetaPanel.showMetaTab = async function (options) {
       border: false,
       region: 'center',
       iconCls: 'sm-collection-icon',
-      title: "Meta dashboard",
+      title: "Meta Dashboard",
       closable: true,
       layout: 'border',
       sm_treePath: treePath,
       updateTitle: function () {
-        this.setTitle("Meta dashboard")
+        this.setTitle("Meta Dashboard")
       },
       items: [
         overviewPanel,
@@ -1830,8 +1858,7 @@ SM.MetaPanel.showMetaTab = async function (options) {
 
     function updateOverviewTitle() {
       const overviewTitle = overviewTitleTpl.apply({
-        // collections: SM.Collection.LabelSpritesByCollectionLabelId(collectionId, gState.collectionIds)
-        collections: `${gState.collectionIds.length ? gState.collectionIds.length : gState.filterableCollections.length} of ${gState.filterableCollections.length} <span class="sm-navtree-sprite">experimental</span>`
+        collections: `${gState.collectionIds.length ? gState.collectionIds.length : gState.filterableCollections.length} of ${gState.filterableCollections.length}` //<span class="sm-navtree-sprite">experimental</span>
       })
       overviewPanel.setTitle(overviewTitle)
     }
@@ -1963,8 +1990,10 @@ SM.MetaPanel.CollectionsMenu = Ext.extend(Ext.menu.Menu, {
       return
     }
     // if selections were not applied, reset items to their checked state when the menu was shown
-    for (const item of this.items.items) {
-      if (item.xtype === 'menucheckitem') item.setChecked(!!menu.lastCheckedStatesObject[item.collectionId], true)
+    if (menu.lastCheckedStatesObject) {
+      for (const item of this.items.items) {
+        if (item.xtype === 'menucheckitem') item.setChecked(!!menu.lastCheckedStatesObject[item.collectionId], true)
+      }
     }
   },
   onMenuShow: function (menu) {
