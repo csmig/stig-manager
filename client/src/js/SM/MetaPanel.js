@@ -114,7 +114,7 @@ SM.MetaPanel.CommonFields = [
   }
 ]
 
-const numberFormater = new Intl.NumberFormat().format
+SM.MetaPanel.numberRenderer = new Intl.NumberFormat().format
 
 SM.MetaPanel.CommonColumns = [
   {
@@ -123,7 +123,7 @@ SM.MetaPanel.CommonColumns = [
     dataIndex: 'assessments',
     align: "center",
     sortable: true,
-    renderer: numberFormater
+    renderer: SM.MetaPanel.numberRenderer
   },
   {
     header: 'Oldest',
@@ -212,24 +212,28 @@ SM.MetaPanel.getRevisionId = function (benchmarkId, revisionStr) {
   return `${benchmarkId}-${version}-${release}`
 }
 
-SM.MetaPanel.renderWithReviewTool = function (v) {
-  return `
-  <div class="sm-grid-cell-with-toolbar">
-    <div class="sm-dynamic-width">
-      <div class="sm-info">${v}</div>
-    </div>
-    <div class="sm-static-width"><img class="sm-grid-cell-toolbar-edit" ext:qtip="Open checklist" src="img/shield-green-check.svg" width="14" height="14"></div>
-  </div>`
-}
-
-SM.MetaPanel.renderWithDashboardTool = function (v) {
-  return `
-  <div class="sm-grid-cell-with-toolbar">
-    <div class="sm-dynamic-width">
-      <div class="sm-info">${v}</div>
-    </div>
-    <div class="sm-static-width"><img class="sm-grid-cell-toolbar-edit" ext:qtip="Open dashboard" src="img/grid.svg" width="14" height="14"></div>
-  </div>`
+SM.MetaPanel.renderWithToolFactory = function (action) {
+  let imgSrc, tipTarget
+  switch (action) {
+    case 'dashboard':
+      imgSrc = "img/collection-color.svg"
+      tipTarget = 'dashboard'
+      break
+    case 'checklist':
+    default:
+      imgSrc = "img/shield-green-check.svg"
+      tipTarget = 'checklist'
+      break
+  }
+  return function (v) {
+    return `
+    <div class="sm-grid-cell-with-toolbar">
+      <div class="sm-dynamic-width">
+        <div class="sm-info">${v}</div>
+      </div>
+      <div class="sm-static-width"><img class="sm-grid-cell-toolbar-edit" sm:action="${action}" ext:qtip="Open ${tipTarget}" src="${imgSrc}" width="13" height="13"></div>
+    </div>`
+  }
 }
 
 SM.MetaPanel.AggGrid = Ext.extend(Ext.grid.GridPanel, {
@@ -320,7 +324,7 @@ SM.MetaPanel.AggGrid = Ext.extend(Ext.grid.GridPanel, {
             id: autoExpandColumn,
             dataIndex: 'name',
             sortable: true,
-            renderer: this.hideReviewTool ? SM.MetaPanel.renderWithDashboardTool : SM.MetaPanel.renderWithReviewTool,
+            renderer: SM.MetaPanel.renderWithToolFactory(this.hideReviewTool ? 'dashboard' : 'checklist'),
             filter: { type: 'string' },
             listeners: {
               mousedown: function (col, grid, index, e) {
@@ -337,7 +341,7 @@ SM.MetaPanel.AggGrid = Ext.extend(Ext.grid.GridPanel, {
             align: "center",
             tooltip: "Total Assets in the Collection",
             sortable: true,
-            renderer: numberFormater
+            renderer: SM.MetaPanel.numberRenderer
           }
         )
         if (this.region === 'north') {
@@ -357,7 +361,7 @@ SM.MetaPanel.AggGrid = Ext.extend(Ext.grid.GridPanel, {
               align: "center",
               tooltip: "Total Asset/STIG in the Collection",
               sortable: true,
-              renderer: numberFormater
+              renderer: SM.MetaPanel.numberRenderer
             }  
           )
         }
@@ -375,7 +379,8 @@ SM.MetaPanel.AggGrid = Ext.extend(Ext.grid.GridPanel, {
         cellmousedown = (grid, rowIndex, columnIndex, e) => {
           if (e.target.className === "sm-grid-cell-toolbar-edit") {
             const r = grid.getStore().getAt(rowIndex)
-            if (e.target.src.endsWith('img/grid.svg')) {
+            const action = e.target.getAttribute('sm:action')
+            if (action === 'dashboard') {
               SM.CollectionPanel.showCollectionTab({
                 collectionId: r.data.collectionId,
                 collectionName: r.data.name,
@@ -412,7 +417,7 @@ SM.MetaPanel.AggGrid = Ext.extend(Ext.grid.GridPanel, {
             id: autoExpandColumn,
             dataIndex: 'benchmarkId',
             sortable: true,
-            renderer: this.hideReviewTool ? undefined : SM.MetaPanel.renderWithReviewTool,
+            renderer: this.hideReviewTool ? undefined : SM.MetaPanel.renderWithToolFactory('checklist'),
             filter: { type: 'string' },
             listeners: {
               mousedown: function (col, grid, index, e) {
@@ -462,7 +467,7 @@ SM.MetaPanel.AggGrid = Ext.extend(Ext.grid.GridPanel, {
             align: "center",
             tooltip: "Total Assets with this STIG assigned",
             sortable: true,
-            renderer: numberFormater
+            renderer: SM.MetaPanel.numberRenderer
           }
         )
         sortField = 'benchmarkId'
@@ -600,7 +605,7 @@ SM.MetaPanel.UnaggGrid = Ext.extend(Ext.grid.GridPanel, {
             dataIndex: 'name',
             sortable: true,
             filter: { type: 'string' },
-            renderer: SM.MetaPanel.renderWithReviewTool
+            renderer: SM.MetaPanel.renderWithToolFactory('checklist')
           },
           {
             header: "Labels",
@@ -635,7 +640,7 @@ SM.MetaPanel.UnaggGrid = Ext.extend(Ext.grid.GridPanel, {
             dataIndex: 'benchmarkId',
             sortable: true,
             filter: { type: 'string' },
-            renderer: SM.MetaPanel.renderWithReviewTool
+            renderer: SM.MetaPanel.renderWithToolFactory('checklist')
           },
           {
             header: "Title",
@@ -954,7 +959,7 @@ SM.MetaPanel.ProgressPanel = Ext.extend(Ext.Panel, {
             return pct.toFixed(0).toString()
           }
         },
-        intlNumberFormat: new Intl.NumberFormat().format
+        intlNumberFormat: SM.MetaPanel.numberRenderer
       }
     )
 
@@ -1044,13 +1049,13 @@ SM.MetaPanel.FindingsPanel = Ext.extend(Ext.Panel, {
     const tpl = new Ext.XTemplate(
       '<div class="sm-metrics-count-parent">',
       '<div class="sm-metrics-count-child sm-metrics-low-box">',
-      `<div class="sm-metrics-count-label">CAT 3</div><div class="sm-metrics-count-value">{[values.low]}</div>`,
+      `<div class="sm-metrics-count-label">CAT 3</div><div class="sm-metrics-count-value">{[SM.MetaPanel.numberRenderer(values.low)]}</div>`,
       '</div>',
       '<div class="sm-metrics-count-child sm-metrics-medium-box" >',
-      `<div class="sm-metrics-count-label">CAT 2</div><div class="sm-metrics-count-value">{[values.medium]}</div>`,
+      `<div class="sm-metrics-count-label">CAT 2</div><div class="sm-metrics-count-value">{[SM.MetaPanel.numberRenderer(values.medium)]}</div>`,
       '</div>',
       '<div class="sm-metrics-count-child sm-metrics-high-box" >',
-      `<div class="sm-metrics-count-label">CAT 1</div><div class="sm-metrics-count-value">{[values.high]}</div>`,
+      `<div class="sm-metrics-count-label">CAT 1</div><div class="sm-metrics-count-value">{[SM.MetaPanel.numberRenderer(values.high)]}</div>`,
       '</div>',
       '</div>'
     )
@@ -1215,13 +1220,13 @@ SM.MetaPanel.InventoryPanel = Ext.extend(Ext.Panel, {
     const tpl = new Ext.XTemplate(
       '<div class="sm-metrics-count-parent">',
       '<div class="sm-metrics-count-child sm-metrics-inventory-box" >',
-      `<div class="sm-metrics-count-label">Assets</div><div class="sm-metrics-count-value">{assets}</div>`,
+      `<div class="sm-metrics-count-label">Assets</div><div class="sm-metrics-count-value">{[SM.MetaPanel.numberRenderer(values.assets)]}</div>`,
       '</div>',
       '<div class="sm-metrics-count-child sm-metrics-inventory-box">',
-      `<div class="sm-metrics-count-label">STIGs</div><div class="sm-metrics-count-value">{stigs}</div>`,
+      `<div class="sm-metrics-count-label">STIGs</div><div class="sm-metrics-count-value">{[SM.MetaPanel.numberRenderer(values.stigs)]}</div>`,
       '</div>',
       '<div class="sm-metrics-count-child sm-metrics-inventory-box">',
-      `<div class="sm-metrics-count-label">Checklists</div><div class="sm-metrics-count-value">{checklists}</div>`,
+      `<div class="sm-metrics-count-label">Checklists</div><div class="sm-metrics-count-value">{[SM.MetaPanel.numberRenderer(values.checklists)]}</div>`,
       '</div>',
       '</div>'
     )
@@ -1790,7 +1795,7 @@ SM.MetaPanel.showMetaTab = async function (options) {
       sm_unshown: true,
       border: false,
       region: 'center',
-      iconCls: 'sm-collection-icon',
+      iconCls: 'sm-report-icon',
       title: "Meta Dashboard",
       closable: true,
       layout: 'border',
