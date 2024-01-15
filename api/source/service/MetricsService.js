@@ -263,7 +263,7 @@ module.exports.queryMetaMetrics = async function ({
       break
     case 'metaStig':
       predicates.statements.push('sa.benchmarkId IS NOT NULL')
-      groupBy.push('rev.revId', 'dr.revisionPinned')
+      groupBy.push('rev.revId')
       orderBy.push('rev.benchmarkId')
       break
   }
@@ -599,7 +599,6 @@ const baseCols = {
     'rev.benchmarkId',
     'stig.title',
     'rev.revisionStr',
-    'CASE WHEN dr.revisionPinned = 1 THEN CAST(true as json) ELSE CAST(false as json) END as revisionPinned',
     'count(distinct granted.collectionId) as collections',
     'count(distinct a.assetId) as assets',
     'rev.ruleCount'
@@ -649,7 +648,6 @@ const baseColsFlat = {
     'rev.benchmarkId',
     'stig.title',
     'rev.revisionStr',
-    'CASE WHEN dr.revisionPinned = 1 THEN CAST(true as json) ELSE CAST(false as json) END as revisionPinned',
     'count(distinct granted.collectionId) as collections',
     'count(distinct a.assetId) as assets',
     'rev.ruleCount'

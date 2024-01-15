@@ -1076,6 +1076,7 @@ SM.MetaPanel.ExportPanel = Ext.extend(Ext.Panel, {
   initComponent: function () {
     const _this = this
     const collectionId = this.collectionId
+    const localStorageBase = 'metaExport'
 
     const formatComboBox = new Ext.form.ComboBox({
       mode: 'local',
@@ -1093,12 +1094,12 @@ SM.MetaPanel.ExportPanel = Ext.extend(Ext.Panel, {
       }),
       valueField: 'valueStr',
       displayField: 'displayStr',
-      value: localStorage.getItem('metricsExportFormat') || 'json',
+      value: localStorage.getItem(`${localStorageBase}Format`) || 'json',
       monitorValid: false,
       triggerAction: 'all',
       listeners: {
         select: function (combo, record, index) {
-          localStorage.setItem('metricsExportFormat', combo.getValue())
+          localStorage.setItem(`${localStorageBase}Format`, combo.getValue())
         }
       }
     })
@@ -1118,12 +1119,12 @@ SM.MetaPanel.ExportPanel = Ext.extend(Ext.Panel, {
       }),
       valueField: 'valueStr',
       displayField: 'displayStr',
-      value: localStorage.getItem('metricsExportStyle') || 'summary',
+      value: localStorage.getItem(`${localStorageBase}Style`) || 'summary',
       monitorValid: false,
       triggerAction: 'all',
       listeners: {
         select: function (combo, record, index) {
-          localStorage.setItem('metricsExportStyle', combo.getValue())
+          localStorage.setItem(`${localStorageBase}Style`, combo.getValue())
         }
       }
     })
@@ -1138,20 +1139,18 @@ SM.MetaPanel.ExportPanel = Ext.extend(Ext.Panel, {
         fields: ['displayStr', 'valueStr'],
         data: [
           ['Collection', 'collection'],
-          ['Asset', 'asset'],
-          ['Label', 'label'],
           ['STIG', 'stig'],
-          ['Ungrouped', 'unagg']
+          ['Totals', 'unagg']
         ]
       }),
       valueField: 'valueStr',
       displayField: 'displayStr',
-      value: localStorage.getItem('metricsExportAgg') || 'collection',
+      value: localStorage.getItem(`${localStorageBase}Agg`) || 'collection',
       monitorValid: false,
       triggerAction: 'all',
       listeners: {
         select: function (combo, record, index) {
-          localStorage.setItem('metricsExportAgg', combo.getValue())
+          localStorage.setItem(`${localStorageBase}Agg`, combo.getValue())
         }
       }
     })
@@ -1172,7 +1171,7 @@ SM.MetaPanel.ExportPanel = Ext.extend(Ext.Panel, {
 
         const style = styleComboBox.getValue()
         const agg = aggComboBox.getValue()
-        const url = `${STIGMAN.Env.apiBase}/collections/${collectionId}/metrics/${style}${agg === 'unagg' ? '' : `/${agg}`}?${queryParamsStr}`
+        const url = `${STIGMAN.Env.apiBase}/collections/meta/metrics/${style}${agg === 'unagg' ? '' : `/${agg}`}?${queryParamsStr}`
 
         const attachment = `${agg}-${style}.${format}`
         await window.oidcProvider.updateToken(10)

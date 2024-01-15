@@ -5377,7 +5377,6 @@ components:
         - title
         - assets
         - revisionStr
-        - revisionPinned
         - ruleCount
       properties:
         benchmarkId:
