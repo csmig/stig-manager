@@ -591,6 +591,7 @@ const baseCols = {
     'count(distinct a.assetId) as assets'
   ],
   meta: [
+    'count(distinct granted.collectionId) as collections',
     'count(distinct a.assetId) as assets',
     'count(distinct sa.benchmarkId) as stigs',
     'count(sa.saId) as checklists'
@@ -640,6 +641,7 @@ const baseColsFlat = {
     'count(distinct a.assetId) as assets'
   ],
   meta: [
+    'count(distinct granted.collectionId) as collections',
     'count(distinct a.assetId) as assets',
     'count(distinct sa.benchmarkId) as stigs',
     'count(sa.saId) as checklists'

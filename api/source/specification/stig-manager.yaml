@@ -2770,7 +2770,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/MetricsDetail'
+                $ref: '#/components/schemas/MetricsDetailAggMeta'
             text/csv:
               schema:
                 type: string
@@ -2862,7 +2862,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/MetricsDetail'
+                $ref: '#/components/schemas/MetricsSummaryAggMeta'
             text/csv:
               schema:
                 type: string
@@ -2894,7 +2894,7 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/MetricsDetailAggCollection'
+                  $ref: '#/components/schemas/MetricsSummaryAggCollection'
             text/csv:
               schema:
                 type: string
@@ -2925,7 +2925,7 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/MetricsDetailAggStig'
+                  $ref: '#/components/schemas/MetricsSummaryAggStig'
             text/csv:
               schema:
                 type: string
@@ -5400,6 +5400,30 @@ components:
     MetricsSummaryAggStig:
       allOf:
         - $ref: '#/components/schemas/MetricsAggStig'
+        - $ref: '#/components/schemas/MetricsSummary'
+    MetricsAggMeta:
+      type: object
+      required:
+        - collections
+        - assets
+        - stigs
+        - checklists
+      properties:
+        collections:
+          type: integer
+        assets:
+          type: integer
+        stigs:
+          type: integer
+        checklists:
+          type: integer
+    MetricsDetailAggMeta:
+      allOf:
+        - $ref: '#/components/schemas/MetricsAggMeta'
+        - $ref: '#/components/schemas/MetricsDetail'
+    MetricsSummaryAggMeta:
+      allOf:
+        - $ref: '#/components/schemas/MetricsAggMeta'
         - $ref: '#/components/schemas/MetricsSummary'
     MetricsDetail:
       type: object

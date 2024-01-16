@@ -13,6 +13,9 @@
   --metrics-status-chart-rejected-dark: hsl(5deg 90% 25%)
 }
 
+.x-tree-node-collapsed .x-tree-node-icon, .x-tree-node-expanded .x-tree-node-icon, .x-tree-node-leaf .x-tree-node-icon {
+	width: 22px;
+}
 .sm-grid-cell-with-toolbar {
 	position: relative;
 }
@@ -1390,7 +1393,7 @@ td.x-grid3-hd-over .x-grid3-hd-inner {
  .sm-collection-tab-icon {
   background-image: url(../img/collection.svg)!important;
   background-repeat: no-repeat;
-  background-size: 16px 16px
+  background-size: 16px 16px;
 }
 .sm-department-icon {
   background-image: url(../img/department-16.png)!important
