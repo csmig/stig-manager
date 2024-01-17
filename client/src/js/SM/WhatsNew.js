@@ -6,7 +6,7 @@ SM.WhatsNew.Sources = [
     header: `New Meta Dashboard`,
     body: `
     <p>
-    The new Meta Dashboard provides totals and metrics for some or all your Collections at a glance. The Collections Tab shows top-level metrics for each Collection, while the STIGs tab shows metrics for each STIG across Collections.  
+    The new Meta Dashboard provides totals and metrics for some or all of your Collections at a glance. The Collections Tab shows top-level metrics for each Collection, while the STIGs tab shows metrics for each STIG across Collections.  
     <p>
     Access the Meta Dashboard by clicking on the Report icon in the top-level Collections node of the Navigation Tree:
     <p>
