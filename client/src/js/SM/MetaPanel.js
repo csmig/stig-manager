@@ -220,10 +220,14 @@ SM.MetaPanel.renderWithToolFactory = function (action) {
       tipTarget = 'dashboard'
       break
     case 'checklist':
-    default:
       imgSrc = "img/shield-green-check.svg"
       tipTarget = 'checklist'
       break
+    case 'none':
+    default:
+      return function (value) {
+        return value
+      }
   }
   return function (v) {
     return `
@@ -417,7 +421,9 @@ SM.MetaPanel.AggGrid = Ext.extend(Ext.grid.GridPanel, {
             id: autoExpandColumn,
             dataIndex: 'benchmarkId',
             sortable: true,
-            renderer: this.hideReviewTool ? undefined : SM.MetaPanel.renderWithToolFactory('checklist'),
+            // renderer: this.hideReviewTool ? undefined : SM.MetaPanel.renderWithToolFactory('checklist'),
+            renderer: SM.MetaPanel.renderWithToolFactory(this.hideReviewTool ? 'none' : 'checklist'),
+
             filter: { type: 'string' },
             listeners: {
               mousedown: function (col, grid, index, e) {
@@ -1380,7 +1386,7 @@ SM.MetaPanel.AggCollectionPanel = Ext.extend(Ext.Panel, {
       border: false,
       reloadBtnHandler: this.reloadBtnHandler,
       baseParams: this.baseParams,
-      exportName: 'Labels',
+      exportName: 'Collections',
       region: 'north',
       split: true,
       height: '33%',
@@ -1548,7 +1554,7 @@ SM.MetaPanel.AggStigPanel = Ext.extend(Ext.Panel, {
       storeAutoLoad: false,
       collectionId,
       baseParams: this.baseParams,
-      exportName: 'STIGs',
+      exportName: 'Collections',
       region: 'center'
     })
     const gridSouth = new SM.MetaPanel.UnaggGrid({
@@ -1588,6 +1594,7 @@ SM.MetaPanel.AggStigPanel = Ext.extend(Ext.Panel, {
     gridCenter.getSelectionModel().on('rowselect', onRowSelectCenter)
     const updateBaseParams = function (params) {
       gridNorth.store.baseParams = _this.baseParams = params
+      gridCenter.store.baseParams = _this.baseParams = params
     }
     const updateData = async function ({ refreshViewsOnly = false, loadMasksDisabled = false, includeGridNorth = true } = {}) {
       try {
