@@ -220,14 +220,10 @@ SM.MetaPanel.renderWithToolFactory = function (action) {
       tipTarget = 'dashboard'
       break
     case 'checklist':
+    default:
       imgSrc = "img/shield-green-check.svg"
       tipTarget = 'checklist'
       break
-    case 'none':
-    default:
-      return function (value) {
-        return value
-      }
   }
   return function (v) {
     return `
@@ -421,9 +417,7 @@ SM.MetaPanel.AggGrid = Ext.extend(Ext.grid.GridPanel, {
             id: autoExpandColumn,
             dataIndex: 'benchmarkId',
             sortable: true,
-            // renderer: this.hideReviewTool ? undefined : SM.MetaPanel.renderWithToolFactory('checklist'),
-            renderer: SM.MetaPanel.renderWithToolFactory(this.hideReviewTool ? 'none' : 'checklist'),
-
+            renderer: this.hideReviewTool ?  v => v : SM.MetaPanel.renderWithToolFactory('checklist'),
             filter: { type: 'string' },
             listeners: {
               mousedown: function (col, grid, index, e) {
