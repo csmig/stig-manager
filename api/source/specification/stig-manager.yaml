@@ -7326,7 +7326,7 @@ components:
     RevisionIdArrayQuery:
       name: revisionId
       in: query
-      description: Filter by one or more revisionIds (benchmarkId-version-release)
+      description: Filter by one or more revisionIds (benchmarkId-version-release)  If Revision specified is not the default rev for at least one Collection, response will be empty.
       schema:
         type: array
         uniqueItems: true
