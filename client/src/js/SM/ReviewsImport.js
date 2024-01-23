@@ -2092,191 +2092,6 @@ SM.ReviewsImport.ImportProgressPanel = Ext.extend(Ext.Panel, {
     }
 })
 
-class TaskObject {
-    constructor({ apiAssets = [], apiStigs = [], parsedResults = [], collectionId, config  }) {
-        // An array of results from the parsers
-        this.parsedResults = parsedResults
-        this.collectionId = collectionId
-        this.config = config ?? { 
-            strictRevisionCheck: false,
-            createObjects: true
-         } 
-        // An array of assets from the API
-        this.apiAssets = apiAssets
-        // Create Maps of the assets by assetName and metadata.cklHostName
-        this.mappedAssetNames = new Map()
-        this.mappedCklHostnames = new Map()
-        for (const apiAsset of apiAssets) {
-            // Update .stigs to an array of benchmarkId strings
-            apiAsset.stigs = apiAsset.stigs.map(stig => stig.benchmarkId)
-            this.mappedAssetNames.set(apiAsset.name.toLowerCase(), apiAsset)
-            if (apiAsset.metadata?.cklHostName) {
-                const v = this.mappedCklHostnames.get(apiAsset.metadata.cklHostName.toLowerCase())
-                if (v) {
-                    v.push(apiAsset)
-                }
-                else {
-                    this.mappedCklHostnames.set(apiAsset.metadata.cklHostName.toLowerCase(), [apiAsset])
-                }
-            }
-        }
-
-        // A Map() of the installed benchmarkIds return by the API
-        // key: benchmarkId, value: array of revisionStr
-        this.mappedStigs = new Map()
-        for (const apiStig of apiStigs) {
-            this.mappedStigs.set(apiStig.benchmarkId, apiStig.revisionStrs)
-        }
-
-        // An array of accumulated errors
-        this.errors = []
-
-        // A Map() of assets to be processed by the writer
-        this.taskAssets = this._createTaskAssets()
-    }
-
-    _findAssetFromParsedTarget(target) {
-        if (!target.metadata.cklHostName) {
-            return this.mappedAssetNames.get(target.name.toLowerCase())
-        }
-        const matchedByCklHostname = this.mappedCklHostnames.get(target.metadata.cklHostName.toLowerCase())
-        if (!matchedByCklHostname) return null
-        const matchedByAllCklMetadata = matchedByCklHostname.find(
-            asset => asset.metadata.cklWebDbInstance?.toLowerCase() === target.metadata.cklWebDbInstance?.toLowerCase()
-                && asset.metadata.cklWebDbSite?.toLowerCase() === target.metadata.cklWebDbSite?.toLowerCase())
-        if (!matchedByAllCklMetadata) return null
-        return matchedByAllCklMetadata
-    }
-
-    _createTaskAssets() {
-        // taskAssets is a Map() keyed by lowercase asset name (or CKL metadata), the value is an object:
-        // {
-            // knownAsset: false, // does the asset need to be created
-            // assetProps: null, // an Asset object suitable for put/post to the API 
-            // hasNewAssignment: false, //  are there new STIG assignments?
-            // newAssignments: [], // any new assignments
-            // checklists: new Map(), // the vetted result checklists, a Map() keyed by benchmarkId
-            // checklistsIgnored: [], // the ignored checklists
-            // reviews: [] // the vetted reviews
-        // }
-
-
-        const taskAssets = new Map()
-
-        for (const parsedResult of this.parsedResults) {
-            // Generate mapping key
-            let mapKey, tMeta = parsedResult.target.metadata
-            if (!tMeta.cklHostName) {
-                mapKey = parsedResult.target.name.toLowerCase()
-            }
-            else {
-                mapKey = `${tMeta.cklHostName}-${tMeta.cklWebDbSite ?? 'NA'}-${tMeta.cklWebDbInstance ?? 'NA'}`
-            }
-
-            // Try to find the asset in the API response
-            const apiAsset = this._findAssetFromParsedTarget(parsedResult.target)
-            if (!apiAsset && !this.config.createObjects) {
-                // Bail if the asset doesn't exist and we won't create it
-                this.errors.push({
-                    file: parsedResult.file,
-                    message: `asset does not exist for target`,
-                    target: parsedResult.target
-                })
-                continue
-            }
-            // Try to find the target in our Map()
-            let taskAsset = taskAssets.get(mapKey)
-
-            if (!taskAsset) {
-                // This is our first encounter with this assetName, initialize Map() value
-                taskAsset = {
-                    knownAsset: false,
-                    assetProps: null, // an object suitable for put/post to the API 
-                    hasNewAssignment: false,
-                    newAssignments: [],
-                    checklists: new Map(), // the vetted result checklists
-                    checklistsIgnored: [], // the ignored checklists
-                    reviews: [] // the vetted reviews
-                }
-                if (!apiAsset) {
-                    // The asset does not exist in the API. Set assetProps from this parseResult.
-                    if (!tMeta.cklHostName) {
-                        taskAsset.assetProps = { ...parsedResult.target, collectionId: this.collectionId, stigs: [] }
-                    }
-                    else {
-                        taskAsset.assetProps = { ...parsedResult.target, name: mapKey, collectionId: this.collectionId, stigs: [] }
-                    }
-                }
-                else {
-                    // The asset exists in the API. Set assetProps from the apiAsset.
-                    taskAsset.knownAsset = true
-                    taskAsset.assetProps = { ...apiAsset, collectionId: this.collectionId }
-                }
-                // Insert the asset into taskAssets
-                taskAssets.set(mapKey, taskAsset)
-            }
-
-            // Helper functions
-            const stigIsInstalled = ({ benchmarkId, revisionStr }) => {
-                const revisionStrs = this.mappedStigs.get(benchmarkId)
-                if ( revisionStrs ) {                  
-                    return revisionStr && this.config.strictRevisionCheck ? revisionStrs.includes( revisionStr ) : true
-                  }
-                  else {
-                    return false
-                  }
-            }
-            const stigIsAssigned = ({ benchmarkId }) => {
-                return taskAsset.assetProps.stigs.includes(benchmarkId)
-            }
-            const assignStig = (benchmarkId) => {
-                if (!stigIsAssigned(benchmarkId)) {
-                    taskAsset.hasNewAssignment = true
-                    taskAsset.newAssignments.push(benchmarkId)
-                    taskAsset.assetProps.stigs.push(benchmarkId)
-                }
-            }
-            const stigIsNewlyAssigned = (benchmarkId) => taskAsset.newAssignments.includes(benchmarkId)
-
-            const addToTaskAssetChecklistMapArray = (taskAsset, checklist) => {
-                let checklistArray = taskAsset.checklists.get(checklist.benchmarkId)
-                if (checklistArray) {
-                    checklistArray.push(checklist)
-                }
-                else {
-                    taskAsset.checklists.set(checklist.benchmarkId, [checklist])
-                }
-            }   
-
-            // Vet the checklists in this parseResult 
-            for (const checklist of parsedResult.checklists) {
-                checklist.file = parsedResult.file
-                if (stigIsInstalled(checklist)) {
-                    if (stigIsAssigned(checklist)) {
-                        checklist.newAssignment = stigIsNewlyAssigned(checklist.benchmarkId)
-                        addToTaskAssetChecklistMapArray(taskAsset, checklist)
-                    }
-                    else if (this.config.createObjects) {
-                        assignStig(checklist.benchmarkId)
-                        checklist.newAssignment = true
-                        addToTaskAssetChecklistMapArray(taskAsset, checklist)
-                    }
-                    else {
-                        checklist.ignored = `Not mapped to Asset`
-                        taskAsset.checklistsIgnored.push(checklist)
-                    }
-                }
-                else {
-                    checklist.ignored = `Not installed`
-                    taskAsset.checklistsIgnored.push(checklist)
-                }
-            }
-
-        }
-        return taskAssets
-    }
-}
-
 async function showImportResultFiles(collectionId) {
     try {
         const cachedCollection = SM.Cache.CollectionMap.get(collectionId)
@@ -2440,7 +2255,7 @@ async function showImportResultFiles(collectionId) {
                     let data = await readTextFileAsync(file)
                     if (extension === 'ckl') {
                         try {
-                            const r = ReviewParser.reviewsFromCkl({
+                            const r = STIGMAN.ClientModules.reviewsFromCkl({
                                 data, 
                                 fieldSettings: cachedCollection.settings.fields, 
                                 allowAccept: canAccept,
@@ -2460,7 +2275,7 @@ async function showImportResultFiles(collectionId) {
                     }
                     else if (extension === 'cklb') {
                         try {
-                            const r = ReviewParser.reviewsFromCklb({
+                            const r = STIGMAN.ClientModules.reviewsFromCklb({
                                 data, 
                                 fieldSettings: cachedCollection.settings.fields, 
                                 allowAccept: canAccept,
@@ -2478,7 +2293,7 @@ async function showImportResultFiles(collectionId) {
                     }
                     else if (extension === 'xml') {
                         try {
-                            const r = ReviewParser.reviewsFromScc({
+                            const r = STIGMAN.ClientModules.reviewsFromScc({
                                 data, 
                                 fieldSettings: cachedCollection.settings.fields, 
                                 allowAccept: canAccept,
@@ -2511,7 +2326,7 @@ async function showImportResultFiles(collectionId) {
                     createObjects: true,
                     strictRevisionCheck: false
                 } 
-                const tasks = new TaskObject({ apiAssets, apiStigs, parsedResults: parseResults.success, collectionId, config: taskConfig })
+                const tasks = new STIGMAN.ClientModules.TaskObject({ apiAssets, apiStigs, parsedResults: parseResults.success, collectionId, config: taskConfig })
                 // Transform into data for SM.ReviewsImport.Grid
                 const results = {
                     taskAssets: tasks.taskAssets,
@@ -2914,7 +2729,7 @@ async function showImportResultFile(params) {
 
             let r
             if (extension === 'ckl') {
-                r = ReviewParser.reviewsFromCkl({
+                r = STIGMAN.ClientModules.reviewsFromCkl({
                     data, 
                     fieldSettings: cachedCollection.settings.fields, 
                     allowAccept: canAccept,
@@ -2924,7 +2739,7 @@ async function showImportResultFile(params) {
                 })
             }
             else if (extension === 'cklb') {
-                r = ReviewParser.reviewsFromCklb({
+                r = STIGMAN.ClientModules.reviewsFromCklb({
                     data, 
                     fieldSettings: cachedCollection.settings.fields, 
                     allowAccept: canAccept,
@@ -2933,7 +2748,7 @@ async function showImportResultFile(params) {
             }
             else if (extension === 'xml') {
                 const scapBenchmarkMap = await getScapBenchmarkMap()
-                r = ReviewParser.reviewsFromScc({
+                r = STIGMAN.ClientModules.reviewsFromScc({
                     data, 
                     fieldSettings: cachedCollection.settings.fields, 
                     allowAccept: canAccept,

@@ -10,7 +10,10 @@
 echo "Client build starting"
 
 # Change to this script directory
-cd "$(dirname "$(realpath "$0")")"
+ScriptDir=$(dirname "$(realpath "$0")") 
+cd $ScriptDir
+echo "Changed to $ScriptDir"
+
 
 SrcDir=src
 DistDir=dist
@@ -87,7 +90,9 @@ cp -r $SrcDir/serviceWorker.js $DistDir/serviceWorker.js
 
 # npm
 echo "Preparing npm resources"
-npm --prefix $SrcDir/js/modules ci
+cd $SrcDir/js/modules
+npm install
+cd $ScriptDir
 
 # JS
 echo "Preparing JavaScript resources"

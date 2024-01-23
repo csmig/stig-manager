@@ -1,9 +1,5 @@
 import { stylesheets, scripts, isMinimizedSource } from './resources.js'
 import * as OP from './modules/oidcProvider.js'
-// import * as ReviewParser from './modules/ReviewParser.js'
-
-// // attach imported values to the global window object for use by the global code
-// window.ReviewParser = ReviewParser
 window.oidcProvider = OP
 
 function getScopeStr() {
@@ -35,14 +31,14 @@ async function loadResources() {
     document.head.appendChild(link)
   }
   for (const src of scripts) {
-    var script = document.createElement('script')
+    let script = document.createElement('script')
     script.src = src
     script.async = false
     document.head.appendChild(script)
   }
   const { serializeError } = await import('./modules/node_modules/serialize-error/index.js')
   STIGMAN.serializeError = serializeError
-  window.ReviewParser = await import('./modules/ReviewParser.js')
+  STIGMAN.ClientModules = await import('./modules/node_modules/stig-manager-client-modules/index.js')
 
   STIGMAN.isMinimizedSource = isMinimizedSource
 }
