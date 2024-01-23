@@ -281,7 +281,8 @@ SM.NavTree.TreePanel = Ext.extend(Ext.tree.TreePanel, {
                   beforeclick: function (n, e) {
                     if (e.target.className === "sm-tree-toolbar") {
                       SM.MetaPanel.showMetaTab({
-                        treePath: n.getPath()
+                        treePath: n.getPath(),
+                        initialCollectionIds: SM.safeJSONParse(localStorage.getItem('metaCollectionIds')) ?? []
                       })
                       return false
                     }
@@ -389,12 +390,6 @@ SM.NavTree.TreePanel = Ext.extend(Ext.tree.TreePanel, {
           SM.CollectionPanel.showCollectionTab({
             collectionId: n.attributes.collectionId,
             collectionName: n.attributes.collectionName,
-            treePath: n.getPath()
-          })
-          return
-        }
-        if (n.attributes.id === "collections-root") {
-          SM.MetaPanel.showMetaTab({
             treePath: n.getPath()
           })
           return

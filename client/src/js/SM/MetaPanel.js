@@ -1,119 +1,5 @@
 Ext.ns('SM.MetaPanel')
 
-Chart.defaults.font = {
-  size: 11,
-  family: "'Open Sans', helvetica, sans-serif"
-}
-
-SM.MetaPanel.Renderers = {
-  severityCount: function (v, md) {
-    return v === 0 ? '' : `<div class="sm-metrics-findings-count-cell sm-metrics-${this.dataIndex}-box">${v}</div>`
-  }
-}
-
-SM.MetaPanel.CommonFields = [
-  {
-    name: 'assessments',
-    type: 'integer',
-    mapping: 'metrics.assessments'
-  },
-  {
-    name: 'assessed',
-    type: 'integer',
-    mapping: 'metrics.assessed'
-  },
-  {
-    name: 'low',
-    type: 'integer',
-    mapping: 'metrics.findings.low'
-  },
-  {
-    name: 'medium',
-    type: 'integer',
-    mapping: 'metrics.findings.medium'
-  },
-  {
-    name: 'high',
-    type: 'integer',
-    mapping: 'metrics.findings.high'
-  },
-  {
-    name: 'saved',
-    type: 'integer',
-    mapping: 'metrics.statuses.saved'
-  },
-  {
-    name: 'submitted',
-    type: 'integer',
-    mapping: 'metrics.statuses.submitted'
-  },
-  {
-    name: 'accepted',
-    type: 'integer',
-    mapping: 'metrics.statuses.accepted'
-  },
-  {
-    name: 'rejected',
-    type: 'integer',
-    mapping: 'metrics.statuses.rejected'
-  },
-  {
-    name: 'pass',
-    type: 'integer',
-    mapping: 'metrics.results.pass'
-  },
-  {
-    name: 'fail',
-    type: 'integer',
-    mapping: 'metrics.results.fail'
-  },
-  {
-    name: 'notapplicable',
-    type: 'integer',
-    mapping: 'metrics.results.notapplicable'
-  },
-  {
-    name: 'unassessed',
-    type: 'integer',
-    mapping: 'metrics.results.unassessed'
-  },
-  {
-    name: 'assessedPct',
-    convert: (v, r) => r.metrics.assessments ? r.metrics.assessed / r.metrics.assessments * 100 : 0
-  },
-  {
-    name: 'savedPct',
-    convert: (v, r) => r.metrics.assessments ? ((r.metrics.statuses.saved + r.metrics.statuses.submitted + r.metrics.statuses.accepted + r.metrics.statuses.rejected) / r.metrics.assessments) * 100 : 0
-  },
-  {
-    name: 'submittedPct',
-    convert: (v, r) => r.metrics.assessments ? ((r.metrics.statuses.submitted + r.metrics.statuses.accepted + r.metrics.statuses.rejected) / r.metrics.assessments) * 100 : 0
-  },
-  {
-    name: 'acceptedPct',
-    convert: (v, r) => r.metrics.assessments ? (r.metrics.statuses.accepted / r.metrics.assessments) * 100 : 0
-  },
-  {
-    name: 'rejectedPct',
-    convert: (v, r) => r.metrics.assessments ? (r.metrics.statuses.rejected / r.metrics.assessments) * 100 : 0
-  },
-  {
-    name: 'minTs',
-    type: 'date',
-    mapping: 'metrics.minTs'
-  },
-  {
-    name: 'maxTs',
-    type: 'date',
-    mapping: 'metrics.maxTs'
-  },
-  {
-    name: 'maxTouchTs',
-    type: 'date',
-    mapping: 'metrics.maxTouchTs'
-  }
-]
-
 SM.MetaPanel.numberRenderer = new Intl.NumberFormat().format
 
 SM.MetaPanel.CommonColumns = [
@@ -187,7 +73,7 @@ SM.MetaPanel.CommonColumns = [
     dataIndex: 'low',
     align: "center",
     sortable: true,
-    renderer: SM.MetaPanel.Renderers.severityCount
+    renderer: SM.CollectionPanel.Renderers.severityCount
   },
   {
     header: "CAT 2",
@@ -195,7 +81,7 @@ SM.MetaPanel.CommonColumns = [
     dataIndex: 'medium',
     align: "center",
     sortable: true,
-    renderer: SM.MetaPanel.Renderers.severityCount
+    renderer: SM.CollectionPanel.Renderers.severityCount
   },
   {
     header: "CAT 1",
@@ -203,7 +89,7 @@ SM.MetaPanel.CommonColumns = [
     dataIndex: 'high',
     align: "center",
     sortable: true,
-    renderer: SM.MetaPanel.Renderers.severityCount
+    renderer: SM.CollectionPanel.Renderers.severityCount
   },
 ]
 
@@ -246,7 +132,7 @@ SM.MetaPanel.AggGrid = Ext.extend(Ext.grid.GridPanel, {
     }) : new Ext.grid.RowSelectionModel({
       singleSelect: true
     })
-    const fields = [...SM.MetaPanel.CommonFields]
+    const fields = [...SM.CollectionPanel.CommonFields]
     const columns = []
     if (this.checkboxSelModel) {
       columns.push(sm)
@@ -590,7 +476,7 @@ SM.MetaPanel.UnaggGrid = Ext.extend(Ext.grid.GridPanel, {
       'title',
       'revisionStr',
       'revisionPinned',
-      ...SM.MetaPanel.CommonFields
+      ...SM.CollectionPanel.CommonFields
     ]
     const columns = []
     let sortField, autoExpandColumn = Ext.id()
@@ -784,84 +670,6 @@ SM.MetaPanel.UnaggGrid = Ext.extend(Ext.grid.GridPanel, {
   }
 })
 
-SM.MetaPanel.ChartPanel = Ext.extend(Ext.Panel, {
-  initComponent: function () {
-    this.chartId = Ext.id()
-    const html = `<canvas id="sm-chart-${this.chartId}"${this.chartHeight ? ' height="250px"' : ''}${this.chartWidth ? ' width="250px"' : ''}></canvas>`
-
-    const config = {
-      html,
-      listeners: {
-        afterrender(me) {
-          me.chart = new Chart(`sm-chart-${me.chartId}`, this.chartOptions)
-        }
-      }
-    }
-    Ext.apply(this, Ext.apply(this.initialConfig, config))
-    SM.MetaPanel.ChartPanel.superclass.initComponent.call(this)
-  },
-  replaceData: function (data, datasetIndex = 0) {
-    this.chart.dataset[datasetIndex].data = data
-    this.chart.update()
-  },
-
-})
-
-SM.MetaPanel.ProgressBarsPanel = Ext.extend(Ext.Panel, {
-  initComponent: function () {
-    const _this = this
-    const calcData = function (metrics) {
-      return {
-        assessed: metrics.assessments ? metrics.assessed / metrics.assessments * 100 : 0,
-        submitted: metrics.assessments ? ((metrics.statuses.submitted + metrics.statuses.accepted + metrics.statuses.rejected) / metrics.assessments) * 100 : 0,
-        accepted: metrics.assessments ? (metrics.statuses.accepted / metrics.assessments) * 100 : 0,
-        rejected: metrics.assessments ? (metrics.statuses.rejected / metrics.assessments) * 100 : 0
-      }
-    }
-    const tpl = new Ext.XTemplate(
-      '<div class="sm-metrics-progress-parent">',
-      '<div class="sm-metrics-progress-child">',
-      `<div class="sm-metrics-progress-label">Assessed</div>`,
-      `<div class="sm-metrics-progress-thermometer-wrap">{[renderPct(values.assessed)]}</div>`,
-      '</div>',
-      '<div class="sm-metrics-progress-child" >',
-      `<div class="sm-metrics-progress-label">Submitted</div>`,
-      `<div class="sm-metrics-progress-thermometer-wrap">{[renderPct(values.submitted)]}</div>`,
-      '</div>',
-      '<div class="sm-metrics-progress-child" >',
-      `<div class="sm-metrics-progress-label">Accepted</div>`,
-      `<div class="sm-metrics-progress-thermometer-wrap">{[renderPct(values.accepted)]}</div>`,
-      '</div>',
-      '<div class="sm-metrics-progress-child" >',
-      `<div class="sm-metrics-progress-label">Rejected</div>`,
-      `<div class="sm-metrics-progress-thermometer-wrap">{[renderPct(values.rejected)]}</div>`,
-      '</div>',
-      '</div>'
-    )
-    const updateMetrics = function (metrics) {
-      _this.update(calcData(metrics))
-    }
-    const config = {
-      tpl,
-      updateMetrics
-    }
-    Ext.apply(this, Ext.apply(this.initialConfig, config))
-    this.superclass().initComponent.call(this)
-  }
-})
-
-SM.MetaPanel.ProgressPanelColors = function (theme) {
-  const style = getComputedStyle(document.documentElement)
-  const ordered = [
-    'assessed',
-    'submitted',
-    'accepted',
-    'unassessed',
-    'rejected'
-  ].map(category => style.getPropertyValue(`--metrics-status-chart-${category}-${theme}`))
-  return ordered
-}
-
 SM.MetaPanel.ProgressPanel = Ext.extend(Ext.Panel, {
   initComponent: function () {
 
@@ -882,7 +690,7 @@ SM.MetaPanel.ProgressPanel = Ext.extend(Ext.Panel, {
       data: {
         datasets: [{
           data: [0, 0, 0, 0, 0],
-          backgroundColor: SM.MetaPanel.ProgressPanelColors(localStorage.getItem('darkMode') === '1' ? 'dark' : 'light'),
+          backgroundColor: SM.CollectionPanel.ProgressPanelColors(localStorage.getItem('darkMode') === '1' ? 'dark' : 'light'),
           borderWidth: [1, 1],
           borderColor: '#bbbbbb'
         }],
@@ -904,7 +712,7 @@ SM.MetaPanel.ProgressPanel = Ext.extend(Ext.Panel, {
       }
     }
 
-    const chartPanel = new SM.MetaPanel.ChartPanel({
+    const chartPanel = new SM.CollectionPanel.ChartPanel({
       border: false,
       width: 170,
       height: 170,
@@ -913,13 +721,11 @@ SM.MetaPanel.ProgressPanel = Ext.extend(Ext.Panel, {
 
     const onThemeChanged = function (theme) {
       if (chartPanel.chart) {
-        chartPanel.chart.config._config.data.datasets[0].backgroundColor = SM.MetaPanel.ProgressPanelColors(theme)
+        chartPanel.chart.config._config.data.datasets[0].backgroundColor = SM.CollectionPanel.ProgressPanelColors(theme)
         chartPanel.chart.update()
       }
     }
     SM.Dispatcher.addListener('themechanged', onThemeChanged)
-
-    // const intlNumberFormat = new Intl.NumberFormat()
 
     const updateMetrics = function (metrics) {
       const metricCalcs = calcMetrics(metrics)
@@ -968,7 +774,7 @@ SM.MetaPanel.ProgressPanel = Ext.extend(Ext.Panel, {
       tpl: dataTpl,
       width: 175
     })
-    const progressBarsPanel = new SM.MetaPanel.ProgressBarsPanel({
+    const progressBarsPanel = new SM.CollectionPanel.ProgressBarsPanel({
       border: false,
       height: 44
     })
@@ -1003,43 +809,6 @@ SM.MetaPanel.ProgressPanel = Ext.extend(Ext.Panel, {
     }
     Ext.apply(this, Ext.apply(this.initialConfig, config))
     SM.MetaPanel.ProgressPanel.superclass.initComponent.call(this)
-  }
-})
-
-SM.MetaPanel.AgesPanel = Ext.extend(Ext.Panel, {
-  initComponent: function () {
-    const _this = this
-    let refreshTimer
-    const tpl = new Ext.XTemplate(
-      '<div class="sm-metrics-count-parent">',
-      `<div class="sm-metrics-count-child sm-metrics-age-box" ext:qwidth=130 ext:qtip="{[Ext.util.Format.date(values.minTs,'Y-m-d H:i T')]}">`,
-      `<div class="sm-metrics-count-label">Oldest</div><div class="sm-metrics-count-value">{[renderDurationToNow(values.minTs)]}</div>`,
-      '</div>',
-      `<div class="sm-metrics-count-child sm-metrics-age-box" ext:qwidth=130 ext:qtip="{[Ext.util.Format.date(values.maxTs,'Y-m-d H:i T')]}">`,
-      `<div class="sm-metrics-count-label">Newest</div><div class="sm-metrics-count-value">{[renderDurationToNow(values.maxTs)]}</div>`,
-      '</div>',
-      `<div class="sm-metrics-count-child sm-metrics-age-box" ext:qwidth=130 ext:qtip="{[Ext.util.Format.date(values.maxTouchTs,'Y-m-d H:i T')]}">`,
-      `<div class="sm-metrics-count-label">Updated</div><div class="sm-metrics-count-value">{[renderDurationToNow(values.maxTouchTs)]}</div>`,
-      '</div>',
-      '</div>'
-    )
-    const updateMetrics = function (metrics) {
-      _this.metrics = metrics
-      _this.update(metrics)
-    }
-
-    const config = {
-      tpl,
-      data: this.metrics,
-      updateMetrics,
-      listeners: {
-        beforedestroy: () => {
-          clearTimeout(refreshTimer)
-        },
-      }
-    }
-    Ext.apply(this, Ext.apply(this.initialConfig, config))
-    this.superclass().initComponent.call(this)
   }
 })
 
@@ -1280,7 +1049,7 @@ SM.MetaPanel.OverviewPanel = Ext.extend(Ext.Panel, {
       tools: this.progressPanelTools || undefined,
       border: true
     })
-    this.agesPanel = new SM.MetaPanel.AgesPanel({
+    this.agesPanel = new SM.CollectionPanel.AgesPanel({
       cls: 'sm-round-inner-panel',
       bodyStyle: 'padding: 10px;',
       title: 'Review Ages',
@@ -1425,7 +1194,7 @@ SM.MetaPanel.AggCollectionPanel = Ext.extend(Ext.Panel, {
       await gridSouth.store.loadPromise({
         benchmarkId: record.data.benchmarkId
       })
-      gridSouth.setTitle(`Checklists for ${record.data.benchmarkId} in ${selectedRowNorth.data.name}`)
+      gridSouth.setTitle(`Checklists for "${record.data.benchmarkId}" in "${selectedRowNorth.data.name}"`)
     }
 
     gridNorth.getSelectionModel().on('rowselect', onRowSelectNorth)
@@ -1476,7 +1245,7 @@ SM.MetaPanel.AggCollectionPanel = Ext.extend(Ext.Panel, {
         gridCenter.store.proxy.setUrl(`${STIGMAN.Env.apiBase}/collections/${currentRecordNorth.data.collectionId}/metrics/summary/stig`)
         await gridCenter.store.loadPromise()
         gridCenter.loadMask.disabled = savedLoadMaskDisabled
-        gridCenter.setTitle(`STIGs in ${currentRecordNorth.data.name}`)
+        gridCenter.setTitle(`STIGs in "${currentRecordNorth.data.name}"`)
 
         
         const currentRecordCenter = gridCenter.store.getById(selectedRowCenter?.data.revisionId)
@@ -1495,7 +1264,7 @@ SM.MetaPanel.AggCollectionPanel = Ext.extend(Ext.Panel, {
           benchmarkId: currentRecordCenter.data.benchmarkId
         })
         gridSouth.loadMask.disabled = savedLoadMaskDisabled
-        gridSouth.setTitle(`Checklists for ${currentRecordCenter.data.benchmarkId} in ${currentRecordNorth.data.name}`)
+        gridSouth.setTitle(`Checklists for "${currentRecordCenter.data.benchmarkId}" in "${currentRecordNorth.data.name}"`)
 
       }
       catch (e) {
@@ -1580,7 +1349,7 @@ SM.MetaPanel.AggStigPanel = Ext.extend(Ext.Panel, {
       await gridSouth.store.loadPromise({
         benchmarkId: selectedRowNorth.data.benchmarkId
       })
-      gridSouth.setTitle(`Checklists for ${selectedRowNorth.data.benchmarkId} in ${record.data.name}`)
+      gridSouth.setTitle(`Checklists for "${selectedRowNorth.data.benchmarkId}" in "${record.data.name}"`)
 
     }
 
@@ -1635,7 +1404,7 @@ SM.MetaPanel.AggStigPanel = Ext.extend(Ext.Panel, {
           revisionId: currentRecordNorth.data.revisionId
         })
         gridCenter.loadMask.disabled = savedLoadMaskDisabled
-        gridCenter.setTitle(`Collections with ${currentRecordNorth.data.benchmarkId} ${currentRecordNorth.data.revisionStr}`)
+        gridCenter.setTitle(`Collections with "${currentRecordNorth.data.benchmarkId} ${currentRecordNorth.data.revisionStr}"`)
 
         
         const currentRecordCenter = gridCenter.store.getById(selectedRowCenter?.data.collectionId)
@@ -1653,7 +1422,7 @@ SM.MetaPanel.AggStigPanel = Ext.extend(Ext.Panel, {
           benchmarkId: currentRecordNorth.data.benchmarkId
         })
         gridSouth.loadMask.disabled = savedLoadMaskDisabled
-        gridSouth.setTitle(`Checklists for ${currentRecordNorth.data.benchmarkId} in ${currentRecordCenter.data.name}`)
+        gridSouth.setTitle(`Checklists for "${currentRecordNorth.data.benchmarkId}" in "${currentRecordCenter.data.name}"`)
 
       }
       catch (e) {
@@ -1699,6 +1468,7 @@ SM.MetaPanel.showMetaTab = async function (options) {
 
     const filterMenu = new SM.MetaPanel.CollectionsMenu({
       collections: gState.filterableCollections,
+      initialCollectionIds,
       showHeader: true,
       showApply: true,
       listeners: {
@@ -1722,9 +1492,6 @@ SM.MetaPanel.showMetaTab = async function (options) {
           }
         }
       ],
-      // title: overviewTitleTpl.apply({
-      //   collections: `Showing ${gState.collectionIds.length ? gState.collectionIds.length : gState.filterableCollections.length} of ${gState.filterableCollections.length}`
-      // }),
       title: 'Initializing...',
       margins: { top: SM.Margin.top, right: SM.Margin.edge, bottom: SM.Margin.bottom, left: SM.Margin.edge },
       region: 'west',
@@ -1732,20 +1499,7 @@ SM.MetaPanel.showMetaTab = async function (options) {
       minWidth: 430,
       split: true,
       reloadBtnHandler,
-      // listeners: {
-      //   render: (panel) => {
-      //     if (panel.tools.collection) {
-      //       panel.tools.collection.setDisplayed(gState.filterableLabels.length > 1)
-      //     }
-      //   }
-      // }
     })
-    // overviewPanel.inventoryPanel.on('render', (panel) => {
-    //   const collectionGrant = curUser.collectionGrants.find(g => g.collection.collectionId === collectionId)
-    //   const isManager = !!(collectionGrant?.accessLevel >= 3)
-    //   panel.tools.manage.setDisplayed(isManager)
-    //   panel.tools.spacer.setDisplayed(isManager)
-    // })
     const aggStigPanel = new SM.MetaPanel.AggStigPanel({
       title: 'STIGs',
       iconCls: 'sm-stig-icon',
@@ -1774,7 +1528,7 @@ SM.MetaPanel.showMetaTab = async function (options) {
       ],
       listeners: {
         tabchange: function (tp) {
-          updateData({ event: 'tabchange' })
+          if (!tp.firstShow) updateData({ event: 'tabchange' })
           tp.firstShow = false
         }
       }
@@ -1863,7 +1617,7 @@ SM.MetaPanel.showMetaTab = async function (options) {
 
     function updateOverviewTitle() {
       const overviewTitle = overviewTitleTpl.apply({
-        collections: `${gState.collectionIds.length ? gState.collectionIds.length : gState.filterableCollections.length} of ${gState.filterableCollections.length}` //<span class="sm-navtree-sprite">experimental</span>
+        collections: `${gState.collectionIds.length ? gState.collectionIds.length : gState.filterableCollections.length} of ${gState.filterableCollections.length}`
       })
       overviewPanel.setTitle(overviewTitle)
     }
@@ -1879,6 +1633,7 @@ SM.MetaPanel.showMetaTab = async function (options) {
         else {
           gState.collectionIds = srcCollectionIds
         }
+        localStorage.setItem('metaCollectionIds', JSON.stringify(gState.collectionIds))
         gState.baseParams = setCurrentBaseParams(gState.collectionIds)
         await overviewPanel.updateData()
         updateOverviewTitle()
@@ -1939,8 +1694,6 @@ SM.MetaPanel.showMetaTab = async function (options) {
     function cancelTimers() {
       clearTimeout(gState.refreshViewTimerId)
       clearTimeout(gState.updateDataTimerId)
-      // clearInterval(gState.updateLastRefreshIntervalId)
-      // gState.refreshViewTimerId = gState.updateDataTimerId = gState.updateLastRefreshIntervalId = null
       gState.refreshViewTimerId = gState.updateDataTimerId = null
     }
 
@@ -1968,8 +1721,9 @@ SM.MetaPanel.CollectionsMenu = Ext.extend(Ext.menu.Menu, {
   initComponent: function () {
     const _this = this
     this.addEvents('applied')
+    const initialItems = this.initialCollectionIds.map( id => ({collectionId: id, checked: true, text: id}))
     const config = {
-      items: [],
+      items: initialItems,
       listeners: {
         itemclick: this.onItemClick,
         hide: this.onMenuHide,
@@ -1978,7 +1732,6 @@ SM.MetaPanel.CollectionsMenu = Ext.extend(Ext.menu.Menu, {
     }
     Ext.apply(this, Ext.apply(this.initialConfig, config))
     this.superclass().initComponent.call(this)
-    this.refreshItems(this.collections)
   },
   isExcluded: function (collection) {
     return collection.metadata['app.metaExcluded'] === '1'
@@ -2019,6 +1772,15 @@ SM.MetaPanel.CollectionsMenu = Ext.extend(Ext.menu.Menu, {
     }, [])
     return checked
   },
+  getCheckedCollections: function () {
+    const checked = this.items.items.reduce(function (checkedItems, item) {
+      if (item.checked) {
+        checkedItems.push(item)
+      }
+      return checkedItems
+    }, [])
+    return checked
+  },
   getCollectionItemConfig: function (collection, checked = false) {
     return {
       xtype: 'menucheckitem',
@@ -2052,7 +1814,7 @@ SM.MetaPanel.CollectionsMenu = Ext.extend(Ext.menu.Menu, {
   },
   setCollectionsChecked: function (collectionIds, checked) {
     for (const collectionId of collectionIds) {
-      this.find('collectionId', collectionId)[0].setChecked(checked, true) //suppressEvent = true
+      this.find('collectionId', collectionId)[0]?.setChecked(checked, true) //suppressEvent = true
     }
   },
   updateCollection: function (collection) {
