@@ -27,6 +27,6 @@ and invoke the API with the envar `STIGMAN_CLIENT_DIRECTORY` set to `../../clien
 ```
 $ cd ../api/source
 $ npm ci
-$ node index.js
+$ STIGMAN_CLIENT_DIRECTORY=../../client/src node index.js
 ```
 
