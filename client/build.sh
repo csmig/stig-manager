@@ -138,6 +138,7 @@ uglifyjs \
 'SM/CollectionAsset.js' \
 'SM/CollectionGrant.js' \
 'SM/CollectionPanel.js' \
+'SM/MetaPanel.js' \
 'SM/ColumnFilters.js' \
 'SM/FindingsPanel.js' \
 'SM/Assignments.js' \
