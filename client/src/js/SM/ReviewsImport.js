@@ -2326,7 +2326,7 @@ async function showImportResultFiles(collectionId) {
                     createObjects: true,
                     strictRevisionCheck: false
                 } 
-                const tasks = new STIGMAN.ClientModules.TaskObject({ apiAssets, apiStigs, parsedResults: parseResults.success, collectionId, config: taskConfig })
+                const tasks = new STIGMAN.ClientModules.TaskObject({ apiAssets, apiStigs, parsedResults: parseResults.success, collectionId, options: taskConfig })
                 // Transform into data for SM.ReviewsImport.Grid
                 const results = {
                     taskAssets: tasks.taskAssets,
