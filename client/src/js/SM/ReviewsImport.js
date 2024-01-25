@@ -240,28 +240,14 @@ SM.ReviewsImport.Grid = Ext.extend(Ext.grid.GridPanel, {
             }),
             listeners: {
             },
-            getValue: function () {
-                return true
-            },
-            setValue: function (v) {
-                store.loadData(v)
-            },
-            validator: function (v) {
-                let one = 1
-            },
-            markInvalid: function () {
-                let one = 1
-            },
-            clearInvalid: function () {
-                let one = 1
-            },
-            isValid: function () {
-                return true
-            },
+            getValue: () => true,
+            setValue: (v) => store.loadData(v),
+            validator: Ext.emptyFn,
+            markInvalid: Ext.emptyFn,
+            clearInvalid: Ext.emptyFn,
+            isValid: () => true,
             getName: () => this.name,
-            validate: function () {
-                let one = 1
-            },
+            validate:Ext.emptyFn,
             createObjects: true,
             importReviews: true,
             enableCreateObjects: (enabled = true) => {
@@ -287,7 +273,6 @@ SM.ReviewsImport.Grid = Ext.extend(Ext.grid.GridPanel, {
 
 SM.ReviewsImport.ReviewsFilterCombo = Ext.extend(Ext.form.ComboBox, {
     initComponent: function () {
-        let me = this
         let config = {
             width: 140,
             forceSelection: true,
@@ -481,12 +466,11 @@ SM.ReviewsImport.ReviewsGrid = Ext.extend(Ext.grid.GridPanel, {
             ]
         })
         const onFilterChanged = (filter) => {
-            switch (filter) {
-                case 'resultchange':
-                    store.filterBy(record => record.data.result !== record.data.curResult)
-                    break
-                default:
-                    store.clearFilter()
+            if (filter === 'resultchange' ) {
+                store.filterBy(record => record.data.result !== record.data.curResult)
+            } 
+            else {
+                store.clearFilter()
             }
         }
 
@@ -534,7 +518,6 @@ SM.ReviewsImport.ReviewsGrid = Ext.extend(Ext.grid.GridPanel, {
 
 SM.ReviewsImport.ParseErrorsGrid = Ext.extend(Ext.grid.GridPanel, {
     initComponent: function () {
-        const me = this
         const fields = [
             {
                 name: 'file'
@@ -624,28 +607,14 @@ SM.ReviewsImport.ParseErrorsGrid = Ext.extend(Ext.grid.GridPanel, {
             }),
             listeners: {
             },
-            getValue: function () {
-                return true
-            },
-            setValue: function (v) {
-                store.loadData(v)
-            },
-            validator: function (v) {
-                let one = 1
-            },
-            markInvalid: function () {
-                let one = 1
-            },
-            clearInvalid: function () {
-                let one = 1
-            },
-            isValid: function () {
-                return true
-            },
+            getValue: () => true,
+            setValue: (v) => store.loadData(v),
+            validator: Ext.emptyFn,
+            markInvalid: Ext.emptyFn,
+            clearInvalid: Ext.emptyFn,
+            isValid: () => true,
             getName: () => this.name,
-            validate: function () {
-                let one = 1
-            }
+            validate: Ext.emptyFn
         }
         Ext.apply(this, Ext.apply(this.initialConfig, config))
         SM.ReviewsImport.ParseErrorsGrid.superclass.initComponent.call(this)
@@ -838,7 +807,6 @@ SM.ReviewsImport.ParseOptionsFieldSet = Ext.extend(Ext.form.FieldSet, {
             value: this.initialOptions.unreviewed,
             name: 'unreviewed',
             readOnly: this.context === 'wizard',
-            name: 'unreviewed',
             listeners: {
                 select: onSelect
             }
@@ -883,7 +851,7 @@ SM.ReviewsImport.ParseOptionsFieldSet = Ext.extend(Ext.form.FieldSet, {
             hideLabel: true,
             listeners: {
                 check: function (cb, checked) {
-                    _this.onOptionChanged && _this.onOptionChanged(_this, cb, checked)
+                    _this.onOptionChanged?.(_this, cb, checked)
                 }
             }
         })
@@ -904,7 +872,7 @@ SM.ReviewsImport.ParseOptionsFieldSet = Ext.extend(Ext.form.FieldSet, {
                     if (_this.localStorage && localStorage.wizardImportOptions?.length) {
                         _this.restoreOptions(JSON.parse(localStorage.wizardImportOptions))
                     }
-                    _this.onOptionChanged && _this.onOptionChanged(_this, cb, checked)
+                    _this.onOptionChanged?.(_this, cb, checked)
                 }
             }
         })
@@ -922,7 +890,7 @@ SM.ReviewsImport.ParseOptionsFieldSet = Ext.extend(Ext.form.FieldSet, {
             if (_this.localStorage) {
                 localStorage.setItem('wizardImportOptions', JSON.stringify(_this.getOptions())) 
             }
-            _this.onOptionChanged && _this.onOptionChanged(_this, item, record, index)
+            _this.onOptionChanged?.(_this, cb, checked)
         }
 
         this.restoreOptions = function (options = _this.initialOptions) {
@@ -985,11 +953,10 @@ SM.ReviewsImport.SelectFilesGrid = Ext.extend(Ext.grid.GridPanel, {
                 e.preventDefault()
                 this.getElementsByClassName('x-panel-body')[0].style.border = ''
                 let entries = []
-                let files = []
                 if (!e.dataTransfer) {
-                    throw ('Event is missing the dataTransfer property')
+                    throw new Error('Event is missing the dataTransfer property')
                 }
-                entries = await getAllFileEntries(e.dataTransfer.items, e.currentTarget)
+                entries = await getAllFileEntries(e.dataTransfer.items)
                 if (!entries.length) {
                    throw new Error('no entries error')
                 }
@@ -1133,34 +1100,32 @@ SM.ReviewsImport.SelectFilesGrid = Ext.extend(Ext.grid.GridPanel, {
         // hack override to handle setting record id as desired
         store.reader.readRecords = function(o){
             this.arrayData = o;
-            var s = this.meta,
-                sid = s ? Ext.num(s.idIndex, s.id) : null,
+            let s = this.meta,
                 recordType = this.recordType,
                 fields = recordType.prototype.fields,
                 records = [],
                 success = true,
                 v;
     
-            var root = this.getRoot(o);
+            let root = this.getRoot(o);
     
-            for(var i = 0, len = root.length; i < len; i++) {
-                var n = root[i],
-                    values = {},
-                    id = ((sid || sid === 0) && n[sid] !== undefined && n[sid] !== "" ? n[sid] : null);
-                for(var j = 0, jlen = fields.length; j < jlen; j++) {
-                    var f = fields.items[j],
+            for(let i = 0, len = root.length; i < len; i++) {
+                let n = root[i],
+                    values = {}
+                for(let j = 0, jlen = fields.length; j < jlen; j++) {
+                    let f = fields.items[j],
                         k = f.mapping !== undefined && f.mapping !== null ? f.mapping : j;
                     v = n[k] !== undefined ? n[k] : f.defaultValue;
                     v = f.convert(v, n);
                     values[f.name] = v;
                 }
                 // change second argument from id to values.id
-                var record = new recordType(values, values.id);
+                let record = new recordType(values, values.id);
                 record.json = n;
                 records[records.length] = record;
             }
     
-            var totalRecords = records.length;
+            let totalRecords = records.length;
     
             if(s.totalProperty) {
                 v = parseInt(this.getTotal(o), 10);
@@ -1583,42 +1548,6 @@ SM.ReviewsImport.OptionsPanel = Ext.extend(Ext.Panel, {
                 await me.addHandler(me.taskAssets, grid.createObjects, grid.importReviews)
             }
         })
-        const controls = new Ext.Panel({
-            region: 'south',
-            border: false,
-            height: 40,
-            layout: 'hbox',
-            layoutConfig: {
-                align: 'middle',
-                defaultMargins: '0 5',
-                pack: 'start'
-            },
-            items: [
-                {
-                    xtype: 'checkbox',
-                    checked: true,
-                    boxLabel: 'Create or update Assets and STIG associations',
-                    margins: '0 15 -2 0',
-                    listeners: {
-                        check: function (cb, checked) {
-                            grid.enableCreateObjects(checked)
-                            continueBtn.setDisabled(!grid.store.getCount())
-                        }
-                    }
-                },
-                {
-                    xtype: 'checkbox',
-                    checked: true,
-                    boxLabel: 'Import reviews',
-                    margins: '0 0 -2 0',
-                    listeners: {
-                        check: function (cb, checked) {
-                            grid.enableImportReviews(checked)
-                        }
-                    }
-                }
-            ]
-        })
         const config = {
             layout: 'vbox',
             layoutConfig: {
@@ -1889,28 +1818,14 @@ SM.ReviewsImport.ImportStatusGrid = Ext.extend(Ext.grid.GridPanel, {
             }),
             listeners: {
             },
-            getValue: function () {
-                return true
-            },
-            setValue: function (v) {
-                store.loadData(v)
-            },
-            validator: function (v) {
-                let one = 1
-            },
-            markInvalid: function () {
-                let one = 1
-            },
-            clearInvalid: function () {
-                let one = 1
-            },
-            isValid: function () {
-                return true
-            },
+            getValue: () => true,
+            setValue: (v) => store.loadData(v),
+            validator: Ext.emptyFn,
+            markInvalid: Ext.emptyFn,
+            clearInvalid: Ext.emptyFn,
+            isValid: () => true,
             getName: () => this.name,
-            validate: function () {
-                let one = 1
-            }
+            validate: Ext.emptyFn
         }
         Ext.apply(this, Ext.apply(this.initialConfig, config))
         this.superclass().initComponent.call(this)
@@ -1919,7 +1834,6 @@ SM.ReviewsImport.ImportStatusGrid = Ext.extend(Ext.grid.GridPanel, {
 
 SM.ReviewsImport.ImportRejectGrid = Ext.extend(Ext.grid.GridPanel, {
     initComponent: function () {
-        const me = this
         const fields = [
             'ruleId',
             'reason'
@@ -1996,28 +1910,14 @@ SM.ReviewsImport.ImportRejectGrid = Ext.extend(Ext.grid.GridPanel, {
             }),
             listeners: {
             },
-            getValue: function () {
-                return true
-            },
-            setValue: function (v) {
-                store.loadData(v)
-            },
-            validator: function (v) {
-                let one = 1
-            },
-            markInvalid: function () {
-                let one = 1
-            },
-            clearInvalid: function () {
-                let one = 1
-            },
-            isValid: function () {
-                return true
-            },
+            getValue: () => true,
+            setValue: (v) => store.loadData(v),
+            validator: Ext.emptyFn,
+            markInvalid: Ext.emptyFn,
+            clearInvalid: Ext.emptyFn,
+            isValid: () => true,
             getName: () => this.name,
-            validate: function () {
-                let one = 1
-            }
+            validate: Ext.emptyFn
         }
         Ext.apply(this, Ext.apply(this.initialConfig, config))
         this.superclass().initComponent.call(this)
@@ -2222,144 +2122,139 @@ async function showImportResultFiles(collectionId) {
         }
 
         async function parseFiles(files, pb) {
-            try {
-                // Get collection assets for matching
-                let apiAssetsResult = Ext.Ajax.requestPromise({
-                    url: `${STIGMAN.Env.apiBase}/assets`,
-                    params: {
-                        collectionId: collectionId,
-                        projection: 'stigs'
-                    },
-                    method: 'GET'
-                })
+            // Get collection assets for matching
+            let apiAssetsResult = Ext.Ajax.requestPromise({
+                url: `${STIGMAN.Env.apiBase}/assets`,
+                params: {
+                    collectionId: collectionId,
+                    projection: 'stigs'
+                },
+                method: 'GET'
+            })
 
-                // Get installed STIGs for matching
-                let apiStigsResult = Ext.Ajax.requestPromise({
-                    url: `${STIGMAN.Env.apiBase}/stigs`,
-                    method: 'GET'
-                })
+            // Get installed STIGs for matching
+            let apiStigsResult = Ext.Ajax.requestPromise({
+                url: `${STIGMAN.Env.apiBase}/stigs`,
+                method: 'GET'
+            })
 
-                // Get SCAP benchmarkId map
-                let scapBenchmarkMap = await getScapBenchmarkMap()
+            // Get SCAP benchmarkId map
+            let scapBenchmarkMap = await getScapBenchmarkMap()
 
-                let filesHandled = 0
-                const parseResults = {
-                    success: [],
-                    fail: []
-                }
+            let filesHandled = 0
+            const parseResults = {
+                success: [],
+                fail: []
+            }
 
-                // Raw parsing of each file
-                for (const file of files) {
-                    pb.updateText(file.name)
-                    let extension = file.name.substring(file.name.lastIndexOf(".") + 1)
-                    let data = await readTextFileAsync(file)
-                    if (extension === 'ckl') {
-                        try {
-                            const r = STIGMAN.ClientModules.reviewsFromCkl({
-                                data, 
-                                fieldSettings: cachedCollection.settings.fields, 
-                                allowAccept: canAccept,
-                                importOptions: fp.parseOptionsFieldSet.getOptions(),
-                                XMLParser,
-                                valueProcessor: tagValueProcessor
-                            })
-                            r.file = file
-                            parseResults.success.push(r)
-                        }
-                        catch (e) {
-                            parseResults.fail.push({
-                                file: file,
-                                error: e.message
-                            })
-                        }
+            // Raw parsing of each file
+            for (const file of files) {
+                pb.updateText(file.name)
+                let extension = file.name.substring(file.name.lastIndexOf(".") + 1)
+                let data = await readTextFileAsync(file)
+                if (extension === 'ckl') {
+                    try {
+                        const r = STIGMAN.ClientModules.reviewsFromCkl({
+                            data, 
+                            fieldSettings: cachedCollection.settings.fields, 
+                            allowAccept: canAccept,
+                            importOptions: fp.parseOptionsFieldSet.getOptions(),
+                            XMLParser,
+                            valueProcessor: tagValueProcessor
+                        })
+                        r.file = file
+                        parseResults.success.push(r)
                     }
-                    else if (extension === 'cklb') {
-                        try {
-                            const r = STIGMAN.ClientModules.reviewsFromCklb({
-                                data, 
-                                fieldSettings: cachedCollection.settings.fields, 
-                                allowAccept: canAccept,
-                                importOptions: fp.parseOptionsFieldSet.getOptions()
-                            })
-                            r.file = file
-                            parseResults.success.push(r)
-                        }
-                        catch (e) {
-                            parseResults.fail.push({
-                                file: file,
-                                error: e.message
-                            })
-                        }
-                    }
-                    else if (extension === 'xml') {
-                        try {
-                            const r = STIGMAN.ClientModules.reviewsFromScc({
-                                data, 
-                                fieldSettings: cachedCollection.settings.fields, 
-                                allowAccept: canAccept,
-                                importOptions: fp.parseOptionsFieldSet.getOptions(),
-                                XMLParser,
-                                valueProcessor: tagValueProcessor,
-                                scapBenchmarkMap
-                            })
-                            r.file = file
-                            parseResults.success.push(r)
-                        }
-                        catch (e) {
-                            parseResults.fail.push({
-                                file: file,
-                                error: e.message
-                            })
-                        }
-                    }
-                    filesHandled++
-                    pb.updateProgress(filesHandled / files.length)
-                }
-
-                apiAssetsResult = await apiAssetsResult
-                const apiAssets = JSON.parse(apiAssetsResult.response.responseText)
-
-                apiStigsResult = await apiStigsResult
-                const apiStigs = JSON.parse(apiStigsResult.response.responseText)
-
-                const taskConfig = {
-                    createObjects: true,
-                    strictRevisionCheck: false
-                } 
-                const tasks = new STIGMAN.ClientModules.TaskObject({ apiAssets, apiStigs, parsedResults: parseResults.success, collectionId, options: taskConfig })
-                // Transform into data for SM.ReviewsImport.Grid
-                const results = {
-                    taskAssets: tasks.taskAssets,
-                    rows: [],
-                    dupedRows: [],
-                    errors: parseResults.fail,
-                    hasDuplicates: false
-                }
-                // Collate multiple checklists into duplicates and the single checklist for POSTing.
-                // Since the parsed files were sorted by ascending date order, the last
-                // item in each checklists array is from the most recently dated file and we will choose this item.
-                for (const taskAsset of tasks.taskAssets.values()) {
-                    for (const assetStigChecklists of taskAsset.checklists.values()) {
-                        if (assetStigChecklists.length > 1) {
-                            results.hasDuplicates = true
-                            const dupedChecklists = assetStigChecklists.slice(0, -1)
-                            const rowsToPush = dupedChecklists.map( checklist => ({ taskAsset, checklist }))
-                            results.dupedRows.push(...rowsToPush)
-                        }
-                        results.rows.push({ taskAsset, checklist: assetStigChecklists.slice(-1)[0]})
-                    }
-                    for (const ignoredChecklist of taskAsset.checklistsIgnored) {
-                        results.errors.push({
-                            file: ignoredChecklist.file,
-                            error: `Ignoring ${ignoredChecklist.benchmarkId} ${ignoredChecklist.revisionStr}. ${ignoredChecklist.ignored}`
+                    catch (e) {
+                        parseResults.fail.push({
+                            file: file,
+                            error: e.message
                         })
                     }
                 }
-                return results
+                else if (extension === 'cklb') {
+                    try {
+                        const r = STIGMAN.ClientModules.reviewsFromCklb({
+                            data, 
+                            fieldSettings: cachedCollection.settings.fields, 
+                            allowAccept: canAccept,
+                            importOptions: fp.parseOptionsFieldSet.getOptions()
+                        })
+                        r.file = file
+                        parseResults.success.push(r)
+                    }
+                    catch (e) {
+                        parseResults.fail.push({
+                            file: file,
+                            error: e.message
+                        })
+                    }
+                }
+                else if (extension === 'xml') {
+                    try {
+                        const r = STIGMAN.ClientModules.reviewsFromScc({
+                            data, 
+                            fieldSettings: cachedCollection.settings.fields, 
+                            allowAccept: canAccept,
+                            importOptions: fp.parseOptionsFieldSet.getOptions(),
+                            XMLParser,
+                            valueProcessor: tagValueProcessor,
+                            scapBenchmarkMap
+                        })
+                        r.file = file
+                        parseResults.success.push(r)
+                    }
+                    catch (e) {
+                        parseResults.fail.push({
+                            file: file,
+                            error: e.message
+                        })
+                    }
+                }
+                filesHandled++
+                pb.updateProgress(filesHandled / files.length)
             }
-            catch (e) {
-                throw (e)
+
+            apiAssetsResult = await apiAssetsResult
+            const apiAssets = JSON.parse(apiAssetsResult.response.responseText)
+
+            apiStigsResult = await apiStigsResult
+            const apiStigs = JSON.parse(apiStigsResult.response.responseText)
+
+            const taskConfig = {
+                createObjects: true,
+                strictRevisionCheck: false
+            } 
+            const tasks = new STIGMAN.ClientModules.TaskObject({ apiAssets, apiStigs, parsedResults: parseResults.success, collectionId, options: taskConfig })
+            // Transform into data for SM.ReviewsImport.Grid
+            const results = {
+                taskAssets: tasks.taskAssets,
+                rows: [],
+                dupedRows: [],
+                errors: parseResults.fail,
+                hasDuplicates: false
             }
+            // Collate multiple checklists into duplicates and the single checklist for POSTing.
+            // Since the parsed files were sorted by ascending date order, the last
+            // item in each checklists array is from the most recently dated file and we will choose this item.
+            for (const taskAsset of tasks.taskAssets.values()) {
+                for (const assetStigChecklists of taskAsset.checklists.values()) {
+                    if (assetStigChecklists.length > 1) {
+                        results.hasDuplicates = true
+                        const dupedChecklists = assetStigChecklists.slice(0, -1)
+                        const rowsToPush = dupedChecklists.map( checklist => ({ taskAsset, checklist }))
+                        results.dupedRows.push(...rowsToPush)
+                    }
+                    results.rows.push({ taskAsset, checklist: assetStigChecklists.slice(-1)[0]})
+                }
+                for (const ignoredChecklist of taskAsset.checklistsIgnored) {
+                    results.errors.push({
+                        file: ignoredChecklist.file,
+                        error: `Ignoring ${ignoredChecklist.benchmarkId} ${ignoredChecklist.revisionStr}. ${ignoredChecklist.ignored}`
+                    })
+                }
+            }
+            return results
         }
 
         function showErrors(results) {
@@ -2848,7 +2743,7 @@ async function showImportResultFile(params) {
                         headers: { 'Content-Type': 'application/json;charset=utf-8' },
                         jsonData: reviewArray
                     })
-                    apiReviews = JSON.parse(result.response.responseText)
+                    const apiReviews = JSON.parse(result.response.responseText)
                     return {
                         inserted: apiReviews.affected.inserted,
                         updated: apiReviews.affected.updated,
@@ -2870,7 +2765,7 @@ async function getScapBenchmarkMap() {
         url: `${STIGMAN.Env.apiBase}/stigs/scap-maps`,
         method: 'GET'
     })
-    apiScapMaps = JSON.parse(result.response.responseText)
+    const apiScapMaps = JSON.parse(result.response.responseText)
     return new Map(apiScapMaps.map(apiScapMap => [apiScapMap.scapBenchmarkId, apiScapMap.benchmarkId]))
 }
 
