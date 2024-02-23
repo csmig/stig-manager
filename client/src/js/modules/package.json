@@ -1,6 +1,6 @@
 {
   "dependencies": {
     "serialize-error": "^11.0.0",
-    "stig-manager-client-modules": "github:nuwcdivnpt/stig-manager-client-modules#semver:^1.4.0"
+    "stig-manager-client-modules": "github:nuwcdivnpt/stig-manager-client-modules"
   }
 }

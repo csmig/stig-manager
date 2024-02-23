@@ -6,19 +6,19 @@ SM.ReviewsImport.Grid = Ext.extend(Ext.grid.GridPanel, {
         const fields = [
             {
                 name: 'filename',
-                mapping: 'checklist.file.name'
+                mapping: 'checklist.sourceRef.name'
             },
             {
                 name: 'fullPath',
-                mapping: 'checklist.file.fullPath'
+                mapping: 'checklist.sourceRef.fullPath'
             },
             {
                 name: 'date',
-                mapping: 'checklist.file.lastModifiedDate'
+                mapping: 'checklist.sourceRef.lastModifiedDate'
             },
             {
                 name: 'file',
-                mapping: 'checklist.file'
+                mapping: 'checklist.sourceRef'
             },
             {
                 name: 'assetId',
@@ -81,7 +81,7 @@ SM.ReviewsImport.Grid = Ext.extend(Ext.grid.GridPanel, {
             reader: new Ext.data.JsonReader({
                 fields: fields,
                 // idProperty: (v) => `${v.filename}-${v.assetName}-${v.benchmarkId}`
-                idProperty: (v) => `${v.checklist.file.name}-${v.taskAsset.assetProps.name}-${v.checklist.benchmarkId}`
+                idProperty: (v) => `${v.checklist.sourceRef.name}-${v.taskAsset.assetProps.name}-${v.checklist.benchmarkId}`
             }),
             sortInfo: {
                 field: 'assetName',
@@ -2159,15 +2159,13 @@ async function showImportResultFiles(collectionId) {
                             fieldSettings: cachedCollection.settings.fields, 
                             allowAccept: canAccept,
                             importOptions: fp.parseOptionsFieldSet.getOptions(),
-                            XMLParser,
-                            valueProcessor: tagValueProcessor
+                            sourceRef: file
                         })
-                        r.file = file
                         parseResults.success.push(r)
                     }
                     catch (e) {
                         parseResults.fail.push({
-                            file: file,
+                            file,
                             error: e.message
                         })
                     }
@@ -2178,9 +2176,9 @@ async function showImportResultFiles(collectionId) {
                             data, 
                             fieldSettings: cachedCollection.settings.fields, 
                             allowAccept: canAccept,
-                            importOptions: fp.parseOptionsFieldSet.getOptions()
+                            importOptions: fp.parseOptionsFieldSet.getOptions(),
+                            sourceRef: file
                         })
-                        r.file = file
                         parseResults.success.push(r)
                     }
                     catch (e) {
@@ -2197,11 +2195,9 @@ async function showImportResultFiles(collectionId) {
                             fieldSettings: cachedCollection.settings.fields, 
                             allowAccept: canAccept,
                             importOptions: fp.parseOptionsFieldSet.getOptions(),
-                            XMLParser,
-                            valueProcessor: tagValueProcessor,
-                            scapBenchmarkMap
+                            scapBenchmarkMap,
+                            sourceRef: file
                         })
-                        r.file = file
                         parseResults.success.push(r)
                     }
                     catch (e) {
@@ -2222,10 +2218,11 @@ async function showImportResultFiles(collectionId) {
             const apiStigs = JSON.parse(apiStigsResult.response.responseText)
 
             const taskConfig = {
+                collectionId,
                 createObjects: true,
                 strictRevisionCheck: false
             } 
-            const tasks = new STIGMAN.ClientModules.TaskObject({ apiAssets, apiStigs, parsedResults: parseResults.success, collectionId, options: taskConfig })
+            const tasks = new STIGMAN.ClientModules.TaskObject({ apiAssets, apiStigs, parsedResults: parseResults.success, options: taskConfig })
             // Transform into data for SM.ReviewsImport.Grid
             const results = {
                 taskAssets: tasks.taskAssets,
@@ -2235,21 +2232,22 @@ async function showImportResultFiles(collectionId) {
                 hasDuplicates: false
             }
             // Collate multiple checklists into duplicates and the single checklist for POSTing.
-            // Since the parsed files were sorted by ascending date order, the last
+            // The parsed files are sorted in descending date order, the first
             // item in each checklists array is from the most recently dated file and we will choose this item.
             for (const taskAsset of tasks.taskAssets.values()) {
                 for (const assetStigChecklists of taskAsset.checklists.values()) {
                     if (assetStigChecklists.length > 1) {
                         results.hasDuplicates = true
-                        const dupedChecklists = assetStigChecklists.slice(0, -1)
+                        assetStigChecklists.sort((a,b) => b.sourceRef.lastModified - a.sourceRef.lastModified)
+                        const dupedChecklists = assetStigChecklists.slice(1)
                         const rowsToPush = dupedChecklists.map( checklist => ({ taskAsset, checklist }))
                         results.dupedRows.push(...rowsToPush)
                     }
-                    results.rows.push({ taskAsset, checklist: assetStigChecklists.slice(-1)[0]})
+                    results.rows.push({ taskAsset, checklist: assetStigChecklists[0]})
                 }
                 for (const ignoredChecklist of taskAsset.checklistsIgnored) {
                     results.errors.push({
-                        file: ignoredChecklist.file,
+                        file: ignoredChecklist.sourceRef,
                         error: `Ignoring ${ignoredChecklist.benchmarkId} ${ignoredChecklist.revisionStr}. ${ignoredChecklist.ignored}`
                     })
                 }
@@ -2328,7 +2326,7 @@ async function showImportResultFiles(collectionId) {
                         if (importReviews) {
                             let reviewsArray = []
                             for (const benchmarkId of taskAsset.checklists.keys()) {
-                                reviewsArray = reviewsArray.concat(taskAsset.checklists.get(benchmarkId).slice(-1)[0].reviews)
+                                reviewsArray = reviewsArray.concat(taskAsset.checklists.get(benchmarkId)[0].reviews)
                             }
                             const importReviewArrayResult = await importReviewArray(collectionId, assetId, reviewsArray)
                             updateStatusGrid({...importAssetResult, ...importReviewArrayResult})
@@ -2629,8 +2627,6 @@ async function showImportResultFile(params) {
                     fieldSettings: cachedCollection.settings.fields, 
                     allowAccept: canAccept,
                     importOptions: fp.parseOptionsFieldSet.getOptions(),
-                    XMLParser,
-                    valueProcessor: tagValueProcessor
                 })
             }
             else if (extension === 'cklb') {
@@ -2648,15 +2644,12 @@ async function showImportResultFile(params) {
                     fieldSettings: cachedCollection.settings.fields, 
                     allowAccept: canAccept,
                     importOptions: fp.parseOptionsFieldSet.getOptions(),
-                    XMLParser,
-                    valueProcessor: tagValueProcessor,
                     scapBenchmarkMap
                 })
             }
             else {
                 throw (new Error('Unknown file extension'))
             }
-            r.file = file
             return r
         }
 

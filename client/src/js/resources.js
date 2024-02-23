@@ -73,7 +73,6 @@ const scripts = [
   'js/ExportButton.js',
   'js/jszip.min.js',
   'js/FileSaver.js',
-  'js/fxparser.min.js',
   'js/jsonview.bundle.js',
   'js/stigman.js'
 ]
