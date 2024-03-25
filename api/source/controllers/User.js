@@ -193,3 +193,9 @@ module.exports.setUserData = async function setUserData (username, fields) {
   }
 }
 /* c8 ignore end */
+
+module.exports.createUserGroup = () => {}
+module.exports.getUserGroup = () => {}
+module.exports.patchUserGroup = () => {}
+module.exports.putUserGroup = () => {}
+module.exports.deleteUserGroup = () => {}

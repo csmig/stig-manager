@@ -3796,6 +3796,100 @@ paths:
       security:
         - oauth:
             - 'stig-manager:user'
+  /user-groups:
+    post:
+      tags:
+        - User
+      summary: Create a User Group
+      operationId: createUserGroup
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserGroupPostOrPut'
+      responses:
+        '201':
+          description: UserGroup response
+          content:
+            application/json:
+              schema:
+                  $ref: '#/components/schemas/UserGroupCreated'
+  '/user-groups/{userGroupId}':
+    get:
+      tags:
+        - User
+      summary: Return a User Group
+      operationId: getUserGroup
+      parameters:
+        - $ref: '#/components/parameters/UserGroupIdPath'
+        - $ref: '#/components/parameters/UserGroupProjectionQuery'
+      responses:
+        '200':
+          description: UserGroup response
+          content:
+            application/json:
+              schema:
+                  $ref: '#/components/schemas/UserGroupProjected'
+    patch: 
+      tags:
+        - User 
+      summary: Patch a User Group
+      operationId: patchUserGroup
+      parameters:
+        - $ref: '#/components/parameters/UserGroupIdPath'
+        - $ref: '#/components/parameters/UserGroupProjectionQuery'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserGroupPatch'
+      responses:
+        '200':
+          description: UserGroup response
+          content:
+            application/json:
+              schema:
+                  $ref: '#/components/schemas/UserGroupProjected'
+    put: 
+      tags:
+        - User 
+      summary: Replace a User Group
+      operationId: putUserGroup
+      parameters:
+        - $ref: '#/components/parameters/UserGroupIdPath'
+        - $ref: '#/components/parameters/UserGroupProjectionQuery'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserGroupPostOrPut'
+      responses:
+        '200':
+          description: UserGroup response
+          content:
+            application/json:
+              schema:
+                  $ref: '#/components/schemas/UserGroupProjected'
+    delete:
+      tags:
+        - User
+      summary: Delete a User Group
+      operationId: deleteUserGroup
+      parameters:
+        - $ref: '#/components/parameters/UserGroupIdPath'
+        - $ref: '#/components/parameters/UserGroupProjectionQuery'
+      responses:
+        '200':
+          description: UserGroup response
+          content:
+            application/json:
+              schema:
+                  $ref: '#/components/schemas/UserGroupProjected'
+         
+
 components:
   schemas:
     AccessLevel:
@@ -6919,6 +7013,76 @@ components:
           type: integer
           minimum: 1
           maximum: 4
+    UserGroupCreated:
+      type: object
+      additionalProperties: false
+      required:
+        - userGroupId
+        - name
+        - description
+      properties:
+        userGroupId:
+          $ref: '#/components/schemas/StringIntId'
+        name:
+          $ref: '#/components/schemas/String255'
+        description:
+          $ref: '#/components/schemas/String255'
+        userIds:
+          type: array
+          items:
+            $ref: '#/components/schemas/StringIntId'
+    UserGroupPatch:
+      type: object
+      additionalProperties: false
+      minProperties: 1
+      properties:
+        name:
+          $ref: '#/components/schemas/String255'
+        description:
+          $ref: '#/components/schemas/String255'
+        userIds:
+          type: array
+          items:
+            $ref: '#/components/schemas/StringIntId'
+    UserGroupProjected:
+      type: object
+      additionalProperties: false
+      required:
+        - userGroupId
+        - name
+        - description
+      properties:
+        userGroupId:
+          $ref: '#/components/schemas/StringIntId'
+        name:
+          $ref: '#/components/schemas/String255'
+        description:
+          $ref: '#/components/schemas/String255'
+        userIds:
+          type: array
+          items:
+            $ref: '#/components/schemas/StringIntId'
+        collectionIds:
+          type: array
+          items:
+            $ref: '#/components/schemas/StringIntId'
+    UserGroupPostOrPut:
+      type: object
+      additionalProperties: false
+      required:
+        - name
+        - description
+        - userIds
+      properties:
+        name:
+          $ref: '#/components/schemas/String255'
+        description:
+          $ref: '#/components/schemas/String255'
+        userIds:
+          type: array
+          items:
+            $ref: '#/components/schemas/StringIntId'
+
     UserPrivileges: 
       type: object
       additionalProperties: false
@@ -7538,6 +7702,27 @@ components:
       in: query
       schema:
         $ref: '#/components/schemas/AccessLevel'
+    UserGroupIdPath:
+      name: userGroupId
+      in: path
+      description: A path parameter that identifies a User Group
+      required: true
+      schema:
+        $ref: '#/components/schemas/StringIntId'
+    UserGroupProjectionQuery:
+      name: projection
+      in: query
+      description: Additional properties to include in the response.
+      style: form
+      explode: true
+      schema:
+        type: array
+        items:
+          type: string
+          enum:
+            - userIds
+            - collectionIds
+      
     UserIdPath:
       name: userId
       in: path
