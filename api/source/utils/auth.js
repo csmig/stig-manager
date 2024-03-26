@@ -5,7 +5,7 @@ const jwt = require('jsonwebtoken')
 const retry = require('async-retry')
 const _ = require('lodash')
 const {promisify} = require('util')
-const User = require(`../service/UserService`)
+const UserService = require(`../service/UserService`)
 const axios = require('axios')
 const SmError = require('./error')
 
@@ -63,7 +63,7 @@ const verifyRequest = async function (req, requiredScopes, securityDefinition) {
             privileges.canAdmin = privilegeGetter(decoded).includes('admin')
 
             req.userObject.privileges = privileges
-            const response = await User.getUserByUsername(req.userObject.username, ['collectionGrants', 'statistics'], false, null)   
+            const response = await UserService.getUserByUsername(req.userObject.username, ['collectionGrants', 'statistics'], false, null)   
             req.userObject.userId = response?.userId || null
             req.userObject.collectionGrants = response?.collectionGrants || []
             req.userObject.statistics = response?.statistics || {}
@@ -80,7 +80,7 @@ const verifyRequest = async function (req, requiredScopes, securityDefinition) {
                 refreshFields.lastClaims = decoded
             }
             if (req.userObject.username && (refreshFields.lastAccess || refreshFields.lastClaims)) {
-                const userId = await User.setUserData(req.userObject, refreshFields)
+                const userId = await UserService.setUserData(req.userObject, refreshFields)
                 if (userId != req.userObject.userId) {
                     req.userObject.userId = userId.toString()
                 }

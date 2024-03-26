@@ -1052,7 +1052,7 @@ paths:
     get:
       tags:
         - Collection
-      summary: Return an accessLevel = 1 User's access to the specified Collection. Request must be made by a User with accessLevel >= 3 to the Collection.
+      summary: Return an accessLevel = 1 User's effective and fully resolved access to the specified Collection. Request must be made by a User with accessLevel >= 3 to the Collection.
       operationId: getStigAssetsByCollectionUser
       responses:
         '200':
@@ -1074,11 +1074,42 @@ paths:
       security:
         - oauth:
             - 'stig-manager:collection:read'
+  '/collections/{collectionId}/grants/user/{userId}/access':
+    parameters:
+      - $ref: '#/components/parameters/CollectionIdPath'
+      - $ref: '#/components/parameters/UserIdPath'
+    get:
+      tags:
+        - Collection
+      summary: Return an accessLevel = 1 User's access rules for the specified Collection. Request must be made by a User with accessLevel >= 3 to the Collection.
+      operationId: getGrantsByCollectionUser
+      responses:
+        '200':
+          description: Collection StigAssetBasic array response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  anyOf:
+                   - $ref: '#/components/schemas/StigAssetBasic'
+                   - $ref: '#/components/schemas/StigLabelBasic'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      security:
+        - oauth:
+            - 'stig-manager:collection:read'
     put:
       tags:
         - Collection
-      summary: Set an accessLevel = 1 User's access to the specified Collection. Request must be made by a User with accessLevel >= 3 to the Collection.
-      operationId: setStigAssetsByCollectionUser
+      summary: Set an accessLevel = 1 User's access rules for the specified Collection. Request must be made by a User with accessLevel >= 3 to the Collection.
+      operationId: setGrantsByCollectionUser
       requestBody:
         required: true
         content:
@@ -1086,7 +1117,73 @@ paths:
             schema:
               type: array
               items:
-                $ref: '#/components/schemas/StigAssetPut'
+                anyOf:
+                 - $ref: '#/components/schemas/StigAssetPut'
+                 - $ref: '#/components/schemas/StigLabelPut'
+      responses:
+        '200':
+          description: StigAssetBasic array response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/StigAssetBasic'
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      security:
+        - oauth:
+            - 'stig-manager:collection'
+  '/collections/{collectionId}/grants/userGroups/{userGroupId}/access':
+    parameters:
+      - $ref: '#/components/parameters/CollectionIdPath'
+      - $ref: '#/components/parameters/UserGroupIdPath'
+    get:
+      tags:
+        - Collection
+      summary: Return an accessLevel = 1 User Group's access rules for the specified Collection. Request must be made by a User with accessLevel >= 3 to the Collection.
+      operationId: getGrantsByCollectionUserGroup
+      responses:
+        '200':
+          description: Collection StigAssetBasic array response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  anyOf:
+                   - $ref: '#/components/schemas/StigAssetBasic'
+                   - $ref: '#/components/schemas/StigLabelBasic'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      security:
+        - oauth:
+            - 'stig-manager:collection:read'
+    put:
+      tags:
+        - Collection
+      summary: Set an accessLevel = 1 User Group's access rules for the specified Collection. Request must be made by a User with accessLevel >= 3 to the Collection.
+      operationId: setGrantsByCollectionUserGroup
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                anyOf:
+                 - $ref: '#/components/schemas/StigAssetPut'
+                 - $ref: '#/components/schemas/StigLabelPut'
       responses:
         '200':
           description: StigAssetBasic array response
@@ -4754,7 +4851,9 @@ components:
         grants:
           type: array
           items:
-            $ref: '#/components/schemas/UserGrant'
+            anyOf:
+              - $ref: '#/components/schemas/UserGrant'
+              - $ref: '#/components/schemas/UserGroupGrant'
         labels:
           type: array
           items:
@@ -4922,7 +5021,9 @@ components:
         grants:
           type: array
           items:
-            $ref: '#/components/schemas/UserGrantProjected'     
+            anyOf:
+             - $ref: '#/components/schemas/UserGrantProjected'     
+             - $ref: '#/components/schemas/UserGroupGrantProjected'     
         owners:
           type: array
           items:
@@ -5187,12 +5288,9 @@ components:
         grants:
           type: array
           items:
-            type: object
-            properties:
-              userId:
-                type: string
-              accessLevel:
-                type: integer
+            anyOf:
+              - $ref: '#/components/schemas/UserGrant'     
+              - $ref: '#/components/schemas/UserGroupGrant'
     CommentaryString:
       type: string
       maxLength: 32767
@@ -6736,9 +6834,7 @@ components:
             $ref: '#/components/schemas/Revision'
     StigAssetPut:
       type: object
-      required:
-        - benchmarkId
-        - assetId
+      minProperties: 1
       additionalProperties: false
       properties:
         benchmarkId:
@@ -6747,15 +6843,31 @@ components:
           type: string
     StigAssetBasic:
       type: object
-      required:
-        - benchmarkId
-        - asset
+      minProperties: 1
       additionalProperties: false
       properties:
         benchmarkId:
           type: string
         asset:
           $ref: '#/components/schemas/AssetBasic'
+    StigLabelPut:
+      type: object
+      minProperties: 1
+      additionalProperties: false
+      properties:
+        benchmarkId:
+          type: string
+        labelId:
+          $ref: '#/components/schemas/StringUuid'
+    StigLabelBasic:
+      type: object
+      minProperties: 1
+      additionalProperties: false
+      properties:
+        benchmarkId:
+          type: string
+        label:
+          $ref: '#/components/schemas/LabelBasic'
     StigUserBasic:
       type: object
       required:
@@ -7013,6 +7125,17 @@ components:
           type: integer
           minimum: 1
           maximum: 4
+    UserGroupBasic:
+      type: object
+      additionalProperties: false
+      required:
+        - userGroupId
+        - name
+      properties:
+        userGroupId:
+          $ref: '#/components/schemas/UserGroupId'
+        name:
+          $ref: '#/components/schemas/String255'
     UserGroupCreated:
       type: object
       additionalProperties: false
@@ -7022,7 +7145,7 @@ components:
         - description
       properties:
         userGroupId:
-          $ref: '#/components/schemas/StringIntId'
+          $ref: '#/components/schemas/UserGroupId'
         name:
           $ref: '#/components/schemas/String255'
         description:
@@ -7031,6 +7154,34 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/StringIntId'
+    UserGroupGrant:
+      type: object
+      required:
+        - userGroupId
+        - accessLevel
+      additionalProperties: false
+      properties:
+        userGroupId:
+          $ref: '#/components/schemas/UserGroupId'
+        accessLevel:
+          type: integer
+          minimum: 1
+          maximum: 4
+    UserGroupGrantProjected:
+      type: object
+      required:
+        - userGroup          
+        - accessLevel
+      additionalProperties: false
+      properties:
+        userGroup:
+          $ref: '#/components/schemas/UserGroupBasic'
+        accessLevel:
+          type: integer
+          minimum: 1
+          maximum: 4
+    UserGroupId:
+      $ref: '#/components/schemas/StringIntId' 
     UserGroupPatch:
       type: object
       additionalProperties: false
@@ -7053,7 +7204,7 @@ components:
         - description
       properties:
         userGroupId:
-          $ref: '#/components/schemas/StringIntId'
+          $ref: '#/components/schemas/UserGroupId'
         name:
           $ref: '#/components/schemas/String255'
         description:
