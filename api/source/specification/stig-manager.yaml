@@ -3899,6 +3899,8 @@ paths:
         - User
       summary: Create a User Group
       operationId: createUserGroup
+      parameters:
+        - $ref: '#/components/parameters/ElevateQuery'
       requestBody:
         required: true
         content:
@@ -3912,6 +3914,26 @@ paths:
             application/json:
               schema:
                   $ref: '#/components/schemas/UserGroupCreated'
+      security:
+        - oauth:
+            - 'stig-manager:user'
+    get:
+      tags:
+        - User
+      summary: Get a list of User Groups accessible to the requester
+      operationId: getUserGroups
+      responses:
+        '200':
+          description: UserGroups response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/UserGroupBasic'
+      security:
+        - oauth:
+            - 'stig-manager:user:read'
   '/user-groups/{userGroupId}':
     get:
       tags:
@@ -3928,6 +3950,9 @@ paths:
             application/json:
               schema:
                   $ref: '#/components/schemas/UserGroupProjected'
+      security:
+        - oauth:
+            - 'stig-manager:user:read'
     patch: 
       tags:
         - User 
@@ -3935,6 +3960,7 @@ paths:
       operationId: patchUserGroup
       parameters:
         - $ref: '#/components/parameters/UserGroupIdPath'
+        - $ref: '#/components/parameters/ElevateQuery'
         - $ref: '#/components/parameters/UserGroupProjectionQuery'
       requestBody:
         required: true
@@ -3949,6 +3975,9 @@ paths:
             application/json:
               schema:
                   $ref: '#/components/schemas/UserGroupProjected'
+      security:
+        - oauth:
+            - 'stig-manager:user'
     put: 
       tags:
         - User 
@@ -3956,6 +3985,7 @@ paths:
       operationId: putUserGroup
       parameters:
         - $ref: '#/components/parameters/UserGroupIdPath'
+        - $ref: '#/components/parameters/ElevateQuery'
         - $ref: '#/components/parameters/UserGroupProjectionQuery'
       requestBody:
         required: true
@@ -3970,6 +4000,9 @@ paths:
             application/json:
               schema:
                   $ref: '#/components/schemas/UserGroupProjected'
+      security:
+        - oauth:
+            - 'stig-manager:user'
     delete:
       tags:
         - User
@@ -3977,6 +4010,7 @@ paths:
       operationId: deleteUserGroup
       parameters:
         - $ref: '#/components/parameters/UserGroupIdPath'
+        - $ref: '#/components/parameters/ElevateQuery'
         - $ref: '#/components/parameters/UserGroupProjectionQuery'
       responses:
         '200':
@@ -3985,8 +4019,9 @@ paths:
             application/json:
               schema:
                   $ref: '#/components/schemas/UserGroupProjected'
-         
-
+      security:
+        - oauth:
+            - 'stig-manager:user'
 components:
   schemas:
     AccessLevel:
@@ -7135,11 +7170,14 @@ components:
       required:
         - userGroupId
         - name
+        - description
       properties:
         userGroupId:
           $ref: '#/components/schemas/UserGroupId'
         name:
           $ref: '#/components/schemas/String255'
+        description:
+          $ref: '#/components/schemas/String255Nullable'
     UserGroupCreated:
       type: object
       additionalProperties: false
@@ -7153,7 +7191,7 @@ components:
         name:
           $ref: '#/components/schemas/String255'
         description:
-          $ref: '#/components/schemas/String255'
+          $ref: '#/components/schemas/String255Nullable'
         userIds:
           type: array
           items:
@@ -7194,7 +7232,7 @@ components:
         name:
           $ref: '#/components/schemas/String255'
         description:
-          $ref: '#/components/schemas/String255'
+          $ref: '#/components/schemas/String255Nullable'
         userIds:
           type: array
           items:
@@ -7212,7 +7250,7 @@ components:
         name:
           $ref: '#/components/schemas/String255'
         description:
-          $ref: '#/components/schemas/String255'
+          $ref: '#/components/schemas/String255Nullable'
         userIds:
           type: array
           items:
@@ -7232,7 +7270,7 @@ components:
         name:
           $ref: '#/components/schemas/String255'
         description:
-          $ref: '#/components/schemas/String255'
+          $ref: '#/components/schemas/String255Nullable'
         userIds:
           type: array
           items:

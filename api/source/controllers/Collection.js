@@ -1078,3 +1078,8 @@ module.exports.exportToCollection = async function (req, res, next) {
     next(err)
   }
 }
+
+module.exports.getGrantsByCollectionUser = () => {}
+module.exports.getGrantsByCollectionUserGroup = () => {}
+module.exports.setGrantsByCollectionUser = () => {}
+module.exports.setGrantsByCollectionUserGroup = () => {}
