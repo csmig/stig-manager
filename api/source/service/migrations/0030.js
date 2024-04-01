@@ -8,22 +8,30 @@ const upMigration = [
     description VARCHAR(255) NULL,
     createdUserId INT NOT NULL,
     createdDate DATETIME DEFAULT CURRENT_TIMESTAMP, 
-    lastModifiedUserId INT NOT NULL,
-    lastModifiedDate DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP, 
+    modifiedUserId INT NOT NULL,
+    modifiedDate DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP, 
     PRIMARY KEY (userGroupId),
-    UNIQUE INDEX idx_name (name ASC) VISIBLE
+    UNIQUE INDEX idx_name (name ASC),
+    INDEX fk_user_group_1_idx (createdUserId ASC),
+    INDEX fk_user_group_2_idx (modifiedUserId ASC),
+    CONSTRAINT fk_user_group_1
+      FOREIGN KEY (createdUserId)
+      REFERENCES user_data (userId)
+      ON DELETE RESTRICT
+      ON UPDATE RESTRICT,
+    CONSTRAINT fk_user_group_2
+      FOREIGN KEY (modifiedUserId)
+      REFERENCES user_data (userId)
+      ON DELETE RESTRICT
+      ON UPDATE RESTRICT
   ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci`,
   
-  // table user_group_map
-  `CREATE TABLE user_group_map (
-    ugmId INT NOT NULL AUTO_INCREMENT,
+  // table user_group_user_map
+  `CREATE TABLE user_group_user_map (
+    ugumId INT NOT NULL AUTO_INCREMENT,
     userGroupId INT NOT NULL,
     userId INT NOT NULL,
-    createdUserId INT NOT NULL,
-    createdDate DATETIME DEFAULT CURRENT_TIMESTAMP, 
-    lastModifiedUserId INT NOT NULL,
-    lastModifiedDate DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP, 
-    PRIMARY KEY (ugmId),
+    PRIMARY KEY (ugumId),
     UNIQUE KEY INDEX_UG_USER (userGroupId,userId),
     INDEX fk_user_group_map_2_idx (userId ASC) VISIBLE,
     CONSTRAINT fk_user_group_map_1
@@ -44,10 +52,6 @@ const upMigration = [
     collectionId int NOT NULL,
     userGroupId int NOT NULL,
     accessLevel int NOT NULL,
-    createdUserId INT NOT NULL,
-    createdDate DATETIME DEFAULT CURRENT_TIMESTAMP, 
-    lastModifiedUserId INT NOT NULL,
-    lastModifiedDate DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP, 
     PRIMARY KEY (cggId),
     UNIQUE KEY INDEX_UG_COLLECTION (userGroupId,collectionId),
     KEY INDEX_COLLECTION_ACCESS (collectionId,accessLevel),
@@ -60,10 +64,6 @@ const upMigration = [
     id int NOT NULL AUTO_INCREMENT,
     userGroupId int NOT NULL,
     saId int NOT NULL,
-    createdUserId INT NOT NULL,
-    createdDate DATETIME DEFAULT CURRENT_TIMESTAMP, 
-    lastModifiedUserId INT NOT NULL,
-    lastModifiedDate DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP, 
     PRIMARY KEY (id),
     KEY fk_user_group_stig_asset_map_2 (userGroupId),
     KEY fk_user_group_stig_asset_map_1 (saId),

@@ -475,6 +475,40 @@ module.exports.retryOnDeadlock = async function (fn, statusObj = {}) {
   })
 }
 
+module.exports.retryOnDeadlock2 = async function ({ transactionFn, statusObj = {}, beforeReleaseFn, afterRollbackFn}) {
+  const connection = await _this.pool.getConnection()
+  const retryFunction = async function (bail) {
+    try {
+      connection.query('START TRANSACTION')
+      const transactionReturn = await transactionFn(connection)
+      connection.commit()
+      return transactionReturn
+    }
+    catch (e) {
+      if (e.code === 'ER_LOCK_DEADLOCK') {
+        throw(e)
+      }
+      await connection.rollback()
+      afterRollbackFn?.(connection)
+      beforeReleaseFn?.(connection)
+      await connection.release()
+      bail(e)
+    }
+  }
+  statusObj.retries = 0
+  return  await retry(retryFunction, {
+    retries: 15,
+    factor: 1,
+    minTimeout: 200,
+    maxTimeout: 200,
+    onRetry: () => {
+      ++statusObj.retries
+    }
+  })
+  // return returnValue
+
+}
+
 module.exports.pruneCollectionRevMap = async function (connection) {
   const sql = `delete crm from collection_rev_map crm
   left join( select distinct a.collectionId, sa.benchmarkId from stig_asset_map sa left join asset a using (assetId) where a.state = "enabled" ) maps using (collectionId, benchmarkId)

@@ -3922,6 +3922,8 @@ paths:
         - User
       summary: Get a list of User Groups accessible to the requester
       operationId: getUserGroups
+      parameters:
+        - $ref: '#/components/parameters/UserGroupProjectionQuery'
       responses:
         '200':
           description: UserGroups response
@@ -4404,6 +4406,22 @@ components:
           type: array
           items:
             type: string
+    Attribution:
+      type: object
+      properties:
+        userId:
+          $ref: '#/components/schemas/UserId'
+        username:
+          $ref: '#/components/schemas/Username'
+        ts:
+          $ref: '#/components/schemas/StringDateTime'
+    Attributions:
+      type: object
+      properties:
+        created:
+          $ref: '#/components/schemas/Attribution'
+        modified:
+          $ref: '#/components/schemas/Attribution'
     BenchmarkId:
         type: string           
     Cci:
@@ -7077,6 +7095,10 @@ components:
         email:
           type: string
           nullable: true
+    UserId:
+      $ref: '#/components/schemas/StringIntId'
+    Username:
+      $ref: '#/components/schemas/String255'
     UserProjected:
       type: object
       required:
@@ -7185,6 +7207,8 @@ components:
         - userGroupId
         - name
         - description
+        - userIds
+        - attributions
       properties:
         userGroupId:
           $ref: '#/components/schemas/UserGroupId'
@@ -7196,6 +7220,9 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/StringIntId'
+        attributions:
+          $ref: '#/components/schemas/Attributions'
+
     UserGroupGrant:
       type: object
       required:
@@ -7259,13 +7286,15 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/StringIntId'
+        attributions:
+          $ref: '#/components/schemas/Attributions'
+
     UserGroupPostOrPut:
       type: object
       additionalProperties: false
       required:
         - name
         - description
-        - userIds
       properties:
         name:
           $ref: '#/components/schemas/String255'
@@ -7273,6 +7302,7 @@ components:
           $ref: '#/components/schemas/String255Nullable'
         userIds:
           type: array
+          uniqueItems: true
           items:
             $ref: '#/components/schemas/StringIntId'
 
@@ -7915,6 +7945,7 @@ components:
           enum:
             - userIds
             - collectionIds
+            - attributions
       
     UserIdPath:
       name: userId

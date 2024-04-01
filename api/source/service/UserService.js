@@ -356,3 +356,92 @@ exports.setUserData = async function (userObject, fields) {
   return result.insertId
 }
 
+exports.addOrUpdateUserGroup = async function ({userGroupId, userGroupFields, userIds, createdUserId, modifiedUserId, svcStatus = {}}) {
+  // CREATE: userGroupId is falsey
+  // REPLACE/UPDATE: userGroupId is not falsey
+  const isUpdate = !!userGroupId
+
+  const sqlInsertUserGroup = `INSERT into user_group (name, description, createdUserId, modifiedUserId) VALUES (?,?,?,?)`
+  const sqlUpdateUserGroup = `UPDATE user_group SET ? WHERE userGroupId = ?`
+  const sqlInsertUserGroupUserMap = `INSERT into user_group_user_map (userGroupId, userId) VALUES ?`
+  const sqlDeleteUserGroupUserMap = `DELETE from user_group_user_map WHERE userGroupId = ?`
+
+  async function transactionFn (connection) {
+    if (Object.keys(userGroupFields).length) {
+      const sql = isUpdate ? sqlUpdateUserGroup : sqlInsertUserGroup
+      const binds = isUpdate ? [userGroupFields, userGroupId] : [userGroupFields.name, userGroupFields.description, createdUserId, modifiedUserId]
+      const [resultUserGroup] = await connection.query(sql, binds)
+      userGroupId = isUpdate ? userGroupId : resultUserGroup.insertId
+    }
+    if (userIds) {
+      if (isUpdate) {
+        await connection.query(sqlDeleteUserGroupUserMap, [userGroupId])
+      }
+      if (userIds.length) {
+        const binds = userIds.map( userId => [userGroupId, userId])
+        await connection.query(
+          sqlInsertUserGroupUserMap,
+          [binds]
+        ) 
+      }
+    }
+    return userGroupId
+  }
+
+  return dbUtils.retryOnDeadlock2({
+    transactionFn, 
+    statusObj: svcStatus
+  })
+}
+
+exports.queryUserGroups = async function ({projections = [], filters = {}, elevate = false, userObject = {}}) {
+  // query components
+  const columns = [
+    'CAST(ug.userGroupId as char) as userGroupId',
+    'ug.name',
+    'ug.description'
+  ]
+  const joins = [
+    `user_group ug`
+  ]
+  const groupBy = []
+  const orderBy = ['name']
+  const predicates = {
+    statements: [],
+    binds: []
+  }
+
+  // predicates
+  if (filters.userGroupId) {
+    predicates.statements.push('ug.userGroupId = ?')
+    predicates.binds.push(filters.userGroupId)
+  }
+
+  // projections
+  if (projections.includes('attributions')) {
+    joins.push(
+      'left join user_data udCreated on ug.createdUserId = udCreated.userId',
+      'left join user_data udModified on ug.modifiedUserId = udModified.userId',
+    )
+    columns.push(`json_object(
+      'created', json_object(
+        'userId', ug.createdUserId,
+        'username', udCreated.username,
+        'ts', DATE_FORMAT(ug.createdDate, '%Y-%m-%dT%H:%i:%sZ') 
+        ),
+      'modified', json_object(
+        'userId', ug.modifiedUserId,
+        'username', udModified.username,
+        'ts', DATE_FORMAT(ug.modifiedDate, '%Y-%m-%dT%H:%i:%sZ')
+        )
+    ) as attributions`)
+  }
+  if (projections.includes('userIds')) {
+    joins.push('left join user_group_user_map ugu using (userGroupId)')
+    groupBy.push('ug.userGroupId')
+    columns.push(`CASE WHEN count(ugu.userId)=0 THEN json_array() ELSE json_arrayagg(cast(ugu.userId as char)) END as userIds`)
+  }
+  const sql = dbUtils.makeQueryString({columns, joins, predicates, groupBy, orderBy})
+  const [rows] = await dbUtils.pool.query(sql, predicates.binds)
+  return (rows)
+}

@@ -194,8 +194,74 @@ module.exports.setUserData = async function setUserData (username, fields) {
 }
 /* c8 ignore end */
 
-module.exports.createUserGroup = () => {}
-module.exports.getUserGroup = () => {}
-module.exports.patchUserGroup = () => {}
-module.exports.putUserGroup = () => {}
-module.exports.deleteUserGroup = () => {}
+module.exports.createUserGroup = async (req, res, next) => {
+  try {
+    if (!req.query.elevate) throw new SmError.PrivilegeError()
+    const {userIds, ...userGroupFields} = req.body
+    const userGroupId = await UserService.addOrUpdateUserGroup({
+      userGroupFields,
+      userIds,
+      createdUserId: req.userObject.userId,
+      modifiedUserId: req.userObject.userId
+    })
+    const response = await UserService.queryUserGroups({
+      projections: ['userIds', 'attributions'],
+      filters: {userGroupId}
+    })
+    res.json(response[0])
+  }
+  catch (err) {
+    next(err)
+  }
+}
+
+module.exports.getUserGroups = async (req, res, next) => {
+  try {
+    const response = await UserService.queryUserGroups({
+      projections: req.query.projection
+    })
+    res.json(response)
+  }
+  catch (err) {
+    next(err)
+  }
+}
+
+module.exports.getUserGroup = async (req, res, next) => {
+  try {
+    const response = await UserService.queryUserGroups({
+      projections: req.query.projection,
+      filters: {userGroupId: req.params.userGroupId}
+    })
+    res.json(response[0])
+  }
+  catch (err) {
+    next(err)
+  }
+}
+
+async function putOrPatchUserGroup (req, res, next) {
+  try {
+    if (!req.query.elevate) throw new SmError.PrivilegeError()
+    const {userIds, ...userGroupFields} = req.body
+    const userGroupId = await UserService.addOrUpdateUserGroup({
+      userGroupId: req.params.userGroupId,
+      userGroupFields,
+      userIds,
+      modifiedUserId: req.userObject.userId
+    })
+    const response = await UserService.queryUserGroups({
+      projections: req.query.projection,
+      filters: {userGroupId}
+    })
+    res.json(response[0])
+  }
+  catch (err) {
+    next(err)
+  }
+}
+
+module.exports.patchUserGroup = putOrPatchUserGroup
+module.exports.putUserGroup = putOrPatchUserGroup
+
+module.exports.deleteUserGroup = async (req, res, next) => {}
