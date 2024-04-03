@@ -401,10 +401,8 @@ exports.queryUserGroups = async function ({projections = [], filters = {}, eleva
     'ug.name',
     'ug.description'
   ]
-  const joins = [
-    `user_group ug`
-  ]
-  const groupBy = []
+  const joins = new Set([`user_group ug`])
+  const groupBy = new Set()
   const orderBy = ['name']
   const predicates = {
     statements: [],
@@ -419,10 +417,8 @@ exports.queryUserGroups = async function ({projections = [], filters = {}, eleva
 
   // projections
   if (projections.includes('attributions')) {
-    joins.push(
-      'left join user_data udCreated on ug.createdUserId = udCreated.userId',
-      'left join user_data udModified on ug.modifiedUserId = udModified.userId',
-    )
+    joins.add('left join user_data udCreated on ug.createdUserId = udCreated.userId')
+    joins.add('left join user_data udModified on ug.modifiedUserId = udModified.userId')
     columns.push(`json_object(
       'created', json_object(
         'userId', ug.createdUserId,
@@ -437,11 +433,46 @@ exports.queryUserGroups = async function ({projections = [], filters = {}, eleva
     ) as attributions`)
   }
   if (projections.includes('userIds')) {
-    joins.push('left join user_group_user_map ugu using (userGroupId)')
-    groupBy.push('ug.userGroupId')
-    columns.push(`CASE WHEN count(ugu.userId)=0 THEN json_array() ELSE json_arrayagg(cast(ugu.userId as char)) END as userIds`)
+    joins.add('left join user_group_user_map ugu using (userGroupId)')
+    groupBy.add('ug.userGroupId')
+    columns.push(`CASE WHEN count(ugu.userId)=0 
+    THEN json_array()
+    ELSE json_arrayagg(cast(ugu.userId as char))
+    END as userIds`)
   }
-  const sql = dbUtils.makeQueryString({columns, joins, predicates, groupBy, orderBy})
-  const [rows] = await dbUtils.pool.query(sql, predicates.binds)
+  if (projections.includes('users')) {
+    joins.add('left join user_group_user_map ugu using (userGroupId)')
+    joins.add('left join user_data udUser on ugu.userId = udUser.userId')
+    groupBy.add('ug.userGroupId')
+    columns.push(`CASE WHEN count(ugu.userId)=0 
+    THEN json_array()
+    ELSE json_arrayagg(json_object(
+      'userId', cast(ugu.userId as char),
+      'username', udUser.username)
+    )
+    END as users`)
+  }
+  if (projections.includes('collectionIds')) {
+    joins.add('left join collection_grant_group cgg using (userGroupId)')
+    groupBy.add('ug.userGroupId')
+    columns.push(`CASE WHEN count(cgg.collectionId)=0 
+    THEN json_array()
+    ELSE json_arrayagg(cast(cgg.collectionId as char))
+    END as collectionIds`)
+  }
+  if (projections.includes('collections')) {
+    joins.add('left join collection_grant_group cgg using (userGroupId)')
+    joins.add('left join collection on cgg.collectionId = collection.collectionId')
+    groupBy.add('ug.userGroupId')
+    columns.push(`CASE WHEN count(cgg.collectionId)=0 
+    THEN json_array()
+    ELSE json_arrayagg(json_object(
+      'collectionId', cast(cgg.collectionId as char),
+      'name', collection.name)
+    )
+    END as collections`)
+  }
+  const sql = dbUtils.makeQueryString({columns, joins, predicates, groupBy, orderBy, format: true})
+  const [rows] = await dbUtils.pool.query(sql)
   return (rows)
 }

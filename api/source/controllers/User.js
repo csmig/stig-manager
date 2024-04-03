@@ -233,6 +233,7 @@ module.exports.getUserGroup = async (req, res, next) => {
       projections: req.query.projection,
       filters: {userGroupId: req.params.userGroupId}
     })
+    if (!response[0]) throw new SmError.NotFoundError()
     res.json(response[0])
   }
   catch (err) {

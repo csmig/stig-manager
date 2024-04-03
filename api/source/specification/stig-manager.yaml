@@ -7282,10 +7282,18 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/StringIntId'
+        users:
+          type: array
+          items:
+            $ref: '#/components/schemas/UserBasic'
         collectionIds:
           type: array
           items:
             $ref: '#/components/schemas/StringIntId'
+        collections:
+          type: array
+          items:
+            $ref: '#/components/schemas/CollectionBasic'
         attributions:
           $ref: '#/components/schemas/Attributions'
 
@@ -7944,7 +7952,9 @@ components:
           type: string
           enum:
             - userIds
+            - users
             - collectionIds
+            - collections
             - attributions
       
     UserIdPath:
