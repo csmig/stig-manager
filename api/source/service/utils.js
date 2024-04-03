@@ -127,7 +127,6 @@ module.exports.initializeDatabase = async function () {
       logger.writeInfo('mysql', 'setup', { message: 'No existing tables detected. Setting up new database.' })
       await setupInitialDatabase(_this.pool)
       logger.writeInfo('mysql', 'setup', { message: 'Database setup complete.' })
-      return
     }
     // Perform migrations
     const umzug = new Umzug({

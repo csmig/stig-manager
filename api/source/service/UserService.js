@@ -474,7 +474,7 @@ exports.queryUserGroups = async function ({projections = [], filters = {}, eleva
   }
   const sql = dbUtils.makeQueryString({columns, joins, predicates, groupBy, orderBy, format: true})
   const [rows] = await dbUtils.pool.query(sql)
-  return (rows)
+  return rows
 }
 
 exports.deleteUserGroup = async function({userGroupId}) {

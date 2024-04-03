@@ -2,6 +2,7 @@
 const dbUtils = require('./utils')
 const config = require('../utils/config.js')
 const MyController = require('../controllers/Collection')
+const SmError = require('../utils/error.js')
 
 const _this = this
 
@@ -610,7 +611,6 @@ exports.addOrUpdateCollection = async function(writeAction, collectionId, body, 
       await connection.query('START TRANSACTION');
 
       // Process scalar properties
-      let binds =  { ...collectionFields}
       if (writeAction === dbUtils.WRITE_ACTION.CREATE) {
         // INSERT into collections
         let sqlInsert =
@@ -619,41 +619,46 @@ exports.addOrUpdateCollection = async function(writeAction, collectionId, body, 
             (name, description, settings, metadata)
           VALUES
             (:name, :description, :settings, :metadata)`
-        let [rows] = await connection.execute(sqlInsert, binds)
+        let [rows] = await connection.execute(sqlInsert, collectionFields)
         collectionId = rows.insertId
       }
       else if (writeAction === dbUtils.WRITE_ACTION.UPDATE || writeAction === dbUtils.WRITE_ACTION.REPLACE) {
-        if (Object.keys(binds).length > 0) {
+        if (Object.keys(collectionFields).length > 0) {
           // UPDATE into collections
-          let sqlUpdate =
-          `UPDATE
-              collection
-            SET
-              ?
-            WHERE
-              collectionId = ?`
+          const sqlUpdate = `UPDATE collection SET ?  WHERE collectionId = ?`
           await connection.query(sqlUpdate, [collectionFields, collectionId])
         }
       }
       else {
-        throw ( {status: 500, message: 'Invalid writeAction'} )
+        throw new SmError.InternalError('Invalid writeAction')
       }
   
       // Process grants
       if (grants && writeAction !== dbUtils.WRITE_ACTION.CREATE) {
         // DELETE from collection_grant
-        let sqlDeleteGrants = 'DELETE FROM collection_grant where collectionId = ?'
-        await connection.execute(sqlDeleteGrants, [collectionId])
+        const sqlDeleteUserGrants = 'DELETE FROM collection_grant where collectionId = ?'
+        await connection.execute(sqlDeleteUserGrants, [collectionId])
+        const sqlDeleteGroupGrants = 'DELETE FROM collection_grant_group where collectionId = ?'
+        await connection.execute(sqlDeleteGroupGrants, [collectionId])
       }
       if (grants && grants.length > 0) {
-        // INSERT into collection_grant
-        let sqlInsertGrants = `
-          INSERT INTO 
-          collection_grant (collectionId, userId, accessLevel)
-          VALUES
-            ?`      
-        let binds = grants.map(i => [collectionId, i.userId, i.accessLevel])
-        await connection.query(sqlInsertGrants, [binds])
+        const grantsByIdType = grants.reduce((accumulator, currentValue) => {
+          accumulator[currentValue.userId ? 'userGrants' : 'groupGrants'].push(currentValue)
+          return accumulator
+        }, {userGrants:[], groupGrants:[]})
+
+        if (grantsByIdType.userGrants.length) {
+          // INSERT into collection_grant
+          const sqlInsertUserGrants = `INSERT INTO collection_grant (collectionId, userId, accessLevel) VALUES ?`      
+          const binds = grantsByIdType.userGrants.map(i => [collectionId, i.userId, i.accessLevel])
+          await connection.query(sqlInsertUserGrants, [binds])
+        }
+        if (grantsByIdType.groupGrants.length) {
+          // INSERT into collection_grant_group
+          const sqlInsertGroupGrants = `INSERT INTO collection_grant_group (collectionId, userGroupId, accessLevel) VALUES ?`      
+          const binds = grantsByIdType.groupGrants.map(i => [collectionId, i.userGroupId, i.accessLevel])
+          await connection.query(sqlInsertGroupGrants, [binds])
+        }
       }
   
       // Process labels

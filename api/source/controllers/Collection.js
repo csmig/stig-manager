@@ -41,7 +41,7 @@ module.exports.createCollection = async function createCollection (req, res, nex
     const body = req.body
     if ( elevate || req.userObject.privileges.canCreateCollection ) {
       if (!hasUniqueGrants(body.grants)) {
-        throw new SmError.UnprocessableError('Duplicate user in grant array')
+        throw new SmError.UnprocessableError('Duplicate user or user group in grant array')
       }  
       try {
         const response = await CollectionService.createCollection( body, projection, req.userObject, res.svcStatus)
@@ -358,17 +358,21 @@ module.exports.updateCollection = async function updateCollection (req, res, nex
 }
 
 function hasUniqueGrants(requestedGrants) {
-  const requestedUsers = {}
+  const userItems = {}
+  const userGroupItems = {}
   for (const grant of requestedGrants) {
-    if (requestedUsers[grant.userId]) return false
-    requestedUsers[grant.userId] = true
+    if (userItems[grant.userId]) return false
+    if (userGroupItems[grant.userGroupId]) return false
+    const itemsObject = grant.userId ? userItems : userGroupItems
+    itemsObject[grant.userId ?? grant.userGroupId] = true
   }
   return true
 }
 
 function requestedOwnerGrantsMatchExisting(requestedGrants, existingGrants) {
   const accumulateOwners = (accumulator, currentValue) => {
-    if (currentValue.accessLevel === Security.ACCESS_LEVEL.Owner) accumulator.push(currentValue.userId)
+    if (currentValue.accessLevel === Security.ACCESS_LEVEL.Owner) 
+      accumulator.push(currentValue.userId ? `U${currentValue.userId}` : `UG${currentValue.userGroupId}`)
     return accumulator
   }
   const haveSameSet = (a, b) => {
@@ -377,10 +381,7 @@ function requestedOwnerGrantsMatchExisting(requestedGrants, existingGrants) {
   const existingOwners = existingGrants.reduce(accumulateOwners, [])
   const requestedOwners = requestedGrants.reduce(accumulateOwners, [])
   
-  if ( existingOwners.length !== requestedOwners.length || !haveSameSet(existingOwners, requestedOwners)) {
-    return false
-  }
-  return true
+  return !(existingOwners.length !== requestedOwners.length || !haveSameSet(existingOwners, requestedOwners))
 }
 
 
