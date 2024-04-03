@@ -265,4 +265,20 @@ async function putOrPatchUserGroup (req, res, next) {
 module.exports.patchUserGroup = putOrPatchUserGroup
 module.exports.putUserGroup = putOrPatchUserGroup
 
-module.exports.deleteUserGroup = async (req, res, next) => {}
+module.exports.deleteUserGroup = async (req, res, next) => {
+  try{
+    if (!req.query.elevate) throw new SmError.PrivilegeError()
+    const response = await UserService.queryUserGroups({
+      projections: req.query.projection,
+      filters: {userGroupId: req.params.userGroupId}
+    })
+    await UserService.deleteUserGroup({
+      userGroupId: req.params.userGroupId,
+    })
+    res.json(response[0])
+  }
+  catch (err) {
+    next(err)
+  }
+}
+
