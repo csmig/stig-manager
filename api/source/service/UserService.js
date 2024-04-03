@@ -478,12 +478,7 @@ exports.queryUserGroups = async function ({projections = [], filters = {}, eleva
 }
 
 exports.deleteUserGroup = async function({userGroupId}) {
-  try{
     const sqlDeleteUserGroup = `DELETE from user_group WHERE userGroupId = ?`
     await dbUtils.pool.query(sqlDeleteUserGroup, [userGroupId])
     return userGroupId
-  }
-  catch(err) {
-    throw ( {status: 500, message: err.message, stack: err.stack} )
-  }
 }
