@@ -69,7 +69,49 @@ const upMigration = [
     KEY fk_user_group_stig_asset_map_1 (saId),
     CONSTRAINT fk_user_group_stig_asset_map_1 FOREIGN KEY (saId) REFERENCES stig_asset_map (saId) ON DELETE CASCADE ON UPDATE CASCADE,
     CONSTRAINT fk_user_group_stig_asset_map_2 FOREIGN KEY (userGroupId) REFERENCES user_group (userGroupId) ON DELETE CASCADE ON UPDATE CASCADE
-  ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci`
+  ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci`,
+
+  // view v_collection_grant_effective
+  `CREATE OR REPLACE VIEW v_collection_grant_effective AS
+  select collectionId, userId, accessLevel from collection_grant
+  union 
+  select
+      cgg.collectionId, 
+      ugu.userId, 
+      max(cgg.accessLevel) as accessLevel
+    from 
+      collection_grant_group cgg 
+      left join user_group_user_map ugu using (userGroupId)
+      left join collection_grant cg on (cgg.collectionId = cg.collectionId and ugu.userId = cg.userId)
+    where
+      cg.userId is null
+    group by
+      cgg.collectionId, 
+      ugu.userId`,
+  
+  // view v_user_stig_asset_effective
+  `CREATE OR REPLACE VIEW v_user_stig_asset_effective AS
+  select  userId, saId from user_stig_asset_map
+  union 
+  select
+	  ugu.userId, 
+	  ugsa.saId
+	from 
+	  user_group_stig_asset_map ugsa 
+	  left join user_group_user_map ugu using (userGroupId)
+	  left join user_stig_asset_map usa on (ugsa.saId = usa.saId and ugu.userId = usa.userId)
+	where
+	  usa.id is null`,
+    
+  // delete phantom records from user_stig_asset_map
+  `delete usa
+  from
+    user_stig_asset_map usa
+    left join stig_asset_map sa using (saId)
+    left join asset a on sa.assetId = a.assetId
+    left join collection_grant cg on (a.collectionId = cg.collectionId and usa.userId = cg.userId and cg.accessLevel = 1)
+  where 
+    cg.cgId is null`
 ]
 
 const downMigration = [

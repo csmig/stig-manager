@@ -208,7 +208,7 @@ module.exports.createUserGroup = async (req, res, next) => {
       projections: ['userIds', 'attributions'],
       filters: {userGroupId}
     })
-    res.json(response[0])
+    res.status(201).json(response[0])
   }
   catch (err) {
     next(err)

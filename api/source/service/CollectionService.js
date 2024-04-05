@@ -68,20 +68,32 @@ exports.queryCollections = async function (inProjection = [], inPredicates = {},
     if (inProjection.includes('grants')) {
       columns.push(`(select
         coalesce(
-          (select json_arrayagg(
-            json_object(
-              'user', json_object(
+          (select json_arrayagg(grantJson) from
+            (select
+              json_object(
+                'user', json_object(
                 'userId', CAST(user_data.userId as char),
                 'username', user_data.username,
                 'displayName', COALESCE(
                   JSON_UNQUOTE(JSON_EXTRACT(user_data.lastClaims, "$.${config.oauth.claims.name}")),
-                  user_data.username)
-                ),
-              'accessLevel', accessLevel
-            )
-          )
-          from collection_grant left join user_data using (userId) where collectionId = c.collectionId)
-        ,  json_array()
+                  user_data.username)),
+                'accessLevel', accessLevel
+              ) as grantJson
+            from
+              collection_grant left join user_data using (userId) where collectionId = c.collectionId
+            UNION
+            select
+              json_object(
+                'userGroup', json_object(
+                  'userGroupId', CAST(user_group.userGroupId as char),
+                  'name', user_group.name,
+                  'description', user_group.description
+                  ),
+                'accessLevel', accessLevel
+              ) as grantJson
+            from collection_grant_group left join user_group using (userGroupId) where collectionId = c.collectionId
+          ) as grantJsons)
+        , json_array()
         )
       ) as "grants"`)
     }
@@ -179,7 +191,7 @@ exports.queryCollections = async function (inProjection = [], inPredicates = {},
     if (predicates.statements.length > 0) {
       sql += "\nWHERE " + predicates.statements.join(" and ")
     }
-    sql += ' group by c.collectionId, c.name, c.description, c.settings, c.metadata'
+    sql += ' group by c.collectionId'
     sql += ' order by c.name'
     
     // perform concurrent labels query
