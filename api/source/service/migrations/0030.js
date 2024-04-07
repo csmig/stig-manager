@@ -73,21 +73,36 @@ const upMigration = [
 
   // view v_collection_grant_effective
   `CREATE OR REPLACE VIEW v_collection_grant_effective AS
-  select collectionId, userId, accessLevel from collection_grant
+  select 
+    collectionId,
+    userId,
+    accessLevel,
+    'user' AS grantSource,
+    userId as grantSourceId
+  from
+    collection_grant
   union 
   select
-      cgg.collectionId, 
-      ugu.userId, 
-      max(cgg.accessLevel) as accessLevel
-    from 
-      collection_grant_group cgg 
-      left join user_group_user_map ugu using (userGroupId)
-      left join collection_grant cg on (cgg.collectionId = cg.collectionId and ugu.userId = cg.userId)
+    collectionId,
+    userId,
+    accessLevel,
+    'userGroup' as grantSource,
+    userGroupId as grantSourceId
+    from
+      (select
+        ROW_NUMBER() OVER(PARTITION BY ugu.userId, cgg.collectionId ORDER BY cgg.accessLevel desc) as rn,
+        cgg.collectionId, 
+        ugu.userId, 
+        cgg.accessLevel,
+        cgg.userGroupId
+      from 
+        collection_grant_group cgg 
+        left join user_group_user_map ugu using (userGroupId)
+        left join collection_grant cg on (cgg.collectionId = cg.collectionId and ugu.userId = cg.userId)
+      where
+        cg.userId is null) dt
     where
-      cg.userId is null
-    group by
-      cgg.collectionId, 
-      ugu.userId`,
+      dt.rn = 1`,
   
   // view v_user_stig_asset_effective
   `CREATE OR REPLACE VIEW v_user_stig_asset_effective AS

@@ -248,6 +248,7 @@ module.exports.getStigAssetsByCollectionUser = async function getStigAssetsByCol
     next(err)
   }
 }
+module.exports.getStigAssetsByCollectionUserGroup = () => {}
 
 module.exports.getStigsByCollection = async function getStigsByCollection (req, res, next) {
   try {
@@ -330,6 +331,7 @@ module.exports.setStigAssetsByCollectionUser = async function setStigAssetsByCol
     next(err)
   }
 }
+module.exports.setStigAssetsByCollectionUserGroup = () => {}
 
 module.exports.updateCollection = async function updateCollection (req, res, next) {
   try {
@@ -1080,7 +1082,7 @@ module.exports.exportToCollection = async function (req, res, next) {
   }
 }
 
-module.exports.getGrantsByCollectionUser = () => {}
-module.exports.getGrantsByCollectionUserGroup = () => {}
-module.exports.setGrantsByCollectionUser = () => {}
-module.exports.setGrantsByCollectionUserGroup = () => {}
+module.exports.getGrantByCollectionUser = () => {}
+module.exports.getGrantByCollectionUserGroup = () => {}
+module.exports.setGrantByCollectionUser = () => {}
+module.exports.setGrantByCollectionUserGroup = () => {}

@@ -1045,24 +1045,28 @@ paths:
       security:
         - oauth:
             - 'stig-manager:collection:read'
-  '/collections/{collectionId}/grants/{userId}/access':
+  '/collections/{collectionId}/grants/user/{userId}':
     parameters:
       - $ref: '#/components/parameters/CollectionIdPath'
       - $ref: '#/components/parameters/UserIdPath'
     get:
       tags:
         - Collection
-      summary: Return an accessLevel = 1 User's effective and fully resolved access to the specified Collection. Request must be made by a User with accessLevel >= 3 to the Collection.
-      operationId: getStigAssetsByCollectionUser
+      summary: Return a User's grant (if any) in the specified Collection. Request must be made by a User with accessLevel >= 3 to the Collection.
+      operationId: getGrantByCollectionUser
       responses:
         '200':
-          description: Collection StigAssetBasic array response
+          description: UserGrant response
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/StigAssetBasic'
+                $ref: '#/components/schemas/UserGrant'
+        '201':
+          description: UserGrant response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserGrant'
         '403':
           $ref: '#/components/responses/Forbidden'
         default:
@@ -1077,34 +1081,40 @@ paths:
     put:
       tags:
         - Collection
-      summary: Set an accessLevel = 1 User's access to the specified Collection. Request must be made by a User with accessLevel >= 3 to the Collection.
-      operationId: setStigAssetsByCollectionUser
+      summary: Set a User's direct (non-group) grant. Request must be made by a User with accessLevel >= 3 to the Collection.
+      operationId: setGrantByCollectionUser
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              type: array
-              items:
-                $ref: '#/components/schemas/StigAssetPut'
+              $ref: '#/components/schemas/UserGrantPut'        
       responses:
         '200':
-          description: StigAssetBasic array response
+          description: UserGrant response
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/StigAssetBasic'
-        default:
-          description: unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
+                $ref: '#/components/schemas/UserGrant'
       security:
         - oauth:
             - 'stig-manager:collection'
+    delete:
+      tags:
+        - Collection
+      summary: Delete a User's direct (non-group) grant. Request must be made by a User with accessLevel >= 3 to the Collection.
+      operationId: deleteGrantByCollectionUser
+      responses:
+        '200':
+          description: UserGrant response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserGrant'
+      security:
+        - oauth:
+            - 'stig-manager:collection'
+    
   '/collections/{collectionId}/grants/user/{userId}/access':
     parameters:
       - $ref: '#/components/parameters/CollectionIdPath'
@@ -1113,7 +1123,7 @@ paths:
       tags:
         - Collection
       summary: Return an accessLevel = 1 User's access rules for the specified Collection. Request must be made by a User with accessLevel >= 3 to the Collection.
-      operationId: getGrantsByCollectionUser
+      operationId: getStigAssetsByCollectionUser
       responses:
         '200':
           description: Collection StigAssetBasic array response
@@ -1140,7 +1150,7 @@ paths:
       tags:
         - Collection
       summary: Set an accessLevel = 1 User's access rules for the specified Collection. Request must be made by a User with accessLevel >= 3 to the Collection.
-      operationId: setGrantsByCollectionUser
+      operationId: setStigAssetsByCollectionUser
       requestBody:
         required: true
         content:
@@ -1169,7 +1179,76 @@ paths:
       security:
         - oauth:
             - 'stig-manager:collection'
-  '/collections/{collectionId}/grants/userGroups/{userGroupId}/access':
+  '/collections/{collectionId}/grants/userGroup/{userGroupId}':
+    parameters:
+      - $ref: '#/components/parameters/CollectionIdPath'
+      - $ref: '#/components/parameters/UserGroupIdPath'
+    get:
+      tags:
+        - Collection
+      summary: Return a User Group's grant for the specified Collection. Request must be made by a User with accessLevel >= 3 to the Collection.
+      operationId: getGrantByCollectionUserGroup
+      responses:
+        '200':
+          description: UserGrant response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserGroupGrant'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      security:
+        - oauth:
+            - 'stig-manager:collection:read'
+    put:
+      tags:
+        - Collection
+      summary: Set a User Group's grant to the specified Collection. Request must be made by a User with accessLevel >= 3 to the Collection.
+      operationId: setGrantByCollectionUserGroup
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserGrantPut'        
+      responses:
+        '200':
+          description: UserGrant response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserGroupGrant'
+        '201':
+          description: UserGrant response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserGroupGrant'
+      security:
+      - oauth:
+          - 'stig-manager:collection'
+    delete:
+      tags:
+        - Collection
+      summary: Delete a UserGroup's grant. Request must be made by a User with accessLevel >= 3 to the Collection.
+      operationId: deleteGrantByCollectionUserGroup
+      responses:
+        '200':
+          description: UserGrant response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserGrant'
+      security:
+        - oauth:
+            - 'stig-manager:collection'
+  '/collections/{collectionId}/grants/userGroup/{userGroupId}/access':
     parameters:
       - $ref: '#/components/parameters/CollectionIdPath'
       - $ref: '#/components/parameters/UserGroupIdPath'
@@ -1177,7 +1256,7 @@ paths:
       tags:
         - Collection
       summary: Return an accessLevel = 1 User Group's access rules for the specified Collection. Request must be made by a User with accessLevel >= 3 to the Collection.
-      operationId: getGrantsByCollectionUserGroup
+      operationId: getStigAssetsByCollectionUserGroup
       responses:
         '200':
           description: Collection StigAssetBasic array response
@@ -1204,7 +1283,7 @@ paths:
       tags:
         - Collection
       summary: Set an accessLevel = 1 User Group's access rules for the specified Collection. Request must be made by a User with accessLevel >= 3 to the Collection.
-      operationId: setGrantsByCollectionUserGroup
+      operationId: setStigAssetsByCollectionUserGroup
       requestBody:
         required: true
         content:
@@ -7192,6 +7271,23 @@ components:
       properties:
         userId:
           type: string
+        accessLevel:
+          type: integer
+          minimum: 1
+          maximum: 4
+        grantSource:
+          type: string
+          enum:
+            - user
+            - userGroup
+        grantSourceId:
+          type: string
+    UserGrantPut:
+      type: object
+      required:
+        - accessLevel
+      additionalProperties: false
+      properties:
         accessLevel:
           type: integer
           minimum: 1
