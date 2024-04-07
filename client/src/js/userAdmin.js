@@ -289,7 +289,7 @@ function addUserAdmin(params ) {
 	const thisTab = Ext.getCmp('main-tab-panel').add({
 		id: 'user-admin-tab',
 		sm_treePath: treePath, 
-		iconCls: 'sm-users-icon',
+		iconCls: 'sm-user-icon',
 		title: 'User Grants',
 		closable:true,
 		layout: 'border',

@@ -260,22 +260,36 @@ SM.UserSelectionField = Ext.extend(Ext.form.ComboBox, {
         let _this = this
         const userStore = new Ext.data.JsonStore({
             fields: [
-                'userId',
-                'username',
-                'displayName'
+                'grantTarget',
+                'grantTargetId',
+                'title',
+                'subtitle',
+                'recordId'
+                // 'userId',
+                // 'username',
+                // 'displayName',
+                // 'userGroupId',
+                // 'name',
+                // 'description'
             ],
-            autoLoad: true,
-            url: `${STIGMAN.Env.apiBase}/users`,
+            // autoLoad: true,
+            // url: `${STIGMAN.Env.apiBase}/users`,
             root: '',
             sortInfo: {
-                field: 'displayName',
+                field: 'title',
                 direction: 'ASC'
             },
-            idProperty: 'userId'
+            idProperty: 'recordId'
         })
         const tpl = new Ext.XTemplate(
             '<tpl for=".">',
-                '<div class="x-combo-list-item sm-users-icon sm-combo-list-icon"><span style="font-weight:600;">{[this.highlightQuery(values.displayName)]}</span><br>{[this.highlightQuery(values.username)]}</div>',
+                `<tpl if="values.grantTarget==='user'">`,
+                    '<div class="x-combo-list-item sm-user-icon sm-combo-list-icon">',
+                '</tpl>',
+                `<tpl if="values.grantTarget==='user-group'">`,
+                    '<div class="x-combo-list-item sm-users-icon sm-combo-list-icon">',
+                '</tpl>',
+                '<span style="font-weight:600;">{[this.highlightQuery(values.title)]}</span><br>{[this.highlightQuery(values.subtitle)]}</div>',
             '</tpl>',
             {
                 highlightQuery: function (text) {
@@ -288,8 +302,8 @@ SM.UserSelectionField = Ext.extend(Ext.form.ComboBox, {
             store: userStore,
             tpl,
             filteringStore: this.filteringStore || null,
-            displayField: 'displayName',
-            valueField: 'userId',
+            displayField: 'title',
+            // valueField: 'grantTargetId',
             mode: 'local',
             forceSelection: true,
             typeAhead: true,
@@ -324,7 +338,7 @@ SM.UserSelectionField = Ext.extend(Ext.form.ComboBox, {
                         // Include records that partially match the combo value
                         filters.push(
                             {
-                                fn: (record) => record.data.displayName.includes(q) || record.data.username.includes(q),
+                                fn: (record) => record.data.title.includes(q) || record.data.subtitle.includes(q),
                                 scope: this
                             }
                         )
@@ -341,6 +355,38 @@ SM.UserSelectionField = Ext.extend(Ext.form.ComboBox, {
         }
         Ext.apply(this, Ext.apply(this.initialConfig, config))
         SM.UserSelectionField.superclass.initComponent.call(this)
+        this.fetchData()
+    },
+    fetchData: async function () {
+        const requests = [
+            Ext.Ajax.requestPromise({
+                responseType: 'json',
+                url: `${STIGMAN.Env.apiBase}/users`,
+                method: 'GET'
+              }),
+              Ext.Ajax.requestPromise({
+                responseType: 'json',
+                url: `${STIGMAN.Env.apiBase}/user-groups`,
+                method: 'GET'
+              })
+        ]
+        const [users, userGroups] = await Promise.all(requests)
+        const usersData = users.map(u=>({
+            grantTarget: 'user',
+            grantTargetId: u.userId,
+            title: u.displayName,
+            subtitle: u.username,
+            recordId: `U${u.userId}`
+        }))
+        const userGroupsData = userGroups.map(ug=>({
+            grantTarget: 'user-group',
+            grantTargetId: ug.userGroupId,
+            title: ug.name,
+            subtitle: ug.description,
+            recordId: `UG${ug.userGroupId}`
+
+        }))
+        this.store.loadData([...usersData, ...userGroupsData])
     }
 })
 Ext.reg('sm-user-selection-field', SM.UserSelectionField);
@@ -350,10 +396,12 @@ SM.UserGrantsGrid = Ext.extend(Ext.grid.GridPanel, {
         const _this = this
         this.canModifyOwners = !!this.canModifyOwners
         const newFields = [
-            'userId',
-            'username',
-            'displayName',
-            'accessLevel'
+            'grantTarget',
+            'grantTargetId',
+            'title',
+            'subtitle',
+            'accessLevel',
+            'recordId'
         ]
         this.newRecordConstructor = Ext.data.Record.create(newFields)
 
@@ -368,9 +416,9 @@ SM.UserGrantsGrid = Ext.extend(Ext.grid.GridPanel, {
             baseParams: this.baseParams,
             root: '',
             fields: newFields,
-            idProperty: 'userId',
+            idProperty: 'recordId',
             sortInfo: {
-                field: 'displayName',
+                field: 'title',
                 direction: 'ASC'
             },
             listeners: {
@@ -386,7 +434,7 @@ SM.UserGrantsGrid = Ext.extend(Ext.grid.GridPanel, {
         const totalTextCmp = new SM.RowCountTextItem ({
             store: grantStore,
             noun: 'grant',
-            iconCls: 'sm-users-icon'
+            iconCls: 'sm-user-icon'
         })
         const userSelectionField = new SM.UserSelectionField({
             submitValue: false,
@@ -406,12 +454,13 @@ SM.UserGrantsGrid = Ext.extend(Ext.grid.GridPanel, {
         })
         const columns = [
             {
-                header: "User",
+                header: "User or User Group",
                 width: 150,
-                dataIndex: 'userId',
+                dataIndex: 'title',
                 sortable: true,
                 renderer: function (v, m, r) {
-                    return `<div class="x-combo-list-item sm-users-icon sm-combo-list-icon" exportValue="${r.data.displayName ?? ''}:${r.data.username ?? ''}"><span style="font-weight:600;">${r.data.displayName ?? ''}</span><br>${r.data.username ?? ''}</div>`
+                    const icon = r.data.grantTarget === 'user' ? 'sm-user-icon' : 'sm-users-icon'
+                    return `<div class="x-combo-list-item ${icon} sm-combo-list-icon" exportValue="${r.data.title ?? ''}:${r.data.subtitle ?? ''}"><span style="font-weight:600;">${r.data.title ?? ''}</span><br>${r.data.subtitle ?? ''}</div>`
                 },
                 editor: userSelectionField
             },
@@ -434,11 +483,14 @@ SM.UserGrantsGrid = Ext.extend(Ext.grid.GridPanel, {
             listeners: {
                 validateedit: function (editor, changes, record, index) {
                     // RowEditor unhelpfully sets changes.username to the userId value. 
-                    if (changes.hasOwnProperty('username')) {
+                    if (changes.hasOwnProperty('title')) {
                         let userEditor = editor.userSelectionField
                         let userRecord = userEditor.store.getAt(userEditor.selectedIndex)
-                        changes.username = userRecord.data.username
-                        changes.userId = userRecord.data.userId
+                        changes.title = userRecord.data.title
+                        changes.subtitle = userRecord.data.subtitle
+                        changes.grantTarget = userRecord.data.grantTarget
+                        changes.grantTargetId = userRecord.data.grantTargetId
+                        changes.recordId = userRecord.data.recordId
                     }
                 },
                 canceledit: function (editor, forced) {
@@ -454,12 +506,13 @@ SM.UserGrantsGrid = Ext.extend(Ext.grid.GridPanel, {
                     // "Save" the record by reconfiguring the store's data collection
                     // Corrects the bug where new records don't deselect when clicking away
 
-                    const userComboBoxRecord = editor.userSelectionField.store.getById(record.data.userId)
+                    const userComboBoxRecord = editor.userSelectionField.store.getById(record.data.recordId)
                     const mc = record.store.data
                     const generatedId = record.id
-                    record.id = record.data.userId
-                    record.data.username = userComboBoxRecord.data.username
-                    record.data.displayName = userComboBoxRecord.data.displayName
+                    record.id = record.data.recordId
+                    record.recordId = record.data.recordId
+                    record.data.subtitle = userComboBoxRecord.data.subtitle
+                    record.data.title = userComboBoxRecord.data.title
                     record.phantom = false
                     record.dirty = false
                     delete mc.map[generatedId]
@@ -479,7 +532,7 @@ SM.UserGrantsGrid = Ext.extend(Ext.grid.GridPanel, {
                         return false
                     }
                     editor.userSelectionField.store.clearFilter()
-                    editor.userSelectionField.setDisabled(!!editor.grid.store.getAt(rowIndex).data.userId)
+                    editor.userSelectionField.setDisabled(!!editor.grid.store.getAt(rowIndex).data.recordId)
                 }
             }
         })
@@ -497,9 +550,9 @@ SM.UserGrantsGrid = Ext.extend(Ext.grid.GridPanel, {
                 disabled: true,
                 text: 'User access...',
                 handler: function () {
-                    var r = _this.getSelectionModel().getSelected();
-                    Ext.getBody().mask('Getting access list for ' + r.get('username') + '...');
-                    showUserAccess(_this.collectionId, r.get('userId'));
+                    const r = _this.getSelectionModel().getSelected();
+                    Ext.getBody().mask('Getting access list for ' + r.get('title') + '...');
+                    showUserAccess(_this.collectionId, r.data);
                 }
             })
         }
@@ -598,21 +651,40 @@ SM.UserGrantsGrid = Ext.extend(Ext.grid.GridPanel, {
 
             getValue: function () {
                 let grants = []
-                grantStore.data.items.forEach((i) => {
-                    grants.push({
-                        userId: i.data.userId,
-                        accessLevel: i.data.accessLevel
-                    })
+                grantStore.data.items.forEach(i => {
+                    if (i.data.grantTarget === 'user')
+                        grants.push({
+                            userId: i.data.grantTargetId,
+                            accessLevel: i.data.accessLevel
+                        })
+                    else 
+                        grants.push({
+                            userGroupId: i.data.grantTargetId,
+                            accessLevel: i.data.accessLevel
+                        })
                 })
                 return grants
             },
             setValue: function (v) {
-                const data = v.map((g) => ({
-                    userId: g.user.userId,
-                    username: g.user.username,
-                    displayName: g.user.displayName,
-                    accessLevel: g.accessLevel
-                }))
+                const data = v.map(g => {
+                    if (g.user) return {
+                        grantTarget: 'user',
+                        grantTargetId: g.user.userId,
+                        subtitle: g.user.username,
+                        title: g.user.displayName,
+                        accessLevel: g.accessLevel,
+                        recordId: `U${g.user.userId}`
+     
+                    }
+                    return {
+                        grantTarget: 'user-group',
+                        grantTargetId: g.userGroup.userGroupId,
+                        title: g.userGroup.name,
+                        subtitle: g.userGroup.description,
+                        accessLevel: g.accessLevel,
+                        recordId: `UG${g.userGroup.userGroupId}`
+                    } 
+                })
                 grantStore.loadData(data)
             },
             validator: function (v) {
@@ -705,7 +777,7 @@ SM.Collection.CreateForm = Ext.extend(Ext.form.FormPanel, {
             autoHeight: true
         })
         const grantGrid = new SM.UserGrantsGrid({
-            iconCls: 'sm-users-icon',
+            iconCls: 'sm-user-icon',
 			showAccessBtn: false,
             canModifyOwners: true,
 			title: 'Grants',
@@ -1072,7 +1144,7 @@ SM.Collection.ManagePanel = Ext.extend(Ext.Panel, {
 
         const grantGrid = new SM.UserGrantsGrid({
 			collectionId: _this.apiCollection.collectionId,
-            iconCls: 'sm-users-icon',
+            iconCls: 'sm-user-icon',
 			showAccessBtn: true,
             canModifyOwners: this.canModifyOwners,
 			url: `${STIGMAN.Env.apiBase}/collections/${_this.apiCollection.collectionId}`,

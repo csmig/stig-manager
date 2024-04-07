@@ -544,6 +544,11 @@ exports.queryStigAssets = async function (inProjection = [], inPredicates = {}, 
     predicates.statements.push('usa.userId = ?')
     predicates.binds.push( inPredicates.userId )
   }
+  if ( inPredicates.userGroupId ) {
+    joins.push('left join user_group_stig_asset_map ugsa on sa.saId = ugsa.saId')
+    predicates.statements.push('ugsa.userGroupId = ?')
+    predicates.binds.push( inPredicates.userGroupId )
+  }
 
   // CONSTRUCT MAIN QUERY
   let sql = 'SELECT '
@@ -583,6 +588,50 @@ exports.setStigAssetsByCollectionUser = async function(collectionId, userId, sti
           predicatesInsertSaIds.push('(benchmarkId = ? AND assetId = ?)')
         }
         let sqlInsertSaIds = `INSERT IGNORE INTO user_stig_asset_map (userId, saId) SELECT ?, saId FROM stig_asset_map WHERE `
+        sqlInsertSaIds += predicatesInsertSaIds.join('\nOR\n')
+        await connection.execute(sqlInsertSaIds, bindsInsertSaIds)
+      }
+      await connection.commit()
+    }
+    await dbUtils.retryOnDeadlock(transaction, svcStatus)
+  }
+  catch (err) {
+    if (typeof connection !== 'undefined') {
+      await connection.rollback()
+    }
+    throw (err)
+  }
+  finally {
+    if (typeof connection !== 'undefined') {
+      await connection.release()
+    }
+  }
+}
+
+exports.setStigAssetsByCollectionUserGroup = async function(collectionId, userGroupId, stigAssets, svcStatus = {}) {
+  let connection // available to try, catch, and finally blocks
+  try {
+    connection = await dbUtils.pool.getConnection()
+    connection.config.namedPlaceholders = true
+    async function transaction () {
+      await connection.query('START TRANSACTION');
+      const sqlDelete = `DELETE FROM 
+        user_group_stig_asset_map
+      WHERE
+        userGroupId = ?
+        and saId IN (
+          SELECT saId from stig_asset_map left join asset using (assetId) where asset.collectionId = ?
+        )`
+        await connection.execute(sqlDelete, [userGroupId, collectionId])
+      if (stigAssets.length > 0) {
+        // Get saIds
+        const bindsInsertSaIds = [ userGroupId ]
+        const predicatesInsertSaIds = []
+        for (const stigAsset of stigAssets) {
+          bindsInsertSaIds.push(stigAsset.benchmarkId, stigAsset.assetId)
+          predicatesInsertSaIds.push('(benchmarkId = ? AND assetId = ?)')
+        }
+        let sqlInsertSaIds = `INSERT IGNORE INTO user_group_stig_asset_map (userGroupId, saId) SELECT ?, saId FROM stig_asset_map WHERE `
         sqlInsertSaIds += predicatesInsertSaIds.join('\nOR\n')
         await connection.execute(sqlInsertSaIds, bindsInsertSaIds)
       }
@@ -902,6 +951,14 @@ exports.getStigAssetsByCollectionUser = async function (collectionId, userId, el
   }, userObject)
   return (rows)
 }
+exports.getStigAssetsByCollectionUserGroup = async function (collectionId, userGroupId, elevate, userObject) {
+  let rows = await _this.queryStigAssets([], { 
+    collectionId,
+    userGroupId
+  }, userObject)
+  return (rows)
+}
+
 
 exports.getStigsByCollection = async function( {collectionId, labelIds, labelNames, labelMatch, userObject, benchmarkId, projections} ) {
   const columns = [

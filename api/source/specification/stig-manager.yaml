@@ -1061,12 +1061,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/UserGrant'
-        '201':
-          description: UserGrant response
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/UserGrant'
         '403':
           $ref: '#/components/responses/Forbidden'
         default:
@@ -1090,6 +1084,12 @@ paths:
             schema:
               $ref: '#/components/schemas/UserGrantPut'        
       responses:
+        '201':
+          description: UserGrant response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserGrant'
         '200':
           description: UserGrant response
           content:
@@ -1179,7 +1179,7 @@ paths:
       security:
         - oauth:
             - 'stig-manager:collection'
-  '/collections/{collectionId}/grants/userGroup/{userGroupId}':
+  '/collections/{collectionId}/grants/user-group/{userGroupId}':
     parameters:
       - $ref: '#/components/parameters/CollectionIdPath'
       - $ref: '#/components/parameters/UserGroupIdPath'
@@ -1248,7 +1248,7 @@ paths:
       security:
         - oauth:
             - 'stig-manager:collection'
-  '/collections/{collectionId}/grants/userGroup/{userGroupId}/access':
+  '/collections/{collectionId}/grants/user-group/{userGroupId}/access':
     parameters:
       - $ref: '#/components/parameters/CollectionIdPath'
       - $ref: '#/components/parameters/UserGroupIdPath'

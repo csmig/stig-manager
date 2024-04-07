@@ -526,19 +526,18 @@ SM.AssignmentPanel = Ext.extend(Ext.Panel, {
   }
 })
 
-async function showUserAccess( collectionId, userId ) {
+async function showUserAccess( collectionId, grantRecord ) {
   try {
     let appwindow 
     let assignmentPanel = new SM.AssignmentPanel({
-        collectionId: collectionId,
-        userId: userId,
+        collectionId: collectionId
     })
 
       /******************************************************/
       // Form window
       /******************************************************/
       appwindow = new Ext.Window({
-        title: 'Access Grants (ID: ' + userId + ')',
+        title: 'Access Grants (ID: ' + grantRecord.recordId + ')',
         cls: 'sm-dialog-window sm-round-panel',
         modal: true,
         hidden: true,
@@ -564,7 +563,7 @@ async function showUserAccess( collectionId, userId ) {
               try {
                 let values = assignmentPanel.assignmentGrid.getValue()
                 let url, method
-                url = `${STIGMAN.Env.apiBase}/collections/${collectionId}/grants/${userId}/access`
+                url = `${STIGMAN.Env.apiBase}/collections/${collectionId}/grants/${grantRecord.grantTarget}/${grantRecord.grantTargetId}/access`
                 method = 'PUT'
                 await Ext.Ajax.requestPromise({
                   url: url,
@@ -585,12 +584,12 @@ async function showUserAccess( collectionId, userId ) {
       })
       assignmentPanel.appwindow = appwindow
       appwindow.render(document.body)
-      let apiUserAccess = await Ext.Ajax.requestPromise({
+      let apiAccess = await Ext.Ajax.requestPromise({
         responseType: 'json',
-          url: `${STIGMAN.Env.apiBase}/collections/${collectionId}/grants/${userId}/access`,
+          url: `${STIGMAN.Env.apiBase}/collections/${collectionId}/grants/${grantRecord.grantTarget}/${grantRecord.grantTargetId}/access`,
           method: 'GET'
       })
-      assignmentPanel.assignmentGrid.setValue(apiUserAccess)
+      assignmentPanel.assignmentGrid.setValue(apiAccess)
               
       Ext.getBody().unmask();
       appwindow.show()

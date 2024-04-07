@@ -1410,8 +1410,13 @@ td.x-grid3-hd-over .x-grid3-hd-inner {
 .sm-department-icon {
   background-image: url(../img/department-16.png)!important
 }
-.sm-users-icon {
+.sm-user-icon {
   background-image: url(../img/user.svg)!important;
+  background-repeat: no-repeat;
+  background-size: 16px 16px
+}
+.sm-users-icon {
+  background-image: url(../img/users.svg)!important;
   background-repeat: no-repeat;
   background-size: 16px 16px
 }

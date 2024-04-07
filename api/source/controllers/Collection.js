@@ -248,7 +248,24 @@ module.exports.getStigAssetsByCollectionUser = async function getStigAssetsByCol
     next(err)
   }
 }
-module.exports.getStigAssetsByCollectionUserGroup = () => {}
+module.exports.getStigAssetsByCollectionUserGroup = async function (req, res, next) {
+  try {
+    const collectionId = req.params.collectionId
+    const userGroupId = req.params.userGroupId
+    
+    const collectionGrant = req.userObject.collectionGrants.find( g => g.collection.collectionId === collectionId )
+    if ( collectionGrant?.accessLevel >= 3 ) {
+      const response = await CollectionService.getStigAssetsByCollectionUser(collectionId, userGroupId, req.userObject )
+      res.json(response)
+    }
+    else {
+      throw new SmError.PrivilegeError()
+    }
+  }
+  catch (err) {
+    next(err)
+  }
+}
 
 module.exports.getStigsByCollection = async function getStigsByCollection (req, res, next) {
   try {
@@ -331,7 +348,32 @@ module.exports.setStigAssetsByCollectionUser = async function setStigAssetsByCol
     next(err)
   }
 }
-module.exports.setStigAssetsByCollectionUserGroup = () => {}
+module.exports.setStigAssetsByCollectionUserGroup = async function (req, res, next) {
+  try {
+    const collectionId = req.params.collectionId
+    const userGroupId = req.params.userGroupId
+    const stigAssets = req.body
+    
+    const collectionGrant = req.userObject.collectionGrants.find( g => g.collection.collectionId === collectionId )
+    if ( collectionGrant?.accessLevel >= 3 ) {
+      const collectionResponse = await CollectionService.getCollection(collectionId, ['grants'], false, req.userObject )
+      if (collectionResponse.grants.filter( grant => grant.accessLevel === 1 && grant.userGroup.userGroupId === userGroupId).length > 0) {
+        await CollectionService.setStigAssetsByCollectionUser(collectionId, userGroupId, stigAssets, res.svcStatus ) 
+        const getResponse = await CollectionService.getStigAssetsByCollectionUserGroup(collectionId, userGroupId, req.userObject )
+        res.json(getResponse)    
+      }
+      else {
+        throw new SmError.NotFoundError('User Group not found in this Collection with accessLevel === 1.')
+      }
+    }
+    else {
+      throw new SmError.PrivilegeError()
+    }
+  }
+  catch (err) {
+    next(err)
+  }
+}
 
 module.exports.updateCollection = async function updateCollection (req, res, next) {
   try {
@@ -345,7 +387,16 @@ module.exports.updateCollection = async function updateCollection (req, res, nex
       }
       const existingGrants = (await CollectionService.getCollection(collectionId, ['grants'], false, req.userObject ))
         ?.grants
-        .map(g => ({userId: g.user.userId, accessLevel: g.accessLevel}))
+        .map(g => {
+          const flattenedGrant = {accessLevel: g.accessLevel}
+          if (g.user) {
+            flattenedGrant.userId = g.user.userId
+          }
+          else {
+            flattenedGrant.userGroupId = g.userGroup.userGroupId
+          }
+          return flattenedGrant
+        })
 
       if (!elevate && (collectionGrant.accessLevel !== Security.ACCESS_LEVEL.Owner && !requestedOwnerGrantsMatchExisting(body.grants, existingGrants))) {
         throw new SmError.PrivilegeError('Cannot create or modify owner grants.')
@@ -1083,6 +1134,9 @@ module.exports.exportToCollection = async function (req, res, next) {
 }
 
 module.exports.getGrantByCollectionUser = () => {}
-module.exports.getGrantByCollectionUserGroup = () => {}
+module.exports.deleteGrantByCollectionUser = () => {}
 module.exports.setGrantByCollectionUser = () => {}
+
+module.exports.getGrantByCollectionUserGroup = () => {}
+module.exports.deleteGrantByCollectionUserGroup = () => {}
 module.exports.setGrantByCollectionUserGroup = () => {}
