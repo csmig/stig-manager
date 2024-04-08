@@ -1132,9 +1132,7 @@ paths:
               schema:
                 type: array
                 items:
-                  anyOf:
-                   - $ref: '#/components/schemas/StigAssetBasic'
-                   - $ref: '#/components/schemas/StigLabelBasic'
+                  $ref: '#/components/schemas/StigAssetBasic'
         '403':
           $ref: '#/components/responses/Forbidden'
         default:
@@ -1158,9 +1156,7 @@ paths:
             schema:
               type: array
               items:
-                anyOf:
-                 - $ref: '#/components/schemas/StigAssetPut'
-                 - $ref: '#/components/schemas/StigLabelPut'
+                $ref: '#/components/schemas/StigAssetPut'
       responses:
         '200':
           description: StigAssetBasic array response
@@ -1244,7 +1240,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/UserGrant'
+                $ref: '#/components/schemas/UserGroupGrant'
       security:
         - oauth:
             - 'stig-manager:collection'
@@ -1265,9 +1261,7 @@ paths:
               schema:
                 type: array
                 items:
-                  anyOf:
-                   - $ref: '#/components/schemas/StigAssetBasic'
-                   - $ref: '#/components/schemas/StigLabelBasic'
+                  $ref: '#/components/schemas/StigAssetBasic'
         '403':
           $ref: '#/components/responses/Forbidden'
         default:
@@ -1291,9 +1285,7 @@ paths:
             schema:
               type: array
               items:
-                anyOf:
-                 - $ref: '#/components/schemas/StigAssetPut'
-                 - $ref: '#/components/schemas/StigLabelPut'
+                $ref: '#/components/schemas/StigAssetPut'
       responses:
         '200':
           description: StigAssetBasic array response
@@ -7001,7 +6993,9 @@ components:
             $ref: '#/components/schemas/Revision'
     StigAssetPut:
       type: object
-      minProperties: 1
+      required:
+        - benchmarkId
+        - assetId
       additionalProperties: false
       properties:
         benchmarkId:
@@ -7010,7 +7004,9 @@ components:
           type: string
     StigAssetBasic:
       type: object
-      minProperties: 1
+      required:
+        - benchmarkId
+        - asset
       additionalProperties: false
       properties:
         benchmarkId:

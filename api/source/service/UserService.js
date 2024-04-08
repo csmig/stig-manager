@@ -22,7 +22,7 @@ exports.queryUsers = async function (inProjection, inPredicates, elevate, userOb
     ]
     let joins = [
       'user_data ud',
-      'left join (select cgi.cgId, cgi.collectionId, cgi.userId, cgi.accessLevel from collection_grant cgi inner join collection c on cgi.collectionId = c.collectionId and c.state = "enabled") cg on ud.userId = cg.userId'
+      'left join (select cgi.collectionId, cgi.userId, cgi.accessLevel from v_collection_grant_effective cgi inner join collection c on cgi.collectionId = c.collectionId and c.state = "enabled") cg on ud.userId = cg.userId'
     ]
     let groupBy = [
       'ud.userId',
@@ -32,7 +32,7 @@ exports.queryUsers = async function (inProjection, inPredicates, elevate, userOb
     // PROJECTIONS
     if (inProjection?.includes('collectionGrants')) {
       joins.push('left join collection c on cg.collectionId = c.collectionId')
-      columns.push(`case when count(cg.cgId) > 0 then 
+      columns.push(`case when count(cg.collectionId) > 0 then 
       json_arrayagg(
         json_object(
           'collection', json_object(
@@ -47,7 +47,7 @@ exports.queryUsers = async function (inProjection, inPredicates, elevate, userOb
     if (inProjection?.includes('statistics')) {
       columns.push(`json_object(
           'created', date_format(ud.created, '%Y-%m-%dT%TZ'),
-          'collectionGrantCount', count(cg.cgId),
+          'collectionGrantCount', count(cg.collectionId),
           'lastAccess', ud.lastAccess,
           'lastClaims', ud.lastClaims
         ) as statistics`)

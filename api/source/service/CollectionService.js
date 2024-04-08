@@ -23,7 +23,7 @@ exports.queryCollections = async function (inProjection = [], inPredicates = {},
     ]
     const joins = [
       'collection c',
-      'left join collection_grant cg on c.collectionId = cg.collectionId',
+      'left join v_collection_grant_effective cg on c.collectionId = cg.collectionId',
       'left join asset a on c.collectionId = a.collectionId and a.state = "enabled"',
       'left join stig_asset_map sa on a.assetId = sa.assetId'
     ]
@@ -108,7 +108,7 @@ exports.queryCollections = async function (inProjection = [], inPredicates = {},
               'displayName', JSON_UNQUOTE(JSON_EXTRACT(user_data.lastClaims, "$.${config.oauth.claims.name}"))
             )
           )
-          from collection_grant 
+          from v_collection_grant_effective 
             left join user_data using (userId)
           where collectionId = c.collectionId and accessLevel = 4)
         ,  json_array()
@@ -120,7 +120,7 @@ exports.queryCollections = async function (inProjection = [], inPredicates = {},
     }
     if (inProjection.includes('statistics')) {
       if (context == dbUtils.CONTEXT_USER) {
-        joins.push('left join collection_grant cgstat on c.collectionId = cgstat.collectionId')
+        joins.push('left join v_collection_grant_effective cgstat on c.collectionId = cgstat.collectionId')
         columns.push(`(select
           json_object(
             'created', DATE_FORMAT(c.created, '%Y-%m-%dT%TZ'),
