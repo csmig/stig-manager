@@ -721,7 +721,8 @@ exports.addOrUpdateCollection = async function(writeAction, collectionId, body, 
           await connection.query(sqlInsertGroupGrants, [binds])
         }
       }
-  
+      if (grants) await dbUtils.pruneUserStigAssetMap(connection, {collectionId})
+
       // Process labels
       if (labels && writeAction !== dbUtils.WRITE_ACTION.CREATE) {
         // DELETE from collection_grant

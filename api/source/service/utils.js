@@ -569,3 +569,16 @@ module.exports.updateDefaultRev = async function (connection, {collectionId, col
   await (connection ?? _this.pool).query(sqlInsert, binds)
   
 }
+
+module.exports.pruneUserStigAssetMap = async function (connection, {collectionId}) {
+  let sql = `delete usa
+  from
+    user_stig_asset_map usa
+    left join stig_asset_map sa using (saId)
+    left join asset a on sa.assetId = a.assetId
+    left join collection_grant cg on (a.collectionId = cg.collectionId and usa.userId = cg.userId and cg.accessLevel = 1)
+  where 
+    cg.cgId is null`
+    if (collectionId) sql += ' and a.collectionId = ?'
+    await (connection ?? _this.pool).query(sql, [collectionId])
+}
