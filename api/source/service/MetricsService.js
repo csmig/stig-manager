@@ -24,10 +24,10 @@ module.exports.queryMetrics = async function ({
     ],
     joins: [
       'collection c',
-      'left join collection_grant cg on c.collectionId = cg.collectionId',
+      'left join v_collection_grant_effective cg on c.collectionId = cg.collectionId',
       'inner join asset a on c.collectionId = a.collectionId and a.state = "enabled"',
       'left join stig_asset_map sa on a.assetId = sa.assetId',
-      'left join user_stig_asset_map usa on sa.saId = usa.saId'
+      'left join v_user_stig_asset_effective usa on sa.saId = usa.saId'
     ],
     predicates: {
       statements: [
@@ -195,10 +195,10 @@ module.exports.queryMetaMetrics = async function ({
     ],
     joins: [
       'collection c',
-      'left join collection_grant cg on c.collectionId = cg.collectionId',
+      'left join v_collection_grant_effective cg on c.collectionId = cg.collectionId',
       'inner join asset a on c.collectionId = a.collectionId and a.state = "enabled"',
       'left join stig_asset_map sa on a.assetId = sa.assetId',
-      'left join user_stig_asset_map usa on sa.saId = usa.saId'
+      'left join v_user_stig_asset_effective usa on sa.saId = usa.saId'
     ],
     predicates: {
       statements: [

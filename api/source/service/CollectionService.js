@@ -178,7 +178,7 @@ exports.queryCollections = async function (inProjection = [], inPredicates = {},
       }
     }
     if (context == dbUtils.CONTEXT_USER) {
-      joins.push('left join user_stig_asset_map usa on sa.saId = usa.saId')
+      joins.push('left join v_user_stig_asset_effective usa on sa.saId = usa.saId')
       predicates.statements.push('(cg.userId = ? AND CASE WHEN cg.accessLevel = 1 THEN usa.userId = cg.userId ELSE TRUE END)')
       predicates.binds.push( userObject.userId, userObject.userId )
     }
@@ -268,10 +268,10 @@ exports.queryFindings = async function (aggregator, inProjection = [], inPredica
   }
   let joins = [
     'collection c',
-    'left join collection_grant cg on c.collectionId = cg.collectionId',
+    'left join v_collection_grant_effective cg on c.collectionId = cg.collectionId',
     'inner join asset a on (c.collectionId = a.collectionId and a.state = "enabled")',
     'inner join stig_asset_map sa on a.assetId = sa.assetId',
-    'left join user_stig_asset_map usa on sa.saId = usa.saId',
+    'left join v_user_stig_asset_effective usa on sa.saId = usa.saId',
     'left join default_rev dr on (sa.benchmarkId = dr.benchmarkId and c.collectionId = dr.collectionId)',
     'left join rev_group_rule_map rgr on dr.revId = rgr.revId',
     'left join rev_group_rule_cci_map rgrcc using (rgrId)',
@@ -467,10 +467,10 @@ exports.queryStatus = async function (inPredicates = {}, userObject) {
   ]
   let joins = [
     'collection c',
-    'left join collection_grant cg on c.collectionId = cg.collectionId',
+    'left join v_collection_grant_effective cg on c.collectionId = cg.collectionId',
     'inner join asset a on c.collectionId = a.collectionId and a.state = "enabled" ',
     'inner join stig_asset_map sa on a.assetId = sa.assetId',
-    'left join user_stig_asset_map usa on sa.saId = usa.saId',
+    'left join v_user_stig_asset_effective usa on sa.saId = usa.saId',
     'left join current_rev cr on sa.benchmarkId = cr.benchmarkId',
   ]
 
@@ -725,7 +725,7 @@ exports.addOrUpdateCollection = async function(writeAction, collectionId, body, 
 
       // Process labels
       if (labels && writeAction !== dbUtils.WRITE_ACTION.CREATE) {
-        // DELETE from collection_grant
+        // DELETE from collection_label
         let sqlDeleteLabels = 'DELETE FROM collection_label where collectionId = ?'
         await connection.execute(sqlDeleteLabels, [collectionId])
       }
@@ -837,7 +837,7 @@ exports.getChecklistByCollectionStig = async function (collectionId, benchmarkId
         select
             sa.assetId
         from
-            user_stig_asset_map usa 
+            v_user_stig_asset_effective usa 
             left join stig_asset_map sa on (usa.saId=sa.saId and sa.benchmarkId = :benchmarkId) 
         where
             usa.userId=:userId)`)
@@ -974,7 +974,7 @@ exports.getStigsByCollection = async function( {collectionId, labelIds, labelNam
 
   const joins = [
     'collection c',
-    'left join collection_grant cg on c.collectionId = cg.collectionId',
+    'left join v_collection_grant_effective cg on c.collectionId = cg.collectionId',
     'left join asset a on c.collectionId = a.collectionId',
     'inner join stig_asset_map sa on a.assetId = sa.assetId',
     'left join default_rev dr on (sa.benchmarkId = dr.benchmarkId and c.collectionId = dr.collectionId)',
@@ -1023,7 +1023,7 @@ exports.getStigsByCollection = async function( {collectionId, labelIds, labelNam
       'name', a.name) order by a.name), ']') as json) as "assets"`)
   }
 
-  joins.push('left join user_stig_asset_map usa on sa.saId = usa.saId')
+  joins.push('left join v_user_stig_asset_effective usa on sa.saId = usa.saId')
   predicates.statements.push('(cg.userId = ? AND CASE WHEN cg.accessLevel = 1 THEN usa.userId = cg.userId ELSE TRUE END)')
   predicates.binds.push( userObject.userId )
   // CONSTRUCT MAIN QUERY
@@ -1402,10 +1402,10 @@ exports.getCollectionLabels = async function (collectionId, userObject) {
   ]
   const joins = [
     'collection_label cl', 
-    'left join collection_grant cg_l on cl.collectionId = cg_l.collectionId',
+    'left join v_collection_grant_effective cg_l on cl.collectionId = cg_l.collectionId',
     'left join asset a_l on cl.collectionId = a_l.collectionId',
     'left join stig_asset_map sa_l on a_l.assetId = sa_l.assetId',
-    'left join user_stig_asset_map usa_l on sa_l.saId = usa_l.saId',
+    'left join v_user_stig_asset_effective usa_l on sa_l.saId = usa_l.saId',
     'left join collection_label_asset_map cla on cla.clId = cl.clId and cla.assetId = a_l.assetId and a_l.state = "enabled"'
   ]
   const groups = [
@@ -1477,10 +1477,10 @@ exports.getCollectionLabelById = async function (collectionId, labelId, userObje
     count(distinct cla.claId) as uses
   from
     collection_label cl 
-    left join collection_grant cg_l on cl.collectionId = cg_l.collectionId
+    left join v_collection_grant_effective cg_l on cl.collectionId = cg_l.collectionId
     left join asset a_l on cl.collectionId = a_l.collectionId and a_l.state = "enabled"
     left join stig_asset_map sa_l on a_l.assetId = sa_l.assetId
-    left join user_stig_asset_map usa_l on sa_l.saId = usa_l.saId
+    left join v_user_stig_asset_effective usa_l on sa_l.saId = usa_l.saId
     left join collection_label_asset_map cla on cla.clId = cl.clId and cla.assetId = a_l.assetId
   where 
     cl.collectionId = ?
@@ -1532,10 +1532,10 @@ select
   a.name
 from
   collection_label cl 
-  left join collection_grant cg on cl.collectionId = cg.collectionId
+  left join v_collection_grant_effective cg on cl.collectionId = cg.collectionId
   left join asset a on cl.collectionId = a.collectionId and a.state = "enabled"
   left join stig_asset_map sa on a.assetId = sa.assetId
-  left join user_stig_asset_map usa on sa.saId = usa.saId
+  left join v_user_stig_asset_effective usa on sa.saId = usa.saId
   left join collection_label_asset_map cla on cla.clId = cl.clId and cla.assetId = a.assetId
 where 
   cl.collectionId = ?
@@ -1706,9 +1706,9 @@ async function queryUnreviewedByCollection ({
     'asset a',
     'left join collection_label_asset_map cla on cla.assetId = a.assetId',
     'left join collection_label cl on cla.clId = cl.clId',
-    'left join collection_grant cg on a.collectionId = cg.collectionId',
+    'left join v_collection_grant_effective cg on a.collectionId = cg.collectionId',
     'left join stig_asset_map sa on a.assetId = sa.assetId',
-    'left join user_stig_asset_map usa on sa.saId = usa.saId',
+    'left join v_user_stig_asset_effective usa on sa.saId = usa.saId',
     'left join current_rev cr on sa.benchmarkId = cr.benchmarkId',
 	  'left join rev_group_rule_map rgr on cr.revId = rgr.revId',
     'left join rule_version_check_digest rvcd on rgr.ruleId = rvcd.ruleId',

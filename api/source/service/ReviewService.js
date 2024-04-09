@@ -61,9 +61,9 @@ exports.postReviewBatch = async function ({
       const sql = `select distinct assetId 
       from
         asset a
-        left join collection_grant cg on a.collectionId = cg.collectionId
+        left join v_collection_grant_effective cg on a.collectionId = cg.collectionId
         left join stig_asset_map sa using (assetId)
-        left join user_stig_asset_map usa on sa.saId = usa.saId
+        left join v_user_stig_asset_effective usa on sa.saId = usa.saId
       where
         a.collectionId = @collectionId 
         and a.state = "enabled"
@@ -101,9 +101,9 @@ exports.postReviewBatch = async function ({
     rgr.ruleId 
   from 
     asset a
-    left join collection_grant cg on a.collectionId = cg.collectionId
+    left join v_collection_grant_effective cg on a.collectionId = cg.collectionId
     left join stig_asset_map sa using (assetId)
-    left join user_stig_asset_map usa on sa.saId = usa.saId
+    left join v_user_stig_asset_effective usa on sa.saId = usa.saId
     left join revision rev using (benchmarkId)
     left join rev_group_rule_map rgr using (revId)
   where 
@@ -618,9 +618,9 @@ exports.getReviews = async function (inProjection = [], inPredicates = {}, userO
     'left join asset on r.assetId = asset.assetId',
     'left join default_rev dr on (rgr.revId = dr.revId and asset.collectionId = dr.collectionId)',
     'left join collection c on asset.collectionId = c.collectionId',
-    'left join collection_grant cg on c.collectionId = cg.collectionId',
+    'left join v_collection_grant_effective cg on c.collectionId = cg.collectionId',
     'left join stig_asset_map sa on (r.assetId = sa.assetId and revision.benchmarkId = sa.benchmarkId)',
-    'left join user_stig_asset_map usa on sa.saId = usa.saId'
+    'left join v_user_stig_asset_effective usa on sa.saId = usa.saId'
   ]
 
   // PROJECTIONS
@@ -963,7 +963,7 @@ SELECT
   c.settings->>"$.history.maxReviews" AS maxReviews
 FROM
   collection c
-  LEFT JOIN collection_grant cg ON (c.collectionId = cg.collectionId)
+  LEFT JOIN v_collection_grant_effective cg ON (c.collectionId = cg.collectionId)
 WHERE
   c.collectionId = @collectionId
   and cg.userId = @userId
@@ -1003,9 +1003,9 @@ select
   distinct rgr.ruleId 
 from 
   asset a
-  left join collection_grant cg on a.collectionId = cg.collectionId
+  left join v_collection_grant_effective cg on a.collectionId = cg.collectionId
   left join stig_asset_map sa using (assetId)
-  left join user_stig_asset_map usa on sa.saId = usa.saId
+  left join v_user_stig_asset_effective usa on sa.saId = usa.saId
   left join revision rev using (benchmarkId)
   left join rev_group_rule_map rgr using (revId)
 where 
@@ -1350,9 +1350,9 @@ exports.getRulesByAssetUser = async function ( assetId, userObject ) {
         distinct rgr.ruleId 
       from 
         asset a
-        left join collection_grant cg on a.collectionId = cg.collectionId
+        left join v_collection_grant_effective cg on a.collectionId = cg.collectionId
         left join stig_asset_map sa using (assetId)
-        left join user_stig_asset_map usa on sa.saId = usa.saId
+        left join v_user_stig_asset_effective usa on sa.saId = usa.saId
         left join revision rev using (benchmarkId)
         left join rev_group_rule_map rgr using (revId)
       where 
@@ -1377,9 +1377,9 @@ exports.checkRuleByAssetUser = async function (ruleId, assetId, userObject) {
         distinct rgr.ruleId 
       from 
         asset a
-        left join collection_grant cg on a.collectionId = cg.collectionId
+        left join v_collection_grant_effective cg on a.collectionId = cg.collectionId
         left join stig_asset_map sa using (assetId)
-        left join user_stig_asset_map usa on sa.saId = usa.saId
+        left join v_user_stig_asset_effective usa on sa.saId = usa.saId
         left join revision rev using (benchmarkId)
         left join rev_group_rule_map rgr using (revId)
       where 

@@ -357,8 +357,8 @@ module.exports.setStigAssetsByCollectionUserGroup = async function (req, res, ne
     const collectionGrant = req.userObject.collectionGrants.find( g => g.collection.collectionId === collectionId )
     if ( collectionGrant?.accessLevel >= 3 ) {
       const collectionResponse = await CollectionService.getCollection(collectionId, ['grants'], false, req.userObject )
-      if (collectionResponse.grants.filter( grant => grant.accessLevel === 1 && grant.userGroup.userGroupId === userGroupId).length > 0) {
-        await CollectionService.setStigAssetsByCollectionUser(collectionId, userGroupId, stigAssets, res.svcStatus ) 
+      if (collectionResponse.grants.filter( grant => grant.accessLevel === 1 && grant.userGroup?.userGroupId === userGroupId).length > 0) {
+        await CollectionService.setStigAssetsByCollectionUserGroup(collectionId, userGroupId, stigAssets, res.svcStatus ) 
         const getResponse = await CollectionService.getStigAssetsByCollectionUserGroup(collectionId, userGroupId, req.userObject )
         res.json(getResponse)    
       }

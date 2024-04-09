@@ -18,8 +18,8 @@ exports.queryStigs = async function ( inPredicates, inProjections, userObject, e
       stig_asset_map sa
       inner join asset a on a.assetId=sa.assetId and a.state = "enabled"
       inner join collection c on c.collectionId=a.collectionId and c.state = "enabled"
-      ${elevate ? '' : `left join collection_grant cg on a.collectionId = cg.collectionId
-      left join user_stig_asset_map usa on sa.saId = usa.saId
+      ${elevate ? '' : `left join v_collection_grant_effective cg on a.collectionId = cg.collectionId
+      left join v_user_stig_asset_effective usa on sa.saId = usa.saId
       where  (cg.userId = ? AND CASE WHEN cg.accessLevel = 1 THEN usa.userId = cg.userId ELSE TRUE END)`}
       group by sa.benchmarkId)`)
 
@@ -76,9 +76,9 @@ exports.queryStigs = async function ( inPredicates, inProjections, userObject, e
         from
         revision r
         inner join collection_rev_map crm using (revId)
-        ${elevate ? '' : `left join collection_grant cg on crm.collectionId = cg.collectionId
+        ${elevate ? '' : `left join v_collection_grant_effective cg on crm.collectionId = cg.collectionId
         left join stig_asset_map sa on r.benchmarkId = sa.benchmarkId
-        left join user_stig_asset_map usa on sa.saId = usa.saId
+        left join v_user_stig_asset_effective usa on sa.saId = usa.saId
         where  (cg.userId = ? AND CASE WHEN cg.accessLevel = 1 THEN usa.userId = cg.userId ELSE TRUE END)`}
         group by r.revId)`)
       cteStigColumns.push(`JSON_ARRAYAGG(
@@ -1241,9 +1241,9 @@ exports.getRevisionByString = async function(benchmarkId, revisionStr, userObjec
         from
         revision r
         inner join collection_rev_map crm using (revId)
-        ${elevate ? '' : `left join collection_grant cg on crm.collectionId = cg.collectionId
+        ${elevate ? '' : `left join v_collection_grant_effective cg on crm.collectionId = cg.collectionId
         left join stig_asset_map sa on r.benchmarkId = sa.benchmarkId
-        left join user_stig_asset_map usa on sa.saId = usa.saId
+        left join v_user_stig_asset_effective usa on sa.saId = usa.saId
         where  (cg.userId = ? AND CASE WHEN cg.accessLevel = 1 THEN usa.userId = cg.userId ELSE TRUE END)`}
         group by r.revId)
     SELECT
@@ -1293,9 +1293,9 @@ exports.getRevisionsByBenchmarkId = async function(benchmarkId, userObject, elev
         from
         revision r
         inner join collection_rev_map crm using (revId)
-        ${elevate ? '' : `left join collection_grant cg on crm.collectionId = cg.collectionId
+        ${elevate ? '' : `left join v_collection_grant_effective cg on crm.collectionId = cg.collectionId
         left join stig_asset_map sa on r.benchmarkId = sa.benchmarkId
-        left join user_stig_asset_map usa on sa.saId = usa.saId
+        left join v_user_stig_asset_effective usa on sa.saId = usa.saId
         where  (cg.userId = ? AND CASE WHEN cg.accessLevel = 1 THEN usa.userId = cg.userId ELSE TRUE END)`}
         group by r.revId)
     SELECT

@@ -197,8 +197,8 @@ module.exports.userHasAssetStigs = async function (assetId, requestedBenchmarkId
     stig_asset_map sa
     inner join asset a on sa.assetId = a.assetId and a.state = 'enabled'
     inner join collection c on a.collectionId = c.collectionId and c.state = 'enabled'
-    left join collection_grant cg on a.collectionId = cg.collectionId
-    left join user_stig_asset_map usa on sa.saId = usa.saId
+    left join v_collection_grant_effective cg on a.collectionId = cg.collectionId
+    left join v_user_stig_asset_effective usa on sa.saId = usa.saId
   where
     cg.userId = ?
     and sa.assetId = ?
@@ -222,7 +222,7 @@ module.exports.scrubReviewsByUser = async function(reviews, elevate, userObject)
     const sql = `SELECT
       CONCAT(sa.assetId, '-', rgr.ruleId) as permitted
     FROM
-      collection_grant cg
+      v_collection_grant_effective cg
       inner join asset a on cg.collectionId = a.collectionId
       inner join stig_asset_map sa on a.assetId = sa.assetId
       inner join revision rev on sa.benchmarkId = rev.benchmarkId
@@ -236,10 +236,10 @@ module.exports.scrubReviewsByUser = async function(reviews, elevate, userObject)
     SELECT
       CONCAT(sa.assetId, '-', rgr.ruleId) as permitted
     FROM
-      collection_grant cg
+      v_collection_grant_effective cg
       inner join asset a on cg.collectionId = a.collectionId
       inner join stig_asset_map sa on a.assetId = sa.assetId
-      inner join user_stig_asset_map usa on (sa.saId = usa.saId and cg.userId = usa.userId)
+      inner join v_user_stig_asset_effective usa on (sa.saId = usa.saId and cg.userId = usa.userId)
       inner join revision rev on sa.benchmarkId = rev.benchmarkId
       inner join rev_group_rule_map rgr on rev.revId = rgr.revId
     WHERE

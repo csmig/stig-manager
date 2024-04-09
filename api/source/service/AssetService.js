@@ -36,9 +36,9 @@ exports.queryAssets = async function (inProjection = [], inPredicates = {}, elev
   const joins = [
     'asset a',
     'left join collection c on a.collectionId = c.collectionId',
-    'left join collection_grant cg on c.collectionId = cg.collectionId',
+    'left join v_collection_grant_effective cg on c.collectionId = cg.collectionId',
     'left join stig_asset_map sa on a.assetId = sa.assetId',
-    'left join user_stig_asset_map usa on sa.saId = usa.saId'
+    'left join v_user_stig_asset_effective usa on sa.saId = usa.saId'
   ]
 
   // PROJECTIONS
@@ -82,7 +82,7 @@ exports.queryAssets = async function (inProjection = [], inPredicates = {}, elev
         else NULL end as users
         FROM 
           stig_asset_map sa
-          left join user_stig_asset_map usa on sa.saId = usa.saId
+          left join v_user_stig_asset_effective usa on sa.saId = usa.saId
           left join user_data ud on usa.userId = ud.userId
         WHERE
         sa.assetId = a.assetId) as r
@@ -98,7 +98,7 @@ exports.queryAssets = async function (inProjection = [], inPredicates = {}, elev
         else json_array() end as reviewers
       FROM 
         stig_asset_map sa
-        left join user_stig_asset_map usa on sa.saId = usa.saId
+        left join v_user_stig_asset_effective usa on sa.saId = usa.saId
         left join user u on usa.userId = u.userId
       WHERE
         sa.assetId = a.assetId and sa.benchmarkId = :benchmarkId) as "reviewers"`)
@@ -236,9 +236,9 @@ exports.queryStigsByAsset = async function (inPredicates = {}, elevate = false, 
   const joins = [
     'asset a',
     'left join collection c on a.collectionId = c.collectionId',
-    'left join collection_grant cg on c.collectionId = cg.collectionId',
+    'left join v_collection_grant_effective cg on c.collectionId = cg.collectionId',
     'left join stig_asset_map sa on a.assetId = sa.assetId',
-    'left join user_stig_asset_map usa on sa.saId = usa.saId',
+    'left join v_user_stig_asset_effective usa on sa.saId = usa.saId',
     'inner join default_rev dr on (sa.benchmarkId = dr.benchmarkId and a.collectionId = dr.collectionId)',
     'left join revision rev on dr.revId = rev.revId'
   ]
@@ -275,9 +275,9 @@ exports.queryUsersByAssetStig = async function (inPredicates = {}, elevate = fal
   const joins = [
     'asset a',
     'inner join collection c on a.collectionId = c.collectionId',
-    'inner join collection_grant cg on c.collectionId = cg.collectionId',
+    'inner join v_collection_grant_effective cg on c.collectionId = cg.collectionId',
     'inner join stig_asset_map sa on a.assetId = sa.assetId',
-    'inner join user_stig_asset_map usa on sa.saId = usa.saId',
+    'inner join v_user_stig_asset_effective usa on sa.saId = usa.saId',
     'inner join user_data ud on usa.userId = ud.userId',
   ]
   // PREDICATES
@@ -357,9 +357,14 @@ exports.addOrUpdateAsset = async function ( {writeAction, assetId, body, project
                 assetId = ?`
           await connection.query(sqlUpdate, [assetFields, assetId])
           if (transferring) {
-            let sqlDeleteRestrictedUsers = 
-              `DELETE user_stig_asset_map FROM user_stig_asset_map INNER JOIN stig_asset_map USING (saId) WHERE stig_asset_map.assetId = ?`
-            await connection.query(sqlDeleteRestrictedUsers, [assetId])
+            await connection.query(
+              `DELETE user_stig_asset_map FROM user_stig_asset_map INNER JOIN stig_asset_map USING (saId) WHERE stig_asset_map.assetId = ?`,
+              [assetId]
+            )
+            await connection.query(
+              `DELETE user_group_stig_asset_map FROM user_group_stig_asset_map INNER JOIN stig_asset_map USING (saId) WHERE stig_asset_map.assetId = ?`,
+              [assetId]
+            )
             
             const sqlGetAssetLabels = `SELECT name, description, color FROM collection_label_asset_map inner join collection_label using (clId) WHERE assetId = ?`
             const [assetLabels] = await connection.query(sqlGetAssetLabels, [assetId])
@@ -570,10 +575,10 @@ exports.queryStigAssets = async function (inProjection = [], inPredicates = {}, 
   ]
   const joins = [
     'collection c',
-    'left join collection_grant cg on c.collectionId = cg.collectionId',
+    'left join v_collection_grant_effective cg on c.collectionId = cg.collectionId',
     'inner join asset a on c.collectionId = a.collectionId',
     'left join stig_asset_map sa on a.assetId = sa.assetId',
-    'left join user_stig_asset_map usa on sa.saId = usa.saId'
+    'left join v_user_stig_asset_effective usa on sa.saId = usa.saId'
   ]
   // PROJECTIONS
   if (inProjection.includes('restrictedUserAccess')) {
