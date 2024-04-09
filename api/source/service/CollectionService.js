@@ -1867,6 +1867,11 @@ exports.cloneCollection = async function ({collectionId, userObject, name, descr
         startText: 'Creating Grants',
         finishText: 'Creating Grants'
       },
+      cloneGrantsGroup: {
+        query: `INSERT INTO collection_grant_group (collectionId, userGroupId, accessLevel) SELECT @destCollectionId, userGroupId, accessLevel FROM collection_grant_group where collectionId = @srcCollectionId`,
+        startText: 'Creating Grants',
+        finishText: 'Creating Grants'
+      },
       insertOwnerGrant: {
         query: `INSERT INTO collection_grant (collectionId, userId, accessLevel) VALUES (@destCollectionId, @userId, 4) ON DUPLICATE KEY UPDATE accessLevel = 4`,
         startText: 'Creating Grants',
@@ -1919,6 +1924,11 @@ exports.cloneCollection = async function ({collectionId, userObject, name, descr
       },
       cloneRestrictedUserGrants: {
         query: `INSERT INTO user_stig_asset_map (userId, saId) SELECT usa.userId, sa2.saId FROM stig_asset_map sa1 inner join user_stig_asset_map usa on sa1.saId = usa.saId inner join t_assetid_map am on sa1.assetId = am.srcAssetId inner join stig_asset_map sa2 on (am.destAssetId = sa2.assetId and sa1.benchmarkId = sa2.benchmarkId)`,
+        startText: 'Creating Restricted User Grants',
+        finishText: 'Created Restricted User Grants'
+      },
+      cloneRestrictedUserGroupGrants: {
+        query: `INSERT INTO user_group_stig_asset_map (userGroupId, saId) SELECT ugsa.userGroupId, sa2.saId FROM stig_asset_map sa1 inner join user_group_stig_asset_map ugsa on sa1.saId = ugsa.saId inner join t_assetid_map am on sa1.assetId = am.srcAssetId inner join stig_asset_map sa2 on (am.destAssetId = sa2.assetId and sa1.benchmarkId = sa2.benchmarkId)`,
         startText: 'Creating Restricted User Grants',
         finishText: 'Created Restricted User Grants'
       },
@@ -1984,6 +1994,7 @@ exports.cloneCollection = async function ({collectionId, userObject, name, descr
 
     if (options.grants) {
       collectionQueries.push('cloneGrants')
+      collectionQueries.push('cloneGrantsGroup')
     }
     collectionQueries.push('insertOwnerGrant')
 
@@ -2000,6 +2011,7 @@ exports.cloneCollection = async function ({collectionId, userObject, name, descr
         collectionQueries.push(options.stigMappings === 'withReviews' ? 'cloneStigMappingsWithReviews' : 'cloneStigMappingsWithoutReviews')
         if (options.grants) {
           collectionQueries.push('cloneRestrictedUserGrants')
+          collectionQueries.push('cloneRestrictedUserGroupGrants')
         }
         collectionQueries.push(options.pinRevisions === 'matchSource' ? 'cloneRevisionsMatchSource' : 'cloneRevisionsSourceDefaults')
         collectionQueries.push('insertDefaultRev')
