@@ -124,7 +124,7 @@ exports.queryCollections = async function (inProjection = [], inPredicates = {},
         columns.push(`(select
           json_object(
             'created', DATE_FORMAT(c.created, '%Y-%m-%dT%TZ'),
-            'grantCount', CASE WHEN cg.accessLevel = 1 THEN 1 ELSE COUNT( distinct cgstat.cgId ) END,
+            'grantCount', CASE WHEN min(cg.accessLevel) = 1 THEN 1 ELSE COUNT( distinct cgstat.userId ) END,
             'assetCount', COUNT( distinct a.assetId ),
             'checklistCount', COUNT( distinct sa.saId )
           )
@@ -134,7 +134,7 @@ exports.queryCollections = async function (inProjection = [], inPredicates = {},
         columns.push(`(select
           json_object(
             'created', DATE_FORMAT(c.created, '%Y-%m-%dT%TZ'),
-            'grantCount', COUNT( distinct cg.cgId ),
+            'grantCount', COUNT( distinct cg.userId ),
             'assetCount', COUNT( distinct a.assetId ),
             'checklistCount', COUNT( distinct sa.saId )
           )

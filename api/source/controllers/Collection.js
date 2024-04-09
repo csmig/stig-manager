@@ -348,6 +348,7 @@ module.exports.setStigAssetsByCollectionUser = async function setStigAssetsByCol
     next(err)
   }
 }
+
 module.exports.setStigAssetsByCollectionUserGroup = async function (req, res, next) {
   try {
     const collectionId = req.params.collectionId
@@ -1140,3 +1141,7 @@ module.exports.setGrantByCollectionUser = () => {}
 module.exports.getGrantByCollectionUserGroup = () => {}
 module.exports.deleteGrantByCollectionUserGroup = () => {}
 module.exports.setGrantByCollectionUserGroup = () => {}
+
+module.exports.setStigAssetsByCollectionUserDEPRECATED = module.exports.setStigAssetsByCollectionUser
+module.exports.getStigAssetsByCollectionUserDEPRECATED = module.exports.getStigAssetsByCollectionUser
+

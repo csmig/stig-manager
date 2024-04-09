@@ -1045,6 +1045,70 @@ paths:
       security:
         - oauth:
             - 'stig-manager:collection:read'
+
+  '/collections/{collectionId}/grants/{userId}/access':
+    parameters:
+      - $ref: '#/components/parameters/CollectionIdPath'
+      - $ref: '#/components/parameters/UserIdPath'
+    get:
+      tags:
+        - Collection
+      summary: Return an accessLevel = 1 User's access to the specified Collection. Request must be made by a User with accessLevel >= 3 to the Collection.
+      operationId: getStigAssetsByCollectionUser
+      responses:
+        '200':
+          description: Collection StigAssetBasic array response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/StigAssetBasic'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      security:
+        - oauth:
+            - 'stig-manager:collection:read'
+    put:
+      tags:
+        - Collection
+      summary: Set an accessLevel = 1 User's access to the specified Collection. Request must be made by a User with accessLevel >= 3 to the Collection.
+      operationId: setStigAssetsByCollectionUser
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '#/components/schemas/StigAssetPut'
+      responses:
+        '200':
+          description: StigAssetBasic array response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/StigAssetBasic'
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      security:
+        - oauth:
+            - 'stig-manager:collection'
+
+
+
   '/collections/{collectionId}/grants/user/{userId}':
     parameters:
       - $ref: '#/components/parameters/CollectionIdPath'
@@ -1123,7 +1187,7 @@ paths:
       tags:
         - Collection
       summary: Return an accessLevel = 1 User's access rules for the specified Collection. Request must be made by a User with accessLevel >= 3 to the Collection.
-      operationId: getStigAssetsByCollectionUser
+      operationId: getStigAssetsByCollectionUserDEPRECATED
       responses:
         '200':
           description: Collection StigAssetBasic array response
@@ -1148,7 +1212,7 @@ paths:
       tags:
         - Collection
       summary: Set an accessLevel = 1 User's access rules for the specified Collection. Request must be made by a User with accessLevel >= 3 to the Collection.
-      operationId: setStigAssetsByCollectionUser
+      operationId: setStigAssetsByCollectionUserDEPRECATED
       requestBody:
         required: true
         content:
