@@ -1134,13 +1134,84 @@ module.exports.exportToCollection = async function (req, res, next) {
   }
 }
 
-module.exports.getGrantByCollectionUser = () => {}
-module.exports.deleteGrantByCollectionUser = () => {}
-module.exports.setGrantByCollectionUser = () => {}
+module.exports.getGrantByCollectionUser = async function (req, res, next) {
+  try {
+    const collectionId = getCollectionIdAndCheckPermission(req, Security.ACCESS_LEVEL.Manage)
+    const userId = req.params.userId
+    const response = await CollectionService.getGrantByCollectionUser({collectionId, userId})
+    res.json(response[0])
+  }
+  catch (err) {
+    next(err)
+  }
+}
 
-module.exports.getGrantByCollectionUserGroup = () => {}
-module.exports.deleteGrantByCollectionUserGroup = () => {}
-module.exports.setGrantByCollectionUserGroup = () => {}
+module.exports.setGrantByCollectionUser = async function (req, res, next) {
+  try{
+    const collectionId = getCollectionIdAndCheckPermission(req, Security.ACCESS_LEVEL.Manage)
+    const userId = req.params.userId
+    const accessLevel = req.body.accessLevel
+    const httpStatus = await CollectionService.setGrantByCollectionUser({collectionId, userId, accessLevel})
+    const response  = await CollectionService.getGrantByCollectionUser({collectionId, userId})
+    res.status(httpStatus).json(response[0])
+  }
+  catch (err) {
+    next(err)
+  }
+}
+
+module.exports.deleteGrantByCollectionUser  = async function (req, res, next) {
+  try{
+    const collectionId = getCollectionIdAndCheckPermission(req, Security.ACCESS_LEVEL.Manage)
+    const userId = req.params.userId
+    const response = await CollectionService.getGrantByCollectionUser({collectionId, userId})
+    await CollectionService.deleteGrantByCollectionUser({collectionId, userId})
+    res.json(response[0])
+  }
+  catch(err){
+    next(err)
+  }
+}
+
+module.exports.getGrantByCollectionUserGroup = async function (req, res, next) {
+  try{
+    const collectionId = getCollectionIdAndCheckPermission(req, Security.ACCESS_LEVEL.Manage)
+    const userGroupId = req.params.userGroupId
+    const response = await CollectionService.getGrantByCollectionUserGroup({collectionId, userGroupId})
+    res.json(response[0])
+  }
+  catch(err){
+    next(err)
+  }
+}
+
+module.exports.setGrantByCollectionUserGroup = async function (req, res, next) {
+  try{
+    const collectionId = getCollectionIdAndCheckPermission(req, Security.ACCESS_LEVEL.Manage)
+    const userGroupId = req.params.userGroupId
+    const accessLevel = req.body.accessLevel
+    const httpStatus = await CollectionService.setGrantByCollectionUserGroup({collectionId, userGroupId, accessLevel})
+    const response  = await CollectionService.getGrantByCollectionUserGroup({collectionId, userGroupId})
+    res.status(httpStatus).json(response[0])
+  }
+  catch (err) {
+    next(err)
+  }
+}
+
+module.exports.deleteGrantByCollectionUserGroup  = async function (req, res, next) {
+  try{
+    const collectionId = getCollectionIdAndCheckPermission(req, Security.ACCESS_LEVEL.Manage)
+    const userGroupId = req.params.userGroupId
+    const response = await CollectionService.getGrantByCollectionUserGroup({collectionId, userGroupId})
+    await CollectionService.deleteGrantByCollectionUserGroup({collectionId, userGroupId})
+    res.json(response[0])
+  }
+  catch(err){
+    next(err)
+  }
+}
+
 
 module.exports.setStigAssetsByCollectionUserDEPRECATED = module.exports.setStigAssetsByCollectionUser
 module.exports.getStigAssetsByCollectionUserDEPRECATED = module.exports.getStigAssetsByCollectionUser

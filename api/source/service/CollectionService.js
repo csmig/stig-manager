@@ -2573,3 +2573,73 @@ exports.exportToCollection = async function ({srcCollectionId, dstCollectionId, 
     }
   }
 }
+
+exports.getGrantByCollectionUser = async function ({collectionId, userId}) {
+
+  const getGrantByCollectionUser = 
+  `SELECT 
+      CAST(cge.userId AS CHAR) as userId,
+      cge.accessLevel,
+      cge.grantSource,
+      CAST(cge.grantSourceId AS CHAR) as grantSourceId
+    FROM
+      v_collection_grant_effective cge
+    WHERE
+    cge.collectionId = ? AND cge.userID = ?`
+
+  const [response] = await dbUtils.pool.query(getGrantByCollectionUser, [collectionId, userId])
+  return response
+}
+
+exports.setGrantByCollectionUser = async function ({collectionId, userId, accessLevel}) {
+
+  const setGrantByCollectionUser = 
+  `INSERT INTO collection_grant (collectionId, userId, accessLevel) VALUES (?, ?, ?) AS new ON DUPLICATE KEY UPDATE accessLevel = new.accessLevel`
+  const [response] = await dbUtils.pool.query(setGrantByCollectionUser, [collectionId, userId, accessLevel])
+
+  // resolving if we are inserting a new db record or updating an existing.
+  const httpStatus = (response.affectedRows === 1 && response.insertId !== 0) ? 201 : 200
+  return httpStatus
+}
+
+exports.deleteGrantByCollectionUser = async function ({collectionId, userId}) {
+
+  const deleteGrantByCollectionUser = 
+  `DELETE FROM collection_grant WHERE collectionId = ? AND userId = ?`
+  const [response] = await dbUtils.pool.query(deleteGrantByCollectionUser, [collectionId, userId])
+  return response
+}
+
+exports.getGrantByCollectionUserGroup = async function ({collectionId, userGroupId}) {
+
+  const getGrantByCollectionUserGroup = 
+  `SELECT 
+      CAST(cgg.userGroupId AS CHAR) as userGroupId,
+      cgg.accessLevel
+    FROM
+      collection_grant_group cgg
+    WHERE
+    cgg.collectionId = ? AND cgg.userGroupId = ?`
+
+  const [response] = await dbUtils.pool.query(getGrantByCollectionUserGroup, [collectionId, userGroupId])
+  return response
+}
+
+exports.setGrantByCollectionUserGroup = async function ({collectionId, userGroupId, accessLevel}) {
+
+  const setGrantByCollectionUserGroup = 
+  `INSERT INTO collection_grant_group (collectionId, userGroupId, accessLevel) VALUES (?, ?, ?) AS new ON DUPLICATE KEY UPDATE accessLevel = new.accessLevel`
+  const [response] = await dbUtils.pool.query(setGrantByCollectionUserGroup, [collectionId, userGroupId, accessLevel])
+
+  // resolving if we are inserting a new db record or updating an existing.
+  const httpStatus = (response.affectedRows === 1 && response.insertId !== 0) ? 201 : 200
+  return httpStatus
+}
+
+exports.deleteGrantByCollectionUserGroup = async function ({collectionId, userGroupId}) {
+
+  const deleteGrantByCollectionUserGroup = 
+  `DELETE FROM collection_grant_group WHERE collectionId = ? AND userGroupId = ?`
+  const [response] = await dbUtils.pool.query(deleteGrantByCollectionUserGroup, [collectionId, userGroupId])
+  return response
+}
