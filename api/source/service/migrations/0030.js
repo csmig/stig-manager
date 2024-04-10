@@ -25,7 +25,7 @@ const upMigration = [
       ON DELETE RESTRICT
       ON UPDATE RESTRICT
   ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci`,
-  
+
   // table user_group_user_map
   `CREATE TABLE user_group_user_map (
     ugumId INT NOT NULL AUTO_INCREMENT,
@@ -45,7 +45,7 @@ const upMigration = [
       ON DELETE CASCADE
       ON UPDATE CASCADE
   ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci`,
-  
+
   // table collection_grant_group
   `CREATE TABLE collection_grant_group (
     cggId int NOT NULL AUTO_INCREMENT,
@@ -103,7 +103,7 @@ const upMigration = [
         cg.userId is null) dt
     where
       dt.rn = 1`,
-  
+
   // view v_user_stig_asset_effective
   `CREATE OR REPLACE VIEW v_user_stig_asset_effective AS
   select  userId, saId from user_stig_asset_map
@@ -117,7 +117,7 @@ const upMigration = [
 	  left join user_stig_asset_map usa on (ugsa.saId = usa.saId and ugu.userId = usa.userId)
 	where
 	  usa.id is null`,
-    
+
   // delete phantom records from user_stig_asset_map
   `delete usa
   from
@@ -126,7 +126,71 @@ const upMigration = [
     left join asset a on sa.assetId = a.assetId
     left join collection_grant cg on (a.collectionId = cg.collectionId and usa.userId = cg.userId and cg.accessLevel = 1)
   where 
-    cg.cgId is null`
+    cg.cgId is null`,
+
+  // trigger cg_after_update
+  `DROP TRIGGER IF EXISTS cg_after_update`,
+  `CREATE TRIGGER cg_after_update AFTER UPDATE ON collection_grant FOR EACH ROW
+  BEGIN
+   IF OLD.accessLevel = 1 and NEW.accessLevel != 1 THEN
+    delete usa
+    from
+      user_stig_asset_map usa
+      left join stig_asset_map sa using (saId)
+      left join asset a on sa.assetId = a.assetId
+    where
+      a.collectionId = OLD.collectionId
+      and usa.userId = OLD.userId;
+   END IF;
+  END`,
+
+  // trigger cg_after_delete
+  `DROP TRIGGER IF EXISTS cg_after_delete`,
+  `CREATE TRIGGER cg_after_delete AFTER DELETE ON collection_grant FOR EACH ROW
+  BEGIN
+    IF OLD.accessLevel = 1 THEN
+    delete usa
+    from
+      user_stig_asset_map usa
+      left join stig_asset_map sa using (saId)
+      left join asset a on sa.assetId = a.assetId
+    where
+      a.collectionId = OLD.collectionId
+      and usa.userId = OLD.userId;
+    END IF;
+  END`,
+
+  // trigger cgg_after_update
+  `DROP TRIGGER IF EXISTS cgg_after_update`,
+  `CREATE TRIGGER cgg_after_update AFTER UPDATE ON collection_grant_group FOR EACH ROW
+  BEGIN
+    IF OLD.accessLevel = 1 and NEW.accessLevel != 1 THEN
+    delete ugsa
+    from
+      user_group_stig_asset_map ugsa
+      left join stig_asset_map sa using (saId)
+      left join asset a on sa.assetId = a.assetId
+    where
+      a.collectionId = OLD.collectionId
+      and ugsa.userGroupId = OLD.userGroupId;
+    END IF;
+  END`,
+
+  // trigger cgg_after_delete
+  `DROP TRIGGER IF EXISTS cgg_after_delete`,
+  `CREATE TRIGGER cgg_after_delete AFTER DELETE ON collection_grant_group FOR EACH ROW
+  BEGIN
+    IF OLD.accessLevel = 1 THEN
+    delete ugsa
+    from
+      user_group_stig_asset_map ugsa
+      left join stig_asset_map sa using (saId)
+      left join asset a on sa.assetId = a.assetId
+    where
+      a.collectionId = OLD.collectionId
+      and ugsa.userGroupId = OLD.userGroupId;
+    END IF;
+  END`
 ]
 
 const downMigration = [

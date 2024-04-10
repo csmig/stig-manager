@@ -693,35 +693,59 @@ exports.addOrUpdateCollection = async function(writeAction, collectionId, body, 
       else {
         throw new SmError.InternalError('Invalid writeAction')
       }
-  
-      // Process grants
-      if (grants && writeAction !== dbUtils.WRITE_ACTION.CREATE) {
-        // DELETE from collection_grant
-        const sqlDeleteUserGrants = 'DELETE FROM collection_grant where collectionId = ?'
-        await connection.execute(sqlDeleteUserGrants, [collectionId])
-        const sqlDeleteGroupGrants = 'DELETE FROM collection_grant_group where collectionId = ?'
-        await connection.execute(sqlDeleteGroupGrants, [collectionId])
-      }
-      if (grants && grants.length > 0) {
-        const grantsByIdType = grants.reduce((accumulator, currentValue) => {
-          accumulator[currentValue.userId ? 'userGrants' : 'groupGrants'].push(currentValue)
-          return accumulator
-        }, {userGrants:[], groupGrants:[]})
 
-        if (grantsByIdType.userGrants.length) {
-          // INSERT into collection_grant
-          const sqlInsertUserGrants = `INSERT INTO collection_grant (collectionId, userId, accessLevel) VALUES ?`      
-          const binds = grantsByIdType.userGrants.map(i => [collectionId, i.userId, i.accessLevel])
-          await connection.query(sqlInsertUserGrants, [binds])
+      // process grants
+      if (grants) {
+        if (grants.length) {
+          const grantsByIdType = grants.reduce((accumulator, currentValue) => {
+            accumulator[currentValue.userId ? 'userGrants' : 'userGroupGrants'].push(currentValue)
+            return accumulator
+          }, {userGrants:[], userGroupGrants:[]})
+
+          if (grantsByIdType.userGrants.length) {
+            await connection.query(
+              `DELETE FROM collection_grant WHERE collectionId = ? and userId NOT IN (?)`,
+              [collectionId, grantsByIdType.userGrants.map(i => i.userId)]
+            )
+            const sqlInsertUserGrants = `INSERT
+            INTO 
+              collection_grant (collectionId, userId, accessLevel)
+            VALUES
+              ? as new 
+            ON DUPLICATE KEY UPDATE 
+              accessLevel = new.accessLevel`      
+            const binds = grantsByIdType.userGrants.map(i => [collectionId, i.userId, i.accessLevel])
+            await connection.query(sqlInsertUserGrants, [binds])
+          }
+          else {
+            await connection.query(`DELETE FROM collection_grant WHERE collectionId = ?`, [collectionId])
+          }
+
+          if (grantsByIdType.userGroupGrants.length) {
+            await connection.query(
+              `DELETE FROM collection_grant_group WHERE collectionId = ? and userGroupId NOT IN (?)`,
+              [collectionId, grantsByIdType.userGroupGrants.map(i => i.userGroupId)]
+            )
+            const sqlInsertGroupGrants = `INSERT 
+            INTO 
+              collection_grant_group (collectionId, userGroupId, accessLevel) 
+            VALUES
+              ? as new
+            ON DUPLICATE KEY UPDATE 
+              accessLevel = new.accessLevel`      
+            const binds = grantsByIdType.userGroupGrants.map(i => [collectionId, i.userGroupId, i.accessLevel])
+            await connection.query(sqlInsertGroupGrants, [binds])
+          }
+          else {
+            await connection.query(`DELETE FROM collection_grant_group WHERE collectionId = ?`, [collectionId]) 
+          }
+  
         }
-        if (grantsByIdType.groupGrants.length) {
-          // INSERT into collection_grant_group
-          const sqlInsertGroupGrants = `INSERT INTO collection_grant_group (collectionId, userGroupId, accessLevel) VALUES ?`      
-          const binds = grantsByIdType.groupGrants.map(i => [collectionId, i.userGroupId, i.accessLevel])
-          await connection.query(sqlInsertGroupGrants, [binds])
+        else if (writeAction !== dbUtils.WRITE_ACTION.CREATE) {
+          await connection.query(`DELETE FROM collection_grant WHERE collectionId = ?`, [collectionId])
+          await connection.query(`DELETE FROM collection_grant_group WHERE collectionId = ?`, [collectionId]) 
         }
       }
-      if (grants) await dbUtils.pruneUserStigAssetMap(connection, {collectionId})
 
       // Process labels
       if (labels && writeAction !== dbUtils.WRITE_ACTION.CREATE) {
