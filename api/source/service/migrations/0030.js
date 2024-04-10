@@ -1,6 +1,11 @@
 const MigrationHandler = require('./lib/MigrationHandler')
 
 const upMigration = [
+  `DROP TABLE IF EXISTS user_group_stig_asset_map`,
+  `DROP TABLE IF EXISTS collection_grant_group`,
+  `DROP TABLE IF EXISTS user_group_user_map`,
+  `DROP TABLE IF EXISTS user_group`,
+
   // table: user_group
   `CREATE TABLE user_group (
     userGroupId INT NOT NULL AUTO_INCREMENT,
