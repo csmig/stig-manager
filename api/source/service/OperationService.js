@@ -171,15 +171,18 @@ exports.replaceAppData = async function (importOpts, appData, userObject, res ) 
         sa.saId,
         jt.userId
         FROM
-        stig_asset_map sa,
+        stig_asset_map sa
+        inner join
           JSON_TABLE(
-            sa.userIds,
+            ?,
             "$[*]"
             COLUMNS(
-              userId INT(11) PATH "$"
+              userId INT(11) PATH "$.userId",
+              assetId INT(11) PATH "$.assetId",
+              benchmarkId VARCHAR(255) PATH "$.benchmarkId"
             )
-          ) AS jt`,
-        insertBinds: [null] // dummy value so length > 0
+          ) AS jt on (jt.assetId = sa.assetId and jt.benchmarkId = sa.benchmarkId COLLATE utf8mb4_0900_as_cs)`,
+        insertBinds: []
       },
       reviewHistory: {
         sqlDelete: `DELETE FROM review_history`,
@@ -369,6 +372,14 @@ exports.replaceAppData = async function (importOpts, appData, userObject, res ) 
           sr.benchmarkId,
           JSON.stringify(sr.userIds)
         ])
+        for (const userId of sr.userIds) {
+          dml.userStigAssetMap.insertBinds.push({
+            userId: parseInt(userId),
+            benchmarkId: sr.benchmarkId,
+            assetId: parseInt(assetFields.assetId)
+          })
+        }
+
       }
       if (labelIds?.length > 0) {
         assetLabels.push({
@@ -377,7 +388,9 @@ exports.replaceAppData = async function (importOpts, appData, userObject, res ) 
           labelIds
         })  
       }
+
     }
+    dml.userStigAssetMap.insertBinds = JSON.stringify(dml.userStigAssetMap.insertBinds)
     dml.assetLabel.insertBinds.push(JSON.stringify(assetLabels))
 
     // Tables: review, review_history
