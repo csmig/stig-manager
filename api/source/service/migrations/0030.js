@@ -6,6 +6,9 @@ const upMigration = [
   `DROP TABLE IF EXISTS user_group_user_map`,
   `DROP TABLE IF EXISTS user_group`,
 
+  // table collection_grant
+  `ALTER TABLE collection_grant ADD COLUMN mergeUserGroupAcls INT NOT NULL DEFAULT 0 AFTER accessLevel`,
+
   // table: user_group
   `CREATE TABLE user_group (
     userGroupId INT NOT NULL AUTO_INCREMENT,
@@ -113,15 +116,18 @@ const upMigration = [
   `CREATE OR REPLACE VIEW v_user_stig_asset_effective AS
   select  userId, saId from user_stig_asset_map
   union 
-  select
+	select
 	  ugu.userId, 
 	  ugsa.saId
 	from 
 	  user_group_stig_asset_map ugsa 
-	  left join user_group_user_map ugu using (userGroupId)
-	  left join user_stig_asset_map usa on (ugsa.saId = usa.saId and ugu.userId = usa.userId)
+	  left join user_group_user_map ugu on ugsa.userGroupId = ugu.userGroupId
+	  left join stig_asset_map sa on ugsa.saId = sa.saId
+	  left join asset a on sa.assetId = a.assetId
+	  left join collection_grant cg on (a.collectionId = cg.collectionId and ugu.userId = cg.userId)
 	where
-	  usa.id is null`,
+    cg.cgId is null
+    or (cg.accessLevel = 1 and cg.mergeUserGroupAcls = 1)`,
 
   // delete phantom records from user_stig_asset_map
   `delete usa
@@ -131,7 +137,9 @@ const upMigration = [
     left join asset a on sa.assetId = a.assetId
     left join collection_grant cg on (a.collectionId = cg.collectionId and usa.userId = cg.userId and cg.accessLevel = 1)
   where 
-    cg.cgId is null`
+    cg.cgId is null`,
+
+
 ]
 
 const downMigration = [

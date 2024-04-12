@@ -264,6 +264,7 @@ SM.UserSelectionField = Ext.extend(Ext.form.ComboBox, {
                 'grantTargetId',
                 'title',
                 'subtitle',
+                'groupUsernames',
                 'recordId'
                 // 'userId',
                 // 'username',
@@ -287,15 +288,22 @@ SM.UserSelectionField = Ext.extend(Ext.form.ComboBox, {
                     '<div class="x-combo-list-item sm-user-icon sm-combo-list-icon">',
                 '</tpl>',
                 `<tpl if="values.grantTarget==='user-group'">`,
-                    '<div class="x-combo-list-item sm-users-icon sm-combo-list-icon">',
+                    '<div class="x-combo-list-item sm-users-icon sm-combo-list-icon" ext:qtip="{[this.formatUsernames(values.groupUsernames)]}">',
                 '</tpl>',
                 '<span style="font-weight:600;">{[this.highlightQuery(values.title)]}</span><br>{[this.highlightQuery(values.subtitle)]}</div>',
             '</tpl>',
             {
                 highlightQuery: function (text) {
-                    const re = new RegExp(_this.el.dom.value,'gi')
-                    return text.replace(re,'<span class="sm-text-highlight">$&</span>')
+                    if (_this.el.dom.value) {
+                        const re = new RegExp(_this.el.dom.value,'gi')
+                        return text.replace(re,'<span class="sm-text-highlight">$&</span>')
+                    }
+                    return text
+                },
+                formatUsernames: function (usernames) {
+                    return usernames.join('<br>')
                 }
+                
             }
         )
         const config = {
@@ -366,7 +374,7 @@ SM.UserSelectionField = Ext.extend(Ext.form.ComboBox, {
               }),
               Ext.Ajax.requestPromise({
                 responseType: 'json',
-                url: `${STIGMAN.Env.apiBase}/user-groups`,
+                url: `${STIGMAN.Env.apiBase}/user-groups?projection=users`,
                 method: 'GET'
               })
         ]
@@ -383,6 +391,7 @@ SM.UserSelectionField = Ext.extend(Ext.form.ComboBox, {
             grantTargetId: ug.userGroupId,
             title: ug.name,
             subtitle: ug.description,
+            groupUsernames: ug.users.map(u=>u.username),
             recordId: `UG${ug.userGroupId}`
 
         }))
