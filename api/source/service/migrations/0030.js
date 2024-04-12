@@ -131,71 +131,7 @@ const upMigration = [
     left join asset a on sa.assetId = a.assetId
     left join collection_grant cg on (a.collectionId = cg.collectionId and usa.userId = cg.userId and cg.accessLevel = 1)
   where 
-    cg.cgId is null`,
-
-  // trigger cg_after_update
-  `DROP TRIGGER IF EXISTS cg_after_update`,
-  `CREATE TRIGGER cg_after_update AFTER UPDATE ON collection_grant FOR EACH ROW
-  BEGIN
-   IF OLD.accessLevel = 1 and NEW.accessLevel != 1 THEN
-    delete usa
-    from
-      user_stig_asset_map usa
-      left join stig_asset_map sa using (saId)
-      left join asset a on sa.assetId = a.assetId
-    where
-      a.collectionId = OLD.collectionId
-      and usa.userId = OLD.userId;
-   END IF;
-  END`,
-
-  // trigger cg_after_delete
-  `DROP TRIGGER IF EXISTS cg_after_delete`,
-  `CREATE TRIGGER cg_after_delete AFTER DELETE ON collection_grant FOR EACH ROW
-  BEGIN
-    IF OLD.accessLevel = 1 THEN
-    delete usa
-    from
-      user_stig_asset_map usa
-      left join stig_asset_map sa using (saId)
-      left join asset a on sa.assetId = a.assetId
-    where
-      a.collectionId = OLD.collectionId
-      and usa.userId = OLD.userId;
-    END IF;
-  END`,
-
-  // trigger cgg_after_update
-  `DROP TRIGGER IF EXISTS cgg_after_update`,
-  `CREATE TRIGGER cgg_after_update AFTER UPDATE ON collection_grant_group FOR EACH ROW
-  BEGIN
-    IF OLD.accessLevel = 1 and NEW.accessLevel != 1 THEN
-    delete ugsa
-    from
-      user_group_stig_asset_map ugsa
-      left join stig_asset_map sa using (saId)
-      left join asset a on sa.assetId = a.assetId
-    where
-      a.collectionId = OLD.collectionId
-      and ugsa.userGroupId = OLD.userGroupId;
-    END IF;
-  END`,
-
-  // trigger cgg_after_delete
-  `DROP TRIGGER IF EXISTS cgg_after_delete`,
-  `CREATE TRIGGER cgg_after_delete AFTER DELETE ON collection_grant_group FOR EACH ROW
-  BEGIN
-    IF OLD.accessLevel = 1 THEN
-    delete ugsa
-    from
-      user_group_stig_asset_map ugsa
-      left join stig_asset_map sa using (saId)
-      left join asset a on sa.assetId = a.assetId
-    where
-      a.collectionId = OLD.collectionId
-      and ugsa.userGroupId = OLD.userGroupId;
-    END IF;
-  END`
+    cg.cgId is null`
 ]
 
 const downMigration = [

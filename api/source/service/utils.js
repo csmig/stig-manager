@@ -570,7 +570,7 @@ module.exports.updateDefaultRev = async function (connection, {collectionId, col
   
 }
 
-module.exports.pruneUserStigAssetMap = async function (connection, {collectionId}) {
+module.exports.pruneUserStigAssetMap = async function (connection, {collectionId, userId}) {
   let sql = `delete usa
   from
     user_stig_asset_map usa
@@ -579,6 +579,35 @@ module.exports.pruneUserStigAssetMap = async function (connection, {collectionId
     left join collection_grant cg on (a.collectionId = cg.collectionId and usa.userId = cg.userId and cg.accessLevel = 1)
   where 
     cg.cgId is null`
-    if (collectionId) sql += ' and a.collectionId = ?'
-    await (connection ?? _this.pool).query(sql, [collectionId])
+    const binds = []
+    if (collectionId) {
+      sql += ' and a.collectionId = ?'
+      binds.push(collectionId)
+    }
+    if (userId) {
+      sql += ' and usa.userId = ?'
+      binds.push(userId)
+    }
+    await (connection ?? _this.pool).query(sql, binds)
+}
+
+module.exports.pruneUserGroupStigAssetMap = async function (connection, {collectionId, userGroupId}) {
+  let sql = `delete ugsa
+  from
+    user_group_stig_asset_map ugsa
+    left join stig_asset_map sa using (saId)
+    left join asset a on sa.assetId = a.assetId
+    left join collection_grant_group cgg on (a.collectionId = cgg.collectionId and ugsa.userGroupId = cgg.userGroupId and cgg.accessLevel = 1)
+  where 
+    cg.cgId is null`
+    const binds = []
+    if (collectionId) {
+      sql += ' and a.collectionId = ?'
+      binds.push(collectionId)
+    }
+    if (userGroupId) {
+      sql += ' and ugsa.userGroupId = ?'
+      binds.push(userGroupId)
+    }
+    await (connection ?? _this.pool).query(sql, binds)
 }

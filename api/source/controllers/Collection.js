@@ -255,7 +255,7 @@ module.exports.getStigAssetsByCollectionUserGroup = async function (req, res, ne
     
     const collectionGrant = req.userObject.collectionGrants.find( g => g.collection.collectionId === collectionId )
     if ( collectionGrant?.accessLevel >= 3 ) {
-      const response = await CollectionService.getStigAssetsByCollectionUser(collectionId, userGroupId, req.userObject )
+      const response = await CollectionService.getStigAssetsByCollectionUserGroup(collectionId, userGroupId, req.userObject )
       res.json(response)
     }
     else {

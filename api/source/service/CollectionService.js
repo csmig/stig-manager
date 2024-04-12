@@ -745,6 +745,8 @@ exports.addOrUpdateCollection = async function(writeAction, collectionId, body, 
           await connection.query(`DELETE FROM collection_grant WHERE collectionId = ?`, [collectionId])
           await connection.query(`DELETE FROM collection_grant_group WHERE collectionId = ?`, [collectionId]) 
         }
+        await dbUtils.pruneUserStigAssetMap(connection, {collectionId})
+        await dbUtils.pruneUserGroupStigAssetMap(connection, {collectionId})
       }
 
       // Process labels
