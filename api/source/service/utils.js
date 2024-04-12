@@ -599,7 +599,7 @@ module.exports.pruneUserGroupStigAssetMap = async function (connection, {collect
     left join asset a on sa.assetId = a.assetId
     left join collection_grant_group cgg on (a.collectionId = cgg.collectionId and ugsa.userGroupId = cgg.userGroupId and cgg.accessLevel = 1)
   where 
-    cg.cgId is null`
+    cgg.cggId is null`
     const binds = []
     if (collectionId) {
       sql += ' and a.collectionId = ?'
