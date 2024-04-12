@@ -1276,7 +1276,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/UserGrantPut'        
+              $ref: '#/components/schemas/UserGroupGrantPut'        
       responses:
         '200':
           description: UserGrant response
@@ -5244,7 +5244,7 @@ components:
           type: array
           items:
             anyOf:
-              - $ref: '#/components/schemas/UserGrant'
+              - $ref: '#/components/schemas/UserGrantPut'
               - $ref: '#/components/schemas/UserGroupGrant'
         labels:
           type: array
@@ -5425,7 +5425,9 @@ components:
         grants:
           type: array
           items:
-            $ref: '#/components/schemas/UserGrantProjected'
+            anyOf:
+             - $ref: '#/components/schemas/UserGrantProjected'     
+             - $ref: '#/components/schemas/UserGroupGrantProjected'     
         labels:
           type: array
           items:
@@ -7540,6 +7542,9 @@ components:
           type: integer
           minimum: 1
           maximum: 4
+        mergeUserGroupAcls:
+          type: boolean
+          default: false
         grantSource:
           type: string
           enum:
@@ -7576,6 +7581,8 @@ components:
           type: integer
           minimum: 1
           maximum: 4
+        mergeUserGroupAcls:
+          type: boolean
     UserGroupBasic:
       type: object
       additionalProperties: false
@@ -7626,6 +7633,16 @@ components:
           type: integer
           minimum: 1
           maximum: 4
+    UserGroupGrantPut:
+      type: object
+      required:
+        - accessLevel
+      additionalProperties: false
+      properties:
+        accessLevel:
+          type: integer
+          minimum: 1
+          maximum: 4
     UserGroupGrantProjected:
       type: object
       required:
@@ -7635,16 +7652,6 @@ components:
       properties:
         userGroup:
           $ref: '#/components/schemas/UserGroupBasic'
-        accessLevel:
-          type: integer
-          minimum: 1
-          maximum: 4
-    UserGroupGrantPut:
-      type: object
-      required:
-        - accessLevel
-      additionalProperties: false
-      properties:
         accessLevel:
           type: integer
           minimum: 1
