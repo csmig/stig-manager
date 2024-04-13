@@ -22,7 +22,7 @@ exports.queryUsers = async function (inProjection, inPredicates, elevate, userOb
     ]
     let joins = [
       'user_data ud',
-      'left join (select cgi.collectionId, cgi.userId, cgi.accessLevel from v_collection_grant_effective cgi inner join collection c on cgi.collectionId = c.collectionId and c.state = "enabled") cg on ud.userId = cg.userId'
+      'left join v_collection_grant_effective cg on ud.userId = cg.userId'
     ]
     let groupBy = [
       'ud.userId',
@@ -41,7 +41,10 @@ exports.queryUsers = async function (inProjection, inPredicates, elevate, userOb
             'collectionId', CAST(cg.collectionId as char),
             'name', c.name
           ),
-          'accessLevel', cg.accessLevel
+          'accessLevel', cg.accessLevel,
+          'grantSource', cg.grantSource,
+          'grantSourceId', CAST(cg.grantSourceId as char),
+          'mergeUserGroupAcls', cg.mergeUserGroupAcls is true
         )
       ) else json_array() end as collectionGrants`)
     }

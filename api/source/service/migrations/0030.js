@@ -82,20 +82,23 @@ const upMigration = [
   // view v_collection_grant_effective
   `CREATE OR REPLACE VIEW v_collection_grant_effective AS
   select 
-    collectionId,
-    userId,
-    accessLevel,
+    cg.collectionId,
+    cg.userId,
+    cg.accessLevel,
     'user' AS grantSource,
-    userId as grantSourceId
+    cg.userId as grantSourceId,
+    cg.mergeUserGroupAcls
   from
-    collection_grant
+    collection_grant cg
+    inner join collection c on (cg.collectionId = c.collectionId and c.state = 'enabled')
   union 
   select
     collectionId,
     userId,
     accessLevel,
     'userGroup' as grantSource,
-    userGroupId as grantSourceId
+    userGroupId as grantSourceId,
+    0
     from
       (select
         ROW_NUMBER() OVER(PARTITION BY ugu.userId, cgg.collectionId ORDER BY cgg.accessLevel desc) as rn,
@@ -107,6 +110,7 @@ const upMigration = [
         collection_grant_group cgg 
         left join user_group_user_map ugu using (userGroupId)
         left join collection_grant cg on (cgg.collectionId = cg.collectionId and ugu.userId = cg.userId)
+        inner join collection c on (cgg.collectionId = c.collectionId and c.state = 'enabled')
       where
         cg.userId is null) dt
     where
@@ -114,7 +118,14 @@ const upMigration = [
 
   // view v_user_stig_asset_effective
   `CREATE OR REPLACE VIEW v_user_stig_asset_effective AS
-  select  userId, saId from user_stig_asset_map
+  select 
+    usa.userId,
+    usa.saId
+  from
+    user_stig_asset_map usa
+	  left join stig_asset_map sa on usa.saId = sa.saId
+	  left join asset a on sa.assetId = a.assetId
+    inner join collection c on (a.collectionId = c.collectionId and c.state = 'enabled')
   union 
 	select
 	  ugu.userId, 
@@ -125,7 +136,8 @@ const upMigration = [
 	  left join stig_asset_map sa on ugsa.saId = sa.saId
 	  left join asset a on sa.assetId = a.assetId
 	  left join collection_grant cg on (a.collectionId = cg.collectionId and ugu.userId = cg.userId)
-	where
+    inner join collection c on (a.collectionId = c.collectionId and c.state = 'enabled')
+  where
     cg.cgId is null
     or (cg.accessLevel = 1 and cg.mergeUserGroupAcls = 1)`,
 

@@ -5395,6 +5395,12 @@ components:
               $ref: '#/components/schemas/CollectionId'
             name:
               $ref: '#/components/schemas/CollectionName'
+        grantSource:
+          $ref: '#/components/schemas/GrantSource'
+        grantSourceId:
+          $ref: '#/components/schemas/GrantSourceId'
+        mergeUserGroupAcls:
+          type: boolean
     CollectionHistorySettings:
       additionalProperties: false
       type: object
@@ -5864,6 +5870,15 @@ components:
           type: string
         text:
           type: string
+    GrantSource:
+      type: string
+      enum:
+        - user
+        - userGroup
+    GrantSourceId:
+      anyOf:
+        - $ref: '#/components/schemas/UserId'
+        - $ref: '#/components/schemas/UserGroupId'
     GroupId:
       $ref: '#/components/schemas/String255'
     GroupProjected:
@@ -7537,21 +7552,16 @@ components:
       additionalProperties: false
       properties:
         userId:
-          type: string
+          $ref: '#/components/schemas/UserId'
         accessLevel:
-          type: integer
-          minimum: 1
-          maximum: 4
+          $ref: '#/components/schemas/AccessLevel'
         mergeUserGroupAcls:
           type: boolean
           default: false
         grantSource:
-          type: string
-          enum:
-            - user
-            - userGroup
+          $ref: '#/components/schemas/GrantSource'
         grantSourceId:
-          type: string
+          $ref: '#/components/schemas/GrantSourceId'
     UserGrantProjected:
       additionalProperties: false
       type: object
@@ -7578,9 +7588,7 @@ components:
       additionalProperties: false
       properties:
         accessLevel:
-          type: integer
-          minimum: 1
-          maximum: 4
+          $ref: '#/components/schemas/AccessLevel'
         mergeUserGroupAcls:
           type: boolean
     UserGroupBasic:
@@ -7653,9 +7661,7 @@ components:
         userGroup:
           $ref: '#/components/schemas/UserGroupBasic'
         accessLevel:
-          type: integer
-          minimum: 1
-          maximum: 4
+          $ref: '#/components/schemas/AccessLevel'
     UserGroupId:
       $ref: '#/components/schemas/StringIntId' 
     UserGroupPatch:
@@ -7670,7 +7676,7 @@ components:
         userIds:
           type: array
           items:
-            $ref: '#/components/schemas/StringIntId'
+            $ref: '#/components/schemas/UserId'
     UserGroupProjected:
       type: object
       additionalProperties: false
@@ -7719,7 +7725,7 @@ components:
           type: array
           uniqueItems: true
           items:
-            $ref: '#/components/schemas/StringIntId'
+            $ref: '#/components/schemas/UserId'
 
     UserId:
       $ref: '#/components/schemas/StringIntId'
