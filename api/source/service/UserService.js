@@ -431,7 +431,7 @@ exports.queryUserGroups = async function ({projections = [], filters = {}, eleva
     groupBy.add('ug.userGroupId')
     columns.push(`CASE WHEN count(ugu.userId)=0 
     THEN json_array()
-    ELSE json_arrayagg(cast(ugu.userId as char))
+    ELSE cast(concat('[', group_concat(distinct concat('"',ugu.userId,'"')), ']') as json)
     END as userIds`)
   }
   if (projections.includes('users')) {
@@ -440,10 +440,10 @@ exports.queryUserGroups = async function ({projections = [], filters = {}, eleva
     groupBy.add('ug.userGroupId')
     columns.push(`CASE WHEN count(ugu.userId)=0 
     THEN json_array()
-    ELSE json_arrayagg(json_object(
+    ELSE cast(concat('[', group_concat(distinct json_object(
       'userId', cast(ugu.userId as char),
       'username', udUser.username)
-    )
+    ), ']') as json)
     END as users`)
   }
   if (projections.includes('collectionIds')) {
@@ -451,7 +451,7 @@ exports.queryUserGroups = async function ({projections = [], filters = {}, eleva
     groupBy.add('ug.userGroupId')
     columns.push(`CASE WHEN count(cgg.collectionId)=0 
     THEN json_array()
-    ELSE json_arrayagg(cast(cgg.collectionId as char))
+    ELSE cast(concat('[', group_concat(distinct concat('"',cgg.collectionId,'"')), ']') as json)
     END as collectionIds`)
   }
   if (projections.includes('collections')) {
@@ -460,10 +460,10 @@ exports.queryUserGroups = async function ({projections = [], filters = {}, eleva
     groupBy.add('ug.userGroupId')
     columns.push(`CASE WHEN count(cgg.collectionId)=0 
     THEN json_array()
-    ELSE json_arrayagg(json_object(
+    ELSE cast(concat('[', group_concat(distinct json_object(
       'collectionId', cast(cgg.collectionId as char),
       'name', collection.name)
-    )
+    ), ']') as json)
     END as collections`)
   }
   const sql = dbUtils.makeQueryString({columns, joins, predicates, groupBy, orderBy, format: true})
