@@ -1120,11 +1120,11 @@ paths:
       operationId: getGrantByCollectionUser
       responses:
         '200':
-          description: UserGrant response
+          description: UserGrantEffective response
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/UserGrant'
+                $ref: '#/components/schemas/UserGrantEffective'
         '403':
           $ref: '#/components/responses/Forbidden'
         default:
@@ -1146,20 +1146,20 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/UserGrantPut'        
+              $ref: '#/components/schemas/GrantContextUser'        
       responses:
         '201':
-          description: UserGrant response
+          description: UserGrantEffective response
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/UserGrant'
+                $ref: '#/components/schemas/UserGrantEffective'
         '200':
-          description: UserGrant response
+          description: UserGrantEffective response
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/UserGrant'
+                $ref: '#/components/schemas/UserGrantEffective'
       security:
         - oauth:
             - 'stig-manager:collection'
@@ -1170,11 +1170,11 @@ paths:
       operationId: deleteGrantByCollectionUser
       responses:
         '200':
-          description: UserGrant response
+          description: UserGrantEffective response
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/UserGrant'
+                $ref: '#/components/schemas/UserGrantEffective'
       security:
         - oauth:
             - 'stig-manager:collection'
@@ -1250,7 +1250,7 @@ paths:
       operationId: getGrantByCollectionUserGroup
       responses:
         '200':
-          description: UserGrant response
+          description: UserGroupGrant response
           content:
             application/json:
               schema:
@@ -1276,16 +1276,16 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/UserGroupGrantPut'        
+              $ref: '#/components/schemas/GrantContextUserGroup'        
       responses:
         '200':
-          description: UserGrant response
+          description: UserGroupGrant response
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/UserGroupGrant'
         '201':
-          description: UserGrant response
+          description: UserGroupGrant response
           content:
             application/json:
               schema:
@@ -1300,7 +1300,7 @@ paths:
       operationId: deleteGrantByCollectionUserGroup
       responses:
         '200':
-          description: UserGrant response
+          description: UserGroupGrant response
           content:
             application/json:
               schema:
@@ -4097,7 +4097,7 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/UserGroupBasic'
+                  $ref: '#/components/schemas/UserGroup'
       security:
         - oauth:
             - 'stig-manager:user:read'
@@ -5244,7 +5244,7 @@ components:
           type: array
           items:
             anyOf:
-              - $ref: '#/components/schemas/UserGrantPut'
+              - $ref: '#/components/schemas/UserGrant'
               - $ref: '#/components/schemas/UserGroupGrant'
         labels:
           type: array
@@ -5434,6 +5434,10 @@ components:
             anyOf:
              - $ref: '#/components/schemas/UserGrantProjected'     
              - $ref: '#/components/schemas/UserGroupGrantProjected'     
+        grantsEffective:
+          type: array
+          items:
+            $ref: '#/components/schemas/GrantEffective'
         labels:
           type: array
           items:
@@ -5870,6 +5874,42 @@ components:
           type: string
         text:
           type: string
+    GrantContextUser:
+      type: object
+      properties:
+        accessLevel:
+          $ref: '#/components/schemas/AccessLevel'
+        mergeUserGroupAcls:
+          type: boolean
+      required:
+        - userId
+        - accessLevel
+    GrantContextUserGroup:
+      type: object
+      required:
+        - accessLevel
+      additionalProperties: false
+      properties:
+        accessLevel:
+          $ref: '#/components/schemas/AccessLevel'
+    GrantEffective:
+      type: object
+      properties:
+        accessLevel:
+          $ref: '#/components/schemas/AccessLevel'
+        grantSource:
+          $ref: '#/components/schemas/GrantSource'
+        grantSourceId:
+          $ref: '#/components/schemas/GrantSourceId'
+        mergeUserGroupAcls:
+          type: boolean
+        user:
+          $ref: '#/components/schemas/UserBasicWithDisplayName'
+      required:
+        - accessLevel
+        - grantSource
+        - grantSourceId
+        - user
     GrantSource:
       type: string
       enum:
@@ -7531,6 +7571,19 @@ components:
       required:
         - userId
         - username
+    UserBasicWithDisplayName:
+      additionalProperties: false
+      type: object
+      properties:
+        userId:
+          $ref: '#/components/schemas/UserId'
+        username:
+          $ref: '#/components/schemas/Username'
+        displayName:
+          $ref: '#/components/schemas/DisplayName'
+      required:
+        - userId
+        - username
     UserCreateOrReplace:
       additionalProperties: false
       type: object
@@ -7544,11 +7597,13 @@ components:
       required:
         - username
         - collectionGrants
-    UserGrant:
+    UserGrantEffective:
       type: object
       required:
         - userId
         - accessLevel
+        - grantSource
+        - grantSourceId
       additionalProperties: false
       properties:
         userId:
@@ -7562,36 +7617,29 @@ components:
           $ref: '#/components/schemas/GrantSource'
         grantSourceId:
           $ref: '#/components/schemas/GrantSourceId'
+    UserGrant:
+      type: object
+      properties:
+        userId:
+          $ref: '#/components/schemas/UserId'
+        accessLevel:
+          $ref: '#/components/schemas/AccessLevel'
+        mergeUserGroupAcls:
+          type: boolean
     UserGrantProjected:
       additionalProperties: false
       type: object
       properties:
         accessLevel:
           $ref: '#/components/schemas/AccessLevel'
+        mergeUserGroupAcls:
+          type: boolean
         user:
-          type: object
-          properties:
-            userId:
-              $ref: '#/components/schemas/UserId'
-            username:
-              $ref: '#/components/schemas/Username'
-          required:
-            - userId
-            - username
+          $ref: '#/components/schemas/UserBasicWithDisplayName'
       required:
         - user
         - accessLevel
-    UserGrantPut:
-      type: object
-      required:
-        - accessLevel
-      additionalProperties: false
-      properties:
-        accessLevel:
-          $ref: '#/components/schemas/AccessLevel'
-        mergeUserGroupAcls:
-          type: boolean
-    UserGroupBasic:
+    UserGroup:
       type: object
       additionalProperties: false
       required:
@@ -7605,6 +7653,17 @@ components:
           $ref: '#/components/schemas/String255'
         description:
           $ref: '#/components/schemas/String255Nullable'
+    UserGroupBasic:
+      type: object
+      additionalProperties: false
+      required:
+        - userGroupId
+        - name
+      properties:
+        userGroupId:
+          $ref: '#/components/schemas/UserGroupId'
+        name:
+          $ref: '#/components/schemas/String255'
     UserGroupCreated:
       type: object
       additionalProperties: false
@@ -7627,7 +7686,6 @@ components:
             $ref: '#/components/schemas/StringIntId'
         attributions:
           $ref: '#/components/schemas/Attributions'
-
     UserGroupGrant:
       type: object
       required:
@@ -7641,16 +7699,6 @@ components:
           type: integer
           minimum: 1
           maximum: 4
-    UserGroupGrantPut:
-      type: object
-      required:
-        - accessLevel
-      additionalProperties: false
-      properties:
-        accessLevel:
-          type: integer
-          minimum: 1
-          maximum: 4
     UserGroupGrantProjected:
       type: object
       required:
@@ -7659,7 +7707,7 @@ components:
       additionalProperties: false
       properties:
         userGroup:
-          $ref: '#/components/schemas/UserGroupBasic'
+          $ref: '#/components/schemas/UserGroup'
         accessLevel:
           $ref: '#/components/schemas/AccessLevel'
     UserGroupId:
@@ -7709,7 +7757,6 @@ components:
             $ref: '#/components/schemas/CollectionBasic'
         attributions:
           $ref: '#/components/schemas/Attributions'
-
     UserGroupPostOrPut:
       type: object
       additionalProperties: false
@@ -7726,7 +7773,6 @@ components:
           uniqueItems: true
           items:
             $ref: '#/components/schemas/UserId'
-
     UserId:
       $ref: '#/components/schemas/StringIntId'
     UserPrivileges:
@@ -7754,6 +7800,10 @@ components:
           $ref: '#/components/schemas/UserPrivileges'
         statistics:
           $ref: '#/components/schemas/UserStatistics'
+        userGroups:
+          type: array
+          items:
+            $ref: '#/components/schemas/UserGroupBasic'
         userId:
           $ref: '#/components/schemas/UserId'
         username:
@@ -7952,6 +8002,7 @@ components:
           enum:
             - assets
             - grants
+            - grantsEffective
             - owners
             - statistics
             - stigs
@@ -8389,7 +8440,6 @@ components:
             - collectionIds
             - collections
             - attributions
-      
     UserIdPath:
       name: userId
       in: path
@@ -8436,6 +8486,7 @@ components:
           enum:
             - collectionGrants
             - statistics
+            - userGroups
   responses:
     Forbidden:
       description: The requesting User does not have access rights to the content

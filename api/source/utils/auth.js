@@ -63,10 +63,11 @@ const verifyRequest = async function (req, requiredScopes, securityDefinition) {
             privileges.canAdmin = privilegeGetter(decoded).includes('admin')
 
             req.userObject.privileges = privileges
-            const response = await UserService.getUserByUsername(req.userObject.username, ['collectionGrants', 'statistics'], false, null)   
+            const response = await UserService.getUserByUsername(req.userObject.username, ['collectionGrants', 'statistics', 'userGroups'], false, null)   
             req.userObject.userId = response?.userId || null
             req.userObject.collectionGrants = response?.collectionGrants || []
             req.userObject.statistics = response?.statistics || {}
+            req.userObject.userGroups = response?.userGroups || []
             
             const refreshFields = {}
             let now = new Date().toUTCString()

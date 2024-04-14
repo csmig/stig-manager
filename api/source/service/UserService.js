@@ -10,7 +10,7 @@ Generalized queries for users
 exports.queryUsers = async function (inProjection, inPredicates, elevate, userObject) {
   let connection
   try {
-    let columns = [
+    const columns = [
       'CAST(ud.userId as char) as userId',
       'ud.username',
       `json_extract(
@@ -18,25 +18,23 @@ exports.queryUsers = async function (inProjection, inPredicates, elevate, userOb
       ) as email`,
       `COALESCE(json_unquote(json_extract(
         ud.lastClaims, :name
-      )), ud.username) as displayName`,  
+      )), ud.username) as displayName`
     ]
-    let joins = [
-      'user_data ud',
-      'left join v_collection_grant_effective cg on ud.userId = cg.userId'
-    ]
-    let groupBy = [
-      'ud.userId',
-      'ud.username'
-    ]
+    const joins = new Set([
+      'user_data ud'
+    ])
+    const groupBy = ['ud.userId']
 
     const orderBy = ['ud.username']
 
     // PROJECTIONS
     if (inProjection?.includes('collectionGrants')) {
-      joins.push('left join collection c on cg.collectionId = c.collectionId')
+      joins.add('left join v_collection_grant_effective cg on ud.userId = cg.userId')
+      joins.add('left join collection c on cg.collectionId = c.collectionId')
       columns.push(`case when count(cg.collectionId) > 0 then 
-      json_arrayagg(
-        json_object(
+      cast(concat('[', group_concat( distinct
+        case when cg.grantSource = 'user' and cg.accessLevel = 1
+        then json_object(
           'collection', json_object(
             'collectionId', CAST(cg.collectionId as char),
             'name', c.name
@@ -46,13 +44,24 @@ exports.queryUsers = async function (inProjection, inPredicates, elevate, userOb
           'grantSourceId', CAST(cg.grantSourceId as char),
           'mergeUserGroupAcls', cg.mergeUserGroupAcls is true
         )
-      ) else json_array() end as collectionGrants`)
+        else json_object(
+          'collection', json_object(
+            'collectionId', CAST(cg.collectionId as char),
+            'name', c.name
+          ),
+          'accessLevel', cg.accessLevel,
+          'grantSource', cg.grantSource,
+          'grantSourceId', CAST(cg.grantSourceId as char)
+        )
+        end      
+      ), ']') as json) else json_array() end as collectionGrants`)
     }
 
     if (inProjection?.includes('statistics')) {
+      joins.add('left join v_collection_grant_effective cg on ud.userId = cg.userId')
       columns.push(`json_object(
           'created', date_format(ud.created, '%Y-%m-%dT%TZ'),
-          'collectionGrantCount', count(cg.collectionId),
+          'collectionGrantCount', count(distinct cg.collectionId),
           'lastAccess', ud.lastAccess,
           'lastClaims', ud.lastClaims
         ) as statistics`)
@@ -60,6 +69,17 @@ exports.queryUsers = async function (inProjection, inPredicates, elevate, userOb
         'ud.lastAccess',
         'ud.lastClaims'
       )
+    }
+    if (inProjection?.includes('userGroups')) {
+      joins.add('left join user_group_user_map ugu on ud.userId = ugu.userId')
+      joins.add('left join user_group ug on ugu.userGroupId = ug.userGroupId')
+      columns.push(`CASE WHEN COUNT(ugu.userGroupId) > 0
+      THEN cast(concat('[', group_concat( distinct JSON_OBJECT(
+        'userGroupId', cast(ugu.userGroupId as char),
+        'name', ug.name
+      )), ']') as json)
+      ELSE json_array()
+      END as userGroups`)
     }
 
     // PREDICATES

@@ -611,3 +611,7 @@ module.exports.pruneUserGroupStigAssetMap = async function (connection, {collect
     }
     await (connection ?? _this.pool).query(sql, binds)
 }
+
+module.exports.jsonArrayAggDistinct = function (valueStr) {
+  return `cast(concat('[', group_concat(distinct ${valueStr}), ']') as json)`
+}

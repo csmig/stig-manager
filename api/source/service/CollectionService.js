@@ -68,20 +68,30 @@ exports.queryCollections = async function (inProjection = [], inPredicates = {},
         ']')
       as json) as "stigs"`)
     }
-    if (inProjection.includes('grants')) {
+    if (inProjection.includes('grants')) { 
       columns.push(`(select
         coalesce(
           (select json_arrayagg(grantJson) from
             (select
-              json_object(
-                'user', json_object(
-                'userId', CAST(user_data.userId as char),
-                'username', user_data.username,
-                'displayName', COALESCE(
-                  JSON_UNQUOTE(JSON_EXTRACT(user_data.lastClaims, "$.${config.oauth.claims.name}")),
-                  user_data.username)),
-                'accessLevel', accessLevel
-              ) as grantJson
+              case when accessLevel = 1
+                then json_object(
+                  'user', json_object(
+                  'userId', CAST(user_data.userId as char),
+                  'username', user_data.username,
+                  'displayName', COALESCE(
+                    JSON_UNQUOTE(JSON_EXTRACT(user_data.lastClaims, "$.${config.oauth.claims.name}")),
+                    user_data.username)),
+                  'accessLevel', accessLevel,
+                  'mergeUserGroupAcls', mergeUserGroupAcls is true)
+                else json_object(
+                  'user', json_object(
+                  'userId', CAST(user_data.userId as char),
+                  'username', user_data.username,
+                  'displayName', COALESCE(
+                    JSON_UNQUOTE(JSON_EXTRACT(user_data.lastClaims, "$.${config.oauth.claims.name}")),
+                    user_data.username)),
+                  'accessLevel', accessLevel)
+              end as grantJson
             from
               collection_grant left join user_data using (userId) where collectionId = c.collectionId
             UNION
@@ -99,6 +109,37 @@ exports.queryCollections = async function (inProjection = [], inPredicates = {},
         , json_array()
         )
       ) as "grants"`)
+    }
+    if (inProjection.includes('grantsEffective')) {
+      joins.push('left join v_collection_grant_effective cge on c.collectionId = cge.collectionId')
+      joins.push('left join user_data ud on cge.userId = ud.userId')
+      columns.push(`case when count(cge.userId) > 0
+      then ${dbUtils.jsonArrayAggDistinct(`
+        case when cge.grantSource = 'user' and cge.accessLevel = 1
+        then json_object(
+          'user', json_object(
+            'userId', CAST(ud.userId as char),
+            'username', ud.username,
+            'displayName', COALESCE(
+              JSON_UNQUOTE(JSON_EXTRACT(ud.lastClaims, "$.${config.oauth.claims.name}")),
+              ud.username)),
+          'accessLevel', cge.accessLevel,
+          'mergeUserGroupAcls', cge.mergeUserGroupAcls is true,
+          'grantSource', cge.grantSource,
+          'grantSourceId', cge.grantSourceId)
+        else json_object(
+          'user', json_object(
+            'userId', CAST(ud.userId as char),
+            'username', ud.username,
+            'displayName', COALESCE(
+              JSON_UNQUOTE(JSON_EXTRACT(ud.lastClaims, "$.${config.oauth.claims.name}")),
+              ud.username)),
+          'accessLevel', cge.accessLevel,
+          'grantSource', cge.grantSource,
+          'grantSourceId', cge.grantSourceId)
+        end`)}
+      else json_array()
+      end as grantsEffective`)
     }
     if (inProjection.includes('owners')) {
       columns.push(`(select

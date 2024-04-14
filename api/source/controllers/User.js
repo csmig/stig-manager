@@ -110,7 +110,7 @@ module.exports.getUsers = async function getUsers (req, res, next) {
     let username = req.query.username
     let usernameMatch = req.query['username-match']
     let projection = req.query.projection
-    if ( !elevate && projection && projection.length > 0) {
+    if ( !elevate && projection?.length > 0) {
       throw new SmError.PrivilegeError()
     }
     let response = await UserService.getUsers( username, usernameMatch, projection, elevate, req.userObject)
