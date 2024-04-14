@@ -31,7 +31,7 @@ function addCollectionAdmin( params ) {
       mapping: 'statistics.assetCount'
     },
     {
-      name: 'grants',
+      name: 'users',
       type: 'integer',
       mapping: 'statistics.grantCount'
     },
@@ -108,9 +108,9 @@ function addCollectionAdmin( params ) {
         }
       },
       {
-        header: "Grants",
+        header: "Users",
         width: 150,
-        dataIndex: 'grants',
+        dataIndex: 'users',
         sortable: true
       },
       {

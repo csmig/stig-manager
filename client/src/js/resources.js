@@ -59,6 +59,8 @@ const scripts = [
   'js/SM/StigRevision.js',
   'js/SM/Inventory.js',
   'js/SM/AssetSelection.js',
+  'js/SM/User.js',
+  'js/SM/UserGroup.js',
   'js/library.js',
   'js/userAdmin.js',
   'js/collectionAdmin.js',
