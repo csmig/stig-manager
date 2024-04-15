@@ -400,7 +400,7 @@ SM.UserSelectionField = Ext.extend(Ext.form.ComboBox, {
 })
 Ext.reg('sm-user-selection-field', SM.UserSelectionField);
 
-SM.UserGrantsGrid = Ext.extend(Ext.grid.GridPanel, {
+SM.Collection.GrantsGrid = Ext.extend(Ext.grid.GridPanel, {
     initComponent: function () {
         const _this = this
         this.canModifyOwners = !!this.canModifyOwners
@@ -443,7 +443,7 @@ SM.UserGrantsGrid = Ext.extend(Ext.grid.GridPanel, {
         const totalTextCmp = new SM.RowCountTextItem ({
             store: grantStore,
             noun: 'grant',
-            iconCls: 'sm-user-icon'
+            iconCls: 'sm-lock-icon'
         })
         const userSelectionField = new SM.UserSelectionField({
             submitValue: false,
@@ -717,10 +717,178 @@ SM.UserGrantsGrid = Ext.extend(Ext.grid.GridPanel, {
         }
 
         Ext.apply(this, Ext.apply(this.initialConfig, config))
-        SM.UserGrantsGrid.superclass.initComponent.call(this)
+        SM.Collection.GrantsGrid.superclass.initComponent.call(this)
     }
 })
-Ext.reg('sm-user-grants-grid', SM.UserGrantsGrid);
+
+SM.Collection.UsersGrid = Ext.extend(Ext.grid.GridPanel, {
+    initComponent: function () {
+        const _this = this
+        const fields = [
+            'grantSource',
+            'grantSourceId',
+            {
+                name: 'userId',
+                mapping: 'user.userId'
+            },
+            {
+                name: 'username',
+                mapping: 'user.username'
+            },
+            'accessLevel',
+            {
+                name: 'displayName',
+                mapping: 'user.displayName'
+            },
+            'mergeUserGroupAcls'
+        ]
+
+        this.proxy = new Ext.data.HttpProxy({
+            restful: true,
+            url: this.url,
+            headers: { 'Content-Type': 'application/json;charset=utf-8' }
+        })
+        const store = new Ext.data.JsonStore({
+            grid: this,
+            proxy: this.proxy,
+            baseParams: this.baseParams,
+            root: '',
+            fields,
+            idProperty: 'userId',
+            sortInfo: {
+                field: 'username',
+                direction: 'ASC'
+            },
+            listeners: {
+                load: function (store, records) {
+                    totalTextCmp.setText(records.length + ' records');
+                },
+                remove: function (store, record, index) {
+                    totalTextCmp.setText(store.getCount() + ' records');
+                    store.grid.fireEvent('grantsremoved', store.grid)
+                }
+            }
+        })
+        const totalTextCmp = new SM.RowCountTextItem ({
+            store,
+            noun: 'user',
+            iconCls: 'sm-user-icon'
+        })
+        const columns = [
+            {
+                header: "User",
+                width: 150,
+                dataIndex: 'username',
+                sortable: true,
+                renderer: function (v, m, r) {
+                    const icon = 'sm-user-icon'
+                    return `<div class="x-combo-list-item ${icon} sm-combo-list-icon" exportValue="${r.data.displayName ?? ''}:${r.data.username ?? ''}"><span style="font-weight:600;">${r.data.displayName ?? ''}</span><br>${r.data.username ?? ''}</div>`
+                }
+            },
+            {
+                header: '<span exportvalue="Grant">Grant<i class= "fa fa-question-circle sm-question-circle"></i></span>',
+                width: 150,
+                dataIndex: 'grantSourceId',
+                sortable: true,
+                renderer: function (v, m, r) {
+                    const icon = r.data.grantSource === 'user' ? 'sm-user-icon' : 'sm-users-icon'
+                    return `<div class="x-combo-list-item ${icon} sm-combo-list-icon" exportValue="${r.data.grantSource ?? ''}:${r.data.grantSourceId ?? ''}">
+                    <span style="font-weight:600;">${r.data.grantSource === 'user' ? r.data.displayName : 'User Group'}</span><br>${r.data.grantSource === 'user' ? r.data.username : r.data.grantSourceId}
+                    </div>`
+                }
+            },
+            {
+                header: '<span exportvalue="Access Level">Access Level<i class= "fa fa-question-circle sm-question-circle"></i></span>',
+                width: 100,
+                dataIndex: 'accessLevel',
+                sortable: true,
+                renderer: (v) => SM.AccessLevelStrings[v],
+            }
+        ]
+        const config = {
+            isFormField: true,
+            name: 'grantsEffective',
+            allowBlank: false,
+            layout: 'fit',
+            height: 150,
+            store,
+            columns,
+            sm: new Ext.grid.RowSelectionModel({
+                singleSelect: true,
+            }),
+            view: new SM.ColumnFilters.GridView({
+                emptyText: this.emptyText || 'No records to display',
+                deferEmptyText: false,
+                forceFit: true,
+                markDirty: false,
+                listeners: {
+                refresh: function (view) {
+                    // Setup the tooltip for column 'accessLevel'
+                    const index = view.grid.getColumnModel().findColumnIndex('accessLevel')
+                    const tipEl = view.getHeaderCell(index).getElementsByClassName('fa')[0]
+                    if (tipEl) {
+                      new Ext.ToolTip({
+                        target: tipEl,
+                        showDelay: 0,
+                        dismissDelay: 0,
+                        maxWidth: 600,
+                        html: SM.TipContent.AccessLevels
+                      })
+                    }
+                  },                 
+                },
+            }),
+            bbar: new Ext.Toolbar({
+                items: [
+                    {
+                        xtype: 'exportbutton',
+                        hasMenu: false,
+                        gridBasename: 'CollectionUsers',
+                        exportType: 'grid',
+                        iconCls: 'sm-export-icon',
+                        text: 'CSV'
+                    },{
+                        xtype: 'tbfill'
+                    },{
+                        xtype: 'tbseparator'
+                    },
+                    totalTextCmp
+                ]
+            }),
+
+            listeners: {
+                viewready: function (grid) {
+                  // Setup the tooltip for column 'accessLevel'
+                  const index = grid.getColumnModel().findColumnIndex('accessLevel')
+                  const tipEl = grid.view.getHeaderCell(index).getElementsByClassName('fa')[0]
+                  if (tipEl) {
+                    new Ext.ToolTip({
+                      target: tipEl,
+                      showDelay: 0,
+                      dismissDelay: 0,
+                      maxWidth: 600,
+                      html: SM.TipContent.AccessLevels
+                    })
+                  }
+                }
+              },   
+
+            setValue: function (v) {
+                store.loadData(v)
+            },
+            validator: function (v) {},
+            markInvalid: function () {},
+            clearInvalid: function () {},
+            isValid: function () {},
+            getName: () => this.name,
+            validate: function () {}
+        }
+
+        Ext.apply(this, Ext.apply(this.initialConfig, config))
+        this.superclass().initComponent.call(this)
+    }
+})
+
 
 SM.Collection.CreateForm = Ext.extend(Ext.form.FormPanel, {
     initComponent: function () {
@@ -785,8 +953,8 @@ SM.Collection.CreateForm = Ext.extend(Ext.form.FormPanel, {
             border: true,
             autoHeight: true
         })
-        const grantGrid = new SM.UserGrantsGrid({
-            iconCls: 'sm-user-icon',
+        const grantGrid = new SM.Collection.GrantsGrid({
+            iconCls: 'sm-lock-icon',
 			showAccessBtn: false,
             canModifyOwners: true,
 			title: 'Grants',
@@ -1151,9 +1319,9 @@ SM.Collection.ManagePanel = Ext.extend(Ext.Panel, {
             }
         }
 
-        const grantGrid = new SM.UserGrantsGrid({
+        const grantGrid = new SM.Collection.GrantsGrid({
 			collectionId: _this.apiCollection.collectionId,
-            iconCls: 'sm-user-icon',
+            iconCls: 'sm-lock-icon',
 			showAccessBtn: true,
             canModifyOwners: this.canModifyOwners,
 			url: `${STIGMAN.Env.apiBase}/collections/${_this.apiCollection.collectionId}`,
@@ -1168,6 +1336,14 @@ SM.Collection.ManagePanel = Ext.extend(Ext.Panel, {
 			}
 		})
 		grantGrid.setValue(_this.apiCollection.grants)
+        
+        const usersGrid = new SM.Collection.UsersGrid({
+            iconCls: 'sm-user-icon',
+			title: 'Users',
+			border: false
+		})
+		usersGrid.setValue(_this.apiCollection.grantsEffective)
+
 
         this.labelGrid = new SM.Collection.LabelsGrid({
 			collectionId: _this.apiCollection.collectionId,
@@ -1324,6 +1500,7 @@ SM.Collection.ManagePanel = Ext.extend(Ext.Panel, {
                     border: false,
                     items: [ 
                         grantGrid,
+                        usersGrid,
                         {
                             xtype: 'panel',
                             bodyStyle: {

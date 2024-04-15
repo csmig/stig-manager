@@ -1476,6 +1476,11 @@ td.x-grid3-hd-over .x-grid3-hd-inner {
 .sm-unlock-icon {
   background-image: url(../img/unlock-16.png)!important
 }
+.sm-lock-icon {
+  background-image: url(../img/lock.svg)!important;
+  background-repeat: no-repeat;
+  background-size: 16px 16px
+}
 .sm-ready-icon {
   background-image: url(../img/ready-16.png)!important
 }
