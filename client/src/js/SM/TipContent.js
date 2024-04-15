@@ -33,7 +33,7 @@ SM.TipContent.AccessLevels = `
 - <b>Manage:</b> Everything in the "Full" level.  Can also add/remove/modify Assets, STIGs, and Grants except for User "Owner" grants. Optionally responsible for accepting and rejecting reviews from evaluators. <br>
 - <b>Owner:</b> Everything in the "Manage" level.  Can also delete the Collection and create new Owner Grants.  Responsible for accepting and rejecting reviews from evaluators. <br>
 <br>
-* Users with Restricted access to a Collection initially can't access any STIG on any Asset. They can be assigned specific STIGs on specific Assets using the "User access..." button in the Grants panel toolbar. <br>
+* By default, Users with a Restricted grant to a Collection can't access any STIG on any Asset. They can be assigned specific STIGs on specific Assets using the "Edit Restricted ACL..." button in the Grants panel toolbar. <br>
 `
 
 SM.TipContent.RulePropertyDiffs = `<b>Changes to these rule properties are detected</b><br>

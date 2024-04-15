@@ -557,7 +557,7 @@ SM.Collection.GrantsGrid = Ext.extend(Ext.grid.GridPanel, {
             this.accessBtn = tbar.addButton({
                 iconCls: 'sm-asset-icon',
                 disabled: true,
-                text: 'User access...',
+                text: 'Edit Restricted ACL...',
                 handler: function () {
                     const r = _this.getSelectionModel().getSelected();
                     Ext.getBody().mask('Getting access list for ' + r.get('title') + '...');
@@ -724,6 +724,39 @@ SM.Collection.GrantsGrid = Ext.extend(Ext.grid.GridPanel, {
 SM.Collection.UsersGrid = Ext.extend(Ext.grid.GridPanel, {
     initComponent: function () {
         const _this = this
+        async function fetchData () {
+            const requests = [
+                Ext.Ajax.requestPromise({
+                    responseType: 'json',
+                    url: `${STIGMAN.Env.apiBase}/users`,
+                    method: 'GET'
+                  }),
+                  Ext.Ajax.requestPromise({
+                    responseType: 'json',
+                    url: `${STIGMAN.Env.apiBase}/user-groups`,
+                    method: 'GET'
+                  })
+            ]
+            const [users, userGroups] = await Promise.all(requests)
+            const usersData = users.map(u=>({
+                grantTarget: 'user',
+                grantTargetId: u.userId,
+                title: u.displayName,
+                subtitle: u.username,
+                recordId: `U${u.userId}`
+            }))
+            const userGroupsData = userGroups.map(ug=>({
+                grantTarget: 'user-group',
+                grantTargetId: ug.userGroupId,
+                title: ug.name,
+                subtitle: ug.description,
+                groupUsernames: ug.users.map(u=>u.username),
+                recordId: `UG${ug.userGroupId}`
+    
+            }))
+            this.store.loadData([...usersData, ...userGroupsData])
+        }
+    
         const fields = [
             'grantSource',
             'grantSourceId',
@@ -805,6 +838,50 @@ SM.Collection.UsersGrid = Ext.extend(Ext.grid.GridPanel, {
                 renderer: (v) => SM.AccessLevelStrings[v],
             }
         ]
+        const sm = new Ext.grid.RowSelectionModel({
+            singleSelect: true,
+            listeners: {
+                selectionchange: function (sm) {
+                    if (sm.hasSelection()) {
+                        const record = sm.getSelected()
+                        viewAclBtn.setDisabled(record.data.accessLevel != 1)
+                    }
+                    else {
+                        viewAclBtn.setDisabled(true)
+                    }
+                }                    
+            }
+        })
+
+        const viewAclBtn = new Ext.Button({
+            iconCls: 'sm-asset-icon',
+            disabled: true,
+            text: 'View Restricted ACL ...',
+            handler: function () {
+                const r = _this.getSelectionModel().getSelected();
+                // viewUserAccess(_this.collectionId, r.data);
+            }
+        })
+
+        const tbar = [viewAclBtn]
+        const bbar = new Ext.Toolbar({
+            items: [
+                {
+                    xtype: 'exportbutton',
+                    hasMenu: false,
+                    gridBasename: 'CollectionUsers',
+                    exportType: 'grid',
+                    iconCls: 'sm-export-icon',
+                    text: 'CSV'
+                },{
+                    xtype: 'tbfill'
+                },{
+                    xtype: 'tbseparator'
+                },
+                totalTextCmp
+            ]
+        })
+
         const config = {
             isFormField: true,
             name: 'grantsEffective',
@@ -813,9 +890,7 @@ SM.Collection.UsersGrid = Ext.extend(Ext.grid.GridPanel, {
             height: 150,
             store,
             columns,
-            sm: new Ext.grid.RowSelectionModel({
-                singleSelect: true,
-            }),
+            sm,
             view: new SM.ColumnFilters.GridView({
                 emptyText: this.emptyText || 'No records to display',
                 deferEmptyText: false,
@@ -838,24 +913,8 @@ SM.Collection.UsersGrid = Ext.extend(Ext.grid.GridPanel, {
                   },                 
                 },
             }),
-            bbar: new Ext.Toolbar({
-                items: [
-                    {
-                        xtype: 'exportbutton',
-                        hasMenu: false,
-                        gridBasename: 'CollectionUsers',
-                        exportType: 'grid',
-                        iconCls: 'sm-export-icon',
-                        text: 'CSV'
-                    },{
-                        xtype: 'tbfill'
-                    },{
-                        xtype: 'tbseparator'
-                    },
-                    totalTextCmp
-                ]
-            }),
-
+            bbar,
+            tbar,
             listeners: {
                 viewready: function (grid) {
                   // Setup the tooltip for column 'accessLevel'

@@ -537,7 +537,7 @@ async function showUserAccess( collectionId, grantRecord ) {
       // Form window
       /******************************************************/
       appwindow = new Ext.Window({
-        title: 'Access Grants (ID: ' + grantRecord.recordId + ')',
+        title: `Access Control List for ${grantRecord.title}`,
         cls: 'sm-dialog-window sm-round-panel',
         modal: true,
         hidden: true,
