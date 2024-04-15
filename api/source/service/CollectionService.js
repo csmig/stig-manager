@@ -2596,22 +2596,31 @@ exports.getGrantByCollectionUser = async function ({collectionId, userId}) {
   return response
 }
 
-exports.setGrantByCollectionUser = async function ({collectionId, userId, accessLevel}) {
+exports.setGrantByCollectionUser = async function ({collectionId, userId, accessLevel, svcStatus = {}}) {
 
   const setGrantByCollectionUser = 
   `INSERT INTO collection_grant (collectionId, userId, accessLevel) VALUES (?, ?, ?) AS new ON DUPLICATE KEY UPDATE accessLevel = new.accessLevel`
-  const [response] = await dbUtils.pool.query(setGrantByCollectionUser, [collectionId, userId, accessLevel])
 
-  // resolving if we are inserting a new db record or updating an existing.
-  const httpStatus = (response.affectedRows === 1 && response.insertId !== 0) ? 201 : 200
-  return httpStatus
+  async function transactionFn (connection) {  
+    const [response] = await connection.query(setGrantByCollectionUser, [collectionId, userId, accessLevel])
+    // resolving if we are inserting a new db record or updating an existing.
+    const httpStatus = (response.affectedRows === 1 && response.insertId !== 0) ? 201 : 200
+    await dbUtils.pruneUserStigAssetMap(connection, {collectionId, userId})
+    return httpStatus
+  }
+
+  return dbUtils.retryOnDeadlock2({
+    transactionFn, 
+    statusObj: svcStatus
+  })
 }
 
-exports.deleteGrantByCollectionUser = async function ({collectionId, userId}) {
+exports.deleteGrantByCollectionUser = async function ({collectionId, userId, shouldPrune}) {
 
   const deleteGrantByCollectionUser = 
   `DELETE FROM collection_grant WHERE collectionId = ? AND userId = ?`
   const [response] = await dbUtils.pool.query(deleteGrantByCollectionUser, [collectionId, userId])
+  if(shouldPrune) await dbUtils.pruneUserStigAssetMap(connection, {collectionId, userId})
   return response
 }
 
@@ -2630,21 +2639,29 @@ exports.getGrantByCollectionUserGroup = async function ({collectionId, userGroup
   return response
 }
 
-exports.setGrantByCollectionUserGroup = async function ({collectionId, userGroupId, accessLevel}) {
+exports.setGrantByCollectionUserGroup = async function ({collectionId, userGroupId, accessLevel, svcStatus = {}}) {
 
   const setGrantByCollectionUserGroup = 
   `INSERT INTO collection_grant_group (collectionId, userGroupId, accessLevel) VALUES (?, ?, ?) AS new ON DUPLICATE KEY UPDATE accessLevel = new.accessLevel`
-  const [response] = await dbUtils.pool.query(setGrantByCollectionUserGroup, [collectionId, userGroupId, accessLevel])
 
-  // resolving if we are inserting a new db record or updating an existing.
-  const httpStatus = (response.affectedRows === 1 && response.insertId !== 0) ? 201 : 200
-  return httpStatus
+  async function transactionFn (connection) {  
+    const [response] = await dbUtils.pool.query(setGrantByCollectionUserGroup, [collectionId, userGroupId, accessLevel])
+    // resolving if we are inserting a new db record or updating an existing.
+    const httpStatus = (response.affectedRows === 1 && response.insertId !== 0) ? 201 : 200
+    await dbUtils.pruneUserGroupStigAssetMap(connection, {collectionId, userGroupId})
+    return httpStatus
+  }
+  return dbUtils.retryOnDeadlock2({
+    transactionFn, 
+    statusObj: svcStatus
+  })
 }
 
-exports.deleteGrantByCollectionUserGroup = async function ({collectionId, userGroupId}) {
+exports.deleteGrantByCollectionUserGroup = async function ({collectionId, userGroupId, shouldPrune}) {
 
   const deleteGrantByCollectionUserGroup = 
   `DELETE FROM collection_grant_group WHERE collectionId = ? AND userGroupId = ?`
   const [response] = await dbUtils.pool.query(deleteGrantByCollectionUserGroup, [collectionId, userGroupId])
+  if(shouldPrune) await dbUtils.pruneUserGroupStigAssetMap(connection, {collectionId, userGroupId})
   return response
 }

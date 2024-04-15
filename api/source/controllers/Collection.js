@@ -1165,7 +1165,8 @@ module.exports.deleteGrantByCollectionUser  = async function (req, res, next) {
     const collectionId = getCollectionIdAndCheckPermission(req, Security.ACCESS_LEVEL.Manage)
     const userId = req.params.userId
     const response = await CollectionService.getGrantByCollectionUser({collectionId, userId})
-    await CollectionService.deleteGrantByCollectionUser({collectionId, userId})
+    const shouldPrune = response[0].accessLevel === 1;
+    await CollectionService.deleteGrantByCollectionUser({collectionId, userId, shouldPrune})
     res.json(response[0])
   }
   catch(err){
@@ -1204,7 +1205,8 @@ module.exports.deleteGrantByCollectionUserGroup  = async function (req, res, nex
     const collectionId = getCollectionIdAndCheckPermission(req, Security.ACCESS_LEVEL.Manage)
     const userGroupId = req.params.userGroupId
     const response = await CollectionService.getGrantByCollectionUserGroup({collectionId, userGroupId})
-    await CollectionService.deleteGrantByCollectionUserGroup({collectionId, userGroupId})
+    const shouldPrune = response[0].accessLevel === 1;
+    await CollectionService.deleteGrantByCollectionUserGroup({collectionId, userGroupId, shouldPrune})
     res.json(response[0])
   }
   catch(err){
