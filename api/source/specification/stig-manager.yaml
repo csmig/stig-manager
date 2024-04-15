@@ -5399,8 +5399,6 @@ components:
           $ref: '#/components/schemas/GrantSource'
         grantSourceId:
           $ref: '#/components/schemas/GrantSourceId'
-        mergeUserGroupAcls:
-          type: boolean
     CollectionHistorySettings:
       additionalProperties: false
       type: object
@@ -5879,8 +5877,6 @@ components:
       properties:
         accessLevel:
           $ref: '#/components/schemas/AccessLevel'
-        mergeUserGroupAcls:
-          type: boolean
       required:
         - userId
         - accessLevel
@@ -5901,8 +5897,6 @@ components:
           $ref: '#/components/schemas/GrantSource'
         grantSourceId:
           $ref: '#/components/schemas/GrantSourceId'
-        mergeUserGroupAcls:
-          type: boolean
         user:
           $ref: '#/components/schemas/UserBasicWithDisplayName'
       required:
@@ -7610,9 +7604,6 @@ components:
           $ref: '#/components/schemas/UserId'
         accessLevel:
           $ref: '#/components/schemas/AccessLevel'
-        mergeUserGroupAcls:
-          type: boolean
-          default: false
         grantSource:
           $ref: '#/components/schemas/GrantSource'
         grantSourceId:
@@ -7624,16 +7615,12 @@ components:
           $ref: '#/components/schemas/UserId'
         accessLevel:
           $ref: '#/components/schemas/AccessLevel'
-        mergeUserGroupAcls:
-          type: boolean
     UserGrantProjected:
       additionalProperties: false
       type: object
       properties:
         accessLevel:
           $ref: '#/components/schemas/AccessLevel'
-        mergeUserGroupAcls:
-          type: boolean
         user:
           $ref: '#/components/schemas/UserBasicWithDisplayName'
       required:

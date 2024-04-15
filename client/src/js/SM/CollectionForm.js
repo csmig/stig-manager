@@ -772,8 +772,7 @@ SM.Collection.UsersGrid = Ext.extend(Ext.grid.GridPanel, {
             {
                 name: 'displayName',
                 mapping: 'user.displayName'
-            },
-            'mergeUserGroupAcls'
+            }
         ]
 
         this.proxy = new Ext.data.HttpProxy({

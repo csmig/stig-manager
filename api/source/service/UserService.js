@@ -31,20 +31,9 @@ exports.queryUsers = async function (inProjection, inPredicates, elevate, userOb
     if (inProjection?.includes('collectionGrants')) {
       joins.add('left join v_collection_grant_effective cg on ud.userId = cg.userId')
       joins.add('left join collection c on cg.collectionId = c.collectionId')
-      columns.push(`case when count(cg.collectionId) > 0 then 
-      cast(concat('[', group_concat( distinct
-        case when cg.grantSource = 'user' and cg.accessLevel = 1
-        then json_object(
-          'collection', json_object(
-            'collectionId', CAST(cg.collectionId as char),
-            'name', c.name
-          ),
-          'accessLevel', cg.accessLevel,
-          'grantSource', cg.grantSource,
-          'grantSourceId', CAST(cg.grantSourceId as char),
-          'mergeUserGroupAcls', cg.mergeUserGroupAcls is true
-        )
-        else json_object(
+      columns.push(`case when count(cg.collectionId) > 0
+      then 
+        ${dbUtils.jsonArrayAggDistinct(`json_object(
           'collection', json_object(
             'collectionId', CAST(cg.collectionId as char),
             'name', c.name
@@ -52,9 +41,9 @@ exports.queryUsers = async function (inProjection, inPredicates, elevate, userOb
           'accessLevel', cg.accessLevel,
           'grantSource', cg.grantSource,
           'grantSourceId', CAST(cg.grantSourceId as char)
-        )
-        end      
-      ), ']') as json) else json_array() end as collectionGrants`)
+        )`)}
+      else json_array() 
+      end as collectionGrants`)
     }
 
     if (inProjection?.includes('statistics')) {

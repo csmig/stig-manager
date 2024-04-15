@@ -6,9 +6,6 @@ const upMigration = [
   `DROP TABLE IF EXISTS user_group_user_map`,
   `DROP TABLE IF EXISTS user_group`,
 
-  // table collection_grant
-  `ALTER TABLE collection_grant ADD COLUMN mergeUserGroupAcls INT NOT NULL DEFAULT 0 AFTER accessLevel`,
-
   // table: user_group
   `CREATE TABLE user_group (
     userGroupId INT NOT NULL AUTO_INCREMENT,
@@ -86,8 +83,7 @@ const upMigration = [
     cg.userId,
     cg.accessLevel,
     'user' AS grantSource,
-    cg.userId as grantSourceId,
-    cg.mergeUserGroupAcls
+    cg.userId as grantSourceId
   from
     collection_grant cg
     inner join collection c on (cg.collectionId = c.collectionId and c.state = 'enabled')
@@ -97,8 +93,7 @@ const upMigration = [
     userId,
     accessLevel,
     'userGroup' as grantSource,
-    userGroupId as grantSourceId,
-    0
+    userGroupId as grantSourceId
     from
       (select
         ROW_NUMBER() OVER(PARTITION BY ugu.userId, cgg.collectionId ORDER BY cgg.accessLevel desc) as rn,
@@ -138,8 +133,7 @@ const upMigration = [
 	  left join collection_grant cg on (a.collectionId = cg.collectionId and ugu.userId = cg.userId)
     inner join collection c on (a.collectionId = c.collectionId and c.state = 'enabled')
   where
-    cg.cgId is null
-    or (cg.accessLevel = 1 and cg.mergeUserGroupAcls = 1)`,
+    cg.cgId is null`,
 
   // delete phantom records from user_stig_asset_map
   `delete usa
