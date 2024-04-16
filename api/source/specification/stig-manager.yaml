@@ -5876,7 +5876,6 @@ components:
         accessLevel:
           $ref: '#/components/schemas/AccessLevel'
       required:
-        - userId
         - accessLevel
     GrantContextUserGroup:
       type: object

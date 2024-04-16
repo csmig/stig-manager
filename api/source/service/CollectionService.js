@@ -2589,13 +2589,19 @@ exports.setGrantByCollectionUser = async function ({collectionId, userId, access
   })
 }
 
-exports.deleteGrantByCollectionUser = async function ({collectionId, userId, shouldPrune}) {
+exports.deleteGrantByCollectionUser = async function ({collectionId, userId, shouldPrune, svcStatus = {}}) {
 
   const deleteGrantByCollectionUser = 
   `DELETE FROM collection_grant WHERE collectionId = ? AND userId = ?`
-  const [response] = await dbUtils.pool.query(deleteGrantByCollectionUser, [collectionId, userId])
-  if(shouldPrune) await dbUtils.pruneUserStigAssetMap(connection, {collectionId, userId})
-  return response
+
+  async function transactionFn (connection) {
+    await connection.query(deleteGrantByCollectionUser, [collectionId, userId])
+    if(shouldPrune) await dbUtils.pruneUserStigAssetMap(connection, {collectionId, userId})
+  }
+  return dbUtils.retryOnDeadlock2({
+    transactionFn,
+    statusObj: svcStatus
+  })
 }
 
 exports.getGrantByCollectionUserGroup = async function ({collectionId, userGroupId}) {
@@ -2631,11 +2637,17 @@ exports.setGrantByCollectionUserGroup = async function ({collectionId, userGroup
   })
 }
 
-exports.deleteGrantByCollectionUserGroup = async function ({collectionId, userGroupId, shouldPrune}) {
+exports.deleteGrantByCollectionUserGroup = async function ({collectionId, userGroupId, shouldPrune, svcStatus = {}}) {
 
   const deleteGrantByCollectionUserGroup = 
   `DELETE FROM collection_grant_group WHERE collectionId = ? AND userGroupId = ?`
-  const [response] = await dbUtils.pool.query(deleteGrantByCollectionUserGroup, [collectionId, userGroupId])
-  if(shouldPrune) await dbUtils.pruneUserGroupStigAssetMap(connection, {collectionId, userGroupId})
-  return response
+
+  async function transactionFn (connection) {
+    await connection.query(deleteGrantByCollectionUserGroup, [collectionId, userGroupId])
+    if(shouldPrune) await dbUtils.pruneUserGroupStigAssetMap(connection, {collectionId, userGroupId})
+  }
+  return dbUtils.retryOnDeadlock2({
+    transactionFn,
+    statusObj: svcStatus
+  })
 }
