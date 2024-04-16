@@ -81,35 +81,66 @@ const upMigration = [
   select 
     cg.collectionId,
     cg.userId,
+    cg.accessLevel
+  from
+      collection_grant cg
+      inner join collection c on (cg.collectionId = c.collectionId and c.state = 'enabled')
+  UNION 
+  select
+    cgg.collectionId, 
+    ugu.userId, 
+    MAX(cgg.accessLevel) as accessLevel
+  from 
+    collection_grant_group cgg 
+    left join user_group_user_map ugu on cgg.userGroupId = ugu.userGroupId
+    left join collection_grant cg on (cgg.collectionId = cg.collectionId and ugu.userId = cg.userId)
+    inner join collection c on (cgg.collectionId = c.collectionId and c.state = 'enabled')
+  where
+    cg.userId is null
+  group by
+    cgg.collectionId,
+    ugu.userId`,
+
+  // view v_collection_grant_sources
+  `CREATE OR REPLACE VIEW v_collection_grant_sources AS
+  select 
+    cg.collectionId,
+    cg.userId,
     cg.accessLevel,
     'user' AS grantSource,
-    cg.userId as grantSourceId
+	  json_array(json_object('userId', cast(ud.userId as char), 'username', ud.username)) as grantSources
   from
     collection_grant cg
     inner join collection c on (cg.collectionId = c.collectionId and c.state = 'enabled')
+    left join user_data ud on cg.userId = ud.userId
   union 
   select
     collectionId,
     userId,
     accessLevel,
     'userGroup' as grantSource,
-    userGroupId as grantSourceId
-    from
-      (select
-        ROW_NUMBER() OVER(PARTITION BY ugu.userId, cgg.collectionId ORDER BY cgg.accessLevel desc) as rn,
-        cgg.collectionId, 
-        ugu.userId, 
-        cgg.accessLevel,
-        cgg.userGroupId
-      from 
-        collection_grant_group cgg 
-        left join user_group_user_map ugu using (userGroupId)
-        left join collection_grant cg on (cgg.collectionId = cg.collectionId and ugu.userId = cg.userId)
-        inner join collection c on (cgg.collectionId = c.collectionId and c.state = 'enabled')
-      where
-        cg.userId is null) dt
+    userGroups as grantSources
+  from
+    (select
+      ROW_NUMBER() OVER(PARTITION BY ugu.userId, cgg.collectionId ORDER BY cgg.accessLevel desc) as rn,
+      cgg.collectionId, 
+      ugu.userId, 
+      cgg.accessLevel,
+      json_arrayagg(
+        json_object(
+          'userGroupId', cast(cgg.userGroupId as char),
+          'name', ug.name
+        )) OVER (PARTITION BY ugu.userId, cgg.collectionId, cgg.accessLevel) as userGroups
+    from 
+      collection_grant_group cgg 
+      left join user_group_user_map ugu on cgg.userGroupId = ugu.userGroupId
+      left join user_group ug on ugu.userGroupId = ug.userGroupId
+      left join collection_grant cg on (cgg.collectionId = cg.collectionId and ugu.userId = cg.userId)
+      inner join collection c on (cgg.collectionId = c.collectionId and c.state = 'enabled')
     where
-      dt.rn = 1`,
+      cg.userId is null) dt
+  where
+    dt.rn = 1`,
 
   // view v_user_stig_asset_effective
   `CREATE OR REPLACE VIEW v_user_stig_asset_effective AS

@@ -5395,10 +5395,8 @@ components:
               $ref: '#/components/schemas/CollectionId'
             name:
               $ref: '#/components/schemas/CollectionName'
-        grantSource:
-          $ref: '#/components/schemas/GrantSource'
-        grantSourceId:
-          $ref: '#/components/schemas/GrantSourceId'
+        grantSources:
+          $ref: '#/components/schemas/GrantSources'
     CollectionHistorySettings:
       additionalProperties: false
       type: object
@@ -5432,7 +5430,7 @@ components:
             anyOf:
              - $ref: '#/components/schemas/UserGrantProjected'     
              - $ref: '#/components/schemas/UserGroupGrantProjected'     
-        grantsEffective:
+        users:
           type: array
           items:
             $ref: '#/components/schemas/GrantEffective'
@@ -5893,26 +5891,27 @@ components:
       properties:
         accessLevel:
           $ref: '#/components/schemas/AccessLevel'
-        grantSource:
-          $ref: '#/components/schemas/GrantSource'
-        grantSourceId:
-          $ref: '#/components/schemas/GrantSourceId'
+        grantSources:
+          $ref: '#/components/schemas/GrantSources'
         user:
           $ref: '#/components/schemas/UserBasicWithDisplayName'
       required:
         - accessLevel
-        - grantSource
-        - grantSourceId
+        - grantSources
         - user
-    GrantSource:
-      type: string
-      enum:
-        - user
-        - userGroup
-    GrantSourceId:
-      anyOf:
-        - $ref: '#/components/schemas/UserId'
-        - $ref: '#/components/schemas/UserGroupId'
+    GrantSources:
+      oneOf:
+        - $ref: '#/components/schemas/GrantSourcesUserGroups'
+        - $ref: '#/components/schemas/GrantSourcesUser'
+    GrantSourcesUser:
+      type: array
+      items:
+        $ref: '#/components/schemas/UserBasic'
+      maxItems: 1
+    GrantSourcesUserGroups:
+      type: array
+      items:
+        $ref: '#/components/schemas/UserGroupBasic'
     GroupId:
       $ref: '#/components/schemas/String255'
     GroupProjected:
@@ -7593,21 +7592,18 @@ components:
         - collectionGrants
     UserGrantEffective:
       type: object
-      required:
-        - userId
-        - accessLevel
-        - grantSource
-        - grantSourceId
       additionalProperties: false
       properties:
         userId:
           $ref: '#/components/schemas/UserId'
         accessLevel:
           $ref: '#/components/schemas/AccessLevel'
-        grantSource:
-          $ref: '#/components/schemas/GrantSource'
-        grantSourceId:
-          $ref: '#/components/schemas/GrantSourceId'
+        grantSources:
+          $ref: '#/components/schemas/GrantSources'
+      required:
+        - userId
+        - accessLevel
+        - grantSources
     UserGrant:
       type: object
       properties:
@@ -7989,7 +7985,7 @@ components:
           enum:
             - assets
             - grants
-            - grantsEffective
+            - users
             - owners
             - statistics
             - stigs

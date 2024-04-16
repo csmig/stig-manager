@@ -100,10 +100,10 @@ exports.queryCollections = async function (inProjection = [], inPredicates = {},
         )
       ) as "grants"`)
     }
-    if (inProjection.includes('grantsEffective')) {
-      joins.push('left join v_collection_grant_effective cge on c.collectionId = cge.collectionId')
-      joins.push('left join user_data ud on cge.userId = ud.userId')
-      columns.push(`case when count(cge.userId) > 0
+    if (inProjection.includes('users')) {
+      joins.push('left join v_collection_grant_sources cgs on c.collectionId = cgs.collectionId')
+      joins.push('left join user_data ud on cgs.userId = ud.userId')
+      columns.push(`case when count(cgs.userId) > 0
       then ${dbUtils.jsonArrayAggDistinct(`json_object(
           'user', json_object(
             'userId', CAST(ud.userId as char),
@@ -111,11 +111,10 @@ exports.queryCollections = async function (inProjection = [], inPredicates = {},
             'displayName', COALESCE(
               JSON_UNQUOTE(JSON_EXTRACT(ud.lastClaims, "$.${config.oauth.claims.name}")),
               ud.username)),
-          'accessLevel', cge.accessLevel,
-          'grantSource', cge.grantSource,
-          'grantSourceId', cge.grantSourceId)`)}
+          'accessLevel', cgs.accessLevel,
+          'grantSources', cgs.grantSources)`)}
       else json_array()
-      end as grantsEffective`)
+      end as users`)
     }
     if (inProjection.includes('owners')) {
       columns.push(`(select
@@ -2559,14 +2558,13 @@ exports.getGrantByCollectionUser = async function ({collectionId, userId}) {
 
   const getGrantByCollectionUser = 
   `SELECT 
-      CAST(cge.userId AS CHAR) as userId,
-      cge.accessLevel,
-      cge.grantSource,
-      CAST(cge.grantSourceId AS CHAR) as grantSourceId
+      CAST(cgs.userId AS CHAR) as userId,
+      cgs.accessLevel,
+      cgs.grantSources
     FROM
-      v_collection_grant_effective cge
+      v_collection_grant_sources cgs
     WHERE
-    cge.collectionId = ? AND cge.userID = ?`
+    cgs.collectionId = ? AND cgs.userId = ?`
 
   const [response] = await dbUtils.pool.query(getGrantByCollectionUser, [collectionId, userId])
   return response

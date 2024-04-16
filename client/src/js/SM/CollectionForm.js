@@ -557,7 +557,7 @@ SM.Collection.GrantsGrid = Ext.extend(Ext.grid.GridPanel, {
             this.accessBtn = tbar.addButton({
                 iconCls: 'sm-asset-icon',
                 disabled: true,
-                text: 'Edit Restricted ACL...',
+                text: 'Edit Restriced Access...',
                 handler: function () {
                     const r = _this.getSelectionModel().getSelected();
                     Ext.getBody().mask('Getting access list for ' + r.get('title') + '...');
@@ -758,8 +758,7 @@ SM.Collection.UsersGrid = Ext.extend(Ext.grid.GridPanel, {
         }
     
         const fields = [
-            'grantSource',
-            'grantSourceId',
+            'grantSources',
             {
                 name: 'userId',
                 mapping: 'user.userId'
@@ -818,15 +817,19 @@ SM.Collection.UsersGrid = Ext.extend(Ext.grid.GridPanel, {
                 }
             },
             {
-                header: '<span exportvalue="Grant">Grant<i class= "fa fa-question-circle sm-question-circle"></i></span>',
+                header: '<span exportvalue="Grant Source">Grant Source<i class= "fa fa-question-circle sm-question-circle"></i></span>',
                 width: 150,
-                dataIndex: 'grantSourceId',
-                sortable: true,
-                renderer: function (v, m, r) {
-                    const icon = r.data.grantSource === 'user' ? 'sm-user-icon' : 'sm-users-icon'
-                    return `<div class="x-combo-list-item ${icon} sm-combo-list-icon" exportValue="${r.data.grantSource ?? ''}:${r.data.grantSourceId ?? ''}">
-                    <span style="font-weight:600;">${r.data.grantSource === 'user' ? r.data.displayName : 'User Group'}</span><br>${r.data.grantSource === 'user' ? r.data.username : r.data.grantSourceId}
-                    </div>`
+                dataIndex: 'grantSources',
+                sortable: false,
+                renderer: function (grantSources) {
+                    const divs = []
+                    for (const source of grantSources) {
+                        const icon = source.userId ? 'sm-user-icon' : 'sm-users-icon'
+                        const title = source.userId ? 'Direct' : source.name
+                        divs.push(`<div class="x-combo-list-item ${icon} sm-combo-list-icon" exportValue="${title}">
+                        <span style="font-weight:600;">${title}</span></div>`)
+                    }
+                    return divs.join('')
                 }
             },
             {
@@ -855,7 +858,7 @@ SM.Collection.UsersGrid = Ext.extend(Ext.grid.GridPanel, {
         const viewAclBtn = new Ext.Button({
             iconCls: 'sm-asset-icon',
             disabled: true,
-            text: 'View Restricted ACL ...',
+            text: 'View Restriced Access ...',
             handler: function () {
                 const r = _this.getSelectionModel().getSelected();
                 // viewUserAccess(_this.collectionId, r.data);
@@ -883,8 +886,9 @@ SM.Collection.UsersGrid = Ext.extend(Ext.grid.GridPanel, {
 
         const config = {
             isFormField: true,
-            name: 'grantsEffective',
+            name: 'users',
             allowBlank: false,
+            stripeRows: true,
             layout: 'fit',
             height: 150,
             store,
@@ -1400,7 +1404,7 @@ SM.Collection.ManagePanel = Ext.extend(Ext.Panel, {
 			title: 'Users',
 			border: false
 		})
-		usersGrid.setValue(_this.apiCollection.grantsEffective)
+		usersGrid.setValue(_this.apiCollection.users)
 
 
         this.labelGrid = new SM.Collection.LabelsGrid({
@@ -1557,8 +1561,8 @@ SM.Collection.ManagePanel = Ext.extend(Ext.Panel, {
                     activeTab: 0,
                     border: false,
                     items: [ 
-                        grantGrid,
                         usersGrid,
+                        grantGrid,
                         {
                             xtype: 'panel',
                             bodyStyle: {

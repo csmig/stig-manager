@@ -29,18 +29,17 @@ exports.queryUsers = async function (inProjection, inPredicates, elevate, userOb
 
     // PROJECTIONS
     if (inProjection?.includes('collectionGrants')) {
-      joins.add('left join v_collection_grant_effective cg on ud.userId = cg.userId')
-      joins.add('left join collection c on cg.collectionId = c.collectionId')
-      columns.push(`case when count(cg.collectionId) > 0
+      joins.add('left join v_collection_grant_sources cgs on ud.userId = cgs.userId')
+      joins.add('left join collection c on cgs.collectionId = c.collectionId')
+      columns.push(`case when count(cgs.collectionId) > 0
       then 
         ${dbUtils.jsonArrayAggDistinct(`json_object(
           'collection', json_object(
-            'collectionId', CAST(cg.collectionId as char),
+            'collectionId', CAST(cgs.collectionId as char),
             'name', c.name
           ),
-          'accessLevel', cg.accessLevel,
-          'grantSource', cg.grantSource,
-          'grantSourceId', CAST(cg.grantSourceId as char)
+          'accessLevel', cgs.accessLevel,
+          'grantSources', cgs.grantSources
         )`)}
       else json_array() 
       end as collectionGrants`)
