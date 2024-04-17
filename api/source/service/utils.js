@@ -509,7 +509,8 @@ module.exports.retryOnDeadlock2 = async function ({ transactionFn, statusObj = {
     try {
       connection.query('START TRANSACTION')
       const transactionReturn = await transactionFn(connection)
-      connection.commit()
+      await connection.commit()
+      await connection.release()
       return transactionReturn
     }
     catch (e) {
