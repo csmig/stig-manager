@@ -124,18 +124,7 @@ exports.addOrUpdateUser = async function (writeAction, userId, body, projection,
     // REPLACE/UPDATE: userId is not null
 
     // Extract or initialize non-scalar properties to separate variables
-    let { collectionGrants, ...userFields } = body
-
-    // Handle userFields.privileges object
-    if (userFields.hasOwnProperty('privileges')) {
-      userFields.canCreateCollection = userFields.privileges.canCreateCollection ? 1 : 0
-      userFields.canAdmin = userFields.privileges.canAdmin ? 1 : 0
-      delete userFields.privileges
-    }
-    // Stringify metadata
-    if (userFields.hasOwnProperty('metadata')) {
-      userFields.metadata = JSON.stringify(userFields.metadata)
-    }
+    let { collectionGrants, userGroups, ...userFields } = body
 
     connection = await dbUtils.pool.getConnection()
     connection.config.namedPlaceholders = true
@@ -173,7 +162,7 @@ exports.addOrUpdateUser = async function (writeAction, userId, body, projection,
         }
       }
       else {
-        throw('Invalid writeAction')
+        throw new Error('Invalid writeAction')
       }
   
       // Process grants if present
@@ -194,6 +183,17 @@ exports.addOrUpdateUser = async function (writeAction, userId, body, projection,
           await connection.query(sqlInsertCollGrant, [ binds] )
         }
       }
+      if (userGroups) {
+        if ( writeAction !== dbUtils.WRITE_ACTION.CREATE ) {
+          await connection.query('DELETE FROM user_group_user_map where userId = ?', [userId])
+        }
+        if (userGroups.length > 0) {
+          await connection.query(
+            `INSERT INTO user_group_user_map (userGroupId, userId) VALUES ?`, 
+            [userGroups.map( userGroup => [userGroup, userId])]
+          )
+      }
+    }
       // Commit the changes
       await connection.commit()
     }
@@ -228,11 +228,8 @@ exports.addOrUpdateUser = async function (writeAction, userId, body, projection,
  * returns List
  **/
 exports.createUser = async function(body, projection, elevate, userObject, svcStatus = {}) {
-  try {
-    let row = await _this.addOrUpdateUser(dbUtils.WRITE_ACTION.CREATE, null, body, projection, elevate, userObject, svcStatus)
-    return (row)
-  }
-  finally {}
+  let row = await _this.addOrUpdateUser(dbUtils.WRITE_ACTION.CREATE, null, body, projection, elevate, userObject, svcStatus)
+  return (row)
 }
 
 
