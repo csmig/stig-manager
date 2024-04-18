@@ -507,7 +507,7 @@ module.exports.retryOnDeadlock2 = async function ({ transactionFn, statusObj = {
   const connection = await _this.pool.getConnection()
   const retryFunction = async function (bail) {
     try {
-      connection.query('START TRANSACTION')
+      await connection.query('START TRANSACTION')
       const transactionReturn = await transactionFn(connection)
       await connection.commit()
       await connection.release()
