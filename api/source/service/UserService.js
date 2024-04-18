@@ -192,8 +192,8 @@ exports.addOrUpdateUser = async function (writeAction, userId, body, projection,
             `INSERT INTO user_group_user_map (userGroupId, userId) VALUES ?`, 
             [userGroups.map( userGroup => [userGroup, userId])]
           )
+        }
       }
-    }
       // Commit the changes
       await connection.commit()
     }
