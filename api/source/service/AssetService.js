@@ -63,30 +63,50 @@ exports.queryAssets = async function (inProjection = [], inPredicates = {}, elev
       ) as "statusStats"`)
   }
   if (inProjection.includes('stigGrants')) {
-    columns.push(`(select
-      CASE WHEN COUNT(byStig.stigAssetUsers) > 0 THEN json_arrayagg(byStig.stigAssetUsers) ELSE json_array() END
-    from
-      (select
-        json_object('benchmarkId', r.benchmarkId, 'users',
-        -- empty array on null handling 
-        case when count(r.users) > 0 then json_arrayagg(r.users) else json_array() end ) as stigAssetUsers
+    columns.push(`(with cteUser as (select
+      sa.benchmarkId,
+      -- if no user, return null instead of object with null property values
+      case when ud.userId is not null then
+        json_object(
+          'userId', CAST(ud.userId as char), 
+          'username', ud.username
+        ) 
+      else NULL end as users
+      FROM 
+        stig_asset_map sa
+        left join user_stig_asset_map usa on sa.saId = usa.saId
+        left join user_data ud on usa.userId = ud.userId
+      WHERE
+      sa.assetId = a.assetId),
+    cteUserGroup as (select
+      sa.benchmarkId,
+      -- if no user, return null instead of object with null property values
+      case when ug.userGroupId is not null then
+        json_object(
+          'userGroupId', CAST(ug.userGroupId as char), 
+          'name', ug.name
+        ) 
+      else NULL end as userGroups
+      FROM 
+        stig_asset_map sa
+        left join user_group_stig_asset_map usa on sa.saId = usa.saId
+        left join user_group ug on usa.userGroupId = ug.userGroupId
+      WHERE
+      sa.assetId = a.assetId)
+      ,
+      byStig as (select
+      json_object(
+        'benchmarkId', r.benchmarkId, 
+        'users', case when count(r.users) > 0 then cast(concat('[', group_concat(distinct r.users) , ']') as json) else json_array() end,
+        'userGroups', case when count(cteUserGroup.userGroups) > 0 then cast(concat('[', group_concat(distinct cteUserGroup.userGroups) , ']') as json) else json_array() end
+        ) as stigAssetUsers
       from
-      (select
-        sa.benchmarkId,
-        -- if no user, return null instead of object with null property values
-        case when ud.userId is not null then
-          json_object(
-            'userId', CAST(ud.userId as char), 
-            'username', ud.username
-          ) 
-        else NULL end as users
-        FROM 
-          stig_asset_map sa
-          left join v_user_stig_asset_effective usa on sa.saId = usa.saId
-          left join user_data ud on usa.userId = ud.userId
-        WHERE
-        sa.assetId = a.assetId) as r
-      group by r.benchmarkId) as byStig) as "stigGrants"`)
+      cteUser as r
+      left join cteUserGroup on r.benchmarkId = cteUserGroup.benchmarkId
+      group by r.benchmarkId)
+      select
+          CASE WHEN COUNT(stigAssetUsers) > 0 THEN json_arrayagg(stigAssetUsers) ELSE json_array() END
+      from byStig) as "stigGrants"`)
   }
   if ( inProjection.includes('reviewers')) {
     // This projection is only available for endpoint /stigs/{benchmarkId}/assets
