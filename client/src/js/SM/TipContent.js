@@ -27,10 +27,10 @@ SM.TipContent.ImportOptions.EmptyComment = `How to handle Reviews with empty com
 
 
 SM.TipContent.AccessLevels = `
-<b>Grant Access Levels</b> <br>
+<b>Grant Levels</b> <br>
 - <b>Restricted:</b> Can access specific STIGs on specific Assets only. <br>
-- <b>Full:</b> Can access any Asset/STIG in the Collection. <br>
-- <b>Manage:</b> Everything in the "Full" level.  Can also add/remove/modify Assets, STIGs, and Grants except for User "Owner" grants. Optionally responsible for accepting and rejecting reviews from evaluators. <br>
+- <b>Full:</b> Can access any Asset/STIG in the Collection but cannot add/remove/modify Assets, STIGs, or Grants. <br>
+- <b>Manage:</b> Can access any Asset/STIG in the Collection and can also add/remove/modify Assets, STIGs, and Grants except for User "Owner" grants. Optionally responsible for accepting and rejecting reviews from evaluators. <br>
 - <b>Owner:</b> Everything in the "Manage" level.  Can also delete the Collection and create new Owner Grants.  Responsible for accepting and rejecting reviews from evaluators. <br>
 <br>
 * By default, Users with a Restricted grant to a Collection can't access any STIG on any Asset. They can be assigned specific STIGs on specific Assets using the "Edit Restriced Access..." button in the Grants panel toolbar. <br>

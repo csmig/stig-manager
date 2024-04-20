@@ -1161,7 +1161,7 @@ async function showAssetProps( assetId, initialCollectionId ) {
         }
                 
         Ext.getBody().unmask();
-        appwindow.show(document.body);
+        appwindow.show(Ext.getBody());
     }
     catch (e) {
         Ext.getBody().unmask()

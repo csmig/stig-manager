@@ -7584,11 +7584,18 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/CollectionGrant'
+          uniqueItems: true
+        userGroups:
+          type: array
+          items:
+            $ref: '#/components/schemas/UserGroupId'
+          uniqueItems: true
         username:
           $ref: '#/components/schemas/Username'
       required:
         - username
         - collectionGrants
+        - userGroups
     UserGrantEffective:
       type: object
       additionalProperties: false
@@ -7821,6 +7828,12 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/CollectionGrant'
+          uniqueItems: true
+        userGroups:
+          type: array
+          items:
+            $ref: '#/components/schemas/UserGroupId'
+          uniqueItems: true
         username:
           $ref: '#/components/schemas/Username'
     Username:

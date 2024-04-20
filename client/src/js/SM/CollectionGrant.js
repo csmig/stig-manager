@@ -202,7 +202,7 @@ SM.CollectionGrantsGrid = Ext.extend(Ext.grid.GridPanel, {
                 editor: collectionSelectionField
             },
             { 	
-				header: "Access Level",
+				header: "Grant Level",
 				width: 100,
                 dataIndex: 'accessLevel',
                 sortable: true,
@@ -328,9 +328,26 @@ Ext.reg('sm-collection-grants-grid', SM.CollectionGrantsGrid);
 
 SM.UserProperties = Ext.extend(Ext.form.FormPanel, {
     initComponent: function () {
-        let me = this
         this.colGrid = new SM.CollectionGrantsGrid({
-            name: 'collectionGrants'
+            name: 'collectionGrants',
+            title: 'Direct Grants',
+            iconCls: 'sm-lock-icon',
+            layout: 'fit',
+            border: true
+        })
+        const userGroupsPanel = new SM.User.GroupSelectingPanel({
+            title: 'User Groups',
+            iconCls: 'sm-users-icon',
+            layout: 'fit',
+            border: true,
+            isFormField: true,
+            submitValue: true
+        })
+        const grantsEffectiveGrid = new Ext.Panel({
+            title: 'Show Effective Grants',
+            iconCls: 'sm-lock-icon',
+            layout: 'fit',
+            border: true
         })
         const registeredUserItems =  [
             {
@@ -430,6 +447,15 @@ SM.UserProperties = Ext.extend(Ext.form.FormPanel, {
                 name: 'username'
             }
         ]
+        const registeredTabPanelItems = [
+            this.colGrid,
+            userGroupsPanel,
+            grantsEffectiveGrid
+        ]
+        const preregisteredTabPanelItems = [
+            this.colGrid,
+            userGroupsPanel        
+        ]
        
         let config = {
             baseCls: 'x-plain',
@@ -445,13 +471,13 @@ SM.UserProperties = Ext.extend(Ext.form.FormPanel, {
                     items: this.registeredUser ? registeredUserItems : preregisteredUserItems
                 },
                 {
-                    xtype: 'fieldset',
-                    title: '<b>Collection Grants</b>',
+                    xtype: 'tabpanel',
+                    border: false,
+                    activeTab: 0,
+                    // title: '<b>Collection Grants</b>',
                     height: 270,
-                    layout: 'fit',
-                    items: [
-                        this.colGrid
-                    ]
+                    // layout: 'fit',
+                    items: this.registeredUser ? registeredTabPanelItems : preregisteredTabPanelItems
                 }
 
             ],
@@ -459,7 +485,8 @@ SM.UserProperties = Ext.extend(Ext.form.FormPanel, {
                 text: this.btnText || 'Save',
                 formBind: true,
                 handler: this.btnHandler || function () {}
-            }]
+            }],
+            userGroupsPanel
         }
 
         Ext.apply(this, Ext.apply(this.initialConfig, config))
@@ -502,29 +529,29 @@ SM.UserProperties = Ext.extend(Ext.form.FormPanel, {
 
 async function showUserProps( userId ) {
     try {
-        let userPropsFormPanel = new SM.UserProperties({
+        const userPropsFormPanel = new SM.UserProperties({
             registeredUser: userId,
             padding: '10px 15px 10px 15px',
             btnHandler: async function(){
                 try {
                     if (userPropsFormPanel.getForm().isValid()) {
-                        let values = userPropsFormPanel.getForm().getFieldValues(false, true) // dirtyOnly=false, getDisabled=true
-                        let jsonData = {collectionGrants: values.collectionGrants}
+                        const values = userPropsFormPanel.getForm().getFieldValues(false, true) // dirtyOnly=false, getDisabled=true
+                        const jsonData = {collectionGrants: values.collectionGrants, userGroups: values.userGroups}
 
-                        let method = userId ? 'PATCH' : 'POST'
-                        let url = userId ? `${STIGMAN.Env.apiBase}/users/${userId}` : `${STIGMAN.Env.apiBase}/users`
+                        const method = userId ? 'PATCH' : 'POST'
+                        const url = userId ? `${STIGMAN.Env.apiBase}/users/${userId}` : `${STIGMAN.Env.apiBase}/users`
                         if (!userId) {
                             jsonData.username = values.username
                         }
-                        let result = await Ext.Ajax.requestPromise({
-                            url: url,
-                            method: method,
+                        const result = await Ext.Ajax.requestPromise({
+                            url,
+                            method,
                             params: {
                                 elevate: curUser.privileges.canAdmin,
-                                projection: ['collectionGrants', 'statistics']
+                                projection: ['userGroups','collectionGrants', 'statistics']
                             },
                             headers: { 'Content-Type': 'application/json;charset=utf-8' },
-                            jsonData: jsonData
+                            jsonData
                         })
                         const apiUser = JSON.parse(result.response.responseText)
                         const event = userId ? 'userchanged' : 'usercreated'
@@ -541,7 +568,7 @@ async function showUserProps( userId ) {
         /******************************************************/
         // Form window
         /******************************************************/
-        var appwindow = new Ext.Window({
+        const appwindow = new Ext.Window({
             title: userId ? 'User Grants, ID ' + userId : 'Pre-register User Grants',
             cls: 'sm-dialog-window sm-round-panel',
             modal: true,
@@ -556,12 +583,12 @@ async function showUserProps( userId ) {
         });
 
         
-        appwindow.render(document.body)
+        appwindow.render(Ext.getBody())
 
         const privilegeGetter = new Function("obj", "return obj?." + STIGMAN.Env.oauth.claims.privileges + " || [];");
 
         if (userId) {
-            let result = await Ext.Ajax.requestPromise({
+            const result = await Ext.Ajax.requestPromise({
                 url: `${STIGMAN.Env.apiBase}/users/${userId}`,
                 params: {
                     elevate: curUser.privileges.canAdmin,
@@ -569,7 +596,7 @@ async function showUserProps( userId ) {
                 },
                 method: 'GET'
             })
-            let apiUser = JSON.parse(result.response.responseText)
+            const apiUser = JSON.parse(result.response.responseText)
             ;['iat', 'exp', 'auth_time'].forEach( claim => {
                 if (apiUser.statistics.lastClaims[claim]) {
                     apiUser.statistics.lastClaims[claim] = new Date(apiUser.statistics.lastClaims[claim] * 1000)
@@ -578,7 +605,7 @@ async function showUserProps( userId ) {
             if (apiUser.statistics.lastClaims.scope) {
                 apiUser.statistics.lastClaims.scope = apiUser.statistics.lastClaims.scope.split(' ')
             }
-            let formValues = {
+            const formValues = {
                 username: apiUser.username,
                 name: apiUser.statistics.lastClaims?.[STIGMAN.Env.oauth.claims.name],
                 email: apiUser.statistics.lastClaims?.[STIGMAN.Env.oauth.claims.email],
@@ -589,9 +616,10 @@ async function showUserProps( userId ) {
             }
             userPropsFormPanel.getForm().setValues(formValues)
         }
-                
+        await userPropsFormPanel.userGroupsPanel.initPanel({userId})
+      
         Ext.getBody().unmask();
-        appwindow.show(document.body);
+        appwindow.show(Ext.getBody());
     }
     catch (e) {
         Ext.getBody().unmask()

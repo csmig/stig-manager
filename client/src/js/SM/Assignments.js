@@ -583,7 +583,7 @@ async function showUserAccess( collectionId, grantRecord ) {
         ]
       })
       assignmentPanel.appwindow = appwindow
-      appwindow.render(document.body)
+      appwindow.render(Ext.getBody())
       let apiAccess = await Ext.Ajax.requestPromise({
         responseType: 'json',
           url: `${STIGMAN.Env.apiBase}/collections/${collectionId}/grants/${grantRecord.grantTarget}/${grantRecord.grantTargetId}/access`,

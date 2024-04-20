@@ -459,7 +459,7 @@ SM.NavTree.TreePanel = Ext.extend(Ext.tree.TreePanel, {
             items: fp
           })
 
-          appwindow.show(document.body)
+          appwindow.show(Ext.getBody())
         }
         if (n.attributes.action == 'collection-management') {
           addCollectionManager({

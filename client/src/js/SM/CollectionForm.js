@@ -474,7 +474,7 @@ SM.Collection.GrantsGrid = Ext.extend(Ext.grid.GridPanel, {
                 editor: userSelectionField
             },
             {
-                header: '<span exportvalue="Access Level">Access Level<i class= "fa fa-question-circle sm-question-circle"></i></span>',
+                header: '<span exportvalue="Grant Level">Grant Level<i class= "fa fa-question-circle sm-question-circle"></i></span>',
                 width: 50,
                 dataIndex: 'accessLevel',
                 sortable: true,
@@ -833,7 +833,7 @@ SM.Collection.UsersGrid = Ext.extend(Ext.grid.GridPanel, {
                 }
             },
             {
-                header: '<span exportvalue="Access Level">Access Level<i class= "fa fa-question-circle sm-question-circle"></i></span>',
+                header: '<span exportvalue="Grant Level">Grant Level<i class= "fa fa-question-circle sm-question-circle"></i></span>',
                 width: 100,
                 dataIndex: 'accessLevel',
                 sortable: true,
@@ -2774,7 +2774,7 @@ SM.Collection.showLabelAssetsWindow = async function ( collectionId, labelId ) {
         await labelAssetsFormPanel.initPanel() // Load asset grid store
 
                
-        appwindow.show(document.body);
+        appwindow.show(Ext.getBody());
     }
     catch (e) {
         Ext.getBody().unmask()

@@ -409,5 +409,9 @@ SM.ColumnFilters.Renderers = {
     if (!labelId) return '<i>(No value)</i>'
     const labelObj = SM.Cache.CollectionMap.get(collectionId).labelMap.get(labelId)
     return SM.Collection.LabelTpl.apply(labelObj)
+  },
+  groups: function (v) {
+    if (!v) return '<i>(No value)</i>'
+    return SM.User.GroupTpl.apply(v)
   }
 }
