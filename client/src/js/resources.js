@@ -44,7 +44,6 @@ const scripts = [
   'js/SM/CollectionStig.js',
   'js/SM/CollectionForm.js',
   'js/SM/CollectionAsset.js',
-  'js/SM/CollectionGrant.js',
   'js/SM/CollectionPanel.js',
   'js/SM/MetaPanel.js',
   'js/SM/ColumnFilters.js',

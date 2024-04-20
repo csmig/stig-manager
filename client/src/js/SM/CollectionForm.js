@@ -793,10 +793,6 @@ SM.Collection.UsersGrid = Ext.extend(Ext.grid.GridPanel, {
             listeners: {
                 load: function (store, records) {
                     totalTextCmp.setText(records.length + ' records');
-                },
-                remove: function (store, record, index) {
-                    totalTextCmp.setText(store.getCount() + ' records');
-                    store.grid.fireEvent('grantsremoved', store.grid)
                 }
             }
         })
