@@ -1214,7 +1214,18 @@ module.exports.deleteGrantByCollectionUserGroup  = async function (req, res, nex
   }
 }
 
-
 module.exports.setStigAssetsByCollectionUserDEPRECATED = module.exports.setStigAssetsByCollectionUser
 module.exports.getStigAssetsByCollectionUserDEPRECATED = module.exports.getStigAssetsByCollectionUser
+
+module.exports.getEffectiveAclByCollectionUser =  async function (req, res, next) {
+  try{
+    const collectionId = getCollectionIdAndCheckPermission(req, Security.ACCESS_LEVEL.Manage, true)
+    const userId = req.params.userId
+    const response = await CollectionService.getEffectiveAclByCollectionUser({collectionId, userId})
+    res.json(response)
+  }
+  catch(err){
+    next(err)
+  }
+}
 

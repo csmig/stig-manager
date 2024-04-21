@@ -539,7 +539,7 @@ exports.queryStigAssets = async function (inProjection = [], inPredicates = {}, 
     predicates.statements.push('c.collectionId = ?')
     predicates.binds.push( inPredicates.collectionId )
   } else {
-    throw ( {status: 400, message: 'Missing required predicate: collectionId'} )
+    throw new Error('Missing required predicate: collectionId')
   }
   if ( inPredicates.userId ) {
     joins.push('left join user_stig_asset_map usa on sa.saId = usa.saId')
@@ -2650,4 +2650,41 @@ exports.deleteGrantByCollectionUserGroup = async function ({collectionId, userGr
     transactionFn,
     statusObj: svcStatus
   })
+}
+
+exports.getEffectiveAclByCollectionUser = async function ({collectionId, userId}) {
+  const sqlSelectEffectiveGrants = `
+  select 
+    json_object('asset', json_object('assetId', cast(a.assetId as char), 'name', a.name), 'benchmarkId', sa.benchmarkId) as \`resource\`,
+    json_array(json_object('userId', cast(usa.userId as char),  'username', ud.username)) as aclSources
+  from
+    user_stig_asset_map usa
+    left join user_data ud on usa.userId = ud.userId
+    left join stig_asset_map sa on usa.saId = sa.saId
+    left join asset a on sa.assetId = a.assetId
+    inner join collection c on (a.collectionId = c.collectionId and c.state = 'enabled')
+  where
+    usa.userId = ?
+    and a.collectionId = ?
+  union 
+  select
+    json_object('asset', json_object('assetId', cast(a.assetId as char), 'name', a.name), 'benchmarkId', sa.benchmarkId) as \`resource\`,
+    json_arrayagg(json_object('userGroupId', cast(ugsa.userGroupId as char), 'name', ug.name))
+  from 
+    user_group_stig_asset_map ugsa 
+    left join user_group_user_map ugu on ugsa.userGroupId = ugu.userGroupId
+    left join user_group ug on ugsa.userGroupId = ug.userGroupId
+    left join user_data ud on ugu.userId = ud.userId
+    left join stig_asset_map sa on ugsa.saId = sa.saId
+    left join asset a on sa.assetId = a.assetId
+    left join collection_grant cg on (a.collectionId = cg.collectionId and ugu.userId = cg.userId)
+    inner join collection c on (a.collectionId = c.collectionId and c.state = 'enabled')
+  where
+    cg.cgId is null
+    and ugu.userId = ?
+    and a.collectionId = ?
+  group by
+    c.collectionId, ugu.userId, ugsa.saId`
+  const [response] = await dbUtils.pool.query(sqlSelectEffectiveGrants, [userId, collectionId, userId, collectionId])
+  return response
 }

@@ -1053,7 +1053,7 @@ paths:
     get:
       tags:
         - Collection
-      summary: Return an accessLevel = 1 User's access to the specified Collection. Request must be made by a User with accessLevel >= 3 to the Collection.
+      summary: DEPRECATED. Use GET /collections/{collectionId}/grants/user/{userId}/access.
       operationId: getStigAssetsByCollectionUserDEPRECATED
       responses:
         '200':
@@ -1078,7 +1078,7 @@ paths:
     put:
       tags:
         - Collection
-      summary: Set an accessLevel = 1 User's access to the specified Collection. Request must be made by a User with accessLevel >= 3 to the Collection.
+      summary: DEPRECATED. Use PUT /collections/{collectionId}/grants/user/{userId}/access.
       operationId: setStigAssetsByCollectionUserDEPRECATED
       requestBody:
         required: true
@@ -1186,7 +1186,7 @@ paths:
     get:
       tags:
         - Collection
-      summary: Return an accessLevel = 1 User's access rules for the specified Collection. Request must be made by a User with accessLevel >= 3 to the Collection.
+      summary: Return an accessLevel = 1 User's direct access rules for the specified Collection. Request must be made by a User with accessLevel >= 3 to the Collection.
       operationId: getStigAssetsByCollectionUser
       responses:
         '200':
@@ -1239,6 +1239,36 @@ paths:
       security:
         - oauth:
             - 'stig-manager:collection'
+  '/collections/{collectionId}/grants/user/{userId}/access/effective':
+    parameters:
+      - $ref: '#/components/parameters/CollectionIdPath'
+      - $ref: '#/components/parameters/UserIdPath'
+      - $ref: '#/components/parameters/ElevateQuery'
+    get:
+      tags:
+        - Collection
+      summary: Return an accessLevel = 1 User's effective access rules for the specified Collection. Request must be made by a User with accessLevel >= 3 to the Collection or by an elevated User.
+      operationId: getEffectiveAclByCollectionUser
+      responses:
+        '200':
+          description: EffectiveAclContextCollectionUser array response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/EffectiveAclContextCollectionUser'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      security:
+        - oauth:
+            - 'stig-manager:collection:read'
   '/collections/{collectionId}/grants/user-group/{userGroupId}':
     parameters:
       - $ref: '#/components/parameters/CollectionIdPath'
@@ -5800,6 +5830,34 @@ components:
           $ref: '#/components/schemas/StringDateTimeNullable'
     DisplayName:
       $ref: '#/components/schemas/String255Nullable'
+    EffectiveAclContextCollection:
+      additionalProperties: false
+      type: object
+      properties:
+        user:
+          $ref: '#/components/schemas/UserBasic'
+        resource:
+          $ref: '#/components/schemas/StigAssetBasic'
+        aclSources:
+          $ref: '#/components/schemas/GrantSources'
+    EffectiveAclContextCollectionUser:
+      additionalProperties: false
+      type: object
+      properties:
+        resource:
+          $ref: '#/components/schemas/StigAssetBasic'
+        aclSources:
+          $ref: '#/components/schemas/GrantSources'
+    EffectiveAclContextUser:
+      additionalProperties: false
+      type: object
+      properties:
+        user:
+          $ref: '#/components/schemas/UserBasic'
+        resource:
+          $ref: '#/components/schemas/StigAssetBasic'
+        aclSources:
+          $ref: '#/components/schemas/GrantSources'
     EmassAp:
       additionalProperties: false
       type: object
