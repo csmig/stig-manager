@@ -857,7 +857,7 @@ SM.Collection.UsersGrid = Ext.extend(Ext.grid.GridPanel, {
             text: 'View Restriced Access ...',
             handler: function () {
                 const r = _this.getSelectionModel().getSelected();
-                // viewUserAccess(_this.collectionId, r.data);
+                SM.User.showCollectionAcl({collectionId: _this.collectionId, userId: r.data.userId})
             }
         })
 
@@ -1398,7 +1398,8 @@ SM.Collection.ManagePanel = Ext.extend(Ext.Panel, {
         const usersGrid = new SM.Collection.UsersGrid({
             iconCls: 'sm-user-icon',
 			title: 'Users',
-			border: false
+			border: false,
+            collectionId: _this.apiCollection.collectionId
 		})
 		usersGrid.setValue(_this.apiCollection.users)
 

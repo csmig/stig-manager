@@ -792,9 +792,8 @@ SM.User.UserGrid = Ext.extend(Ext.grid.GridPanel, {
         type: 'string'
       },
       {
-        name: 'name',
-        type: 'string',
-        mapping: 'statistics.lastClaims?.name'
+        name: 'displayName',
+        type: 'string'
       },
       {
         name: 'groupNames',
@@ -852,7 +851,7 @@ SM.User.UserGrid = Ext.extend(Ext.grid.GridPanel, {
         {
           header: "Name",
           width: 150,
-          dataIndex: 'name',
+          dataIndex: 'displayName',
           sortable: true,
           filter: { type: 'string' }
         },
@@ -1069,7 +1068,7 @@ SM.User.UserProperties = Ext.extend(Ext.form.FormPanel, {
     })
     const effectiveGrantsGrid = new SM.User.EffectiveGrantsGrid({
       name: 'effectiveGrants',
-      title: 'Show Effective Grants',
+      title: 'View Effective Grants',
       iconCls: 'sm-lock-icon',
       layout: 'fit',
       isFormField: true,
@@ -1174,9 +1173,9 @@ SM.User.UserProperties = Ext.extend(Ext.form.FormPanel, {
       }
     ]
     const registeredTabPanelItems = [
+      effectiveGrantsGrid,
       directGrantsGrid,
       userGroupsPanel,
-      effectiveGrantsGrid
     ]
     const preregisteredTabPanelItems = [
       directGrantsGrid,
@@ -1349,4 +1348,110 @@ SM.User.showUserProps = async function showUserProps(userId) {
     Ext.getBody().unmask()
     SM.Error.handleError(e)
   }
+}
+
+SM.User.CollectionAclGrid = Ext.extend(Ext.grid.GridPanel, {
+  initComponent: function () {
+      const fields = [
+        {
+          name: 'assetName',
+          mapping: 'resource.asset.name'
+        },
+        {
+          name: 'benchmarkId',
+          mapping: 'resource.benchmarkId'
+        },
+        'aclSources'
+      ]
+      const store = new Ext.data.JsonStore({
+        autoLoad: true,
+        proxy: new Ext.data.HttpProxy({
+          url: `${STIGMAN.Env.apiBase}/collections/${this.collectionId}/grants/user/${this.userId}/access/effective`,
+          method: 'GET'
+        }),
+        baseParams: {
+          elevate: this.tryElevate ? curUser.privileges.canAdmin : false
+        },
+        root: '',
+        fields,
+        idProperty: 'assetName',
+        sortInfo: {
+          field: 'assetName',
+          direction: 'ASC' // or 'DESC' (case sensitive for local sorting)
+        }
+      })
+      const columns = [
+        {
+          header: `<span class="sm-asset-icon sm-column-with-icon">Asset</span>`, 
+          dataIndex: 'assetName',
+          sortable: true,
+          width: 250
+        },
+        {
+          header: `<span class="sm-stig-icon sm-column-with-icon">STIG</span>`, 
+          dataIndex: 'benchmarkId',
+          sortable: true,
+          width: 350
+        },
+        {
+          header: 'ACL Source',
+          width: 150,
+          dataIndex: 'aclSources',
+          sortable: false,
+          renderer: function (aclSources) {
+            const divs = []
+            for (const source of aclSources) {
+              const icon = source.userId ? 'sm-user-icon' : 'sm-users-icon'
+              const title = source.userId ? 'Direct' : source.name
+              divs.push(`<div class="x-combo-list-item ${icon} sm-combo-list-icon" exportValue="${title}">
+                      <span style="font-weight:600;">${title}</span></div>`)
+            }
+            return divs.join('')
+          }
+        }
+      ]
+      const sm = new Ext.grid.RowSelectionModel({
+        singleSelect: true
+      })
+      const view = new SM.ColumnFilters.GridView({
+        emptyText: this.emptyText || 'No records to display',
+        deferEmptyText: false,
+        forceFit: true,
+        markDirty: false
+      })
+
+      const config = {
+        fields,
+        store,
+        columns,
+        sm,
+        view,
+        stripeRows: true,
+        layout: 'fit',
+      }
+      Ext.apply(this, Ext.apply(this.initialConfig, config))
+      this.superclass().initComponent.call(this)
+  }
+})
+
+SM.User.showCollectionAcl = async function showUserProps({userId, collectionId}) {
+  const aclGrid = new SM.User.CollectionAclGrid({
+    userId,
+    collectionId,
+    border: false
+  })
+  const appwindow = new Ext.Window({
+    title: 'User ID ' + userId,
+    cls: 'sm-dialog-window sm-round-panel',
+    modal: true,
+    hidden: true,
+    width: 660,
+    height: 650,
+    layout: 'fit',
+    plain: true,
+    bodyStyle: 'padding:5px;',
+    buttonAlign: 'right',
+    items: aclGrid
+  })
+  appwindow.show(Ext.getBody());
 }

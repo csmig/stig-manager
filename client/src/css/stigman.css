@@ -2274,3 +2274,6 @@ td.x-grid3-hd-over .x-grid3-hd-inner {
 .x-item-disabled {
 	filter: saturate(0)
 }
+.sm-column-with-icon {
+	padding-left: 20px;
+}

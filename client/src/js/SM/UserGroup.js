@@ -128,7 +128,7 @@ SM.UserGroup.UserGroupGrid = Ext.extend(Ext.grid.GridPanel, {
         disabled: !(curUser.privileges.canAdmin),
         handler: function() {
           Ext.getBody().mask('');
-          showUserProps(0);            
+          SM.UserGroup.showUserGroupProps(0);            
         }
       },
       '-',
@@ -171,9 +171,7 @@ SM.UserGroup.UserGroupGrid = Ext.extend(Ext.grid.GridPanel, {
         iconCls: 'icon-edit',
         text: 'Modify Group',
         handler: function() {
-          const r = userGrid.getSelectionModel().getSelected();
-          Ext.getBody().mask('Getting properties...');
-          showUserGroupProps(r.get('userGroupId'));
+          SM.UserGroup.showUserGroupProps(sm.getSelected().get('userGroupId'))
         }
       }
     ]
@@ -223,13 +221,15 @@ SM.UserGroup.UserGroupGrid = Ext.extend(Ext.grid.GridPanel, {
 
 SM.UserGroup.UserSelectingGrid = Ext.extend(Ext.grid.GridPanel, {
   initComponent: function () {
-    const _this = this
-    const fields = Ext.data.Record.create([
-      { name: 'userId', type: 'string' },
-      { name: 'username', type: 'string' },
-      { name: 'displayName', type: 'string' },
-      { name: 'userGroups', convert: (v, r) => r.userGroups.map(userGroup => userGroup.name) },
-    ])
+    const fields = [
+      'userId',
+      'username',
+      'displayName',
+      { 
+        name: 'userGroups', 
+        convert: (v, r) => r.userGroups.map(userGroup => userGroup.name)
+      }
+    ]
     const sm = new Ext.grid.CheckboxSelectionModel({
       singleSelect: false,
       checkOnly: false,
@@ -242,44 +242,20 @@ SM.UserGroup.UserSelectingGrid = Ext.extend(Ext.grid.GridPanel, {
     const columns = [
       sm,
       {
-        header: "Username",
-        width: 150,
-        dataIndex: 'username',
-        sortable: true,
-        filter: { type: 'string' }
-      },
-      {
-        header: "Name",
+        header: "User",
         width: 150,
         dataIndex: 'displayName',
         sortable: true,
-        filter: { type: 'string' }
-      },
-      {
-        header: "Name",
-        width: 120,
-        dataIndex: 'displayName',
-        sortable: false,
-        filter: {
-          type: 'values',
-          collectionId: this.collectionId,
-          renderer: SM.ColumnFilters.Renderers.labels
-        },
-        renderer: function (value) {
-          const labels = []
-          for (const labelId of value) {
-            const label = SM.Cache.CollectionMap.get(_this.collectionId).labelMap.get(labelId)
-            if (label) labels.push(label)
-          }
-          labels.sort((a, b) => a.name.localeCompare(b.name))
-          return SM.Collection.LabelArrayTpl.apply(labels)
+        renderer: function (v, m, r) {
+            const icon = 'sm-user-icon'
+            return `<div class="x-combo-list-item ${icon} sm-combo-list-icon" exportValue="${r.data.displayName ?? ''}:${r.data.username ?? ''}"><span style="font-weight:600;">${r.data.displayName ?? ''}</span><br>${r.data.username ?? ''}</div>`
         }
       },
       {
-        header: "STIGs",
+        header: "Groups",
         width: 50,
         align: 'center',
-        dataIndex: 'benchmarkIds',
+        dataIndex: 'userGroups',
         sortable: true,
         hidden: false,
         filter: { type: 'values' },
@@ -289,41 +265,14 @@ SM.UserGroup.UserSelectingGrid = Ext.extend(Ext.grid.GridPanel, {
             let longest = Math.max(...(value.map(el => el.length)))
             qtipWidth = longest * 8
           }
-          metadata.attr = ` ext:qwidth=${qtipWidth} ext:qtip="<b>${record.data.name} STIGs</b><br>${value.join('<br>')}"`
+          metadata.attr = ` ext:qwidth=${qtipWidth} ext:qtip="<b>${record.data.name} Members</b><br>${value.join('<br>')}"`
           return `<i>${value.length}</i>`
         }
-      },
-      {
-        header: "FQDN",
-        width: 100,
-        dataIndex: 'fqdn',
-        sortable: true,
-        hidden: true,
-        renderer: SM.styledEmptyRenderer,
-        filter: { type: 'string' }
-      },
-      {
-        header: "IP",
-        width: 100,
-        dataIndex: 'ip',
-        hidden: true,
-        sortable: true,
-        renderer: SM.styledEmptyRenderer
-      },
-      {
-        header: "MAC",
-        hidden: true,
-        width: 110,
-        dataIndex: 'mac',
-        sortable: true,
-        renderer: SM.styledEmptyRenderer,
-        filter: { type: 'string' }
-      },
-
+      }
     ]
     const store = new Ext.data.JsonStore({
       fields,
-      idProperty: 'assetId',
+      idProperty: 'userId',
       sortInfo: {
         field: 'name',
         direction: 'ASC'
@@ -331,23 +280,23 @@ SM.UserGroup.UserSelectingGrid = Ext.extend(Ext.grid.GridPanel, {
     })
     const totalTextCmp = new SM.RowCountTextItem({
       store,
-      noun: 'asset',
-      iconCls: 'sm-asset-icon'
+      noun: 'user',
+      iconCls: 'sm-user-icon'
     })
     const config = {
       store,
       columns,
       sm,
       enableDragDrop: true,
-      ddText : '{0} selected Asset{1}',
+      ddText: '{0} selected User{1}',
       bodyCssClass: 'sm-grid3-draggable',
-      ddGroup: `SM.AssetSelection.GridPanel-${this.role}`,
+      ddGroup: `SM.UserGroup.UserSelectingGrid-${this.role}`,
       border: true,
       loadMask: false,
       stripeRows: true,
-      view: new SM.ColumnFilters.GridViewBuffered({
+      view: new SM.ColumnFilters.GridView({
         forceFit: true,
-        emptyText: 'No Assets to display',
+        emptyText: 'No Users to display',
         listeners: {
           filterschanged: function (view, item, value) {
             store.filter(view.getFilterFns())
@@ -360,8 +309,8 @@ SM.UserGroup.UserSelectingGrid = Ext.extend(Ext.grid.GridPanel, {
             xtype: 'exportbutton',
             grid: this,
             hasMenu: false,
-            gridBasename: 'Assets (grid)',
-            storeBasename: 'Assets (store)',
+            gridBasename: 'Users (grid)',
+            storeBasename: 'Users (store)',
             iconCls: 'sm-export-icon',
             text: 'CSV'
           },
@@ -380,10 +329,10 @@ SM.UserGroup.UserSelectingGrid = Ext.extend(Ext.grid.GridPanel, {
   }
 })
 
-SM.UserGroup.SelectingPanel = Ext.extend(Ext.Panel, {
+SM.UserGroup.UserSelectingPanel = Ext.extend(Ext.Panel, {
   initComponent: function () {
     const _this = this
-    function setupDragZone (grid) {
+    function setupDragZone(grid) {
       const gridDragZone = grid.getView().dragZone
       const originalGetDragData = gridDragZone.getDragData
       gridDragZone.getDragData = function (e) {
@@ -393,7 +342,7 @@ SM.UserGroup.SelectingPanel = Ext.extend(Ext.Panel, {
         }
         return originalGetDragData.call(gridDragZone, e)
       }
-      
+
       const originalStartDrag = gridDragZone.startDrag
       gridDragZone.startDrag = function (x, y) {
         Ext.getBody().addClass('sm-grabbing')
@@ -413,11 +362,10 @@ SM.UserGroup.SelectingPanel = Ext.extend(Ext.Panel, {
       }
 
     }
-    const availableGrid = new SM.AssetSelection.GridPanel({
+    const availableGrid = new SM.UserGroup.UserSelectingGrid({
       title: 'Available',
       headerCssClass: 'sm-available-panel-header',
       role: 'available',
-      collectionId: this.collectionId,
       flex: 1,
       listeners: {
         render: function (grid) {
@@ -427,7 +375,7 @@ SM.UserGroup.SelectingPanel = Ext.extend(Ext.Panel, {
             ddGroup: selectionsGrid.ddGroup,
             notifyDrop: function (ddSource, e, data) {
               const selectedRecords = ddSource.dragData.selections;
-              changeSelectedAssets(selectionsGrid, selectedRecords, availableGrid)
+              changeSelected(selectionsGrid, selectedRecords, availableGrid)
               return true
             }
           })
@@ -435,11 +383,10 @@ SM.UserGroup.SelectingPanel = Ext.extend(Ext.Panel, {
 
       }
     })
-    const selectionsGrid = new SM.AssetSelection.GridPanel({
+    const selectionsGrid = new SM.UserGroup.UserSelectingGrid({
       title: this.selectionsGridTitle || 'Assigned',
       headerCssClass: 'sm-selections-panel-header',
       role: 'selections',
-      collectionId: this.collectionId,
       flex: 1,
       listeners: {
         render: function (grid) {
@@ -449,7 +396,7 @@ SM.UserGroup.SelectingPanel = Ext.extend(Ext.Panel, {
             ddGroup: availableGrid.ddGroup,
             notifyDrop: function (ddSource, e, data) {
               const selectedRecords = ddSource.dragData.selections;
-              changeSelectedAssets(availableGrid, selectedRecords, selectionsGrid)
+              changeSelected(availableGrid, selectedRecords, selectionsGrid)
               return true
             }
           })
@@ -465,7 +412,7 @@ SM.UserGroup.SelectingPanel = Ext.extend(Ext.Panel, {
       disabled: true,
       handler: function (btn) {
         const selectedRecords = availableGrid.getSelectionModel().getSelections()
-        changeSelectedAssets(availableGrid, selectedRecords, selectionsGrid)
+        changeSelected(availableGrid, selectedRecords, selectionsGrid)
         btn.disable()
       }
     })
@@ -475,7 +422,7 @@ SM.UserGroup.SelectingPanel = Ext.extend(Ext.Panel, {
       disabled: true,
       handler: function (btn) {
         const selectedRecords = selectionsGrid.getSelectionModel().getSelections()
-        changeSelectedAssets(selectionsGrid, selectedRecords, availableGrid)
+        changeSelected(selectionsGrid, selectedRecords, availableGrid)
         btn.disable()
       }
     })
@@ -507,64 +454,48 @@ SM.UserGroup.SelectingPanel = Ext.extend(Ext.Panel, {
       removeBtn.setDisabled(this.role === 'selections')
     }
 
-    async function initPanel({ benchmarkId, labelId }) {
+    async function initPanel({ userGroupId }) {
       const promises = [
         Ext.Ajax.requestPromise({
           responseType: 'json',
-          url: `${STIGMAN.Env.apiBase}/assets`,
+          url: `${STIGMAN.Env.apiBase}/users`,
           params: {
-            collectionId: _this.collectionId,
-            projection: ['stigs']
+            projection: ['userGroups']
+          },
+          method: 'GET'
+        }),
+        Ext.Ajax.requestPromise({
+          responseType: 'json',
+          url: `${STIGMAN.Env.apiBase}/user-groups/${userGroupId}`,
+          params: {
+            elevate: curUser.privileges.canAdmin,
+            projection: ['users']
           },
           method: 'GET'
         })
       ]
-      if (benchmarkId) {
-        promises.push(Ext.Ajax.requestPromise({
-          responseType: 'json',
-          url: `${STIGMAN.Env.apiBase}/collections/${_this.collectionId}/stigs/${benchmarkId}/assets`,
-          method: 'GET'
-        }))
-        _this.trackedProperty = { dataProperty: 'benchmarkIds', value: benchmarkId }
-      }
-      else if (labelId) {
-        promises.push(Ext.Ajax.requestPromise({
-          responseType: 'json',
-          url: `${STIGMAN.Env.apiBase}/collections/${_this.collectionId}/labels/${labelId}/assets`,
-          method: 'GET'
-        }))
-        _this.trackedProperty = { dataProperty: 'labelIds', value: labelId }
-      }
-      const [apiAvailableAssets, apiAssignedAssets = []] = await Promise.all(promises)
-      const assignedAssetIds = apiAssignedAssets.map(apiAsset => apiAsset.assetId)
-      _this.originalAssetIds = assignedAssetIds
-      const availableAssets = []
-      const assignedAssets = []
-      apiAvailableAssets.reduce((accumulator, asset) => {
-        const property = assignedAssetIds.includes(asset.assetId) ? 'assignedAssets' : 'availableAssets'
-        accumulator[property].push(asset)
+      const [apiAvailableUsers, apiUserGroup] = await Promise.all(promises)
+      const assignedUserIds = apiUserGroup?.users?.map(user => user.userId) ?? []
+      _this.originalUserIds = assignedUserIds
+      const availableUsers = []
+      const assignedUsers = []
+      apiAvailableUsers.reduce((accumulator, user) => {
+        const property = assignedUserIds.includes(user.userId) ? 'assignedUsers' : 'availableUsers'
+        accumulator[property].push(user)
         return accumulator
-      }, { availableAssets, assignedAssets })
+      }, { availableUsers, assignedUsers })
 
-      availableGrid.store.loadData(availableAssets)
-      selectionsGrid.store.loadData(assignedAssets)
+      availableGrid.store.loadData(availableUsers)
+      selectionsGrid.store.loadData(assignedUsers)
+      _this.trackedProperty = { dataProperty: 'userGroups', value: apiUserGroup.name }
+
     }
 
-    function changeSelectedAssets(srcGrid, records, dstGrid) {
+    function changeSelected(srcGrid, records, dstGrid) {
       srcGrid.store.suspendEvents()
       dstGrid.store.suspendEvents()
       srcGrid.store.remove(records)
       dstGrid.store.add(records)
-      for (const record of records) {
-        if (srcGrid.role === 'available') {
-          record.data[_this.trackedProperty.dataProperty].push(_this.trackedProperty.value)
-          record.commit()
-        }
-        else {
-          record.data[_this.trackedProperty.dataProperty] = record.data[_this.trackedProperty.dataProperty].filter(i => i !== _this.trackedProperty.value)
-          record.commit()
-        }
-      }
       const { field, direction } = dstGrid.store.getSortState()
       dstGrid.store.sort(field, direction)
       srcGrid.store.resumeEvents()
@@ -577,12 +508,12 @@ SM.UserGroup.SelectingPanel = Ext.extend(Ext.Panel, {
 
       dstGrid.getSelectionModel().selectRecords(records)
       dstGrid.getView().focusRow(dstGrid.store.indexOfId(records[0].data.assetId))
-      _this.fireEvent('assetselectionschanged')
+      _this.fireEvent('userselectionschanged')
     }
 
     function getValue() {
       const records = selectionsGrid.store.snapshot?.items ?? selectionsGrid.store.getRange()
-      return records.map(record => record.data.assetId)
+      return records.map(record => record.data.userId)
     }
 
     const config = {
@@ -590,7 +521,7 @@ SM.UserGroup.SelectingPanel = Ext.extend(Ext.Panel, {
       layoutConfig: {
         align: 'stretch'
       },
-      name: 'assets',
+      name: 'users',
       border: false,
       items: [
         availableGrid,
@@ -610,9 +541,168 @@ SM.UserGroup.SelectingPanel = Ext.extend(Ext.Panel, {
       validate: () => true
     }
     Ext.apply(this, Ext.apply(this.initialConfig, config))
-    this.superclass().initComponent.call(this);
+    this.superclass().initComponent.call(this)
   }
 })
+
+SM.UserGroup.UserGroupProperties = Ext.extend(Ext.form.FormPanel, {
+  initComponent: function () {
+    const usersPanel = new SM.UserGroup.UserSelectingPanel({
+      title: 'Users',
+      iconCls: 'sm-user-icon',
+      layout: 'fit',
+      border: true,
+      isFormField: true,
+      submitValue: true
+    })
+    const userGroupItems = [
+      {
+        xtype: 'textfield',
+        fieldLabel: 'Group Name',
+        allowBlank: false,
+        anchor: '100%',
+        name: 'name'
+      },
+      {
+        xtype: 'textfield',
+        fieldLabel: 'Description',
+        allowBlank: false,
+        anchor: '100%',
+        name: 'description'
+      }
+    ]
+
+    let config = {
+      baseCls: 'x-plain',
+      // height: 400,
+      region: 'south',
+      labelWidth: 70,
+      monitorValid: true,
+      trackResetOnLoad: true,
+      items: [
+        {
+          xtype: 'fieldset',
+          title: '<b>User Group information</b>',
+          items: userGroupItems
+        },
+        usersPanel
+      ],
+      buttons: [{
+        text: this.btnText || 'Save',
+        formBind: true,
+        handler: this.btnHandler || function () { }
+      }],
+      usersPanel
+    }
+
+    Ext.apply(this, Ext.apply(this.initialConfig, config))
+    this.superclass().initComponent.call(this)
+
+    this.getForm().getFieldValues = function (dirtyOnly, getDisabled) {
+      // Override to support submitValue boolean
+      var o = {},
+        n,
+        key,
+        val;
+      this.items.each(function (f) {
+        // Added condition for f.submitValue
+        if (f.submitValue && (!f.disabled || getDisabled) && (dirtyOnly !== true || f.isDirty())) {
+          n = f.getName();
+          key = o[n];
+          val = f.getValue();
+
+          if (Ext.isDefined(key)) {
+            if (Ext.isArray(key)) {
+              o[n].push(val);
+            } else {
+              o[n] = [key, val];
+            }
+          } else {
+            o[n] = val;
+          }
+        }
+      });
+      return o;
+    }
+  }
+})
+
+SM.UserGroup.showUserGroupProps = async function (userGroupId) {
+  try {
+    const fp = new SM.UserGroup.UserGroupProperties({
+      padding: '10px 15px 10px 15px',
+      btnHandler: async function () {
+        try {
+          if (fp.getForm().isValid()) {
+            const values = fp.getForm().getFieldValues(false, true) // dirtyOnly=false, getDisabled=true
+            const jsonData = { name: values.name, description: values.description, userGroups: values.userGroups }
+
+            const method = userId ? 'PATCH' : 'POST'
+            const url = userGroupId ? `${STIGMAN.Env.apiBase}/user-groups/${userGroupsId}` : `${STIGMAN.Env.apiBase}/user-groups`
+            const result = await Ext.Ajax.requestPromise({
+              url,
+              method,
+              params: {
+                elevate: curUser.privileges.canAdmin,
+                projection: ['users', 'userIds', 'collectionIds', 'attributions']
+              },
+              headers: { 'Content-Type': 'application/json;charset=utf-8' },
+              jsonData
+            })
+            const apiUserGroup = JSON.parse(result.response.responseText)
+            const event = userId ? 'usergroupchanged' : 'usergroupcreated'
+            SM.Dispatcher.fireEvent(event, apiUserGroup)
+            appwindow.close()
+          }
+        }
+        catch (e) {
+          SM.Error.handleError(e)
+        }
+      }
+    })
+
+    /******************************************************/
+    // Form window
+    /******************************************************/
+    const appwindow = new Ext.Window({
+      title: 'User Group ID ' + userGroupId,
+      cls: 'sm-dialog-window sm-round-panel',
+      modal: true,
+      hidden: true,
+      width: 660,
+      height: 440,
+      layout: 'fit',
+      plain: true,
+      bodyStyle: 'padding:5px;',
+      buttonAlign: 'right',
+      items: fp
+    });
+
+
+    appwindow.show(Ext.getBody());
+
+    if (userGroupId) {
+      const result = await Ext.Ajax.requestPromise({
+        url: `${STIGMAN.Env.apiBase}/user-groups/${userGroupId}`,
+        params: {
+          // elevate: curUser.privileges.canAdmin,
+          projection: ['users']
+        },
+        method: 'GET'
+      })
+      const apiUserGroup = JSON.parse(result.response.responseText)
+      fp.getForm().setValues(apiUserGroup)
+    }
+    await fp.userGroupsPanel.initPanel({ userGroupId })
+
+    Ext.getBody().unmask();
+  }
+  catch (e) {
+    Ext.getBody().unmask()
+    SM.Error.handleError(e)
+  }
+}
+
 
 SM.UserGroup.addUserGroupAdmin = function ({treePath}) {
 	const tab = Ext.getCmp('main-tab-panel').getItem('user-group-admin-tab')

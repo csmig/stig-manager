@@ -444,13 +444,13 @@ SM.AssignmentGrid = Ext.extend(Ext.grid.GridPanel, {
       sm: selectionModel,
       columns:[
         {
-          header: `<img src="img/security_firewall_on.png" style="vertical-align: bottom;"> STIG`, 
+          header: `<span class="sm-stig-icon sm-column-with-icon">STIG</span>`, 
           dataIndex: 'benchmarkId',
           sortable: true,
           width: 350
         },
         {
-          header: `<img src="img/mycomputer1-16.png" style="vertical-align: bottom;"> Asset`, 
+          header: `<span class="sm-asset-icon sm-column-with-icon">Asset</span>`, 
           dataIndex: 'assetName',
           sortable: true,
           width: 250

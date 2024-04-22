@@ -4127,7 +4127,7 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/UserGroup'
+                  $ref: '#/components/schemas/UserGroupProjected'
       security:
         - oauth:
             - 'stig-manager:user:read'
@@ -7793,7 +7793,7 @@ components:
         users:
           type: array
           items:
-            $ref: '#/components/schemas/UserBasic'
+            $ref: '#/components/schemas/UserBasicWithDisplayName'
         collectionIds:
           type: array
           items:

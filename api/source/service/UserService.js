@@ -450,9 +450,14 @@ exports.queryUserGroups = async function ({projections = [], filters = {}, eleva
     THEN json_array()
     ELSE cast(concat('[', group_concat(distinct json_object(
       'userId', cast(ugu.userId as char),
-      'username', udUser.username)
+      'username', udUser.username,
+      'displayName', COALESCE(json_unquote(json_extract(
+        udUser.lastClaims, ?
+      )), udUser.username)
+      )
     ), ']') as json)
     END as users`)
+    predicates.binds.push(`$.${config.oauth.claims.name}`)
   }
   if (projections.includes('collectionIds')) {
     joins.add('left join collection_grant_group cgg using (userGroupId)')
