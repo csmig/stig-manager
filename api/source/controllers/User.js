@@ -77,6 +77,16 @@ module.exports.exportUsers = async function exportUsers (projection, elevate, us
   }
 } 
 
+module.exports.exportUserGroups = async function exportUserGroups (projections, elevate) {
+
+  if (elevate) {
+    return await UserService.queryUserGroups({projections})
+  }
+  else {
+    throw new SmError.PrivilegeError()    
+  }
+}
+
 module.exports.getUserObject = async function getUserObject (req, res, next) {
   try {
     res.json(req.userObject)
