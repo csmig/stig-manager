@@ -434,14 +434,6 @@ exports.queryUserGroups = async function ({projections = [], filters = {}, eleva
         )
     ) as attributions`)
   }
-  if (projections.includes('userIds')) {
-    joins.add('left join user_group_user_map ugu using (userGroupId)')
-    groupBy.add('ug.userGroupId')
-    columns.push(`CASE WHEN count(ugu.userId)=0 
-    THEN json_array()
-    ELSE cast(concat('[', group_concat(distinct concat('"',ugu.userId,'"')), ']') as json)
-    END as userIds`)
-  }
   if (projections.includes('users')) {
     joins.add('left join user_group_user_map ugu using (userGroupId)')
     joins.add('left join user_data udUser on ugu.userId = udUser.userId')
@@ -452,20 +444,11 @@ exports.queryUserGroups = async function ({projections = [], filters = {}, eleva
       'userId', cast(ugu.userId as char),
       'username', udUser.username,
       'displayName', COALESCE(json_unquote(json_extract(
-        udUser.lastClaims, ?
+        udUser.lastClaims, '$.${config.oauth.claims.name}'
       )), udUser.username)
       )
     ), ']') as json)
     END as users`)
-    predicates.binds.push(`$.${config.oauth.claims.name}`)
-  }
-  if (projections.includes('collectionIds')) {
-    joins.add('left join collection_grant_group cgg using (userGroupId)')
-    groupBy.add('ug.userGroupId')
-    columns.push(`CASE WHEN count(cgg.collectionId)=0 
-    THEN json_array()
-    ELSE cast(concat('[', group_concat(distinct concat('"',cgg.collectionId,'"')), ']') as json)
-    END as collectionIds`)
   }
   if (projections.includes('collections')) {
     joins.add('left join collection_grant_group cgg using (userGroupId)')

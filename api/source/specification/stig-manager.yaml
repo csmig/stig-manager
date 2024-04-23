@@ -1243,7 +1243,6 @@ paths:
     parameters:
       - $ref: '#/components/parameters/CollectionIdPath'
       - $ref: '#/components/parameters/UserIdPath'
-      - $ref: '#/components/parameters/ElevateQuery'
     get:
       tags:
         - Collection
@@ -4118,6 +4117,7 @@ paths:
       summary: Get a list of User Groups accessible to the requester
       operationId: getUserGroups
       parameters:
+        - $ref: '#/components/parameters/ElevateQuery'
         - $ref: '#/components/parameters/UserGroupProjectionQuery'
       responses:
         '200':
@@ -4138,6 +4138,7 @@ paths:
       summary: Return a User Group
       operationId: getUserGroup
       parameters:
+        - $ref: '#/components/parameters/ElevateQuery'
         - $ref: '#/components/parameters/UserGroupIdPath'
         - $ref: '#/components/parameters/UserGroupProjectionQuery'
       responses:
@@ -8488,9 +8489,7 @@ components:
         items:
           type: string
           enum:
-            - userIds
             - users
-            - collectionIds
             - collections
             - attributions
     UserIdPath:

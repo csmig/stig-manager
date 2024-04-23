@@ -35,12 +35,12 @@ SM.UserGroup.UserGroupGrid = Ext.extend(Ext.grid.GridPanel, {
       {
         name: 'userCount',
         type: 'integer',
-        convert: (v, r) => r.userIds.length
+        convert: (v, r) => r.users.length
       },
       {
         name: 'collectionCount',
         type: 'integer',
-        convert: (v, r) => r.collectionIds.length
+        convert: (v, r) => r.collections.length
 
       }
     ])
@@ -50,8 +50,8 @@ SM.UserGroup.UserGroupGrid = Ext.extend(Ext.grid.GridPanel, {
         method: 'GET'
       }),
       baseParams: {
-        // elevate: curUser.privileges.canAdmin,
-        projection: ['userIds', 'collectionIds', 'attributions']
+        elevate: curUser.privileges.canAdmin,
+        projection: ['users', 'collections', 'attributions']
       },
       root: '',
       fields,
@@ -247,9 +247,8 @@ SM.UserGroup.UserSelectingGrid = Ext.extend(Ext.grid.GridPanel, {
         dataIndex: 'displayName',
         sortable: true,
         renderer: function (v, m, r) {
-            const icon = 'sm-user-icon'
-            return `<div class="x-combo-list-item ${icon} sm-combo-list-icon" exportValue="${r.data.displayName ?? ''}:${r.data.username ?? ''}"><span style="font-weight:600;">${r.data.displayName ?? ''}</span><br>${r.data.username ?? ''}</div>`
-        }
+          return `<div exportValue="${r.data.displayName ?? ''}:${r.data.username ?? ''}"><span style="font-weight:600;">${r.data.displayName ?? ''}</span><br>${r.data.username ?? ''}</div>`
+    }
       },
       {
         header: "Groups",
@@ -274,7 +273,7 @@ SM.UserGroup.UserSelectingGrid = Ext.extend(Ext.grid.GridPanel, {
       fields,
       idProperty: 'userId',
       sortInfo: {
-        field: 'name',
+        field: 'displayName',
         direction: 'ASC'
       },
     })
@@ -363,7 +362,8 @@ SM.UserGroup.UserSelectingPanel = Ext.extend(Ext.Panel, {
 
     }
     const availableGrid = new SM.UserGroup.UserSelectingGrid({
-      title: 'Available',
+      title: 'Available Users',
+      iconCls: 'sm-user-icon',
       headerCssClass: 'sm-available-panel-header',
       role: 'available',
       flex: 1,
@@ -384,7 +384,8 @@ SM.UserGroup.UserSelectingPanel = Ext.extend(Ext.Panel, {
       }
     })
     const selectionsGrid = new SM.UserGroup.UserSelectingGrid({
-      title: this.selectionsGridTitle || 'Assigned',
+      title: 'Group Members',
+      iconCls: 'sm-user-icon',
       headerCssClass: 'sm-selections-panel-header',
       role: 'selections',
       flex: 1,
@@ -460,6 +461,7 @@ SM.UserGroup.UserSelectingPanel = Ext.extend(Ext.Panel, {
           responseType: 'json',
           url: `${STIGMAN.Env.apiBase}/users`,
           params: {
+            elevate: curUser.privileges.canAdmin,
             projection: ['userGroups']
           },
           method: 'GET'
@@ -548,10 +550,11 @@ SM.UserGroup.UserSelectingPanel = Ext.extend(Ext.Panel, {
 SM.UserGroup.UserGroupProperties = Ext.extend(Ext.form.FormPanel, {
   initComponent: function () {
     const usersPanel = new SM.UserGroup.UserSelectingPanel({
-      title: 'Users',
-      iconCls: 'sm-user-icon',
-      layout: 'fit',
+      hideLabel: true,
+      // title: 'Users',
+      // iconCls: 'sm-user-icon',
       border: true,
+      anchor: '0 -110',
       isFormField: true,
       submitValue: true
     })
@@ -635,22 +638,22 @@ SM.UserGroup.showUserGroupProps = async function (userGroupId) {
         try {
           if (fp.getForm().isValid()) {
             const values = fp.getForm().getFieldValues(false, true) // dirtyOnly=false, getDisabled=true
-            const jsonData = { name: values.name, description: values.description, userGroups: values.userGroups }
+            const jsonData = { name: values.name, description: values.description, userIds: values.users }
 
-            const method = userId ? 'PATCH' : 'POST'
-            const url = userGroupId ? `${STIGMAN.Env.apiBase}/user-groups/${userGroupsId}` : `${STIGMAN.Env.apiBase}/user-groups`
+            const method = userGroupId ? 'PATCH' : 'POST'
+            const url = userGroupId ? `${STIGMAN.Env.apiBase}/user-groups/${userGroupId}` : `${STIGMAN.Env.apiBase}/user-groups`
             const result = await Ext.Ajax.requestPromise({
               url,
               method,
               params: {
                 elevate: curUser.privileges.canAdmin,
-                projection: ['users', 'userIds', 'collectionIds', 'attributions']
+                projection: ['users', 'collections', 'attributions']
               },
               headers: { 'Content-Type': 'application/json;charset=utf-8' },
               jsonData
             })
             const apiUserGroup = JSON.parse(result.response.responseText)
-            const event = userId ? 'usergroupchanged' : 'usergroupcreated'
+            const event = userGroupId ? 'usergroupchanged' : 'usergroupcreated'
             SM.Dispatcher.fireEvent(event, apiUserGroup)
             appwindow.close()
           }
@@ -670,7 +673,7 @@ SM.UserGroup.showUserGroupProps = async function (userGroupId) {
       modal: true,
       hidden: true,
       width: 660,
-      height: 440,
+      height: 650,
       layout: 'fit',
       plain: true,
       bodyStyle: 'padding:5px;',
@@ -693,7 +696,7 @@ SM.UserGroup.showUserGroupProps = async function (userGroupId) {
       const apiUserGroup = JSON.parse(result.response.responseText)
       fp.getForm().setValues(apiUserGroup)
     }
-    await fp.userGroupsPanel.initPanel({ userGroupId })
+    await fp.usersPanel.initPanel({ userGroupId })
 
     Ext.getBody().unmask();
   }

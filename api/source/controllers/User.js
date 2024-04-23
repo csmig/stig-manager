@@ -227,6 +227,9 @@ module.exports.createUserGroup = async (req, res, next) => {
 
 module.exports.getUserGroups = async (req, res, next) => {
   try {
+    if (req.query.projection?.includes('collections') && !req.query.elevate) {
+      throw new SmError.PrivilegeError('collections projection requires elevation')
+    }
     const response = await UserService.queryUserGroups({
       projections: req.query.projection
     })
@@ -239,6 +242,9 @@ module.exports.getUserGroups = async (req, res, next) => {
 
 module.exports.getUserGroup = async (req, res, next) => {
   try {
+    if (req.query.projection?.includes('collections') && !req.query.elevate) {
+      throw new SmError.PrivilegeError('collections projection requires elevation')
+    }
     const response = await UserService.queryUserGroups({
       projections: req.query.projection,
       filters: {userGroupId: req.params.userGroupId}

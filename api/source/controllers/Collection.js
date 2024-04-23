@@ -1219,7 +1219,7 @@ module.exports.getStigAssetsByCollectionUserDEPRECATED = module.exports.getStigA
 
 module.exports.getEffectiveAclByCollectionUser =  async function (req, res, next) {
   try{
-    const collectionId = getCollectionIdAndCheckPermission(req, Security.ACCESS_LEVEL.Manage, true)
+    const collectionId = getCollectionIdAndCheckPermission(req, Security.ACCESS_LEVEL.Manage)
     const userId = req.params.userId
     const response = await CollectionService.getEffectiveAclByCollectionUser({collectionId, userId})
     res.json(response)
