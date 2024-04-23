@@ -1,11 +1,10 @@
 {
 	"info": {
-		"_postman_id": "8b002922-b439-4e61-9555-0523907eb2e8",
+		"_postman_id": "dfeae7cf-f780-4f19-b891-f23d35c61d52",
 		"name": "STIGMan OSS",
 		"description": "An API for managing evaluations of Security Technical Implementation Guide (STIG) assessments.\n\nContact Support:\n Name: Carl Smigielski\n Email: carl.a.smigielski@saic.com",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
-		"_exporter_id": "17450853",
-		"_collection_link": "https://stigman.postman.co/workspace/STIGMan-OSS~0fa3c2c0-df3b-4f99-91fc-c96f25ac66a1/collection/17450853-8b002922-b439-4e61-9555-0523907eb2e8?action=share&source=collection_link&creator=17450853"
+		"_exporter_id": "17450853"
 	},
 	"item": [
 		{
@@ -39133,7 +39132,8 @@
 													"});\r",
 													""
 												],
-												"type": "text/javascript"
+												"type": "text/javascript",
+												"packages": {}
 											}
 										}
 									],
@@ -39147,7 +39147,7 @@
 										],
 										"body": {
 											"mode": "raw",
-											"raw": "{\n    \"username\": \"bizarroLvl1\",\n    \"collectionGrants\": [\n        {\n            \"collectionId\": \"{{scrapCollection}}\",\n            \"accessLevel\": 1\n        }\n    ]\n}\n"
+											"raw": "{\n    \"username\": \"bizarroLvl1\",\n    \"collectionGrants\": [\n        {\n            \"collectionId\": \"{{scrapCollection}}\",\n            \"accessLevel\": 1\n        }\n    ],\n    \"userGroups\": []\n}\n"
 										},
 										"url": {
 											"raw": "{{baseUrl}}/users/:userId?elevate={{elevated}}&projection=collectionGrants&projection=statistics",
@@ -39417,7 +39417,8 @@
 											"\r",
 											""
 										],
-										"type": "text/javascript"
+										"type": "text/javascript",
+										"packages": {}
 									}
 								}
 							],
@@ -39431,7 +39432,7 @@
 								],
 								"body": {
 									"mode": "raw",
-									"raw": "{\n    \"username\": \"TEST_USER_{{$randomNoun}}-{{$randomJobType}}\",\n    \"collectionGrants\": [\n        {\n            \"collectionId\": \"{{scrapCollection}}\",\n            \"accessLevel\": 1\n        }\n    ]\n}\n"
+									"raw": "{\n    \"username\": \"TEST_USER_{{$randomNoun}}-{{$randomJobType}}\",\n    \"collectionGrants\": [\n        {\n            \"collectionId\": \"{{scrapCollection}}\",\n            \"accessLevel\": 1\n        }\n    ],\n    \"userGroups\": []\n}\n"
 								},
 								"url": {
 									"raw": "{{baseUrl}}/users?elevate={{elevated}}&projection=collectionGrants&projection=statistics",
