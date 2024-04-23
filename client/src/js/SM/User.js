@@ -1104,7 +1104,7 @@ SM.User.UserProperties = Ext.extend(Ext.form.FormPanel, {
                 fieldLabel: 'Name',
                 readOnly: true,
                 anchor: '100%',
-                name: 'name'
+                name: 'displayName'
               }
             ]
           }
@@ -1118,34 +1118,16 @@ SM.User.UserProperties = Ext.extend(Ext.form.FormPanel, {
         name: 'email'
       },
       {
-        // xtype: 'compositefield',
+        xtype: 'textfield',
         fieldLabel: 'Privileges',
-        allowBlank: true,
         anchor: '100%',
-        layout: 'hbox',
-        border: false,
-        items: [
-          {
-            xtype: 'checkbox',
-            name: 'canCreateCollection',
-            boxLabel: 'Create collection',
-            flex: 1,
-            readOnly: true
-          },
-          {
-            xtype: 'checkbox',
-            name: 'canAdmin',
-            checked: false,
-            boxLabel: 'Administrator',
-            flex: 1,
-            readOnly: true
-          }
-        ]
+        readOnly: true,
+        name: 'privileges'
       },
       {
         xtype: 'displayfield',
         allowBlank: true,
-        style: 'border: 1px solid #C1C1C1',
+        // style: 'border: 1px solid #888',
         fieldLabel: 'Last Claims',
         autoScroll: true,
         border: true,
@@ -1184,7 +1166,6 @@ SM.User.UserProperties = Ext.extend(Ext.form.FormPanel, {
 
     let config = {
       baseCls: 'x-plain',
-      // height: 400,
       region: 'south',
       labelWidth: 70,
       monitorValid: true,
@@ -1199,9 +1180,7 @@ SM.User.UserProperties = Ext.extend(Ext.form.FormPanel, {
           xtype: 'tabpanel',
           border: false,
           activeTab: 0,
-          // title: '<b>Collection Grants</b>',
           height: 270,
-          // layout: 'fit',
           items: this.registeredUser ? registeredTabPanelItems : preregisteredTabPanelItems
         }
 
@@ -1216,10 +1195,6 @@ SM.User.UserProperties = Ext.extend(Ext.form.FormPanel, {
 
     Ext.apply(this, Ext.apply(this.initialConfig, config))
     this.superclass().initComponent.call(this)
-
-    this.getForm().addListener('beforeadd', (fp, c, i) => {
-      let one = c
-    })
 
     this.getForm().getFieldValues = function (dirtyOnly, getDisabled) {
       // Override to support submitValue boolean
@@ -1330,8 +1305,9 @@ SM.User.showUserProps = async function showUserProps(userId) {
       }
       const formValues = {
         username: apiUser.username,
-        name: apiUser.statistics.lastClaims?.[STIGMAN.Env.oauth.claims.name],
-        email: apiUser.statistics.lastClaims?.[STIGMAN.Env.oauth.claims.email],
+        displayName: apiUser.displayName,
+        email: apiUser.email,
+        privileges: privilegeGetter(apiUser.statistics.lastClaims).join(', '),
         canCreateCollection: privilegeGetter(apiUser.statistics.lastClaims).includes('create_collection'),
         canAdmin: privilegeGetter(apiUser.statistics.lastClaims).includes('admin'),
         lastClaims: apiUser.statistics.lastClaims,
@@ -1369,9 +1345,6 @@ SM.User.CollectionAclGrid = Ext.extend(Ext.grid.GridPanel, {
           url: `${STIGMAN.Env.apiBase}/collections/${this.collectionId}/grants/user/${this.userId}/access/effective`,
           method: 'GET'
         }),
-        baseParams: {
-          elevate: this.tryElevate ? curUser.privileges.canAdmin : false
-        },
         root: '',
         fields,
         idProperty: 'assetName',
