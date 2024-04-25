@@ -331,7 +331,8 @@ const sqlMetricsDetail = `json_object(
     'notselected', json_object('total',sa.notselected,'resultEngine',sa.notselectedResultEngine),
     'informational', json_object('total',sa.informational,'resultEngine',sa.informationalResultEngine),
     'fixed', json_object('total',sa.fixed,'resultEngine',sa.fixedResultEngine)
-  )
+  ),
+  'resultEngines', coalesce(sa.resultEngines, json_array())
 ) as metrics`
 const sqlMetricsDetailAgg = `json_object(
   'assessments', coalesce(sum(rev.ruleCount),0),
@@ -365,7 +366,8 @@ const sqlMetricsDetailAgg = `json_object(
     'notselected', json_object('total',coalesce(sum(sa.notselected),0),'resultEngine',coalesce(sum(sa.notselectedResultEngine),0)),
     'informational', json_object('total',coalesce(sum(sa.informational),0),'resultEngine',coalesce(sum(sa.informationalResultEngine),0)),
     'fixed', json_object('total',coalesce(sum(sa.fixed),0),'resultEngine',coalesce(sum(sa.fixedResultEngine),0))
-  )
+  ),
+  'resultEngines', json_array()
 ) as metrics`
 const sqlMetricsSummary = `json_object(
   'assessments', rev.ruleCount,
@@ -389,7 +391,8 @@ const sqlMetricsSummary = `json_object(
     'low', sa.lowCount,
     'medium', sa.mediumCount,
     'high', sa.highCount
-  )
+  ),
+  'resultEngines', coalesce(sa.resultEngines, json_array())
 ) as metrics`
 const sqlMetricsSummaryAgg = `json_object(
   'assessments', coalesce(sum(rev.ruleCount),0),
@@ -413,7 +416,8 @@ const sqlMetricsSummaryAgg = `json_object(
     'low', coalesce(sum(sa.lowCount),0),
     'medium', coalesce(sum(sa.mediumCount),0),
     'high', coalesce(sum(sa.highCount),0)
-  )
+  ),
+  'resultEngines', json_array()
 ) as metrics`
 const colsMetricsDetail = [
   `rev.ruleCount as assessments`,

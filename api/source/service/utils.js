@@ -127,7 +127,6 @@ module.exports.initializeDatabase = async function () {
       logger.writeInfo('mysql', 'setup', { message: 'No existing tables detected. Setting up new database.' })
       await setupInitialDatabase(_this.pool)
       logger.writeInfo('mysql', 'setup', { message: 'Database setup complete.' })
-      return
     }
     // Perform migrations
     const umzug = new Umzug({
@@ -355,7 +354,7 @@ module.exports.updateStatsAssetStig = async function(connection, {
       benchmarkId,
       reProduct,
       reVersion,
-      count(*) as reviewCount
+      count(*) as resultCount
     from
       reReview
     group by
@@ -368,7 +367,7 @@ module.exports.updateStatsAssetStig = async function(connection, {
     select
       assetId,
       benchmarkId,
-      json_arrayagg(json_object('product', reProduct, 'version', reVersion, 'numAsessed', reviewCount)) as resultEngines
+      json_arrayagg(json_object('product', reProduct, 'version', reVersion, 'resultCount', resultCount)) as resultEngines
     from
       reCount
     group by

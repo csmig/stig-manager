@@ -5692,6 +5692,10 @@ components:
               $ref: '#/components/schemas/MaxTs'
             minTs:
               $ref: '#/components/schemas/MinTs'
+            resultEngines:
+              type: array
+              items:
+                $ref: '#/components/schemas/ResultEngineMetric'
             results:
               additionalProperties: false
               type: object
@@ -5745,6 +5749,7 @@ components:
             - results
             - statuses
             - findings
+            - resultEngines
       required:
         - metrics
     MetricsDetailAggAsset:
@@ -5801,6 +5806,10 @@ components:
               $ref: '#/components/schemas/MaxTs'
             minTs:
               $ref: '#/components/schemas/MinTs'
+            resultEngines:
+              type: array
+              items:
+                $ref: '#/components/schemas/ResultEngineMetric'
             results:
               additionalProperties: false
               type: object
@@ -5844,6 +5853,7 @@ components:
             - results
             - statuses
             - findings
+            - resultEngines
       required:
         - metrics
     MetricsSummaryAggAsset:
@@ -5937,6 +5947,15 @@ components:
           $ref: '#/components/schemas/LocationString'
       required:
         - location
+    ResultEngineMetric:
+      type: object
+      properties:
+        product:
+          $ref: '#/components/schemas/String255'
+        version:
+          $ref: '#/components/schemas/VersionString'
+        resultCount:
+          type: integer
     ResultEngineOverride:
       additionalProperties: false
       type: object
