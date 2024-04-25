@@ -1,5 +1,88 @@
 const dbUtils = require('./utils')
 
+function genCteReTable (aggregation) {
+    // reTable: This CTE unpacks stig_asset_map.resultEngines into a table
+    const columns= [
+      'granted.*',
+      'tt.*'
+    ]
+    const joins = [
+      `granted`,
+      `inner join stig_asset_map sa on granted.saId = sa.saId`,
+      `inner join JSON_TABLE(
+        sa.resultEngines, 
+        '$[*]' 
+        COLUMNS(
+          product VARCHAR(255) PATH '$.product', 
+          version VARCHAR(10) PATH '$.version', 
+          resultCount INT PATH '$.resultCount'
+        )
+      ) AS tt on true`
+    ]
+    if (aggregation === 'label') {
+      columns.push('cl.clId')
+      joins.push(
+        'left join collection_label_asset_map cla on granted.assetId = cla.assetId',
+        'left join collection_label cl on cla.clId = cl.clId'
+      )
+    }
+    if (aggregation === 'metaStig') {
+      columns.push('rev.revId')
+      joins.push(
+        'left join default_rev dr on granted.collectionId = dr.collectionId and sa.benchmarkId = dr.benchmarkId',
+        'left join revision rev on dr.revId = rev.revId'
+      )
+    }
+    return dbUtils.makeQueryString({columns, joins})
+}
+
+function genCteReAgg (aggregation) {
+    // reAgg: This CTE counts product/version from reTable based on the requested aggregation
+    const columns = [
+        'product',
+        'version',
+        'sum(resultCount) as resultCount'
+        ]
+    const joins = ['reTable']
+    const groupBy = [
+      'product',
+      'version'
+    ]
+    if (aggregation !== 'meta') {
+      const columnByAggregation = {
+        asset: 'assetId',
+        stig: 'benchmarkId',
+        metaStig: 'revId',
+        collection: 'collectionId',
+        label: 'clId'
+      }
+      columns.push(columnByAggregation[aggregation])
+      groupBy.push(columnByAggregation[aggregation])
+    }
+    return dbUtils.makeQueryString({columns, joins, groupBy})
+}
+
+function genCteReJson (aggregation) {
+  // reJson: This CTE produces one row of JSON for each aggregated value
+  const columns = [
+    'json_arrayagg(json_object("product", product, "version", version, "resultCount", resultCount)) as reInfo'
+  ]
+  const joins = ['reAgg']
+  const groupBy = []
+  const columnByAggregation = {
+    asset: 'assetId',
+    stig: 'benchmarkId',
+    metaStig: 'revId',
+    collection: 'collectionId',
+    label: 'clId'
+  }
+  if (aggregation !== 'meta') {
+    columns.push(columnByAggregation[aggregation])
+    groupBy.push(columnByAggregation[aggregation])
+  }
+  return dbUtils.makeQueryString({columns, joins, groupBy})
+}
+
 module.exports.queryMetrics = async function ({
   inPredicates = {},
   userId,
@@ -14,8 +97,8 @@ module.exports.queryMetrics = async function ({
   }
 
   // CTE processing
-  // This CTE retreives the granted Asset/STIG pairs for a single collection
-  const cteProps = {
+  // granted: This CTE retreives the granted Asset/STIG pairs for a single collection
+  const cteGrantedProps = {
     columns: [
       'distinct c.collectionId',
       'sa.benchmarkId',
@@ -42,7 +125,7 @@ module.exports.queryMetrics = async function ({
     }
   }
   if (inPredicates.labelNames || inPredicates.labelIds || inPredicates.labelMatch) {
-    cteProps.joins.push(
+    cteGrantedProps.joins.push(
       'left join collection_label_asset_map cla on a.assetId = cla.assetId',
       'left join collection_label cl on cla.clId = cl.clId'
     )
@@ -51,13 +134,13 @@ module.exports.queryMetrics = async function ({
       labelPredicates.push('cl.name IN ?')
       if (aggregation === 'label')
         predicates.binds.push([inPredicates.labelNames])
-      cteProps.predicates.binds.push([inPredicates.labelNames])
+      cteGrantedProps.predicates.binds.push([inPredicates.labelNames])
     }
     if (inPredicates.labelIds) {
       const uuidBinds = inPredicates.labelIds.map( uuid => dbUtils.uuidToSqlString(uuid))
       if (aggregation === 'label')
         predicates.binds.push([uuidBinds])
-      cteProps.predicates.binds.push([uuidBinds])
+      cteGrantedProps.predicates.binds.push([uuidBinds])
       labelPredicates.push('cl.uuid IN ?')
     }
     if (inPredicates.labelMatch === 'null') {
@@ -66,30 +149,38 @@ module.exports.queryMetrics = async function ({
     const labelPredicatesClause = `(${labelPredicates.join(' OR ')})`
     if (aggregation === 'label')
       predicates.statements.push(labelPredicatesClause)
-    cteProps.predicates.statements.push(labelPredicatesClause)
+    cteGrantedProps.predicates.statements.push(labelPredicatesClause)
   }
   if (inPredicates.assetIds) {
-    cteProps.predicates.statements.push(
+    cteGrantedProps.predicates.statements.push(
       'a.assetId IN ?'
     )
-    cteProps.predicates.binds.push([inPredicates.assetIds])
+    cteGrantedProps.predicates.binds.push([inPredicates.assetIds])
   }
   if (inPredicates.benchmarkIds) {
-    cteProps.predicates.statements.push(
+    cteGrantedProps.predicates.statements.push(
       'sa.benchmarkId IN ?'
     )
-    cteProps.predicates.binds.push([inPredicates.benchmarkIds])
+    cteGrantedProps.predicates.binds.push([inPredicates.benchmarkIds])
   }
 
-  const cteQuery = dbUtils.makeQueryString({
-    columns: cteProps.columns,
-    joins: cteProps.joins,
-    predicates: cteProps.predicates
+  const cteGrantedQuery = dbUtils.makeQueryString({
+    columns: cteGrantedProps.columns,
+    joins: cteGrantedProps.joins,
+    predicates: cteGrantedProps.predicates
   })
+
+  // Array of all required CTEs
   const ctes = [
     `granted as (select ? as collectionId, null as benchmarkId, null as assetId, null as saId
-      union all ${cteQuery} )`
+      union all ${cteGrantedQuery} )`
   ]
+
+  if (aggregation !== 'unagg') {
+    ctes.push(`reTable as (${genCteReTable(aggregation)})`)
+    ctes.push(`reAgg as (${genCteReAgg(aggregation)})`)
+    ctes.push(`reJson as (${genCteReJson(aggregation)})`)
+  }
 
   // Main query
   const columns = returnType === 'csv' ? [...baseColsFlat[aggregation]] : [...baseCols[aggregation]]
@@ -107,27 +198,30 @@ module.exports.queryMetrics = async function ({
   switch (aggregation) {
     case 'asset':
       predicates.statements.push('a.assetId IS NOT NULL')
-      groupBy.push('a.assetId')
+      joins.push('left join reJson on a.assetId = reJson.assetId')
+      groupBy.push('a.assetId', 'reJson.reInfo')
       orderBy.push('a.name')
       break
     case 'stig':
       predicates.statements.push('sa.benchmarkId IS NOT NULL')
-      groupBy.push('rev.revId', 'dr.revisionPinned')
+      joins.push('left join reJson on stig.benchmarkId = reJson.benchmarkId')
+      groupBy.push('rev.revId', 'dr.revisionPinned', 'reJson.reInfo')
       orderBy.push('rev.benchmarkId')
       break
     case 'collection':
       joins.push('left join collection c on granted.collectionId = c.collectionId')
-      groupBy.push('c.collectionId')
+      joins.push('left join reJson on c.collectionId = reJson.collectionId')
+      groupBy.push('c.collectionId', 'reJson.reInfo')
       orderBy.push('c.name')
       break
     case 'label':
       predicates.statements.push('a.assetId IS NOT NULL')
-      groupBy.push('cl.description', 'cl.color')
+      groupBy.push('cl.description', 'cl.color', 'cl.uuid', 'cl.name', 'reJson.reInfo')
       joins.push(
         'left join collection_label_asset_map cla on a.assetId = cla.assetId',
-        'left join collection_label cl on cla.clId = cl.clId'
+        'left join collection_label cl on cla.clId = cl.clId',
+        'left join reJson on cl.clId <=> reJson.clId'
       )
-      groupBy.push('cl.uuid', 'cl.name')
       orderBy.push('cl.name')
       break
     case 'unagg':
@@ -168,7 +262,7 @@ module.exports.queryMetrics = async function ({
   
   let [ rows ] = await dbUtils.pool.query(
     query, 
-    [...cteProps.predicates.binds, ...predicates.binds]
+    [...cteGrantedProps.predicates.binds, ...predicates.binds]
   )
   return (rows || [])
 }
@@ -186,7 +280,7 @@ module.exports.queryMetaMetrics = async function ({
   }
   // CTE processing
   // This CTE retreives the granted Asset/STIG pairs across all collections (or the requested ones)
-  const cteProps = {
+  const cteGrantedProps = {
     columns: [
       'distinct c.collectionId',
       'sa.benchmarkId',
@@ -211,34 +305,37 @@ module.exports.queryMetaMetrics = async function ({
     }
   }
   if (inPredicates.benchmarkIds) {
-    cteProps.predicates.statements.push(
+    cteGrantedProps.predicates.statements.push(
       'sa.benchmarkId IN ?'
     )
-    cteProps.predicates.binds.push([inPredicates.benchmarkIds])
+    cteGrantedProps.predicates.binds.push([inPredicates.benchmarkIds])
   }
   if (inPredicates.collectionIds) {
-    cteProps.predicates.statements.push(
+    cteGrantedProps.predicates.statements.push(
       'c.collectionId IN ?'
     )
-    cteProps.predicates.binds.push([inPredicates.collectionIds])
+    cteGrantedProps.predicates.binds.push([inPredicates.collectionIds])
   }
   if (inPredicates.revisionIds) {
-    cteProps.joins.push(
+    cteGrantedProps.joins.push(
       'left join default_rev dr on c.collectionId = dr.collectionId and sa.benchmarkId = dr.benchmarkId',
       'left join revision rev on dr.revId = rev.revId'
     )
-    cteProps.predicates.statements.push(
+    cteGrantedProps.predicates.statements.push(
       'rev.revId IN ?'
     )
-    cteProps.predicates.binds.push([inPredicates.revisionIds])
+    cteGrantedProps.predicates.binds.push([inPredicates.revisionIds])
   }
-  const cteQuery = dbUtils.makeQueryString({
-    columns: cteProps.columns,
-    joins: cteProps.joins,
-    predicates: cteProps.predicates
+  const cteGrantedQuery = dbUtils.makeQueryString({
+    columns: cteGrantedProps.columns,
+    joins: cteGrantedProps.joins,
+    predicates: cteGrantedProps.predicates
   })
   const ctes = [
-    `granted as (${cteQuery})`
+    `granted as (${cteGrantedQuery})`,
+    `reTable as (${genCteReTable(aggregation)})`,
+    `reAgg as (${genCteReAgg(aggregation)})`,
+    `reJson as (${genCteReJson(aggregation)})`
   ]
   // Main query
   const columns = returnType === 'csv' ? [...baseColsFlat[aggregation]] : [...baseCols[aggregation]]
@@ -250,19 +347,24 @@ module.exports.queryMetaMetrics = async function ({
     'left join revision rev on dr.revId = rev.revId',
     'left join stig on rev.benchmarkId = stig.benchmarkId'
   ]
-  const groupBy = []
+  const groupBy = ['reJson.reInfo']
   const orderBy = []
   switch (aggregation) {
     case 'meta':
       predicates.statements.push('sa.benchmarkId IS NOT NULL')
+      joins.push('left join reJson on true')
       break
     case 'collection':
-      joins.push('left join collection c on granted.collectionId = c.collectionId')
+      joins.push(
+        'left join collection c on granted.collectionId = c.collectionId',
+        'left join reJson on c.collectionId = reJson.collectionId'
+      )
       groupBy.push('c.collectionId')
       orderBy.push('c.name')
       break
     case 'metaStig':
       predicates.statements.push('sa.benchmarkId IS NOT NULL')
+      joins.push('left join reJson on rev.revId = reJson.revId')
       groupBy.push('rev.revId')
       orderBy.push('rev.benchmarkId')
       break
@@ -292,9 +394,9 @@ module.exports.queryMetaMetrics = async function ({
     orderBy
   })
 
-  let [rows, fields] = await dbUtils.pool.query(
+  let [rows] = await dbUtils.pool.query(
     query, 
-    [...cteProps.predicates.binds, ...predicates.binds]
+    [...cteGrantedProps.predicates.binds, ...predicates.binds]
   )
   return (rows || [])
 }
@@ -367,7 +469,7 @@ const sqlMetricsDetailAgg = `json_object(
     'informational', json_object('total',coalesce(sum(sa.informational),0),'resultEngine',coalesce(sum(sa.informationalResultEngine),0)),
     'fixed', json_object('total',coalesce(sum(sa.fixed),0),'resultEngine',coalesce(sum(sa.fixedResultEngine),0))
   ),
-  'resultEngines', json_array()
+  'resultEngines', coalesce(reJson.reInfo, json_array())
 ) as metrics`
 const sqlMetricsSummary = `json_object(
   'assessments', rev.ruleCount,
@@ -417,7 +519,7 @@ const sqlMetricsSummaryAgg = `json_object(
     'medium', coalesce(sum(sa.mediumCount),0),
     'high', coalesce(sum(sa.highCount),0)
   ),
-  'resultEngines', json_array()
+  'resultEngines', coalesce(reJson.reInfo, json_array())
 ) as metrics`
 const colsMetricsDetail = [
   `rev.ruleCount as assessments`,
@@ -457,6 +559,7 @@ const colsMetricsDetail = [
   `sa.informationalResultEngine`,
   `sa.fixed`,
   `sa.fixedResultEngine`,
+  `json_unquote(sa.resultEngines) as resultEngines`
 ]
 const colsMetricsDetailAgg = [
   `coalesce(sum(rev.ruleCount),0) as assessments`,
@@ -495,7 +598,8 @@ const colsMetricsDetailAgg = [
   `coalesce(sum(sa.informational),0) as informational`,
   `coalesce(sum(sa.informationalResultEngine),0) as informationalResultEngine`,
   `coalesce(sum(sa.fixed),0) as fixed`,
-  `coalesce(sum(sa.fixedResultEngine),0) as fixedResultEngine`
+  `coalesce(sum(sa.fixedResultEngine),0) as fixedResultEngine`,
+  `json_unquote(reJson.reInfo) as resultEngines`
 ]
 const colsMetricsSummary = [
   'rev.ruleCount as "assessments"', 
@@ -513,7 +617,8 @@ const colsMetricsSummary = [
   'sa.saved as "saved"', 
   'sa.submitted as "submitted"', 
   'sa.accepted as "accepted"', 
-  'sa.rejected as "rejected"'
+  'sa.rejected as "rejected"',
+  'json_unquote(sa.resultEngines) as resultEngines'
 ]
 const colsMetricsSummaryAgg = [
   'coalesce(sum(rev.ruleCount),0) as "assessments"', 
@@ -531,7 +636,8 @@ const colsMetricsSummaryAgg = [
   'coalesce(sum(sa.saved),0) as "saved"', 
   'coalesce(sum(sa.submitted),0) as "submitted"', 
   'coalesce(sum(sa.accepted),0) as "accepted"', 
-  'coalesce(sum(sa.rejected),0) as "rejected"'
+  'coalesce(sum(sa.rejected),0) as "rejected"',
+  `json_unquote(reJson.reInfo) as resultEngines`
 ]
 const sqlLabels = `coalesce(
   (select
