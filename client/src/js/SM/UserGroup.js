@@ -212,7 +212,7 @@ SM.UserGroup.UserGroupGrid = Ext.extend(Ext.grid.GridPanel, {
       columns,
       view,
       tbar,
-      bbar
+      bbar,
     }
     Ext.apply(this, Ext.apply(this.initialConfig, config))
     this.superclass().initComponent.call(this)
@@ -465,8 +465,9 @@ SM.UserGroup.UserSelectingPanel = Ext.extend(Ext.Panel, {
             projection: ['userGroups']
           },
           method: 'GET'
-        }),
-        Ext.Ajax.requestPromise({
+        })]
+      if (userGroupId) {
+        promises.push(Ext.Ajax.requestPromise({
           responseType: 'json',
           url: `${STIGMAN.Env.apiBase}/user-groups/${userGroupId}`,
           params: {
@@ -474,8 +475,8 @@ SM.UserGroup.UserSelectingPanel = Ext.extend(Ext.Panel, {
             projection: ['users']
           },
           method: 'GET'
-        })
-      ]
+        }))
+      }
       const [apiAvailableUsers, apiUserGroup] = await Promise.all(promises)
       const assignedUserIds = apiUserGroup?.users?.map(user => user.userId) ?? []
       _this.originalUserIds = assignedUserIds
@@ -489,7 +490,7 @@ SM.UserGroup.UserSelectingPanel = Ext.extend(Ext.Panel, {
 
       availableGrid.store.loadData(availableUsers)
       selectionsGrid.store.loadData(assignedUsers)
-      _this.trackedProperty = { dataProperty: 'userGroups', value: apiUserGroup.name }
+      // _this.trackedProperty = { dataProperty: 'userGroups', value: apiUserGroup.name }
 
     }
 
@@ -706,7 +707,6 @@ SM.UserGroup.showUserGroupProps = async function (userGroupId) {
   }
 }
 
-
 SM.UserGroup.addUserGroupAdmin = function ({treePath}) {
 	const tab = Ext.getCmp('main-tab-panel').getItem('user-group-admin-tab')
 	if (tab) {
@@ -719,17 +719,22 @@ SM.UserGroup.addUserGroupAdmin = function ({treePath}) {
 		margins: { top: SM.Margin.top, right: SM.Margin.edge, bottom: SM.Margin.bottom, left: SM.Margin.edge },
 		region: 'center',
 		stripeRows:true,
-		loadMask: {msg: ''}
+		loadMask: {msg: ''},
+    listeners: {
+      rowdblclick: function (grid, rowIndex) {
+        SM.UserGroup.showUserGroupProps(grid.getStore().getAt(rowIndex).get('userGroupId'))
+      }
+    }
 	})
 
-	// const onUserChanged = function (apiUser) {
-	// 	userGrid.store.loadData(apiUser, true)
-	// 	const sortState = userGrid.store.getSortState()
-	// 	userGrid.store.sort(sortState.field, sortState.direction)
-	// 	userGrid.getSelectionModel().selectRow(userGrid.store.findExact('userId',apiUser.userId))
-	// }
-	// SM.Dispatcher.addListener('userchanged', onUserChanged)
-	// SM.Dispatcher.addListener('usercreated', onUserChanged)
+	const onUserGroupChanged = function (apiUserGroup) {
+		userGroupGrid.store.loadData(apiUserGroup, true)
+		const sortState = userGroupGrid.store.getSortState()
+		userGroupGrid.store.sort(sortState.field, sortState.direction)
+		userGroupGrid.getSelectionModel().selectRow(userGroupGrid.store.findExact('userGroupId',apiUserGroup.userGroupId))
+	}
+	SM.Dispatcher.addListener('usergroupchanged', onUserGroupChanged)
+	SM.Dispatcher.addListener('usergroupcreated', onUserGroupChanged)
 
 
 	const thisTab = Ext.getCmp('main-tab-panel').add({

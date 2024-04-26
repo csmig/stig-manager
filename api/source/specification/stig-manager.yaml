@@ -4095,6 +4095,7 @@ paths:
       operationId: createUserGroup
       parameters:
         - $ref: '#/components/parameters/ElevateQuery'
+        - $ref: '#/components/parameters/UserGroupProjectionQuery'
       requestBody:
         required: true
         content:
@@ -4107,7 +4108,7 @@ paths:
           content:
             application/json:
               schema:
-                  $ref: '#/components/schemas/UserGroupCreated'
+                  $ref: '#/components/schemas/UserGroupProjected'
       security:
         - oauth:
             - 'stig-manager:user'
@@ -7712,28 +7713,6 @@ components:
           $ref: '#/components/schemas/UserGroupId'
         name:
           $ref: '#/components/schemas/String255'
-    UserGroupCreated:
-      type: object
-      additionalProperties: false
-      required:
-        - userGroupId
-        - name
-        - description
-        - userIds
-        - attributions
-      properties:
-        userGroupId:
-          $ref: '#/components/schemas/UserGroupId'
-        name:
-          $ref: '#/components/schemas/String255'
-        description:
-          $ref: '#/components/schemas/String255Nullable'
-        userIds:
-          type: array
-          items:
-            $ref: '#/components/schemas/StringIntId'
-        attributions:
-          $ref: '#/components/schemas/Attributions'
     UserGroupGrant:
       type: object
       required:
@@ -7787,18 +7766,10 @@ components:
           $ref: '#/components/schemas/String255'
         description:
           $ref: '#/components/schemas/String255Nullable'
-        userIds:
-          type: array
-          items:
-            $ref: '#/components/schemas/StringIntId'
         users:
           type: array
           items:
             $ref: '#/components/schemas/UserBasicWithDisplayName'
-        collectionIds:
-          type: array
-          items:
-            $ref: '#/components/schemas/StringIntId'
         collections:
           type: array
           items:

@@ -215,7 +215,7 @@ module.exports.createUserGroup = async (req, res, next) => {
       modifiedUserId: req.userObject.userId
     })
     const response = await UserService.queryUserGroups({
-      projections: ['userIds', 'attributions'],
+      projections: req.query.projection,
       filters: {userGroupId}
     })
     res.status(201).json(response[0])
