@@ -199,24 +199,24 @@ module.exports.queryMetrics = async function ({
     case 'asset':
       predicates.statements.push('a.assetId IS NOT NULL')
       joins.push('left join reJson on a.assetId = reJson.assetId')
-      groupBy.push('a.assetId', 'reJson.reInfo')
+      groupBy.push('a.assetId')
       orderBy.push('a.name')
       break
     case 'stig':
       predicates.statements.push('sa.benchmarkId IS NOT NULL')
       joins.push('left join reJson on stig.benchmarkId = reJson.benchmarkId')
-      groupBy.push('rev.revId', 'dr.revisionPinned', 'reJson.reInfo')
+      groupBy.push('rev.revId', 'dr.revisionPinned')
       orderBy.push('rev.benchmarkId')
       break
     case 'collection':
       joins.push('left join collection c on granted.collectionId = c.collectionId')
       joins.push('left join reJson on c.collectionId = reJson.collectionId')
-      groupBy.push('c.collectionId', 'reJson.reInfo')
+      groupBy.push('c.collectionId')
       orderBy.push('c.name')
       break
     case 'label':
       predicates.statements.push('a.assetId IS NOT NULL')
-      groupBy.push('cl.description', 'cl.color', 'cl.uuid', 'cl.name', 'reJson.reInfo')
+      groupBy.push('cl.description', 'cl.color', 'cl.uuid', 'cl.name')
       joins.push(
         'left join collection_label_asset_map cla on a.assetId = cla.assetId',
         'left join collection_label cl on cla.clId = cl.clId',
@@ -347,7 +347,7 @@ module.exports.queryMetaMetrics = async function ({
     'left join revision rev on dr.revId = rev.revId',
     'left join stig on rev.benchmarkId = stig.benchmarkId'
   ]
-  const groupBy = ['reJson.reInfo']
+  const groupBy = []
   const orderBy = []
   switch (aggregation) {
     case 'meta':
@@ -469,7 +469,7 @@ const sqlMetricsDetailAgg = `json_object(
     'informational', json_object('total',coalesce(sum(sa.informational),0),'resultEngine',coalesce(sum(sa.informationalResultEngine),0)),
     'fixed', json_object('total',coalesce(sum(sa.fixed),0),'resultEngine',coalesce(sum(sa.fixedResultEngine),0))
   ),
-  'resultEngines', coalesce(reJson.reInfo, json_array())
+  'resultEngines', coalesce(any_value(reJson.reInfo), json_array())
 ) as metrics`
 const sqlMetricsSummary = `json_object(
   'assessments', rev.ruleCount,
@@ -519,7 +519,7 @@ const sqlMetricsSummaryAgg = `json_object(
     'medium', coalesce(sum(sa.mediumCount),0),
     'high', coalesce(sum(sa.highCount),0)
   ),
-  'resultEngines', coalesce(reJson.reInfo, json_array())
+  'resultEngines', coalesce(any_value(reJson.reInfo), json_array())
 ) as metrics`
 const colsMetricsDetail = [
   `rev.ruleCount as assessments`,
@@ -599,7 +599,7 @@ const colsMetricsDetailAgg = [
   `coalesce(sum(sa.informationalResultEngine),0) as informationalResultEngine`,
   `coalesce(sum(sa.fixed),0) as fixed`,
   `coalesce(sum(sa.fixedResultEngine),0) as fixedResultEngine`,
-  `json_unquote(reJson.reInfo) as resultEngines`
+  `json_unquote(any_value(reJson.reInfo)) as resultEngines`
 ]
 const colsMetricsSummary = [
   'rev.ruleCount as "assessments"', 
@@ -637,7 +637,7 @@ const colsMetricsSummaryAgg = [
   'coalesce(sum(sa.submitted),0) as "submitted"', 
   'coalesce(sum(sa.accepted),0) as "accepted"', 
   'coalesce(sum(sa.rejected),0) as "rejected"',
-  `json_unquote(reJson.reInfo) as resultEngines`
+  `json_unquote(any_value(reJson.reInfo)) as resultEngines`
 ]
 const sqlLabels = `coalesce(
   (select
