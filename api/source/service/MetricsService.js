@@ -20,18 +20,12 @@ function genCteReTable (aggregation) {
       ) AS tt on true`
     ]
     if (aggregation === 'label') {
-      columns.push('cl.clId')
-      joins.push(
-        'left join collection_label_asset_map cla on granted.assetId = cla.assetId',
-        'left join collection_label cl on cla.clId = cl.clId'
-      )
+      columns.push('cla.clId')
+      joins.push('left join collection_label_asset_map cla on granted.assetId = cla.assetId')
     }
     if (aggregation === 'metaStig') {
-      columns.push('rev.revId')
-      joins.push(
-        'left join default_rev dr on granted.collectionId = dr.collectionId and sa.benchmarkId = dr.benchmarkId',
-        'left join revision rev on dr.revId = rev.revId'
-      )
+      columns.push('dr.revId')
+      joins.push('left join default_rev dr on granted.collectionId = dr.collectionId and sa.benchmarkId = dr.benchmarkId')
     }
     return dbUtils.makeQueryString({columns, joins})
 }
