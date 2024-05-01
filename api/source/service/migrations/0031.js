@@ -1,83 +1,191 @@
-const MigrationHandler = require('./lib/MigrationHandler')
+const logger = require('../../utils/logger')
+const path = require('node:path')
 
-const upMigration = [
-    `ALTER TABLE stig_asset_map ADD COLUMN resultEngines JSON NULL`,
-    // `ALTER TABLE stig_asset_map CHANGE COLUMN userIds resultEngines JSON NULL`,
-    `UPDATE stig_asset_map SET resultEngines = NULL`,
-    `with reReview as (
-      select
-          review.assetId,
-          dr.benchmarkId,
-          review.reProduct,
-          json_unquote(json_extract(review.resultEngine,'$.version')) as reVersion
-      from
-          asset a
-          left join stig_asset_map sa using (assetId)
-          left join default_rev dr on (sa.benchmarkId = dr.benchmarkId and a.collectionId = dr.collectionId)
-          left join rev_group_rule_map rgr on dr.revId = rgr.revId
-          left join rule_version_check_digest rvcd on rgr.ruleId = rvcd.ruleId
-          left join review on (rvcd.version=review.version and rvcd.checkDigest=review.checkDigest and review.assetId=sa.assetId)
-      where
-        review.reProduct is not null
-        ),
-    reCount as (
-      select
-        assetId,
-        benchmarkId,
-        reProduct,
-        reVersion,
-        count(*) as resultCount
-      from
-        reReview
-      group by
-        assetId,
-        benchmarkId,
-        reProduct,
-        reVersion),
-    reJson as (
-      select
-        assetId,
-        benchmarkId,
-        json_arrayagg(json_object('product', reProduct, 'version', reVersion, 'resultCount', resultCount)) as resultEngines
-      from
-        reCount
-      group by
-        assetId,
-        benchmarkId),
-    source as (
-      select
-          sa.assetId,
-          sa.benchmarkId,
-          any_value(reJson.resultEngines) as resultEngines      
-        from
-          asset a
-          left join stig_asset_map sa using (assetId)
-          left join default_rev dr on (sa.benchmarkId = dr.benchmarkId and a.collectionId = dr.collectionId)
-          left join rev_group_rule_map rgr on dr.revId = rgr.revId
-          left join rule_version_check_digest rvcd on rgr.ruleId = rvcd.ruleId
-          left join review on (rvcd.version=review.version and rvcd.checkDigest=review.checkDigest and review.assetId=sa.assetId)
-          inner join reJson on (sa.assetId = reJson.assetId and sa.benchmarkId = reJson.benchmarkId)
-      group by
-        sa.assetId,
-        sa.benchmarkId
-        )
-    update
-      stig_asset_map sam
-      inner join source on sam.assetId = source.assetId and source.benchmarkId = sam.benchmarkId
-    set
-      sam.resultEngines = source.resultEngines`
-]
+const migrationName = path.basename(__filename, '.js')
 
-const downMigration = [
-]
+const upFn = async (pool, migrationName) => {
+  const [cols] = await pool.query('SHOW COLUMNS FROM stig_asset_map')
+  const colNames = cols.map(row => row.Field)
+  const colStatements = []
+  if (!colNames.includes('resultEngines')) {
+    colStatements.push(`ALTER TABLE stig_asset_map ADD COLUMN resultEngines JSON NULL`)
+  }
+  if (!colNames.includes('users')) {
+    colStatements.push(`ALTER TABLE stig_asset_map ADD COLUMN users JSON NULL`)
+  }
+  if (!colNames.includes('statusUsers')) {
+    colStatements.push(`ALTER TABLE stig_asset_map ADD COLUMN statusUsers JSON NULL`)
+  }
+  for (const statement of colStatements) {
+    logger.writeInfo('mysql', 'migration', {status: 'running', name: migrationName, statement })
+    await pool.query(statement)
+  }
+  const sqlUpdateStigAssetMap = `with reviewProps as (
+    select
+      review.assetId,
+      dr.benchmarkId,
+      review.reProduct,
+      json_unquote(json_extract(review.resultEngine,'$.version')) as reVersion,
+      review.userId,
+      review.statusUserId
+    from
+      asset a
+      left join stig_asset_map sa using (assetId)
+      left join default_rev dr on (sa.benchmarkId = dr.benchmarkId and a.collectionId = dr.collectionId)
+      left join rev_group_rule_map rgr on dr.revId = rgr.revId
+      left join rule_version_check_digest rvcd on rgr.ruleId = rvcd.ruleId
+      left join review on (rvcd.version=review.version and rvcd.checkDigest=review.checkDigest and review.assetId=sa.assetId)
+  ),
+  reCount as (
+    select
+      assetId,
+      benchmarkId,
+      reProduct,
+      reVersion,
+      count(*) as resultCount
+    from
+      reviewProps
+    where
+	    reProduct is not null
+    group by
+      assetId,
+      benchmarkId,
+      reProduct,
+      reVersion
+  ),
+  reJson as (
+    select
+      assetId,
+      benchmarkId,
+      json_arrayagg(json_object('product', reProduct, 'version', reVersion, 'resultCount', resultCount)) as resultEngines
+    from
+      reCount
+    group by
+      assetId,
+      benchmarkId
+  ),
+  userCount as (
+    select
+      assetId,
+      benchmarkId,
+      userId,
+      count(*) as reviewCount
+    from
+      reviewProps
+    group by
+      assetId,
+      benchmarkId,
+      userId
+  ),
+  userJson as (
+    select
+      assetId,
+      benchmarkId,
+      json_arrayagg(json_object('userId', userId, 'reviewCount', reviewCount)) as users
+    from
+      userCount
+    group by
+      assetId,
+      benchmarkId
+  ),
+  statusUserCount as (
+    select
+      assetId,
+      benchmarkId,
+      statusUserId,
+      count(*) as reviewCount
+    from
+      reviewProps
+    group by
+      assetId,
+      benchmarkId,
+      statusUserId
+  ),
+  statusUserJson as (
+    select
+      assetId,
+      benchmarkId,
+      json_arrayagg(json_object('statusUserId', statusUserId, 'reviewCount', reviewCount)) as statusUsers
+    from
+      statusUserCount
+    group by
+      assetId,
+      benchmarkId
+  ),
+  source as (
+    select
+      sa.assetId,
+      sa.benchmarkId,
+      any_value(reJson.resultEngines) as resultEngines,
+      any_value(userJson.users) as users,
+      any_value(statusUserJson.statusUsers) as statusUsers
+    from
+      asset a
+      left join stig_asset_map sa using (assetId)
+      left join default_rev dr on (sa.benchmarkId = dr.benchmarkId and a.collectionId = dr.collectionId)
+      left join rev_group_rule_map rgr on dr.revId = rgr.revId
+      left join rule_version_check_digest rvcd on rgr.ruleId = rvcd.ruleId
+      left join review on (rvcd.version=review.version and rvcd.checkDigest=review.checkDigest and review.assetId=sa.assetId)
+      left join reJson on (sa.assetId = reJson.assetId and sa.benchmarkId = reJson.benchmarkId)
+      left join userJson on (sa.assetId = userJson.assetId and sa.benchmarkId = userJson.benchmarkId)
+      left join statusUserJson on (sa.assetId = statusUserJson.assetId and sa.benchmarkId = statusUserJson.benchmarkId)
+    group by
+      sa.assetId,
+      sa.benchmarkId
+  )
+  update
+    stig_asset_map sam
+    inner join source on sam.assetId = source.assetId and source.benchmarkId = sam.benchmarkId
+  set
+    sam.resultEngines = source.resultEngines,
+    sam.users = source.users,
+    sam.statusUsers = source.statusUsers
+  `
+  logger.writeInfo('mysql', 'migration', {status: 'running', name: migrationName, statement: sqlUpdateStigAssetMap})
+  await pool.query(sqlUpdateStigAssetMap)
+}
 
-const migrationHandler = new MigrationHandler(upMigration, downMigration)
+const downFn = async (pool, migrationName) => {
+  const [cols] = await pool.query('SHOW COLUMNS FROM stig_asset_map')
+  const colNames = cols.map(row => row.Field)
+  const colStatements = []
+  if (colNames.includes('resultEngines')) {
+    colStatements.push(`ALTER TABLE stig_asset_map DROP COLUMN resultEngines`)
+  }
+  if (colNames.includes('users')) {
+    colStatements.push(`ALTER TABLE stig_asset_map DROP COLUMN users`)
+  }
+  if (colNames.includes('statusUsers')) {
+    colStatements.push(`ALTER TABLE stig_asset_map DROP COLUMN statusUsers`)
+  }
+  for (const statement of colStatements) {
+    logger.writeInfo('mysql', 'migration', {status: 'running', name: migrationName, statement })
+    await pool.query(statement)
+  }
+}
+
 module.exports = {
-  up: async (pool) => {
-    await migrationHandler.up(pool, __filename)
+  up: async pool => {
+    try {
+      logger.writeInfo('mysql', 'migration', {status: 'start', direction: 'up', migrationName })
+      await upFn(pool, migrationName)
+      logger.writeInfo('mysql', 'migration', {status: 'finish', migrationName })
+    }
+    catch (e) {
+      logger.writeError('mysql', 'migration', {status: 'error', migrationName, message: e.message })
+      throw (e)
+    }
   },
   down: async (pool) => {
-    await migrationHandler.down(pool, __filename)
+    try {
+      logger.writeInfo('mysql', 'migration', {status: 'start', direction: 'down', migrationName })
+      await downFn(pool, migrationName)
+      logger.writeInfo('mysql', 'migration', {status: 'finish', migrationName })
+    }
+    catch (e) {
+      logger.writeError('mysql', 'migration', {status: 'error', migrationName, message: e.message })
+      throw (e)
+    }
   }
 }
 
