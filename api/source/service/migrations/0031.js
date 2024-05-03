@@ -24,10 +24,10 @@ const upFn = async (pool, migrationName) => {
     select
       review.assetId,
       dr.benchmarkId,
+      cast(review.userId as char) as userId,
+      cast(review.statusUserId as char) as statusUserId,
       review.reProduct,
-      json_unquote(json_extract(review.resultEngine,'$.version')) as reVersion,
-      review.userId,
-      review.statusUserId
+      json_unquote(json_extract(review.resultEngine,'$.version')) as reVersion
     from
       asset a
       left join stig_asset_map sa using (assetId)
@@ -42,7 +42,7 @@ const upFn = async (pool, migrationName) => {
       benchmarkId,
       reProduct,
       reVersion,
-      count(*) as resultCount
+      count(*) as reviewCount
     from
       reviewProps
     where
@@ -57,7 +57,7 @@ const upFn = async (pool, migrationName) => {
     select
       assetId,
       benchmarkId,
-      json_arrayagg(json_object('product', reProduct, 'version', reVersion, 'resultCount', resultCount)) as resultEngines
+      json_arrayagg(json_object('product', reProduct, 'version', reVersion, 'reviewCount', reviewCount)) as resultEngines
     from
       reCount
     group by

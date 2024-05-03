@@ -331,10 +331,12 @@ module.exports.updateStatsAssetStig = async function(connection, {
   }
 
   const sqlUpdate = `
-  with reReview as (
+  with reviewProps as (
     select
         review.assetId,
         dr.benchmarkId,
+        cast(review.userId as char) as userId,
+        cast(review.statusUserId as char) as statusUserId,
         review.reProduct,
         json_unquote(json_extract(review.resultEngine,'$.version')) as reVersion
     from
@@ -344,9 +346,55 @@ module.exports.updateStatsAssetStig = async function(connection, {
        left join rev_group_rule_map rgr on dr.revId = rgr.revId
        left join rule_version_check_digest rvcd on rgr.ruleId = rvcd.ruleId
        left join review on (rvcd.version=review.version and rvcd.checkDigest=review.checkDigest and review.assetId=sa.assetId)
-    where
-      review.reProduct is not null
-      ${whereClause ? `and ${whereClause}`:''}
+    ${whereClause ? `where ${whereClause}`:''}
+  ),
+  userCount as (
+    select
+      assetId,
+      benchmarkId,
+      userId,
+      count(*) as reviewCount
+    from
+      reviewProps
+    group by
+      assetId,
+      benchmarkId,
+      userId
+  ),
+  userJson as (
+    select
+      assetId,
+      benchmarkId,
+      json_arrayagg(json_object('userId', userId, 'reviewCount', reviewCount)) as users
+    from
+      userCount
+    group by
+      assetId,
+      benchmarkId
+  ),
+  statusUserCount as (
+    select
+      assetId,
+      benchmarkId,
+      statusUserId,
+      count(*) as reviewCount
+    from
+      reviewProps
+    group by
+      assetId,
+      benchmarkId,
+      statusUserId
+  ),
+  statusUserJson as (
+    select
+      assetId,
+      benchmarkId,
+      json_arrayagg(json_object('statusUserId', statusUserId, 'reviewCount', reviewCount)) as statusUsers
+    from
+      statusUserCount
+    group by
+      assetId,
+      benchmarkId
   ),
   reCount as (
     select
@@ -354,9 +402,9 @@ module.exports.updateStatsAssetStig = async function(connection, {
       benchmarkId,
       reProduct,
       reVersion,
-      count(*) as resultCount
+      count(*) as reviewCount
     from
-      reReview
+      reviewProps
     group by
       assetId,
       benchmarkId,
@@ -367,7 +415,7 @@ module.exports.updateStatsAssetStig = async function(connection, {
     select
       assetId,
       benchmarkId,
-      json_arrayagg(json_object('product', reProduct, 'version', reVersion, 'resultCount', resultCount)) as resultEngines
+      json_arrayagg(json_object('product', reProduct, 'version', reVersion, 'reviewCount', reviewCount)) as resultEngines
     from
       reCount
     group by
@@ -378,7 +426,9 @@ module.exports.updateStatsAssetStig = async function(connection, {
     ( select
        sa.assetId,
        sa.benchmarkId,
-       reJson.resultEngines,
+       any_value(reJson.resultEngines) as resultEngines,
+       any_value(userJson.users) as users,
+       any_value(statusUserJson.statusUsers) as statusUsers,
        min(review.ts) as minTs,
        max(review.ts) as maxTs,  
        max(review.touchTs) as maxTouchTs,  
@@ -423,15 +473,18 @@ module.exports.updateStatsAssetStig = async function(connection, {
          left join rule_version_check_digest rvcd on rgr.ruleId = rvcd.ruleId
          left join review on (rvcd.version=review.version and rvcd.checkDigest=review.checkDigest and review.assetId=sa.assetId)
          left join reJson on (sa.assetId = reJson.assetId and sa.benchmarkId = reJson.benchmarkId)
+         left join userJson on (sa.assetId = userJson.assetId and sa.benchmarkId = userJson.benchmarkId)
+         left join statusUserJson on (sa.assetId = statusUserJson.assetId and sa.benchmarkId = statusUserJson.benchmarkId)
         ${whereClause ? `where ${whereClause}`:''}
     group by
       sa.assetId,
-      sa.benchmarkId,
-      reJson.resultEngines
+      sa.benchmarkId
     )
   update stig_asset_map sam
     inner join source on sam.assetId = source.assetId and source.benchmarkId = sam.benchmarkId
-    set sam.resultEngines = source.resultEngines,
+        set sam.resultEngines = source.resultEngines,
+        sam.users = source.users,
+        sam.statusUsers = source.statusUsers,
         sam.minTs = source.minTs,
         sam.maxTs = source.maxTs,
         sam.maxTouchTs = source.maxTouchTs,

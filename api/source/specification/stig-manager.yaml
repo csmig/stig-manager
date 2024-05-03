@@ -5667,7 +5667,7 @@ components:
             resultEngines:
               type: array
               items:
-                $ref: '#/components/schemas/ResultEngineMetric'
+                $ref: '#/components/schemas/MetricsResultEngine'
             results:
               additionalProperties: false
               type: object
@@ -5711,6 +5711,14 @@ components:
                   $ref: '#/components/schemas/CollectionStatusCount'
                 submitted:
                   $ref: '#/components/schemas/CollectionStatusCount'
+            statusUsers:
+              type: array
+              items:
+                $ref: '#/components/schemas/MetricsStatusUser'
+            users:
+              type: array
+              items:
+                $ref: '#/components/schemas/MetricsUser'
           required:
             - assessments
             - assessmentsBySeverity
@@ -5722,6 +5730,8 @@ components:
             - statuses
             - findings
             - resultEngines
+            - users
+            - statusUsers
       required:
         - metrics
     MetricsDetailAggAsset:
@@ -5748,6 +5758,22 @@ components:
       allOf:
         - $ref: '#/components/schemas/MetricsUnagg'
         - $ref: '#/components/schemas/MetricsDetail'
+    MetricsResultEngine:
+      type: object
+      properties:
+        product:
+          $ref: '#/components/schemas/String255'
+        version:
+          $ref: '#/components/schemas/VersionString'
+        reviewCount:
+          type: integer
+    MetricsStatusUser:
+      type: object
+      properties:
+        statusUserId:
+          $ref: '#/components/schemas/UserId'
+        reviewCount:
+          type: integer
     MetricsSummary:
       properties:
         metrics:
@@ -5778,10 +5804,6 @@ components:
               $ref: '#/components/schemas/MaxTs'
             minTs:
               $ref: '#/components/schemas/MinTs'
-            resultEngines:
-              type: array
-              items:
-                $ref: '#/components/schemas/ResultEngineMetric'
             results:
               additionalProperties: false
               type: object
@@ -5825,7 +5847,6 @@ components:
             - results
             - statuses
             - findings
-            - resultEngines
       required:
         - metrics
     MetricsSummaryAggAsset:
@@ -5879,6 +5900,13 @@ components:
         - title
         - revisionStr
         - revisionPinned
+    MetricsUser:
+      type: object
+      properties:
+        userId:
+          $ref: '#/components/schemas/UserId'
+        reviewCount:
+          type: integer
     MinTs:
       format: date-time
       nullable: true
@@ -5919,15 +5947,6 @@ components:
           $ref: '#/components/schemas/LocationString'
       required:
         - location
-    ResultEngineMetric:
-      type: object
-      properties:
-        product:
-          $ref: '#/components/schemas/String255'
-        version:
-          $ref: '#/components/schemas/VersionString'
-        resultCount:
-          type: integer
     ResultEngineOverride:
       additionalProperties: false
       type: object
