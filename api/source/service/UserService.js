@@ -27,8 +27,6 @@ exports.queryUsers = async function (inProjection, inPredicates, elevate, userOb
 
     const orderBy = ['ud.username']
 
-    const orderBy = ['ud.username']
-
     // PROJECTIONS
     if (inProjection?.includes('collectionGrants')) {
       joins.add('left join v_collection_grant_sources cgs on ud.userId = cgs.userId')

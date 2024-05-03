@@ -5914,7 +5914,6 @@ components:
       required:
         - accessLevel
       additionalProperties: false
-      type: object
       properties:
         accessLevel:
           $ref: '#/components/schemas/AccessLevel'
