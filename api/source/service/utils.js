@@ -345,7 +345,7 @@ module.exports.updateStatsAssetStig = async function(connection, {
        left join default_rev dr on (sa.benchmarkId = dr.benchmarkId and a.collectionId = dr.collectionId)
        left join rev_group_rule_map rgr on dr.revId = rgr.revId
        left join rule_version_check_digest rvcd on rgr.ruleId = rvcd.ruleId
-       left join review on (rvcd.version=review.version and rvcd.checkDigest=review.checkDigest and review.assetId=sa.assetId)
+       inner join review on (rvcd.version=review.version and rvcd.checkDigest=review.checkDigest and review.assetId=sa.assetId)
     ${whereClause ? `where ${whereClause}`:''}
   ),
   userCount as (
@@ -405,6 +405,8 @@ module.exports.updateStatsAssetStig = async function(connection, {
       count(*) as reviewCount
     from
       reviewProps
+    where
+      reviewProps.reProduct is not null
     group by
       assetId,
       benchmarkId,
@@ -467,7 +469,7 @@ module.exports.updateStatsAssetStig = async function(connection, {
        
        from
          asset a
-         left join stig_asset_map sa using (assetId)
+         inner join stig_asset_map sa using (assetId)
          left join default_rev dr on (sa.benchmarkId = dr.benchmarkId and a.collectionId = dr.collectionId)
          left join rev_group_rule_map rgr on dr.revId = rgr.revId
          left join rule_version_check_digest rvcd on rgr.ruleId = rvcd.ruleId
