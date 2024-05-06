@@ -24,8 +24,10 @@ const upFn = async (pool, migrationName) => {
     select
       review.assetId,
       dr.benchmarkId,
-      cast(review.userId as char) as userId,
-      cast(review.statusUserId as char) as statusUserId,
+      review.userId,
+      udUser.username,
+      review.statusUserId,
+      udStatusUser.username as statusUsername,
       review.reProduct,
       json_unquote(json_extract(review.resultEngine,'$.version')) as reVersion
     from
@@ -35,7 +37,9 @@ const upFn = async (pool, migrationName) => {
       left join rev_group_rule_map rgr on dr.revId = rgr.revId
       left join rule_version_check_digest rvcd on rgr.ruleId = rvcd.ruleId
       inner join review on (rvcd.version=review.version and rvcd.checkDigest=review.checkDigest and review.assetId=sa.assetId)
-  ),
+      left join user_data udUser on review.userId = udUser.userId
+      left join user_data udStatusUser on review.statusUserId = udStatusUser.userId
+    ),
   reCount as (
     select
       assetId,
@@ -69,19 +73,21 @@ const upFn = async (pool, migrationName) => {
       assetId,
       benchmarkId,
       userId,
+      username,
       count(*) as reviewCount
     from
       reviewProps
     group by
       assetId,
       benchmarkId,
-      userId
+      userId,
+      username
   ),
   userJson as (
     select
       assetId,
       benchmarkId,
-      json_arrayagg(json_object('userId', userId, 'reviewCount', reviewCount)) as users
+      json_arrayagg(json_object('userId', cast(userId as char), 'username', username, 'reviewCount', reviewCount)) as users
     from
       userCount
     group by
@@ -93,19 +99,21 @@ const upFn = async (pool, migrationName) => {
       assetId,
       benchmarkId,
       statusUserId,
+      statusUsername,
       count(*) as reviewCount
     from
       reviewProps
     group by
       assetId,
       benchmarkId,
-      statusUserId
+      statusUserId,
+      statusUsername
   ),
   statusUserJson as (
     select
       assetId,
       benchmarkId,
-      json_arrayagg(json_object('statusUserId', statusUserId, 'reviewCount', reviewCount)) as statusUsers
+      json_arrayagg(json_object('userId', cast(statusUserId as char), 'username', statusUsername, 'reviewCount', reviewCount)) as statusUsers
     from
       statusUserCount
     group by

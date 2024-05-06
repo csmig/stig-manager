@@ -28,6 +28,7 @@ function genCtePropTable ({aggregation, property}) {
           '$[*]' 
           COLUMNS(
             userId VARCHAR(16) PATH '$.userId', 
+            username VARCHAR(255) PATH '$.username', 
             reviewCount INT PATH '$.reviewCount'
           )
         ) AS tt on true`)
@@ -37,7 +38,8 @@ function genCtePropTable ({aggregation, property}) {
           sa.statusUsers, 
           '$[*]' 
           COLUMNS(
-            statusUserId VARCHAR(16) PATH '$.statusUserId', 
+            userId VARCHAR(16) PATH '$.userId', 
+            username VARCHAR(255) PATH '$.username', 
             reviewCount INT PATH '$.reviewCount'
           )
         ) AS tt on true`)
@@ -66,12 +68,12 @@ function genCtePropAgg ({aggregation, property}) {
       groupBy.push('product', 'version')
       break
     case 'users':
-      columns.push('userId')
-      groupBy.push('userId')
+      columns.push('userId', 'username')
+      groupBy.push('userId', 'username')
       break
     case 'statusUsers':
-      columns.push('statusUserId')
-      groupBy.push('statusUserId')
+      columns.push('userId', 'username')
+      groupBy.push('userId', 'username')
       break
   }
 
@@ -94,8 +96,8 @@ function genCtePropJson ({aggregation, property}) {
   // this CTE produces one row of JSON for each aggregated <property> value from <propertyAggTable>
   const jsonObjectPropsByProp = {
     resultEngines: `"product", product, "version", version`,
-    users: `"userId", userId`,
-    statusUsers: `"statusUserId", statusUserId`
+    users: `"userId", userId, "username", username`,
+    statusUsers: `"userId", userId, "username", username`
   }
   const columns = [
     `json_arrayagg(json_object("reviewCount", reviewCount, ${jsonObjectPropsByProp[property]})) as reInfo`

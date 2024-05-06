@@ -5770,8 +5770,10 @@ components:
     MetricsStatusUser:
       type: object
       properties:
-        statusUserId:
+        userId:
           $ref: '#/components/schemas/UserId'
+        username:
+          $ref: '#/components/schemas/Username'
         reviewCount:
           type: integer
     MetricsSummary:
@@ -5905,6 +5907,8 @@ components:
       properties:
         userId:
           $ref: '#/components/schemas/UserId'
+        username:
+          $ref: '#/components/schemas/Username'
         reviewCount:
           type: integer
     MinTs:
