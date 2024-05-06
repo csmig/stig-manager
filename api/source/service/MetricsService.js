@@ -631,9 +631,9 @@ const colsMetricsDetail = [
   `sa.informationalResultEngine`,
   `sa.fixed`,
   `sa.fixedResultEngine`,
-  `json_pretty(sa.resultEngines) as resultEngines`,
-  `json_pretty(sa.users) as users`,
-  `json_pretty(sa.statusUsers) as statusUsers`
+  `json_unquote(sa.resultEngines) as resultEngines`,
+  `json_unquote(sa.users) as users`,
+  `json_unquote(sa.statusUsers) as statusUsers`
 ]
 const colsMetricsDetailAgg = [
   `coalesce(sum(rev.ruleCount),0) as assessments`,
@@ -673,9 +673,9 @@ const colsMetricsDetailAgg = [
   `coalesce(sum(sa.informationalResultEngine),0) as informationalResultEngine`,
   `coalesce(sum(sa.fixed),0) as fixed`,
   `coalesce(sum(sa.fixedResultEngine),0) as fixedResultEngine`,
-  `json_pretty(any_value(resultEnginesJson.reInfo)) as resultEngines`,
-  `json_pretty(any_value(usersJson.reInfo)) as users`,
-  `json_pretty(any_value(statusUsersJson.reInfo)) as statusUsers`
+  `json_unquote(any_value(resultEnginesJson.reInfo)) as resultEngines`,
+  `json_unquote(any_value(usersJson.reInfo)) as users`,
+  `json_unquote(any_value(statusUsersJson.reInfo)) as statusUsers`
 ]
 const colsMetricsSummary = [
   'rev.ruleCount as "assessments"', 
