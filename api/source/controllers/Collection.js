@@ -272,7 +272,7 @@ module.exports.setStigAssetsByCollectionUser = async function setStigAssetsByCol
     const stigAssets = req.body
     const { collectionId } = getCollectionInfoAndCheckPermission(req)
     const collectionResponse = await CollectionService.getCollection(collectionId, ['grants'], false, req.userObject )
-    if (collectionResponse.grants.filter( grant => grant.accessLevel === 1 && grant.user.userId === userId).length > 0) {
+    if (collectionResponse.grants.filter( grant => grant.accessLevel === 1 && grant.user?.userId === userId).length > 0) {
       await CollectionService.setStigAssetsByCollectionUser(collectionId, userId, stigAssets, res.svcStatus ) 
       const getResponse = await CollectionService.getStigAssetsByCollectionUser(collectionId, userId, req.userObject )
       res.json(getResponse)    
@@ -1074,7 +1074,7 @@ module.exports.exportToCollection = async function (req, res, next) {
 
 module.exports.getGrantByCollectionUser = async function (req, res, next) {
   try {
-    const collectionId = getCollectionIdAndCheckPermission(req, Security.ACCESS_LEVEL.Manage)
+    const {collectionId} = getCollectionInfoAndCheckPermission(req, Security.ACCESS_LEVEL.Manage)
     const userId = req.params.userId
     const response = await CollectionService.getGrantByCollectionUser({collectionId, userId})
     res.json(response[0])
@@ -1086,7 +1086,7 @@ module.exports.getGrantByCollectionUser = async function (req, res, next) {
 
 module.exports.setGrantByCollectionUser = async function (req, res, next) {
   try{
-    const collectionId = getCollectionIdAndCheckPermission(req, Security.ACCESS_LEVEL.Manage)
+    const {collectionId} = getCollectionInfoAndCheckPermission(req, Security.ACCESS_LEVEL.Manage)
     const userId = req.params.userId
     const accessLevel = req.body.accessLevel
     const httpStatus = await CollectionService.setGrantByCollectionUser({collectionId, userId, accessLevel})
@@ -1100,7 +1100,7 @@ module.exports.setGrantByCollectionUser = async function (req, res, next) {
 
 module.exports.deleteGrantByCollectionUser  = async function (req, res, next) {
   try{
-    const collectionId = getCollectionIdAndCheckPermission(req, Security.ACCESS_LEVEL.Manage)
+    const {collectionId} = getCollectionInfoAndCheckPermission(req, Security.ACCESS_LEVEL.Manage)
     const userId = req.params.userId
     const response = await CollectionService.getGrantByCollectionUser({collectionId, userId})
     const shouldPrune = response[0].accessLevel === 1;
@@ -1114,7 +1114,7 @@ module.exports.deleteGrantByCollectionUser  = async function (req, res, next) {
 
 module.exports.getGrantByCollectionUserGroup = async function (req, res, next) {
   try{
-    const collectionId = getCollectionIdAndCheckPermission(req, Security.ACCESS_LEVEL.Manage)
+    const {collectionId} = getCollectionInfoAndCheckPermission(req, Security.ACCESS_LEVEL.Manage)
     const userGroupId = req.params.userGroupId
     const response = await CollectionService.getGrantByCollectionUserGroup({collectionId, userGroupId})
     res.json(response[0])
@@ -1126,7 +1126,7 @@ module.exports.getGrantByCollectionUserGroup = async function (req, res, next) {
 
 module.exports.setGrantByCollectionUserGroup = async function (req, res, next) {
   try{
-    const collectionId = getCollectionIdAndCheckPermission(req, Security.ACCESS_LEVEL.Manage)
+    const {collectionId} = getCollectionInfoAndCheckPermission(req, Security.ACCESS_LEVEL.Manage)
     const userGroupId = req.params.userGroupId
     const accessLevel = req.body.accessLevel
     const httpStatus = await CollectionService.setGrantByCollectionUserGroup({collectionId, userGroupId, accessLevel})
@@ -1140,7 +1140,7 @@ module.exports.setGrantByCollectionUserGroup = async function (req, res, next) {
 
 module.exports.deleteGrantByCollectionUserGroup  = async function (req, res, next) {
   try{
-    const collectionId = getCollectionIdAndCheckPermission(req, Security.ACCESS_LEVEL.Manage)
+    const {collectionId} = getCollectionInfoAndCheckPermission(req, Security.ACCESS_LEVEL.Manage)
     const userGroupId = req.params.userGroupId
     const response = await CollectionService.getGrantByCollectionUserGroup({collectionId, userGroupId})
     const shouldPrune = response[0].accessLevel === 1;
@@ -1157,7 +1157,7 @@ module.exports.getStigAssetsByCollectionUserDEPRECATED = module.exports.getStigA
 
 module.exports.getEffectiveAclByCollectionUser =  async function (req, res, next) {
   try{
-    const collectionId = getCollectionIdAndCheckPermission(req, Security.ACCESS_LEVEL.Manage)
+    const {collectionId} = getCollectionInfoAndCheckPermission(req, Security.ACCESS_LEVEL.Manage)
     const userId = req.params.userId
     const response = await CollectionService.getEffectiveAclByCollectionUser({collectionId, userId})
     res.json(response)
