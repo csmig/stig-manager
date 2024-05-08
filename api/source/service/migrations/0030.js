@@ -76,6 +76,44 @@ const upMigration = [
     CONSTRAINT fk_user_group_stig_asset_map_2 FOREIGN KEY (userGroupId) REFERENCES user_group (userGroupId) ON DELETE CASCADE ON UPDATE CASCADE
   ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci`,
 
+  // table collection_grant_acl
+  `CREATE TABLE collection_grant_acl (
+    cgAclId INT NOT NULL AUTO_INCREMENT,
+    cgId INT NULL,
+    benchmarkId VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_as_cs NULL,
+    assetId INT NULL,
+    clId INT NULL,
+    PRIMARY KEY (cgAclId),
+    KEY fk_collection_grant_acl_1 (cgId),
+    KEY fk_collection_grant_acl_2 (assetId, benchmarkId),
+    KEY fk_collection_grant_acl_3 (benchmarkId, assetId),
+    KEY fk_collection_grant_acl_4 (clId, benchmarkId),
+    CONSTRAINT fk_collection_grant_acl_1 FOREIGN KEY (cgId) REFERENCES collection_grant (cgId) ON DELETE CASCADE ON UPDATE CASCADE,
+    CONSTRAINT fk_collection_grant_acl_2 FOREIGN KEY (assetId) REFERENCES asset (assetId) ON DELETE CASCADE ON UPDATE CASCADE,
+    CONSTRAINT fk_collection_grant_acl_3 FOREIGN KEY (benchmarkId) REFERENCES stig (benchmarkId) ON DELETE CASCADE ON UPDATE CASCADE,
+    CONSTRAINT fk_collection_grant_acl_4 FOREIGN KEY (clId) REFERENCES collection_label (clId) ON DELETE CASCADE ON UPDATE CASCADE,
+    CONSTRAINT fk_collection_grant_acl_5 FOREIGN KEY (benchmarkId, assetId) REFERENCES stig_asset_map (benchmarkId, assetId) ON DELETE CASCADE ON UPDATE CASCADE
+  )`,
+
+  // table collection_grant_group_acl
+  `CREATE TABLE collection_grant_group_acl (
+    cggAclId INT NOT NULL AUTO_INCREMENT,
+    cggId INT NULL,
+    benchmarkId VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_as_cs NULL,
+    assetId INT NULL,
+    clId INT NULL,
+    PRIMARY KEY (cggAclId),
+    KEY fk_collection_grant_group_acl_1 (cggId),
+    KEY fk_collection_grant_group_acl_2 (assetId, benchmarkId),
+    KEY fk_collection_grant_group_acl_3 (benchmarkId, assetId),
+    KEY fk_collection_grant_group_acl_4 (clId, benchmarkId),
+    CONSTRAINT fk_collection_grant_group_acl_1 FOREIGN KEY (cggId) REFERENCES collection_grant_group (cggId) ON DELETE CASCADE ON UPDATE CASCADE,
+    CONSTRAINT fk_collection_grant_group_acl_2 FOREIGN KEY (assetId) REFERENCES collection_grant_group (cggId) ON DELETE CASCADE ON UPDATE CASCADE,
+    CONSTRAINT fk_collection_grant_group_acl_3 FOREIGN KEY (benchmarkId) REFERENCES stig (benchmarkId) ON DELETE CASCADE ON UPDATE CASCADE,
+    CONSTRAINT fk_collection_grant_group_acl_4 FOREIGN KEY (clId) REFERENCES collection_label (clId) ON DELETE CASCADE ON UPDATE CASCADE,
+    CONSTRAINT fk_collection_grant_group_acl_5 FOREIGN KEY (benchmarkId, assetId) REFERENCES stig_asset_map (benchmarkId, assetId) ON DELETE CASCADE ON UPDATE CASCADE
+  )`,
+  
   // view v_collection_grant_effective
   `CREATE OR REPLACE VIEW v_collection_grant_effective AS
   select 
@@ -176,6 +214,16 @@ const upMigration = [
   where 
     cg.cgId is null`,
 
+  // initialize collection_grant_acl
+  `INSERT INTO collection_grant_acl (cgId, assetId, benchmarkId) SELECT
+  cg.cgId,
+  sa.assetId,
+  sa.benchmarkId 
+FROM
+  user_stig_asset_map usa
+  left join stig_asset_map sa using (saId)
+  left join asset a on sa.assetId = a.assetId
+  left join collection_grant cg on (a.collectionId = cg.collectionId and usa.userId = cg.userId )`,
 
 ]
 

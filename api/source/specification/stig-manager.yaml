@@ -1196,7 +1196,7 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/StigAssetBasic'
+                  $ref: '#/components/schemas/GrantAccessBasic'
         '403':
           $ref: '#/components/responses/Forbidden'
         default:
@@ -1220,7 +1220,7 @@ paths:
             schema:
               type: array
               items:
-                $ref: '#/components/schemas/StigAssetPut'
+                $ref: '#/components/schemas/GrantAccessPut'
       responses:
         '200':
           description: StigAssetBasic array response
@@ -1354,7 +1354,7 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/StigAssetBasic'
+                  $ref: '#/components/schemas/GrantAccessBasic'
         '403':
           $ref: '#/components/responses/Forbidden'
         default:
@@ -1378,7 +1378,7 @@ paths:
             schema:
               type: array
               items:
-                $ref: '#/components/schemas/StigAssetPut'
+                $ref: '#/components/schemas/GrantAccessPut'
       responses:
         '200':
           description: StigAssetBasic array response
@@ -5902,6 +5902,14 @@ components:
           type: string
         text:
           type: string
+    GrantAccessBasic:
+      anyOf:
+       - $ref: '#/components/schemas/StigAssetBasic'
+       - $ref: '#/components/schemas/StigLabelBasic'
+    GrantAccessPut:
+      anyOf:
+       - $ref: '#/components/schemas/StigAssetPut'
+       - $ref: '#/components/schemas/StigLabelPut'
     GrantContextUser:
       type: object
       properties:
@@ -7356,25 +7364,39 @@ components:
     StigAssetBasic:
       additionalProperties: false
       type: object
+      minProperties: 1
       properties:
         asset:
           $ref: '#/components/schemas/AssetBasic'
         benchmarkId:
           $ref: '#/components/schemas/BenchmarkId'
-      required:
-        - benchmarkId
-        - asset
     StigAssetPut:
       additionalProperties: false
       type: object
+      minProperties: 1
       properties:
         assetId:
           $ref: '#/components/schemas/AssetId'
         benchmarkId:
           $ref: '#/components/schemas/BenchmarkId'
-      required:
-        - benchmarkId
-        - assetId
+    StigLabelBasic:
+      additionalProperties: false
+      type: object
+      minProperties: 1
+      properties:
+        label:
+          $ref: '#/components/schemas/LabelBasic'
+        benchmarkId:
+          $ref: '#/components/schemas/BenchmarkId'
+    StigLabelPut:
+      additionalProperties: false
+      type: object
+      minProperties: 1
+      properties:
+        labelId:
+          $ref: '#/components/schemas/LabelId'
+        benchmarkId:
+          $ref: '#/components/schemas/BenchmarkId'
     StigTitle:
       $ref: '#/components/schemas/String255'
     StigUserBasic:
