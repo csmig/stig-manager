@@ -1057,13 +1057,13 @@ paths:
       operationId: getStigAssetsByCollectionUserDEPRECATED
       responses:
         '200':
-          description: Collection StigAssetBasic array response
+          description: Collection AclRuleAssetBasic array response
           content:
             application/json:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/StigAssetBasic'
+                  $ref: '#/components/schemas/AclRuleAssetBasic'
         '403':
           $ref: '#/components/responses/Forbidden'
         default:
@@ -1087,16 +1087,16 @@ paths:
             schema:
               type: array
               items:
-                $ref: '#/components/schemas/StigAssetPut'
+                $ref: '#/components/schemas/AclRuleAssetPut'
       responses:
         '200':
-          description: StigAssetBasic array response
+          description: AclRuleAssetBasic array response
           content:
             application/json:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/StigAssetBasic'
+                  $ref: '#/components/schemas/AclRuleAssetBasic'
         default:
           description: unexpected error
           content:
@@ -1190,13 +1190,13 @@ paths:
       operationId: getStigAssetsByCollectionUser
       responses:
         '200':
-          description: Collection StigAssetBasic array response
+          description: Collection AclRuleAssetBasic array response
           content:
             application/json:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/GrantAccessBasic'
+                  $ref: '#/components/schemas/AclRuleBasic'
         '403':
           $ref: '#/components/responses/Forbidden'
         default:
@@ -1220,16 +1220,16 @@ paths:
             schema:
               type: array
               items:
-                $ref: '#/components/schemas/GrantAccessPut'
+                $ref: '#/components/schemas/AclRulePut'
       responses:
         '200':
-          description: StigAssetBasic array response
+          description: AclRuleAssetBasic array response
           content:
             application/json:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/StigAssetBasic'
+                  $ref: '#/components/schemas/AclRuleBasic'
         default:
           description: unexpected error
           content:
@@ -1348,13 +1348,13 @@ paths:
       operationId: getStigAssetsByCollectionUserGroup
       responses:
         '200':
-          description: Collection StigAssetBasic array response
+          description: Collection AclRuleAssetBasic array response
           content:
             application/json:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/GrantAccessBasic'
+                  $ref: '#/components/schemas/AclRuleBasic'
         '403':
           $ref: '#/components/responses/Forbidden'
         default:
@@ -1378,16 +1378,16 @@ paths:
             schema:
               type: array
               items:
-                $ref: '#/components/schemas/GrantAccessPut'
+                $ref: '#/components/schemas/AclRulePut'
       responses:
         '200':
-          description: StigAssetBasic array response
+          description: AclRuleAssetBasic array response
           content:
             application/json:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/StigAssetBasic'
+                  $ref: '#/components/schemas/AclRuleAssetBasic'
         default:
           description: unexpected error
           content:
@@ -4199,6 +4199,67 @@ components:
       maximum: 4
       minimum: 1
       type: integer
+    AclRuleAccess:
+      type: string
+      enum:
+        - r
+        - rw
+    AclRuleAssetBasic:
+      additionalProperties: false
+      type: object
+      properties:
+        asset:
+          $ref: '#/components/schemas/AssetBasic'
+        benchmarkId:
+          $ref: '#/components/schemas/BenchmarkId'
+        access:
+          $ref: '#/components/schemas/AclRuleAccess'
+      required:
+        - access
+    AclRuleAssetPut:
+      additionalProperties: false
+      type: object
+      properties:
+        assetId:
+          $ref: '#/components/schemas/AssetId'
+        benchmarkId:
+          $ref: '#/components/schemas/BenchmarkId'
+        access:
+          $ref: '#/components/schemas/AclRuleAccess'
+      required:
+        - access
+    AclRuleBasic:
+      anyOf:
+       - $ref: '#/components/schemas/AclRuleAssetBasic'
+       - $ref: '#/components/schemas/AclRuleLabelBasic'
+    AclRuleLabelBasic:
+      additionalProperties: false
+      type: object
+      properties:
+        label:
+          $ref: '#/components/schemas/LabelBasic'
+        benchmarkId:
+          $ref: '#/components/schemas/BenchmarkId'
+        access:
+          $ref: '#/components/schemas/AclRuleAccess'
+      required:
+        - access
+    AclRuleLabelPut:
+      additionalProperties: false
+      type: object
+      properties:
+        labelId:
+          $ref: '#/components/schemas/LabelId'
+        benchmarkId:
+          $ref: '#/components/schemas/BenchmarkId'
+        access:
+          $ref: '#/components/schemas/AclRuleAccess'
+      required:
+        - access
+    AclRulePut:
+      anyOf:
+       - $ref: '#/components/schemas/AclRuleAssetPut'
+       - $ref: '#/components/schemas/AclRuleLabelPut'
     ApAcronym:
       $ref: '#/components/schemas/String20Nullable'
     ApiClassification:
@@ -4226,8 +4287,6 @@ components:
       oneOf:
         - type: object
         - type: array
-          items:
-            type: object
     ApiVersion:
       $ref: '#/components/schemas/Version'
     Asset:
@@ -5811,7 +5870,7 @@ components:
         user:
           $ref: '#/components/schemas/UserBasic'
         resource:
-          $ref: '#/components/schemas/StigAssetBasic'
+          $ref: '#/components/schemas/AclRuleAssetBasic'
         aclSources:
           $ref: '#/components/schemas/GrantSources'
     EffectiveAclContextCollectionUser:
@@ -5819,7 +5878,7 @@ components:
       type: object
       properties:
         resource:
-          $ref: '#/components/schemas/StigAssetBasic'
+          $ref: '#/components/schemas/AclRuleAssetBasic'
         aclSources:
           $ref: '#/components/schemas/GrantSources'
     EffectiveAclContextUser:
@@ -5829,7 +5888,7 @@ components:
         user:
           $ref: '#/components/schemas/UserBasic'
         resource:
-          $ref: '#/components/schemas/StigAssetBasic'
+          $ref: '#/components/schemas/AclRuleAssetBasic'
         aclSources:
           $ref: '#/components/schemas/GrantSources'
     EmassAp:
@@ -5902,14 +5961,6 @@ components:
           type: string
         text:
           type: string
-    GrantAccessBasic:
-      anyOf:
-       - $ref: '#/components/schemas/StigAssetBasic'
-       - $ref: '#/components/schemas/StigLabelBasic'
-    GrantAccessPut:
-      anyOf:
-       - $ref: '#/components/schemas/StigAssetPut'
-       - $ref: '#/components/schemas/StigLabelPut'
     GrantContextUser:
       type: object
       properties:
@@ -6192,6 +6243,10 @@ components:
               $ref: '#/components/schemas/MaxTs'
             minTs:
               $ref: '#/components/schemas/MinTs'
+            resultEngines:
+              type: array
+              items:
+                $ref: '#/components/schemas/MetricsResultEngine'
             results:
               additionalProperties: false
               type: object
@@ -6235,6 +6290,14 @@ components:
                   $ref: '#/components/schemas/CollectionStatusCount'
                 submitted:
                   $ref: '#/components/schemas/CollectionStatusCount'
+            statusUsers:
+              type: array
+              items:
+                $ref: '#/components/schemas/MetricsStatusUser'
+            users:
+              type: array
+              items:
+                $ref: '#/components/schemas/MetricsUser'
           required:
             - assessments
             - assessmentsBySeverity
@@ -6245,6 +6308,9 @@ components:
             - results
             - statuses
             - findings
+            - resultEngines
+            - users
+            - statusUsers
       required:
         - metrics
     MetricsDetailAggAsset:
@@ -6271,6 +6337,24 @@ components:
       allOf:
         - $ref: '#/components/schemas/MetricsUnagg'
         - $ref: '#/components/schemas/MetricsDetail'
+    MetricsResultEngine:
+      type: object
+      properties:
+        product:
+          $ref: '#/components/schemas/String255'
+        version:
+          $ref: '#/components/schemas/VersionString'
+        reviewCount:
+          type: integer
+    MetricsStatusUser:
+      type: object
+      properties:
+        userId:
+          $ref: '#/components/schemas/UserId'
+        username:
+          $ref: '#/components/schemas/Username'
+        reviewCount:
+          type: integer
     MetricsSummary:
       properties:
         metrics:
@@ -6397,6 +6481,15 @@ components:
         - title
         - revisionStr
         - revisionPinned
+    MetricsUser:
+      type: object
+      properties:
+        userId:
+          $ref: '#/components/schemas/UserId'
+        username:
+          $ref: '#/components/schemas/Username'
+        reviewCount:
+          type: integer
     MinTs:
       format: date-time
       nullable: true
@@ -7361,42 +7454,6 @@ components:
         - collectionIds
     StatusText:
       $ref: '#/components/schemas/String511Nullable'
-    StigAssetBasic:
-      additionalProperties: false
-      type: object
-      minProperties: 1
-      properties:
-        asset:
-          $ref: '#/components/schemas/AssetBasic'
-        benchmarkId:
-          $ref: '#/components/schemas/BenchmarkId'
-    StigAssetPut:
-      additionalProperties: false
-      type: object
-      minProperties: 1
-      properties:
-        assetId:
-          $ref: '#/components/schemas/AssetId'
-        benchmarkId:
-          $ref: '#/components/schemas/BenchmarkId'
-    StigLabelBasic:
-      additionalProperties: false
-      type: object
-      minProperties: 1
-      properties:
-        label:
-          $ref: '#/components/schemas/LabelBasic'
-        benchmarkId:
-          $ref: '#/components/schemas/BenchmarkId'
-    StigLabelPut:
-      additionalProperties: false
-      type: object
-      minProperties: 1
-      properties:
-        labelId:
-          $ref: '#/components/schemas/LabelId'
-        benchmarkId:
-          $ref: '#/components/schemas/BenchmarkId'
     StigTitle:
       $ref: '#/components/schemas/String255'
     StigUserBasic:
