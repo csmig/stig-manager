@@ -305,7 +305,7 @@ module.exports.setStigAssetsByCollectionUserGroup = async function (req, res, ne
       }
     }
     else {
-      throw new SmError.PrivilegeError()
+      throw new SmError.NotFoundError('User not found in this Collection with accessLevel === 1.')
     }
   }
   catch (err) {
