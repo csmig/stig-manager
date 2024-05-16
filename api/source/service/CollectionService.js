@@ -511,7 +511,7 @@ exports.queryStatus = async function (inPredicates = {}, userObject) {
   return (rows)
 }
 
-exports.queryStigAssets = async function (inProjection = [], inPredicates = {}, userObject) {
+exports.queryReviewAcl = async function (inProjection = [], inPredicates = {}, userObject) {
   let columns = [
     'sa.benchmarkId',
     `json_object(
@@ -558,7 +558,7 @@ exports.queryStigAssets = async function (inProjection = [], inPredicates = {}, 
   return (rows)
 }
 
-exports.setStigAssetsByCollectionUser = async function(collectionId, userId, stigAssets, svcStatus = {}) {
+exports.setReviewAclByCollectionUser = async function(collectionId, userId, stigAssets, svcStatus = {}) {
   let connection // available to try, catch, and finally blocks
   try {
     connection = await dbUtils.pool.getConnection()
@@ -602,7 +602,7 @@ exports.setStigAssetsByCollectionUser = async function(collectionId, userId, sti
   }
 }
 
-exports.setStigAssetsByCollectionUserGroup = async function(collectionId, userGroupId, stigAssets, svcStatus = {}) {
+exports.setReviewAclByCollectionUserGroup = async function(collectionId, userGroupId, stigAssets, svcStatus = {}) {
   let connection // available to try, catch, and finally blocks
   try {
     connection = await dbUtils.pool.getConnection()
@@ -955,15 +955,15 @@ exports.getFindingsByCollection = async function( collectionId, aggregator, benc
   return (rows)
 }
 
-exports.getStigAssetsByCollectionUser = async function (collectionId, userId, elevate, userObject) {
-  let rows = await _this.queryStigAssets([], { 
+exports.getReviewAclByCollectionUser = async function (collectionId, userId, elevate, userObject) {
+  let rows = await _this.queryReviewAcl([], { 
     collectionId: collectionId,
     userId: userId
   }, userObject)
   return (rows)
 }
-exports.getStigAssetsByCollectionUserGroup = async function (collectionId, userGroupId, elevate, userObject) {
-  let rows = await _this.queryStigAssets([], { 
+exports.getReviewAclByCollectionUserGroup = async function (collectionId, userGroupId, elevate, userObject) {
+  let rows = await _this.queryReviewAcl([], { 
     collectionId,
     userGroupId
   }, userObject)

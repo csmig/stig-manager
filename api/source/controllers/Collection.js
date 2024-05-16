@@ -181,25 +181,25 @@ module.exports.getPoamByCollection = async function getFindingsByCollection (req
 }
 
 
-module.exports.getStigAssetsByCollectionUser = async function getStigAssetsByCollectionUser (req, res, next) {
+module.exports.getReviewAclByCollectionUser = async function getReviewAclByCollectionUser (req, res, next) {
   try {
     const userId = req.params.userId
     const { collectionId } = getCollectionInfoAndCheckPermission(req)
-    const response = await CollectionService.getStigAssetsByCollectionUser(collectionId, userId, req.userObject )
+    const response = await CollectionService.getReviewAclByCollectionUser(collectionId, userId, req.userObject )
     res.json(response)
   }
   catch (err) {
     next(err)
   }
 }
-module.exports.getStigAssetsByCollectionUserGroup = async function (req, res, next) {
+module.exports.getReviewAclByCollectionUserGroup = async function (req, res, next) {
   try {
     const collectionId = req.params.collectionId
     const userGroupId = req.params.userGroupId
     
     const collectionGrant = req.userObject.collectionGrants.find( g => g.collection.collectionId === collectionId )
     if ( collectionGrant?.accessLevel >= 3 ) {
-      const response = await CollectionService.getStigAssetsByCollectionUserGroup(collectionId, userGroupId, req.userObject )
+      const response = await CollectionService.getReviewAclByCollectionUserGroup(collectionId, userGroupId, req.userObject )
       res.json(response)
     }
     else {
@@ -266,15 +266,15 @@ module.exports.replaceCollection = async function replaceCollection (req, res, n
   }
 }
 
-module.exports.setStigAssetsByCollectionUser = async function setStigAssetsByCollectionUser (req, res, next) {
+module.exports.setReviewAclByCollectionUser = async function setReviewAclByCollectionUser (req, res, next) {
   try {
     const userId = req.params.userId
-    const stigAssets = req.body
+    const reviewAcl = req.body
     const { collectionId } = getCollectionInfoAndCheckPermission(req)
     const collectionResponse = await CollectionService.getCollection(collectionId, ['grants'], false, req.userObject )
     if (collectionResponse.grants.filter( grant => grant.accessLevel === 1 && grant.user?.userId === userId).length > 0) {
-      await CollectionService.setStigAssetsByCollectionUser(collectionId, userId, stigAssets, res.svcStatus ) 
-      const getResponse = await CollectionService.getStigAssetsByCollectionUser(collectionId, userId, req.userObject )
+      await CollectionService.setReviewAclByCollectionUser(collectionId, userId, reviewAcl, res.svcStatus ) 
+      const getResponse = await CollectionService.getReviewAclByCollectionUser(collectionId, userId, req.userObject )
       res.json(getResponse)    
     }
     else {
@@ -286,18 +286,18 @@ module.exports.setStigAssetsByCollectionUser = async function setStigAssetsByCol
   }
 }
 
-module.exports.setStigAssetsByCollectionUserGroup = async function (req, res, next) {
+module.exports.setReviewAclByCollectionUserGroup = async function (req, res, next) {
   try {
     const collectionId = req.params.collectionId
     const userGroupId = req.params.userGroupId
-    const stigAssets = req.body
+    const reviewAcl = req.body
     
     const collectionGrant = req.userObject.collectionGrants.find( g => g.collection.collectionId === collectionId )
     if ( collectionGrant?.accessLevel >= 3 ) {
       const collectionResponse = await CollectionService.getCollection(collectionId, ['grants'], false, req.userObject )
       if (collectionResponse.grants.filter( grant => grant.accessLevel === 1 && grant.userGroup?.userGroupId === userGroupId).length > 0) {
-        await CollectionService.setStigAssetsByCollectionUserGroup(collectionId, userGroupId, stigAssets, res.svcStatus ) 
-        const getResponse = await CollectionService.getStigAssetsByCollectionUserGroup(collectionId, userGroupId, req.userObject )
+        await CollectionService.setReviewAclByCollectionUserGroup(collectionId, userGroupId, reviewAcl, res.svcStatus ) 
+        const getResponse = await CollectionService.getReviewAclByCollectionUserGroup(collectionId, userGroupId, req.userObject )
         res.json(getResponse)    
       }
       else {
@@ -1152,8 +1152,8 @@ module.exports.deleteGrantByCollectionUserGroup  = async function (req, res, nex
   }
 }
 
-module.exports.setStigAssetsByCollectionUserDEPRECATED = module.exports.setStigAssetsByCollectionUser
-module.exports.getStigAssetsByCollectionUserDEPRECATED = module.exports.getStigAssetsByCollectionUser
+module.exports.setReviewAclByCollectionUserDEPRECATED = module.exports.setReviewAclByCollectionUser
+module.exports.getReviewAclByCollectionUserDEPRECATED = module.exports.getReviewAclByCollectionUser
 
 module.exports.getEffectiveAclByCollectionUser =  async function (req, res, next) {
   try{

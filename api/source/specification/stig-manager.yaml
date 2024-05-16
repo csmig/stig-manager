@@ -1054,7 +1054,7 @@ paths:
       tags:
         - Collection
       summary: DEPRECATED. Use GET /collections/{collectionId}/grants/user/{userId}/access.
-      operationId: getStigAssetsByCollectionUserDEPRECATED
+      operationId: getReviewAclByCollectionUserDEPRECATED
       responses:
         '200':
           description: Collection AclRuleAssetBasic array response
@@ -1079,7 +1079,7 @@ paths:
       tags:
         - Collection
       summary: DEPRECATED. Use PUT /collections/{collectionId}/grants/user/{userId}/access.
-      operationId: setStigAssetsByCollectionUserDEPRECATED
+      operationId: setReviewAclByCollectionUserDEPRECATED
       requestBody:
         required: true
         content:
@@ -1116,7 +1116,7 @@ paths:
     get:
       tags:
         - Collection
-      summary: Return a User's grant (if any) in the specified Collection. Request must be made by a User with accessLevel >= 3 to the Collection.
+      summary: Return a User's grant (if any) in the specified Collection.
       operationId: getGrantByCollectionUser
       responses:
         '200':
@@ -1139,7 +1139,7 @@ paths:
     put:
       tags:
         - Collection
-      summary: Set a User's direct (non-group) grant. Request must be made by a User with accessLevel >= 3 to the Collection.
+      summary: Set a User's direct (non-group) grant.
       operationId: setGrantByCollectionUser
       requestBody:
         required: true
@@ -1166,7 +1166,7 @@ paths:
     delete:
       tags:
         - Collection
-      summary: Delete a User's direct (non-group) grant. Request must be made by a User with accessLevel >= 3 to the Collection.
+      summary: Delete a User's direct (non-group) grant.
       operationId: deleteGrantByCollectionUser
       responses:
         '200':
@@ -1186,8 +1186,8 @@ paths:
     get:
       tags:
         - Collection
-      summary: Return an accessLevel = 1 User's direct access rules for the specified Collection. Request must be made by a User with accessLevel >= 3 to the Collection.
-      operationId: getStigAssetsByCollectionUser
+      summary: Return a User's direct (non-group) access rules for the specified Collection.
+      operationId: getReviewAclByCollectionUser
       responses:
         '200':
           description: Collection AclRuleAssetBasic array response
@@ -1211,8 +1211,8 @@ paths:
     put:
       tags:
         - Collection
-      summary: Set an accessLevel = 1 User's access rules for the specified Collection. Request must be made by a User with accessLevel >= 3 to the Collection.
-      operationId: setStigAssetsByCollectionUser
+      summary: Set a User's access rules for the specified Collection.
+      operationId: setReviewAclByCollectionUser
       requestBody:
         required: true
         content:
@@ -1246,7 +1246,7 @@ paths:
     get:
       tags:
         - Collection
-      summary: Return an accessLevel = 1 User's effective access rules for the specified Collection. Request must be made by a User with accessLevel >= 3 to the Collection or by an elevated User.
+      summary: Return a User's effective access rules for the specified Collection.
       operationId: getEffectiveAclByCollectionUser
       responses:
         '200':
@@ -1275,7 +1275,7 @@ paths:
     get:
       tags:
         - Collection
-      summary: Return a User Group's grant for the specified Collection. Request must be made by a User with accessLevel >= 3 to the Collection.
+      summary: Return a User Group's grant for the specified Collection.
       operationId: getGrantByCollectionUserGroup
       responses:
         '200':
@@ -1298,7 +1298,7 @@ paths:
     put:
       tags:
         - Collection
-      summary: Set a User Group's grant to the specified Collection. Request must be made by a User with accessLevel >= 3 to the Collection.
+      summary: Set a User Group's grant to the specified Collection.
       operationId: setGrantByCollectionUserGroup
       requestBody:
         required: true
@@ -1325,7 +1325,7 @@ paths:
     delete:
       tags:
         - Collection
-      summary: Delete a UserGroup's grant. Request must be made by a User with accessLevel >= 3 to the Collection.
+      summary: Delete a UserGroup's grant.
       operationId: deleteGrantByCollectionUserGroup
       responses:
         '200':
@@ -1344,8 +1344,8 @@ paths:
     get:
       tags:
         - Collection
-      summary: Return an accessLevel = 1 User Group's access rules for the specified Collection. Request must be made by a User with accessLevel >= 3 to the Collection.
-      operationId: getStigAssetsByCollectionUserGroup
+      summary: Return a User Group's access rules for the specified Collection.
+      operationId: getReviewAclByCollectionUserGroup
       responses:
         '200':
           description: Collection AclRuleAssetBasic array response
@@ -1369,8 +1369,8 @@ paths:
     put:
       tags:
         - Collection
-      summary: Set an accessLevel = 1 User Group's access rules for the specified Collection. Request must be made by a User with accessLevel >= 3 to the Collection.
-      operationId: setStigAssetsByCollectionUserGroup
+      summary: Set a User Group's access rules for the specified Collection.
+      operationId: setReviewAclByCollectionUserGroup
       requestBody:
         required: true
         content:
@@ -2926,7 +2926,7 @@ paths:
     parameters:
       - $ref: '#/components/parameters/CollectionIdPath'
       - $ref: '#/components/parameters/BenchmarkIdPath'
-      - $ref: '#/components/parameters/StigAssetsProjectionQuery'
+      - $ref: '#/components/parameters/ReviewAclProjectionQuery'
     get:
       tags:
         - Asset
@@ -4202,6 +4202,7 @@ components:
     AclRuleAccess:
       type: string
       enum:
+        - none
         - r
         - rw
     AclRuleAssetBasic:
@@ -4214,8 +4215,8 @@ components:
           $ref: '#/components/schemas/BenchmarkId'
         access:
           $ref: '#/components/schemas/AclRuleAccess'
-      required:
-        - access
+      # required:
+      #   - access
     AclRuleAssetPut:
       additionalProperties: false
       type: object
@@ -4226,8 +4227,8 @@ components:
           $ref: '#/components/schemas/BenchmarkId'
         access:
           $ref: '#/components/schemas/AclRuleAccess'
-      required:
-        - access
+      # required:
+      #   - access
     AclRuleBasic:
       anyOf:
        - $ref: '#/components/schemas/AclRuleAssetBasic'
@@ -4242,8 +4243,8 @@ components:
           $ref: '#/components/schemas/BenchmarkId'
         access:
           $ref: '#/components/schemas/AclRuleAccess'
-      required:
-        - access
+      # required:
+      #   - access
     AclRuleLabelPut:
       additionalProperties: false
       type: object
@@ -4254,8 +4255,8 @@ components:
           $ref: '#/components/schemas/BenchmarkId'
         access:
           $ref: '#/components/schemas/AclRuleAccess'
-      required:
-        - access
+      # required:
+      #   - access
     AclRulePut:
       anyOf:
        - $ref: '#/components/schemas/AclRuleAssetPut'
@@ -8302,6 +8303,18 @@ components:
       required: true
       schema:
         $ref: '#/components/schemas/StringDate'
+    ReviewAclProjectionQuery:
+      name: projection
+      in: query
+      description: Additional properties to include in the response.
+      style: form
+      explode: true
+      schema:
+        type: array
+        items:
+          type: string
+          enum:
+            - restrictedUserAccess
     ReviewProjectionQuery:
       name: projection
       in: query
@@ -8455,18 +8468,6 @@ components:
           type: string
           enum:
             - revisions
-    StigAssetsProjectionQuery:
-      name: projection
-      in: query
-      description: Additional properties to include in the response.
-      style: form
-      explode: true
-      schema:
-        type: array
-        items:
-          type: string
-          enum:
-            - restrictedUserAccess
     UnreviewedAssetsProjectionQuery:
       name: projection
       in: query
