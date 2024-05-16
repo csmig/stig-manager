@@ -2,6 +2,8 @@ const MigrationHandler = require('./lib/MigrationHandler')
 
 const upMigration = [
   `DROP TABLE IF EXISTS user_group_stig_asset_map`,
+  `DROP TABLE IF EXISTS collection_grant_acl`,
+  `DROP TABLE IF EXISTS collection_grant_group_acl`,
   `DROP TABLE IF EXISTS collection_grant_group`,
   `DROP TABLE IF EXISTS user_group_user_map`,
   `DROP TABLE IF EXISTS user_group`,
@@ -79,10 +81,13 @@ const upMigration = [
   // table collection_grant_acl
   `CREATE TABLE collection_grant_acl (
     cgAclId INT NOT NULL AUTO_INCREMENT,
-    cgId INT NULL,
+    cgId INT NOT NULL,
     benchmarkId VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_as_cs NULL,
     assetId INT NULL,
     clId INT NULL,
+    access enum('none','r', 'rw') NOT NULL,
+    isRead tinyint GENERATED ALWAYS AS (case when (access = 'r' or access = 'rw') then 1 else NULL end) VIRTUAL,
+    isWrite tinyint GENERATED ALWAYS AS (case when (access = 'rw') then 1 else NULL end) VIRTUAL,
     PRIMARY KEY (cgAclId),
     KEY fk_collection_grant_acl_1 (cgId),
     KEY fk_collection_grant_acl_2 (assetId, benchmarkId),
@@ -98,10 +103,13 @@ const upMigration = [
   // table collection_grant_group_acl
   `CREATE TABLE collection_grant_group_acl (
     cggAclId INT NOT NULL AUTO_INCREMENT,
-    cggId INT NULL,
+    cggId INT NOT NULL,
     benchmarkId VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_as_cs NULL,
     assetId INT NULL,
     clId INT NULL,
+    access enum('none','r', 'rw') NOT NULL,
+    isRead tinyint GENERATED ALWAYS AS (case when (access = 'r' or access = 'rw') then 1 else NULL end) VIRTUAL,
+    isWrite tinyint GENERATED ALWAYS AS (case when (access = 'rw') then 1 else NULL end) VIRTUAL,
     PRIMARY KEY (cggAclId),
     KEY fk_collection_grant_group_acl_1 (cggId),
     KEY fk_collection_grant_group_acl_2 (assetId, benchmarkId),
@@ -204,26 +212,29 @@ const upMigration = [
   where
     cg.cgId is null`,
 
-  // delete phantom records from user_stig_asset_map
-  `delete usa
-  from
-    user_stig_asset_map usa
-    left join stig_asset_map sa using (saId)
-    left join asset a on sa.assetId = a.assetId
-    left join collection_grant cg on (a.collectionId = cg.collectionId and usa.userId = cg.userId and cg.accessLevel = 1)
-  where 
-    cg.cgId is null`,
+  // // delete phantom records from user_stig_asset_map
+  // `delete usa
+  // from
+  //   user_stig_asset_map usa
+  //   left join stig_asset_map sa using (saId)
+  //   left join asset a on sa.assetId = a.assetId
+  //   left join collection_grant cg on (a.collectionId = cg.collectionId and usa.userId = cg.userId and cg.accessLevel = 1)
+  // where 
+  //   cg.cgId is null`,
 
   // initialize collection_grant_acl
-  `INSERT INTO collection_grant_acl (cgId, assetId, benchmarkId) SELECT
+  `INSERT INTO collection_grant_acl (cgId, assetId, benchmarkId, access) SELECT
   cg.cgId,
   sa.assetId,
-  sa.benchmarkId 
+  sa.benchmarkId,
+  'rw' 
 FROM
   user_stig_asset_map usa
   left join stig_asset_map sa using (saId)
   left join asset a on sa.assetId = a.assetId
-  left join collection_grant cg on (a.collectionId = cg.collectionId and usa.userId = cg.userId )`,
+  left join collection_grant cg on (a.collectionId = cg.collectionId and usa.userId = cg.userId )
+WHERE
+  cg.cgId is not null`,
 
 ]
 
