@@ -269,17 +269,21 @@ module.exports.replaceCollection = async function replaceCollection (req, res, n
 module.exports.setReviewAclByCollectionUser = async function setReviewAclByCollectionUser (req, res, next) {
   try {
     const userId = req.params.userId
-    const reviewAcl = req.body
-    const { collectionId } = getCollectionInfoAndCheckPermission(req)
-    const collectionResponse = await CollectionService.getCollection(collectionId, ['grants'], false, req.userObject )
-    if (collectionResponse.grants.filter( grant => grant.accessLevel === 1 && grant.user?.userId === userId).length > 0) {
-      await CollectionService.setReviewAclByCollectionUser(collectionId, userId, reviewAcl, res.svcStatus ) 
-      const getResponse = await CollectionService.getReviewAclByCollectionUser(collectionId, userId, req.userObject )
-      res.json(getResponse)    
+    const acl = req.body
+    const {collectionId} = getCollectionInfoAndCheckPermission(req)
+
+    const validated = await CollectionService._reviewAclValidate({collectionId, userId, acl})
+    if (validated.pass.length > 0) {
+      await CollectionService.setReviewAclByCollectionGrant({
+        acl: validated.pass,
+        userId: req.userObject.userId,
+        svcStatus: res.svcStatus
+      })
     }
-    else {
-      throw new SmError.NotFoundError('User not found in this Collection with accessLevel === 1.')
-    }
+    res.json({
+      inserted: validated.pass,
+      ignored: validated.fail
+    })
   }
   catch (err) {
     next(err)

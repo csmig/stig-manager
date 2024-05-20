@@ -558,48 +558,21 @@ exports.queryReviewAcl = async function (inProjection = [], inPredicates = {}, u
   return (rows)
 }
 
-exports.setReviewAclByCollectionUser = async function(collectionId, userId, stigAssets, svcStatus = {}) {
-  let connection // available to try, catch, and finally blocks
-  try {
-    connection = await dbUtils.pool.getConnection()
-    connection.config.namedPlaceholders = true
-    async function transaction () {
-      await connection.query('START TRANSACTION');
-      const sqlDelete = `DELETE FROM 
-        user_stig_asset_map
-      WHERE
-        userId = ?
-        and saId IN (
-          SELECT saId from stig_asset_map left join asset using (assetId) where asset.collectionId = ?
-        )`
-        await connection.execute(sqlDelete, [userId, collectionId])
-      if (stigAssets.length > 0) {
-        // Get saIds
-        const bindsInsertSaIds = [ userId ]
-        const predicatesInsertSaIds = []
-        for (const stigAsset of stigAssets) {
-          bindsInsertSaIds.push(stigAsset.benchmarkId, stigAsset.assetId)
-          predicatesInsertSaIds.push('(benchmarkId = ? AND assetId = ?)')
-        }
-        let sqlInsertSaIds = `INSERT IGNORE INTO user_stig_asset_map (userId, saId) SELECT ?, saId FROM stig_asset_map WHERE `
-        sqlInsertSaIds += predicatesInsertSaIds.join('\nOR\n')
-        await connection.execute(sqlInsertSaIds, bindsInsertSaIds)
-      }
-      await connection.commit()
-    }
-    await dbUtils.retryOnDeadlock(transaction, svcStatus)
+exports.setReviewAclByCollectionGrant = async function({acl, userId, svcStatus = {}}) {
+
+  const values = acl.map(i => [i.cgId, i.assetId, i.benchmarkId, i.clId, i.access, userId])
+
+  async function transactionFn (connection) {  
+    const sqlDelete = `DELETE from collection_grant_acl WHERE cgId = ?`
+    const sqlInsert = `INSERT into collection_grant_acl (cgId, assetId, benchmarkId, clId, access, modifiedUserId) VALUES ?`
+    await connection.query(sqlDelete, [acl[0].cgId])
+    await connection.query(sqlInsert, [values])
   }
-  catch (err) {
-    if (typeof connection !== 'undefined') {
-      await connection.rollback()
-    }
-    throw (err)
-  }
-  finally {
-    if (typeof connection !== 'undefined') {
-      await connection.release()
-    }
-  }
+  
+  return dbUtils.retryOnDeadlock2({
+    transactionFn, 
+    statusObj: svcStatus
+  })
 }
 
 exports.setReviewAclByCollectionUserGroup = async function(collectionId, userGroupId, stigAssets, svcStatus = {}) {
@@ -2677,5 +2650,64 @@ exports.getEffectiveAclByCollectionUser = async function ({collectionId, userId}
   group by
     c.collectionId, ugu.userId, ugsa.saId`
   const [response] = await dbUtils.pool.query(sqlSelectEffectiveGrants, [userId, collectionId, userId, collectionId])
+  return response
+}
+
+exports._reviewAclValidate = async function ({collectionId, userId, acl}) {
+  const sql = `
+  select
+    any_value(cg.cgId) as cgId,
+    group_concat(jt.item) as item,
+    jt.assetId,
+    jt.benchmarkId,
+    cl.clId,
+      group_concat(jt.access) as access,
+      group_concat(case when any_value(cg.accessLevel) != 1 and jt.access = 'none'
+        then 'user role prohibits access:none'
+        else case when jt.assetId is not null and a.assetId is null
+          then 'asset not found in collection'
+          else case when jt.benchmarkId is not null and s.benchmarkId is null
+            then 'stig not installed'
+            else case when jt.labelId is not null and cl.clId is null
+              then 'label not found in collection'
+              else 'pass'
+            end
+          end
+        end
+      end) as validity,
+    count(jt.item) as dupCount
+  from
+    json_table(
+      ?,
+      "$[*]" COLUMNS (
+        item FOR ORDINALITY,
+        assetId INT PATH '$.assetId',
+        benchmarkId VARCHAR(255) PATH '$.benchmarkId',
+        labelId VARCHAR(255) PATH '$.labelId',
+        access VARCHAR(255) PATH '$.access'
+    )) jt
+    left join collection_grant cg on (cg.collectionId = ? and cg.userId = ?)
+    left join collection_label cl on cl.uuid = UUID_TO_BIN(jt.labelId,1) and cl.collectionId = ?
+    left join asset a on jt.assetId = a.assetId and a.state = 'enabled' and a.collectionId = ?
+    left join stig s on jt.benchmarkId collate utf8mb4_0900_as_cs = s.benchmarkId
+  group by
+    jt.assetId, jt.benchmarkId, cl.clId
+  order by
+    item`
+    
+  const [rows] = await dbUtils.pool.query(sql, [JSON.stringify(acl), collectionId, userId, collectionId, collectionId])
+
+  if (!rows[0].cgId) throw new SmError.UnprocessableError(`User has no grant in Collection`)
+
+  const response = rows.reduce((a,v) => {
+    const disposition = v.validity === 'pass' ? 'pass' : 'fail'
+    if (disposition === 'fail') {
+      delete v.cgId
+      if (v.dupCount > 1) v.validity = 'duplicate resource definition'
+    }
+    delete v.dupCount
+    a[disposition].push(v)
+    return a
+  }, {pass:[], fail:[]})
   return response
 }

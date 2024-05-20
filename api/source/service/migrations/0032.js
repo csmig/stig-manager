@@ -1,12 +1,14 @@
 const MigrationHandler = require('./lib/MigrationHandler')
 
 const upMigration = [
-  `DROP TABLE IF EXISTS user_group_stig_asset_map`,
+  // `DROP TABLE IF EXISTS user_group_stig_asset_map`,
   `DROP TABLE IF EXISTS collection_grant_acl`,
   `DROP TABLE IF EXISTS collection_grant_group_acl`,
   `DROP TABLE IF EXISTS collection_grant_group`,
   `DROP TABLE IF EXISTS user_group_user_map`,
   `DROP TABLE IF EXISTS user_group`,
+
+  `ALTER TABLE asset ADD INDEX idx_asset_state (state ASC)`,
 
   // table: user_group
   `CREATE TABLE user_group (
@@ -59,6 +61,8 @@ const upMigration = [
     collectionId int NOT NULL,
     userGroupId int NOT NULL,
     accessLevel int NOT NULL,
+    modifiedUserId int NOT NULL,
+    modifiedDate datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     PRIMARY KEY (cggId),
     UNIQUE KEY INDEX_UG_COLLECTION (userGroupId,collectionId),
     KEY INDEX_COLLECTION_ACCESS (collectionId,accessLevel),
@@ -66,17 +70,17 @@ const upMigration = [
     CONSTRAINT fk_collection_grant_group_2 FOREIGN KEY (collectionId) REFERENCES collection (collectionId) ON DELETE CASCADE ON UPDATE CASCADE
   ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci`,
 
-  // table user_group_stig_asset_map
-  `CREATE TABLE user_group_stig_asset_map (
-    id int NOT NULL AUTO_INCREMENT,
-    userGroupId int NOT NULL,
-    saId int NOT NULL,
-    PRIMARY KEY (id),
-    KEY fk_user_group_stig_asset_map_2 (userGroupId),
-    KEY fk_user_group_stig_asset_map_1 (saId),
-    CONSTRAINT fk_user_group_stig_asset_map_1 FOREIGN KEY (saId) REFERENCES stig_asset_map (saId) ON DELETE CASCADE ON UPDATE CASCADE,
-    CONSTRAINT fk_user_group_stig_asset_map_2 FOREIGN KEY (userGroupId) REFERENCES user_group (userGroupId) ON DELETE CASCADE ON UPDATE CASCADE
-  ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci`,
+  // // table user_group_stig_asset_map
+  // `CREATE TABLE user_group_stig_asset_map (
+  //   id int NOT NULL AUTO_INCREMENT,
+  //   userGroupId int NOT NULL,
+  //   saId int NOT NULL,
+  //   PRIMARY KEY (id),
+  //   KEY fk_user_group_stig_asset_map_2 (userGroupId),
+  //   KEY fk_user_group_stig_asset_map_1 (saId),
+  //   CONSTRAINT fk_user_group_stig_asset_map_1 FOREIGN KEY (saId) REFERENCES stig_asset_map (saId) ON DELETE CASCADE ON UPDATE CASCADE,
+  //   CONSTRAINT fk_user_group_stig_asset_map_2 FOREIGN KEY (userGroupId) REFERENCES user_group (userGroupId) ON DELETE CASCADE ON UPDATE CASCADE
+  // ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci`,
 
   // table collection_grant_acl
   `CREATE TABLE collection_grant_acl (
@@ -86,6 +90,8 @@ const upMigration = [
     assetId INT NULL,
     clId INT NULL,
     access enum('none','r', 'rw') NOT NULL,
+    modifiedUserId int NULL,
+    modifiedDate datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     isRead tinyint GENERATED ALWAYS AS (case when (access = 'r' or access = 'rw') then 1 else NULL end) VIRTUAL,
     isWrite tinyint GENERATED ALWAYS AS (case when (access = 'rw') then 1 else NULL end) VIRTUAL,
     PRIMARY KEY (cgAclId),
@@ -108,6 +114,8 @@ const upMigration = [
     assetId INT NULL,
     clId INT NULL,
     access enum('none','r', 'rw') NOT NULL,
+    modifiedUserId int NOT NULL,
+    modifiedDate datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     isRead tinyint GENERATED ALWAYS AS (case when (access = 'r' or access = 'rw') then 1 else NULL end) VIRTUAL,
     isWrite tinyint GENERATED ALWAYS AS (case when (access = 'rw') then 1 else NULL end) VIRTUAL,
     PRIMARY KEY (cggAclId),
@@ -188,29 +196,29 @@ const upMigration = [
   where
     dt.rn = 1`,
 
-  // view v_user_stig_asset_effective
-  `CREATE OR REPLACE VIEW v_user_stig_asset_effective AS
-  select 
-    usa.userId,
-    usa.saId
-  from
-    user_stig_asset_map usa
-	  left join stig_asset_map sa on usa.saId = sa.saId
-	  left join asset a on sa.assetId = a.assetId
-    inner join collection c on (a.collectionId = c.collectionId and c.state = 'enabled')
-  union 
-	select
-	  ugu.userId, 
-	  ugsa.saId
-	from 
-	  user_group_stig_asset_map ugsa 
-	  left join user_group_user_map ugu on ugsa.userGroupId = ugu.userGroupId
-	  left join stig_asset_map sa on ugsa.saId = sa.saId
-	  left join asset a on sa.assetId = a.assetId
-	  left join collection_grant cg on (a.collectionId = cg.collectionId and ugu.userId = cg.userId)
-    inner join collection c on (a.collectionId = c.collectionId and c.state = 'enabled')
-  where
-    cg.cgId is null`,
+  // // view v_user_stig_asset_effective
+  // `CREATE OR REPLACE VIEW v_user_stig_asset_effective AS
+  // select 
+  //   usa.userId,
+  //   usa.saId
+  // from
+  //   user_stig_asset_map usa
+	//   left join stig_asset_map sa on usa.saId = sa.saId
+	//   left join asset a on sa.assetId = a.assetId
+  //   inner join collection c on (a.collectionId = c.collectionId and c.state = 'enabled')
+  // union 
+	// select
+	//   ugu.userId, 
+	//   ugsa.saId
+	// from 
+	//   user_group_stig_asset_map ugsa 
+	//   left join user_group_user_map ugu on ugsa.userGroupId = ugu.userGroupId
+	//   left join stig_asset_map sa on ugsa.saId = sa.saId
+	//   left join asset a on sa.assetId = a.assetId
+	//   left join collection_grant cg on (a.collectionId = cg.collectionId and ugu.userId = cg.userId)
+  //   inner join collection c on (a.collectionId = c.collectionId and c.state = 'enabled')
+  // where
+  //   cg.cgId is null`,
 
   // // delete phantom records from user_stig_asset_map
   // `delete usa
@@ -223,19 +231,20 @@ const upMigration = [
   //   cg.cgId is null`,
 
   // initialize collection_grant_acl
-  `INSERT INTO collection_grant_acl (cgId, assetId, benchmarkId, access) SELECT
+  `INSERT INTO collection_grant_acl (cgId, assetId, benchmarkId, access, modifiedUserId, modifiedDate) SELECT
   cg.cgId,
   sa.assetId,
   sa.benchmarkId,
-  'rw' 
+  'rw',
+  null,
+  null 
 FROM
   user_stig_asset_map usa
   left join stig_asset_map sa using (saId)
   left join asset a on sa.assetId = a.assetId
   left join collection_grant cg on (a.collectionId = cg.collectionId and usa.userId = cg.userId )
 WHERE
-  cg.cgId is not null`,
-
+  cg.cgId is not null`
 ]
 
 const downMigration = [

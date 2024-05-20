@@ -53,7 +53,8 @@ function getPoolConfig() {
         return( bytes[ 0 ] === 1 )
       }
       return next()
-    } 
+    },
+    namedPlaceholders: true
   }
   if (config.database.password) {
     poolConfig.password = config.database.password
