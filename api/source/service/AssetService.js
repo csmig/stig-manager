@@ -108,21 +108,6 @@ exports.queryAssets = async function (inProjection = [], inPredicates = {}, elev
           CASE WHEN COUNT(stigAssetUsers) > 0 THEN json_arrayagg(stigAssetUsers) ELSE json_array() END
       from byStig) as "stigGrants"`)
   }
-  if ( inProjection.includes('reviewers')) {
-    // This projection is only available for endpoint /stigs/{benchmarkId}/assets
-    // Subquery relies on predicate :benchmarkId being set
-    columns.push(`(select
-        case when count(u.userId > 0) then json_arrayagg(
-        -- if no user, return null instead of object with null property values
-        case when u.userId is not null then json_object('userId', CAST(u.userId as char), 'username', u.username) else NULL end) 
-        else json_array() end as reviewers
-      FROM 
-        stig_asset_map sa
-        left join v_user_stig_asset_effective usa on sa.saId = usa.saId
-        left join user u on usa.userId = u.userId
-      WHERE
-        sa.assetId = a.assetId and sa.benchmarkId = :benchmarkId) as "reviewers"`)
-  }
   if (inProjection.includes('stigs')) {
     //TODO: If benchmarkId is a predicate in main query, this incorrectly only shows that STIG
     joins.push('left join default_rev dr on (sa.benchmarkId=dr.benchmarkId and a.collectionId = dr.collectionId)')

@@ -180,37 +180,6 @@ module.exports.getPoamByCollection = async function getFindingsByCollection (req
   }
 }
 
-
-module.exports.getReviewAclByCollectionUser = async function getReviewAclByCollectionUser (req, res, next) {
-  try {
-    const userId = req.params.userId
-    const { collectionId } = getCollectionInfoAndCheckPermission(req)
-    const response = await CollectionService.getReviewAclByCollectionUser(collectionId, userId, req.userObject )
-    res.json(response)
-  }
-  catch (err) {
-    next(err)
-  }
-}
-module.exports.getReviewAclByCollectionUserGroup = async function (req, res, next) {
-  try {
-    const collectionId = req.params.collectionId
-    const userGroupId = req.params.userGroupId
-    
-    const collectionGrant = req.userObject.collectionGrants.find( g => g.collection.collectionId === collectionId )
-    if ( collectionGrant?.accessLevel >= 3 ) {
-      const response = await CollectionService.getReviewAclByCollectionUserGroup(collectionId, userGroupId, req.userObject )
-      res.json(response)
-    }
-    else {
-      throw new SmError.PrivilegeError()
-    }
-  }
-  catch (err) {
-    next(err)
-  }
-}
-
 module.exports.getStigsByCollection = async function getStigsByCollection (req, res, next) {
   try {
     const { collectionId } = getCollectionInfoAndCheckPermission(req, Security.ACCESS_LEVEL.Restricted)
@@ -260,57 +229,6 @@ module.exports.replaceCollection = async function replaceCollection (req, res, n
     }
     let response = await CollectionService.replaceCollection(collectionId, body, projection, req.userObject, res.svcStatus)
     res.json(response)
-  }
-  catch (err) {
-    next(err)
-  }
-}
-
-module.exports.setReviewAclByCollectionUser = async function setReviewAclByCollectionUser (req, res, next) {
-  try {
-    const userId = req.params.userId
-    const acl = req.body
-    const {collectionId} = getCollectionInfoAndCheckPermission(req)
-
-    const validated = await CollectionService._reviewAclValidate({collectionId, userId, acl})
-    if (validated.pass.length > 0) {
-      await CollectionService.setReviewAclByCollectionGrant({
-        acl: validated.pass,
-        userId: req.userObject.userId,
-        svcStatus: res.svcStatus
-      })
-    }
-    res.json({
-      inserted: validated.pass,
-      ignored: validated.fail
-    })
-  }
-  catch (err) {
-    next(err)
-  }
-}
-
-module.exports.setReviewAclByCollectionUserGroup = async function (req, res, next) {
-  try {
-    const collectionId = req.params.collectionId
-    const userGroupId = req.params.userGroupId
-    const reviewAcl = req.body
-    
-    const collectionGrant = req.userObject.collectionGrants.find( g => g.collection.collectionId === collectionId )
-    if ( collectionGrant?.accessLevel >= 3 ) {
-      const collectionResponse = await CollectionService.getCollection(collectionId, ['grants'], false, req.userObject )
-      if (collectionResponse.grants.filter( grant => grant.accessLevel === 1 && grant.userGroup?.userGroupId === userGroupId).length > 0) {
-        await CollectionService.setReviewAclByCollectionUserGroup(collectionId, userGroupId, reviewAcl, res.svcStatus ) 
-        const getResponse = await CollectionService.getReviewAclByCollectionUserGroup(collectionId, userGroupId, req.userObject )
-        res.json(getResponse)    
-      }
-      else {
-        throw new SmError.NotFoundError('User Group not found in this Collection with accessLevel === 1.')
-      }
-    }
-    else {
-      throw new SmError.NotFoundError('User not found in this Collection with accessLevel === 1.')
-    }
   }
   catch (err) {
     next(err)
@@ -1081,6 +999,7 @@ module.exports.getGrantByCollectionUser = async function (req, res, next) {
     const {collectionId} = getCollectionInfoAndCheckPermission(req, Security.ACCESS_LEVEL.Manage)
     const userId = req.params.userId
     const response = await CollectionService.getGrantByCollectionUser({collectionId, userId})
+    if (!response[0]) throw new SmError.NotFoundError()
     res.json(response[0])
   }
   catch (err) {
@@ -1093,7 +1012,7 @@ module.exports.setGrantByCollectionUser = async function (req, res, next) {
     const {collectionId} = getCollectionInfoAndCheckPermission(req, Security.ACCESS_LEVEL.Manage)
     const userId = req.params.userId
     const accessLevel = req.body.accessLevel
-    const httpStatus = await CollectionService.setGrantByCollectionUser({collectionId, userId, accessLevel})
+    const httpStatus = await CollectionService.setGrantByCollection({collectionId, userId, accessLevel})
     const response  = await CollectionService.getGrantByCollectionUser({collectionId, userId})
     res.status(httpStatus).json(response[0])
   }
@@ -1121,6 +1040,7 @@ module.exports.getGrantByCollectionUserGroup = async function (req, res, next) {
     const {collectionId} = getCollectionInfoAndCheckPermission(req, Security.ACCESS_LEVEL.Manage)
     const userGroupId = req.params.userGroupId
     const response = await CollectionService.getGrantByCollectionUserGroup({collectionId, userGroupId})
+    if (!response[0]) throw new SmError.NotFoundError()
     res.json(response[0])
   }
   catch(err){
@@ -1133,7 +1053,7 @@ module.exports.setGrantByCollectionUserGroup = async function (req, res, next) {
     const {collectionId} = getCollectionInfoAndCheckPermission(req, Security.ACCESS_LEVEL.Manage)
     const userGroupId = req.params.userGroupId
     const accessLevel = req.body.accessLevel
-    const httpStatus = await CollectionService.setGrantByCollectionUserGroup({collectionId, userGroupId, accessLevel})
+    const httpStatus = await CollectionService.setGrantByCollection({collectionId, userGroupId, accessLevel})
     const response  = await CollectionService.getGrantByCollectionUserGroup({collectionId, userGroupId})
     res.status(httpStatus).json(response[0])
   }
@@ -1156,8 +1076,32 @@ module.exports.deleteGrantByCollectionUserGroup  = async function (req, res, nex
   }
 }
 
-module.exports.setReviewAclByCollectionUserDEPRECATED = module.exports.setReviewAclByCollectionUser
-module.exports.getReviewAclByCollectionUserDEPRECATED = module.exports.getReviewAclByCollectionUser
+module.exports.getReviewAclByCollectionUser = async function getReviewAclByCollectionUser (req, res, next) {
+  try {
+    const userId = req.params.userId
+    const { collectionId } = getCollectionInfoAndCheckPermission(req)
+    const grant = await CollectionService._getCollectionGrant({collectionId, userId})
+    if (!grant) throw new SmError.UnprocessableError('user has no grant in collection')
+    const response = await CollectionService.queryReviewAcl({cgId: grant.cgId})
+    res.json(response)
+  }
+  catch (err) {
+    next(err)
+  }
+}
+module.exports.getReviewAclByCollectionUserGroup = async function (req, res, next) {
+  try {
+    const userGroupId = req.params.userGroupId
+    const { collectionId } = getCollectionInfoAndCheckPermission(req)
+    const grant = await CollectionService._getCollectionGrant({collectionId, userGroupId})
+    if (!grant) throw new SmError.UnprocessableError('group has no grant in collection')
+    const response = await CollectionService.queryReviewAcl({cgId: grant.cgId})
+    res.json(response)
+  }
+  catch (err) {
+    next(err)
+  }
+}
 
 module.exports.getEffectiveAclByCollectionUser =  async function (req, res, next) {
   try{
@@ -1170,4 +1114,69 @@ module.exports.getEffectiveAclByCollectionUser =  async function (req, res, next
     next(err)
   }
 }
+
+module.exports.setReviewAclByCollectionUser = async function setReviewAclByCollectionUser (req, res, next) {
+  try {
+    const userId = req.params.userId
+    const acl = req.body
+    const {collectionId} = getCollectionInfoAndCheckPermission(req)
+    
+    const grant = await CollectionService._getCollectionGrant({collectionId, userId})
+    if (!grant) throw new SmError.UnprocessableError('user has no grant in collection')
+
+    const validated = await CollectionService._reviewAclValidate({cgId: grant.cgId, acl})
+    if (validated.fail.length > 0) {
+      throw new SmError.UnprocessableError(validated.fail)
+    }
+    if (validated.pass.length > 0) {
+      await CollectionService.setValidatedAcl({
+        validatedAcl: validated.pass,
+        attributionUserId: req.userObject.userId,
+        svcStatus: res.svcStatus
+      })
+    }
+    res.json({
+      inserted: validated.pass,
+      ignored: validated.fail
+    })
+  }
+  catch (err) {
+    next(err)
+  }
+}
+
+module.exports.setReviewAclByCollectionUserGroup = async function (req, res, next) {
+  try {
+    const userGroupId = req.params.userGroupId
+    const acl = req.body
+    const {collectionId} = getCollectionInfoAndCheckPermission(req)
+    
+    const grant = await CollectionService._getCollectionGrant({collectionId, userGroupId})
+    if (!grant) throw new SmError.UnprocessableError('group has no grant in collection')
+
+    const validated = await CollectionService._reviewAclValidate({cgId: grant.cgId, acl})
+    if (validated.fail.length > 0) {
+      throw new SmError.UnprocessableError(validated.fail)
+    }
+    if (validated.pass.length > 0) {
+      await CollectionService.setValidatedAcl({
+        validatedAcl: validated.pass,
+        attributionUserId: req.userObject.userId,
+        svcStatus: res.svcStatus
+      })
+    }
+    res.json({
+      inserted: validated.pass,
+      ignored: validated.fail
+    })
+  }
+  catch (err) {
+    next(err)
+  }
+}
+
+
+module.exports.setReviewAclByCollectionUserDEPRECATED = module.exports.setReviewAclByCollectionUser
+module.exports.getReviewAclByCollectionUserDEPRECATED = module.exports.getReviewAclByCollectionUser
+
 

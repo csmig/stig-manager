@@ -589,7 +589,7 @@ async function showUserAccess( collectionId, grantRecord ) {
           url: `${STIGMAN.Env.apiBase}/collections/${collectionId}/grants/${grantRecord.grantTarget}/${grantRecord.grantTargetId}/access`,
           method: 'GET'
       })
-      assignmentPanel.assignmentGrid.setValue(apiAccess)
+      assignmentPanel.assignmentGrid.setValue(apiAccess.acl)
               
       Ext.getBody().unmask();
       appwindow.show()

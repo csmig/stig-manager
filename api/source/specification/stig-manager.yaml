@@ -1186,7 +1186,7 @@ paths:
     get:
       tags:
         - Collection
-      summary: Return a User's direct (non-group) access rules for the specified Collection.
+      summary: Return a User's assigned access rules for the specified Collection.
       operationId: getReviewAclByCollectionUser
       responses:
         '200':
@@ -1194,9 +1194,7 @@ paths:
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/AclRuleBasic'
+                $ref: '#/components/schemas/AclForGrant'
         '403':
           $ref: '#/components/responses/Forbidden'
         default:
@@ -1211,7 +1209,7 @@ paths:
     put:
       tags:
         - Collection
-      summary: Set a User's access rules for the specified Collection.
+      summary: Set a User's assigned access rules for the specified Collection.
       operationId: setReviewAclByCollectionUser
       requestBody:
         required: true
@@ -1227,9 +1225,7 @@ paths:
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/AclRuleBasic'
+                $ref: '#/components/schemas/AclForGrant'
         default:
           description: unexpected error
           content:
@@ -1344,7 +1340,7 @@ paths:
     get:
       tags:
         - Collection
-      summary: Return a User Group's access rules for the specified Collection.
+      summary: Return a User Group's assigned access rules for the specified Collection.
       operationId: getReviewAclByCollectionUserGroup
       responses:
         '200':
@@ -1352,9 +1348,7 @@ paths:
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/AclRuleBasic'
+                $ref: '#/components/schemas/AclForGrant'
         '403':
           $ref: '#/components/responses/Forbidden'
         default:
@@ -1369,7 +1363,7 @@ paths:
     put:
       tags:
         - Collection
-      summary: Set a User Group's access rules for the specified Collection.
+      summary: Set a User Group's assigned access rules for the specified Collection.
       operationId: setReviewAclByCollectionUserGroup
       requestBody:
         required: true
@@ -4199,6 +4193,15 @@ components:
       maximum: 4
       minimum: 1
       type: integer
+    AclForGrant:
+      type: object
+      properties:
+        defaultAccess:
+          $ref: '#/components/schemas/AclRuleAccess'
+        acl:
+          type: array
+          items:
+            $ref: '#/components/schemas/AclRuleBasic'
     AclRuleAccess:
       type: string
       enum:
@@ -5997,12 +6000,12 @@ components:
     GrantSourcesUser:
       type: array
       items:
-        $ref: '#/components/schemas/UserBasic'
+        $ref: '#/components/schemas/UserBasicWithCgId'
       maxItems: 1
     GrantSourcesUserGroups:
       type: array
       items:
-        $ref: '#/components/schemas/UserGroupBasic'
+        $ref: '#/components/schemas/UserGroupBasicWithCgId'
     GroupId:
       $ref: '#/components/schemas/String255'
     GroupProjected:
@@ -7675,6 +7678,20 @@ components:
       required:
         - userId
         - username
+    UserBasicWithCgId:
+      additionalProperties: false
+      type: object
+      properties:
+        userId:
+          $ref: '#/components/schemas/UserId'
+        username:
+          $ref: '#/components/schemas/Username'
+        cgId:
+          type: integer
+      required:
+        - userId
+        - username
+        - cgId
     UserBasicWithDisplayName:
       additionalProperties: false
       type: object
@@ -7761,6 +7778,20 @@ components:
         - userGroupId
         - name
       properties:
+        userGroupId:
+          $ref: '#/components/schemas/UserGroupId'
+        name:
+          $ref: '#/components/schemas/String255'
+    UserGroupBasicWithCgId:
+      type: object
+      additionalProperties: false
+      required:
+        - cgId
+        - userGroupId
+        - name
+      properties:
+        cgId:
+          type: integer
         userGroupId:
           $ref: '#/components/schemas/UserGroupId'
         name:

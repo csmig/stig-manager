@@ -83,7 +83,7 @@ exports.queryCollections = async function (inProjection = [], inPredicates = {},
                   'accessLevel', accessLevel)
                 as grantJson
             from
-              collection_grant left join user_data using (userId) where collectionId = c.collectionId
+              collection_grant inner join user_data using (userId) where collectionId = c.collectionId
             UNION
             select
               json_object(
@@ -94,7 +94,7 @@ exports.queryCollections = async function (inProjection = [], inPredicates = {},
                   ),
                 'accessLevel', accessLevel
               ) as grantJson
-            from collection_grant_group left join user_group using (userGroupId) where collectionId = c.collectionId
+            from collection_grant inner join user_group using (userGroupId) where collectionId = c.collectionId
           ) as grantJsons)
         , json_array()
         )
@@ -511,70 +511,6 @@ exports.queryStatus = async function (inPredicates = {}, userObject) {
   return (rows)
 }
 
-exports.queryReviewAcl = async function (inProjection = [], inPredicates = {}, userObject) {
-  let columns = [
-    'sa.benchmarkId',
-    `json_object(
-      'assetId', CAST(a.assetId as char),
-      'name', a.name
-    ) as asset`
-  ]
-  let joins = [
-    'collection c',
-    'left join asset a on c.collectionId = a.collectionId',
-    'left join stig_asset_map sa on a.assetId = sa.assetId',
-  ]
-  // PREDICATES
-  let predicates = {
-    statements: [
-      'c.state = "enabled"',
-      'a.state = "enabled"'
-    ],
-    binds: []
-  }
-
-  let orderBy = ['sa.benchmarkId', 'a.name']
-
-  if ( inPredicates.collectionId ) {
-    predicates.statements.push('c.collectionId = ?')
-    predicates.binds.push( inPredicates.collectionId )
-  } else {
-    throw new Error('Missing required predicate: collectionId')
-  }
-  if ( inPredicates.userId ) {
-    joins.push('left join user_stig_asset_map usa on sa.saId = usa.saId')
-    predicates.statements.push('usa.userId = ?')
-    predicates.binds.push( inPredicates.userId )
-  }
-  if ( inPredicates.userGroupId ) {
-    joins.push('left join user_group_stig_asset_map ugsa on sa.saId = ugsa.saId')
-    predicates.statements.push('ugsa.userGroupId = ?')
-    predicates.binds.push( inPredicates.userGroupId )
-  }
-
-  const sql = dbUtils.makeQueryString({columns, joins, predicates, orderBy})
-
-  let [rows] = await dbUtils.pool.query(sql, predicates.binds)
-  return (rows)
-}
-
-exports.setReviewAclByCollectionGrant = async function({acl, userId, svcStatus = {}}) {
-
-  const values = acl.map(i => [i.cgId, i.assetId, i.benchmarkId, i.clId, i.access, userId])
-
-  async function transactionFn (connection) {  
-    const sqlDelete = `DELETE from collection_grant_acl WHERE cgId = ?`
-    const sqlInsert = `INSERT into collection_grant_acl (cgId, assetId, benchmarkId, clId, access, modifiedUserId) VALUES ?`
-    await connection.query(sqlDelete, [acl[0].cgId])
-    await connection.query(sqlInsert, [values])
-  }
-  
-  return dbUtils.retryOnDeadlock2({
-    transactionFn, 
-    statusObj: svcStatus
-  })
-}
-
 exports.setReviewAclByCollectionUserGroup = async function(collectionId, userGroupId, stigAssets, svcStatus = {}) {
   let connection // available to try, catch, and finally blocks
   try {
@@ -929,17 +865,11 @@ exports.getFindingsByCollection = async function( collectionId, aggregator, benc
 }
 
 exports.getReviewAclByCollectionUser = async function (collectionId, userId, elevate, userObject) {
-  let rows = await _this.queryReviewAcl([], { 
-    collectionId: collectionId,
-    userId: userId
-  }, userObject)
+  let rows = await _this.queryReviewAcl({collectionId, userId})
   return (rows)
 }
 exports.getReviewAclByCollectionUserGroup = async function (collectionId, userGroupId, elevate, userObject) {
-  let rows = await _this.queryReviewAcl([], { 
-    collectionId,
-    userGroupId
-  }, userObject)
+  let rows = await _this.queryReviewAcl({collectionId, userGroupId})
   return (rows)
 }
 
@@ -2519,7 +2449,6 @@ exports.exportToCollection = async function ({srcCollectionId, dstCollectionId, 
 }
 
 exports.getGrantByCollectionUser = async function ({collectionId, userId}) {
-
   const getGrantByCollectionUser = 
   `SELECT 
       CAST(cgs.userId AS CHAR) as userId,
@@ -2534,13 +2463,13 @@ exports.getGrantByCollectionUser = async function ({collectionId, userId}) {
   return response
 }
 
-exports.setGrantByCollectionUser = async function ({collectionId, userId, accessLevel, svcStatus = {}}) {
+exports.setGrantByCollection = async function ({collectionId, userId, userGroupId, accessLevel, svcStatus = {}}) {
 
-  const setGrantByCollectionUser = 
-  `INSERT INTO collection_grant (collectionId, userId, accessLevel) VALUES (?, ?, ?) AS new ON DUPLICATE KEY UPDATE accessLevel = new.accessLevel`
+  const sqlInsertGrant = 
+  `INSERT INTO collection_grant (collectionId, ${userId ? 'userId' : 'userGroupId'}, accessLevel) VALUES (?, ?, ?) AS new ON DUPLICATE KEY UPDATE accessLevel = new.accessLevel`
 
   async function transactionFn (connection) {  
-    const [response] = await connection.query(setGrantByCollectionUser, [collectionId, userId, accessLevel])
+    const [response] = await connection.query(sqlInsertGrant, [collectionId, userId || userGroupId, accessLevel])
     // resolving if we are inserting a new db record or updating an existing.
     const httpStatus = (response.affectedRows === 1 && response.insertId !== 0) ? 201 : 200
     await dbUtils.pruneUserStigAssetMap(connection, {collectionId, userId})
@@ -2572,33 +2501,15 @@ exports.getGrantByCollectionUserGroup = async function ({collectionId, userGroup
 
   const getGrantByCollectionUserGroup = 
   `SELECT 
-      CAST(cgg.userGroupId AS CHAR) as userGroupId,
-      cgg.accessLevel
+      CAST(cg.userGroupId AS CHAR) as userGroupId,
+      cg.accessLevel
     FROM
-      collection_grant_group cgg
+      collection_grant cg
     WHERE
-    cgg.collectionId = ? AND cgg.userGroupId = ?`
+    cg.collectionId = ? AND cg.userGroupId = ?`
 
   const [response] = await dbUtils.pool.query(getGrantByCollectionUserGroup, [collectionId, userGroupId])
   return response
-}
-
-exports.setGrantByCollectionUserGroup = async function ({collectionId, userGroupId, accessLevel, svcStatus = {}}) {
-
-  const setGrantByCollectionUserGroup = 
-  `INSERT INTO collection_grant_group (collectionId, userGroupId, accessLevel) VALUES (?, ?, ?) AS new ON DUPLICATE KEY UPDATE accessLevel = new.accessLevel`
-
-  async function transactionFn (connection) {  
-    const [response] = await dbUtils.pool.query(setGrantByCollectionUserGroup, [collectionId, userGroupId, accessLevel])
-    // resolving if we are inserting a new db record or updating an existing.
-    const httpStatus = (response.affectedRows === 1 && response.insertId !== 0) ? 201 : 200
-    await dbUtils.pruneUserGroupStigAssetMap(connection, {collectionId, userGroupId})
-    return httpStatus
-  }
-  return dbUtils.retryOnDeadlock2({
-    transactionFn, 
-    statusObj: svcStatus
-  })
 }
 
 exports.deleteGrantByCollectionUserGroup = async function ({collectionId, userGroupId, shouldPrune, svcStatus = {}}) {
@@ -2653,17 +2564,36 @@ exports.getEffectiveAclByCollectionUser = async function ({collectionId, userId}
   return response
 }
 
-exports._reviewAclValidate = async function ({collectionId, userId, acl}) {
+exports.setValidatedAcl = async function({validatedAcl, attributionUserId, svcStatus = {}}) {
+
+  const values = validatedAcl.map(i => [i.cgId, i.assetId, i.benchmarkId, i.clId, i.access, attributionUserId])
+
+  async function transactionFn (connection) {  
+    const sqlDelete = `DELETE from collection_grant_acl WHERE cgId = ?`
+    const sqlInsert = `INSERT into collection_grant_acl (cgId, assetId, benchmarkId, clId, access, modifiedUserId) VALUES ?`
+    await connection.query(sqlDelete, [validatedAcl[0].cgId])
+    await connection.query(sqlInsert, [values])
+  }
+  
+  return dbUtils.retryOnDeadlock2({
+    transactionFn, 
+    statusObj: svcStatus
+  })
+}
+
+
+exports._reviewAclValidate = async function ({cgId, acl}) {
   const sql = `
   select
     any_value(cg.cgId) as cgId,
-    group_concat(jt.item) as item,
+    group_concat(jt.itemNum) as itemNum,
+    case when count(jt.item) > 1 then json_arrayagg(jt.item) else any_value(jt.item) end as item,
     jt.assetId,
     jt.benchmarkId,
     cl.clId,
       group_concat(jt.access) as access,
       group_concat(case when any_value(cg.accessLevel) != 1 and jt.access = 'none'
-        then 'user role prohibits access:none'
+        then 'role prohibits access:none'
         else case when jt.assetId is not null and a.assetId is null
           then 'asset not found in collection'
           else case when jt.benchmarkId is not null and s.benchmarkId is null
@@ -2680,34 +2610,94 @@ exports._reviewAclValidate = async function ({collectionId, userId, acl}) {
     json_table(
       ?,
       "$[*]" COLUMNS (
-        item FOR ORDINALITY,
+        itemNum FOR ORDINALITY,
+        item JSON PATH '$',
         assetId INT PATH '$.assetId',
         benchmarkId VARCHAR(255) PATH '$.benchmarkId',
         labelId VARCHAR(255) PATH '$.labelId',
         access VARCHAR(255) PATH '$.access'
     )) jt
-    left join collection_grant cg on (cg.collectionId = ? and cg.userId = ?)
-    left join collection_label cl on cl.uuid = UUID_TO_BIN(jt.labelId,1) and cl.collectionId = ?
-    left join asset a on jt.assetId = a.assetId and a.state = 'enabled' and a.collectionId = ?
+    left join collection_grant cg on (cg.cgId = ?)
+    left join collection_label cl on cl.uuid = UUID_TO_BIN(jt.labelId,1) and cg.collectionId = cl.collectionId
+    left join asset a on jt.assetId = a.assetId and a.state = 'enabled' and cg.collectionId = a.collectionId
     left join stig s on jt.benchmarkId collate utf8mb4_0900_as_cs = s.benchmarkId
   group by
-    jt.assetId, jt.benchmarkId, cl.clId
+    jt.assetId, jt.benchmarkId, jt.labelId, cl.clId
   order by
-    item`
+    itemNum`
     
-  const [rows] = await dbUtils.pool.query(sql, [JSON.stringify(acl), collectionId, userId, collectionId, collectionId])
-
-  if (!rows[0].cgId) throw new SmError.UnprocessableError(`User has no grant in Collection`)
+  const [rows] = await dbUtils.pool.query(sql, [JSON.stringify(acl), cgId])
 
   const response = rows.reduce((a,v) => {
     const disposition = v.validity === 'pass' ? 'pass' : 'fail'
     if (disposition === 'fail') {
       delete v.cgId
-      if (v.dupCount > 1) v.validity = 'duplicate resource definition'
+      delete v.assetId
+      delete v.benchmarkId
+      delete v.clId
+      delete v.access
+      if (v.dupCount > 1) v.validity += ',duplicate resource definition'
     }
     delete v.dupCount
     a[disposition].push(v)
     return a
   }, {pass:[], fail:[]})
   return response
+}
+
+exports._getCollectionGrant = async function ({collectionId, userId, userGroupId}) {
+  const sql = `SELECT * FROM collection_grant where collectionId = ? and ${userId ? 'userId' : 'userGroupId'} = ?`
+  const [response] = await dbUtils.pool.query(sql, [collectionId, userId || userGroupId])
+  return response?.[0]
+}
+
+exports.queryReviewAcl = async function ({cgId, collectionId, userId, userGroupId}) {
+  let columns = [
+    `case when cg.accessLevel = 1 then 'none' else 'rw' end as defaultAccess`,
+    `coalesce(json_arrayagg(
+      json_remove(json_object(
+        CASE WHEN cga.benchmarkId is null THEN 'x' ELSE 'benchmarkId' END, cga.benchmarkId,
+        CASE WHEN cga.assetId is null THEN 'x' ELSE 'asset' END, 
+        CASE WHEN cga.assetId is null THEN NULL ELSE json_object('assetId',cga.assetId,'name',a.name) END,
+        CASE WHEN cga.clId is null THEN 'x' ELSE 'label' END,
+        CASE WHEN cga.clId is null THEN NULL ELSE json_object('labelId',BIN_TO_UUID(cl.uuid,1), 'name', cl.name) END,
+        'access', cga.access
+      ), '$.x')
+    ), json_array()) as acl`
+  ]
+  let joins = [
+    'collection_grant cg',
+    'left join collection c using (collectionId)',
+    'left join collection_grant_acl cga using (cgId)',
+    'left join asset a using (assetId)',
+    'left join collection_label cl using (clId)'
+  ]
+  // PREDICATES
+  let predicates = {
+    statements: [
+      'c.state = "enabled"',
+      'a.state = "enabled"'
+    ],
+    binds: []
+  }
+
+  let orderBy = ['cga.cgAclId']
+
+  if (cgId) {
+    predicates.statements.push('cg.cgId = ?')
+    predicates.binds.push(cgId)
+  }
+  else if (userId && collectionId) {
+    predicates.statements.push('cg.userId = ?', 'cg.collectionId = ?')
+    predicates.binds.push(userId, collectionId)
+  }
+  else if (userGroupId && collectionId) {
+    predicates.statements.push('cg.userGroupId = ?', 'cg.collectionId = ?')
+    predicates.binds.push(userGroupId, collectionId)
+  }
+
+  const sql = dbUtils.makeQueryString({columns, joins, predicates, orderBy})
+
+  let [rows] = await dbUtils.pool.query(sql, predicates.binds)
+  return (rows?.[0])
 }
