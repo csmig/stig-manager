@@ -282,6 +282,7 @@ SM.Acl.AssignedRulesGrid = Ext.extend(Ext.grid.GridPanel, {
         'assetName',
         'labelId',
         'labelName',
+        'label',
         'access'  
       ],
       root: this.root || '',
@@ -292,10 +293,10 @@ SM.Acl.AssignedRulesGrid = Ext.extend(Ext.grid.GridPanel, {
       idProperty: v => `${v.benchmarkId}-${v.assetName}-${v.labelName}`,
       listeners: {
         add: function(){
-          me.setTitle('Asset-STIG Assignments (' + assignmentStore.getCount() + ')');
+          // me.setTitle('Asset-STIG Assignments (' + assignmentStore.getCount() + ')');
         }, 
         remove: function(){
-          me.setTitle('Asset-STIG Assignments (' + assignmentStore.getCount() + ')');
+          // me.setTitle('Asset-STIG Assignments (' + assignmentStore.getCount() + ')');
           //==========================================================
           //DISABLE THE REMOVAL BUTTON AFTER EACH REMOVAL OF ASSIGMENTS
           //==========================================================
@@ -325,16 +326,16 @@ SM.Acl.AssignedRulesGrid = Ext.extend(Ext.grid.GridPanel, {
     function renderResource (value, metadata, record) {
       let html = ''
       if (!record.data.assetName && !record.data.labelName && !record.data.benchmarkId) {
-        html += `<div class="sm-collection-icon sm-column-with-icon">Collection</div>`
+        html += `<div class="sm-collection-icon sm-cell-with-icon">Collection</div>`
       }
       if (record.data.assetName) {
-        html += `<div class="sm-asset-icon sm-column-with-icon">${record.data.assetName}</div>`
+        html += `<div class="sm-asset-icon sm-cell-with-icon">${record.data.assetName}</div>`
       }
       if (record.data.labelName) {
-        html += `<div class="sm-label-icon sm-column-with-icon">${record.data.labelName}</div>`
+        html += `<div class="sm-label-icon sm-cell-with-icon">${SM.Collection.LabelTpl.apply(record.data.label)}</div>`
       }
       if (record.data.benchmarkId) {
-        html += `<div class="sm-stig-icon sm-column-with-icon">${record.data.benchmarkId}</div>`
+        html += `<div class="sm-stig-icon sm-cell-with-icon">${record.data.benchmarkId}</div>`
       }
       return html
     }
@@ -350,7 +351,7 @@ SM.Acl.AssignedRulesGrid = Ext.extend(Ext.grid.GridPanel, {
         header: `Access`, 
         dataIndex: 'access',
         sortable: true,
-        width: 250
+        width: 50
       }
     ]
     const config = {
@@ -363,6 +364,7 @@ SM.Acl.AssignedRulesGrid = Ext.extend(Ext.grid.GridPanel, {
           assetName: rule.asset?.name,
           labelId: rule.label?.labelId,
           labelName: rule.label?.name,
+          label: rule.label,
           access: rule.access
         })))
       },
@@ -370,9 +372,9 @@ SM.Acl.AssignedRulesGrid = Ext.extend(Ext.grid.GridPanel, {
         let rules = [];
         assignmentStore.each(function(record){
           rules.push({
-            benchmarkId: record.data.benchmarkId,
-            assetId: record.data.assetId,
-            labelId: record.data.assetId,
+            benchmarkId: record.data.benchmarkId || undefined,
+            assetId: record.data.assetId || undefined,
+            labelId: record.data.labelId || undefined,
             access: record.data.access
           })
         })
@@ -447,6 +449,7 @@ SM.Acl.Panel = Ext.extend(Ext.Panel, {
         assetName: selectedNode.attributes.assetName,
         labelId:selectedNode.attributes.label?.labelId, 
         labelName: selectedNode.attributes.label?.name,
+        label: selectedNode.attributes.label,
         access
       }
       assignedRulesGrid.getStore().loadData(assignment, true);
@@ -454,7 +457,7 @@ SM.Acl.Panel = Ext.extend(Ext.Panel, {
 
     const assignedRulesGrid = new SM.Acl.AssignedRulesGrid({
       panel: this,
-      title: 'Assigned ACL',
+      title: `Assigned ACL`,
       flex: 1
     })
 
@@ -473,7 +476,7 @@ SM.Acl.Panel = Ext.extend(Ext.Panel, {
     if (this.accessLevel === 1) addBtnMenuItems.push({text: 'with No access', access: 'none', handler: handleAddBtnItem})
     const addBtn = new SM.Acl.ResourceAddBtn({
       tree: navTree,
-      text: 'Add Assignment ',
+      text: 'Assign Resource',
       grid: assignedRulesGrid,
       menu: new Ext.menu.Menu({
         items: addBtnMenuItems
@@ -521,7 +524,7 @@ SM.Acl.Panel = Ext.extend(Ext.Panel, {
   }
 })
 
-async function showUserAccess( collectionId, grantRecord ) {
+SM.Acl.showAccess = async function(collectionId, grantRecord) {
   try {
     let appwindow 
     let assignmentPanel = new SM.Acl.Panel({
@@ -586,6 +589,7 @@ async function showUserAccess( collectionId, grantRecord ) {
           method: 'GET'
       })
       assignmentPanel.assignmentGrid.setValue(apiAccess.acl)
+      assignmentPanel.assignmentGrid.setTitle(`Assigned access, default = ${apiAccess.defaultAccess}`)
               
       Ext.getBody().unmask();
       appwindow.show()

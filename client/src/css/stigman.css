@@ -2283,3 +2283,7 @@ td.x-grid3-hd-over .x-grid3-hd-inner {
 .sm-column-with-icon {
 	padding-left: 20px;
 }
+.sm-cell-with-icon {
+	padding-left: 20px;
+	line-height: 18px;
+}

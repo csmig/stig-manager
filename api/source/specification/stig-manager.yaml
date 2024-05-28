@@ -1344,7 +1344,7 @@ paths:
       operationId: getReviewAclByCollectionUserGroup
       responses:
         '200':
-          description: Collection AclRuleAssetBasic array response
+          description: AclForGrant response
           content:
             application/json:
               schema:
@@ -1379,9 +1379,7 @@ paths:
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/AclRuleAssetBasic'
+                $ref: '#/components/schemas/AclForGrant'
         default:
           description: unexpected error
           content:
@@ -4218,8 +4216,8 @@ components:
           $ref: '#/components/schemas/BenchmarkId'
         access:
           $ref: '#/components/schemas/AclRuleAccess'
-      # required:
-      #   - access
+      required:
+        - access
     AclRuleAssetPut:
       additionalProperties: false
       type: object
@@ -4230,8 +4228,8 @@ components:
           $ref: '#/components/schemas/BenchmarkId'
         access:
           $ref: '#/components/schemas/AclRuleAccess'
-      # required:
-      #   - access
+      required:
+        - access
     AclRuleBasic:
       anyOf:
        - $ref: '#/components/schemas/AclRuleAssetBasic'
@@ -4241,13 +4239,13 @@ components:
       type: object
       properties:
         label:
-          $ref: '#/components/schemas/LabelBasic'
+          $ref: '#/components/schemas/LabelBasicWithColor'
         benchmarkId:
           $ref: '#/components/schemas/BenchmarkId'
         access:
           $ref: '#/components/schemas/AclRuleAccess'
-      # required:
-      #   - access
+      required:
+        - access
     AclRuleLabelPut:
       additionalProperties: false
       type: object
@@ -6056,6 +6054,20 @@ components:
           $ref: '#/components/schemas/LabelName'
       required:
         - name
+        - labelId
+    LabelBasicWithColor:
+      additionalProperties: false
+      type: object
+      properties:
+        labelId:
+          $ref: '#/components/schemas/LabelId'
+        name:
+          $ref: '#/components/schemas/LabelName'
+        color:
+          $ref: '#/components/schemas/StringHexColor'
+      required:
+        - name
+        - color
         - labelId
     LabelCreate:
       additionalProperties: false

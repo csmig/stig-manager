@@ -531,9 +531,6 @@ SM.Collection.GrantsGrid = Ext.extend(Ext.grid.GridPanel, {
                             mc.keys[x] = record.id
                         }
                     }
-                    if (_this.showAccessBtn) {
-                        _this.accessBtn.setDisabled(record.data.accessLevel != 1)
-                    }
                     editor.grid.fireEvent('grantschanged', editor.grid)
                 },
                 beforeedit: function (editor, rowIndex) {
@@ -552,19 +549,17 @@ SM.Collection.GrantsGrid = Ext.extend(Ext.grid.GridPanel, {
             deleteProperty: 'userId',
             newRecord: this.newRecordConstructor
         })
-        if (this.showAccessBtn) {
-            tbar.addSeparator()
-            this.accessBtn = tbar.addButton({
-                iconCls: 'sm-asset-icon',
-                disabled: true,
-                text: 'Edit Restriced Access...',
-                handler: function () {
-                    const r = _this.getSelectionModel().getSelected();
-                    Ext.getBody().mask('Getting access list for ' + r.get('title') + '...');
-                    showUserAccess(_this.collectionId, r.data);
-                }
-            })
-        }
+        tbar.addSeparator()
+        this.accessBtn = tbar.addButton({
+            iconCls: 'sm-asset-icon',
+            disabled: true,
+            text: 'Edit Access...',
+            handler: function () {
+                const r = _this.getSelectionModel().getSelected();
+                Ext.getBody().mask('Getting access list for ' + r.get('title') + '...');
+                SM.Acl.showAccess(_this.collectionId, r.data);
+            }
+        })
         const config = {
             isFormField: true,
             name: 'grants',
@@ -581,17 +576,14 @@ SM.Collection.GrantsGrid = Ext.extend(Ext.grid.GridPanel, {
                 listeners: {
                     selectionchange: function (sm) {
                         if (sm.hasSelection()){
-
+                            _this.accessBtn?.setDisabled(false)
                             let record = sm.getSelected()
-                            if (_this.showAccessBtn) {
-                                _this.accessBtn.setDisabled(record.data.accessLevel != 1)
-                            }
                             if (record.data.accessLevel === 4 && !_this.canModifyOwners){
                                 tbar.delButton.setDisabled(true)
                             }
                             else{
                                 tbar.delButton.setDisabled(false)
-                            }                            
+                            }
                         }
                         else{
                             tbar.delButton.setDisabled(true)
@@ -1013,7 +1005,6 @@ SM.Collection.CreateForm = Ext.extend(Ext.form.FormPanel, {
         })
         const grantGrid = new SM.Collection.GrantsGrid({
             iconCls: 'sm-lock-icon',
-			showAccessBtn: false,
             canModifyOwners: true,
 			title: 'Grants',
 			border: true,
@@ -1380,7 +1371,6 @@ SM.Collection.ManagePanel = Ext.extend(Ext.Panel, {
         const grantGrid = new SM.Collection.GrantsGrid({
 			collectionId: _this.apiCollection.collectionId,
             iconCls: 'sm-lock-icon',
-			showAccessBtn: true,
             canModifyOwners: this.canModifyOwners,
 			url: `${STIGMAN.Env.apiBase}/collections/${_this.apiCollection.collectionId}`,
 			baseParams: {

@@ -1135,10 +1135,8 @@ module.exports.setReviewAclByCollectionUser = async function setReviewAclByColle
         svcStatus: res.svcStatus
       })
     }
-    res.json({
-      inserted: validated.pass,
-      ignored: validated.fail
-    })
+    const response = await CollectionService.queryReviewAcl({cgId: grant.cgId})
+    res.json(response)
   }
   catch (err) {
     next(err)
@@ -1165,10 +1163,8 @@ module.exports.setReviewAclByCollectionUserGroup = async function (req, res, nex
         svcStatus: res.svcStatus
       })
     }
-    res.json({
-      inserted: validated.pass,
-      ignored: validated.fail
-    })
+    const response = await CollectionService.queryReviewAcl({cgId: grant.cgId})
+    res.json(response)
   }
   catch (err) {
     next(err)

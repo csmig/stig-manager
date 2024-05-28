@@ -511,50 +511,6 @@ exports.queryStatus = async function (inPredicates = {}, userObject) {
   return (rows)
 }
 
-exports.setReviewAclByCollectionUserGroup = async function(collectionId, userGroupId, stigAssets, svcStatus = {}) {
-  let connection // available to try, catch, and finally blocks
-  try {
-    connection = await dbUtils.pool.getConnection()
-    connection.config.namedPlaceholders = true
-    async function transaction () {
-      await connection.query('START TRANSACTION');
-      const sqlDelete = `DELETE FROM 
-        user_group_stig_asset_map
-      WHERE
-        userGroupId = ?
-        and saId IN (
-          SELECT saId from stig_asset_map left join asset using (assetId) where asset.collectionId = ?
-        )`
-        await connection.execute(sqlDelete, [userGroupId, collectionId])
-      if (stigAssets.length > 0) {
-        // Get saIds
-        const bindsInsertSaIds = [ userGroupId ]
-        const predicatesInsertSaIds = []
-        for (const stigAsset of stigAssets) {
-          bindsInsertSaIds.push(stigAsset.benchmarkId, stigAsset.assetId)
-          predicatesInsertSaIds.push('(benchmarkId = ? AND assetId = ?)')
-        }
-        let sqlInsertSaIds = `INSERT IGNORE INTO user_group_stig_asset_map (userGroupId, saId) SELECT ?, saId FROM stig_asset_map WHERE `
-        sqlInsertSaIds += predicatesInsertSaIds.join('\nOR\n')
-        await connection.execute(sqlInsertSaIds, bindsInsertSaIds)
-      }
-      await connection.commit()
-    }
-    await dbUtils.retryOnDeadlock(transaction, svcStatus)
-  }
-  catch (err) {
-    if (typeof connection !== 'undefined') {
-      await connection.rollback()
-    }
-    throw (err)
-  }
-  finally {
-    if (typeof connection !== 'undefined') {
-      await connection.release()
-    }
-  }
-}
-
 exports.addOrUpdateCollection = async function(writeAction, collectionId, body, projection, userObject, svcStatus = {}) {
   // CREATE: collectionId will be null
   // REPLACE/UPDATE: collectionId is not null
@@ -2581,6 +2537,49 @@ exports.setValidatedAcl = async function({validatedAcl, attributionUserId, svcSt
   })
 }
 
+exports.setReviewAclByCollectionUserGroup = async function(collectionId, userGroupId, stigAssets, svcStatus = {}) {
+  let connection // available to try, catch, and finally blocks
+  try {
+    connection = await dbUtils.pool.getConnection()
+    connection.config.namedPlaceholders = true
+    async function transaction () {
+      await connection.query('START TRANSACTION');
+      const sqlDelete = `DELETE FROM 
+        user_group_stig_asset_map
+      WHERE
+        userGroupId = ?
+        and saId IN (
+          SELECT saId from stig_asset_map left join asset using (assetId) where asset.collectionId = ?
+        )`
+        await connection.execute(sqlDelete, [userGroupId, collectionId])
+      if (stigAssets.length > 0) {
+        // Get saIds
+        const bindsInsertSaIds = [ userGroupId ]
+        const predicatesInsertSaIds = []
+        for (const stigAsset of stigAssets) {
+          bindsInsertSaIds.push(stigAsset.benchmarkId, stigAsset.assetId)
+          predicatesInsertSaIds.push('(benchmarkId = ? AND assetId = ?)')
+        }
+        let sqlInsertSaIds = `INSERT IGNORE INTO user_group_stig_asset_map (userGroupId, saId) SELECT ?, saId FROM stig_asset_map WHERE `
+        sqlInsertSaIds += predicatesInsertSaIds.join('\nOR\n')
+        await connection.execute(sqlInsertSaIds, bindsInsertSaIds)
+      }
+      await connection.commit()
+    }
+    await dbUtils.retryOnDeadlock(transaction, svcStatus)
+  }
+  catch (err) {
+    if (typeof connection !== 'undefined') {
+      await connection.rollback()
+    }
+    throw (err)
+  }
+  finally {
+    if (typeof connection !== 'undefined') {
+      await connection.release()
+    }
+  }
+}
 
 exports._reviewAclValidate = async function ({cgId, acl}) {
   const sql = `
@@ -2654,34 +2653,31 @@ exports._getCollectionGrant = async function ({collectionId, userId, userGroupId
 exports.queryReviewAcl = async function ({cgId, collectionId, userId, userGroupId}) {
   let columns = [
     `case when cg.accessLevel = 1 then 'none' else 'rw' end as defaultAccess`,
-    `coalesce(json_arrayagg(
-      json_remove(json_object(
-        CASE WHEN cga.benchmarkId is null THEN 'x' ELSE 'benchmarkId' END, cga.benchmarkId,
-        CASE WHEN cga.assetId is null THEN 'x' ELSE 'asset' END, 
-        CASE WHEN cga.assetId is null THEN NULL ELSE json_object('assetId',cga.assetId,'name',a.name) END,
-        CASE WHEN cga.clId is null THEN 'x' ELSE 'label' END,
-        CASE WHEN cga.clId is null THEN NULL ELSE json_object('labelId',BIN_TO_UUID(cl.uuid,1), 'name', cl.name) END,
-        'access', cga.access
-      ), '$.x')
-    ), json_array()) as acl`
+    `case when count(cga.cgAclId) = 0
+      THEN json_array()
+      ELSE json_arrayagg(
+        json_remove(json_object(
+          CASE WHEN cga.benchmarkId is null THEN 'x' ELSE 'benchmarkId' END, cga.benchmarkId,
+          CASE WHEN cga.assetId is null THEN 'x' ELSE 'asset' END, 
+          CASE WHEN cga.assetId is null THEN NULL ELSE json_object('assetId',cast(cga.assetId as char),'name',a.name) END,
+          CASE WHEN cga.clId is null THEN 'x' ELSE 'label' END,
+          CASE WHEN cga.clId is null THEN NULL ELSE json_object('labelId',BIN_TO_UUID(cl.uuid,1), 'name', cl.name, 'color', cl.color) END,
+          'access', cga.access
+        ), '$.x'))
+      END as acl`
   ]
   let joins = [
     'collection_grant cg',
-    'left join collection c using (collectionId)',
-    'left join collection_grant_acl cga using (cgId)',
-    'left join asset a using (assetId)',
-    'left join collection_label cl using (clId)'
-  ]
+    'left join collection c on cg.collectionId = c.collectionId and c.state = "enabled"',
+    'left join collection_grant_acl cga on cg.cgId = cga.cgId',
+    'left join asset a on cga.assetId = a.assetId and a.state = "enabled"',
+    'left join collection_label cl on cga.clId = cl.clId'
+    ]
   // PREDICATES
   let predicates = {
-    statements: [
-      'c.state = "enabled"',
-      'a.state = "enabled"'
-    ],
+    statements: [],
     binds: []
   }
-
-  let orderBy = ['cga.cgAclId']
 
   if (cgId) {
     predicates.statements.push('cg.cgId = ?')
@@ -2696,7 +2692,7 @@ exports.queryReviewAcl = async function ({cgId, collectionId, userId, userGroupI
     predicates.binds.push(userGroupId, collectionId)
   }
 
-  const sql = dbUtils.makeQueryString({columns, joins, predicates, orderBy})
+  const sql = dbUtils.makeQueryString({columns, joins, predicates})
 
   let [rows] = await dbUtils.pool.query(sql, predicates.binds)
   return (rows?.[0])

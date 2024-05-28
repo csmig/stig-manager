@@ -173,15 +173,15 @@ const upMigration = [
   cg.accessLevel,
   'user' AS grantSource,
   json_array(json_object(
-  'cgId', cg.cgId,
-      'userId', cast(ud.userId as char),
-      'username', ud.username)) as grantSources
+    'cgId', cg.cgId,
+    'userId', cast(ud.userId as char),
+    'username', ud.username)) as grantSources
 from
   collection_grant cg
   inner join collection c on (cg.collectionId = c.collectionId and c.state = 'enabled')
   left join user_data ud on cg.userId = ud.userId
 where
-cg.userId is not null
+  cg.userId is not null
 union 
 select
   collectionId,
@@ -197,7 +197,7 @@ from
     cg.accessLevel,
     json_arrayagg(
       json_object(
-    'cgId', cg.cgId,
+        'cgId', cg.cgId,
         'userGroupId', cast(cg.userGroupId as char),
         'name', ug.name
       )) OVER (PARTITION BY ugu.userId, cg.collectionId, cg.accessLevel) as userGroups
@@ -208,8 +208,8 @@ from
     left join collection_grant cgDirect on (cg.collectionId = cgDirect.collectionId and ugu.userId = cgDirect.userId)
     inner join collection c on (cg.collectionId = c.collectionId and c.state = 'enabled')
   where
-  cg.userGroupId is not null
-  and cgDirect.userId is null) dt
+    cg.userGroupId is not null
+    and cgDirect.userId is null) dt
 where
   dt.rn = 1`,
 
