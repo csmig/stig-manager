@@ -451,8 +451,8 @@ exports.queryUserGroups = async function ({projections = [], filters = {}, eleva
     END as users`)
   }
   if (projections.includes('collections')) {
-    joins.add('left join collection_grant_group cgg using (userGroupId)')
-    joins.add('left join collection on cgg.collectionId = collection.collectionId')
+    joins.add('left join collection_grant cgg using (userGroupId)')
+    joins.add('left join collection on cgg.collectionId = collection.collectionId and collection.state = "enabled"')
     groupBy.add('ug.userGroupId')
     columns.push(`CASE WHEN count(cgg.collectionId)=0 
     THEN json_array()

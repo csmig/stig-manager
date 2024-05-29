@@ -577,17 +577,17 @@ exports.addOrUpdateCollection = async function(writeAction, collectionId, body, 
             await connection.query(sqlInsertUserGrants, [binds])
           }
           else {
-            await connection.query(`DELETE FROM collection_grant WHERE collectionId = ?`, [collectionId])
+            await connection.query(`DELETE FROM collection_grant WHERE collectionId = ? and userId is not null`, [collectionId])
           }
 
           if (grantsByIdType.userGroupGrants.length) {
             await connection.query(
-              `DELETE FROM collection_grant_group WHERE collectionId = ? and userGroupId NOT IN (?)`,
+              `DELETE FROM collection_grant WHERE collectionId = ? and userGroupId NOT IN (?)`,
               [collectionId, grantsByIdType.userGroupGrants.map(i => i.userGroupId)]
             )
             const sqlInsertGroupGrants = `INSERT 
             INTO 
-              collection_grant_group (collectionId, userGroupId, accessLevel) 
+              collection_grant (collectionId, userGroupId, accessLevel) 
             VALUES
               ? as new
             ON DUPLICATE KEY UPDATE 
@@ -596,7 +596,7 @@ exports.addOrUpdateCollection = async function(writeAction, collectionId, body, 
             await connection.query(sqlInsertGroupGrants, [binds])
           }
           else {
-            await connection.query(`DELETE FROM collection_grant_group WHERE collectionId = ?`, [collectionId]) 
+            await connection.query(`DELETE FROM collection_grant WHERE collectionId = ? and userGroupId is not null`, [collectionId]) 
           }
   
         }
@@ -604,8 +604,8 @@ exports.addOrUpdateCollection = async function(writeAction, collectionId, body, 
           await connection.query(`DELETE FROM collection_grant WHERE collectionId = ?`, [collectionId])
           await connection.query(`DELETE FROM collection_grant_group WHERE collectionId = ?`, [collectionId]) 
         }
-        await dbUtils.pruneUserStigAssetMap(connection, {collectionId})
-        await dbUtils.pruneUserGroupStigAssetMap(connection, {collectionId})
+        // await dbUtils.pruneUserStigAssetMap(connection, {collectionId})
+        // await dbUtils.pruneUserGroupStigAssetMap(connection, {collectionId})
       }
 
       // Process labels

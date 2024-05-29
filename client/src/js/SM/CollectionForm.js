@@ -1548,8 +1548,8 @@ SM.Collection.ManagePanel = Ext.extend(Ext.Panel, {
                     activeTab: 0,
                     border: false,
                     items: [ 
-                        usersGrid,
                         grantGrid,
+                        usersGrid,
                         {
                             xtype: 'panel',
                             bodyStyle: {
