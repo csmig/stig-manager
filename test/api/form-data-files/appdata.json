@@ -899,6 +899,37 @@
       "collectionId": "21"
     },
     {
+      "assetId": "42",
+      "name": "Collection_X_lvl1_asset-1",
+      "fqdn": null,
+      "description": "",
+      "ip": "",
+      "labelIds": [
+        "755b8a28-9a68-11ec-b1bc-0242ac110002",
+        "5130dc84-9a68-11ec-b1bc-0242ac110002"
+      ],
+      "mac": null,
+      "noncomputing": true,
+      "metadata": {
+        "testkey": "testvalue"
+      },
+      "stigGrants": [
+        {
+          "benchmarkId": "VPN_SRG_TEST",
+          "userIds": [
+            "85"
+          ]
+        },
+        {
+          "benchmarkId": "Windows_10_STIG_TEST",
+          "userIds": [
+            "86"
+          ]
+        }
+      ],
+      "collectionId": "21"
+    },
+    {
       "assetId": "154",
       "name": "Collection_X_lvl1_asset-2",
       "fqdn": null,
