@@ -9,6 +9,7 @@ const upMigration = [
   `DROP TABLE IF EXISTS user_group`,
 
   `ALTER TABLE asset ADD INDEX idx_asset_state (state ASC)`,
+  `ALTER TABLE collection ADD INDEX index4 (collectionId ASC, state ASC)`,
 
   // table: user_group
   `CREATE TABLE user_group (
@@ -62,33 +63,6 @@ const upMigration = [
   `ALTER TABLE collection_grant ADD CONSTRAINT fk_collection_grant_1 FOREIGN KEY (userId) REFERENCES user_data (userId) ON DELETE CASCADE ON UPDATE CASCADE`,
   `ALTER TABLE collection_grant ADD CONSTRAINT fk_collection_grant_3 FOREIGN KEY (userGroupId) REFERENCES user_group (userGroupId) ON DELETE CASCADE ON UPDATE CASCADE`,
 
-  // // table collection_grant_group
-  // `CREATE TABLE collection_grant_group (
-  //   cggId int NOT NULL AUTO_INCREMENT,
-  //   collectionId int NOT NULL,
-  //   userGroupId int NOT NULL,
-  //   accessLevel int NOT NULL,
-  //   modifiedUserId int NOT NULL,
-  //   modifiedDate datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  //   PRIMARY KEY (cggId),
-  //   UNIQUE KEY INDEX_UG_COLLECTION (userGroupId,collectionId),
-  //   KEY INDEX_COLLECTION_ACCESS (collectionId,accessLevel),
-  //   CONSTRAINT fk_collection_grant_group_1 FOREIGN KEY (userGroupId) REFERENCES user_group (userGroupId) ON DELETE CASCADE ON UPDATE CASCADE,
-  //   CONSTRAINT fk_collection_grant_group_2 FOREIGN KEY (collectionId) REFERENCES collection (collectionId) ON DELETE CASCADE ON UPDATE CASCADE
-  // ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci`,
-
-  // // table user_group_stig_asset_map
-  // `CREATE TABLE user_group_stig_asset_map (
-  //   id int NOT NULL AUTO_INCREMENT,
-  //   userGroupId int NOT NULL,
-  //   saId int NOT NULL,
-  //   PRIMARY KEY (id),
-  //   KEY fk_user_group_stig_asset_map_2 (userGroupId),
-  //   KEY fk_user_group_stig_asset_map_1 (saId),
-  //   CONSTRAINT fk_user_group_stig_asset_map_1 FOREIGN KEY (saId) REFERENCES stig_asset_map (saId) ON DELETE CASCADE ON UPDATE CASCADE,
-  //   CONSTRAINT fk_user_group_stig_asset_map_2 FOREIGN KEY (userGroupId) REFERENCES user_group (userGroupId) ON DELETE CASCADE ON UPDATE CASCADE
-  // ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci`,
-
   // table collection_grant_acl
   `CREATE TABLE collection_grant_acl (
     cgAclId INT NOT NULL AUTO_INCREMENT,
@@ -113,30 +87,6 @@ const upMigration = [
     CONSTRAINT fk_collection_grant_acl_5 FOREIGN KEY (benchmarkId, assetId) REFERENCES stig_asset_map (benchmarkId, assetId) ON DELETE CASCADE ON UPDATE CASCADE
   )`,
 
-  // // table collection_grant_group_acl
-  // `CREATE TABLE collection_grant_group_acl (
-  //   cggAclId INT NOT NULL AUTO_INCREMENT,
-  //   cggId INT NOT NULL,
-  //   benchmarkId VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_as_cs NULL,
-  //   assetId INT NULL,
-  //   clId INT NULL,
-  //   access enum('none','r', 'rw') NOT NULL,
-  //   modifiedUserId int NOT NULL,
-  //   modifiedDate datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  //   isRead tinyint GENERATED ALWAYS AS (case when (access = 'r' or access = 'rw') then 1 else NULL end) VIRTUAL,
-  //   isWrite tinyint GENERATED ALWAYS AS (case when (access = 'rw') then 1 else NULL end) VIRTUAL,
-  //   PRIMARY KEY (cggAclId),
-  //   KEY fk_collection_grant_group_acl_1 (cggId),
-  //   KEY fk_collection_grant_group_acl_2 (assetId, benchmarkId),
-  //   KEY fk_collection_grant_group_acl_3 (benchmarkId, assetId),
-  //   KEY fk_collection_grant_group_acl_4 (clId, benchmarkId),
-  //   CONSTRAINT fk_collection_grant_group_acl_1 FOREIGN KEY (cggId) REFERENCES collection_grant_group (cggId) ON DELETE CASCADE ON UPDATE CASCADE,
-  //   CONSTRAINT fk_collection_grant_group_acl_2 FOREIGN KEY (assetId) REFERENCES collection_grant_group (cggId) ON DELETE CASCADE ON UPDATE CASCADE,
-  //   CONSTRAINT fk_collection_grant_group_acl_3 FOREIGN KEY (benchmarkId) REFERENCES stig (benchmarkId) ON DELETE CASCADE ON UPDATE CASCADE,
-  //   CONSTRAINT fk_collection_grant_group_acl_4 FOREIGN KEY (clId) REFERENCES collection_label (clId) ON DELETE CASCADE ON UPDATE CASCADE,
-  //   CONSTRAINT fk_collection_grant_group_acl_5 FOREIGN KEY (benchmarkId, assetId) REFERENCES stig_asset_map (benchmarkId, assetId) ON DELETE CASCADE ON UPDATE CASCADE
-  // )`,
-  
   // view v_collection_grant_effective
   `CREATE OR REPLACE VIEW v_collection_grant_effective AS
   select 
@@ -215,20 +165,108 @@ where
 
   // // view v_user_stig_asset_effective
   `CREATE OR REPLACE VIEW v_user_stig_asset_effective AS
-  select 
-    *
-  from
-    user_stig_asset_map usa`,
-
-  // // delete phantom records from user_stig_asset_map
-  // `delete usa
-  // from
-  //   user_stig_asset_map usa
-  //   left join stig_asset_map sa using (saId)
-  //   left join asset a on sa.assetId = a.assetId
-  //   left join collection_grant cg on (a.collectionId = cg.collectionId and usa.userId = cg.userId and cg.accessLevel = 1)
-  // where 
-  //   cg.cgId is null`,
+  with cteDirectMapped as (select 
+		cg.cgId,
+		cg.collectionId,
+		cg.userId,
+		cg.userGroupId,
+		sa.saId,
+		sa.assetId,
+		sa.benchmarkId,
+		cga.access,
+		case when cga.benchmarkId is not null then 1 else 0 end +
+    case when cga.assetId is not null then 1 else 0 end +
+		case when cga.clId is not null then 1 else 0 end as specificity
+	from
+		collection_grant_acl cga
+		left join collection_grant cg on cga.cgId = cg.cgId
+		inner join collection c on cg.collectionId = c.collectionId and c.state = 'enabled'
+		left join collection_label_asset_map cla on cga.clId = cla.clId
+		inner join stig_asset_map sa on (
+      case when cga.assetId is not null 
+			  then cga.assetId = sa.assetId 
+        else true
+      end and 
+      case when cga.benchmarkId is not null 
+        then cga.benchmarkId = sa.benchmarkId
+         else true
+		  end and
+		  case when cga.clId is not null 
+        then cla.assetId = sa.assetId
+        else true
+		  end)
+   	inner join asset a on sa.assetId = a.assetId and cg.collectionId = a.collectionId and a.state = 'enabled'
+	where
+		cg.userId is not null
+),
+cteGroupMapped as (select 
+		cg.cgId,
+		cg.collectionId,
+		ugu.userId,
+		cg.userGroupId,
+		sa.saId,
+		sa.assetId,
+		sa.benchmarkId,
+		cga.access,
+		case when cga.benchmarkId is not null then 1 else 0 end +
+    case when cga.assetId is not null then 1 else 0 end +
+		case when cga.clId is not null then 1 else 0 end as specificity
+	from
+		collection_grant_acl cga
+		left join collection_grant cg on cga.cgId = cg.cgId
+		inner join collection c on cg.collectionId = c.collectionId and c.state = 'enabled'
+    left join user_group_user_map ugu on cg.userGroupId = ugu.userGroupId
+    left join collection_grant cgDirect on c.collectionId = cgDirect.collectionId and ugu.userId = cgDirect.userId
+		left join collection_label_asset_map cla on cga.clId = cla.clId
+		inner join stig_asset_map sa on (
+      case when cga.assetId is not null 
+			  then cga.assetId = sa.assetId 
+        else true
+      end and 
+      case when cga.benchmarkId is not null 
+        then cga.benchmarkId = sa.benchmarkId
+        else true
+		  end and
+		  case when cga.clId is not null 
+        then cla.assetId = sa.assetId
+        else true
+		  end)
+   		inner join asset a on sa.assetId = a.assetId and cg.collectionId = a.collectionId and a.state = 'enabled'
+	where
+		cg.userGroupId is not null
+    and cgDirect.userId is null
+),
+cteDirectRanked as (
+	select
+		cgId,
+		collectionId,
+		userId,
+		userGroupId,
+		saId,
+		assetId,
+		benchmarkId,
+		access,
+		specificity,
+		row_number() over (partition by userId, saId order by specificity desc, access asc) as rn
+	from 
+		cteDirectMapped),
+cteGroupRanked as (
+	select
+		cgId,
+		collectionId,
+		userId,
+		userGroupId,
+		saId,
+		assetId,
+		benchmarkId,
+		access,
+		specificity,
+		row_number() over (partition by userId, saId order by specificity desc, access asc) as rn
+	from 
+		cteGroupMapped)
+  select * from cteDirectRanked where	rn = 1
+  union
+  select * from cteGroupRanked where	rn = 1`,
 
   // initialize collection_grant_acl
   `INSERT INTO collection_grant_acl (cgId, assetId, benchmarkId, access, modifiedUserId, modifiedDate) SELECT
@@ -244,7 +282,9 @@ FROM
   left join asset a on sa.assetId = a.assetId
   left join collection_grant cg on (a.collectionId = cg.collectionId and usa.userId = cg.userId )
 WHERE
-  cg.cgId is not null`
+  cg.cgId is not null`,
+
+  `DROP TABLE user_stig_asset_map`
 ]
 
 const downMigration = [
