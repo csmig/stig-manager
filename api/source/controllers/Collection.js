@@ -1081,7 +1081,7 @@ module.exports.getReviewAclByCollectionUser = async function getReviewAclByColle
     const userId = req.params.userId
     const { collectionId } = getCollectionInfoAndCheckPermission(req)
     const grant = await CollectionService._getCollectionGrant({collectionId, userId})
-    if (!grant) throw new SmError.UnprocessableError('user has no grant in collection')
+    if (!grant) throw new SmError.UnprocessableError('user has no direct grant in collection')
     const response = await CollectionService.queryReviewAcl({cgId: grant.cgId})
     res.json(response)
   }
@@ -1122,7 +1122,7 @@ module.exports.setReviewAclByCollectionUser = async function setReviewAclByColle
     const {collectionId} = getCollectionInfoAndCheckPermission(req)
     
     const grant = await CollectionService._getCollectionGrant({collectionId, userId})
-    if (!grant) throw new SmError.UnprocessableError('user has no grant in collection')
+    if (!grant) throw new SmError.UnprocessableError('user has no direct grant in collection')
 
     const validated = await CollectionService._reviewAclValidate({cgId: grant.cgId, acl})
     if (validated.fail.length > 0) {

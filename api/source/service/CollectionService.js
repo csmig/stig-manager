@@ -16,7 +16,7 @@ exports.queryCollections = async function (inProjection = [], inPredicates = {},
 
     const groupBy = []
     const orderBy = []
-
+    const ctes = []
     const columns = [
       'CAST(c.collectionId as char) as collectionId',
       'c.name',
@@ -101,7 +101,8 @@ exports.queryCollections = async function (inProjection = [], inPredicates = {},
       ) as "grants"`)
     }
     if (inProjection.includes('users')) {
-      joins.push('left join v_collection_grant_sources cgs on c.collectionId = cgs.collectionId')
+      ctes.push(`cte_collection_grant_sources as (${dbUtils.sqlCollectionGrantSources({collectionId: inPredicates?.collectionId})})`)
+      joins.push('left join cte_collection_grant_sources cgs on c.collectionId = cgs.collectionId')
       joins.push('left join user_data ud on cgs.userId = ud.userId')
       columns.push(`case when count(cgs.userId) > 0
       then ${dbUtils.jsonArrayAggDistinct(`json_object(
@@ -205,7 +206,7 @@ exports.queryCollections = async function (inProjection = [], inPredicates = {},
     groupBy.push('c.collectionId, c.name, c.description, c.settings, c.metadata')
     orderBy.push('c.name')
 
-    const sql = dbUtils.makeQueryString({columns, joins, predicates,groupBy, orderBy})
+    const sql = dbUtils.makeQueryString({ctes, columns, joins, predicates,groupBy, orderBy})
 
     // perform concurrent labels query
     if (queries.length) {
@@ -2405,17 +2406,8 @@ exports.exportToCollection = async function ({srcCollectionId, dstCollectionId, 
 }
 
 exports.getGrantByCollectionUser = async function ({collectionId, userId}) {
-  const getGrantByCollectionUser = 
-  `SELECT 
-      CAST(cgs.userId AS CHAR) as userId,
-      cgs.accessLevel,
-      cgs.grantSources
-    FROM
-      v_collection_grant_sources cgs
-    WHERE
-    cgs.collectionId = ? AND cgs.userId = ?`
-
-  const [response] = await dbUtils.pool.query(getGrantByCollectionUser, [collectionId, userId])
+  const sqlGrantByCollectionUser = dbUtils.sqlCollectionGrantSources({collectionId, userId, includeColumnCollectionId: false})
+  const [response] = await dbUtils.pool.query(sqlGrantByCollectionUser, [collectionId, userId, collectionId, userId])
   return response
 }
 
@@ -2485,37 +2477,121 @@ exports.deleteGrantByCollectionUserGroup = async function ({collectionId, userGr
 
 exports.getEffectiveAclByCollectionUser = async function ({collectionId, userId}) {
   const sqlSelectEffectiveGrants = `
-  select 
-    json_object('asset', json_object('assetId', cast(a.assetId as char), 'name', a.name), 'benchmarkId', sa.benchmarkId) as \`resource\`,
-    json_array(json_object('userId', cast(usa.userId as char),  'username', ud.username)) as aclSources
-  from
-    user_stig_asset_map usa
-    left join user_data ud on usa.userId = ud.userId
-    left join stig_asset_map sa on usa.saId = sa.saId
-    left join asset a on sa.assetId = a.assetId
-    inner join collection c on (a.collectionId = c.collectionId and c.state = 'enabled')
-  where
-    usa.userId = ?
-    and a.collectionId = ?
-  union 
-  select
-    json_object('asset', json_object('assetId', cast(a.assetId as char), 'name', a.name), 'benchmarkId', sa.benchmarkId) as \`resource\`,
-    json_arrayagg(json_object('userGroupId', cast(ugsa.userGroupId as char), 'name', ug.name))
-  from 
-    user_group_stig_asset_map ugsa 
-    left join user_group_user_map ugu on ugsa.userGroupId = ugu.userGroupId
-    left join user_group ug on ugsa.userGroupId = ug.userGroupId
-    left join user_data ud on ugu.userId = ud.userId
-    left join stig_asset_map sa on ugsa.saId = sa.saId
-    left join asset a on sa.assetId = a.assetId
-    left join collection_grant cg on (a.collectionId = cg.collectionId and ugu.userId = cg.userId)
-    inner join collection c on (a.collectionId = c.collectionId and c.state = 'enabled')
-  where
-    cg.cgId is null
+  with cteDirectMapped as (select 
+		cg.userId,
+    ud.username as name,
+		cg.userGroupId,
+		sa.saId,
+		cga.access,
+    json_object(
+			'asset', json_object('assetId', cast(a.assetId as char),'name', a.name),
+			'benchmarkId', sa.benchmarkId) as resource,
+    json_remove(json_object(
+        CASE WHEN cga.benchmarkId is null THEN 'x' ELSE 'benchmarkId' END, cga.benchmarkId,
+        CASE WHEN cga.assetId is null THEN 'x' ELSE 'assetId' END, 
+        CASE WHEN cga.assetId is null THEN NULL ELSE json_object('assetId', cast(cga.assetId as char), 'name', a.name) END,
+        CASE WHEN cga.clId is null THEN 'x' ELSE 'label' END,
+        CASE WHEN cga.clId is null THEN NULL ELSE json_object('labelId', BIN_TO_UUID(cl.uuid,1), 'name', cl.name) END,
+        'access', cga.access
+      ), '$.x') as aclRule,
+		case when cga.benchmarkId is not null then 1 else 0 end +
+      case when cga.assetId is not null then 1 else 0 end +
+      case when cga.assetId is not null and cga.benchmarkId is not null then 1 else 0 end +
+		  case when cga.clId is not null then 1 else 0 end as specificity
+	from
+		collection_grant_acl cga
+		left join collection_grant cg on cga.cgId = cg.cgId
+		inner join collection c on cg.collectionId = c.collectionId and c.state = 'enabled'
+		left join collection_label_asset_map cla on cga.clId = cla.clId
+    left join collection_label cl on cga.clId = cl.clId
+		inner join stig_asset_map sa on (
+      case when cga.assetId is not null 
+			  then cga.assetId = sa.assetId 
+        else true
+      end and 
+      case when cga.benchmarkId is not null 
+        then cga.benchmarkId = sa.benchmarkId
+        else true
+		  end and
+		  case when cga.clId is not null 
+        then cla.assetId = sa.assetId
+        else true
+		  end)
+   		inner join asset a on sa.assetId = a.assetId and cg.collectionId = a.collectionId and a.state = 'enabled'
+      left join user_data ud on cg.userId = ud.userId
+	where
+		cg.userId = ?
+    and cg.collectionId = ?
+),
+cteGroupMapped as (select 
+		ugu.userId,
+    ug.name,
+		cg.userGroupId,
+		sa.saId,
+		cga.access,
+		json_object(
+			'asset', json_object('assetId', cast(a.assetId as char), 'name', a.name),
+			'benchmarkId', sa.benchmarkId) as resource,
+    json_remove(json_object(
+      CASE WHEN cga.benchmarkId is null THEN 'x' ELSE 'benchmarkId' END, cga.benchmarkId,
+      CASE WHEN cga.assetId is null THEN 'x' ELSE 'asset' END, 
+      CASE WHEN cga.assetId is null THEN NULL ELSE json_object('assetId', cast(cga.assetId as char), 'name', a.name) END,
+      CASE WHEN cga.clId is null THEN 'x' ELSE 'label' END,
+      CASE WHEN cga.clId is null THEN NULL ELSE json_object('labelId', BIN_TO_UUID(cl.uuid,1), 'name', cl.name) END,
+      'access', cga.access
+    ), '$.x') as aclRule,
+  case when cga.benchmarkId is not null then 1 else 0 end +
+      case when cga.assetId is not null then 1 else 0 end +
+      case when cga.assetId is not null and cga.benchmarkId is not null then 1 else 0 end +
+		  case when cga.clId is not null then 1 else 0 end as specificity
+	from
+		collection_grant_acl cga
+		left join collection_grant cg on cga.cgId = cg.cgId
+		inner join collection c on cg.collectionId = c.collectionId and c.state = 'enabled'
+    left join user_group_user_map ugu on cg.userGroupId = ugu.userGroupId
+    left join collection_grant cgDirect on c.collectionId = cgDirect.collectionId and ugu.userId = cgDirect.userId
+		left join collection_label_asset_map cla on cga.clId = cla.clId
+    left join collection_label cl on cga.clId = cl.clId
+		inner join stig_asset_map sa on (
+      case when cga.assetId is not null 
+        then cga.assetId = sa.assetId 
+        else true
+      end and 
+      case when cga.benchmarkId is not null 
+        then cga.benchmarkId = sa.benchmarkId
+        else true
+		  end and
+		  case when cga.clId is not null 
+        then cla.assetId = sa.assetId
+        else true
+		  end)
+   		inner join asset a on sa.assetId = a.assetId and cg.collectionId = a.collectionId and a.state = 'enabled'
+      left join user_group ug on cg.userGroupId = ug.userGroupId
+	where
+		cg.userGroupId is not null
+    and cgDirect.userId is null
     and ugu.userId = ?
-    and a.collectionId = ?
-  group by
-    c.collectionId, ugu.userId, ugsa.saId`
+    and cg.collectionId = ?
+),
+cteDirectRanked as (
+	select
+		access,
+    resource,
+    json_arrayagg(json_object('userId', cast(userId as char), 'username', name, 'aclRule', aclRule)) over (partition by saId, access, specificity) as aclSources,
+		row_number() over (partition by saId order by specificity desc, access asc) as rn
+	from 
+		cteDirectMapped),
+cteGroupRanked as (
+	select
+		access,
+    resource,
+    json_arrayagg(json_object('userGroupId', cast(userGroupId as char), 'name', name, 'aclRule', aclRule)) over (partition by saId, access, specificity) as aclSources,
+		row_number() over (partition by saId order by specificity desc, access asc) as rn
+	from 
+		cteGroupMapped)
+select access, resource, aclSources from cteDirectRanked where	rn = 1
+union
+select access, resource, aclSources from cteGroupRanked where	rn = 1`
   const [response] = await dbUtils.pool.query(sqlSelectEffectiveGrants, [userId, collectionId, userId, collectionId])
   return response
 }

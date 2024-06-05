@@ -10,6 +10,8 @@ Generalized queries for users
 exports.queryUsers = async function (inProjection, inPredicates, elevate, userObject) {
   let connection
   try {
+    const ctes = []
+    let needsCollectionGrantSources = false
     const columns = [
       'CAST(ud.userId as char) as userId',
       'ud.username',
@@ -29,7 +31,8 @@ exports.queryUsers = async function (inProjection, inPredicates, elevate, userOb
 
     // PROJECTIONS
     if (inProjection?.includes('collectionGrants')) {
-      joins.add('left join v_collection_grant_sources cgs on ud.userId = cgs.userId')
+      needsCollectionGrantSources = true
+      joins.add('left join cte_collection_grant_sources cgs on ud.userId = cgs.userId')
       joins.add('left join collection c on cgs.collectionId = c.collectionId')
       columns.push(`case when count(cgs.collectionId) > 0
       then 
@@ -46,10 +49,11 @@ exports.queryUsers = async function (inProjection, inPredicates, elevate, userOb
     }
 
     if (inProjection?.includes('statistics')) {
-      joins.add('left join v_collection_grant_effective cg on ud.userId = cg.userId')
+      needsCollectionGrantSources = true
+      joins.add('left join cte_collection_grant_sources cgs on ud.userId = cgs.userId')
       columns.push(`json_object(
           'created', date_format(ud.created, '%Y-%m-%dT%TZ'),
-          'collectionGrantCount', count(distinct cg.collectionId),
+          'collectionGrantCount', count(distinct cgs.collectionId),
           'lastAccess', ud.lastAccess,
           'lastClaims', ud.lastClaims
         ) as statistics`)
@@ -101,9 +105,12 @@ exports.queryUsers = async function (inProjection, inPredicates, elevate, userOb
       predicates.statements.push(`ud.username ${matchStr}`)
       predicates.binds.username = `${inPredicates.username}`
     }
+    if (needsCollectionGrantSources) {
+      ctes.push(`cte_collection_grant_sources as (${dbUtils.sqlCollectionGrantSources({userId: inPredicates.userId, username: inPredicates.username})})`)
+    }
 
     // CONSTRUCT MAIN QUERY
-    const sql = dbUtils.makeQueryString({columns, joins, predicates, groupBy, orderBy})
+    const sql = dbUtils.makeQueryString({ctes, columns, joins, predicates, groupBy, orderBy})
   
     connection = await dbUtils.pool.getConnection()
     connection.config.namedPlaceholders = true

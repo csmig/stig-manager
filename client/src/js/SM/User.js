@@ -1337,6 +1337,7 @@ SM.User.CollectionAclGrid = Ext.extend(Ext.grid.GridPanel, {
           name: 'benchmarkId',
           mapping: 'resource.benchmarkId'
         },
+        'access',
         'aclSources'
       ]
       const store = new Ext.data.JsonStore({
@@ -1365,6 +1366,12 @@ SM.User.CollectionAclGrid = Ext.extend(Ext.grid.GridPanel, {
           dataIndex: 'benchmarkId',
           sortable: true,
           width: 350
+        },
+        {
+          header: `Access`, 
+          dataIndex: 'access',
+          sortable: true,
+          width: 150
         },
         {
           header: 'ACL Source',
@@ -1407,11 +1414,12 @@ SM.User.CollectionAclGrid = Ext.extend(Ext.grid.GridPanel, {
   }
 })
 
-SM.User.showCollectionAcl = async function showUserProps({userId, collectionId}) {
+SM.User.showCollectionAcl = async function ({userId, collectionId, defaultAccess}) {
   const aclGrid = new SM.User.CollectionAclGrid({
     userId,
     collectionId,
-    border: false
+    border: false,
+    title: `Effective Access, default = ${defaultAccess}`
   })
   const appwindow = new Ext.Window({
     title: 'User ID ' + userId,
@@ -1422,7 +1430,7 @@ SM.User.showCollectionAcl = async function showUserProps({userId, collectionId})
     height: 650,
     layout: 'fit',
     plain: true,
-    bodyStyle: 'padding:5px;',
+    bodyStyle: 'padding:15px;',
     buttonAlign: 'right',
     items: aclGrid
   })

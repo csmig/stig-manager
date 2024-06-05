@@ -115,53 +115,53 @@ const upMigration = [
     cg.collectionId,
     ugu.userId`,
 
-  // view v_collection_grant_sources
-  `CREATE OR REPLACE VIEW v_collection_grant_sources AS
-  select 
-  cg.collectionId,
-  cg.userId,
-  cg.accessLevel,
-  'user' AS grantSource,
-  json_array(json_object(
-    'cgId', cg.cgId,
-    'userId', cast(ud.userId as char),
-    'username', ud.username)) as grantSources
-from
-  collection_grant cg
-  inner join collection c on (cg.collectionId = c.collectionId and c.state = 'enabled')
-  left join user_data ud on cg.userId = ud.userId
-where
-  cg.userId is not null
-union 
-select
-  collectionId,
-  userId,
-  accessLevel,
-  'userGroup' as grantSource,
-  userGroups as grantSources
-from
-  (select
-    ROW_NUMBER() OVER(PARTITION BY ugu.userId, cg.collectionId ORDER BY cg.accessLevel desc) as rn,
-    cg.collectionId, 
-    ugu.userId, 
-    cg.accessLevel,
-    json_arrayagg(
-      json_object(
-        'cgId', cg.cgId,
-        'userGroupId', cast(cg.userGroupId as char),
-        'name', ug.name
-      )) OVER (PARTITION BY ugu.userId, cg.collectionId, cg.accessLevel) as userGroups
-  from 
-    collection_grant cg
-    left join user_group_user_map ugu on cg.userGroupId = ugu.userGroupId
-    left join user_group ug on ugu.userGroupId = ug.userGroupId
-    left join collection_grant cgDirect on (cg.collectionId = cgDirect.collectionId and ugu.userId = cgDirect.userId)
-    inner join collection c on (cg.collectionId = c.collectionId and c.state = 'enabled')
-  where
-    cg.userGroupId is not null
-    and cgDirect.userId is null) dt
-where
-  dt.rn = 1`,
+//   // view v_collection_grant_sources
+//   `CREATE OR REPLACE VIEW v_collection_grant_sources AS
+//   select 
+//   cg.collectionId,
+//   cg.userId,
+//   cg.accessLevel,
+//   'user' AS grantSource,
+//   json_array(json_object(
+//     'cgId', cg.cgId,
+//     'userId', cast(ud.userId as char),
+//     'username', ud.username)) as grantSources
+// from
+//   collection_grant cg
+//   inner join collection c on (cg.collectionId = c.collectionId and c.state = 'enabled')
+//   left join user_data ud on cg.userId = ud.userId
+// where
+//   cg.userId is not null
+// union 
+// select
+//   collectionId,
+//   userId,
+//   accessLevel,
+//   'userGroup' as grantSource,
+//   userGroups as grantSources
+// from
+//   (select
+//     ROW_NUMBER() OVER(PARTITION BY ugu.userId, cg.collectionId ORDER BY cg.accessLevel desc) as rn,
+//     cg.collectionId, 
+//     ugu.userId, 
+//     cg.accessLevel,
+//     json_arrayagg(
+//       json_object(
+//         'cgId', cg.cgId,
+//         'userGroupId', cast(cg.userGroupId as char),
+//         'name', ug.name
+//       )) OVER (PARTITION BY ugu.userId, cg.collectionId, cg.accessLevel) as userGroups
+//   from 
+//     collection_grant cg
+//     left join user_group_user_map ugu on cg.userGroupId = ugu.userGroupId
+//     left join user_group ug on ugu.userGroupId = ug.userGroupId
+//     left join collection_grant cgDirect on (cg.collectionId = cgDirect.collectionId and ugu.userId = cgDirect.userId)
+//     inner join collection c on (cg.collectionId = c.collectionId and c.state = 'enabled')
+//   where
+//     cg.userGroupId is not null
+//     and cgDirect.userId is null) dt
+// where
+//   dt.rn = 1`,
 
   // // view v_user_stig_asset_effective
   `CREATE OR REPLACE VIEW v_user_stig_asset_effective AS

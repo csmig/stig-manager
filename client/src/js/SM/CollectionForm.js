@@ -553,7 +553,7 @@ SM.Collection.GrantsGrid = Ext.extend(Ext.grid.GridPanel, {
         this.accessBtn = tbar.addButton({
             iconCls: 'sm-asset-icon',
             disabled: true,
-            text: 'Edit Access...',
+            text: 'Edit Access List...',
             handler: function () {
                 const r = _this.getSelectionModel().getSelected();
                 Ext.getBody().mask('Getting access list for ' + r.get('title') + '...');
@@ -833,8 +833,7 @@ SM.Collection.UsersGrid = Ext.extend(Ext.grid.GridPanel, {
             listeners: {
                 selectionchange: function (sm) {
                     if (sm.hasSelection()) {
-                        const record = sm.getSelected()
-                        viewAclBtn.setDisabled(record.data.accessLevel != 1)
+                        viewAclBtn.setDisabled(false)
                     }
                     else {
                         viewAclBtn.setDisabled(true)
@@ -846,10 +845,11 @@ SM.Collection.UsersGrid = Ext.extend(Ext.grid.GridPanel, {
         const viewAclBtn = new Ext.Button({
             iconCls: 'sm-asset-icon',
             disabled: true,
-            text: 'View Restriced Access ...',
+            text: 'View Effective Access List...',
             handler: function () {
-                const r = _this.getSelectionModel().getSelected();
-                SM.User.showCollectionAcl({collectionId: _this.collectionId, userId: r.data.userId})
+                const r = _this.getSelectionModel().getSelected()
+                const defaultAccess = r.data.accessLevel === 1 ? 'none' : 'rw'
+                SM.User.showCollectionAcl({collectionId: _this.collectionId, userId: r.data.userId, defaultAccess})
             }
         })
 

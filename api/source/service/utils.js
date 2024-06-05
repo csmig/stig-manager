@@ -619,3 +619,89 @@ module.exports.pruneUserGroupStigAssetMap = async function (connection, {collect
 module.exports.jsonArrayAggDistinct = function (valueStr) {
   return `cast(concat('[', group_concat(distinct ${valueStr}), ']') as json)`
 }
+
+module.exports.sqlCollectionGrantSources = function ({collectionId, userId, username, nameMatch, includeColumnCollectionId = true, isForOas = true}) {
+  const predicates = {
+    statements: [],
+    binds: []
+  }
+  if (collectionId) {
+    predicates.statements.push('cg.collectionId = ?')
+    predicates.binds.push(collectionId)
+  }
+  if (userId) {
+    predicates.statements.push('ud.userId = ?')
+    predicates.binds.push(userId)
+  }
+  if (username) {
+    let matchStr = '= ?'
+    if ( nameMatch && nameMatch !== 'exact') {
+      matchStr = 'LIKE ?'
+      switch (nameMatch) {
+        case 'startsWith':
+          username = `${username}%`
+          break
+        case 'endsWith':
+          username = `%${username}`
+          break
+        case 'contains':
+          username = `%${username}%`
+          break
+      }
+    }
+    predicates.statements.push(`ud.username ${matchStr}`)
+    predicates.binds.push(username)
+  }
+  const sqlGrantSourcesDirect = isForOas ? 
+    "json_object('userId', cast(ud.userId as char),'username', ud.username)" :
+    "cg.cgId"
+
+  const sqlGrantSourcesGroup = isForOas ? 
+    "json_object('userGroupId', cast(cg.userGroupId as char),'name', ug.name)" :
+    "cg.cgId"
+
+  // final query will be a UNION of sqlDirectGrants and sqlGroupGrants
+  const sqlDirectGrants = `select 
+  ${includeColumnCollectionId ? 'cg.collectionId,' : ''}
+  cast(cg.userId as char) as userId,
+  cg.accessLevel,
+  json_array(${sqlGrantSourcesDirect}) as grantSources
+from
+  collection_grant cg
+  inner join collection c on (cg.collectionId = c.collectionId and c.state = 'enabled')
+  left join user_data ud on cg.userId = ud.userId
+where
+    cg.userId is not null
+    ${predicates.statements.length ? `and ${predicates.statements.join(' and ')}` : ''}`
+  const sqlFormattedDirectGrants = mysql.format(sqlDirectGrants, predicates.binds)
+
+  const sqlGroupGrants = `select
+  ${includeColumnCollectionId ? 'collectionId,' : ''}
+  userId,
+  accessLevel,
+  userGroups as grantSources
+from
+  (select
+    ROW_NUMBER() OVER(PARTITION BY ugu.userId, cg.collectionId ORDER BY cg.accessLevel desc) as rn,
+    ${includeColumnCollectionId ? 'cg.collectionId,' : ''} 
+    cast(ugu.userId as char) as userId, 
+    cg.accessLevel,
+    json_arrayagg(${sqlGrantSourcesGroup}) OVER (PARTITION BY ugu.userId, cg.collectionId, cg.accessLevel) as userGroups
+from 
+    collection_grant cg
+    inner join collection c on (cg.collectionId = c.collectionId and c.state = 'enabled')
+    left join user_group_user_map ugu on cg.userGroupId = ugu.userGroupId
+    left join user_group ug on ugu.userGroupId = ug.userGroupId
+    left join user_data ud on ugu.userId = ud.userId
+    left join collection_grant cgDirect on (cg.collectionId = cgDirect.collectionId and ugu.userId = cgDirect.userId)
+  where
+    cg.userGroupId is not null
+    and cgDirect.userId is null
+    ${predicates.statements.length ? `and ${predicates.statements.join(' and ')}` : ''}
+  ) dt
+where
+  dt.rn = 1`
+  const sqlFormattedGroupGrants = mysql.format(sqlGroupGrants, predicates.binds)
+  const sqlFormatted = `${sqlFormattedDirectGrants} union ${sqlFormattedGroupGrants}`
+  return sqlFormatted
+}
