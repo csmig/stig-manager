@@ -620,7 +620,7 @@ module.exports.jsonArrayAggDistinct = function (valueStr) {
   return `cast(concat('[', group_concat(distinct ${valueStr}), ']') as json)`
 }
 
-module.exports.sqlCollectionGrantSources = function ({collectionId, userId, username, nameMatch, includeColumnCollectionId = true, isForOas = true}) {
+module.exports.sqlCollectionGrantSources = function ({collectionId, userId, username, nameMatch, includeColumnCollectionId = true, sourceType = 'object'}) {
   const predicates = {
     statements: [],
     binds: []
@@ -652,11 +652,11 @@ module.exports.sqlCollectionGrantSources = function ({collectionId, userId, user
     predicates.statements.push(`ud.username ${matchStr}`)
     predicates.binds.push(username)
   }
-  const sqlGrantSourcesDirect = isForOas ? 
+  const sqlGrantSourcesDirect = sourceType === 'object' ? 
     "json_object('userId', cast(ud.userId as char),'username', ud.username)" :
     "cg.cgId"
 
-  const sqlGrantSourcesGroup = isForOas ? 
+  const sqlGrantSourcesGroup = sourceType === 'object' ? 
     "json_object('userGroupId', cast(cg.userGroupId as char),'name', ug.name)" :
     "cg.cgId"
 
