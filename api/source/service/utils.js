@@ -620,7 +620,7 @@ module.exports.jsonArrayAggDistinct = function (valueStr) {
   return `cast(concat('[', group_concat(distinct ${valueStr}), ']') as json)`
 }
 
-module.exports.sqlCollectionGrantSources = function ({collectionId, userId, username, nameMatch, includeColumnCollectionId = true, sourceType = 'object'}) {
+module.exports.sqlCollectionGrantees = function ({collectionId, userId, username, nameMatch, includeColumnCollectionId = true, granteeType = 'object'}) {
   const predicates = {
     statements: [],
     binds: []
@@ -652,11 +652,11 @@ module.exports.sqlCollectionGrantSources = function ({collectionId, userId, user
     predicates.statements.push(`ud.username ${matchStr}`)
     predicates.binds.push(username)
   }
-  const sqlGrantSourcesDirect = sourceType === 'object' ? 
+  const sqlGranteesDirect = granteeType === 'object' ? 
     "json_object('userId', cast(ud.userId as char),'username', ud.username)" :
     "cg.cgId"
 
-  const sqlGrantSourcesGroup = sourceType === 'object' ? 
+  const sqlGranteesGroup = granteeType === 'object' ? 
     "json_object('userGroupId', cast(cg.userGroupId as char),'name', ug.name)" :
     "cg.cgId"
 
@@ -665,7 +665,7 @@ module.exports.sqlCollectionGrantSources = function ({collectionId, userId, user
   ${includeColumnCollectionId ? 'cg.collectionId,' : ''}
   cast(cg.userId as char) as userId,
   cg.accessLevel,
-  json_array(${sqlGrantSourcesDirect}) as grantSources
+  json_array(${sqlGranteesDirect}) as grantees
 from
   collection_grant cg
   inner join collection c on (cg.collectionId = c.collectionId and c.state = 'enabled')
@@ -679,14 +679,14 @@ where
   ${includeColumnCollectionId ? 'collectionId,' : ''}
   userId,
   accessLevel,
-  userGroups as grantSources
+  userGroups as grantees
 from
   (select
     ROW_NUMBER() OVER(PARTITION BY ugu.userId, cg.collectionId ORDER BY cg.accessLevel desc) as rn,
     ${includeColumnCollectionId ? 'cg.collectionId,' : ''} 
     cast(ugu.userId as char) as userId, 
     cg.accessLevel,
-    json_arrayagg(${sqlGrantSourcesGroup}) OVER (PARTITION BY ugu.userId, cg.collectionId, cg.accessLevel) as userGroups
+    json_arrayagg(${sqlGranteesGroup}) OVER (PARTITION BY ugu.userId, cg.collectionId, cg.accessLevel) as userGroups
 from 
     collection_grant cg
     inner join collection c on (cg.collectionId = c.collectionId and c.state = 'enabled')
@@ -703,5 +703,46 @@ where
   dt.rn = 1`
   const sqlFormattedGroupGrants = mysql.format(sqlGroupGrants, predicates.binds)
   const sqlFormatted = `${sqlFormattedDirectGrants} union ${sqlFormattedGroupGrants}`
+  return sqlFormatted
+}
+
+module.exports.sqlCteAclRulesRankedByCgIds = function (cgIds) {
+  const sql = `cteAclRules as (select 
+	sa.saId,
+	cga.access,
+	case when cga.benchmarkId is not null then 1 else 0 end +
+	  case when cga.assetId is not null then 1 else 0 end +
+	  case when cga.assetId is not null and cga.benchmarkId is not null then 1 else 0 end +
+	  case when cga.clId is not null then 1 else 0 end as specificity
+from
+	collection_grant_acl cga
+	left join collection_label_asset_map cla on cga.clId = cla.clId
+    left join collection_label cl on cla.clId = cl.clId
+	inner join stig_asset_map sa on (
+	  case when cga.assetId is not null 
+		then cga.assetId = sa.assetId 
+		else true
+	  end and 
+	  case when cga.benchmarkId is not null 
+		then cga.benchmarkId = sa.benchmarkId
+		else true
+	  end and
+	  case when cga.clId is not null 
+		then cla.assetId = sa.assetId
+		else true
+	  end)
+	inner join asset a on sa.assetId = a.assetId and a.state = 'enabled'
+where
+	cga.cgId in (?)
+),
+cteAclRulesRanked as (
+    select
+		saId,
+    access,
+		row_number() over (partition by saId order by specificity desc, access asc) as rn
+	from 
+		cteAclRules)`
+
+  const sqlFormatted = mysql.format(sql, cgIds)
   return sqlFormatted
 }

@@ -11,7 +11,7 @@ exports.queryUsers = async function (inProjection, inPredicates, elevate, userOb
   let connection
   try {
     const ctes = []
-    let needsCollectionGrantSources = false
+    let needsCollectionGrantees = false
     const columns = [
       'CAST(ud.userId as char) as userId',
       'ud.username',
@@ -31,8 +31,8 @@ exports.queryUsers = async function (inProjection, inPredicates, elevate, userOb
 
     // PROJECTIONS
     if (inProjection?.includes('collectionGrants')) {
-      needsCollectionGrantSources = true
-      joins.add('left join cte_collection_grant_sources cgs on ud.userId = cgs.userId')
+      needsCollectionGrantees = true
+      joins.add('left join cte_collection_grantees cgs on ud.userId = cgs.userId')
       joins.add('left join collection c on cgs.collectionId = c.collectionId')
       columns.push(`case when count(cgs.collectionId) > 0
       then 
@@ -42,15 +42,15 @@ exports.queryUsers = async function (inProjection, inPredicates, elevate, userOb
             'name', c.name
           ),
           'accessLevel', cgs.accessLevel,
-          'grantSources', cgs.grantSources
+          'grantees', cgs.grantees
         )`)}
       else json_array() 
       end as collectionGrants`)
     }
 
     if (inProjection?.includes('statistics')) {
-      needsCollectionGrantSources = true
-      joins.add('left join cte_collection_grant_sources cgs on ud.userId = cgs.userId')
+      needsCollectionGrantees = true
+      joins.add('left join cte_collection_grantees cgs on ud.userId = cgs.userId')
       columns.push(`json_object(
           'created', date_format(ud.created, '%Y-%m-%dT%TZ'),
           'collectionGrantCount', count(distinct cgs.collectionId),
@@ -105,8 +105,8 @@ exports.queryUsers = async function (inProjection, inPredicates, elevate, userOb
       predicates.statements.push(`ud.username ${matchStr}`)
       predicates.binds.username = `${inPredicates.username}`
     }
-    if (needsCollectionGrantSources) {
-      ctes.push(`cte_collection_grant_sources as (${dbUtils.sqlCollectionGrantSources({userId: inPredicates.userId, username: inPredicates.username})})`)
+    if (needsCollectionGrantees) {
+      ctes.push(`cte_collection_grantees as (${dbUtils.sqlCollectionGrantees({userId: inPredicates.userId, username: inPredicates.username})})`)
     }
 
     // CONSTRUCT MAIN QUERY

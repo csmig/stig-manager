@@ -314,7 +314,7 @@ SM.User.DirectGrantsGrid = Ext.extend(Ext.grid.GridPanel, {
         return grants
       },
       setValue: function (collectionGrants) {
-        const data = collectionGrants.filter(g => g.grantSources[0]?.userId).map(g => ({
+        const data = collectionGrants.filter(g => g.grantees[0]?.userId).map(g => ({
           collectionId: g.collection.collectionId,
           name: g.collection.name,
           accessLevel: g.accessLevel
@@ -345,7 +345,7 @@ SM.User.EffectiveGrantsGrid = Ext.extend(Ext.grid.GridPanel, {
         mapping: 'collection.name'
       },
       'accessLevel',
-      'grantSources'
+      'grantees'
     ]
     const totalTextCmp = new Ext.Toolbar.TextItem({
       text: '0 records',
@@ -374,13 +374,13 @@ SM.User.EffectiveGrantsGrid = Ext.extend(Ext.grid.GridPanel, {
         sortable: true,
       },
       {
-        header: '<span exportvalue="Grant Source">Grant Source<i class= "fa fa-question-circle sm-question-circle"></i></span>',
+        header: '<span exportvalue="Grantee">Grantee<i class= "fa fa-question-circle sm-question-circle"></i></span>',
         width: 150,
-        dataIndex: 'grantSources',
+        dataIndex: 'grantees',
         sortable: false,
-        renderer: function (grantSources) {
+        renderer: function (grantees) {
           const divs = []
-          for (const source of grantSources) {
+          for (const source of grantees) {
             const icon = source.userId ? 'sm-user-icon' : 'sm-users-icon'
             const title = source.userId ? 'Direct' : source.name
             divs.push(`<div class="x-combo-list-item ${icon} sm-combo-list-icon" exportValue="${title}">
@@ -1331,12 +1331,9 @@ SM.User.CollectionAclGrid = Ext.extend(Ext.grid.GridPanel, {
       const fields = [
         {
           name: 'assetName',
-          mapping: 'resource.asset.name'
+          mapping: 'asset.name'
         },
-        {
-          name: 'benchmarkId',
-          mapping: 'resource.benchmarkId'
-        },
+        'benchmarkId',
         'access',
         'aclSources'
       ]
@@ -1381,8 +1378,8 @@ SM.User.CollectionAclGrid = Ext.extend(Ext.grid.GridPanel, {
           renderer: function (aclSources) {
             const divs = []
             for (const source of aclSources) {
-              const icon = source.userId ? 'sm-user-icon' : 'sm-users-icon'
-              const title = source.userId ? 'Direct' : source.name
+              const icon = source.grantee.userId ? 'sm-user-icon' : 'sm-users-icon'
+              const title = source.grantee.userId ? 'Direct' : source.grantee.name
               divs.push(`<div class="x-combo-list-item ${icon} sm-combo-list-icon" exportValue="${title}">
                       <span style="font-weight:600;">${title}</span></div>`)
             }

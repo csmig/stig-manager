@@ -115,17 +115,17 @@ const upMigration = [
     cg.collectionId,
     ugu.userId`,
 
-//   // view v_collection_grant_sources
-//   `CREATE OR REPLACE VIEW v_collection_grant_sources AS
+//   // view v_collection_grantees
+//   `CREATE OR REPLACE VIEW v_collection_grantees AS
 //   select 
 //   cg.collectionId,
 //   cg.userId,
 //   cg.accessLevel,
-//   'user' AS grantSource,
+//   'user' AS grantee,
 //   json_array(json_object(
 //     'cgId', cg.cgId,
 //     'userId', cast(ud.userId as char),
-//     'username', ud.username)) as grantSources
+//     'username', ud.username)) as grantees
 // from
 //   collection_grant cg
 //   inner join collection c on (cg.collectionId = c.collectionId and c.state = 'enabled')
@@ -137,8 +137,8 @@ const upMigration = [
 //   collectionId,
 //   userId,
 //   accessLevel,
-//   'userGroup' as grantSource,
-//   userGroups as grantSources
+//   'userGroup' as grantee,
+//   userGroups as grantees
 // from
 //   (select
 //     ROW_NUMBER() OVER(PARTITION BY ugu.userId, cg.collectionId ORDER BY cg.accessLevel desc) as rn,

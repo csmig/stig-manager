@@ -750,7 +750,7 @@ SM.Collection.UsersGrid = Ext.extend(Ext.grid.GridPanel, {
         }
     
         const fields = [
-            'grantSources',
+            'grantees',
             {
                 name: 'userId',
                 mapping: 'user.userId'
@@ -805,15 +805,15 @@ SM.Collection.UsersGrid = Ext.extend(Ext.grid.GridPanel, {
                 }
             },
             {
-                header: '<span exportvalue="Grant Source">Grant Source<i class= "fa fa-question-circle sm-question-circle"></i></span>',
+                header: '<span exportvalue="Grantee">Grantee<i class= "fa fa-question-circle sm-question-circle"></i></span>',
                 width: 150,
-                dataIndex: 'grantSources',
+                dataIndex: 'grantees',
                 sortable: false,
-                renderer: function (grantSources) {
+                renderer: function (grantees) {
                     const divs = []
-                    for (const source of grantSources) {
-                        const icon = source.userId ? 'sm-user-icon' : 'sm-users-icon'
-                        const title = source.userId ? 'Direct' : source.name
+                    for (const grantee of grantees) {
+                        const icon = grantee.userId ? 'sm-user-icon' : 'sm-users-icon'
+                        const title = grantee.userId ? 'Direct' : grantee.name
                         divs.push(`<div class="x-combo-list-item ${icon} sm-combo-list-icon" exportValue="${title}">
                         <span style="font-weight:600;">${title}</span></div>`)
                     }
