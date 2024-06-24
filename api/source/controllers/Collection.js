@@ -160,7 +160,7 @@ module.exports.getPoamByCollection = async function getFindingsByCollection (req
       office: req.query.office,
       status: req.query.status
     }
-    const { collectionId, collectionGrant } = getCollectionInfoAndCheckPermission(req, Security.ACCESS_LEVEL.Restricted)
+    const { collectionId } = getCollectionInfoAndCheckPermission(req, Security.ACCESS_LEVEL.Restricted)
     const response = await CollectionService.getFindingsByCollection( collectionId, aggregator, benchmarkId, assetId, acceptedOnly, 
       [
         'rulesWithDiscussion',
@@ -172,8 +172,8 @@ module.exports.getPoamByCollection = async function getFindingsByCollection (req
     
     const po = Serialize.poamObjectFromFindings(response, defaults)
     const xlsx = await Serialize.xlsxFromPoamObject(po)
-    let collectionName = collectionGrant.collection.name
-    writer.writeInlineFile( res, xlsx, `POAM-${collectionName}.xlsx`, 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+    // let collectionName = collectionGrant.collection.name
+    writer.writeInlineFile( res, xlsx, `POAM-${collectionId}.xlsx`, 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
   }
   catch (err) {
     next(err)
@@ -309,7 +309,8 @@ function requestedOwnerGrantsMatchExisting(requestedGrants, existingGrants) {
 function getCollectionInfoAndCheckPermission(request, minimumAccessLevel = Security.ACCESS_LEVEL.Manage, supportsElevation = false) {
   let collectionId = request.params.collectionId
   const elevate = request.query.elevate
-  const collectionGrant = request.userObject.collectionGrants.find( g => g.collection.collectionId === collectionId )
+  const collectionGrant = request.userObject.collectionGrants[collectionId]
+
   // If elevate is not set and supported, and the user does not have a grant, or the grant level is below the minimum required, throw an error.
   if (!( (supportsElevation && elevate) || (collectionGrant?.accessLevel >= minimumAccessLevel) )) {
     throw new SmError.PrivilegeError()

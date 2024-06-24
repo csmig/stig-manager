@@ -3876,7 +3876,7 @@ paths:
       tags:
         - User
       summary: Return the requester's user information
-      operationId: getUserObject
+      operationId: getUser
       responses:
         '200':
           description: User response

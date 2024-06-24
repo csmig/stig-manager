@@ -87,10 +87,12 @@ module.exports.exportUserGroups = async function exportUserGroups (projections, 
   }
 }
 
-module.exports.getUserObject = async function getUserObject (req, res, next) {
+module.exports.getUser = async function getUser (req, res, next) {
   try {
-    res.json(req.userObject)
-  }
+    let response = await UserService.getUserByUserId(req.userObject.userId, ['collectionGrants', 'statistics', 'userGroups'])
+    response.privileges = req.userObject.privileges
+    res.json(response)
+}
   catch(err) {
     next(err)
   }

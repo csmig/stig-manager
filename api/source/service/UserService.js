@@ -340,13 +340,13 @@ exports.setLastAccess = async function (userId, timestamp) {
     return true
 }
 
-exports.setUserData = async function (userObject, fields) {
+exports.setUserData = async function (username, fields) {
   let insertColumns = ['username']
   // Apparently the standard MySQL practice to ensure insertId is valid even on non-updating updates
   // See: https://chrisguitarguy.com/2020/01/26/mysql-last-insert-id-on-duplicate-key-update/
   let updateColumns = ['userId = LAST_INSERT_ID(userId)']
   // let updateColumns = []
-  let binds = [userObject.username]
+  let binds = [username]
   if (fields.lastAccess) {
     insertColumns.push('lastAccess')
     updateColumns.push('lastAccess = VALUES(lastAccess)')
@@ -478,4 +478,56 @@ exports.deleteUserGroup = async function({userGroupId}) {
     const sqlDeleteUserGroup = `DELETE from user_group WHERE userGroupId = ?`
     await dbUtils.pool.query(sqlDeleteUserGroup, [userGroupId])
     return userGroupId
+}
+
+exports.getUserObject = async function (username) {
+  const sql = `
+  select
+    userId,
+    username,
+    lastAccess,
+    lastClaims,
+    (select
+      json_objectagg(dt2.collectionId, json_object('accessLevel', dt2.accessLevel, 'grantIds', dt2.grantIds))
+    from   
+      (select 
+        cg.collectionId,
+        cg.accessLevel,
+        json_array(cg.cgId) as grantIds
+      from
+        collection_grant cg
+        inner join collection c on (cg.collectionId = c.collectionId and c.state = 'enabled')
+        left join user_data ud2 on cg.userId = ud2.userId
+      where
+        ud2.userId = ud.userId
+      union 
+      select
+        collectionId,
+        accessLevel,
+        grantIds
+      from
+        (select
+          ROW_NUMBER() OVER(PARTITION BY ugu.userId, cg.collectionId ORDER BY cg.accessLevel desc) as rn,
+          cg.collectionId, 
+          cg.accessLevel,
+          json_arrayagg(cg.cgId) OVER (PARTITION BY ugu.userId, cg.collectionId, cg.accessLevel) as grantIds
+        from 
+          collection_grant cg
+          inner join collection c on (cg.collectionId = c.collectionId and c.state = 'enabled')
+          left join user_group_user_map ugu on cg.userGroupId = ugu.userGroupId
+          left join user_group ug on ugu.userGroupId = ug.userGroupId
+          left join user_data ud3 on ugu.userId = ud3.userId
+          left join collection_grant cgDirect on (cg.collectionId = cgDirect.collectionId and ugu.userId = cgDirect.userId)
+        where
+        cg.userGroupId is not null
+        and cgDirect.userId is null
+        and ud3.userId = ud.userId) dt
+    where
+      dt.rn = 1) dt2) as collectionGrants                               
+  from
+    user_data ud
+  where
+    ud.username = ?`
+  const [rows] = await dbUtils.pool.query(sql, [username])
+  return rows[0]
 }
