@@ -9,10 +9,15 @@ const _this = this
 /**
 Generalized queries for collection(s).
 **/
-exports.queryCollections = async function (inProjection = [], inPredicates = {}, elevate = false, userObject) { 
-    const context = elevate ? dbUtils.CONTEXT_ALL : dbUtils.CONTEXT_USER
+exports.queryCollections = async function (inProjection = [], inPredicates = {}, elevate = false, userObject) {
+
+  /**
+   * projections when inPredicates.collectionId: assets, grants, users, stigs, labels
+   * 
+   * projections common: owners, statistics
+   */
     
-    const queries = []
+    const collectionIdsGranted = Object.keys(userObject.collectionGrants)
 
     const groupBy = []
     const orderBy = []
@@ -21,223 +26,309 @@ exports.queryCollections = async function (inProjection = [], inPredicates = {},
       'CAST(c.collectionId as char) as collectionId',
       'c.name',
       'c.description',
-      `JSON_MERGE_PATCH('${JSON.stringify(MyController.defaultSettings)}', c.settings) as settings`,
+      'c.settings',
       'c.metadata'
     ]
-    const joins = [
-      'collection c',
-      'left join v_collection_grant_effective cg on c.collectionId = cg.collectionId',
-      'left join asset a on c.collectionId = a.collectionId and a.state = "enabled"',
-      'left join stig_asset_map sa on a.assetId = sa.assetId'
-    ]
+    const joins = new Set(['collection c'])
 
-    // PROJECTIONS
-    if (inProjection.includes('assets')) {
-      columns.push(`cast(
-        concat('[', 
-          coalesce (
-            group_concat(distinct 
-              case when a.assetId is not null then 
-                json_object(
-                  'assetId', CAST(a.assetId as char), 
-                  'name', a.name
-                )
-              else null end 
-            order by a.name),
-            ''),
-        ']')
-      as json) as "assets"`)
-    }
-    if (inProjection.includes('stigs')) {
-      joins.push('left join default_rev dr on (sa.benchmarkId=dr.benchmarkId and c.collectionId = dr.collectionId)')
-      joins.push('left join revision on dr.revId = revision.revId')
-      columns.push(`cast(
-        concat('[', 
-          coalesce (
-            group_concat(distinct 
-              case when sa.benchmarkId is not null then 
-                json_object(
-                  'benchmarkId', sa.benchmarkId, 
-                  'revisionStr', revision.revisionStr, 
-                  'benchmarkDate', date_format(revision.benchmarkDateSql,'%Y-%m-%d'),
-                  'revisionPinned', CASE WHEN dr.revisionPinned = 1 THEN CAST(true as json) ELSE CAST(false as json) END, 
-                  'ruleCount', revision.ruleCount)
-              else null end 
-            order by sa.benchmarkId),
-            ''),
-        ']')
-      as json) as "stigs"`)
-    }
-    if (inProjection.includes('grants')) { 
-      columns.push(`(select
-        coalesce(
-          (select json_arrayagg(grantJson) from
-            (select
-               json_object(
-                  'user', json_object(
-                  'userId', CAST(user_data.userId as char),
-                  'username', user_data.username,
-                  'displayName', COALESCE(
-                    JSON_UNQUOTE(JSON_EXTRACT(user_data.lastClaims, "$.${config.oauth.claims.name}")),
-                    user_data.username)),
-                  'accessLevel', accessLevel)
-                as grantJson
-            from
-              collection_grant inner join user_data using (userId) where collectionId = c.collectionId
-            UNION
-            select
-              json_object(
-                'userGroup', json_object(
-                  'userGroupId', CAST(user_group.userGroupId as char),
-                  'name', user_group.name,
-                  'description', user_group.description
-                  ),
-                'accessLevel', accessLevel
-              ) as grantJson
-            from collection_grant inner join user_group using (userGroupId) where collectionId = c.collectionId
-          ) as grantJsons)
-        , json_array()
-        )
-      ) as "grants"`)
-    }
-    if (inProjection.includes('users')) {
-      ctes.push(`cte_collection_grantees as (${dbUtils.sqlCollectionGrantees({collectionId: inPredicates?.collectionId})})`)
-      joins.push('left join cte_collection_grantees cgs on c.collectionId = cgs.collectionId')
-      joins.push('left join user_data ud on cgs.userId = ud.userId')
-      columns.push(`case when count(cgs.userId) > 0
-      then ${dbUtils.jsonArrayAggDistinct(`json_object(
-          'user', json_object(
-            'userId', CAST(ud.userId as char),
-            'username', ud.username,
-            'displayName', COALESCE(
-              JSON_UNQUOTE(JSON_EXTRACT(ud.lastClaims, "$.${config.oauth.claims.name}")),
-              ud.username)),
-          'accessLevel', cgs.accessLevel,
-          'grantees', cgs.grantees)`)}
-      else json_array()
-      end as users`)
-    }
-    if (inProjection.includes('owners')) {
-      columns.push(`(select
-        coalesce(
-          (select json_arrayagg(
-            json_object(
-              'userId', CAST(user_data.userId as char),
-              'username', user_data.username,
-              'email', JSON_UNQUOTE(JSON_EXTRACT(user_data.lastClaims, "$.${config.oauth.claims.email}")), 
-              'displayName', JSON_UNQUOTE(JSON_EXTRACT(user_data.lastClaims, "$.${config.oauth.claims.name}"))
-            )
-          )
-          from v_collection_grant_effective 
-            left join user_data using (userId)
-          where collectionId = c.collectionId and accessLevel = 4)
-        ,  json_array()
-        )
-      ) as "owners"`)
-    }
-    if (inProjection.includes('labels')) {
-      queries.push(_this.getCollectionLabels('all', userObject))
-    }
-    if (inProjection.includes('statistics')) {
-      if (context == dbUtils.CONTEXT_USER) {
-        joins.push('left join v_collection_grant_effective cgstat on c.collectionId = cgstat.collectionId')
-        columns.push(`(select
-          json_object(
-            'created', DATE_FORMAT(c.created, '%Y-%m-%dT%TZ'),
-            'grantCount', CASE WHEN min(cg.accessLevel) = 1 THEN 1 ELSE COUNT( distinct cgstat.userId ) END,
-            'assetCount', COUNT( distinct a.assetId ),
-            'checklistCount', COUNT( distinct sa.saId )
-          )
-        ) as "statistics"`)
-      }
-      else {
-        columns.push(`(select
-          json_object(
-            'created', DATE_FORMAT(c.created, '%Y-%m-%dT%TZ'),
-            'grantCount', COUNT( distinct cg.userId ),
-            'assetCount', COUNT( distinct a.assetId ),
-            'checklistCount', COUNT( distinct sa.saId )
-          )
-        ) as "statistics"`)
-      }
-    }
+    let requireCteGrantees = false
+    let requireCteAcls = false
+    let requireCteAssets = false
+    let requireCteStigs = false
+    let requireCteLabels = ''
 
-    // PREDICATES
-    let predicates = {
+    const predicates = {
       statements: [`c.state = "enabled"`],
       binds: []
     }
-    if ( inPredicates.collectionId ) {
+
+    if (inPredicates.collectionId) {
+      const requestersAccessLevel = elevate ? 4 : userObject.collectionGrants[inPredicates.collectionId].accessLevel
+      const requestersGrantIds = userObject.collectionGrants[inPredicates.collectionId].grantIds
       predicates.statements.push('c.collectionId = ?')
       predicates.binds.push( inPredicates.collectionId )
-    }
-    if ( inPredicates.name ) {
-      let matchStr = '= ?'
-      if ( inPredicates.nameMatch && inPredicates.nameMatch !== 'exact') {
-        matchStr = 'LIKE ?'
-        switch (inPredicates.nameMatch) {
-          case 'startsWith':
-            inPredicates.name = `${inPredicates.name}%`
-            break
-          case 'endsWith':
-            inPredicates.name = `%${inPredicates.name}`
-            break
-          case 'contains':
-            inPredicates.name = `%${inPredicates.name}%`
-            break
+
+      if (inProjection.includes('assets')) {
+        let sqlAssets = `(select coalesce(json_arrayagg(json_object(
+        'assetId', CAST(assetId as char), 
+        'name', name)), json_array()) from
+        ${requestersAccessLevel === 1 ? 'cteAssets' : 'asset where collectionId = c.collectionId order by name'}) as assets`
+        if (requestersAccessLevel === 1) {
+          requireCteAcls = true
+          requireCteAssets = true
+        }
+        columns.push(sqlAssets)
+      }
+
+      if (inProjection.includes('stigs')) {
+        if (requestersAccessLevel === 1) {
+          requireCteAcls = true
+          requireCteStigs = true
+          columns.push(`(select coalesce(json_arrayagg(json_object(
+          'benchmarkId', benchmarkId, 
+          'revisionStr', revisionStr,
+          'benchmarkDate', benchmarkDate,
+          'revisionPinned', revisionPinned,
+          'ruleCount', ruleCount
+          )), json_array()) from cteStigs) as stigs`)
+        }
+        else {
+          columns.push(`(select coalesce(json_arrayagg(json_object(
+            'benchmarkId', sa.benchmarkId, 
+            'revisionStr', revision.revisionStr,
+            'benchmarkDate', date_format(revision.benchmarkDateSql,'%Y-%m-%d'),
+            'revisionPinned', CASE WHEN dr.revisionPinned = 1 THEN CAST(true as json) ELSE CAST(false as json) END,
+            'ruleCount', revision.ruleCount
+            )), json_array()) from 
+            asset
+            left join stig_asset_map sa on a.assetId = sa.assetId
+            left join default_rev dr on (sa.benchmarkId=dr.benchmarkId and dr.collectionId = a.collectionId)
+            left join revision on dr.revId = revision.revId
+            where a.collectionId = c.collectionId) as stigs`)
         }
       }
-      predicates.statements.push(`c.name ${matchStr}`)
-      predicates.binds.push( inPredicates.name )
-    }
-    if ( inPredicates.metadata ) {
-      for (const pair of inPredicates.metadata) {
-        const [key, value] = pair.split(':')
-        predicates.statements.push('JSON_CONTAINS(c.metadata, ?, ?)')
-        predicates.binds.push( `"${value}"`,  `$.${key}`)
+
+      if (inProjection.includes('grants')) { 
+        columns.push(`(select
+          coalesce(
+            (select json_arrayagg(grantJson) from
+              (select
+                 json_object(
+                    'user', json_object(
+                    'userId', CAST(user_data.userId as char),
+                    'username', user_data.username,
+                    'displayName', COALESCE(
+                      JSON_UNQUOTE(JSON_EXTRACT(user_data.lastClaims, "$.${config.oauth.claims.name}")),
+                      user_data.username)),
+                    'accessLevel', accessLevel)
+                  as grantJson
+              from
+                collection_grant inner join user_data using (userId) where collectionId = c.collectionId
+              UNION
+              select
+                json_object(
+                  'userGroup', json_object(
+                    'userGroupId', CAST(user_group.userGroupId as char),
+                    'name', user_group.name,
+                    'description', user_group.description
+                    ),
+                  'accessLevel', accessLevel
+                ) as grantJson
+              from collection_grant inner join user_group using (userGroupId) where collectionId = c.collectionId
+            ) as grantJsons)
+          , json_array()
+          )
+        ) as "grants"`)
+      }
+
+      if (inProjection.includes('users')) {
+        requireCteGrantees = true
+        columns.push(`(select 
+        json_arrayagg(json_object(
+        'user', json_object(
+          'userId', CAST(ud.userId as char),
+          'username', ud.username,
+          'displayName', COALESCE(
+          JSON_UNQUOTE(JSON_EXTRACT(ud.lastClaims, "$.name")),
+          ud.username)),
+        'accessLevel', cgs.accessLevel,
+        'grantees', cgs.grantees))
+        from cteGrantees cgs left join user_data ud on cgs.userId = ud.userId) as users`)
+      }
+
+      if (inProjection.includes('labels')) {
+        if (requestersAccessLevel === 1) {
+          requireCteAcls = true
+          requireCteLabels = 'restricted'
+        }
+        else {
+          requireCteLabels = 'all'
+        }
+        columns.push(`(select
+          coalesce(json_arrayagg(json_object(
+            'labelId', labelId, 
+            'name', name,
+            'description', description,
+            'color', color,
+            'uses', uses
+            )), json_array())
+          from
+            cteLabels) as labels`)
+      }
+
+      if (inProjection.includes('owners')) {
+        columns.push(`(select json_arrayagg(grantJson) from
+          (select json_object(
+            'userId', CAST(user_data.userId as char),
+            'username', user_data.username
+            ) as grantJson
+          from
+            collection_grant inner join user_data using (userId) where collectionId = c.collectionId and accessLevel = 4
+          UNION
+          select json_object(
+            'userGroupId', CAST(user_group.userGroupId as char),
+            'name', user_group.name,
+            'description', user_group.description
+          ) as grantJson
+          from collection_grant inner join user_group using (userGroupId) where collectionId = c.collectionId and accessLevel = 4) o) as owners`)
+      }
+
+      if (inProjection.includes('statistics')) {
+        requireCteGrantees = true
+        requireCteAcls = true
+        columns.push(`(select
+        json_object(
+        'created', DATE_FORMAT(c.created, '%Y-%m-%dT%TZ'),
+        'userCount', dt4.userCount,
+        'assetCount', dt4.assetCount,
+        'checklistCount', dt4.checklistCount
+        )
+        from 
+          (SELECT
+          (select count(userId) from cteGrantees where collectionId = c.collectionId) as userCount,
+          (select count(distinct sa.assetId) from cteAclRulesRanked carr left join stig_asset_map sa using (saId) where carr.collectionId = c.collectionId) as assetCount,
+          (select count(saId) from cteAclRulesRanked where collectionId = c.collectionId) as checklistCount) dt4
+        ) as statistics`)
+      }
+
+      // setup ctes
+      if (requireCteGrantees) {
+        const cteGranteesParams = {collectionId: inPredicates.collectionId, returnCte: true}
+        ctes.push(dbUtils.sqlGrantees(cteGranteesParams))
+      }
+      if (requireCteAcls) {
+        const cteAclRulesRankedParams = {cgIds: requestersGrantIds}
+        ctes.push(dbUtils.cteAclRulesRankedByCgIds(cteAclRulesRankedParams))
+      }
+      if (requireCteAssets) {
+        ctes.push(`cteAssets as (select distinct a.assetId, a.name from 
+        cteAclRules ar
+        inner join stig_asset_map sa using (saId)
+        left join asset a using (assetId)
+        order by a.name)`)
+      }
+      if (requireCteStigs) {
+        ctes.push(`cteStigs as (
+        select distinct
+          sa.benchmarkId,
+          revision.revisionStr,
+          date_format(revision.benchmarkDateSql,'%Y-%m-%d') as benchmarkDate,
+          CASE WHEN dr.revisionPinned = 1 THEN CAST(true as json) ELSE CAST(false as json) END as revisionPinned,
+          revision.ruleCount
+          from
+        cteAclRules ar
+          inner join stig_asset_map sa using (saId)
+        left join default_rev dr on (sa.benchmarkId=dr.benchmarkId and dr.collectionId = 1)
+          left join revision on dr.revId = revision.revId
+          order by sa.benchmarkId)`)
+      }
+      if (requireCteLabels) {
+        ctes.push(`cteLabels as (
+        select
+          BIN_TO_UUID(cl.uuid,1) labelId,
+          cl.name,
+          cl.description,
+          cl.color,
+          count(distinct cla.claId) as uses
+        from
+          collection_label cl
+          left join collection_label_asset_map cla on cla.clId = cl.clId
+          ${requireCteLabels === 'restricted' ? 'left join stig_asset_map sa on cla.assetId = sa.assetId' : ''}
+          ${requireCteLabels === 'restricted' ? 'inner join cteAclRulesRanked car on sa.saId = car.saId' : ''}
+        where
+          cl.collectionId = 1
+        group by
+          cl.clId)`)
       }
     }
-    if (context == dbUtils.CONTEXT_USER) {
-      joins.push('left join v_user_stig_asset_effective usa on sa.saId = usa.saId')
-      predicates.statements.push('(cg.userId = ? AND CASE WHEN cg.accessLevel = 1 THEN usa.userId = cg.userId ELSE TRUE END)')
-      predicates.binds.push( userObject.userId, userObject.userId )
+    else {
+      let requestersGrantIds = []
+
+      if (!elevate) {
+        for (const collectionId in userObject.collectionGrants) {
+          requestersGrantIds.push(userObject.collectionGrants[collectionId].grantIds)
+        }
+        requestersGrantIds = requestersGrantIds.flat()
+      }
+
+      if (inProjection.includes('owners')) {
+        columns.push(`(select json_arrayagg(grantJson) from
+          (select json_object(
+            'userId', CAST(user_data.userId as char),
+            'username', user_data.username
+            ) as grantJson
+          from
+            collection_grant inner join user_data using (userId) where collectionId = c.collectionId and accessLevel = 4
+          UNION
+          select json_object(
+            'userGroupId', CAST(user_group.userGroupId as char),
+            'name', user_group.name,
+            'description', user_group.description
+          ) as grantJson
+          from collection_grant inner join user_group using (userGroupId) where collectionId = c.collectionId and accessLevel = 4) o) as owners`)
+      }
+      if (inProjection.includes('statistics')) {
+        if (!elevate) {
+          requireCteGrantees = true
+          requireCteAcls = true
+          columns.push(`(select
+            json_object(
+            'created', DATE_FORMAT(c.created, '%Y-%m-%dT%TZ'),
+            'userCount', dt4.userCount,
+            'assetCount', case when dt4.accessLevel = 1 then dt4.assetGrantedCount else dt4.assetCount end,
+            'checklistCount', case when dt4.accessLevel = 1 then dt4.checklistGrantedCount else dt4.checklistCount end
+            )
+            from 
+              (SELECT
+              (select accessLevel from cteGrantees where collectionId = c.collectionId and userId = ?) as accessLevel,
+              (select count(userId) from cteGrantees where collectionId = c.collectionId) as userCount,
+              (select count(distinct a.assetId) from asset a where a.collectionId = c.collectionId) as assetCount,
+              (select count(distinct sa.assetId) from cteAclRulesRanked carr left join stig_asset_map sa using (saId) where carr.collectionId = c.collectionId) as assetGrantedCount,
+              (select count(sa.saId) from asset a left join stig_asset_map sa using (assetId) where a.collectionId = c.collectionId) as checklistCount,
+              (select count(saId) from cteAclRulesRanked where collectionId = c.collectionId) as checklistGrantedCount
+            ) dt4
+          ) as statistics`)
+          predicates.binds.push(userObject.userId)
+        }
+        else {
+          requireCteGrantees = true
+          columns.push(`(select
+            json_object(
+            'created', DATE_FORMAT(c.created, '%Y-%m-%dT%TZ'),
+            'userCount', dt4.userCount,
+            'assetCount', dt4.assetCount,
+            'checklistCount', dt4.checklistCount
+            )
+            from 
+              (SELECT
+              (select count(userId) from cteGrantees where collectionId = c.collectionId) as userCount,
+              (select count(distinct a.assetId) from asset a where a.collectionId = c.collectionId) as assetCount,
+              (select count(sa.saId) from asset a left join stig_asset_map sa using (assetId) where a.collectionId = c.collectionId) as checklistCount) dt4
+            ) as statistics`)
+        }
+
+        if (!elevate) {
+          predicates.statements.push('c.collectionId IN (?)')
+          predicates.binds.push( collectionIdsGranted )
+        }
+
+        if (requireCteGrantees) {
+          const cteGranteesParams = elevate ? {returnCte: true} : {collectionIds: collectionIdsGranted, returnCte: true}
+          ctes.push(dbUtils.sqlGrantees(cteGranteesParams))
+        }
+        if (requireCteAcls) {
+          const cteAclRulesRankedParams = {cgIds: requestersGrantIds}
+          ctes.push(dbUtils.cteAclRulesRankedByCgIds(cteAclRulesRankedParams))
+        }
+      }
     }
 
-    groupBy.push('c.collectionId, c.name, c.description, c.settings, c.metadata')
     orderBy.push('c.name')
 
     const sql = dbUtils.makeQueryString({ctes, columns, joins, predicates,groupBy, orderBy})
 
-    // perform concurrent labels query
-    if (queries.length) {
-      queries.push(dbUtils.pool.query(sql, predicates.binds))
-      const results = await Promise.all(queries)
-
-      const labelResults = results[0]
-      const collectionResults = results[1][0]
-      
-      // transform labels into Map
-      const labelMap = new Map()
-      for (const labelResult of labelResults) {
-        const {collectionId, ...label} = labelResult
-        const existing = labelMap.get(collectionId)
-        if (existing) {
-          existing.push(label)
-        }
-        else {
-          labelMap.set(collectionId, [label])
-        }
-      }
-      for (const collectionResult of collectionResults) {
-        collectionResult.labels = labelMap.get(collectionResult.collectionId) ?? []
-      }
-
-      return collectionResults
-    }
-    else {
-      let [rows] = await dbUtils.pool.query(sql, predicates.binds)
-      return (rows)  
-    }
+    let [rows] = await dbUtils.pool.query(sql, predicates.binds)
+    return (rows)  
 }
 
 exports.queryFindings = async function (aggregator, inProjection = [], inPredicates = {}, userObject) {
@@ -2406,7 +2497,7 @@ exports.exportToCollection = async function ({srcCollectionId, dstCollectionId, 
 }
 
 exports.getGrantByCollectionUser = async function ({collectionId, userId}) {
-  const sqlGrantByCollectionUser = dbUtils.sqlCollectionGrantees({collectionId, userId, includeColumnCollectionId: false})
+  const sqlGrantByCollectionUser = dbUtils.sqlGrantees({collectionId, userId, includeColumnCollectionId: false})
   const [response] = await dbUtils.pool.query(sqlGrantByCollectionUser, [collectionId, userId, collectionId, userId])
   return response
 }

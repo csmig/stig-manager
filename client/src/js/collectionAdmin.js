@@ -33,7 +33,7 @@ function addCollectionAdmin( params ) {
     {
       name: 'users',
       type: 'integer',
-      mapping: 'statistics.grantCount'
+      mapping: 'statistics.userCount'
     },
     {
       name: 'checklists',
@@ -331,6 +331,7 @@ async function showCollectionProps(collectionId) {
         },
         method: 'GET'
       })
+      SM.Cache.updateCollection(apiCollection)
 
       fp.setFieldValues(apiCollection)
     }

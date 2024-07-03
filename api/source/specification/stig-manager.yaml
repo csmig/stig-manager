@@ -5520,7 +5520,7 @@ components:
         owners:
           type: array
           items:
-            $ref: '#/components/schemas/User'
+            $ref: '#/components/schemas/Grantee'
         settings:
           $ref: '#/components/schemas/CollectionSettings'
         statistics:
@@ -5555,12 +5555,12 @@ components:
           type: integer
         created:
           $ref: '#/components/schemas/Created'
-        grantCount:
+        userCount:
           type: integer
       required:
         - created
         - assetCount
-        - grantCount
+        - userCount
         - checklistCount
     CollectionStatus:
       additionalProperties: false
@@ -5759,10 +5759,6 @@ components:
           $ref: '#/components/schemas/CollectionId'
         description:
           $ref: '#/components/schemas/CollectionDescription'
-        labels:
-          type: array
-          items:
-            $ref: '#/components/schemas/Label'
         metadata:
           $ref: '#/components/schemas/Metadata'
         name:
@@ -8091,7 +8087,6 @@ components:
           enum:
             - owners
             - statistics
-            - labels
     CollectionStigProjectionQuery:
       name: projection
       in: query

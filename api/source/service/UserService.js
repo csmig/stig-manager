@@ -32,7 +32,7 @@ exports.queryUsers = async function (inProjection, inPredicates, elevate, userOb
     // PROJECTIONS
     if (inProjection?.includes('collectionGrants')) {
       needsCollectionGrantees = true
-      joins.add('left join cte_collection_grantees cgs on ud.userId = cgs.userId')
+      joins.add('left join cteGrantees cgs on ud.userId = cgs.userId')
       joins.add('left join collection c on cgs.collectionId = c.collectionId')
       columns.push(`case when count(cgs.collectionId) > 0
       then 
@@ -50,7 +50,7 @@ exports.queryUsers = async function (inProjection, inPredicates, elevate, userOb
 
     if (inProjection?.includes('statistics')) {
       needsCollectionGrantees = true
-      joins.add('left join cte_collection_grantees cgs on ud.userId = cgs.userId')
+      joins.add('left join cteGrantees cgs on ud.userId = cgs.userId')
       columns.push(`json_object(
           'created', date_format(ud.created, '%Y-%m-%dT%TZ'),
           'collectionGrantCount', count(distinct cgs.collectionId),
@@ -106,7 +106,7 @@ exports.queryUsers = async function (inProjection, inPredicates, elevate, userOb
       predicates.binds.username = `${inPredicates.username}`
     }
     if (needsCollectionGrantees) {
-      ctes.push(`cte_collection_grantees as (${dbUtils.sqlCollectionGrantees({userId: inPredicates.userId, username: inPredicates.username})})`)
+      ctes.push(dbUtils.sqlGrantees({userId: inPredicates.userId, username: inPredicates.username, returnCte: true}))
     }
 
     // CONSTRUCT MAIN QUERY

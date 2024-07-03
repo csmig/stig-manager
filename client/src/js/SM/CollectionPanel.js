@@ -1675,6 +1675,8 @@ SM.CollectionPanel.showCollectionTab = async function (options) {
       return
     }
 
+    SM.Cache.updateCollectionLabels(collectionId)
+
     const gState = {}
 
     gState.labelIds = initialLabelIds

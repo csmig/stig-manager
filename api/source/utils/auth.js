@@ -23,9 +23,7 @@ const verifyRequest = async function (req, requiredScopes, securityDefinition) {
     const decoded = await verifyAndDecodeToken (token, getKey, {algorithms: ['RS256']})
     req.access_token = decoded
     req.bearer = token
-    // req.userObject = {
-    //     email: decoded[config.oauth.claims.email] ||  'None Provided'
-    // }        
+
     // Get username from configured claims in token, or fall back through precedence list. 
     const usernamePrecedence = [config.oauth.claims.username, "preferred_username", config.oauth.claims.servicename, "azp", "client_id", "clientId"]
     const username = decoded[usernamePrecedence.find(element => !!decoded[element])]
@@ -34,8 +32,6 @@ const verifyRequest = async function (req, requiredScopes, securityDefinition) {
         throw(new SmError.PrivilegeError("No token claim mappable to username found"))
     }
 
-    // Get display name from configured claim in token, or use username
-    // req.userObject.displayName = decoded[config.oauth.claims.name] || req.userObject.username
     // Check scopes
     const grantedScopes = typeof decoded[config.oauth.claims.scope] === 'string' ? 
         decoded[config.oauth.claims.scope].split(' ') : 
@@ -55,7 +51,7 @@ const verifyRequest = async function (req, requiredScopes, securityDefinition) {
         throw(new SmError.PrivilegeError("Not in scope"))
     }
 
-    // Get privileges      
+    // Get privileges and check elevate param  
     const privileges = {
         canCreateCollection: privilegeGetter(decoded).includes('create_collection'),
         canAdmin: privilegeGetter(decoded).includes('admin')
@@ -64,14 +60,7 @@ const verifyRequest = async function (req, requiredScopes, securityDefinition) {
         throw(new SmError.PrivilegeError("User has insufficient privilege to complete this request."))
     }
 
-
-    // req.userObject.privileges = privileges
-    // const response = await UserService.getUserByUsername(req.userObject.username, ['collectionGrants', 'statistics', 'userGroups'], false, null)   
     const userObject = await UserService.getUserObject(username) ?? {} 
-    // req.userObject.userId = response?.userId || null
-    // req.userObject.collectionGrants = response?.collectionGrants || []
-    // req.userObject.statistics = response?.statistics || {}
-    // req.userObject.userGroups = response?.userGroups || []
     
     const refreshFields = {}
     let now = new Date().toUTCString()
@@ -90,6 +79,7 @@ const verifyRequest = async function (req, requiredScopes, securityDefinition) {
             userObject.userId = userId.toString()
         }
     }
+
     userObject.privileges = privileges
     req.userObject = userObject
     return true
