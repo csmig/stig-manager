@@ -160,7 +160,7 @@ module.exports.getPoamByCollection = async function getFindingsByCollection (req
       office: req.query.office,
       status: req.query.status
     }
-    const { collectionId } = getCollectionInfoAndCheckPermission(req, Security.ACCESS_LEVEL.Restricted)
+    const { collectionId, collectionGrant } = getCollectionInfoAndCheckPermission(req, Security.ACCESS_LEVEL.Restricted)
     const response = await CollectionService.getFindingsByCollection( collectionId, aggregator, benchmarkId, assetId, acceptedOnly, 
       [
         'rulesWithDiscussion',
@@ -172,8 +172,21 @@ module.exports.getPoamByCollection = async function getFindingsByCollection (req
     
     const po = Serialize.poamObjectFromFindings(response, defaults)
     const xlsx = await Serialize.xlsxFromPoamObject(po)
-    // let collectionName = collectionGrant.collection.name
-    writer.writeInlineFile( res, xlsx, `POAM-${collectionId}.xlsx`, 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+    let collectionName = collectionGrant.collection.name
+    writer.writeInlineFile( res, xlsx, `POAM-${collectionName}.xlsx`, 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+  }
+  catch (err) {
+    next(err)
+  }
+}
+
+
+module.exports.getStigAssetsByCollectionUser = async function getStigAssetsByCollectionUser (req, res, next) {
+  try {
+    const userId = req.params.userId
+    const { collectionId } = getCollectionInfoAndCheckPermission(req)
+    const response = await CollectionService.getStigAssetsByCollectionUser(collectionId, userId, req.userObject )
+    res.json(response)
   }
   catch (err) {
     next(err)
