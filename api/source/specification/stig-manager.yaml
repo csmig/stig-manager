@@ -4206,6 +4206,7 @@ components:
         - none
         - r
         - rw
+      default: rw
     AclRuleAssetBasic:
       additionalProperties: false
       type: object
@@ -4216,8 +4217,8 @@ components:
           $ref: '#/components/schemas/BenchmarkId'
         access:
           $ref: '#/components/schemas/AclRuleAccess'
-      required:
-        - access
+      # required:
+      #   - access
     AclRuleAssetPut:
       additionalProperties: false
       type: object

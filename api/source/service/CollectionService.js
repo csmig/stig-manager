@@ -18,6 +18,9 @@ exports.queryCollections = async function (inProjection = [], inPredicates = {},
    */
     
     const collectionIdsGranted = Object.keys(userObject.collectionGrants)
+    if (!collectionIdsGranted.length && !elevate) {
+      return []
+    }
 
     const groupBy = []
     const orderBy = []
@@ -44,7 +47,7 @@ exports.queryCollections = async function (inProjection = [], inPredicates = {},
 
     if (inPredicates.collectionId) {
       const requestersAccessLevel = elevate ? 4 : userObject.collectionGrants[inPredicates.collectionId].accessLevel
-      const requestersGrantIds = userObject.collectionGrants[inPredicates.collectionId].grantIds
+      const requestersGrantIds = userObject.collectionGrants[inPredicates.collectionId]?.grantIds
       predicates.statements.push('c.collectionId = ?')
       predicates.binds.push( inPredicates.collectionId )
 
@@ -80,7 +83,7 @@ exports.queryCollections = async function (inProjection = [], inPredicates = {},
             'revisionPinned', CASE WHEN dr.revisionPinned = 1 THEN CAST(true as json) ELSE CAST(false as json) END,
             'ruleCount', revision.ruleCount
             )), json_array()) from 
-            asset
+            asset a
             left join stig_asset_map sa on a.assetId = sa.assetId
             left join default_rev dr on (sa.benchmarkId=dr.benchmarkId and dr.collectionId = a.collectionId)
             left join revision on dr.revId = revision.revId
@@ -174,21 +177,40 @@ exports.queryCollections = async function (inProjection = [], inPredicates = {},
       }
 
       if (inProjection.includes('statistics')) {
-        requireCteGrantees = true
-        requireCteAcls = true
-        columns.push(`(select
-        json_object(
-        'created', DATE_FORMAT(c.created, '%Y-%m-%dT%TZ'),
-        'userCount', dt4.userCount,
-        'assetCount', dt4.assetCount,
-        'checklistCount', dt4.checklistCount
-        )
-        from 
-          (SELECT
-          (select count(userId) from cteGrantees where collectionId = c.collectionId) as userCount,
-          (select count(distinct sa.assetId) from cteAclRulesRanked carr left join stig_asset_map sa using (saId) where carr.collectionId = c.collectionId) as assetCount,
-          (select count(saId) from cteAclRulesRanked where collectionId = c.collectionId) as checklistCount) dt4
-        ) as statistics`)
+        if (requestersAccessLevel === 1) {
+          requireCteGrantees = true
+          requireCteAcls = true
+          columns.push(`(select
+          json_object(
+          'created', DATE_FORMAT(c.created, '%Y-%m-%dT%TZ'),
+          'userCount', dt4.userCount,
+          'assetCount', dt4.assetCount,
+          'checklistCount', dt4.checklistCount
+          )
+          from 
+            (SELECT
+            (select count(userId) from cteGrantees where collectionId = c.collectionId) as userCount,
+            (select count(distinct sa.assetId) from cteAclRulesRanked carr left join stig_asset_map sa using (saId) where carr.collectionId = c.collectionId) as assetCount,
+            (select count(saId) from cteAclRulesRanked where collectionId = c.collectionId) as checklistCount) dt4
+          ) as statistics`)
+        }
+        else {
+          requireCteGrantees = true
+          columns.push(`(select
+            json_object(
+            'created', DATE_FORMAT(c.created, '%Y-%m-%dT%TZ'),
+            'userCount', dt4.userCount,
+            'assetCount', dt4.assetCount,
+            'checklistCount', dt4.checklistCount
+            )
+            from 
+              (SELECT
+              (select count(userId) from cteGrantees where collectionId = c.collectionId) as userCount,
+              (select count(distinct a.assetId) from asset a where a.collectionId = c.collectionId) as assetCount,
+              (select count(saId) from asset a left join stig_asset_map sa using (assetId) where a.collectionId = c.collectionId) as checklistCount) dt4
+            ) as statistics`)
+  
+        }
       }
 
       // setup ctes
@@ -306,20 +328,20 @@ exports.queryCollections = async function (inProjection = [], inPredicates = {},
               (select count(sa.saId) from asset a left join stig_asset_map sa using (assetId) where a.collectionId = c.collectionId) as checklistCount) dt4
             ) as statistics`)
         }
+      }
 
-        if (!elevate) {
-          predicates.statements.push('c.collectionId IN (?)')
-          predicates.binds.push( collectionIdsGranted )
-        }
+      if (!elevate) {
+        predicates.statements.push('c.collectionId IN (?)')
+        predicates.binds.push( collectionIdsGranted )
+      }
 
-        if (requireCteGrantees) {
-          const cteGranteesParams = elevate ? {returnCte: true} : {collectionIds: collectionIdsGranted, returnCte: true}
-          ctes.push(dbUtils.sqlGrantees(cteGranteesParams))
-        }
-        if (requireCteAcls) {
-          const cteAclRulesRankedParams = {cgIds: requestersGrantIds}
-          ctes.push(dbUtils.cteAclRulesRankedByCgIds(cteAclRulesRankedParams))
-        }
+      if (requireCteGrantees) {
+        const cteGranteesParams = elevate ? {returnCte: true} : {collectionIds: collectionIdsGranted, returnCte: true}
+        ctes.push(dbUtils.sqlGrantees(cteGranteesParams))
+      }
+      if (requireCteAcls) {
+        const cteAclRulesRankedParams = {cgIds: requestersGrantIds}
+        ctes.push(dbUtils.cteAclRulesRankedByCgIds(cteAclRulesRankedParams))
       }
     }
 
@@ -849,7 +871,7 @@ exports.getChecklistByCollectionStig = async function (collectionId, benchmarkId
     }
 
     // Access control
-    const collectionGrant = userObject.collectionGrants.find( g => g.collection.collectionId === collectionId )
+    const collectionGrant = userObject.collectionGrants[collectionId]
     if (collectionGrant?.accessLevel === 1) {
       predicates.statements.push(`a.assetId in (
         select

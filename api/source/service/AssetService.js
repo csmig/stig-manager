@@ -63,50 +63,19 @@ exports.queryAssets = async function (inProjection = [], inPredicates = {}, elev
       ) as "statusStats"`)
   }
   if (inProjection.includes('stigGrants')) {
-    columns.push(`(with cteUser as (select
-      sa.benchmarkId,
-      -- if no user, return null instead of object with null property values
-      case when ud.userId is not null then
-        json_object(
-          'userId', CAST(ud.userId as char), 
-          'username', ud.username
-        ) 
-      else NULL end as users
-      FROM 
-        stig_asset_map sa
-        left join user_stig_asset_map usa on sa.saId = usa.saId
-        left join user_data ud on usa.userId = ud.userId
-      WHERE
-      sa.assetId = a.assetId),
-    cteUserGroup as (select
-      sa.benchmarkId,
-      -- if no user, return null instead of object with null property values
-      case when ug.userGroupId is not null then
-        json_object(
-          'userGroupId', CAST(ug.userGroupId as char), 
-          'name', ug.name
-        ) 
-      else NULL end as userGroups
-      FROM 
-        stig_asset_map sa
-        left join user_group_stig_asset_map usa on sa.saId = usa.saId
-        left join user_group ug on usa.userGroupId = ug.userGroupId
-      WHERE
-      sa.assetId = a.assetId)
-      ,
-      byStig as (select
-      json_object(
-        'benchmarkId', r.benchmarkId, 
-        'users', case when count(r.users) > 0 then cast(concat('[', group_concat(distinct r.users) , ']') as json) else json_array() end,
-        'userGroups', case when count(cteUserGroup.userGroups) > 0 then cast(concat('[', group_concat(distinct cteUserGroup.userGroups) , ']') as json) else json_array() end
-        ) as stigAssetUsers
-      from
-      cteUser as r
-      left join cteUserGroup on r.benchmarkId = cteUserGroup.benchmarkId
-      group by r.benchmarkId)
-      select
-          CASE WHEN COUNT(stigAssetUsers) > 0 THEN json_arrayagg(stigAssetUsers) ELSE json_array() END
-      from byStig) as "stigGrants"`)
+    columns.push(`cast(
+      concat('[', 
+        coalesce (
+          group_concat(distinct 
+            case when sa.benchmarkId is not null then 
+              json_object(
+                'benchmarkId', sa.benchmarkId, 
+                'users', json_array())
+            else null end 
+          order by sa.benchmarkId),
+          ''),
+      ']')
+    as json) as "stigGrants"`)
   }
   if (inProjection.includes('stigs')) {
     //TODO: If benchmarkId is a predicate in main query, this incorrectly only shows that STIG

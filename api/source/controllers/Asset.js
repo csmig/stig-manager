@@ -18,7 +18,7 @@ module.exports.createAsset = async function createAsset (req, res, next) {
     const elevate = req.query.elevate
     let projection = req.query.projection
     const body = req.body
-    const collectionGrant = req.userObject.collectionGrants.find( g => g.collection.collectionId === body.collectionId )
+    const collectionGrant = req.userObject.collectionGrants[body.collectionId]
 
     if ( elevate || (collectionGrant?.accessLevel >= 3) ) {
       try {
@@ -146,7 +146,7 @@ module.exports.getAsset = async function getAsset (req, res, next) {
     if (projection?.includes('stigGrants')) {
       // Check if the stigGrants projection is forbidden
       if (!elevate) {
-        const collectionGrant = req.userObject.collectionGrants.find( g => g.collection.collectionId === response.collection.collectionId )
+        const collectionGrant = req.userObject.collectionGrants[response.collection.collectionId]
         if (collectionGrant?.accessLevel < 3) {
           throw new SmError.PrivilegeError(`User has insufficient privilege to request projection 'stigGrants'.`)
         }
@@ -171,7 +171,7 @@ module.exports.getAssets = async function getAssets (req, res, next) {
     let labelMatch = req.query.labelMatch
     let projection = req.query.projection
     let elevate = req.query.elevate
-    const collectionGrant = req.userObject.collectionGrants.find( g => g.collection.collectionId === collectionId )
+    const collectionGrant = req.userObject.collectionGrants[collectionId]
 
     if ( collectionGrant || elevate ) {
   
@@ -368,7 +368,7 @@ module.exports.replaceAsset = async function replaceAsset (req, res, next) {
       throw new SmError.PrivilegeError('User has insufficient privilege to modify this asset.')
     }
     // Check if the user has an appropriate grant to the asset's collection
-    const currentCollectionGrant = req.userObject.collectionGrants.find( g => g.collection.collectionId === currentAsset.collection.collectionId )
+    const currentCollectionGrant = req.userObject.collectionGrants[currentAsset.collection.collectionId]
     if ( !currentCollectionGrant || currentCollectionGrant.accessLevel < 3 ) {
       throw new SmError.PrivilegeError(`User has insufficient privilege in collectionId ${currentAsset.collection.collectionId} to modify this asset.`)
     }
@@ -377,7 +377,7 @@ module.exports.replaceAsset = async function replaceAsset (req, res, next) {
       {oldCollectionId: currentAsset.collection.collectionId, newCollectionId: body.collectionId} : null
     if (transferring) {
       // If so, Check if the user has an appropriate grant to the asset's updated collection
-      const updatedCollectionGrant = req.userObject.collectionGrants.find( g => g.collection.collectionId === body.collectionId )
+      const updatedCollectionGrant = req.userObject.collectionGrants[body.collectionId]
       if ( !updatedCollectionGrant || updatedCollectionGrant.accessLevel < 3 ) {
         throw new SmError.PrivilegeError(`User has insufficient privilege in collectionId ${body.collectionId} to transfer this asset.`)
       }
@@ -530,7 +530,7 @@ module.exports.updateAsset = async function updateAsset (req, res, next) {
       throw new SmError.PrivilegeError('User has insufficient privilege to modify this asset.')
     }
     // Check if the user has an appropriate grant to the asset's collection
-    const currentCollectionGrant = req.userObject.collectionGrants.find( g => g.collection.collectionId === currentAsset.collection.collectionId )
+    const currentCollectionGrant = req.userObject.collectionGrants[currentAsset.collection.collectionId]
     if ( !currentCollectionGrant || currentCollectionGrant.accessLevel < 3 ) {
       throw new SmError.PrivilegeError(`User has insufficient privilege in collectionId ${currentAsset.collection.collectionId} to modify this asset.`)
     }
@@ -539,7 +539,7 @@ module.exports.updateAsset = async function updateAsset (req, res, next) {
       {oldCollectionId: currentAsset.collection.collectionId, newCollectionId: body.collectionId} : null
     if (transferring) {
       // If so, Check if the user has an appropriate grant to the asset's updated collection
-      const updatedCollectionGrant = req.userObject.collectionGrants.find( g => g.collection.collectionId === body.collectionId )
+      const updatedCollectionGrant = req.userObject.collectionGrants[body.collectionId]
       if ( !updatedCollectionGrant || updatedCollectionGrant.accessLevel < 3 ) {
         throw new SmError.PrivilegeError(`User has insufficient privilege in collectionId ${body.collectionId} to transfer this asset.`)
       }
@@ -676,7 +676,7 @@ module.exports.patchAssets = async function (req, res, next) {
 
 function getCollectionIdAndVerifyAccess(request, minimumAccessLevel = Security.ACCESS_LEVEL.Manage) {
   let collectionId = request.query.collectionId
-  const collectionGrant = request.userObject.collectionGrants.find( g => g.collection.collectionId === collectionId )
+  const collectionGrant = request.userObject.collectionGrants[collectionId]
   if (collectionGrant?.accessLevel < minimumAccessLevel || !collectionGrant) {
     throw new SmError.PrivilegeError()
   }
@@ -699,7 +699,7 @@ async function getAssetInfoAndVerifyAccess(request, accessLevel = Security.ACCES
   if (!assetToAffect) {
     throw new SmError.PrivilegeError()
   }
-  const collectionGrant = request.userObject.collectionGrants.find( g => g.collection.collectionId === assetToAffect.collection.collectionId )
+  const collectionGrant = request.userObject.collectionGrants[assetToAffect.collection.collectionId]
   // check if user has sufficient access level
   if (collectionGrant?.accessLevel < accessLevel) {
     throw new SmError.PrivilegeError("Insufficient access level.")

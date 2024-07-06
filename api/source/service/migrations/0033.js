@@ -238,29 +238,15 @@ cteGroupMapped as (select
 ),
 cteDirectRanked as (
 	select
-		cgId,
-		collectionId,
 		userId,
-		userGroupId,
 		saId,
-		assetId,
-		benchmarkId,
-		access,
-		specificity,
 		row_number() over (partition by userId, saId order by specificity desc, access asc) as rn
 	from 
 		cteDirectMapped),
 cteGroupRanked as (
 	select
-		cgId,
-		collectionId,
 		userId,
-		userGroupId,
 		saId,
-		assetId,
-		benchmarkId,
-		access,
-		specificity,
 		row_number() over (partition by userId, saId order by specificity desc, access asc) as rn
 	from 
 		cteGroupMapped)
@@ -284,7 +270,7 @@ FROM
 WHERE
   cg.cgId is not null`,
 
-  `DROP TABLE user_stig_asset_map`
+  // `DROP TABLE user_stig_asset_map`
 ]
 
 const downMigration = [

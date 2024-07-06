@@ -488,7 +488,7 @@ exports.getUserObject = async function (username) {
     lastAccess,
     lastClaims,
     (select
-      json_objectagg(dt2.collectionId, json_object('accessLevel', dt2.accessLevel, 'grantIds', dt2.grantIds))
+      coalesce(json_objectagg(dt2.collectionId, json_object('accessLevel', dt2.accessLevel, 'grantIds', dt2.grantIds)), json_object())
     from   
       (select 
         cg.collectionId,

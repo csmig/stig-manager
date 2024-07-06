@@ -310,33 +310,7 @@ exports.replaceAppData = async function (importOpts, appData, userObject, res ) 
         sqlDelete: `DELETE FROM user_group_user_map`,
         sqlInsert: `INSERT into user_group_user_map (userGroupId, userId) VALUES ?`,
         insertBinds: []
-      },
-      collectionGrantGroup:{
-        sqlDelete: `DELETE FROM collection_grant_group`,
-        sqlInsert: `INSERT INTO collection_grant_group (collectionId, userGroupId, accessLevel) VALUES ?`,
-        insertBinds: []
-      },
-      userGroupStigAssetMap: {
-        sqlDelete: `DELETE FROM user_group_stig_asset_map`,
-        sqlInsert: `INSERT INTO user_group_stig_asset_map
-        (saId, userGroupId)
-          SELECT
-            sa.saId,
-            jt.userGroupId
-            FROM
-            stig_asset_map sa
-            inner join
-              JSON_TABLE(
-                ?,
-                "$[*]"
-                COLUMNS(
-                  userGroupId INT(11) PATH "$.userGroupId",
-                  assetId INT(11) PATH "$.assetId",
-                  benchmarkId VARCHAR(255) PATH "$.benchmarkId"
-                )
-              ) AS jt on (jt.assetId = sa.assetId and jt.benchmarkId = sa.benchmarkId COLLATE utf8mb4_0900_as_cs)`,
-        insertBinds: []
-      },
+      }
     }
 
     // Process appdata object
@@ -360,20 +334,11 @@ exports.replaceAppData = async function (importOpts, appData, userObject, res ) 
         JSON.stringify(c.metadata)
       ])
       for (const grant of c.grants) {
-        if(grant.userId){
-          dml.collectionGrant.insertBinds.push([
-            parseInt(c.collectionId),
-            parseInt(grant.userId),
-            parseInt(grant.accessLevel)
-          ])
-        }
-        else if(grant.userGroupId){
-          dml.collectionGrantGroup.insertBinds.push([
-            parseInt(c.collectionId),
-            parseInt(grant.userGroupId),
-            parseInt(grant.accessLevel)
-          ])
-        }
+        dml.collectionGrant.insertBinds.push([
+          parseInt(c.collectionId),
+          parseInt(grant.userId),
+          parseInt(grant.accessLevel)
+        ])
       }
       for (const label of c.labels) {
         dml.collectionLabel.insertBinds.push([
@@ -427,16 +392,16 @@ exports.replaceAppData = async function (importOpts, appData, userObject, res ) 
             assetId: parseInt(asset.assetId)
           })
         }
-        if (benchmark.userGroupIds) {
-          // for each user group with a grant to this benchmark
-          for (const userGroupId of benchmark.userGroupIds) {
-            dml.userGroupStigAssetMap.insertBinds.push({
-              userGroupId: parseInt(userGroupId),
-              benchmarkId: benchmark.benchmarkId,
-              assetId: parseInt(asset.assetId)
-            })
-          }
-        }
+        // if (benchmark.userGroupIds) {
+        //   // for each user group with a grant to this benchmark
+        //   for (const userGroupId of benchmark.userGroupIds) {
+        //     dml.userGroupStigAssetMap.insertBinds.push({
+        //       userGroupId: parseInt(userGroupId),
+        //       benchmarkId: benchmark.benchmarkId,
+        //       assetId: parseInt(asset.assetId)
+        //     })
+        //   }
+        // }
       }
       if (labelIds?.length > 0) {
         assetLabels.push({
@@ -447,7 +412,7 @@ exports.replaceAppData = async function (importOpts, appData, userObject, res ) 
       }
     }
     dml.userStigAssetMap.insertBinds = JSON.stringify(dml.userStigAssetMap.insertBinds)
-    dml.userGroupStigAssetMap.insertBinds = JSON.stringify(dml.userGroupStigAssetMap.insertBinds)
+    // dml.userGroupStigAssetMap.insertBinds = JSON.stringify(dml.userGroupStigAssetMap.insertBinds)
     dml.assetLabel.insertBinds.push(JSON.stringify(assetLabels))
 
     // Tables: review, review_history
@@ -550,8 +515,8 @@ exports.replaceAppData = async function (importOpts, appData, userObject, res ) 
       'userData',
       'userGroup',
       'userGroupUser',
-      'collectionGrantGroup',
-      'userGroupStigAssetMap'
+      // 'collectionGrantGroup',
+      // 'userGroupStigAssetMap'
     ]
     for (const table of tableOrder) {
       res.write(`Deleting: ${table}\n`)
@@ -579,8 +544,8 @@ exports.replaceAppData = async function (importOpts, appData, userObject, res ) 
       'reviewHistory',
       'userGroup',
       'userGroupUser',
-      'collectionGrantGroup',
-      'userGroupStigAssetMap'
+      // 'collectionGrantGroup',
+      // 'userGroupStigAssetMap'
     ]
 
     if (dml.collectionPins?.insertBinds?.length > 0) {
@@ -619,6 +584,23 @@ exports.replaceAppData = async function (importOpts, appData, userObject, res ) 
         hrend = process.hrtime(hrstart)
         stats.stats = `${statusStats.affectedRows} in ${hrend[0]}s  ${hrend[1] / 1000000}ms`
     
+    // temporary: initialize collection_grant_acl
+    await dbUtils.pool.query(`truncate collection_grant_acl`)
+    await dbUtils.pool.query(`INSERT INTO collection_grant_acl (cgId, assetId, benchmarkId, access, modifiedUserId, modifiedDate) SELECT
+      cg.cgId,
+      sa.assetId,
+      sa.benchmarkId,
+      'rw',
+      null,
+      null 
+    FROM
+      user_stig_asset_map usa
+      left join stig_asset_map sa using (saId)
+      left join asset a on sa.assetId = a.assetId
+      left join collection_grant cg on (a.collectionId = cg.collectionId and usa.userId = cg.userId )
+    WHERE
+      cg.cgId is not null`)
+
 
     // Total time calculation
     hrend = process.hrtime(totalstart)
