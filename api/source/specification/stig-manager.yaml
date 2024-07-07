@@ -6047,12 +6047,12 @@ components:
       additionalProperties: false
       type: object
       properties:
-        labelId:
-          $ref: '#/components/schemas/LabelId'
-        name:
-          $ref: '#/components/schemas/LabelName'
         color:
           $ref: '#/components/schemas/StringHexColor'
+        description:
+          $ref: '#/components/schemas/String255Nullable'
+        name:
+          $ref: '#/components/schemas/LabelName'
       required:
         - name
         - color

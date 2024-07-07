@@ -306,7 +306,8 @@ exports.addOrUpdateAsset = async function ( {writeAction, assetId, body, project
 
       // Process scalar properties
       binds = { ...assetFields}
-  
+      assetFields.collectionId ??=  currentCollectionId
+
       if (writeAction === dbUtils.WRITE_ACTION.CREATE) {
         // INSERT into assets
         let sqlInsert =
@@ -1527,10 +1528,10 @@ exports.attachAssetsToStig = async function(collectionId, benchmarkId, assetIds,
   }
 }
 
-exports.updateAsset = async function( {assetId, body, projection, transferring, userObject, svcStatus = {}} ) {
+exports.updateAsset = async function( {assetId, body, projection, currentCollectionId, transferring, userObject, svcStatus = {}} ) {
   return _this.addOrUpdateAsset({
     writeAction: dbUtils.WRITE_ACTION.UPDATE,
-    assetId, body, projection, transferring, userObject, svcStatus
+    assetId, body, projection, currentCollectionId, transferring, userObject, svcStatus
   })
 }
 
