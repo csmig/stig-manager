@@ -332,14 +332,9 @@ exports.addOrUpdateAsset = async function ( {writeAction, assetId, body, project
           await connection.query(sqlUpdate, [assetFields, assetId])
           if (transferring) {
             await connection.query(
-              `DELETE user_stig_asset_map FROM user_stig_asset_map INNER JOIN stig_asset_map USING (saId) WHERE stig_asset_map.assetId = ?`,
+              `DELETE FROM collection_grant_acl WHERE assetId = ?`,
               [assetId]
-            )
-            await connection.query(
-              `DELETE user_group_stig_asset_map FROM user_group_stig_asset_map INNER JOIN stig_asset_map USING (saId) WHERE stig_asset_map.assetId = ?`,
-              [assetId]
-            )
-            
+            )  
             const sqlGetAssetLabels = `SELECT name, description, color FROM collection_label_asset_map inner join collection_label using (clId) WHERE assetId = ?`
             const [assetLabels] = await connection.query(sqlGetAssetLabels, [assetId])
             

@@ -492,6 +492,7 @@ exports.getUserObject = async function (username) {
     from   
       (select 
         cg.collectionId,
+        c.name,
         cg.accessLevel,
         json_array(cg.cgId) as grantIds
       from
@@ -503,12 +504,14 @@ exports.getUserObject = async function (username) {
       union 
       select
         collectionId,
+        name,
         accessLevel,
         grantIds
       from
         (select
           ROW_NUMBER() OVER(PARTITION BY ugu.userId, cg.collectionId ORDER BY cg.accessLevel desc) as rn,
-          cg.collectionId, 
+          cg.collectionId,
+          c.name, 
           cg.accessLevel,
           json_arrayagg(cg.cgId) OVER (PARTITION BY ugu.userId, cg.collectionId, cg.accessLevel) as grantIds
         from 

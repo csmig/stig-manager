@@ -1054,16 +1054,16 @@ paths:
       tags:
         - Collection
       summary: DEPRECATED. Use GET /collections/{collectionId}/grants/user/{userId}/access.
-      operationId: getReviewAclByCollectionUserDEPRECATED
+      operationId: getStigAssetsByCollectionUser
       responses:
         '200':
-          description: Collection AclRuleAssetBasic array response
+          description: Collection StigAssetBasic array response
           content:
             application/json:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/AclRuleAssetBasic'
+                  $ref: '#/components/schemas/StigAssetBasic'
         '403':
           $ref: '#/components/responses/Forbidden'
         default:
@@ -1079,7 +1079,7 @@ paths:
       tags:
         - Collection
       summary: DEPRECATED. Use PUT /collections/{collectionId}/grants/user/{userId}/access.
-      operationId: setReviewAclByCollectionUserDEPRECATED
+      operationId: setStigAssetsByCollectionUser
       requestBody:
         required: true
         content:
@@ -1087,16 +1087,16 @@ paths:
             schema:
               type: array
               items:
-                $ref: '#/components/schemas/AclRuleAssetPut'
+                $ref: '#/components/schemas/StigAssetPut'
       responses:
         '200':
-          description: AclRuleAssetBasic array response
+          description: StigAssetBasic array response
           content:
             application/json:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/AclRuleAssetBasic'
+                  $ref: '#/components/schemas/StigAssetBasic'
         default:
           description: unexpected error
           content:
@@ -7416,6 +7416,32 @@ components:
         - collectionIds
     StatusText:
       $ref: '#/components/schemas/String511Nullable'
+    StigAssetBasic:
+      additionalProperties: false
+      type: object
+      properties:
+        asset:
+          $ref: '#/components/schemas/AssetBasic'
+        benchmarkId:
+          $ref: '#/components/schemas/BenchmarkId'
+        access:
+          $ref: '#/components/schemas/AclRuleAccess'
+      required:
+        - benchmarkId
+        - asset
+    StigAssetPut:
+      additionalProperties: false
+      type: object
+      properties:
+        assetId:
+          $ref: '#/components/schemas/AssetId'
+        benchmarkId:
+          $ref: '#/components/schemas/BenchmarkId'
+        access:
+          $ref: '#/components/schemas/AclRuleAccess'
+      required:
+        - benchmarkId
+        - assetId
     StigTitle:
       $ref: '#/components/schemas/String255'
     StigUserBasic:
@@ -7677,12 +7703,12 @@ components:
           items:
             $ref: '#/components/schemas/UserGroupId'
           uniqueItems: true
+          default: []
         username:
           $ref: '#/components/schemas/Username'
       required:
         - username
         - collectionGrants
-        - userGroups
     UserGrantEffective:
       type: object
       additionalProperties: false

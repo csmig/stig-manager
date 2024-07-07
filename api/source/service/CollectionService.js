@@ -84,7 +84,7 @@ exports.queryCollections = async function (inProjection = [], inPredicates = {},
             'ruleCount', revision.ruleCount
             )), json_array()) from 
             asset a
-            left join stig_asset_map sa on a.assetId = sa.assetId
+            inner join stig_asset_map sa on a.assetId = sa.assetId
             left join default_rev dr on (sa.benchmarkId=dr.benchmarkId and dr.collectionId = a.collectionId)
             left join revision on dr.revId = revision.revId
             where a.collectionId = c.collectionId) as stigs`)
@@ -160,7 +160,7 @@ exports.queryCollections = async function (inProjection = [], inPredicates = {},
       }
 
       if (inProjection.includes('owners')) {
-        columns.push(`(select json_arrayagg(grantJson) from
+        columns.push(`(select coalesce(json_arrayagg(grantJson),json_array()) from
           (select json_object(
             'userId', CAST(user_data.userId as char),
             'username', user_data.username
@@ -240,7 +240,7 @@ exports.queryCollections = async function (inProjection = [], inPredicates = {},
           from
         cteAclRules ar
           inner join stig_asset_map sa using (saId)
-        left join default_rev dr on (sa.benchmarkId=dr.benchmarkId and dr.collectionId = 1)
+        left join default_rev dr on (sa.benchmarkId=dr.benchmarkId and dr.collectionId = ${inPredicates.collectionId})
           left join revision on dr.revId = revision.revId
           order by sa.benchmarkId)`)
       }
@@ -258,7 +258,7 @@ exports.queryCollections = async function (inProjection = [], inPredicates = {},
           ${requireCteLabels === 'restricted' ? 'left join stig_asset_map sa on cla.assetId = sa.assetId' : ''}
           ${requireCteLabels === 'restricted' ? 'inner join cteAclRulesRanked car on sa.saId = car.saId' : ''}
         where
-          cl.collectionId = 1
+          cl.collectionId = ${inPredicates.collectionId}
         group by
           cl.clId)`)
       }
@@ -274,7 +274,7 @@ exports.queryCollections = async function (inProjection = [], inPredicates = {},
       }
 
       if (inProjection.includes('owners')) {
-        columns.push(`(select json_arrayagg(grantJson) from
+        columns.push(`(select coalesce(json_arrayagg(grantJson),json_array()) from
           (select json_object(
             'userId', CAST(user_data.userId as char),
             'username', user_data.username
@@ -329,10 +329,70 @@ exports.queryCollections = async function (inProjection = [], inPredicates = {},
             ) as statistics`)
         }
       }
+      // This projection is not exposed in the OAS, only used by Operation.getAppData()
+      if (inProjection.includes('grants')) { 
+        columns.push(`(select
+          coalesce(
+            (select json_arrayagg(grantJson) from
+              (select
+                 json_object(
+                    'user', json_object(
+                    'userId', CAST(user_data.userId as char),
+                    'username', user_data.username,
+                    'displayName', COALESCE(
+                      JSON_UNQUOTE(JSON_EXTRACT(user_data.lastClaims, "$.${config.oauth.claims.name}")),
+                      user_data.username)),
+                    'accessLevel', accessLevel)
+                  as grantJson
+              from
+                collection_grant inner join user_data using (userId) where collectionId = c.collectionId
+              UNION
+              select
+                json_object(
+                  'userGroup', json_object(
+                    'userGroupId', CAST(user_group.userGroupId as char),
+                    'name', user_group.name,
+                    'description', user_group.description
+                    ),
+                  'accessLevel', accessLevel
+                ) as grantJson
+              from collection_grant inner join user_group using (userGroupId) where collectionId = c.collectionId
+            ) as grantJsons)
+          , json_array()
+          )
+        ) as "grants"`)
+      }
+
 
       if (!elevate) {
         predicates.statements.push('c.collectionId IN (?)')
         predicates.binds.push( collectionIdsGranted )
+      }
+      if ( inPredicates.name ) {
+        let matchStr = '= ?'
+        if ( inPredicates.nameMatch && inPredicates.nameMatch !== 'exact') {
+          matchStr = 'LIKE ?'
+          switch (inPredicates.nameMatch) {
+            case 'startsWith':
+              inPredicates.name = `${inPredicates.name}%`
+              break
+            case 'endsWith':
+              inPredicates.name = `%${inPredicates.name}`
+              break
+            case 'contains':
+              inPredicates.name = `%${inPredicates.name}%`
+              break
+          }
+        }
+        predicates.statements.push(`c.name ${matchStr}`)
+        predicates.binds.push( inPredicates.name )
+      }
+      if ( inPredicates.metadata ) {
+        for (const pair of inPredicates.metadata) {
+          const [key, value] = pair.split(':')
+          predicates.statements.push('JSON_CONTAINS(c.metadata, ?, ?)')
+          predicates.binds.push( `"${value}"`,  `$.${key}`)
+        }
       }
 
       if (requireCteGrantees) {

@@ -172,7 +172,7 @@ module.exports.getPoamByCollection = async function getFindingsByCollection (req
     
     const po = Serialize.poamObjectFromFindings(response, defaults)
     const xlsx = await Serialize.xlsxFromPoamObject(po)
-    let collectionName = collectionGrant.collection.name
+    let collectionName = collectionGrant.name
     writer.writeInlineFile( res, xlsx, `POAM-${collectionName}.xlsx`, 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
   }
   catch (err) {
@@ -1186,7 +1186,46 @@ module.exports.setReviewAclByCollectionUserGroup = async function (req, res, nex
 }
 
 
-module.exports.setReviewAclByCollectionUserDEPRECATED = module.exports.setReviewAclByCollectionUser
-module.exports.getReviewAclByCollectionUserDEPRECATED = module.exports.getReviewAclByCollectionUser
+module.exports.setStigAssetsByCollectionUser = async function (req, res, next) {
+  try {
+    const userId = req.params.userId
+    const acl = req.body
+    const {collectionId} = getCollectionInfoAndCheckPermission(req)
+    
+    const grant = await CollectionService._getCollectionGrant({collectionId, userId})
+    if (!grant) throw new SmError.UnprocessableError('user has no direct grant in collection')
+
+    const validated = await CollectionService._reviewAclValidate({cgId: grant.cgId, acl})
+    if (validated.fail.length > 0) {
+      throw new SmError.UnprocessableError(validated.fail)
+    }
+    if (validated.pass.length > 0) {
+      await CollectionService.setValidatedAcl({
+        validatedAcl: validated.pass,
+        attributionUserId: req.userObject.userId,
+        svcStatus: res.svcStatus
+      })
+    }
+    const response = await CollectionService.queryReviewAcl({cgId: grant.cgId})
+    res.json(response.acl)
+  }
+  catch (err) {
+    next(err)
+  }
+}
+
+module.exports.getStigAssetsByCollectionUser = async function (req, res, next) {
+  try {
+    const userId = req.params.userId
+    const { collectionId } = getCollectionInfoAndCheckPermission(req)
+    const grant = await CollectionService._getCollectionGrant({collectionId, userId})
+    if (!grant) throw new SmError.UnprocessableError('user has no direct grant in collection')
+    const response = await CollectionService.queryReviewAcl({cgId: grant.cgId})
+    res.json(response.acl)
+  }
+  catch (err) {
+    next(err)
+  }
+}
 
 

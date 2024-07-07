@@ -58,7 +58,7 @@ module.exports.getAppData = async function getAppData (req, res, next) {
         asset.stigGrants = asset.stigGrants.map( s => ({
           benchmarkId: s.benchmarkId,
           userIds: s.users.map( r => r.userId ),
-          userGroupIds: s.userGroups.map( r => r.userGroupId )
+          userGroupIds: s.userGroups?.map( r => r.userGroupId )
         }))
       })
       let reviews = await Review.exportReviews(true)

@@ -431,7 +431,7 @@ module.exports.attachStigToAsset = async function attachStigToAsset (req, res, n
       let response = await AssetService.attachStigToAsset({
         assetId,
         benchmarkId,
-        collectionId: collectionGrant.collection.collectionId,
+        collectionId: collectionGrant.collectionId,
         elevate,
         userObject: req.userObject,
         svcStatus: res.svcStatus
