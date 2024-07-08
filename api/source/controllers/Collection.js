@@ -964,6 +964,13 @@ module.exports.cloneCollection = async function (req, res, next) {
         progressCb
       })
       if (cloned) {
+        // // hack the existing userObject
+        req.userObject.collectionGrants[cloned.destCollectionId] = {
+          collectionId: cloned.destCollectionId,
+          name: req.body.name,
+          accessLevel: 4,
+          grantIds: []
+        }
         const collection = await CollectionService.getCollection(cloned.destCollectionId, req.query.projection, false, req.userObject )
         res.write(JSON.stringify({stage: 'result', collection}) + '\n')
       }

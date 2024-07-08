@@ -620,6 +620,10 @@ module.exports.jsonArrayAggDistinct = function (valueStr) {
   return `cast(concat('[', group_concat(distinct ${valueStr}), ']') as json)`
 }
 
+module.exports.jsonArrayAgg = function ({value, orderBy = '', distinct = false}) {
+  return `cast(concat('[', group_concat(${distinct ? 'distinct ' : ''}${value} ${orderBy ? `order by ${orderBy}` : ''}), ']') as json)`
+}
+
 module.exports.sqlGrantees = function ({collectionId, collectionIds, userId, username, nameMatch, includeColumnCollectionId = true, returnCte = false}) {
   const predicates = {
     statements: [],

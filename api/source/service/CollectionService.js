@@ -52,11 +52,18 @@ exports.queryCollections = async function (inProjection = [], inPredicates = {},
       predicates.binds.push( inPredicates.collectionId )
 
       if (inProjection.includes('assets')) {
-        let sqlAssets = `(select coalesce(json_arrayagg(json_object(
-        'assetId', CAST(assetId as char), 
-        'name', name)), json_array()) from
-        ${requestersAccessLevel === 1 ? 'cteAssets' : 'asset where collectionId = c.collectionId order by name'}) as assets`
-        if (requestersAccessLevel === 1) {
+        // let sqlAssets = `(select coalesce(json_arrayagg(json_object(
+        // 'assetId', CAST(assetId as char), 
+        // 'name', name)), json_array()) from
+        // ${requestersAccessLevel === 1 ? 'cteAssets' : 'asset where collectionId = c.collectionId'}) as assets`
+        let sqlAssets = `(select coalesce(${dbUtils.jsonArrayAgg({
+          value: `json_object(
+          'assetId', CAST(assetId as char), 
+          'name', name)`,
+          orderBy: 'name'
+          })}, json_array()) from
+          ${requestersAccessLevel === 1 ? 'cteAssets' : 'asset where collectionId = c.collectionId'}) as assets`
+          if (requestersAccessLevel === 1) {
           requireCteAcls = true
           requireCteAssets = true
         }
@@ -161,19 +168,20 @@ exports.queryCollections = async function (inProjection = [], inPredicates = {},
 
       if (inProjection.includes('owners')) {
         columns.push(`(select coalesce(json_arrayagg(grantJson),json_array()) from
-          (select json_object(
+          (select user_data.username, json_object(
             'userId', CAST(user_data.userId as char),
-            'username', user_data.username
+            'username', user_data.username,
+            'displayName', JSON_UNQUOTE(JSON_EXTRACT(user_data.lastClaims, "$.${config.oauth.claims.name}"))
             ) as grantJson
           from
             collection_grant inner join user_data using (userId) where collectionId = c.collectionId and accessLevel = 4
           UNION
-          select json_object(
+          select user_group.name, json_object(
             'userGroupId', CAST(user_group.userGroupId as char),
             'name', user_group.name,
             'description', user_group.description
           ) as grantJson
-          from collection_grant inner join user_group using (userGroupId) where collectionId = c.collectionId and accessLevel = 4) o) as owners`)
+          from collection_grant inner join user_group using (userGroupId) where collectionId = c.collectionId and accessLevel = 4 order by username) o) as owners`)
       }
 
       if (inProjection.includes('statistics')) {
@@ -1891,12 +1899,17 @@ exports.cloneCollection = async function ({collectionId, userObject, name, descr
         finishText: 'Created core properties'
       },
       cloneGrants: {
-        query: `INSERT INTO collection_grant (collectionId, userId, accessLevel) SELECT @destCollectionId, userId, accessLevel FROM collection_grant where collectionId = @srcCollectionId`,
+        query: `INSERT INTO collection_grant (collectionId, userId, userGroupId, accessLevel) SELECT @destCollectionId, userId, userGroupId, accessLevel FROM collection_grant where collectionId = @srcCollectionId`,
         startText: 'Creating Grants',
         finishText: 'Creating Grants'
       },
-      cloneGrantsGroup: {
-        query: `INSERT INTO collection_grant_group (collectionId, userGroupId, accessLevel) SELECT @destCollectionId, userGroupId, accessLevel FROM collection_grant_group where collectionId = @srcCollectionId`,
+      dropGrantMap: {
+        query: `DROP TEMPORARY TABLE IF EXISTS t_grantid_map`,
+        startText: 'Creating Grants',
+        finishText: 'Creating Grants'
+      },
+      createGrantMap: {
+        query: `CREATE TEMPORARY TABLE t_grantid_map SELECT cg1.cgId as srcGrantId, cg2.cgId as destGrantId FROM collection_grant cg1 left join collection_grant cg2 on (cg1.collectionId = @srcCollectionId and cg1.userId = cg2.userId and cg1.userGroupId = cg2.userGroupId and cg1.accessLevel = cg2.accessLevel) WHERE cg2.collectionId = @destCollectionId`,
         startText: 'Creating Grants',
         finishText: 'Creating Grants'
       },
@@ -1950,16 +1963,32 @@ exports.cloneCollection = async function ({collectionId, userObject, name, descr
         startText: 'Creating Asset/STIG mappings',
         finishText: 'Created Asset/STIG mappings'
       },
-      cloneRestrictedUserGrants: {
-        query: `INSERT INTO user_stig_asset_map (userId, saId) SELECT usa.userId, sa2.saId FROM stig_asset_map sa1 inner join user_stig_asset_map usa on sa1.saId = usa.saId inner join t_assetid_map am on sa1.assetId = am.srcAssetId inner join stig_asset_map sa2 on (am.destAssetId = sa2.assetId and sa1.benchmarkId = sa2.benchmarkId)`,
-        startText: 'Creating Restricted User Grants',
-        finishText: 'Created Restricted User Grants'
+      cloneGrantAcls: {
+        query: `INSERT INTO collection_grant_acl (cgId, benchmarkId, assetId, clId, access)
+        SELECT
+          gm.destGrantId,
+          cg1.benchmarkId,
+          am.destAssetId,
+          cm.destClId,
+          cg1.access
+        FROM
+          collection_grant_acl cg1
+          inner join t_grantid_map gm on cg1.cgId = gm.srcGrantId
+          left join t_assetid_map am on cg1.assetId = am.srcAssetId 
+          left join t_clid_map cm on cg1.clId = cm.srcClId`,
+          startText: 'Creating Collection Grant ACLs',
+          finishText: 'Created Collection Grant ACLs'
       },
-      cloneRestrictedUserGroupGrants: {
-        query: `INSERT INTO user_group_stig_asset_map (userGroupId, saId) SELECT ugsa.userGroupId, sa2.saId FROM stig_asset_map sa1 inner join user_group_stig_asset_map ugsa on sa1.saId = ugsa.saId inner join t_assetid_map am on sa1.assetId = am.srcAssetId inner join stig_asset_map sa2 on (am.destAssetId = sa2.assetId and sa1.benchmarkId = sa2.benchmarkId)`,
-        startText: 'Creating Restricted User Grants',
-        finishText: 'Created Restricted User Grants'
-      },
+      // cloneRestrictedUserGrants: {
+      //   query: `INSERT INTO user_stig_asset_map (userId, saId) SELECT usa.userId, sa2.saId FROM stig_asset_map sa1 inner join user_stig_asset_map usa on sa1.saId = usa.saId inner join t_assetid_map am on sa1.assetId = am.srcAssetId inner join stig_asset_map sa2 on (am.destAssetId = sa2.assetId and sa1.benchmarkId = sa2.benchmarkId)`,
+      //   startText: 'Creating Restricted User Grants',
+      //   finishText: 'Created Restricted User Grants'
+      // },
+      // cloneRestrictedUserGroupGrants: {
+      //   query: `INSERT INTO user_group_stig_asset_map (userGroupId, saId) SELECT ugsa.userGroupId, sa2.saId FROM stig_asset_map sa1 inner join user_group_stig_asset_map ugsa on sa1.saId = ugsa.saId inner join t_assetid_map am on sa1.assetId = am.srcAssetId inner join stig_asset_map sa2 on (am.destAssetId = sa2.assetId and sa1.benchmarkId = sa2.benchmarkId)`,
+      //   startText: 'Creating Restricted User Grants',
+      //   finishText: 'Created Restricted User Grants'
+      // },
       cloneRevisionsMatchSource: {
         query: `INSERT INTO collection_rev_map (collectionId, benchmarkId, revId) SELECT @destCollectionId, benchmarkId, revId FROM collection_rev_map where collectionId = @srcCollectionId`,
         startText: 'Creating Revision pins',
@@ -2021,8 +2050,7 @@ exports.cloneCollection = async function ({collectionId, userObject, name, descr
     const reviewQueries = []
 
     if (options.grants) {
-      collectionQueries.push('cloneGrants')
-      collectionQueries.push('cloneGrantsGroup')
+      collectionQueries.push('cloneGrants', 'dropGrantMap', 'createGrantMap')
     }
     collectionQueries.push('insertOwnerGrant')
 
@@ -2038,8 +2066,8 @@ exports.cloneCollection = async function ({collectionId, userObject, name, descr
       if (options.stigMappings !== 'none') {
         collectionQueries.push(options.stigMappings === 'withReviews' ? 'cloneStigMappingsWithReviews' : 'cloneStigMappingsWithoutReviews')
         if (options.grants) {
-          collectionQueries.push('cloneRestrictedUserGrants')
-          collectionQueries.push('cloneRestrictedUserGroupGrants')
+          collectionQueries.push('cloneGrantAcls')
+          // collectionQueries.push('cloneRestrictedUserGroupGrants')
         }
         collectionQueries.push(options.pinRevisions === 'matchSource' ? 'cloneRevisionsMatchSource' : 'cloneRevisionsSourceDefaults')
         collectionQueries.push('insertDefaultRev')
