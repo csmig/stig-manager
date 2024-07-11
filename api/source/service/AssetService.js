@@ -1424,33 +1424,28 @@ exports.getUsersByAssetStig = async function (assetId, benchmarkId, elevate, use
 
 exports.getChecklistByAssetStig = async function(assetId, benchmarkId, revisionStr, format, elevate, userObject) {
   switch (format) {
-    case 'json':
-      const rows = await _this.queryChecklist(null, {
+    case 'json': {
+      return _this.queryChecklist(null, {
         assetId: assetId,
         benchmarkId: benchmarkId,
         revisionStr: revisionStr
       }, elevate, userObject)
-      return (rows)
-    case 'ckl':
-      const cklObject = await _this.cklFromAssetStigs(assetId, [{benchmarkId, revisionStr}], elevate, userObject)
-      return (cklObject)
+    }
+    case 'ckl': 
+      return _this.cklFromAssetStigs(assetId, [{benchmarkId, revisionStr}], elevate, userObject)
     case 'cklb':
-      const cklbObject = await _this.cklbFromAssetStigs(assetId, [{benchmarkId, revisionStr}], elevate, userObject)
-      return (cklbObject)
+      return _this.cklbFromAssetStigs(assetId, [{benchmarkId, revisionStr}], elevate, userObject)
     case 'xccdf':
-      const xccdfObject = await _this.xccdfFromAssetStig(assetId, benchmarkId, revisionStr)
-      return (xccdfObject)
+      return _this.xccdfFromAssetStig(assetId, benchmarkId, revisionStr)
   }
 }
 
 exports.getChecklistByAsset = async function(assetId, benchmarks, format, elevate, userObject) {
   switch (format) {
     case 'ckl':
-      let cklObject = await _this.cklFromAssetStigs(assetId, benchmarks, elevate, userObject)
-      return (cklObject)
+      return _this.cklFromAssetStigs(assetId, benchmarks, elevate, userObject)
     case 'cklb':
-      let cklbObject = await _this.cklbFromAssetStigs(assetId, benchmarks, elevate, userObject)
-      return (cklbObject)
+      return _this.cklbFromAssetStigs(assetId, benchmarks, elevate, userObject)
     }
 }
 

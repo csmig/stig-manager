@@ -190,25 +190,40 @@ module.exports.parseRevisionStr = function (revisionStr) {
   return ro
 }
 
+module.exports.selectCollectionByAssetId = async function (assetId) {
+  // another possibility: return _this.pool.query(`SELECT c.* from asset a left join collection c using (collectionId) where a.assetId = ?`, [assetId])
+  return _this.pool.query(`SELECT * from collection where collectionId = (select collectionId from asset where assetId = ?)`, [assetId])
+}
+
+module.exports.getGrantByAssetId = async function (assetId, grants) {
+  const [rows] = await _this.selectCollectionByAssetId(assetId)
+  if (!rows.length) return
+  const collection = rows[0]
+  return grants[collection.collectionId]
+}
+
+module.exports.getUserAssetStigs = async function ({assetId, grant, collectionGrants}) {
+  if (!grant && collectionGrants) {
+    grant = await _this.getGrantByAssetId(assetId, collectionGrants)
+  }
+  if (!grant) return [[]]
+  const sql = `with ${_this.cteAclEffective({cgIds: grant.grantIds})} select
+    distinct sa.benchmarkId,
+    coalesce(ae.access, 'rw') as access
+  from
+	  stig_asset_map sa
+    ${grant.accessLevel === 1 ? 'inner' : 'left'} join cteAclEffective ae using (saId)
+  where
+	  sa.assetId = ?`
+    return _this.pool.query(sql, [assetId])
+}
+
 // Returns Boolean
 module.exports.userHasAssetStigs = async function (assetId, requestedBenchmarkIds, elevate, userObject) {
-  let sql
-  let rows
-  sql = `select
-    distinct sa.benchmarkId
-  from
-    stig_asset_map sa
-    inner join asset a on sa.assetId = a.assetId and a.state = 'enabled'
-    inner join collection c on a.collectionId = c.collectionId and c.state = 'enabled'
-    left join v_collection_grant_effective cg on a.collectionId = cg.collectionId
-    left join v_user_stig_asset_effective usa on sa.saId = usa.saId
-  where
-    cg.userId = ?
-    and sa.assetId = ?
-    and (cg.accessLevel >= 2 or (cg.accessLevel = 1 and usa.userId = cg.userId))`
-
-  ;[rows] = await _this.pool.query(sql, [userObject.userId, assetId])
-
+  const [rows] = await _this.getUserAssetStigs({
+    assetId,
+    collectionGrants: userObject.collectionGrants
+  })
   const availableBenchmarkIds = rows.map( row => row.benchmarkId )
   return requestedBenchmarkIds.every( requestedBenchmarkId => availableBenchmarkIds.includes(requestedBenchmarkId))   
 }
@@ -711,7 +726,7 @@ where
   return returnCte ? `cteGrantees as (${sqlFormatted})` : sqlFormatted
 }
 
-module.exports.cteAclRulesRankedByCgIds = function ({cgIds = [], includeColumnCollectionId = true, inClauseTable = 'cteGrantees', inClauseColumn = 'grantIds', inClauseUserId = ''}) {
+module.exports.cteAclEffective = function ({cgIds = [], includeColumnCollectionId = true, inClauseTable = 'cteGrantees', inClauseColumn = 'grantIds', inClauseUserId = ''}) {
   const inClause = cgIds.length ? '?' : `select jt.grantId from ${inClauseTable} left join json_table (${inClauseTable}.${inClauseColumn}, '$[*]' COLUMNS (grantId INT PATH '$')) jt on true${inClauseUserId ? ` where ${inClauseTable}.userId = ${inClauseUserId}` : ''}`
   const sql = `cteAclRules as (select ${includeColumnCollectionId ? 'a.collectionId,' : ''}
 	sa.saId,
@@ -747,7 +762,8 @@ cteAclRulesRanked as (
     access,
 		row_number() over (partition by saId order by specificity desc, access asc) as rn
 	from 
-		cteAclRules)`
+		cteAclRules),
+cteAclEffective as (select saId, access from cteAclRulesRanked where rn = 1)`
 
   const sqlFormatted = mysql.format(sql, [cgIds])
   return sqlFormatted

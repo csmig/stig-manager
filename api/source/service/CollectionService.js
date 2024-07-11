@@ -228,7 +228,7 @@ exports.queryCollections = async function (inProjection = [], inPredicates = {},
       }
       if (requireCteAcls) {
         const cteAclRulesRankedParams = {cgIds: requestersGrantIds}
-        ctes.push(dbUtils.cteAclRulesRankedByCgIds(cteAclRulesRankedParams))
+        ctes.push(dbUtils.cteAclEffective(cteAclRulesRankedParams))
       }
       if (requireCteAssets) {
         ctes.push(`cteAssets as (select distinct a.assetId, a.name from 
@@ -409,7 +409,7 @@ exports.queryCollections = async function (inProjection = [], inPredicates = {},
       }
       if (requireCteAcls) {
         const cteAclRulesRankedParams = {cgIds: requestersGrantIds}
-        ctes.push(dbUtils.cteAclRulesRankedByCgIds(cteAclRulesRankedParams))
+        ctes.push(dbUtils.cteAclEffective(cteAclRulesRankedParams))
       }
     }
 

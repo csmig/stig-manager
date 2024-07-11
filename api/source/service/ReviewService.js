@@ -104,7 +104,7 @@ exports.postReviewBatch = async function ({
     left join v_collection_grant_effective cg on a.collectionId = cg.collectionId
     left join stig_asset_map sa using (assetId)
     left join v_user_stig_asset_effective usa on sa.saId = usa.saId
-    left join revision rev using (benchmarkId)
+    left join revision rev on sa.benchmarkId = rev.benchmarkId
     left join rev_group_rule_map rgr using (revId)
   where 
     cg.collectionId =  @collectionId
@@ -925,6 +925,7 @@ exports.putReviewsByAsset = async function ({
   assetId,
   reviews,
   userId,
+  grant,
   svcStatus
   }) {
   let connection
@@ -935,7 +936,7 @@ CREATE TEMPORARY TABLE IF NOT EXISTS tt_validated_review (
   PRIMARY KEY (ruleId),
   UNIQUE KEY (\`version\`, checkDigest)
 )
-REPLACE WITH
+REPLACE WITH ${dbUtils.cteAclEffective({cgIds: grant.grantIds})},
 cteCollectionSetting AS (
 SELECT 
   c.settings->>"$.fields.detail.required" AS detailRequired,
@@ -989,16 +990,13 @@ select
   distinct rgr.ruleId 
 from 
   asset a
-  left join v_collection_grant_effective cg on a.collectionId = cg.collectionId
   left join stig_asset_map sa using (assetId)
-  left join v_user_stig_asset_effective usa on sa.saId = usa.saId
-  left join revision rev using (benchmarkId)
+  ${grant.accessLevel === 1 ? 'inner' : 'left'} join cteAclEffective cae on sa.saId = cae.saId
+  left join revision rev on sa.benchmarkId = rev.benchmarkId
   left join rev_group_rule_map rgr using (revId)
 where 
-  cg.collectionId =  @collectionId
-  and a.assetId = @assetId
-  and cg.userId = @userId 
-  and (CASE WHEN cg.accessLevel = 1 THEN usa.userId = cg.userId ELSE TRUE END)
+  a.assetId = @assetId
+  and coalesce(cae.access, 'rw') = 'rw'
 ),
 cteCandidate AS (
 select
@@ -1317,7 +1315,7 @@ where
     if (typeof connection !== 'undefined') {
       await connection.rollback()
     }    
-    throw ( {status: 500, message: err.message, stack: err.stack} ) ;
+    throw err
   }
   finally {
     if (typeof connection !== 'undefined') {
@@ -1327,57 +1325,53 @@ where
   }
 }
 
-// Returns a Set of ruleIds
-exports.getRulesByAssetUser = async function ( assetId, userObject ) {
-  try {
-    const binds = []
-    let sql = `
-      select
-        distinct rgr.ruleId 
-      from 
-        asset a
-        left join v_collection_grant_effective cg on a.collectionId = cg.collectionId
-        left join stig_asset_map sa using (assetId)
-        left join v_user_stig_asset_effective usa on sa.saId = usa.saId
-        left join revision rev using (benchmarkId)
-        left join rev_group_rule_map rgr using (revId)
-      where 
-        a.assetid = ?
-        and cg.userId = ?
-        and CASE WHEN cg.accessLevel = 1 THEN usa.userId = cg.userId ELSE TRUE END`
+// // Returns a Set of ruleIds
+// exports.getRulesByAssetUser = async function ( assetId, userObject ) {
+//   try {
+//     const binds = []
+//     let sql = `
+//       select
+//         distinct rgr.ruleId 
+//       from 
+//         asset a
+//         left join v_collection_grant_effective cg on a.collectionId = cg.collectionId
+//         left join stig_asset_map sa using (assetId)
+//         left join v_user_stig_asset_effective usa on sa.saId = usa.saId
+//         left join revision rev on sa.benchmarkId = rev.benchmarkId
+//         left join rev_group_rule_map rgr using (revId)
+//       where 
+//         a.assetid = ?
+//         and cg.userId = ?
+//         and CASE WHEN cg.accessLevel = 1 THEN usa.userId = cg.userId ELSE TRUE END`
 
-    binds.push(assetId, userObject.userId)
+//     binds.push(assetId, userObject.userId)
 
-    let [rows] = await dbUtils.pool.query(sql, binds)
-    return new Set(rows.map( row => row.ruleId ))
-  }
-  finally { }
-}
+//     let [rows] = await dbUtils.pool.query(sql, binds)
+//     return new Set(rows.map( row => row.ruleId ))
+//   }
+//   finally { }
+// }
 
 // Returns a Boolean
-exports.checkRuleByAssetUser = async function (ruleId, assetId, userObject) {
-  try {
-    const binds = []
-    let sql = `
-      select
-        distinct rgr.ruleId 
-      from 
-        asset a
-        left join v_collection_grant_effective cg on a.collectionId = cg.collectionId
-        left join stig_asset_map sa using (assetId)
-        left join v_user_stig_asset_effective usa on sa.saId = usa.saId
-        left join revision rev using (benchmarkId)
-        left join rev_group_rule_map rgr using (revId)
-      where 
-        a.assetId = ?
-        and rgr.ruleId = ?
-        and cg.userId = ?
-        and CASE WHEN cg.accessLevel = 1 THEN usa.userId = cg.userId ELSE TRUE END`
-    binds.push(assetId, ruleId, userObject.userId)   
-    let [rows] = await dbUtils.pool.query(sql, binds)
-    return rows.length > 0
-  }
-  finally { }
+exports.checkRuleByAssetUser = async function ({ruleId, assetId, collectionId, grant, checkWritable}) {
+  const binds = []
+  let sql = `with ${dbUtils.cteAclEffective({cgIds: grant.grantIds})}
+    select
+      rgr.ruleId 
+    from 
+      asset a
+      left join stig_asset_map sa using (assetId)
+      ${grant.accessLevel === 1 ? 'inner' : 'left'} join cteAclEffective cae on sa.saId = cae.saId
+      left join revision rev on sa.benchmarkId = rev.benchmarkId
+      left join rev_group_rule_map rgr using (revId)
+    where 
+      a.assetId = ?
+      and rgr.ruleId = ?
+      ${checkWritable ? "and coalesce(cae.access, 'rw') = 'rw'" : ''}
+      ${collectionId ? "and a.collectionId = ?" : ''}`
+  binds.push(assetId, ruleId, collectionId)   
+  let [rows] = await dbUtils.pool.query(sql, binds)
+  return rows.length > 0
 }
 
 exports.getReviewMetadataKeys = async function ( assetId, ruleId ) {

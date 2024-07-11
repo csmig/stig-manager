@@ -6,6 +6,7 @@ const CollectionService = require(`../service/CollectionService`)
 const Collection = require(`./Collection`)
 const SmError = require('../utils/error')
 const Security = require('../utils/accessLevels')
+const dbUtils = require('../service/utils')
 
 const _this = this
 
@@ -19,6 +20,7 @@ module.exports.postReviewsByAsset = async function postReviewsByAsset (req, res,
       reviews,
       collectionId, 
       userId: req.userObject.userId,
+      grant: req.userObject.collectionGrant[collectionId],
       svcStatus: res.svcStatus
     })
     res.json(result)
@@ -34,8 +36,8 @@ module.exports.deleteReviewByAssetRule = async function deleteReviewByAssetRule 
     let ruleId = req.params.ruleId
     let projection = req.query.projection
     
-    Collection.getCollectionInfoAndCheckPermission(req, Security.ACCESS_LEVEL.Restricted)
-    const userHasRule = await ReviewService.checkRuleByAssetUser( ruleId, assetId, req.userObject )
+    const {collectionId, collectionGrant} = Collection.getCollectionInfoAndCheckPermission(req, Security.ACCESS_LEVEL.Restricted)
+    const userHasRule = await ReviewService.checkRuleByAssetUser({ruleId, assetId, collectionId, grant: collectionGrant, checkWritable: true})
     if (userHasRule) {
       let response = await ReviewService.deleteReviewByAssetRule(assetId, ruleId, projection, req.userObject, res.svcStatus)
       res.status(response ? 200 : 204).json(response)
@@ -133,6 +135,7 @@ module.exports.putReviewByAssetRule = async function (req, res, next) {
       reviews: [review],
       collectionId, 
       userId: req.userObject.userId,
+      grant: req.userObject.collectionGrant[collectionId],
       svcStatus: res.svcStatus
     })
     if (result.rejected.length) {
@@ -164,6 +167,7 @@ module.exports.patchReviewByAssetRule = async function (req, res, next) {
       reviews: [review],
       collectionId, 
       userId: req.userObject.userId,
+      grant: req.userObject.collectionGrant[collectionId],
       svcStatus: res.svcStatus
     })
     if (result.rejected.length) {
@@ -181,8 +185,8 @@ module.exports.getReviewMetadata = async function (req, res, next) {
   try {
     let assetId = req.params.assetId
     let ruleId = req.params.ruleId
-    Collection.getCollectionInfoAndCheckPermission(req, Security.ACCESS_LEVEL.Restricted)
-    const userHasRule = await ReviewService.checkRuleByAssetUser( ruleId, assetId, req.userObject )
+    const {collectionId, collectionGrant} = Collection.getCollectionInfoAndCheckPermission(req, Security.ACCESS_LEVEL.Restricted)
+    const userHasRule = await ReviewService.checkRuleByAssetUser({ruleId, assetId, collectionId, grant: collectionGrant})
     if (userHasRule) {
       let response = await ReviewService.getReviewMetadata( assetId, ruleId, req.userObject)
       res.json(response)
@@ -201,8 +205,8 @@ module.exports.patchReviewMetadata = async function (req, res, next) {
     let assetId = req.params.assetId
     let ruleId = req.params.ruleId
     let metadata = req.body
-    Collection.getCollectionInfoAndCheckPermission(req, Security.ACCESS_LEVEL.Restricted)
-    const userHasRule = await ReviewService.checkRuleByAssetUser( ruleId, assetId, req.userObject )
+    const {collectionId, collectionGrant} = Collection.getCollectionInfoAndCheckPermission(req, Security.ACCESS_LEVEL.Restricted)
+    const userHasRule = await ReviewService.checkRuleByAssetUser({ruleId, assetId, collectionId, grant: collectionGrant, checkWritable: true})
     if (userHasRule) {
       await ReviewService.patchReviewMetadata( assetId, ruleId, metadata)
       let response = await ReviewService.getReviewMetadata( assetId, ruleId)
@@ -222,8 +226,8 @@ module.exports.putReviewMetadata = async function (req, res, next) {
     let assetId = req.params.assetId
     let ruleId = req.params.ruleId
     let body = req.body
-    Collection.getCollectionInfoAndCheckPermission(req, Security.ACCESS_LEVEL.Restricted)
-    const userHasRule = await ReviewService.checkRuleByAssetUser( ruleId, assetId, req.userObject )
+    const {collectionId, collectionGrant} = Collection.getCollectionInfoAndCheckPermission(req, Security.ACCESS_LEVEL.Restricted)
+    const userHasRule = await ReviewService.checkRuleByAssetUser({ruleId, assetId, collectionId, grant: collectionGrant, checkWritable: true})
     if (userHasRule) {
       await ReviewService.putReviewMetadata( assetId, ruleId, body)
       let response = await ReviewService.getReviewMetadata( assetId, ruleId)
@@ -242,8 +246,8 @@ module.exports.getReviewMetadataKeys = async function (req, res, next) {
   try {
     let assetId = req.params.assetId
     let ruleId = req.params.ruleId
-    Collection.getCollectionInfoAndCheckPermission(req, Security.ACCESS_LEVEL.Restricted)
-    const userHasRule = await ReviewService.checkRuleByAssetUser( ruleId, assetId, req.userObject )
+    const {collectionId, collectionGrant} = Collection.getCollectionInfoAndCheckPermission(req, Security.ACCESS_LEVEL.Restricted)
+    const userHasRule = await ReviewService.checkRuleByAssetUser({ruleId, assetId, collectionId, grant: collectionGrant})
     if (userHasRule) {
       let response = await ReviewService.getReviewMetadataKeys( assetId, ruleId, req.userObject)
       if (!response) {
@@ -265,8 +269,8 @@ module.exports.getReviewMetadataValue = async function (req, res, next) {
     let assetId = req.params.assetId
     let ruleId = req.params.ruleId
     let key = req.params.key
-    Collection.getCollectionInfoAndCheckPermission(req, Security.ACCESS_LEVEL.Restricted)
-    const userHasRule = await ReviewService.checkRuleByAssetUser( ruleId, assetId, req.userObject )
+    const {collectionId, collectionGrant} = Collection.getCollectionInfoAndCheckPermission(req, Security.ACCESS_LEVEL.Restricted)
+    const userHasRule = await ReviewService.checkRuleByAssetUser({ruleId, assetId, collectionId, grant: collectionGrant})
     if (userHasRule) {
       let response = await ReviewService.getReviewMetadataValue( assetId, ruleId, key, req.userObject)
       if (!response) {
@@ -289,8 +293,8 @@ module.exports.putReviewMetadataValue = async function (req, res, next) {
     let ruleId = req.params.ruleId
     let key = req.params.key
     let value = req.body
-    Collection.getCollectionInfoAndCheckPermission(req, Security.ACCESS_LEVEL.Restricted)
-    const userHasRule = await ReviewService.checkRuleByAssetUser( ruleId, assetId, req.userObject )
+    const {collectionId, collectionGrant} = Collection.getCollectionInfoAndCheckPermission(req, Security.ACCESS_LEVEL.Restricted)
+    const userHasRule = await ReviewService.checkRuleByAssetUser({ruleId, assetId, collectionId, grant: collectionGrant, checkWritable: true})
     if (userHasRule) {
       await ReviewService.putReviewMetadataValue( assetId, ruleId, key, value)
       res.status(204).send()
@@ -309,8 +313,8 @@ module.exports.deleteReviewMetadataKey = async function (req, res, next) {
     let assetId = req.params.assetId
     let ruleId = req.params.ruleId
     let key = req.params.key
-    Collection.getCollectionInfoAndCheckPermission(req, Security.ACCESS_LEVEL.Restricted)
-    const userHasRule = await ReviewService.checkRuleByAssetUser( ruleId, assetId, req.userObject )
+    const {collectionId, collectionGrant} = Collection.getCollectionInfoAndCheckPermission(req, Security.ACCESS_LEVEL.Restricted)
+    const userHasRule = await ReviewService.checkRuleByAssetUser({ruleId, assetId, collectionId, grant: collectionGrant, checkWritable: true})
     if (userHasRule) {
       await ReviewService.deleteReviewMetadataKey( assetId, ruleId, key, req.userObject)
       res.status(204).send()

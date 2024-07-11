@@ -283,7 +283,7 @@ module.exports.getChecklistByAssetStig = async function getChecklistByAssetStig 
   }
 }
 
-module.exports.getChecklistByAsset = async function getChecklistByAssetStig (req, res, next) {
+module.exports.getChecklistByAsset = async function (req, res, next) {
   try {
     const assetId = req.params.assetId
     let requestedBenchmarkIds = req.query.benchmarkId
