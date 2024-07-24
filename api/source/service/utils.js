@@ -189,25 +189,38 @@ module.exports.parseRevisionStr = function (revisionStr) {
   return ro
 }
 
+module.exports.selectCollectionByAssetId = async function (assetId) {
+  // another possibility: return _this.pool.query(`SELECT c.* from asset a left join collection c using (collectionId) where a.assetId = ?`, [assetId])
+  return _this.pool.query(`SELECT * from collection where collectionId = (select collectionId from asset where assetId = ?)`, [assetId])
+}
+
+module.exports.getGrantByAssetId = async function (assetId, grants) {
+  const [rows] = await _this.selectCollectionByAssetId(assetId)
+  return rows.length ? grants[rows[0].collectionId] : null
+}
+
+module.exports.getUserAssetStigs = async function ({assetId, grant, grants}) {
+  if (!grant && grants) {
+    grant = await _this.getGrantByAssetId(assetId, grants)
+  }
+  if (!grant) return [[]]
+  const sql = `with ${_this.cteAclEffective({cgIds: grant.grantIds})} select
+    distinct sa.benchmarkId,
+    coalesce(ae.access, 'rw') as access
+  from
+	  stig_asset_map sa
+    ${grant.accessLevel === 1 ? 'inner' : 'left'} join cteAclEffective ae using (saId)
+  where
+	  sa.assetId = ?`
+    return _this.pool.query(sql, [assetId])
+}
+
 // Returns Boolean
 module.exports.userHasAssetStigs = async function (assetId, requestedBenchmarkIds, elevate, userObject) {
-  let sql
-  let rows
-  sql = `select
-    distinct sa.benchmarkId
-  from
-    stig_asset_map sa
-    inner join asset a on sa.assetId = a.assetId and a.state = 'enabled'
-    inner join collection c on a.collectionId = c.collectionId and c.state = 'enabled'
-    left join collection_grant cg on a.collectionId = cg.collectionId
-    left join user_stig_asset_map usa on sa.saId = usa.saId
-  where
-    cg.userId = ?
-    and sa.assetId = ?
-    and (cg.accessLevel >= 2 or (cg.accessLevel = 1 and usa.userId = cg.userId))`
-
-  ;[rows] = await _this.pool.query(sql, [userObject.userId, assetId])
-
+  const [rows] = await _this.getUserAssetStigs({
+    assetId,
+    grants: userObject.grants
+  })
   const availableBenchmarkIds = rows.map( row => row.benchmarkId )
   return requestedBenchmarkIds.every( requestedBenchmarkId => availableBenchmarkIds.includes(requestedBenchmarkId))   
 }
@@ -224,7 +237,7 @@ module.exports.scrubReviewsByUser = async function(reviews, elevate, userObject)
     const sql = `SELECT
       CONCAT(sa.assetId, '-', rgr.ruleId) as permitted
     FROM
-      collection_grant cg
+      v_collection_grant_effective cg
       inner join asset a on cg.collectionId = a.collectionId
       inner join stig_asset_map sa on a.assetId = sa.assetId
       inner join revision rev on sa.benchmarkId = rev.benchmarkId
@@ -238,10 +251,10 @@ module.exports.scrubReviewsByUser = async function(reviews, elevate, userObject)
     SELECT
       CONCAT(sa.assetId, '-', rgr.ruleId) as permitted
     FROM
-      collection_grant cg
+      v_collection_grant_effective cg
       inner join asset a on cg.collectionId = a.collectionId
       inner join stig_asset_map sa on a.assetId = sa.assetId
-      inner join user_stig_asset_map usa on (sa.saId = usa.saId and cg.userId = usa.userId)
+      inner join v_user_stig_asset_effective usa on (sa.saId = usa.saId and cg.userId = usa.userId)
       inner join revision rev on sa.benchmarkId = rev.benchmarkId
       inner join rev_group_rule_map rgr on rev.revId = rgr.revId
     WHERE
@@ -435,9 +448,10 @@ module.exports.uuidToSqlString  = function (uuid) {
   }
 }
 
-module.exports.makeQueryString = function ({ctes = [], columns, joins, predicates, groupBy, orderBy}) {
-  const query = `
-${ctes.length ? 'WITH ' + ctes.join(',  \n') : ''}
+module.exports.makeQueryString = function ({ctes = [], columns, joins, predicates, groupBy, orderBy, format = false}) {
+  if (joins instanceof Set) joins = Array.from(joins)
+  if (groupBy instanceof Set) groupBy = Array.from(groupBy)
+  const query = `${ctes.length ? 'WITH ' + ctes.join(',  \n') : ''}
 SELECT
   ${columns.join(',\n  ')}
 FROM
@@ -446,7 +460,7 @@ ${predicates?.statements.length ? 'WHERE\n  ' + predicates.statements.join(' and
 ${groupBy?.length ? 'GROUP BY\n  ' + groupBy.join(',\n  ') : ''}
 ${orderBy?.length ? 'ORDER BY\n  ' + orderBy.join(',\n  ') : ''}
 `
-  return query
+  return format? mysql.format(query, predicates.binds) : query
 }
 
 module.exports.CONTEXT_ALL = 'all'
@@ -504,6 +518,41 @@ module.exports.retryOnDeadlock = async function (fn, statusObj = {}) {
   })
 }
 
+module.exports.retryOnDeadlock2 = async function ({ transactionFn, statusObj = {}, beforeReleaseFn, afterRollbackFn}) {
+  const connection = await _this.pool.getConnection()
+  const retryFunction = async function (bail) {
+    try {
+      await connection.query('START TRANSACTION')
+      const transactionReturn = await transactionFn(connection)
+      await connection.commit()
+      await connection.release()
+      return transactionReturn
+    }
+    catch (e) {
+      if (e.code === 'ER_LOCK_DEADLOCK') {
+        throw(e)
+      }
+      await connection.rollback()
+      afterRollbackFn?.(connection)
+      beforeReleaseFn?.(connection)
+      await connection.release()
+      bail(e)
+    }
+  }
+  statusObj.retries = 0
+  return  await retry(retryFunction, {
+    retries: 15,
+    factor: 1,
+    minTimeout: 200,
+    maxTimeout: 200,
+    onRetry: () => {
+      ++statusObj.retries
+    }
+  })
+  // return returnValue
+
+}
+
 module.exports.pruneCollectionRevMap = async function (connection) {
   const sql = `delete crm from collection_rev_map crm
   left join( select distinct a.collectionId, sa.benchmarkId from stig_asset_map sa left join asset a using (assetId) where a.state = "enabled" ) maps using (collectionId, benchmarkId)
@@ -535,4 +584,184 @@ module.exports.updateDefaultRev = async function (connection, {collectionId, col
   await (connection ?? _this.pool).query(sqlDelete, binds)
   await (connection ?? _this.pool).query(sqlInsert, binds)
   
+}
+
+module.exports.pruneUserStigAssetMap = async function (connection, {collectionId, userId}) {
+  let sql = `delete usa
+  from
+    user_stig_asset_map usa
+    left join stig_asset_map sa using (saId)
+    left join asset a on sa.assetId = a.assetId
+    left join collection_grant cg on (a.collectionId = cg.collectionId and usa.userId = cg.userId and cg.accessLevel = 1)
+  where 
+    cg.cgId is null`
+    const binds = []
+    if (collectionId) {
+      sql += ' and a.collectionId = ?'
+      binds.push(collectionId)
+    }
+    if (userId) {
+      sql += ' and usa.userId = ?'
+      binds.push(userId)
+    }
+    await (connection ?? _this.pool).query(sql, binds)
+}
+
+module.exports.pruneUserGroupStigAssetMap = async function (connection, {collectionId, userGroupId}) {
+  let sql = `delete ugsa
+  from
+    user_group_stig_asset_map ugsa
+    left join stig_asset_map sa using (saId)
+    left join asset a on sa.assetId = a.assetId
+    left join collection_grant_group cgg on (a.collectionId = cgg.collectionId and ugsa.userGroupId = cgg.userGroupId and cgg.accessLevel = 1)
+  where 
+    cgg.cggId is null`
+    const binds = []
+    if (collectionId) {
+      sql += ' and a.collectionId = ?'
+      binds.push(collectionId)
+    }
+    if (userGroupId) {
+      sql += ' and ugsa.userGroupId = ?'
+      binds.push(userGroupId)
+    }
+    await (connection ?? _this.pool).query(sql, binds)
+}
+
+module.exports.jsonArrayAggDistinct = function (valueStr) {
+  return `cast(concat('[', group_concat(distinct ${valueStr}), ']') as json)`
+}
+
+module.exports.jsonArrayAgg = function ({value, orderBy = '', distinct = false}) {
+  return `cast(concat('[', group_concat(${distinct ? 'distinct ' : ''}${value} ${orderBy ? `order by ${orderBy}` : ''}), ']') as json)`
+}
+
+module.exports.sqlGrantees = function ({collectionId, collectionIds, userId, username, nameMatch, includeColumnCollectionId = true, returnCte = false}) {
+  const predicates = {
+    statements: [],
+    binds: []
+  }
+  if (collectionId) {
+    predicates.statements.push('cg.collectionId = ?')
+    predicates.binds.push(collectionId)
+  }
+  if (collectionIds) {
+    predicates.statements.push('cg.collectionId IN (?)')
+    predicates.binds.push(collectionIds)
+  }
+  if (userId) {
+    predicates.statements.push('ud.userId = ?')
+    predicates.binds.push(userId)
+  }
+  if (username) {
+    let matchStr = '= ?'
+    if ( nameMatch && nameMatch !== 'exact') {
+      matchStr = 'LIKE ?'
+      switch (nameMatch) {
+        case 'startsWith':
+          username = `${username}%`
+          break
+        case 'endsWith':
+          username = `%${username}`
+          break
+        case 'contains':
+          username = `%${username}%`
+          break
+      }
+    }
+    predicates.statements.push(`ud.username ${matchStr}`)
+    predicates.binds.push(username)
+  }
+
+  // final query will be a UNION of sqlDirectGrants and sqlGroupGrants
+  const sqlDirectGrants = `select 
+  ${includeColumnCollectionId ? 'cg.collectionId,' : ''}
+  cast(cg.userId as char) as userId,
+  cg.accessLevel,
+  json_array(json_object('userId', cast(ud.userId as char),'username', ud.username)) as grantees,
+  json_array(cg.cgId) as grantIds
+from
+  collection_grant cg
+  inner join collection c on (cg.collectionId = c.collectionId and c.state = 'enabled')
+  left join user_data ud on cg.userId = ud.userId
+where
+    cg.userId is not null
+    ${predicates.statements.length ? `and ${predicates.statements.join(' and ')}` : ''}`
+  const sqlFormattedDirectGrants = mysql.format(sqlDirectGrants, predicates.binds)
+
+  const sqlGroupGrants = `select
+  ${includeColumnCollectionId ? 'collectionId,' : ''}
+  userId,
+  accessLevel,
+  grantees,
+  grantIds
+from
+  (select
+    ROW_NUMBER() OVER(PARTITION BY ugu.userId, cg.collectionId ORDER BY cg.accessLevel desc) as rn,
+    ${includeColumnCollectionId ? 'cg.collectionId,' : ''} 
+    cast(ugu.userId as char) as userId, 
+    cg.accessLevel,
+    json_arrayagg(json_object('userGroupId', cast(cg.userGroupId as char),'name', ug.name)) OVER (PARTITION BY ugu.userId, cg.collectionId, cg.accessLevel) as grantees,
+    json_arrayagg(cg.cgId) OVER (PARTITION BY ugu.userId, cg.collectionId, cg.accessLevel) as grantIds
+from 
+    collection_grant cg
+    inner join collection c on (cg.collectionId = c.collectionId and c.state = 'enabled')
+    left join user_group_user_map ugu on cg.userGroupId = ugu.userGroupId
+    left join user_group ug on ugu.userGroupId = ug.userGroupId
+    left join user_data ud on ugu.userId = ud.userId
+    left join collection_grant cgDirect on (cg.collectionId = cgDirect.collectionId and ugu.userId = cgDirect.userId)
+  where
+    cg.userGroupId is not null
+    and cgDirect.userId is null
+    ${predicates.statements.length ? `and ${predicates.statements.join(' and ')}` : ''}
+  ) dt
+where
+  dt.rn = 1`
+  const sqlFormattedGroupGrants = mysql.format(sqlGroupGrants, predicates.binds)
+
+  const sqlFormatted = `${sqlFormattedDirectGrants} union ${sqlFormattedGroupGrants}`
+  return returnCte ? `cteGrantees as (${sqlFormatted})` : sqlFormatted
+}
+
+module.exports.cteAclEffective = function ({cgIds = [], includeColumnCollectionId = true, inClauseTable = 'cteGrantees', inClauseColumn = 'grantIds', inClauseUserId = ''}) {
+  const inClause = cgIds.length ? '?' : `select jt.grantId from ${inClauseTable} left join json_table (${inClauseTable}.${inClauseColumn}, '$[*]' COLUMNS (grantId INT PATH '$')) jt on true${inClauseUserId ? ` where ${inClauseTable}.userId = ${inClauseUserId}` : ''}`
+  const sql = `cteAclRules as (select ${includeColumnCollectionId ? 'a.collectionId,' : ''}
+	sa.saId,
+	cga.access,
+	case when cga.benchmarkId is not null then 1 else 0 end +
+	  case when cga.assetId is not null then 1 else 0 end +
+	  case when cga.assetId is not null and cga.benchmarkId is not null then 1 else 0 end +
+	  case when cga.clId is not null then 1 else 0 end as specificity
+from
+	collection_grant_acl cga
+	left join collection_label_asset_map cla on cga.clId = cla.clId
+  left join collection_label cl on cla.clId = cl.clId
+	inner join stig_asset_map sa on (
+	  case when cga.assetId is not null 
+		then cga.assetId = sa.assetId 
+		else true
+	  end and 
+	  case when cga.benchmarkId is not null 
+		then cga.benchmarkId = sa.benchmarkId
+		else true
+	  end and
+	  case when cga.clId is not null 
+		then cla.assetId = sa.assetId
+		else true
+	  end)
+	inner join asset a on sa.assetId = a.assetId and a.state = 'enabled'
+where
+	cga.cgId in (${inClause})
+),
+cteAclRulesRanked as (
+    select ${includeColumnCollectionId ? 'collectionId,' : ''}
+		saId,
+    access,
+		row_number() over (partition by saId order by specificity desc, access asc) as rn
+	from 
+		cteAclRules),
+cteAclEffective as (select saId, access from cteAclRulesRanked where rn = 1)`
+
+  const sqlFormatted = mysql.format(sql, [cgIds])
+  return sqlFormatted
 }

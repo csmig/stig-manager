@@ -596,8 +596,11 @@ SM.StigSelectionField = Ext.extend(Ext.form.ComboBox, {
             '</tpl>',
             {
                 highlightQuery: function (text) {
-                    const re = new RegExp(_this.el.dom.value,'gi')
-                    return text.replace(re,'<span class="sm-text-highlight">$&</span>')
+                    if (_this.el.dom.value) {
+                        const re = new RegExp(_this.el.dom.value,'gi')
+                        return text.replace(re,'<span class="sm-text-highlight">$&</span>')
+                    }
+                    return text
                 }
             }
         )
@@ -1158,7 +1161,7 @@ async function showAssetProps( assetId, initialCollectionId ) {
         }
                 
         Ext.getBody().unmask();
-        appwindow.show(document.body);
+        appwindow.show(Ext.getBody());
     }
     catch (e) {
         Ext.getBody().unmask()

@@ -144,7 +144,7 @@ SM.Review.Form.ResultEngineSprite = Ext.extend(Ext.form.DisplayField, {
                 delegate: 'span', // target of the mouseover
                 showDelay: 0,
                 dismissDelay: 0,
-                renderTo: document.body,
+                renderTo: Ext.getBody(),
                 tplResultEngine: new Ext.XTemplate(
                   '<span>',
                   '<tpl if="values.version">',
