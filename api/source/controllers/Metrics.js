@@ -40,14 +40,14 @@ async function getCollectionMetrics (req, res, next, {style, aggregation, firstR
 async function getMetaMetrics (req, res, next, {style, aggregation, firstRowOnly = false}) {
   try {
     const returnType = req.query.format || 'json'
-    const inPredicates = {
+    const filter = {
       collectionIds: req.query.collectionId,
       benchmarkIds: req.query.benchmarkId,
       revisionIds: req.query.revisionId
     }
     const rows = await MetricsService.queryMetaMetrics({
-      inPredicates,
-      userId: req.userObject.userId,
+      filter,
+      grants: req.userObject.grants,
       style,
       aggregation,
       returnType 
@@ -97,20 +97,20 @@ module.exports.getMetricsSummaryByCollectionAggStig = async function (req, res, 
   return getCollectionMetrics(req, res, next, {style: 'summary', aggregation: 'stig'})
 }
 module.exports.getMetricsDetailByMeta = async function (req, res, next) {
-  await getMetaMetrics(req, res, next, {style: 'detail', aggregation: 'meta', firstRowOnly: true})
+  return getMetaMetrics(req, res, next, {style: 'detail', aggregation: 'meta', firstRowOnly: true})
 }
 module.exports.getMetricsDetailByMetaAggCollection = async function (req, res, next) {
-  await getMetaMetrics(req, res, next, {style: 'detail', aggregation: 'collection'})
+  return getMetaMetrics(req, res, next, {style: 'detail', aggregation: 'collection'})
 }
 module.exports.getMetricsDetailByMetaAggStig = async function (req, res, next) {
-  await getMetaMetrics(req, res, next, {style: 'detail', aggregation: 'metaStig'})
+  return getMetaMetrics(req, res, next, {style: 'detail', aggregation: 'metaStig'})
 }
 module.exports.getMetricsSummaryByMeta = async function (req, res, next) {
-  await getMetaMetrics(req, res, next, {style: 'summary', aggregation: 'meta', firstRowOnly: true})
+  return getMetaMetrics(req, res, next, {style: 'summary', aggregation: 'meta', firstRowOnly: true})
 }
 module.exports.getMetricsSummaryByMetaAggCollection = async function (req, res, next) {
-  await getMetaMetrics(req, res, next, {style: 'summary', aggregation: 'collection'})
+  return getMetaMetrics(req, res, next, {style: 'summary', aggregation: 'collection'})
 }
 module.exports.getMetricsSummaryByMetaAggStig = async function (req, res, next) {
-  await getMetaMetrics(req, res, next, {style: 'summary', aggregation: 'metaStig'})
+  return getMetaMetrics(req, res, next, {style: 'summary', aggregation: 'metaStig'})
 }
