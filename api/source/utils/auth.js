@@ -135,4 +135,4 @@ async function initializeAuth(depStatus) {
     depStatus.auth = 'up'
 }
 
-module.exports = {verifyRequest, initializeAuth}
+module.exports = {verifyRequest, initializeAuth, privilegeGetter}
