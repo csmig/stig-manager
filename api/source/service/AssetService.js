@@ -1260,7 +1260,7 @@ exports.getChecklistByAsset = async function(assetId, benchmarks, format) {
     }
 }
 
-exports.getAssetsByStig = async function({collectionId, benchmarkId, projections, labels, grant}) {
+exports.getAssetsByStig = async function({collectionId, benchmarkId, projections = [], labels, grant}) {
   const ctes = []
   const columns = [
     'DISTINCT CAST(a.assetId as char) as assetId',

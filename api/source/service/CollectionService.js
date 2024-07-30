@@ -597,107 +597,96 @@ exports.deleteCollection = async function(collectionId, userId) {
  * returns CollectionChecklist
  **/
 exports.getChecklistByCollectionStig = async function (collectionId, benchmarkId, revisionStr, userObject ) {
-  let connection
-  try {
+  const ctes = []
+  const groupBy = ['rgr.rgrId']
+  const orderBy = ['rgr.ruleId']
 
-    const groupBy = ['rgr.rgrId']
-    const orderBy = ['rgr.ruleId']
+  const columns = [
+    `rgr.ruleId
+    ,rgr.title as ruleTitle
+    ,rgr.severity
+    ,rgr.\`version\`
+    ,rgr.groupId
+    ,rgr.groupTitle
+    ,json_object(
+      'results', json_object(
+        'pass', sum(CASE WHEN r.resultId = 3 THEN 1 ELSE 0 END),
+        'fail', sum(CASE WHEN r.resultId = 4 THEN 1 ELSE 0 END),
+        'notapplicable', sum(CASE WHEN r.resultId = 2 THEN 1 ELSE 0 END),
+        'other', sum(CASE WHEN r.resultId is null OR (r.resultId != 2 AND r.resultId != 3 AND r.resultId != 4) THEN 1 ELSE 0 END)
+      ),
+      'statuses', json_object(
+        'saved', sum(CASE WHEN r.statusId = 0 THEN 1 ELSE 0 END),
+        'submitted', sum(CASE WHEN r.statusId = 1 THEN 1 ELSE 0 END),
+        'rejected', sum(CASE WHEN r.statusId = 2 THEN 1 ELSE 0 END),
+        'accepted', sum(CASE WHEN r.statusId = 3 THEN 1 ELSE 0 END)
+      )
+    ) as counts
+    ,json_object(
+      'ts', json_object(
+        'min', DATE_FORMAT(MIN(r.ts),'%Y-%m-%dT%H:%i:%sZ'),
+        'max', DATE_FORMAT(MAX(r.ts),'%Y-%m-%dT%H:%i:%sZ')
+      ),
+      'statusTs', json_object(
+        'min', DATE_FORMAT(MIN(r.statusTs),'%Y-%m-%dT%H:%i:%sZ'),
+        'max', DATE_FORMAT(MAX(r.statusTs),'%Y-%m-%dT%H:%i:%sZ')
+      ),
+      'touchTs', json_object(
+        'min', DATE_FORMAT(MIN(r.touchTs),'%Y-%m-%dT%H:%i:%sZ'),
+        'max', DATE_FORMAT(MAX(r.touchTs),'%Y-%m-%dT%H:%i:%sZ')
+      )
+    ) as timestamps`
+  ]
 
-    const columns = [
-          `rgr.ruleId
-      ,rgr.title as ruleTitle
-      ,rgr.severity
-      ,rgr.\`version\`
-      ,rgr.groupId
-      ,rgr.groupTitle
-      ,json_object(
-        'results', json_object(
-          'pass', sum(CASE WHEN r.resultId = 3 THEN 1 ELSE 0 END),
-          'fail', sum(CASE WHEN r.resultId = 4 THEN 1 ELSE 0 END),
-          'notapplicable', sum(CASE WHEN r.resultId = 2 THEN 1 ELSE 0 END),
-          'other', sum(CASE WHEN r.resultId is null OR (r.resultId != 2 AND r.resultId != 3 AND r.resultId != 4) THEN 1 ELSE 0 END)
-        ),
-        'statuses', json_object(
-          'saved', sum(CASE WHEN r.statusId = 0 THEN 1 ELSE 0 END),
-          'submitted', sum(CASE WHEN r.statusId = 1 THEN 1 ELSE 0 END),
-          'rejected', sum(CASE WHEN r.statusId = 2 THEN 1 ELSE 0 END),
-          'accepted', sum(CASE WHEN r.statusId = 3 THEN 1 ELSE 0 END)
-        )
-      ) as counts
-      ,json_object(
-        'ts', json_object(
-          'min', DATE_FORMAT(MIN(r.ts),'%Y-%m-%dT%H:%i:%sZ'),
-          'max', DATE_FORMAT(MAX(r.ts),'%Y-%m-%dT%H:%i:%sZ')
-        ),
-        'statusTs', json_object(
-          'min', DATE_FORMAT(MIN(r.statusTs),'%Y-%m-%dT%H:%i:%sZ'),
-          'max', DATE_FORMAT(MAX(r.statusTs),'%Y-%m-%dT%H:%i:%sZ')
-        ),
-        'touchTs', json_object(
-          'min', DATE_FORMAT(MIN(r.touchTs),'%Y-%m-%dT%H:%i:%sZ'),
-          'max', DATE_FORMAT(MAX(r.touchTs),'%Y-%m-%dT%H:%i:%sZ')
-        )
-      ) as timestamps`
+  const joins = [
+    'asset a',
+    'left join stig_asset_map sa using (assetId)',
+    'left join current_rev rev using (benchmarkId)',
+    'left join rev_group_rule_map rgr using (revId)',
+    'left join rule_version_check_digest rvcd using (ruleId)',
+    'left join review r on (rvcd.version=r.version and rvcd.checkDigest=r.checkDigest and sa.assetId=r.assetId)'
+  ]
+
+  const predicates = {
+    statements: [
+      'a.collectionId = ?',
+      'rev.benchmarkId = ?',
+      'a.state = "enabled"'
+    ],
+    binds: [
+      collectionId,
+      benchmarkId
     ]
-
-    const joins = [
-      'asset a',
-      'left join stig_asset_map sa using (assetId)',
-      'left join current_rev rev using (benchmarkId)',
-      'left join rev_group_rule_map rgr using (revId)',
-      'left join rule_version_check_digest rvcd using (ruleId)',
-      'left join review r on (rvcd.version=r.version and rvcd.checkDigest=r.checkDigest and sa.assetId=r.assetId)'
-    ]
-
-    const predicates = {
-      statements: [
-        'a.collectionId = :collectionId',
-        'rev.benchmarkId = :benchmarkId',
-        'a.state = "enabled"'
-      ],
-      binds: {
-        collectionId: collectionId,
-        benchmarkId: benchmarkId
-      }
-    }
-
-    // Non-current revision
-    if (revisionStr !== 'latest') {
-      joins.splice(2, 1, 'left join revision rev on sa.benchmarkId=rev.benchmarkId')
-      const {version, release} = dbUtils.parseRevisionStr(revisionStr)
-      predicates.statements.push('rev.version = :version')
-      predicates.statements.push('rev.release = :release')
-      predicates.binds.version = version
-      predicates.binds.release = release
-    }
-
-    // Access control
-    const grant = userObject.grants[collectionId]
-    if (grant?.accessLevel === 1) {
-      predicates.statements.push(`a.assetId in (
-        select
-            sa.assetId
-        from
-            v_user_stig_asset_effective usa 
-            left join stig_asset_map sa on (usa.saId=sa.saId and sa.benchmarkId = :benchmarkId) 
-        where
-            usa.userId=:userId)`)
-      predicates.binds.userId = userObject.userId
-    }
-  
-    const sql = dbUtils.makeQueryString({columns, joins, predicates, groupBy, orderBy})
-
-    // Send query
-    connection = await dbUtils.pool.getConnection()
-    connection.config.namedPlaceholders = true
-    const [rows] = await connection.query(sql, predicates.binds)
-    return (rows)
   }
-  finally {
-    if (typeof connection !== 'undefined') {
-      await connection.release()
-    }
+
+  // Non-current revision
+  if (revisionStr !== 'latest') {
+    joins.splice(2, 1, 'left join revision rev on sa.benchmarkId=rev.benchmarkId')
+    const {version, release} = dbUtils.parseRevisionStr(revisionStr)
+    predicates.statements.push('rev.version = ?', 'rev.release = ?')
+    predicates.binds.push(version, release)
   }
+
+  // Access control
+  const grant = userObject.grants[collectionId]
+  if (grant.accessLevel === 1) {
+    ctes.push(dbUtils.cteAclEffective({cgIds: grant.grantIds}))
+    joins.push('inner join cteAclEffective cae on sa.saId = cae.saId')
+  }
+
+  const sql = dbUtils.makeQueryString({
+    ctes,
+    columns,
+    joins,
+    predicates,
+    groupBy,
+    orderBy,
+    format: true
+  })
+
+  // Send query
+  const [rows] = await dbUtils.pool.query(sql)
+  return (rows)
 }
 
 

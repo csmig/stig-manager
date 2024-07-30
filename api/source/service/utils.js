@@ -225,60 +225,6 @@ module.exports.userHasAssetStigs = async function (assetId, requestedBenchmarkId
   return requestedBenchmarkIds.every( requestedBenchmarkId => availableBenchmarkIds.includes(requestedBenchmarkId))   
 }
 
-// @param reviews Array List of Review objects
-// @param elevate Boolean 
-// @param userObject Object
-module.exports.scrubReviewsByUser = async function(reviews, elevate, userObject) {
-  let permitted = [], rejected = []
-  if (elevate) {
-    permitted = reviews
-  }
-  else {
-    const sql = `SELECT
-      CONCAT(sa.assetId, '-', rgr.ruleId) as permitted
-    FROM
-      v_collection_grant_effective cg
-      inner join asset a on cg.collectionId = a.collectionId
-      inner join stig_asset_map sa on a.assetId = sa.assetId
-      inner join revision rev on sa.benchmarkId = rev.benchmarkId
-      inner join rev_group_rule_map rgr on rev.revId = rgr.revId
-    WHERE
-      cg.userId = ?
-      and cg.accessLevel != 1
-    GROUP BY
-      sa.assetId, rgr.ruleId
-    UNION
-    SELECT
-      CONCAT(sa.assetId, '-', rgr.ruleId) as permitted
-    FROM
-      v_collection_grant_effective cg
-      inner join asset a on cg.collectionId = a.collectionId
-      inner join stig_asset_map sa on a.assetId = sa.assetId
-      inner join v_user_stig_asset_effective usa on (sa.saId = usa.saId and cg.userId = usa.userId)
-      inner join revision rev on sa.benchmarkId = rev.benchmarkId
-      inner join rev_group_rule_map rgr on rev.revId = rgr.revId
-    WHERE
-      cg.userId = ?
-      and cg.accessLevel = 1
-    GROUP BY
-      sa.assetId, rgr.ruleId`
-    let [rows] = await _this.pool.query(sql, [userObject.userId, userObject.userId])
-    let allowedAssetRules = rows.map(r => r.permitted)
-    reviews.forEach(review => {
-      if (allowedAssetRules.includes(`${review.assetId}-${review.ruleId}`)) {
-        permitted.push(review)
-      }
-      else {
-        rejected.push(review)
-      }
-    })
-  }
-  return {
-    permitted: permitted,
-    rejected: rejected
-  }
-}
-
 /**
  * updateStatsAssetStig
  * @param {PoolConnection} connection 

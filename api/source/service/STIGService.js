@@ -117,9 +117,9 @@ exports.queryStigs = async function ( inPredicates, inProjections, userObject, e
       binds
     }
 
-    const sql = dbUtils.makeQueryString({ctes, columns, joins, predicates})
+    const sql = dbUtils.makeQueryString({ctes, columns, joins, predicates, format: true})
 
-    let [rows] = await dbUtils.pool.query(sql, predicates.binds)
+    const [rows] = await dbUtils.pool.query(sql)
     return (rows)
   }
   catch (err) {
