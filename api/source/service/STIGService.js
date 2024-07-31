@@ -4,127 +4,182 @@ const {createHash} = require('node:crypto')
 
 let _this = this
 
+function cteStigCollection ({elevate = false, unrestrictedCollectionIds = [], hasRestrictions = true}) {
+  const columns = [
+    'sa.benchmarkId',
+    `cast(concat('[', group_concat(distinct concat('"',a.collectionId,'"')),']') as json) as collectionIds`
+  ]
+  const joins = [
+    'stig_asset_map sa',
+    'inner join asset a on a.assetId=sa.assetId and a.state = "enabled"',
+    'inner join collection c on c.collectionId=a.collectionId and c.state = "enabled"'
+  ]
+  const predicates = {
+    statements: [],
+    binds: []
+  }
+  const groupBy = ['sa.benchmarkId']
+
+  if (!elevate) {
+    const statements = []
+    if (hasRestrictions) {
+      joins.push('left join cteAclEffective cae on sa.saId = cae.saId')
+      statements.push('cae.saId is not null')
+    }
+    if (unrestrictedCollectionIds.length) {
+      statements.push('c.collectionId in (?)')
+      predicates.binds.push(unrestrictedCollectionIds)
+    }
+    if (statements.length) predicates.statements.push(statements.join(' OR '))
+  }
+
+  const sql = dbUtils.makeQueryString({columns, joins, predicates, groupBy, format: true})
+  return `cte_stig_collection as (${sql})`
+}
+
+function cteRevCollection({elevate = false, unrestrictedCollectionIds = [], hasRestrictions = true}) {
+  const columns = [
+    'r.revId',
+    `cast(concat('[', group_concat(distinct concat('"',crm.collectionId,'"')),']') as json) as collectionIds`
+  ]
+  const joins = [
+    'revision r',
+    'inner join collection_rev_map crm using (revId)'
+  ]
+  const predicates = {
+    statements: [],
+    binds: []
+  }
+  const groupBy = ['r.revId']
+  if (!elevate) {
+    const statements = []
+    if (hasRestrictions) {
+      joins.push('left join stig_asset_map sa on r.benchmarkId = sa.benchmarkId','left join cteAclEffective cae on sa.saId = cae.saId')
+      statements.push('cae.saId is not null')
+    }
+    if (unrestrictedCollectionIds.length) {
+      statements.push('crm.collectionId in (?)')
+      predicates.binds.push(unrestrictedCollectionIds)
+    }
+    if (statements.length) predicates.statements.push(statements.join(' OR '))
+  }
+
+  const sql = dbUtils.makeQueryString({columns, joins, predicates, groupBy, format: true})
+  return `cte_rev_collection as (${sql})`
+}
+
 /**
 Generalized queries for STIGs
 **/
-exports.queryStigs = async function ( inPredicates, inProjections, userObject, elevate = false ) {
-  try {
-    const ctes = []
-    // cte_stig_collection is used for the base query (no projections)
-    ctes.push(`cte_stig_collection AS (select
-      sa.benchmarkId,
-      cast(concat('[', group_concat(distinct concat('"',a.collectionId,'"')),']') as json) as collectionIds
-      FROM
-      stig_asset_map sa
-      inner join asset a on a.assetId=sa.assetId and a.state = "enabled"
-      inner join collection c on c.collectionId=a.collectionId and c.state = "enabled"
-      ${elevate ? '' : `left join v_collection_grant_effective cg on a.collectionId = cg.collectionId
-      left join v_user_stig_asset_effective usa on sa.saId = usa.saId
-      where  (cg.userId = ? AND CASE WHEN cg.accessLevel = 1 THEN usa.userId = cg.userId ELSE TRUE END)`}
-      group by sa.benchmarkId)`)
-
-    // cte_stig is used for the base query (no projections)
-    const cteStigColumns = [
-      'b.benchmarkId',
-      'b.title',
-      `cr.status`,
-      `concat('V', cr.version, 'R', cr.release) as "lastRevisionStr"`,
-      `date_format(cr.benchmarkDateSql,'%Y-%m-%d') as "lastRevisionDate"`,
-      `cr.ruleCount`,
-      `coalesce(sc.collectionIds,json_array()) as collectionIds`,
-      `JSON_ARRAYAGG(concat('V',revision.version,'R',revision.release)) OVER (PARTITION BY b.benchmarkId ORDER BY revision.benchmarkDateSql DESC) as revisionStrs`,
-      `ROW_NUMBER() OVER (PARTITION BY b.benchmarkId ORDER BY revision.benchmarkDateSql ASC) as rownum`
-    ]
-    const cteStigJoins = [
-      'stig b',
-      'left join current_rev cr on b.benchmarkId = cr.benchmarkId',
-      'left join cte_stig_collection sc on b.benchmarkId = sc.benchmarkId',
-      'left join revision on b.benchmarkId = revision.benchmarkId',
-    ]
-
-    // PREDICATES
-    let cteStigPredicates = {
-      statements: [],
-      binds: []
+exports.queryStigs = async function ({filter, projections, grants, elevate = false}) {
+  const unrestrictedCollectionIds = []
+  let requireCteAcls = false
+  let requesterGrantIds = []
+  if (!elevate) {
+    for (const collectionId in grants) {
+      if (grants[collectionId].accessLevel === 1) {
+        requesterGrantIds.push(grants[collectionId].grantIds)
+      }
+      else {
+        unrestrictedCollectionIds.push(collectionId)
+      }
     }
-    if (inPredicates.title) {
-      cteStigPredicates.statements.push("b.title LIKE CONCAT('%',?,'%')")
-      cteStigPredicates.binds.push( inPredicates.title )
-    }
-    if (inPredicates.benchmarkId) {
-      cteStigPredicates.statements.push('b.benchmarkId = ?')
-      cteStigPredicates.binds.push( inPredicates.benchmarkId )
-    }
-
-    // Main query columns, can be modified by projections
-    const columns = [
-      'benchmarkId',
-      'title',
-      '`status`',
-      `lastRevisionStr`,
-      `lastRevisionDate`,
-      `ruleCount`,
-      `revisionStrs`,
-      `collectionIds`,
-    ]
-
-    if (inProjections.includes('revisions')) {
-      // add cte_rev_collection, add revision objects to cteStigColumns, add joins to cteStigJoins
-      ctes.push(`cte_rev_collection AS (select
-        r.revId,
-        cast(concat('[', group_concat(distinct concat('"',crm.collectionId,'"')),']') as json) as collectionIds
-        from
-        revision r
-        inner join collection_rev_map crm using (revId)
-        ${elevate ? '' : `left join v_collection_grant_effective cg on crm.collectionId = cg.collectionId
-        left join stig_asset_map sa on r.benchmarkId = sa.benchmarkId
-        left join v_user_stig_asset_effective usa on sa.saId = usa.saId
-        where  (cg.userId = ? AND CASE WHEN cg.accessLevel = 1 THEN usa.userId = cg.userId ELSE TRUE END)`}
-        group by r.revId)`)
-      cteStigColumns.push(`JSON_ARRAYAGG(
-        json_object(
-          "benchmarkId", revision.benchmarkId,
-          "revisionStr", concat('V',revision.version,'R',revision.release),
-          "version", cast(revision.version as char),
-          "release", revision.release,
-          "benchmarkDate", revision.benchmarkDateSql,
-          "status", revision.status,
-          "statusDate", revision.statusDate,
-          "ruleCount", revision .ruleCount,
-          "collectionIds", coalesce(rc.collectionIds,json_array())
-        )) OVER (PARTITION BY b.benchmarkId ORDER BY revision.benchmarkDateSql DESC) as revisions`)
-      cteStigJoins.push('left join cte_rev_collection rc on revision.revId = rc.revId')
-      columns.push('revisions')
-    }
-
-    ctes.push(`cte_stig AS (${dbUtils.makeQueryString({columns:cteStigColumns, joins:cteStigJoins, predicates:cteStigPredicates, orderBy:['b.benchmarkId']})})`)
-
-    let binds
-    if (elevate) {
-      binds = cteStigPredicates.binds
-    }
-    else if (inProjections.includes('revisions')){
-      binds = [userObject.userId, userObject.userId, ...cteStigPredicates.binds]
-    }
-    else {
-      binds = [userObject.userId, ...cteStigPredicates.binds]
-    }
-
-    // CONSTRUCT MAIN QUERY
-    const joins = ['cte_stig']
-    const predicates = {
-      statements: ['rownum = 1'],
-      binds
-    }
-
-    const sql = dbUtils.makeQueryString({ctes, columns, joins, predicates, format: true})
-
-    const [rows] = await dbUtils.pool.query(sql)
-    return (rows)
+    requesterGrantIds = requesterGrantIds.flat()
+    requireCteAcls = !!requesterGrantIds.length
   }
-  catch (err) {
-    throw err
-  }  
+
+
+  const ctes = []
+  if (requireCteAcls) {
+    ctes.push(dbUtils.cteAclEffective({cgIds: requesterGrantIds}))
+  }
+  ctes.push(cteStigCollection({
+    elevate,
+    unrestrictedCollectionIds,
+    hasRestrictions: !!requesterGrantIds.length
+  }))
+
+  // cte_stig is used for the base query (no projections)
+  const cteStigColumns = [
+    'b.benchmarkId',
+    'b.title',
+    `cr.status`,
+    `concat('V', cr.version, 'R', cr.release) as "lastRevisionStr"`,
+    `date_format(cr.benchmarkDateSql,'%Y-%m-%d') as "lastRevisionDate"`,
+    `cr.ruleCount`,
+    `coalesce(sc.collectionIds,json_array()) as collectionIds`,
+    `JSON_ARRAYAGG(concat('V',revision.version,'R',revision.release)) OVER (PARTITION BY b.benchmarkId ORDER BY revision.benchmarkDateSql DESC) as revisionStrs`,
+    `ROW_NUMBER() OVER (PARTITION BY b.benchmarkId ORDER BY revision.benchmarkDateSql ASC) as rownum`
+  ]
+  const cteStigJoins = [
+    'stig b',
+    'left join current_rev cr on b.benchmarkId = cr.benchmarkId',
+    'left join cte_stig_collection sc on b.benchmarkId = sc.benchmarkId',
+    'left join revision on b.benchmarkId = revision.benchmarkId',
+  ]
+
+  // PREDICATES
+  const cteStigPredicates = {
+    statements: [],
+    binds: []
+  }
+  if (filter.title) {
+    cteStigPredicates.statements.push("b.title LIKE CONCAT('%',?,'%')")
+    cteStigPredicates.binds.push( filter.title )
+  }
+  if (filter.benchmarkId) {
+    cteStigPredicates.statements.push('b.benchmarkId = ?')
+    cteStigPredicates.binds.push( filter.benchmarkId )
+  }
+
+  // Main query columns, can be modified by projections
+  const columns = [
+    'benchmarkId',
+    'title',
+    '`status`',
+    `lastRevisionStr`,
+    `lastRevisionDate`,
+    `ruleCount`,
+    `revisionStrs`,
+    `collectionIds`,
+  ]
+
+  if (projections.includes('revisions')) {
+    // add cte_rev_collection, add revision objects to cteStigColumns, add joins to cteStigJoins
+    ctes.push(cteRevCollection({
+      elevate,
+      unrestrictedCollectionIds,
+      hasRestrictions: !!requesterGrantIds.length
+    }))
+    cteStigColumns.push(`JSON_ARRAYAGG(
+      json_object(
+        "benchmarkId", revision.benchmarkId,
+        "revisionStr", concat('V',revision.version,'R',revision.release),
+        "version", cast(revision.version as char),
+        "release", revision.release,
+        "benchmarkDate", revision.benchmarkDateSql,
+        "status", revision.status,
+        "statusDate", revision.statusDate,
+        "ruleCount", revision .ruleCount,
+        "collectionIds", coalesce(rc.collectionIds,json_array())
+      )) OVER (PARTITION BY b.benchmarkId ORDER BY revision.benchmarkDateSql DESC) as revisions`)
+    cteStigJoins.push('left join cte_rev_collection rc on revision.revId = rc.revId')
+    columns.push('revisions')
+  }
+
+  ctes.push(`cte_stig AS (${dbUtils.makeQueryString({columns:cteStigColumns, joins:cteStigJoins, predicates:cteStigPredicates, orderBy:['b.benchmarkId']})})`)
+
+  // CONSTRUCT MAIN QUERY
+  const joins = ['cte_stig']
+  const predicates = {
+    statements: ['rownum = 1'],
+    binds: cteStigPredicates.binds
+  }
+
+  const sql = dbUtils.makeQueryString({ctes, columns, joins, predicates, format: true})
+
+  const [rows] = await dbUtils.pool.query(sql)
+  return (rows)
 }
 
 
@@ -940,7 +995,11 @@ exports.deleteStigById = async function(benchmarkId, userObject, svcStatus = {})
   let connection;
 
   try {
-    let rows = await _this.queryStigs( {benchmarkId: benchmarkId}, [], userObject)
+    let rows = await _this.queryStigs({
+      filter: {benchmarkId},
+      projections: [], 
+      grants: userObject.grants
+    })
 
     let binds = {
       benchmarkId: benchmarkId
@@ -1345,11 +1404,14 @@ exports.getRulesByRevision = async function(benchmarkId, revisionStr, projection
  * title String A string found anywhere in a STIG title (optional)
  * returns List
  **/
-exports.getSTIGs = async function(title, projection, userObject, elevate) {
+exports.getSTIGs = async function(title, projections, userObject, elevate) {
   try {
-    let rows = await _this.queryStigs( {
-      title: title
-    }, projection, userObject, elevate )
+    let rows = await _this.queryStigs({
+      filter: {title},
+      projections,
+      grants: userObject.grants,
+      elevate
+    })
     return (rows)
   }
   catch(err) {
@@ -1366,9 +1428,12 @@ exports.getSTIGs = async function(title, projection, userObject, elevate) {
  **/
 exports.getStigById = async function(benchmarkId, userObject, elevate) {
   try {
-    let rows = await _this.queryStigs( {
-      benchmarkId: benchmarkId
-    }, ['revisions'], userObject, elevate )
+    let rows = await _this.queryStigs({
+      filter: {benchmarkId},
+      projections: ['revisions'],
+      grants: userObject.grants,
+      elevate
+    })
     return (rows[0])
   }
   catch(err) {
