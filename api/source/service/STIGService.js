@@ -68,10 +68,7 @@ function cteRevCollection({elevate = false, unrestrictedCollectionIds = [], hasR
   return `cte_rev_collection as (${sql})`
 }
 
-/**
-Generalized queries for STIGs
-**/
-exports.queryStigs = async function ({filter, projections, grants, elevate = false}) {
+function parseGrants (grants, elevate = false) {
   const unrestrictedCollectionIds = []
   let requireCteAcls = false
   let requesterGrantIds = []
@@ -87,7 +84,19 @@ exports.queryStigs = async function ({filter, projections, grants, elevate = fal
     requesterGrantIds = requesterGrantIds.flat()
     requireCteAcls = !!requesterGrantIds.length
   }
+  return {unrestrictedCollectionIds, requesterGrantIds, requireCteAcls }
+}
 
+/**
+Generalized queries for STIGs
+**/
+exports.queryStigs = async function ({filter, projections, grants, elevate = false}) {
+
+  const {
+    unrestrictedCollectionIds, 
+    requesterGrantIds, 
+    requireCteAcls
+  } = parseGrants(grants, elevate)
 
   const ctes = []
   if (requireCteAcls) {
@@ -1249,50 +1258,52 @@ exports.getGroupsByRevision = async function(benchmarkId, revisionStr, projectio
  * revisionStr String A path parameter that indentifies a STIG revision [ V{version_num}R{release_num} | 'latest' ]
  * returns Revision
  **/
-exports.getRevisionByString = async function(benchmarkId, revisionStr, userObject, elevate = false) {
-  try {
-    const ro = dbUtils.parseRevisionStr(revisionStr)
-    const sql = 
-    `WITH cte_rev_collection AS (select
-        r.revId,
-        cast(concat('[', group_concat(distinct concat('"',crm.collectionId,'"')),']') as json) as collectionIds
-        from
-        revision r
-        inner join collection_rev_map crm using (revId)
-        ${elevate ? '' : `left join v_collection_grant_effective cg on crm.collectionId = cg.collectionId
-        left join stig_asset_map sa on r.benchmarkId = sa.benchmarkId
-        left join v_user_stig_asset_effective usa on sa.saId = usa.saId
-        where  (cg.userId = ? AND CASE WHEN cg.accessLevel = 1 THEN usa.userId = cg.userId ELSE TRUE END)`}
-        group by r.revId)
-    SELECT
-      ${ro.table_alias}.benchmarkId,
-      concat('V', ${ro.table_alias}.version, 'R', ${ro.table_alias}.release) as "revisionStr",
-      cast(${ro.table_alias}.version as char) as version,
-      ${ro.table_alias}.release,
-      date_format(${ro.table_alias}.benchmarkDateSql,'%Y-%m-%d') as "benchmarkDate",
-      ${ro.table_alias}.status,
-      ${ro.table_alias}.statusDate,
-      ${ro.table_alias}.ruleCount,
-      coalesce(rc.collectionIds,json_array()) as collectionIds
-    FROM
-      ${ro.table} ${ro.table_alias}
-      left join cte_rev_collection rc on ${ro.table_alias}.revId = rc.revId
-    WHERE
-      ${ro.table_alias}.benchmarkId = ?
-      ${ro.predicates}
-    ORDER BY
-      ${ro.table_alias}.benchmarkDateSql desc
-    `
-    const binds = elevate ? [benchmarkId] : [userObject.userId, benchmarkId]
-    if (ro.version) {
-      binds.push(ro.version, ro.release)
-    }
-    const [rows] = await dbUtils.pool.query(sql, binds)
-    return (rows[0])
+exports.getRevisionByString = async function({benchmarkId, revisionStr, grants, elevate = false}) {
+  const {
+    unrestrictedCollectionIds, 
+    requesterGrantIds, 
+    requireCteAcls
+  } = parseGrants(grants, elevate)
+
+  const ctes = []
+  if (requireCteAcls) {
+    ctes.push(dbUtils.cteAclEffective({cgIds: requesterGrantIds}))
   }
-  catch(err) {
-    throw ( {status: 500, message: err.message, stack: err.stack} )
+  ctes.push(cteRevCollection({
+    elevate,
+    unrestrictedCollectionIds,
+    hasRestrictions: !!requesterGrantIds.length
+  }))
+
+  const ro = dbUtils.parseRevisionStr(revisionStr)
+  const columns = [
+    `${ro.table_alias}.benchmarkId`,
+    `concat('V', ${ro.table_alias}.version, 'R', ${ro.table_alias}.release) as "revisionStr"`,
+    `cast(${ro.table_alias}.version as char) as version`,
+`    ${ro.table_alias}.release`,
+    `date_format(${ro.table_alias}.benchmarkDateSql,'%Y-%m-%d') as "benchmarkDate"`,
+    `${ro.table_alias}.status`,
+    `${ro.table_alias}.statusDate`,
+    `${ro.table_alias}.ruleCount`,
+    `coalesce(rc.collectionIds,json_array()) as collectionIds`
+  ]
+  const joins = [
+    `${ro.table} ${ro.table_alias}`,
+    `left join cte_rev_collection rc on ${ro.table_alias}.revId = rc.revId`
+  ]
+  const predicates = {
+    statements: [`${ro.table_alias}.benchmarkId = ?`],
+    binds: [benchmarkId]
   }
+  if (ro.version) {
+    predicates.statements.push(
+      'r.version = ?',
+      'r.release = ? ')
+    predicates.binds.push(ro.version, ro.release)
+  }
+  const sql = dbUtils.makeQueryString({ctes, columns, joins, predicates, format: true})
+  const [rows] = await dbUtils.pool.query(sql)
+  return (rows[0])
 }
 
 
@@ -1302,44 +1313,48 @@ exports.getRevisionByString = async function(benchmarkId, revisionStr, userObjec
  * benchmarkId String A path parameter that indentifies a STIG
  * returns List
  **/
-exports.getRevisionsByBenchmarkId = async function(benchmarkId, userObject, elevate = false) {
-  try {
-    let sql = 
-    `WITH cte_rev_collection AS (select
-        r.revId,
-        cast(concat('[', group_concat(distinct concat('"',crm.collectionId,'"')),']') as json) as collectionIds
-        from
-        revision r
-        inner join collection_rev_map crm using (revId)
-        ${elevate ? '' : `left join v_collection_grant_effective cg on crm.collectionId = cg.collectionId
-        left join stig_asset_map sa on r.benchmarkId = sa.benchmarkId
-        left join v_user_stig_asset_effective usa on sa.saId = usa.saId
-        where  (cg.userId = ? AND CASE WHEN cg.accessLevel = 1 THEN usa.userId = cg.userId ELSE TRUE END)`}
-        group by r.revId)
-    SELECT
-      r.benchmarkId,
-      concat('V', r.version, 'R', r.release) as "revisionStr",
-      CAST(r.version as char) as version,
-      r.release,
-      date_format(r.benchmarkDateSql,'%Y-%m-%d') as "benchmarkDate",
-      r.status,
-      r.statusDate,
-      r.ruleCount,
-      coalesce(rc.collectionIds,json_array()) as collectionIds
-    FROM
-      revision r
-      left join cte_rev_collection rc on r.revId = rc.revId
-    WHERE
-      r.benchmarkId = ?
-    ORDER BY
-      r.benchmarkDateSql desc`
-    const binds = elevate ? [benchmarkId] : [userObject.userId, benchmarkId]
-    let [rows] = await dbUtils.pool.query(sql, binds)
-    return (rows)
+exports.getRevisionsByBenchmarkId = async function({benchmarkId, grants, userObject, elevate = false}) {
+  const {
+    unrestrictedCollectionIds, 
+    requesterGrantIds, 
+    requireCteAcls
+  } = parseGrants(grants, elevate)
+
+  const ctes = []
+  if (requireCteAcls) {
+    ctes.push(dbUtils.cteAclEffective({cgIds: requesterGrantIds}))
   }
-  catch(err) {
-    throw ( {status: 500, message: err.message, stack: err.stack} )
+  ctes.push(cteRevCollection({
+    elevate,
+    unrestrictedCollectionIds,
+    hasRestrictions: !!requesterGrantIds.length
+  }))
+
+  const columns = [
+    'r.benchmarkId',
+    `concat('V', r.version, 'R', r.release) as "revisionStr"`,
+    'CAST(r.version as char) as version',
+    'r.release',
+    `date_format(r.benchmarkDateSql,'%Y-%m-%d') as "benchmarkDate"`,
+    'r.status',
+    'r.statusDate',
+    'r.ruleCount',
+    'coalesce(rc.collectionIds,json_array()) as collectionIds'
+  ]
+
+  const joins = [
+    'revision r',
+    'left join cte_rev_collection rc on r.revId = rc.revId'
+  ]
+  const predicates = {
+    statements: ['r.benchmarkId = ?'],
+    binds: [benchmarkId]
   }
+  const orderBy = ['r.benchmarkDateSql desc']
+  
+  const sql = dbUtils.makeQueryString({ctes, columns, joins, predicates, orderBy, format: true})
+  const [rows] = await dbUtils.pool.query(sql)
+  return (rows)
 }
 
 
