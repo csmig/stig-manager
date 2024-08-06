@@ -7075,6 +7075,8 @@ components:
       additionalProperties: false
       type: object
       properties:
+        access:
+          $ref: '#/components/schemas/AclRuleAccess'
         assetId:
           $ref: '#/components/schemas/StringIntId'
         assetLabelIds:
