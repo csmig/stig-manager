@@ -522,8 +522,6 @@ exports.addOrUpdateCollection = async function(writeAction, collectionId, body, 
           await connection.query(`DELETE FROM collection_grant WHERE collectionId = ?`, [collectionId])
           await connection.query(`DELETE FROM collection_grant_group WHERE collectionId = ?`, [collectionId]) 
         }
-        // await dbUtils.pruneUserStigAssetMap(connection, {collectionId})
-        // await dbUtils.pruneUserGroupStigAssetMap(connection, {collectionId})
       }
 
       // Process labels
@@ -1811,16 +1809,6 @@ exports.cloneCollection = async function ({collectionId, userObject, name, descr
           startText: 'Creating Collection Grant ACLs',
           finishText: 'Created Collection Grant ACLs'
       },
-      // cloneRestrictedUserGrants: {
-      //   query: `INSERT INTO user_stig_asset_map (userId, saId) SELECT usa.userId, sa2.saId FROM stig_asset_map sa1 inner join user_stig_asset_map usa on sa1.saId = usa.saId inner join t_assetid_map am on sa1.assetId = am.srcAssetId inner join stig_asset_map sa2 on (am.destAssetId = sa2.assetId and sa1.benchmarkId = sa2.benchmarkId)`,
-      //   startText: 'Creating Restricted User Grants',
-      //   finishText: 'Created Restricted User Grants'
-      // },
-      // cloneRestrictedUserGroupGrants: {
-      //   query: `INSERT INTO user_group_stig_asset_map (userGroupId, saId) SELECT ugsa.userGroupId, sa2.saId FROM stig_asset_map sa1 inner join user_group_stig_asset_map ugsa on sa1.saId = ugsa.saId inner join t_assetid_map am on sa1.assetId = am.srcAssetId inner join stig_asset_map sa2 on (am.destAssetId = sa2.assetId and sa1.benchmarkId = sa2.benchmarkId)`,
-      //   startText: 'Creating Restricted User Grants',
-      //   finishText: 'Created Restricted User Grants'
-      // },
       cloneRevisionsMatchSource: {
         query: `INSERT INTO collection_rev_map (collectionId, benchmarkId, revId) SELECT @destCollectionId, benchmarkId, revId FROM collection_rev_map where collectionId = @srcCollectionId`,
         startText: 'Creating Revision pins',
@@ -2444,38 +2432,22 @@ exports.getGrantByCollectionUser = async function ({collectionId, userId}) {
   return response
 }
 
-exports.setGrantByCollection = async function ({collectionId, userId, userGroupId, accessLevel, svcStatus = {}}) {
+exports.setGrantByCollection = async function ({collectionId, userId, userGroupId, accessLevel}) {
 
   const sqlInsertGrant = 
   `INSERT INTO collection_grant (collectionId, ${userId ? 'userId' : 'userGroupId'}, accessLevel) VALUES (?, ?, ?) AS new ON DUPLICATE KEY UPDATE accessLevel = new.accessLevel`
 
-  async function transactionFn (connection) {  
-    const [response] = await connection.query(sqlInsertGrant, [collectionId, userId || userGroupId, accessLevel])
-    // resolving if we are inserting a new db record or updating an existing.
-    const httpStatus = (response.affectedRows === 1 && response.insertId !== 0) ? 201 : 200
-    await dbUtils.pruneUserStigAssetMap(connection, {collectionId, userId})
-    return httpStatus
-  }
-
-  return dbUtils.retryOnDeadlock2({
-    transactionFn, 
-    statusObj: svcStatus
-  })
+  const [response] = await connection.query(sqlInsertGrant, [collectionId, userId || userGroupId, accessLevel])
+  // resolving if we are inserting a new db record or updating an existing.
+  const httpStatus = (response.affectedRows === 1 && response.insertId !== 0) ? 201 : 200
+  return httpStatus
 }
 
-exports.deleteGrantByCollectionUser = async function ({collectionId, userId, shouldPrune, svcStatus = {}}) {
+exports.deleteGrantByCollectionUser = function ({collectionId, userId}) {
 
   const deleteGrantByCollectionUser = 
   `DELETE FROM collection_grant WHERE collectionId = ? AND userId = ?`
-
-  async function transactionFn (connection) {
-    await connection.query(deleteGrantByCollectionUser, [collectionId, userId])
-    if(shouldPrune) await dbUtils.pruneUserStigAssetMap(connection, {collectionId, userId})
-  }
-  return dbUtils.retryOnDeadlock2({
-    transactionFn,
-    statusObj: svcStatus
-  })
+  return connection.query(deleteGrantByCollectionUser, [collectionId, userId])
 }
 
 exports.getGrantByCollectionUserGroup = async function ({collectionId, userGroupId}) {
@@ -2493,19 +2465,11 @@ exports.getGrantByCollectionUserGroup = async function ({collectionId, userGroup
   return response
 }
 
-exports.deleteGrantByCollectionUserGroup = async function ({collectionId, userGroupId, shouldPrune, svcStatus = {}}) {
+exports.deleteGrantByCollectionUserGroup = function ({collectionId, userGroupId}) {
 
   const deleteGrantByCollectionUserGroup = 
   `DELETE FROM collection_grant_group WHERE collectionId = ? AND userGroupId = ?`
-
-  async function transactionFn (connection) {
-    await connection.query(deleteGrantByCollectionUserGroup, [collectionId, userGroupId])
-    if(shouldPrune) await dbUtils.pruneUserGroupStigAssetMap(connection, {collectionId, userGroupId})
-  }
-  return dbUtils.retryOnDeadlock2({
-    transactionFn,
-    statusObj: svcStatus
-  })
+  return connection.query(deleteGrantByCollectionUserGroup, [collectionId, userGroupId])
 }
 
 exports.getEffectiveAclByCollectionUser = async function ({collectionId, userId}) {
