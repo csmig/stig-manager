@@ -621,12 +621,12 @@ exports.getReviews = async function ({projections = [], filter = {}, grant}) {
   if (grant.accessLevel === 1) {
     joins.push('inner join cteAclEffective cae on sa.saId = cae.saId')
     // newman tests will fail if we add the new column
-    // columns.push('min(cae.access) as access')
+    columns.push('min(cae.access) as access')
   }
   else {
     joins.push('left join cteAclEffective cae on sa.saId = cae.saId')
     // newman tests will fail if we add the new column
-    // columns.push("coalesce(min(cae.access), 'rw') as access")
+    columns.push("coalesce(min(cae.access), 'rw') as access")
   }
 
   if (projections.includes('metadata')) {

@@ -664,7 +664,7 @@ cteAclRulesRanked as (
 		row_number() over (partition by saId order by specificity desc, access asc) as rn
 	from 
 		cteAclRules),
-cteAclEffective as (select saId, access from cteAclRulesRanked where rn = 1)`
+cteAclEffective as (select saId, access from cteAclRulesRanked where rn = 1 and access != 'none')`
 
   const sqlFormatted = mysql.format(sql, [cgIds])
   return sqlFormatted
