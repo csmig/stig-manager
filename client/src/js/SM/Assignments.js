@@ -271,7 +271,7 @@ SM.Acl.ResourceRemoveBtn = Ext.extend(Ext.Button, {
   }
 })
 
-SM.Acl.AssignedRulesGrid = Ext.extend(Ext.grid.GridPanel, {
+SM.Acl.AssignedRulesGrid = Ext.extend(Ext.grid.EditorGridPanel, {
   // config: { panel}
   initComponent: function() {
     let me = this
@@ -351,7 +351,36 @@ SM.Acl.AssignedRulesGrid = Ext.extend(Ext.grid.GridPanel, {
         header: `Access`, 
         dataIndex: 'access',
         sortable: true,
-        width: 50
+        width: 100,
+        editor: new Ext.form.ComboBox({
+          mode: 'local',
+          forceSelection: true,
+          autoSelect: true,
+          editable: false,
+          store: new Ext.data.SimpleStore({
+            fields: ['access'],
+            data: [
+              ['rw'],
+              ['r'],
+              ['none']
+            ]
+          }),
+          valueField:'access',
+          displayField:'access',
+          monitorValid: false,
+          listeners: {
+            select: function (combo,record,index) {
+              if (combo.startValue !== combo.value ) {
+                combo.fireEvent("blur");
+              } 
+              else {
+                console.log('No Change')
+              }
+            }
+          },
+          triggerAction: 'all'
+        }),
+
       }
     ]
     const config = {
