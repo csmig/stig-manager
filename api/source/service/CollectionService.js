@@ -178,8 +178,8 @@ exports.queryCollection = async function ({collectionId, projections = [], eleva
       from 
         (SELECT
         (select count(userId) from cteGrantees where collectionId = c.collectionId) as userCount,
-        (select count(distinct sa.assetId) from cteAclRulesRanked carr left join stig_asset_map sa using (saId) where carr.collectionId = c.collectionId) as assetCount,
-        (select count(saId) from cteAclRulesRanked where collectionId = c.collectionId) as checklistCount) dt4
+        (select count(distinct sa.assetId) from cteAclEffective cae left join stig_asset_map sa using (saId)) as assetCount,
+        (select count(saId) from cteAclEffective) as checklistCount) dt4
       ) as statistics`)
     }
     else {
@@ -207,8 +207,7 @@ exports.queryCollection = async function ({collectionId, projections = [], eleva
     ctes.push(dbUtils.sqlGrantees(cteGranteesParams))
   }
   if (requireCteAcls) {
-    const cteAclRulesRankedParams = {cgIds: requesterGrantIds}
-    ctes.push(dbUtils.cteAclEffective(cteAclRulesRankedParams))
+    ctes.push(dbUtils.cteAclEffective({cgIds: requesterGrantIds, includeColumnCollectionId: false}))
   }
   if (requireCteAssets) {
     ctes.push(`cteAssets as (select distinct a.assetId, a.name from 
@@ -244,7 +243,7 @@ exports.queryCollection = async function ({collectionId, projections = [], eleva
       collection_label cl
       left join collection_label_asset_map cla on cla.clId = cl.clId
       ${requireCteLabels === 'restricted' ? 'left join stig_asset_map sa on cla.assetId = sa.assetId' : ''}
-      ${requireCteLabels === 'restricted' ? 'inner join cteAclRulesRanked car on sa.saId = car.saId' : ''}
+      ${requireCteLabels === 'restricted' ? 'inner join cteAclEffective cae on sa.saId = cae.saId' : ''}
     where
       cl.collectionId = ${collectionId}
     group by
@@ -324,9 +323,9 @@ exports.queryCollections = async function ({projections = [], filter = {}, eleva
             (select accessLevel from cteGrantees where collectionId = c.collectionId and userId = ?) as accessLevel,
             (select count(userId) from cteGrantees where collectionId = c.collectionId) as userCount,
             (select count(distinct a.assetId) from asset a where a.collectionId = c.collectionId) as assetCount,
-            (select count(distinct sa.assetId) from cteAclRulesRanked carr left join stig_asset_map sa using (saId) where carr.collectionId = c.collectionId) as assetGrantedCount,
+            (select count(distinct sa.assetId) from cteAclEffective cae left join stig_asset_map sa using (saId) where cae.collectionId = c.collectionId) as assetGrantedCount,
             (select count(sa.saId) from asset a left join stig_asset_map sa using (assetId) where a.collectionId = c.collectionId) as checklistCount,
-            (select count(saId) from cteAclRulesRanked where collectionId = c.collectionId) as checklistGrantedCount
+            (select count(saId) from cteAclEffective where collectionId = c.collectionId) as checklistGrantedCount
           ) dt4
         ) as statistics`)
         predicates.binds.push(userId)
@@ -419,8 +418,7 @@ exports.queryCollections = async function ({projections = [], filter = {}, eleva
       ctes.push(dbUtils.sqlGrantees(cteGranteesParams))
     }
     if (requireCteAcls) {
-      const cteAclRulesRankedParams = {cgIds: requesterGrantIds}
-      ctes.push(dbUtils.cteAclEffective(cteAclRulesRankedParams))
+      ctes.push(dbUtils.cteAclEffective({cgIds: requesterGrantIds}))
     }
 
     const sql = dbUtils.makeQueryString({ctes, columns, joins, predicates, orderBy, format: true})
@@ -2573,7 +2571,7 @@ cteAclRulesRanked as (
 		row_number() over (partition by saId order by specificity desc, access asc) as rn
 	from 
 		cteAclRules)
-select access, asset, benchmarkId, aclSources from cteAclRulesRanked where rn = 1`
+select access, asset, benchmarkId, aclSources from cteAclRulesRanked where rn = 1 and access != 'none`
   const [response] = await dbUtils.pool.query(sqlSelectEffectiveGrants, [collectionId, userId, collectionId, userId])
   return response
 }

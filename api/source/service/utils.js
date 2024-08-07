@@ -629,7 +629,7 @@ where
 
 module.exports.cteAclEffective = function ({cgIds = [], includeColumnCollectionId = true, inClauseTable = 'cteGrantees', inClauseColumn = 'grantIds', inClauseUserId = ''}) {
   const inClause = cgIds.length ? '?' : `select jt.grantId from ${inClauseTable} left join json_table (${inClauseTable}.${inClauseColumn}, '$[*]' COLUMNS (grantId INT PATH '$')) jt on true${inClauseUserId ? ` where ${inClauseTable}.userId = ${inClauseUserId}` : ''}`
-  const sql = `cteAclRules as (select ${includeColumnCollectionId ? 'a.collectionId,' : ''}
+  const sql = `cteAclRules as (select${includeColumnCollectionId ? ' a.collectionId,' : ''}
 	sa.saId,
 	cga.access,
 	case when cga.benchmarkId is not null then 1 else 0 end +
@@ -658,13 +658,13 @@ where
 	cga.cgId in (${inClause})
 ),
 cteAclRulesRanked as (
-    select ${includeColumnCollectionId ? 'collectionId,' : ''}
+    select${includeColumnCollectionId ? ' collectionId,' : ''}
 		saId,
     access,
 		row_number() over (partition by saId order by specificity desc, access asc) as rn
 	from 
 		cteAclRules),
-cteAclEffective as (select saId, access from cteAclRulesRanked where rn = 1 and access != 'none')`
+cteAclEffective as (select${includeColumnCollectionId ? ' collectionId,' : ''} saId, access from cteAclRulesRanked where rn = 1 and access != 'none')`
 
   const sqlFormatted = mysql.format(sql, [cgIds])
   return sqlFormatted
