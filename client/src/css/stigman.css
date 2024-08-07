@@ -969,11 +969,11 @@ textarea.x-form-field {
   border: 1px solid #c1c1c1
 }
 
-.x-form-search:read-only,
+/* .x-form-search:read-only,
 .x-form-text:read-only,
 textarea.x-form-field:read-only {
 	border: none;
-}
+} */
 .x-tab-panel-footer,
 .x-tab-panel-header {
   background-color: transparent
