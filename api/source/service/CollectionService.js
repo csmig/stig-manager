@@ -2571,7 +2571,7 @@ cteAclRulesRanked as (
 		row_number() over (partition by saId order by specificity desc, access asc) as rn
 	from 
 		cteAclRules)
-select access, asset, benchmarkId, aclSources from cteAclRulesRanked where rn = 1 and access != 'none`
+select access, asset, benchmarkId, aclSources from cteAclRulesRanked where rn = 1 and access != 'none'`
   const [response] = await dbUtils.pool.query(sqlSelectEffectiveGrants, [collectionId, userId, collectionId, userId])
   return response
 }
