@@ -2554,7 +2554,7 @@ from
 		then cla.assetId = sa.assetId
 		else true
 	  end)
-	inner join asset a on sa.assetId = a.assetId and a.state = 'enabled'
+	inner join asset a on sa.assetId = a.assetId and a.state = 'enabled' and cg.collectionId = a.collectionId
 where
 	cga.cgId in (
 		select jt.grantId from cteGrantees left join json_table (cteGrantees.grantIds, '$[*]' COLUMNS (grantId INT PATH '$')) jt on true

@@ -638,6 +638,7 @@ module.exports.cteAclEffective = function ({cgIds = [], includeColumnCollectionI
 	  case when cga.clId is not null then 1 else 0 end as specificity
 from
 	collection_grant_acl cga
+  left join collection_grant cg on cga.cgId = cg.cgId
 	left join collection_label_asset_map cla on cga.clId = cla.clId
   left join collection_label cl on cla.clId = cl.clId
 	inner join stig_asset_map sa on (
@@ -653,7 +654,7 @@ from
 		then cla.assetId = sa.assetId
 		else true
 	  end)
-	inner join asset a on sa.assetId = a.assetId and a.state = 'enabled'
+	inner join asset a on sa.assetId = a.assetId and a.state = 'enabled' and cg.collectionId = a.collectionId
 where
 	cga.cgId in (${inClause})
 ),
