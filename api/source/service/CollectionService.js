@@ -64,17 +64,18 @@ exports.queryCollection = async function ({collectionId, projections = [], eleva
     }
     else {
       columns.push(`(select coalesce(json_arrayagg(json_object(
-        'benchmarkId', sa.benchmarkId, 
+        'benchmarkId', cb.benchmarkId, 
         'revisionStr', revision.revisionStr,
         'benchmarkDate', date_format(revision.benchmarkDateSql,'%Y-%m-%d'),
         'revisionPinned', CASE WHEN dr.revisionPinned = 1 THEN CAST(true as json) ELSE CAST(false as json) END,
         'ruleCount', revision.ruleCount
-        )), json_array()) from 
-        asset a
+        )), json_array())
+        from 
+		    (select distinct sa.benchmarkId from asset a
         inner join stig_asset_map sa on a.assetId = sa.assetId
-        left join default_rev dr on (sa.benchmarkId=dr.benchmarkId and dr.collectionId = a.collectionId)
-        left join revision on dr.revId = revision.revId
-        where a.collectionId = c.collectionId) as stigs`)
+        where a.collectionId = c.collectionId) cb
+        left join default_rev dr on (cb.benchmarkId=dr.benchmarkId and dr.collectionId = c.collectionId)
+        left join revision on dr.revId = revision.revId) as stigs`)
     }
   }
 

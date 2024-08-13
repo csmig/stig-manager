@@ -127,22 +127,22 @@ SM.Acl.ResourceTreePanel = Ext.extend(Ext.tree.TreePanel, {
           match = node.match(/^(\d+)-resource-stigs-node$/)
           if (match) {
             let collectionId = match[1]
-            let apiCollection = await Ext.Ajax.requestPromise({
+            let apiStigs = await Ext.Ajax.requestPromise({
               responseType: 'json',
-              url: `${STIGMAN.Env.apiBase}/collections/${collectionId}`,
+              url: `${STIGMAN.Env.apiBase}/collections/${collectionId}/stigs`,
               method: 'GET',
-              params: {
-                projection: 'stigs'
-              }
+              // params: {
+              //   projection: 'stigs'
+              // }
             })
-            let content = apiCollection.stigs.map( stig => ({
+            let content = apiStigs.map( stig => ({
               collectionId: collectionId,
               text: SM.he(stig.benchmarkId),
               node: 'stig',
               iconCls: 'sm-stig-icon',
               id: `${collectionId}-${stig.benchmarkId}-resource-stigs-stig-node`,
               benchmarkId: stig.benchmarkId,
-              qtip: `Rules: ${SM.he(stig.ruleCount)}`
+              qtip: `Assets: ${SM.he(stig.assetCount)}`
             }) )
             cb( content, { status: true } )
             return
