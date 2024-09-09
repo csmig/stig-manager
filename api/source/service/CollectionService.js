@@ -408,7 +408,7 @@ exports.queryCollections = async function ({projections = [], filter = {}, eleva
     }
     if ( filter.metadata ) {
       for (const pair of filter.metadata) {
-        const [key, value] = pair.split(':')
+        const [key, value] = pair.split(/:(.*)/s)
         predicates.statements.push('JSON_CONTAINS(c.metadata, ?, ?)')
         predicates.binds.push( `"${value}"`,  `$.${key}`)
       }

@@ -162,9 +162,9 @@ exports.queryAssets = async function ({projections = [], filter = {}, grant = {}
     predicates.statements.push('sa.benchmarkId = ?')
     predicates.binds.push(filter.benchmarkId)
   }
-  if ( filter.metadata ) {
+  if (filter.metadata ) {
     for (const pair of filter.metadata) {
-      const [key, value] = pair.split(':')
+      const [key, value] = pair.split(/:(.*)/s)
       predicates.statements.push('JSON_CONTAINS(a.metadata, ?, ?)')
       predicates.binds.push( `"${value}"`,  `$.${key}`)
     }

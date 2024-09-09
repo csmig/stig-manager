@@ -154,17 +154,27 @@ module.exports.getFindingsByCollection = async function getFindingsByCollection 
 
 module.exports.getPoamByCollection = async function getPoamByCollection (req, res, next) {
   try {
-    const aggregator = req.query.aggregator
-    const benchmarkId = req.query.benchmarkId
-    const assetId = req.query.assetId
-    const acceptedOnly = req.query.acceptedOnly
+    const {
+      aggregator, 
+      benchmarkId, 
+      assetId, 
+      acceptedOnly, 
+      date, 
+      office, 
+      status, 
+      mccastPackageId, 
+      mccastAuthName, 
+      format
+    } = req.query
     const defaults = {
-      date: req.query.date,
-      office: req.query.office,
-      status: req.query.status
+      date, 
+      office, 
+      status, 
+      mccastPackageId, 
+      mccastAuthName
     }
     const {collectionId, grant} = getCollectionInfoAndCheckPermission(req, Security.ACCESS_LEVEL.Restricted)
-    const response = await CollectionService.getFindingsByCollection({
+    const findings = await CollectionService.getFindingsByCollection({
       collectionId, aggregator, benchmarkId, assetId, acceptedOnly, 
       projections: [
         'rulesWithDiscussion',
@@ -175,16 +185,17 @@ module.exports.getPoamByCollection = async function getPoamByCollection (req, re
       ],
       grant})
     
-    const po = Serialize.poamObjectFromFindings(response, defaults)
-    const xlsx = await Serialize.xlsxFromPoamObject(po)
-    let collectionName = grant.name
-    writer.writeInlineFile( res, xlsx, `POAM-${collectionName}.xlsx`, 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+    const poFns = {
+      EMASS: Serialize.poamObjectFromFindings,
+      MCCAST: Serialize.mccastPoamObjectFromFindings
+    }
+    const xlsx = await Serialize.xlsxFromPoamObject(poFns[format](findings, defaults), format)
+    writer.writeInlineFile( res, xlsx, `POAM-${format}-${grant.name}_${escape.filenameComponentFromDate()}.xlsx`, 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
   }
   catch (err) {
     next(err)
   }
 }
-
 
 module.exports.getStigAssetsByCollectionUser = async function getStigAssetsByCollectionUser (req, res, next) {
   try {
