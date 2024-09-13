@@ -507,8 +507,7 @@ module.exports.patchAssets = async function (req, res, next) {
     if (!patchRequest.assetIds.every( a => collectionAssets.includes(a))) {
       throw new SmError.PrivilegeError('One or more assetId is not a Collection member.')
     }
-
-    await AssetService.deleteAssets(patchRequest.assetIds, req.userObject.userId)
+    await AssetService.deleteAssets(patchRequest.assetIds, req.userObject.userId, res.svcStatus)
     res.json({
       operation: 'deleted',
       assetIds: patchRequest.assetIds

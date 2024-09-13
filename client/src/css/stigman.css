@@ -2287,3 +2287,13 @@ td.x-grid3-hd-over .x-grid3-hd-inner {
 	padding-left: 20px;
 	line-height: 18px;
 }
+
+.sm-match-case-icon {
+  background-image: url(../img/match-case.svg);
+  background-size: contain;
+}
+
+.sm-match-word-icon {
+  background-image: url(../img/match-word.svg);
+  background-size: contain;
+}
