@@ -1,10 +1,8 @@
 'use strict';
 const dbUtils = require('./utils')
 const config = require('../utils/config')
-const {privilegeGetter} = require('../utils/auth')
 const logger = require('../utils/logger')
 const _ = require('lodash')
-
 
 /**
  * Return version information
@@ -550,8 +548,7 @@ exports.replaceAppData = async function (importOpts, appData, userObject, res ) 
 }
 
 exports.getDetails = async function() {
-  const sqlAnalyze = `ANALYZE TABLE
-  collection, asset, review, review_history, user`
+  const sqlAnalyze = `ANALYZE TABLE collection, asset, review, review_history, user`
   const sqlInfoSchema = `
   SELECT
     TABLE_NAME as tableName,
@@ -568,9 +565,9 @@ exports.getDetails = async function() {
     information_schema.TABLES
   WHERE
     TABLE_SCHEMA = ?
+    and TABLE_TYPE='BASE TABLE'
   ORDER BY
-    TABLE_NAME
-    `
+    TABLE_NAME`
   const sqlCollectionAssetStigs = `
   SELECT
     CAST(sub.collectionId as char) as collectionId,
@@ -598,10 +595,10 @@ exports.getDetails = async function() {
   ORDER BY
     sub.collectionId
   `
-
   const sqlCountsByCollection = `
   SELECT
     cast(c.collectionId as char) as collectionId,
+    c.name,
     c.state,
     count(distinct a.assetId) as assetsTotal,
     count( distinct 
@@ -629,7 +626,6 @@ exports.getDetails = async function() {
   ORDER BY
     c.collectionId
   `
-
   const sqlLabelCountsByCollection = `
   SELECT
     cast(c.collectionId as char) as collectionId,
@@ -661,7 +657,6 @@ exports.getDetails = async function() {
   group by 
     sub.collectionId
 `
-
   const sqlGrantCounts = `
   SELECT 
     collectionId,
@@ -676,12 +671,15 @@ exports.getDetails = async function() {
   ORDER BY 
     collectionId
   `
-  
   const sqlUserInfo = `
   select 
-    userId, 
+    userId,
+    username, 
     lastAccess,
-    JSON_UNQUOTE(lastClaims) as lastClaims
+    coalesce(
+      JSON_EXTRACT(user_data.lastClaims, "$.${config.oauth.claims.privilegesPath}"),
+      json_array()
+    ) as roles
   from 
     stigman.user_data
   `
@@ -693,7 +691,6 @@ exports.getDetails = async function() {
   where 
     r.ruleId not in (select ruleId from rule_version_check_digest)
   `
-
   const sqlMySqlVersion = `SELECT VERSION() as version`
 
   const mysqlVarsInMbOnly = [
@@ -711,7 +708,6 @@ exports.getDetails = async function() {
     'binlog_cache_size',
     'tmp_table_size'
   ]
-
   const mySqlVariablesRawOnly = [
     'innodb_buffer_pool_instances' ,  
     'innodb_io_capacity' , 
@@ -720,7 +716,6 @@ exports.getDetails = async function() {
     'innodb_io_capacity_max' ,  
     'innodb_lock_wait_timeout'
   ]
-
   const sqlMySqlVariablesInMb = `
   SELECT 
     variable_name,
@@ -746,34 +741,32 @@ exports.getDetails = async function() {
     )
     ORDER by variable_name
   `
-
-const mySqlStatusRawOnly = [
-'Bytes_received',
-'Bytes_sent',
-'Handler_commit',
-'Handler_update',
-'Handler_write',
-'Innodb_buffer_pool_bytes_data',
-'Innodb_row_lock_waits',
-'Innodb_rows_read',
-'Innodb_rows_updated',
-'Innodb_rows_inserted',
-'Innodb_row_lock_time_avg',
-'Innodb_row_lock_time_max',
-'Created_tmp_files',
-'Created_tmp_tables',
-'Max_used_connections',
-'Open_tables',
-'Opened_tables',
-'Queries',
-'Select_full_join',
-'Slow_queries',
-'Table_locks_immediate',
-'Table_locks_waited',
-'Threads_created',
-'Uptime'
-]
-
+  const mySqlStatusRawOnly = [
+  'Bytes_received',
+  'Bytes_sent',
+  'Handler_commit',
+  'Handler_update',
+  'Handler_write',
+  'Innodb_buffer_pool_bytes_data',
+  'Innodb_row_lock_waits',
+  'Innodb_rows_read',
+  'Innodb_rows_updated',
+  'Innodb_rows_inserted',
+  'Innodb_row_lock_time_avg',
+  'Innodb_row_lock_time_max',
+  'Created_tmp_files',
+  'Created_tmp_tables',
+  'Max_used_connections',
+  'Open_tables',
+  'Opened_tables',
+  'Queries',
+  'Select_full_join',
+  'Slow_queries',
+  'Table_locks_immediate',
+  'Table_locks_waited',
+  'Threads_created',
+  'Uptime'
+  ]
   const sqlMySqlStatusRawValues = `
   SELECT 
     variable_name,
@@ -789,31 +782,50 @@ const mySqlStatusRawOnly = [
 
   await dbUtils.pool.query(sqlAnalyze)
 
-  const [schemaInfoArray] = await dbUtils.pool.query(sqlInfoSchema, [config.database.schema])
-  let [assetStigByCollection] = await dbUtils.pool.query(sqlCollectionAssetStigs)
-  let [countsByCollection] = await dbUtils.pool.query(sqlCountsByCollection)
-  let [labelCountsByCollection] = await dbUtils.pool.query(sqlLabelCountsByCollection)
-  let [restrictedGrantCountsByCollection] = await dbUtils.pool.query(sqlRestrictedGrantCountsByCollection)
-  let [grantCountsByCollection] = await dbUtils.pool.query(sqlGrantCounts)
-  const [orphanedReviews] = await dbUtils.pool.query(sqlOrphanedReviews)
-  let [userInfo] = await dbUtils.pool.query(sqlUserInfo)
-  const [mySqlVersion] = await dbUtils.pool.query(sqlMySqlVersion)
-  let [mySqlVariablesInMb] = await dbUtils.pool.query(sqlMySqlVariablesInMb)
-  let [mySqlVariablesRaw] = await dbUtils.pool.query(sqlMySqlVariablesRawValues)
-  let [mySqlStatusRaw] = await dbUtils.pool.query(sqlMySqlStatusRawValues)
+  let [
+    [schemaInfoArray],
+    [assetStigByCollection],
+    [countsByCollection],
+    [labelCountsByCollection],
+    [restrictedGrantCountsByCollection],
+    [grantCountsByCollection],
+    [orphanedReviews],
+    [userInfo],
+    [mySqlVersion],
+    [mySqlVariablesInMb],
+    [mySqlVariablesRaw],
+    [mySqlStatusRaw]
+  ] = await Promise.all([
+    dbUtils.pool.query(sqlInfoSchema, [config.database.schema]),
+    dbUtils.pool.query(sqlCollectionAssetStigs),
+    dbUtils.pool.query(sqlCountsByCollection),
+    dbUtils.pool.query(sqlLabelCountsByCollection),
+    dbUtils.pool.query(sqlRestrictedGrantCountsByCollection),
+    dbUtils.pool.query(sqlGrantCounts),
+    dbUtils.pool.query(sqlOrphanedReviews),
+    dbUtils.pool.query(sqlUserInfo),
+    dbUtils.pool.query(sqlMySqlVersion),
+    dbUtils.pool.query(sqlMySqlVariablesInMb),
+    dbUtils.pool.query(sqlMySqlVariablesRawValues),
+    dbUtils.pool.query(sqlMySqlStatusRawValues)
+  ])
 
-  // remove lastClaims, replace non-stigman roles with "other"
-  userInfo = cleanUserData(userInfo)
+  // append accurate row counts to the dbInfo.tables object
+  const tables = createObjectFromKeyValue(schemaInfoArray, "tableName")
+  const rowCountQueries = []
+  for (const table in tables) {
+    rowCountQueries.push(dbUtils.pool.query(`SELECT "${table}" as tableName, count(*) as rowCount from ${table}`))
+  }
+  const rowCountResults = await Promise.all(rowCountQueries)
+  for (const result of rowCountResults) {
+    tables[result[0][0].tableName].rowCount = result[0][0].rowCount
+  }
+
   //count role assignments and break out by lastAccess time periods
   let userPrivilegeCounts = breakOutRoleUsage(userInfo)
 
   //create working copy of operational stats
   let operationalStats = _.cloneDeep(logger.overallOpStats)
-
-  // Obfuscate client names in stats if configured (default == true)
-  if (config.settings.obfuscateClientsInOptStats == "true") {
-    operationalStats = obfuscateClients(operationalStats)
-  }
 
   operationalStats.operationIdStats = sortObjectByKeys(operationalStats.operationIdStats)
 
@@ -828,8 +840,8 @@ const mySqlStatusRawOnly = [
   restrictedGrantCountsByCollection = createObjectFromKeyValue(restrictedGrantCountsByCollection, "collectionId")
   grantCountsByCollection = createObjectFromKeyValue(grantCountsByCollection, "collectionId")
 
-//Bundle "byCollection" stats together by collectionId
-  for(let collectionId in countsByCollection) {
+  //Bundle "byCollection" stats together by collectionId
+  for(const collectionId in countsByCollection) {
     // Add assetStig data to countsByCollection 
     if (assetStigByCollection[collectionId]) {
       countsByCollection[collectionId].assetStigByCollection = assetStigByCollection[collectionId]
@@ -854,14 +866,17 @@ const mySqlStatusRawOnly = [
       countsByCollection[collectionId].labelCounts = labelCountsByCollection[collectionId]
     }
   }
-  
 
   return ({
-    dateGenerated: new Date().toISOString(),
-    stigmanVersion: config.version,
-    stigmanCommit: config.commit,
+    date: new Date().toISOString(),
+    version: config.version,
+    commit: config.commit,
     dbInfo: {
-      tables: createObjectFromKeyValue(schemaInfoArray, "tableName"),
+      version: mySqlVersion[0].version,
+      tables,
+      variablesInMb: createObjectFromKeyValue(mySqlVariablesInMb, "variable_name", "value"),
+      variablesRaw: createObjectFromKeyValue(mySqlVariablesRaw, "variable_name", "value"),
+      statusRaw: createObjectFromKeyValue(mySqlStatusRaw, "variable_name", "value")
     },
     countsByCollection,
     uniqueRuleCountOfOrphanedReviews: orphanedReviews[0].uniqueOrphanedRules,
@@ -870,91 +885,82 @@ const mySqlStatusRawOnly = [
     operationalStats,
     nodeUptime: getNodeUptime(),
     nodeMemoryUsageInMb: getNodeMemoryUsage(),
-    mySqlVersion: mySqlVersion[0].version,
-    mySqlVariablesInMb: createObjectFromKeyValue(mySqlVariablesInMb, "variable_name", "value"),
-    mySqlVariablesRaw: createObjectFromKeyValue(mySqlVariablesRaw, "variable_name", "value"),
-    mySqlStatusRaw: createObjectFromKeyValue(mySqlStatusRaw, "variable_name", "value")
   })
-}
 
-// Reduce an array of objects to a single object, using the value of one property as keys
-// and either assigning the rest of the object or the value of a second property as the value.
-function createObjectFromKeyValue(data, keyPropertyName, valuePropertyName = null) {
-  return data.reduce((acc, item) => {
-    const { [keyPropertyName]: key, ...rest } = item
-    acc[key] = valuePropertyName ? item[valuePropertyName] : rest
-    return acc
-  }, {})
-}
-
-function obfuscateClients(operationalStats) {
-  const obfuscationMap = {}
-  let obfuscatedCounter = 1
-
-  function getObfuscatedKey(client) {
-    if (client === "unknown") {
-      return client
-    }
-    if (!obfuscationMap[client]) {
-      obfuscationMap[client] = `client${obfuscatedCounter++}`
-    }
-    return obfuscationMap[client]
+  // Reduce an array of objects to a single object, using the value of one property as keys
+  // and either assigning the rest of the object or the value of a second property as the value.
+  function createObjectFromKeyValue(data, keyPropertyName, valuePropertyName = null) {
+    return data.reduce((acc, item) => {
+      const { [keyPropertyName]: key, ...rest } = item
+      acc[key] = valuePropertyName ? item[valuePropertyName] : rest
+      return acc
+    }, {})
   }
 
-  const operationIdStats = operationalStats.operationIdStats
+  function obfuscateClients(operationalStats) {
+    const obfuscationMap = {}
+    let obfuscatedCounter = 1
 
-  for (const operationId in operationIdStats) {
-    if (operationIdStats[operationId].clients) {
-      const clients = operationIdStats[operationId].clients
-      const newClients = {}
-      
-      for (const clientName in clients) {
-        const obfuscatedName = getObfuscatedKey(clientName)
-        newClients[obfuscatedName] = clients[clientName]
+    function getObfuscatedKey(client) {
+      if (client === "unknown") {
+        return client
       }
-      
-      operationIdStats[operationId].clients = newClients
-    }
-  }
-
-  return operationalStats
-}
-
-function sortObjectByKeys(obj) {
-  // Extract property names and sort them
-  const sortedKeys = Object.keys(obj).sort()
-  // Create a new object and add properties in sorted order
-  const sortedObj = {}
-  for (const key of sortedKeys) {
-    sortedObj[key] = obj[key]
-  }
-  return sortedObj
-}
-
-function breakOutRoleUsage(userInfo) {
-  let roleCounts = {
-    overall: {},
-    activeInLast30Days: {},
-    activeInLast90Days: {}
-  }
-  
-  // Calculate the timestamps for 30 and 90 days ago
-  const currentTime = Math.floor(Date.now() / 1000)
-  const thirtyDaysAgo = currentTime - (30 * 24 * 60 * 60)
-  const ninetyDaysAgo = currentTime - (90 * 24 * 60 * 60)
-  
-  userInfo.forEach(user => {
-      // Function to update counts
-      const updateCounts = (roleCounts, roles) => {
-        roles.forEach(role => {
-          if (roleCounts[role]) {
-            roleCounts[role]++
-          } else {
-            roleCounts[role] = 1
-          }
-        })
+      if (!obfuscationMap[client]) {
+        obfuscationMap[client] = `client${obfuscatedCounter++}`
       }
-      // Update overall counts
+      return obfuscationMap[client]
+    }
+
+    const operationIdStats = operationalStats.operationIdStats
+
+    for (const operationId in operationIdStats) {
+      if (operationIdStats[operationId].clients) {
+        const clients = operationIdStats[operationId].clients
+        const newClients = {}
+        
+        for (const clientName in clients) {
+          const obfuscatedName = getObfuscatedKey(clientName)
+          newClients[obfuscatedName] = clients[clientName]
+        }
+        
+        operationIdStats[operationId].clients = newClients
+      }
+    }
+
+    return operationalStats
+  }
+
+  function sortObjectByKeys(obj) {
+    // Create a new object and add properties in sorted order
+    const sortedObj = {}
+    for (const key of Object.keys(obj).sort()) {
+      sortedObj[key] = obj[key]
+    }
+    return sortedObj
+  }
+
+  function breakOutRoleUsage(userInfo) {
+    let roleCounts = {
+      overall: {},
+      activeInLast30Days: {},
+      activeInLast90Days: {}
+    }
+    
+    // Calculate the timestamps for 30 and 90 days ago
+    const currentTime = Math.floor(Date.now() / 1000)
+    const thirtyDaysAgo = currentTime - (30 * 24 * 60 * 60)
+    const ninetyDaysAgo = currentTime - (90 * 24 * 60 * 60)
+    const updateCounts = (roleCounts, roles) => {
+      for (const role of roles) {
+        if (roleCounts[role]) {
+          roleCounts[role]++
+        } else {
+          roleCounts[role] = 1
+        }
+      }
+    }
+
+    for (const user of userInfo) {
       updateCounts(roleCounts.overall, user.roles)
       // Update counts for the last 30 and 90 days based on lastAccess
       if (user.lastAccess >= ninetyDaysAgo) {
@@ -964,44 +970,29 @@ function breakOutRoleUsage(userInfo) {
         updateCounts(roleCounts.activeInLast30Days, user.roles)
       }
     }
-  )
-  return roleCounts
-}  
+    return roleCounts
+  }  
 
-// Replace non-stigman roles with "other"
-function replaceRoles(roles) {
-  return roles.map(role => (role !== 'admin' && role !== 'create_collection') ? 'other' : role)
-}
+  function getNodeUptime() {
+    let uptime = process.uptime()
+    const days = Math.floor(uptime / 86400)
+    uptime %= 86400
+    const hours = Math.floor(uptime / 3600)
+    uptime %= 3600
+    const minutes = Math.floor(uptime / 60)
+    const seconds = Math.floor(uptime % 60)
+    return `${days} days, ${hours} hours, ${minutes} minutes, ${seconds} seconds`
+  }
 
-// Clean up user info
-function cleanUserData(userInfo) {
-  return userInfo.map(user => {
-    if (user.lastClaims) {
-      user.roles = replaceRoles(privilegeGetter(JSON.parse(user.lastClaims)))
-      delete user.lastClaims
+  function getNodeMemoryUsage() {
+    const memoryData = process.memoryUsage()
+    const formatMemoryUsage = (data) => `${Math.round(data / 1024 / 1024 * 100) / 100}`
+    return {
+        rss: `${formatMemoryUsage(memoryData.rss)}`, //Resident Set Size - total memory allocated for the process execution
+        heapTotal: `${formatMemoryUsage(memoryData.heapTotal)}`, // total size of the allocated heap
+        heapUsed: `${formatMemoryUsage(memoryData.heapUsed)}`, // actual memory used during the execution
+        external: `${formatMemoryUsage(memoryData.external)}` // V8 external memory
     }
-    return user
-  })
-}
-
-function getNodeUptime() {
-  let uptime = process.uptime()
-  let days = Math.floor(uptime / 86400)
-  uptime %= 86400
-  let hours = Math.floor(uptime / 3600)
-  uptime %= 3600
-  let minutes = Math.floor(uptime / 60)
-  let seconds = Math.floor(uptime % 60)
-  return `${days} days, ${hours} hours, ${minutes} minutes, ${seconds} seconds`
-}
-
-function getNodeMemoryUsage() {
-  const memoryData = process.memoryUsage()
-  const formatMemoryUsage = (data) => `${Math.round(data / 1024 / 1024 * 100) / 100}`
-  return {
-      rss: `${formatMemoryUsage(memoryData.rss)}`, //Resident Set Size - total memory allocated for the process execution
-      heapTotal: `${formatMemoryUsage(memoryData.heapTotal)}`, // total size of the allocated heap
-      heapUsed: `${formatMemoryUsage(memoryData.heapUsed)}`, // actual memory used during the execution
-      external: `${formatMemoryUsage(memoryData.external)}` // V8 external memory
   }
 }
+
