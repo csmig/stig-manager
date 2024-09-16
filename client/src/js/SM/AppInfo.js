@@ -97,6 +97,33 @@ SM.AppInfo.KeyValueGrid = Ext.extend(Ext.grid.GridPanel, {
   }
 })
 
+SM.AppInfo.JsonTreePanel = Ext.extend(Ext.Panel, {
+  initComponent: function () {
+    let tree
+    function loadData(data) {
+      tree = JsonView.createTree(data)
+      tree.isExpanded = true
+      if (this.body) {
+        this.body.dom.textContent = ''
+        JsonView.render(tree, this.body)
+      }
+    }
+    function renderTree() {
+      if (tree) {
+        JsonView.render(tree, this.body)
+      } 
+    }
+
+    const config = {
+      html: '',
+      loadData
+    }
+    Ext.apply(this, Ext.apply(this.initialConfig, config))
+    this.superclass().initComponent.call(this)
+    this.on('render', renderTree)
+  }
+})
+
 
 SM.AppInfo.Collections.Grid = Ext.extend(Ext.grid.GridPanel, {
   initComponent: function () {
@@ -1117,6 +1144,11 @@ SM.AppInfo.TabPanel = Ext.extend(Ext.TabPanel, {
       iconCls: 'sm-collection-icon'
     })
 
+    const usersGrid = new SM.AppInfo.Users.Grid({
+      title: 'Users',
+      iconCls: 'sm-users-icon'
+    })
+
     const opsPanel = new SM.AppInfo.Operations.Panel({
       title: 'Operations',
       iconCls: 'sm-api-icon'
@@ -1132,10 +1164,12 @@ SM.AppInfo.TabPanel = Ext.extend(Ext.TabPanel, {
       iconCls: 'sm-nodejs-icon'
     })
 
-    const usersGrid = new SM.AppInfo.Users.Grid({
-      title: 'Users',
-      iconCls: 'sm-users-icon'
+    const jsonPanel = new SM.AppInfo.JsonTreePanel({
+      title: 'JSON Tree',
+      iconCls: 'sm-json-icon',
+      layout: 'fit'
     })
+
 
 
     function loadData(data) {
@@ -1160,8 +1194,8 @@ SM.AppInfo.TabPanel = Ext.extend(Ext.TabPanel, {
       }
       usersGrid.store.loadData(users)
 
-
       dbPanel.loadData(data)
+      jsonPanel.loadData(data)
 
     }
   
@@ -1172,7 +1206,8 @@ SM.AppInfo.TabPanel = Ext.extend(Ext.TabPanel, {
         usersGrid,
         opsPanel,
         dbPanel,
-        nodeJsPanel
+        nodeJsPanel,
+        jsonPanel
       ]
     }
     Ext.apply(this, Ext.apply(this.initialConfig, config))

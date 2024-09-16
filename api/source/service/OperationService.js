@@ -874,6 +874,12 @@ exports.getDetails = async function() {
     schema,
     version: config.version,
     commit: config.commit,
+    collections: countsByCollection,
+    operations: operationalStats,
+    users: {
+      userInfo: createObjectFromKeyValue(userInfo, "userId", null),
+      userPrivilegeCounts
+    },
     mysql: {
       version: mySqlVersion[0].version,
       tables,
@@ -881,18 +887,12 @@ exports.getDetails = async function() {
       variablesRaw: createObjectFromKeyValue(mySqlVariablesRaw, "variable_name", "value"),
       statusRaw: createObjectFromKeyValue(mySqlStatusRaw, "variable_name", "value")
     },
-    collections: countsByCollection,
-    uniqueRuleCountOfOrphanedReviews: orphanedReviews[0].uniqueOrphanedRules,
-    users: {
-      userInfo: createObjectFromKeyValue(userInfo, "userId", null),
-      userPrivilegeCounts
-    },
-    operations: operationalStats,
     nodejs: {
       uptime: process.uptime(),
       version: process.version,
       memory: process.memoryUsage()
     },
+    uniqueRuleCountOfOrphanedReviews: orphanedReviews[0].uniqueOrphanedRules
     // nodeUptime: getNodeUptime(),
     // nodeMemoryUsageInMb: getNodeMemoryUsage(),
   })

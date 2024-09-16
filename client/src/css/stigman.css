@@ -2286,3 +2286,7 @@ td.x-grid3-hd-over .x-grid3-hd-inner {
   background-image: url(../img/mysql.svg);
   background-size: 16px;
 }
+.sm-json-icon {
+  background-image: url(../img/json.svg);
+  background-size: 16px;
+}
