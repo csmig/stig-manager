@@ -2274,3 +2274,15 @@ td.x-grid3-hd-over .x-grid3-hd-inner {
   background-image: url(../img/match-word.svg);
   background-size: contain;
 }
+.sm-api-icon {
+  background-image: url(../img/rest-api.svg);
+  background-size: 16px;
+}
+.sm-nodejs-icon {
+  background-image: url(../img/jsIconGreen.svg);
+  background-size: 16px;
+}
+.sm-mysql-icon {
+  background-image: url(../img/mysql.svg);
+  background-size: 16px;
+}

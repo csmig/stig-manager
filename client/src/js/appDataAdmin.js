@@ -238,19 +238,25 @@ async function addAppDataAdmin( params ) {
       window.URL.revokeObjectURL(url)
     }
 
+    // const collectionsGrid = new SM.DeploymentDetails.CollectionsGrid({
+    //   region: 'center'
+    // })
 
     const thisTab = Ext.getCmp('main-tab-panel').add({
       id: 'appdata-admin-tab',
+      xtype: 'tabpanel',
+      activeTab: 0,
       sm_treePath: treePath,
       iconCls: 'sm-database-save-icon',
       title: 'Application Info',
       closable: true,
-      layout: 'border',
+      // layout: 'border',
       border: false,
       items: [detailJson, appDataPanel]
     })
     thisTab.show()
 
+    // detailBodyWrapEl = collectionsGrid.getEl().child('.x-panel-bwrap')
     detailBodyWrapEl = detailJson.getEl().child('.x-panel-bwrap')
     detailBodyWrapEl.mask('Getting data...')
     const detailResponseText = (await getDetail()).response.responseText //used by downloadBlob
@@ -262,6 +268,13 @@ async function addAppDataAdmin( params ) {
     detailTree.children[0].isExpanded = true
 
     JsonView.render(detailTree, detailJson.body)
+
+    // const details = JSON.parse(detailResponseText)
+    // const collections = []
+    // for (const key in details.countsByCollection) {
+    //   collections.push(details.countsByCollection[key])
+    // }
+    // collectionsGrid.store.loadData(collections)
   }
   catch (e) {
     SM.Error.handleError(e)

@@ -548,6 +548,7 @@ exports.replaceAppData = async function (importOpts, appData, userObject, res ) 
 }
 
 exports.getDetails = async function() {
+  const schema = '1.0'
   const sqlAnalyze = `ANALYZE TABLE collection, asset, review, review_history, user`
   const sqlInfoSchema = `
   SELECT
@@ -869,30 +870,38 @@ exports.getDetails = async function() {
 
   return ({
     date: new Date().toISOString(),
+    schema,
     version: config.version,
     commit: config.commit,
-    dbInfo: {
+    mysql: {
       version: mySqlVersion[0].version,
       tables,
       variablesInMb: createObjectFromKeyValue(mySqlVariablesInMb, "variable_name", "value"),
       variablesRaw: createObjectFromKeyValue(mySqlVariablesRaw, "variable_name", "value"),
       statusRaw: createObjectFromKeyValue(mySqlStatusRaw, "variable_name", "value")
     },
-    countsByCollection,
+    collections: countsByCollection,
     uniqueRuleCountOfOrphanedReviews: orphanedReviews[0].uniqueOrphanedRules,
-    userInfo: createObjectFromKeyValue(userInfo, "userId"),
-    userPrivilegeCounts,
-    operationalStats,
-    nodeUptime: getNodeUptime(),
-    nodeMemoryUsageInMb: getNodeMemoryUsage(),
+    users: {
+      userInfo: createObjectFromKeyValue(userInfo, "userId", null),
+      userPrivilegeCounts
+    },
+    operations: operationalStats,
+    nodejs: {
+      uptime: process.uptime(),
+      version: process.version,
+      memory: process.memoryUsage()
+    },
+    // nodeUptime: getNodeUptime(),
+    // nodeMemoryUsageInMb: getNodeMemoryUsage(),
   })
 
   // Reduce an array of objects to a single object, using the value of one property as keys
   // and either assigning the rest of the object or the value of a second property as the value.
-  function createObjectFromKeyValue(data, keyPropertyName, valuePropertyName = null) {
+  function createObjectFromKeyValue(data, keyPropertyName, valuePropertyName = null, includeKey = false) {
     return data.reduce((acc, item) => {
       const { [keyPropertyName]: key, ...rest } = item
-      acc[key] = valuePropertyName ? item[valuePropertyName] : rest
+      acc[key] = valuePropertyName ? item[valuePropertyName] : includeKey ? item : rest
       return acc
     }, {})
   }

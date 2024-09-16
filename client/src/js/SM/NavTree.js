@@ -474,7 +474,8 @@ SM.NavTree.TreePanel = Ext.extend(Ext.tree.TreePanel, {
             addStigAdmin( { treePath: n.getPath() })
             break
           case 'appdata-admin':
-            addAppDataAdmin( { treePath: n.getPath() })
+            // addAppDataAdmin( { treePath: n.getPath() })
+            SM.AppInfo.showAppInfoTab({treePath: n.getPath()})
             break
           case 'whats-new':
             SM.WhatsNew.addTab( { treePath: n.getPath() })
