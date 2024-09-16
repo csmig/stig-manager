@@ -2,6 +2,8 @@ Ext.ns("SM.AppInfo")
 Ext.ns("SM.AppInfo.Collections")
 Ext.ns("SM.AppInfo.Database")
 Ext.ns("SM.AppInfo.Operations")
+Ext.ns("SM.AppInfo.Users")
+Ext.ns("SM.AppInfo.Nodejs")
 
 SM.AppInfo.numberRenderer = new Intl.NumberFormat().format
 
@@ -94,6 +96,7 @@ SM.AppInfo.KeyValueGrid = Ext.extend(Ext.grid.GridPanel, {
     this.superclass().initComponent.call(this)
   }
 })
+
 
 SM.AppInfo.Collections.Grid = Ext.extend(Ext.grid.GridPanel, {
   initComponent: function () {
@@ -398,6 +401,7 @@ SM.AppInfo.Collections.Grid = Ext.extend(Ext.grid.GridPanel, {
   }
 })
 
+
 SM.AppInfo.Database.TablesGrid = Ext.extend(Ext.grid.GridPanel, {
   initComponent: function () {
     const fields = [
@@ -639,6 +643,7 @@ SM.AppInfo.Database.Panel = Ext.extend(Ext.Panel, {
     this.superclass().initComponent.call(this)
   }
 })
+
 
 SM.AppInfo.Operations.ParentGrid = Ext.extend(Ext.grid.GridPanel, {
   initComponent: function () {
@@ -989,6 +994,122 @@ SM.AppInfo.Operations.Panel = Ext.extend(Ext.Panel, {
   }
 })
 
+
+SM.AppInfo.Users.Grid = Ext.extend(Ext.grid.GridPanel, {
+  initComponent: function () {
+    const fields = [
+      {
+        name: 'userId',
+        type: 'int'
+      },
+      'username',
+      'created',
+      'lastAccess',
+      'roles'
+    ]
+
+    const store = new Ext.data.JsonStore({
+      fields,
+      root: '',
+      idProperty: 'userId',
+      sortInfo: {
+        field: 'userId',
+        direction: 'ASC'
+      }
+    })
+
+    const columns = [
+      {
+        header: 'Id',
+        dataIndex: 'userId',
+        sortable: true,
+      },
+      {
+        header: 'username',
+        dataIndex: 'username',
+        sortable: true,
+        align: 'right',
+        filter: { type: 'string' }
+      },
+      {
+        header: 'lastAccess',
+        dataIndex: 'lastAccess',
+        width: 150,
+        sortable: true,
+        align: 'right',
+        renderer: v => new Date(v * 1000).toISOString()
+      },
+      {
+        header: 'roles',
+        dataIndex: 'roles',
+        width: 250,
+        sortable: true,
+        align: 'right',
+        renderer: v => JSON.stringify(v)
+      },
+      {
+        header: 'created',
+        dataIndex: 'created',
+        width: 150,
+        sortable: true,
+        align: 'right'
+      }
+
+    ]
+
+    const sm = new Ext.grid.RowSelectionModel({
+      singleSelect: true
+    })
+
+    const view = new SM.ColumnFilters.GridView({
+      emptyText: this.emptyText || 'No records to display',
+      deferEmptyText: false,
+      // forceFit: true,
+      markDirty: false,
+      listeners: {
+        filterschanged: function (view) {
+          store.filter(view.getFilterFns())  
+        }
+      }
+    })
+
+    const bbar = new Ext.Toolbar({
+      items: [
+        {
+          xtype: 'exportbutton',
+          hasMenu: false,
+          grid: this,
+          gridBasename: this.exportName || this.title || 'users',
+          iconCls: 'sm-export-icon',
+          text: 'CSV'
+        },
+        {
+          xtype: 'tbfill'
+        },
+        {
+          xtype: 'tbseparator'
+        },
+        new SM.RowCountTextItem({
+          store,
+          noun: this.rowCountNoun ?? 'user',
+          iconCls: 'sm-user-icon'
+        })
+      ]
+    })
+
+    const config = {
+      store,
+      view,
+      sm,
+      columns,
+      bbar
+    }
+    Ext.apply(this, Ext.apply(this.initialConfig, config))
+    this.superclass().initComponent.call(this)
+  }
+})
+
+
 SM.AppInfo.TabPanel = Ext.extend(Ext.TabPanel, {
   initComponent: function () {
     const collectionsGrid = new SM.AppInfo.Collections.Grid({
@@ -1011,7 +1132,7 @@ SM.AppInfo.TabPanel = Ext.extend(Ext.TabPanel, {
       iconCls: 'sm-nodejs-icon'
     })
 
-    const usersPanel = new Ext.Panel({
+    const usersGrid = new SM.AppInfo.Users.Grid({
       title: 'Users',
       iconCls: 'sm-users-icon'
     })
@@ -1032,6 +1153,14 @@ SM.AppInfo.TabPanel = Ext.extend(Ext.TabPanel, {
       }
       opsPanel.loadData(operationIds)
 
+      const users = []
+      const usersProp = data.users?.userInfo ?? data.userInfo
+      for (const key in usersProp) {
+        users.push({userId: key, username: `User ${key}`, ...usersProp[key]})
+      }
+      usersGrid.store.loadData(users)
+
+
       dbPanel.loadData(data)
 
     }
@@ -1040,7 +1169,7 @@ SM.AppInfo.TabPanel = Ext.extend(Ext.TabPanel, {
       loadData,
       items: [
         collectionsGrid,
-        usersPanel,
+        usersGrid,
         opsPanel,
         dbPanel,
         nodeJsPanel

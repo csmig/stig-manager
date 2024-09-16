@@ -675,7 +675,8 @@ exports.getDetails = async function() {
   const sqlUserInfo = `
   select 
     userId,
-    username, 
+    username,
+    created, 
     lastAccess,
     coalesce(
       JSON_EXTRACT(user_data.lastClaims, "$.${config.oauth.claims.privilegesPath}"),
