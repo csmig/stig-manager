@@ -1,10 +1,101 @@
 Ext.ns("SM.AppInfo")
+Ext.ns("SM.AppInfo.Collections")
 Ext.ns("SM.AppInfo.Database")
 Ext.ns("SM.AppInfo.Operations")
 
 SM.AppInfo.numberRenderer = new Intl.NumberFormat().format
 
-SM.AppInfo.CollectionsGrid = Ext.extend(Ext.grid.GridPanel, {
+SM.AppInfo.KeyValueGrid = Ext.extend(Ext.grid.GridPanel, {
+  initComponent: function () {
+    const fields = [
+      'key',
+      'value'
+    ]
+
+    const store = new Ext.data.JsonStore({
+      fields,
+      root: '',
+      idProperty: 'key',
+      sortInfo: {
+        field: 'key',
+        direction: 'ASC'
+      }
+    })
+
+    const columns = [
+      {
+        header: this.keyColumnName ?? "key",
+        width: this.keyColumnWidth ?? 100,
+        dataIndex: 'key',
+        sortable: true,
+        filter: { type: 'string' }
+      },
+      {
+        header: this.valueColumnName ?? "value",
+        width: this.valueColumnWidth ?? 100,
+        dataIndex: 'value',
+        sortable: true,
+        align: 'right',
+        renderer: v => {
+          const rendered = SM.AppInfo.numberRenderer(v)
+          return rendered === 'NaN' ? v : rendered
+        }
+      }
+    ]
+
+    const sm = new Ext.grid.RowSelectionModel({
+      singleSelect: true
+    })
+
+    const view = new SM.ColumnFilters.GridView({
+      emptyText: this.emptyText || 'No records to display',
+      deferEmptyText: false,
+      // forceFit: true,
+      markDirty: false,
+      listeners: {
+        filterschanged: function (view) {
+          store.filter(view.getFilterFns())  
+        }
+      }
+    })
+
+    const bbar = new Ext.Toolbar({
+      items: [
+        {
+          xtype: 'exportbutton',
+          hasMenu: false,
+          grid: this,
+          gridBasename: this.exportName || this.title || 'keys',
+          iconCls: 'sm-export-icon',
+          text: 'CSV'
+        },
+        {
+          xtype: 'tbfill'
+        },
+        {
+          xtype: 'tbseparator'
+        },
+        new SM.RowCountTextItem({
+          store,
+          noun: this.rowCountNoun ?? 'key',
+          iconCls: 'sm-database-icon'
+        })
+      ]
+    })
+
+    const config = {
+      store,
+      view,
+      sm,
+      columns,
+      bbar
+    }
+    Ext.apply(this, Ext.apply(this.initialConfig, config))
+    this.superclass().initComponent.call(this)
+  }
+})
+
+SM.AppInfo.Collections.Grid = Ext.extend(Ext.grid.GridPanel, {
   initComponent: function () {
     const fields = [
       {
@@ -427,7 +518,7 @@ SM.AppInfo.Database.TablesGrid = Ext.extend(Ext.grid.GridPanel, {
     const view = new SM.ColumnFilters.GridView({
       emptyText: this.emptyText || 'No records to display',
       deferEmptyText: false,
-      // forceFit: true,
+      forceFit: true,
       markDirty: false,
       listeners: {
         filterschanged: function (view) {
@@ -472,96 +563,84 @@ SM.AppInfo.Database.TablesGrid = Ext.extend(Ext.grid.GridPanel, {
   }
 })
 
-SM.AppInfo.KeyValueGrid = Ext.extend(Ext.grid.GridPanel, {
+SM.AppInfo.Database.Panel = Ext.extend(Ext.Panel, {
   initComponent: function () {
-    const fields = [
-      'key',
-      'value'
-    ]
-
-    const store = new Ext.data.JsonStore({
-      fields,
-      root: '',
-      idProperty: 'key',
-      sortInfo: {
-        field: 'key',
-        direction: 'ASC'
-      }
+    const tablesGrid = new SM.AppInfo.Database.TablesGrid({
+      region: 'center'
     })
 
-    const columns = [
-      {
-        header: this.keyColumnName ?? "key",
-        width: 160,
-        dataIndex: 'key',
-        sortable: true,
-        filter: { type: 'string' }
-      },
-      {
-        header: this.valueColumnName ?? "value",
-        dataIndex: 'value',
-        sortable: true,
-        align: 'right',
-        renderer: v => {
-          const rendered = SM.AppInfo.numberRenderer(v)
-          return rendered === 'NaN' ? v : rendered
-        }
-      }
-    ]
-
-    const sm = new Ext.grid.RowSelectionModel({
-      singleSelect: true
+    const variablesGrid = new SM.AppInfo.KeyValueGrid({
+      // title: 'Variables',
+      // iconCls: 'sm-database-save-icon',
+      flex: 1,
+      height: 300,
+      keyColumnName: 'variable',
+      keyColumnWidth: 200,
+      exportName: 'variables',
+      rowCountNoun: 'variable'
     })
 
-    const view = new SM.ColumnFilters.GridView({
-      emptyText: this.emptyText || 'No records to display',
-      deferEmptyText: false,
-      // forceFit: true,
-      markDirty: false,
-      listeners: {
-        filterschanged: function (view) {
-          store.filter(view.getFilterFns())  
-        }
-      }
+    const statusGrid = new SM.AppInfo.KeyValueGrid({
+      // title: 'Status',
+      // iconCls: 'sm-database-save-icon',
+      flex: 1,
+      height: 300,
+      keyColumnName: 'status',
+      keyColumnWidth: 200,
+      exportName: 'status',
+      rowCountNoun: 'status'
     })
 
-    const bbar = new Ext.Toolbar({
+    const childPanel = new Ext.Panel({
+      region: 'south',
+      height: 300,
+      layout: 'hbox',
+      border: false,
       items: [
-        {
-          xtype: 'exportbutton',
-          hasMenu: false,
-          grid: this,
-          gridBasename: this.exportName || this.title || 'keys',
-          iconCls: 'sm-export-icon',
-          text: 'CSV'
-        },
-        {
-          xtype: 'tbfill'
-        },
-        {
-          xtype: 'tbseparator'
-        },
-        new SM.RowCountTextItem({
-          store,
-          noun: this.rowCountNoun ?? 'key',
-          iconCls: 'sm-database-icon'
-        })
+        variablesGrid,
+        statusGrid
       ]
     })
 
+    function loadData(data) {
+      const tables = []
+      const dbProp = data.mysql ?? data.dbInfo
+      for (const key in dbProp.tables) {
+        tables.push({tableName: key, ...dbProp.tables[key]})
+      }
+      tablesGrid.store.loadData(tables)
+
+      const variables = []
+      const variablesObj = dbProp.variablesRaw ?? data.mySqlVariablesRaw 
+      variables.push({key: 'mysql_version', value: variablesObj.version ?? data.MySqlVersion})
+      for (const key in variablesObj) {
+        variables.push({key, value: variablesObj[key]})
+      }
+      variablesGrid.store.loadData(variables)
+
+      const status = []
+      const statusObj = dbProp.statusRaw ?? data.mySqlStatusRaw 
+      status.push({key: 'mysql_version', value: dbProp.version ?? data.MySqlVersion})
+      for (const key in statusObj) {
+        status.push({key, value: statusObj[key]})
+      }
+      statusGrid.store.loadData(status)
+    }
+
     const config = {
-      store,
-      view,
-      sm,
-      columns,
-      bbar
+      layout: 'border',
+      items: [
+        tablesGrid,
+        childPanel
+      ],
+      loadData
     }
     Ext.apply(this, Ext.apply(this.initialConfig, config))
     this.superclass().initComponent.call(this)
   }
 })
 
-SM.AppInfo.Operations.OpIdsGrid = Ext.extend(Ext.grid.GridPanel, {
+SM.AppInfo.Operations.ParentGrid = Ext.extend(Ext.grid.GridPanel, {
   initComponent: function () {
     const fields = [
       'operationId',
@@ -573,7 +652,8 @@ SM.AppInfo.Operations.OpIdsGrid = Ext.extend(Ext.grid.GridPanel, {
       'maxDurationUpdates',
       'averageDuration',
       'clients',
-      'users'
+      'users',
+      'projections'
     ]
 
     const store = new Ext.data.JsonStore({
@@ -648,32 +728,35 @@ SM.AppInfo.Operations.OpIdsGrid = Ext.extend(Ext.grid.GridPanel, {
         sortable: true,
         align: 'right',
       },
-      {
-        header: "clients",
-        // width: 25,
-        dataIndex: 'clients',
-        sortable: true,
-        align: 'right',
-        renderer: v => JSON.stringify(v)
-      },
-      {
-        header: "users",
-        // width: 25,
-        dataIndex: 'users',
-        sortable: true,
-        align: 'right',
-        renderer: v => JSON.stringify(v)
-      }
+      // {
+      //   header: "clients",
+      //   // width: 25,
+      //   dataIndex: 'clients',
+      //   sortable: true,
+      //   align: 'right',
+      //   renderer: v => JSON.stringify(v)
+      // },
+      // {
+      //   header: "users",
+      //   // width: 25,
+      //   dataIndex: 'users',
+      //   sortable: true,
+      //   align: 'right',
+      //   renderer: v => JSON.stringify(v)
+      // }
     ]
 
     const sm = new Ext.grid.RowSelectionModel({
-      singleSelect: true
+      singleSelect: true,
+      listeners: {
+        rowselect: this.onRowSelect ?? Ext.emptyFn
+      }
     })
 
     const view = new SM.ColumnFilters.GridView({
       emptyText: this.emptyText || 'No records to display',
       deferEmptyText: false,
-      // forceFit: true,
+      forceFit: true,
       markDirty: false,
       listeners: {
         filterschanged: function (view) {
@@ -718,36 +801,209 @@ SM.AppInfo.Operations.OpIdsGrid = Ext.extend(Ext.grid.GridPanel, {
   }
 })
 
+SM.AppInfo.Operations.ProjectionsGrid = Ext.extend(Ext.grid.GridPanel, {
+  initComponent: function () {
+    const fields = [
+      'projection',
+      'totalRequests',
+      'minDuration',
+      'maxDuration',
+      'totalDuration',
+      'averageDuration'
+    ]
+
+    const store = new Ext.data.JsonStore({
+      fields,
+      root: '',
+      idProperty: 'projection',
+      sortInfo: {
+        field: 'projection',
+        direction: 'ASC'
+      }
+    })
+
+    const columns = [
+      {
+        header: 'Projection',
+        width: 160,
+        dataIndex: 'projection',
+        sortable: true,
+        filter: { type: 'string' }
+      },
+      {
+        header: 'totalRequests',
+        dataIndex: 'totalRequests',
+        sortable: true,
+        align: 'right',
+        renderer: SM.AppInfo.numberRenderer
+      },
+      {
+        header: 'minDuration',
+        dataIndex: 'minDuration',
+        sortable: true,
+        align: 'right',
+        renderer: SM.AppInfo.numberRenderer
+      },
+      {
+        header: 'maxDuration',
+        dataIndex: 'maxDuration',
+        sortable: true,
+        align: 'right',
+        renderer: SM.AppInfo.numberRenderer
+      },
+      {
+        header: 'totalDuration',
+        dataIndex: 'totalDuration',
+        sortable: true,
+        align: 'right',
+        renderer: SM.AppInfo.numberRenderer
+      },
+      {
+        header: 'averageDuration',
+        dataIndex: 'averageDuration',
+        sortable: true,
+        align: 'right',
+        renderer: SM.AppInfo.numberRenderer
+      }
+    ]
+
+    const sm = new Ext.grid.RowSelectionModel({
+      singleSelect: true
+    })
+
+    const view = new SM.ColumnFilters.GridView({
+      emptyText: this.emptyText || 'No records to display',
+      deferEmptyText: false,
+      // forceFit: true,
+      markDirty: false,
+      listeners: {
+        filterschanged: function (view) {
+          store.filter(view.getFilterFns())  
+        }
+      }
+    })
+
+    const bbar = new Ext.Toolbar({
+      items: [
+        {
+          xtype: 'exportbutton',
+          hasMenu: false,
+          grid: this,
+          gridBasename: this.exportName || this.title || 'projections',
+          iconCls: 'sm-export-icon',
+          text: 'CSV'
+        },
+        {
+          xtype: 'tbfill'
+        },
+        {
+          xtype: 'tbseparator'
+        },
+        new SM.RowCountTextItem({
+          store,
+          noun: this.rowCountNoun ?? 'projection',
+          iconCls: 'sm-api-icon'
+        })
+      ]
+    })
+
+    const config = {
+      store,
+      view,
+      sm,
+      columns,
+      bbar
+    }
+    Ext.apply(this, Ext.apply(this.initialConfig, config))
+    this.superclass().initComponent.call(this)
+  }
+})
+
+SM.AppInfo.Operations.Panel = Ext.extend(Ext.Panel, {
+  initComponent: function () {
+    const parentGrid = new SM.AppInfo.Operations.ParentGrid({
+      region: 'center',
+      onRowSelect
+    })
+    const usersGrid = new SM.AppInfo.KeyValueGrid({
+      region: 'east',
+      keyColumnName: 'User',
+      valueColumnName: 'Requests',
+      width: '25%',
+    })
+    const clientsGrid = new SM.AppInfo.KeyValueGrid({
+      region: 'west',
+      keyColumnName: 'Client',
+      valueColumnName: 'Requests',
+      width: '25%',
+    })
+    const projectionsGrid = new SM.AppInfo.Operations.ProjectionsGrid({
+      region: 'center'
+    })
+
+    function onRowSelect(sm, index, record) {
+      const users = []
+      const clients = []
+      const projections = []
+      const data = record.data
+      for (const user in data.users) {
+        users.push({key: user, value: data.users[user]})
+      }
+      for (const client in data.clients) {
+        clients.push({key: client, value: data.clients[client]})
+      }
+      for (const projection of Object.keys(data.projections)) {
+        projections.push({projection, ...data.projections[projection]})
+      }
+      usersGrid.store.loadData(users)
+      clientsGrid.store.loadData(clients)
+      projectionsGrid.store.loadData(projections)
+    }
+
+    const childPanel = new Ext.Panel({
+      height: 300,
+      region: 'south',
+      layout: 'border',
+      border: false,
+      items: [
+        usersGrid,
+        clientsGrid,
+        projectionsGrid
+      ]
+    })
+
+    function loadData(data) {
+      parentGrid.store.loadData(data)
+    }
+
+    const config = {
+      layout: 'border',
+      items: [
+        parentGrid,
+        childPanel
+      ],
+      loadData
+    }
+    Ext.apply(this, Ext.apply(this.initialConfig, config))
+    this.superclass().initComponent.call(this)
+  }
+})
+
 SM.AppInfo.TabPanel = Ext.extend(Ext.TabPanel, {
   initComponent: function () {
-    const collectionsGrid = new SM.AppInfo.CollectionsGrid({
+    const collectionsGrid = new SM.AppInfo.Collections.Grid({
       title: 'Collections',
       iconCls: 'sm-collection-icon'
     })
-    const dbTablesGrid = new SM.AppInfo.Database.TablesGrid({
-      title: 'Tables',
-      iconCls: 'sm-database-save-icon'
-    })
 
-    const dbVarsGrid = new SM.AppInfo.KeyValueGrid({
-      title: 'Variables',
-      iconCls: 'sm-database-save-icon',
-      keyColumnName: 'variable',
-      exportName: 'variables',
-      rowCountNoun: 'variable'
-    })
-    
-    const dbStatusGrid = new SM.AppInfo.KeyValueGrid({
-      title: 'Status',
-      iconCls: 'sm-database-save-icon',
-      keyColumnName: 'status',
-      exportName: 'status',
-      rowCountNoun: 'status'
-    })
-
-    const opIdsGrid = new SM.AppInfo.Operations.OpIdsGrid({
+    const opsPanel = new SM.AppInfo.Operations.Panel({
       title: 'Operations',
       iconCls: 'sm-api-icon'
+    })
+
+    const dbPanel = new SM.AppInfo.Database.Panel({
+      title: 'Database',
+      iconCls: 'sm-database-save-icon'
     })
 
     const nodeJsPanel = new Ext.Panel({
@@ -769,35 +1025,15 @@ SM.AppInfo.TabPanel = Ext.extend(Ext.TabPanel, {
       }
       collectionsGrid.store.loadData(collections)
 
-      const tables = []
-      const dbProp = data.mysql ?? data.dbInfo
-      for (const key in dbProp.tables) {
-        tables.push({tableName: key, ...dbProp.tables[key]})
-      }
-      dbTablesGrid.store.loadData(tables)
-
       const operationIds = []
       const operationsProp = data.operations ?? data.operationalStats
       for (const key in operationsProp?.operationIdStats) {
         operationIds.push({operationId: key, ...operationsProp?.operationIdStats[key]})
       }
-      opIdsGrid.store.loadData(operationIds)
+      opsPanel.loadData(operationIds)
 
-      const variables = []
-      const variablesObj = dbProp.variablesRaw ?? data.mySqlVariablesRaw 
-      variables.push({key: 'mysql_version', value: variablesObj.version ?? data.MySqlVersion})
-      for (const key in variablesObj) {
-        variables.push({key, value: variablesObj[key]})
-      }
-      dbVarsGrid.store.loadData(variables)
+      dbPanel.loadData(data)
 
-      const status = []
-      const statusObj = dbProp.statusRaw ?? data.mySqlStatusRaw 
-      status.push({key: 'mysql_version', value: dbProp.version ?? data.MySqlVersion})
-      for (const key in statusObj) {
-        status.push({key, value: statusObj[key]})
-      }
-      dbStatusGrid.store.loadData(status)
     }
   
     const config = {
@@ -805,10 +1041,8 @@ SM.AppInfo.TabPanel = Ext.extend(Ext.TabPanel, {
       items: [
         collectionsGrid,
         usersPanel,
-        opIdsGrid,
-        dbTablesGrid,
-        dbVarsGrid,
-        dbStatusGrid,
+        opsPanel,
+        dbPanel,
         nodeJsPanel
       ]
     }
