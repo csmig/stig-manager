@@ -2,6 +2,7 @@
 const dbUtils = require('./utils')
 const config = require('../utils/config')
 const logger = require('../utils/logger')
+const os = require('node:os')
 const _ = require('lodash')
 
 /**
@@ -716,7 +717,11 @@ exports.getDetails = async function() {
     'innodb_io_capacity_max' ,  
     'innodb_flush_sync' ,  
     'innodb_io_capacity_max' ,  
-    'innodb_lock_wait_timeout'
+    'innodb_lock_wait_timeout',
+    'version',
+    'version_compile_machine',
+    'version_compile_os',
+    'long_query_time'
   ]
   const sqlMySqlVariablesInMb = `
   SELECT 
@@ -989,6 +994,7 @@ exports.getDetails = async function() {
       }
     }
     const {platform, arch, nodejsVersion, cpus, osMachine, osName, osRelease} = header
+    const loadAverage = os.loadavg().join(', ')
 
     const memory = process.memoryUsage()
     memory.maxRss = resourceUsage.maxRss
@@ -1000,7 +1006,8 @@ exports.getDetails = async function() {
         arch,
         osMachine,
         osName,
-        osRelease
+        osRelease,
+        loadAverage
       },
       environment,
       memory,

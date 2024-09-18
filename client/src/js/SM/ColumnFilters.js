@@ -14,7 +14,7 @@ SM.ColumnFilters.extend = function extend (extended = Ext.grid.GridView) {
     handleHdDown: function (e, target) {
       // Modifies superclass method to support lastHide
   
-      if (target.className == 'x-grid3-hd-checker') {
+      if (target.classList[0] !== 'x-grid3-hd-inner') {
         return
       }
       e.stopEvent()

@@ -20,6 +20,7 @@ SM.AppInfo.uptimeString = function uptimeString(uptime) {
 
 SM.AppInfo.KeyValueGrid = Ext.extend(Ext.grid.GridPanel, {
   initComponent: function () {
+    const valueColumnId = Ext.id()
     const fields = [
       'key',
       'value'
@@ -49,7 +50,8 @@ SM.AppInfo.KeyValueGrid = Ext.extend(Ext.grid.GridPanel, {
     const valueColumn = {
       ...{
         header: 'value',
-        width: 100,
+        id: valueColumnId,
+        // width: 100,
         dataIndex: 'value',
         sortable: true,
         align: 'right',
@@ -72,6 +74,7 @@ SM.AppInfo.KeyValueGrid = Ext.extend(Ext.grid.GridPanel, {
 
     const view = new SM.ColumnFilters.GridView({
       emptyText: this.emptyText || 'No records to display',
+      // autoFill: true,
       deferEmptyText: false,
       forceFit: this.forceFit ?? false,
       markDirty: false,
@@ -116,6 +119,8 @@ SM.AppInfo.KeyValueGrid = Ext.extend(Ext.grid.GridPanel, {
 
     const config = {
       cls: this.cls ?? 'sm-round-panel',
+      autoExpandColumn: valueColumnId,
+      autoExpandMax: 500,
       store,
       view,
       sm,
@@ -649,7 +654,7 @@ SM.AppInfo.Database.Container = Ext.extend(Ext.Container, {
     const variablesGrid = new SM.AppInfo.KeyValueGrid({
       title: 'Variables',
       flex: 1,
-      // margins: {top: 0, right: 5, bottom: 0, left: 0},
+      margins: {top: 0, right: 5, bottom: 0, left: 0},
       keyColumnConfig: {header: 'Variable', width: 200},
       valueColumnConfig: {header: 'Value'},
       exportName: 'variables',
@@ -659,7 +664,7 @@ SM.AppInfo.Database.Container = Ext.extend(Ext.Container, {
     const statusGrid = new SM.AppInfo.KeyValueGrid({
       title: 'Status',
       flex: 1,
-      // margins: {top: 0, right: 0, bottom: 0, left: 5},
+      margins: {top: 0, right: 0, bottom: 0, left: 5},
       keyColumnConfig: {header: 'Variable', width: 200},
       valueColumnConfig: {header: 'Value'},
       exportName: 'status',
@@ -674,7 +679,7 @@ SM.AppInfo.Database.Container = Ext.extend(Ext.Container, {
       bodyStyle: 'background-color: transparent;',
       layoutConfig: {
         align: 'stretch',
-        defaultMargins: {top: 5, right: 10, bottom: 0, left: 10}
+        // defaultMargins: {top: 5, right: 10, bottom: 0, left: 10}
       },
       border: false,
       items: [
@@ -846,6 +851,7 @@ SM.AppInfo.Operations.ParentGrid = Ext.extend(Ext.grid.GridPanel, {
     })
 
     const config = {
+      cls: this.cls ?? 'sm-round-panel',
       store,
       view,
       sm,
@@ -964,6 +970,7 @@ SM.AppInfo.Operations.ProjectionsGrid = Ext.extend(Ext.grid.GridPanel, {
     })
 
     const config = {
+      cls: this.cls ?? 'sm-round-panel',
       store,
       view,
       sm,
@@ -975,30 +982,31 @@ SM.AppInfo.Operations.ProjectionsGrid = Ext.extend(Ext.grid.GridPanel, {
   }
 })
 
-SM.AppInfo.Operations.Panel = Ext.extend(Ext.Panel, {
+SM.AppInfo.Operations.Panel = Ext.extend(Ext.Container, {
   initComponent: function () {
     const parentGrid = new SM.AppInfo.Operations.ParentGrid({
+      title: 'Operations',
       region: 'center',
       onRowSelect
     })
     const usersGrid = new SM.AppInfo.KeyValueGrid({
       title: 'User requests',
-      style: 'padding: 10px;',
+      margins: {top: 0, right: 5, bottom: 0, left: 0},
       keyColumnConfig: {header: 'User'},
       valueColumnConfig: {header: 'Requests'},
-      width: 300,
+      width: 200,
     })
     const clientsGrid = new SM.AppInfo.KeyValueGrid({
       title: 'Client requests',
-      style: 'padding: 10px;',
+      margins: {top: 0, right: 5, bottom: 0, left: 5},
       keyColumnConfig: {header: 'Client'},
       valueColumnConfig: {header: 'Requests'},
-      width: 300,
+      width: 200,
     })
     const projectionsGrid = new SM.AppInfo.Operations.ProjectionsGrid({
       title: 'Projections',
       flex: 1,
-      style: 'padding: 10px;'
+      margins: {top: 0, right: 0, bottom: 0, left: 5}
     })
 
     function onRowSelect(sm, index, record) {
@@ -1024,10 +1032,11 @@ SM.AppInfo.Operations.Panel = Ext.extend(Ext.Panel, {
       region: 'south',
       split: true,
       height: 300,
+      bodyStyle: 'background-color: transparent;',
       layout: 'hbox',
       layoutConfig: {
         align: 'stretch',
-        defaultMargins: {top: 10, right: 10, bottom: 10, left: 10}
+        // defaultMargins: {top: 10, right: 10, bottom: 10, left: 10}
       },
       border: false,
       items: [
@@ -1179,9 +1188,28 @@ SM.AppInfo.Nodejs.Container = Ext.extend(Ext.Container, {
       envGrid.loadData(data.environment)
     }
 
+    const envGrid = new SM.AppInfo.KeyValueGrid({
+      title: 'Environment',
+      region: 'center',
+      keyColumnConfig: {header: 'Variable', width: 240},
+      valueColumnConfig: {header: 'Value', align: 'left', width: 370},
+      forceFit: true,
+      exportName: 'environment',
+      rowCountNoun: 'item'
+    })
+    const cpusGrid = new SM.AppInfo.KeyValueGrid({
+      title: 'CPU',
+      flex: 1,
+      margins: {top: 0, right: 5, bottom: 0, left: 0},
+      keyColumnConfig: {header: 'CPU', width: 200},
+      valueColumnConfig: {header: 'Value', renderer: v=>JSON.stringify(v)},
+      exportName: 'os',
+      rowCountNoun: 'cpu'
+    })
     const memoryGrid = new SM.AppInfo.KeyValueGrid({
       title: 'Memory',
       flex: 1,
+      margins: {top: 0, right: 5, bottom: 0, left: 5},
       keyColumnConfig: {header: 'Property'},
       valueColumnConfig: {header: 'Value'},
       exportName: 'memory',
@@ -1190,26 +1218,10 @@ SM.AppInfo.Nodejs.Container = Ext.extend(Ext.Container, {
     const osGrid = new SM.AppInfo.KeyValueGrid({
       title: 'OS',
       flex: 1,
+      margins: {top: 0, right: 0, bottom: 0, left: 5},
       keyColumnConfig: {header: 'Property'},
       valueColumnConfig: {header: 'Value', align: 'left'},
       exportName: 'os',
-      rowCountNoun: 'item'
-    })
-    const cpusGrid = new SM.AppInfo.KeyValueGrid({
-      title: 'CPU',
-      flex: 1,
-      keyColumnConfig: {header: 'CPU', width: 200},
-      valueColumnConfig: {header: 'Value'},
-      exportName: 'os',
-      rowCountNoun: 'cpu'
-    })
-    const envGrid = new SM.AppInfo.KeyValueGrid({
-      title: 'Environment',
-      region: 'center',
-      keyColumnConfig: {header: 'Variable', width: 240},
-      valueColumnConfig: {header: 'Value', align: 'left', width: 370},
-      forceFit: true,
-      exportName: 'environment',
       rowCountNoun: 'item'
     })
 
@@ -1221,10 +1233,9 @@ SM.AppInfo.Nodejs.Container = Ext.extend(Ext.Container, {
       layout: 'hbox',
       layoutConfig: {
         align: 'stretch',
-        defaultMargins: {top: 5, right: 10, bottom: 0, left: 10}
+        // defaultMargins: {top: 5, right: 10, bottom: 0, left: 10}
       },
       border: false,
-      // headerStyle: '{font-size: larger;}',
       items: [
         cpusGrid,
         memoryGrid,
@@ -1256,7 +1267,7 @@ SM.AppInfo.TabPanel = Ext.extend(Ext.TabPanel, {
     })
 
     const opsPanel = new SM.AppInfo.Operations.Panel({
-      title: 'Operations',
+      title: 'API',
       iconCls: 'sm-api-icon'
     })
 

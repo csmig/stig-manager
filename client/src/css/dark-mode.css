@@ -675,13 +675,13 @@ td.x-date-mp-month a, td.x-date-mp-month a:hover, td.x-date-mp-year a, td.x-date
 .x-layout-split {
     background-color: transparent;
     transition-property: background-color;
-    transition-duration: 0.25s;
+    transition-duration: 100ms;
     transition-delay: 0s;
 }
 
 .x-layout-split:hover {
-    background-color: hsl(0 0% 33% / 1);
-    transition-duration: 0.25s;
+    background-color: #243385;
+    transition-duration: 100ms;
     transition-delay: 0s;
 }
 
