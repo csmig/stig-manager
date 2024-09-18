@@ -32,11 +32,11 @@ const writeError = config.log.level >= 1 ? function writeError () {
 
 
 // Stats for all requests
-const overallOpStats = {
+const requestStats = {
   totalRequests: 0,
   totalApiRequests: 0,
   totalRequestDuration: 0,
-  operationIdStats: {}
+  operationIds: {}
 }
 
 // All messages to STDOUT are handled here
@@ -124,12 +124,12 @@ function requestLogger (req, res, next) {
 
   function logResponse () {
     res._startTime = res._startTime ?? new Date()
-    overallOpStats.totalRequests += 1
+    requestStats.totalRequests += 1
     const durationMs = Number(res._startTime - req._startTime)
 
-    overallOpStats.totalRequestDuration += durationMs
+    requestStats.totalRequestDuration += durationMs
     const operationId = res.req.openapi?.schema.operationId
-    let operationalStats = {
+    let operationStats = {
       operationId,
       retries: res.svcStatus?.retries,
       durationMs
@@ -138,11 +138,11 @@ function requestLogger (req, res, next) {
     //if operationId is defined, this is an api endpoint response so we can track some stats
     if (operationId ) {
       trackOperationStats(operationId, durationMs, res)
-      // If including stats in log entries, add to operationalStats object
+      // If including stats in log entries, add to operationStats object
       if (config.log.optStats === 'true') {
-        operationalStats = {
-          ...operationalStats,
-          ...overallOpStats.operationIdStats[operationId]
+        operationStats = {
+          ...operationStats,
+          ...requestStats.operationIds[operationId]
         }
       }
     }    
@@ -158,7 +158,7 @@ function requestLogger (req, res, next) {
           errorBody: res.errorBody,
           responseBody,
         },
-        operationalStats
+        operationStats
       })  
     }
     else {
@@ -167,7 +167,7 @@ function requestLogger (req, res, next) {
         status: res.statusCode,
         headers: res.getHeaders(),
         errorBody: res.errorBody,
-        operationalStats
+        operationStats
       })  
     }
   }
@@ -192,10 +192,10 @@ function serializeEnvironment () {
 
 function trackOperationStats(operationId, durationMs, res) {
   //increment total api requests
-  overallOpStats.totalApiRequests++
-  // Ensure the operationIdStats object exists for the operationId
-  if (!overallOpStats.operationIdStats[operationId]) {
-    overallOpStats.operationIdStats[operationId] = {
+  requestStats.totalApiRequests++
+  // Ensure the operationIds object exists for the operationId
+  if (!requestStats.operationIds[operationId]) {
+    requestStats.operationIds[operationId] = {
       totalRequests: 0,
       totalDuration: 0,
       elevatedRequests: 0,
@@ -211,7 +211,7 @@ function trackOperationStats(operationId, durationMs, res) {
   }
 
   // Get the stats object for this operationId
-  const stats = overallOpStats.operationIdStats[operationId]
+  const stats = requestStats.operationIds[operationId]
   // Increment total requests and total duration for this operationId
   stats.totalRequests++
   stats.totalDuration += durationMs
@@ -272,5 +272,5 @@ module.exports = {
   writeWarn, 
   writeInfo, 
   writeDebug,
-  overallOpStats
+  requestStats
 }

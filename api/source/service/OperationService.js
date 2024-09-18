@@ -549,7 +549,7 @@ exports.replaceAppData = async function (importOpts, appData, userObject, res ) 
 }
 
 exports.getDetails = async function() {
-  const schema = '1.0'
+  const schema = 'stig-manager-appinfo-v1.0'
   const sqlAnalyze = `ANALYZE TABLE collection, asset, review, review_history, user`
   const sqlInfoSchema = `
   SELECT
@@ -631,9 +631,9 @@ exports.getDetails = async function() {
   const sqlLabelCountsByCollection = `
   SELECT
     cast(c.collectionId as char) as collectionId,
-    count(distinct cl.clId) as collectionLabelCount,
-    count(distinct clam.assetId) as labeledAssetCount,
-    count(distinct clam.claId) as assetLabelCount
+    count(distinct cl.clId) as collectionLabels,
+    count(distinct clam.assetId) as labeledAssets,
+    count(distinct clam.claId) as assetLabels
   FROM
     collection c
     left join collection_label cl on cl.collectionId = c.collectionId
@@ -696,7 +696,7 @@ exports.getDetails = async function() {
   `
   const sqlMySqlVersion = `SELECT VERSION() as version`
 
-  const mysqlVarsInMbOnly = [
+  const mySqlVariablesOnly = [
     'innodb_buffer_pool_size',
     'innodb_log_buffer_size',
     'innodb_log_file_size',
@@ -709,9 +709,7 @@ exports.getDetails = async function() {
     'read_rnd_buffer_size',
     'join_buffer_size',
     'binlog_cache_size',
-    'tmp_table_size'
-  ]
-  const mySqlVariablesRawOnly = [
+    'tmp_table_size',
     'innodb_buffer_pool_instances' ,  
     'innodb_io_capacity' , 
     'innodb_io_capacity_max' ,  
@@ -723,32 +721,17 @@ exports.getDetails = async function() {
     'version_compile_os',
     'long_query_time'
   ]
-  const sqlMySqlVariablesInMb = `
-  SELECT 
-    variable_name,
-    ROUND(variable_value / (1024 * 1024), 2) AS value
-  FROM 
-    performance_schema.global_variables
-  WHERE 
-    variable_name IN (
-      ${mysqlVarsInMbOnly.map( v => `'${v}'`).join(',')}
-    )
-  ORDER by variable_name
-  `  
-  const sqlMySqlVariablesRawValues = `
+  const sqlMySqlVariablesValues = `
   SELECT 
     variable_name,
     variable_value as value
     FROM 
     performance_schema.global_variables
   WHERE 
-    variable_name IN (
-        ${mysqlVarsInMbOnly.map( v => `'${v}'`).join(',')},
-        ${mySqlVariablesRawOnly.map( v => `'${v}'`).join(',')}
-    )
+    variable_name IN (${mySqlVariablesOnly.map(v => `'${v}'`).join(',')})
     ORDER by variable_name
   `
-  const mySqlStatusRawOnly = [
+  const mySqlStatusOnly = [
   'Bytes_received',
   'Bytes_sent',
   'Handler_commit',
@@ -774,7 +757,7 @@ exports.getDetails = async function() {
   'Threads_created',
   'Uptime'
   ]
-  const sqlMySqlStatusRawValues = `
+  const sqlMySqlStatusValues = `
   SELECT 
     variable_name,
     variable_value as value
@@ -782,7 +765,7 @@ exports.getDetails = async function() {
     performance_schema.global_status
   WHERE 
     variable_name IN (
-        ${mySqlStatusRawOnly.map( v => `'${v}'`).join(',')}
+        ${mySqlStatusOnly.map( v => `'${v}'`).join(',')}
     )
   ORDER by variable_name
   `
@@ -799,9 +782,8 @@ exports.getDetails = async function() {
     [orphanedReviews],
     [userInfo],
     [mySqlVersion],
-    [mySqlVariablesInMb],
-    [mySqlVariablesRaw],
-    [mySqlStatusRaw]
+    [mySqlVariables],
+    [mySqlStatus]
   ] = await Promise.all([
     dbUtils.pool.query(sqlInfoSchema, [config.database.schema]),
     dbUtils.pool.query(sqlCollectionAssetStigs),
@@ -812,9 +794,8 @@ exports.getDetails = async function() {
     dbUtils.pool.query(sqlOrphanedReviews),
     dbUtils.pool.query(sqlUserInfo),
     dbUtils.pool.query(sqlMySqlVersion),
-    dbUtils.pool.query(sqlMySqlVariablesInMb),
-    dbUtils.pool.query(sqlMySqlVariablesRawValues),
-    dbUtils.pool.query(sqlMySqlStatusRawValues)
+    dbUtils.pool.query(sqlMySqlVariablesValues),
+    dbUtils.pool.query(sqlMySqlStatusValues)
   ])
 
   // append accurate row counts to the dbInfo.tables object
@@ -829,16 +810,12 @@ exports.getDetails = async function() {
   }
 
   //count role assignments and break out by lastAccess time periods
-  let userPrivilegeCounts = breakOutRoleUsage(userInfo)
+  const userPrivilegeCounts = breakOutRoleUsage(userInfo)
 
   //create working copy of operational stats
-  let operationalStats = _.cloneDeep(logger.overallOpStats)
+  const requests = _.cloneDeep(logger.requestStats)
 
-  operationalStats.operationIdStats = sortObjectByKeys(operationalStats.operationIdStats)
-
-  for (const key in mySqlVariablesInMb){
-    mySqlVariablesInMb[key].value = `${mySqlVariablesInMb[key].value}M`
-  }
+  requests.operationIds = sortObjectByKeys(requests.operationIds)
 
   // Create objects keyed by collectionId from arrays of objects
   countsByCollection = createObjectFromKeyValue(countsByCollection, "collectionId")
@@ -851,15 +828,14 @@ exports.getDetails = async function() {
   for(const collectionId in countsByCollection) {
     // Add assetStig data to countsByCollection 
     if (assetStigByCollection[collectionId]) {
-      countsByCollection[collectionId].assetStigByCollection = assetStigByCollection[collectionId]
+      countsByCollection[collectionId].assetStigRanges = assetStigByCollection[collectionId]
     }
     // Add restrictedGrant data to countsByCollection
     if (restrictedGrantCountsByCollection[collectionId]) {
-      countsByCollection[collectionId].restrictedGrantCountsByUser = restrictedGrantCountsByCollection[collectionId].restrictedUserGrantCounts
-      countsByCollection[collectionId].restrictedGrantCountsByUser = createObjectFromKeyValue(countsByCollection[collectionId].restrictedGrantCountsByUser, "user")
+      countsByCollection[collectionId].restrictedUsers = createObjectFromKeyValue(restrictedGrantCountsByCollection[collectionId].restrictedUserGrantCounts, "user")
     }
     else {
-      countsByCollection[collectionId].restrictedGrantCountsByUser = 0
+      countsByCollection[collectionId].restrictedUsers = {}
     }
     // Add grant data to countsByCollection
     if (grantCountsByCollection[collectionId]) {
@@ -880,7 +856,7 @@ exports.getDetails = async function() {
     version: config.version,
     commit: config.commit,
     collections: countsByCollection,
-    operations: operationalStats,
+    requests,
     users: {
       userInfo: createObjectFromKeyValue(userInfo, "userId", null),
       userPrivilegeCounts
@@ -888,9 +864,8 @@ exports.getDetails = async function() {
     mysql: {
       version: mySqlVersion[0].version,
       tables,
-      variablesInMb: createObjectFromKeyValue(mySqlVariablesInMb, "variable_name", "value"),
-      variablesRaw: createObjectFromKeyValue(mySqlVariablesRaw, "variable_name", "value"),
-      statusRaw: createObjectFromKeyValue(mySqlStatusRaw, "variable_name", "value")
+      variables: createObjectFromKeyValue(mySqlVariables, "variable_name", "value"),
+      status: createObjectFromKeyValue(mySqlStatus, "variable_name", "value")
     },
     nodejs: getNodeValues(),
     uniqueRuleCountOfOrphanedReviews: orphanedReviews[0].uniqueOrphanedRules
@@ -908,38 +883,38 @@ exports.getDetails = async function() {
     }, {})
   }
 
-  function obfuscateClients(operationalStats) {
-    const obfuscationMap = {}
-    let obfuscatedCounter = 1
+  // function obfuscateClients(operationalStats) {
+  //   const obfuscationMap = {}
+  //   let obfuscatedCounter = 1
 
-    function getObfuscatedKey(client) {
-      if (client === "unknown") {
-        return client
-      }
-      if (!obfuscationMap[client]) {
-        obfuscationMap[client] = `client${obfuscatedCounter++}`
-      }
-      return obfuscationMap[client]
-    }
+  //   function getObfuscatedKey(client) {
+  //     if (client === "unknown") {
+  //       return client
+  //     }
+  //     if (!obfuscationMap[client]) {
+  //       obfuscationMap[client] = `client${obfuscatedCounter++}`
+  //     }
+  //     return obfuscationMap[client]
+  //   }
 
-    const operationIdStats = operationalStats.operationIdStats
+  //   const operationIdStats = operationalStats.operationIdStats
 
-    for (const operationId in operationIdStats) {
-      if (operationIdStats[operationId].clients) {
-        const clients = operationIdStats[operationId].clients
-        const newClients = {}
+  //   for (const operationId in operationIdStats) {
+  //     if (operationIdStats[operationId].clients) {
+  //       const clients = operationIdStats[operationId].clients
+  //       const newClients = {}
         
-        for (const clientName in clients) {
-          const obfuscatedName = getObfuscatedKey(clientName)
-          newClients[obfuscatedName] = clients[clientName]
-        }
+  //       for (const clientName in clients) {
+  //         const obfuscatedName = getObfuscatedKey(clientName)
+  //         newClients[obfuscatedName] = clients[clientName]
+  //       }
         
-        operationIdStats[operationId].clients = newClients
-      }
-    }
+  //       operationIdStats[operationId].clients = newClients
+  //     }
+  //   }
 
-    return operationalStats
-  }
+  //   return operationalStats
+  // }
 
   function sortObjectByKeys(obj) {
     // Create a new object and add properties in sorted order

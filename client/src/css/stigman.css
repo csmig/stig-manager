@@ -2306,3 +2306,6 @@ td.x-grid3-hd-over .x-grid3-hd-inner {
     transition-duration: 0.25s;
     transition-delay: 0s;
 }
+.sm-row-disabled {
+	color: #a15e5e
+}
