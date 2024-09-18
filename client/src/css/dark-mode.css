@@ -110,9 +110,13 @@ input:-webkit-autofill, select:-webkit-autofill, textarea:-webkit-autofill {
     background-color: hsl(0 0% 12% / 1)
 }
 
-.sm-round-inner-panel .x-panel-body {
+.sm-round-panel .sm-round-inner-panel .x-panel-body {
     background-color: #1a1d1e
 }
+.sm-round-panel .x-panel-body {
+    background-color: #1a1d1e;
+}
+
 
 .x-grid3-row-expanded .x-grid3-row-body {
     background-color: hsl(37deg 10% 23%)
@@ -669,7 +673,16 @@ td.x-date-mp-month a, td.x-date-mp-month a:hover, td.x-date-mp-year a, td.x-date
 }
 
 .x-layout-split {
-    background-color: transparent
+    background-color: transparent;
+    transition-property: background-color;
+    transition-duration: 0.25s;
+    transition-delay: 0s;
+}
+
+.x-layout-split:hover {
+    background-color: hsl(0 0% 33% / 1);
+    transition-duration: 0.25s;
+    transition-delay: 0s;
 }
 
 .ext-strict .ext-ie6 .x-layout-split {
@@ -2334,13 +2347,13 @@ td.sort-asc, td.sort-desc, td.x-grid3-hd-menu-open, td.x-grid3-hd-over {
 }
 
 .x-border-layout-ct {
-    background-color: hsl(211deg 25% 7%)
+    background-color: hsl(0 0% 8% / 1);
 }
 
-.sm-round-panel {
-    background-color: #181a1b
-}
-
+/* .sm-round-panel {
+    background-color: #276d90;
+} 
+ */
 .sm-round-panel .x-panel-header {
     background-color: #35393b;
     background-image: none
@@ -2350,7 +2363,7 @@ td.sort-asc, td.sort-desc, td.x-grid3-hd-menu-open, td.x-grid3-hd-over {
     background-color: hsl(200 5% 17% / 1)
 }
 
-.sm-home-widget-body {
+.sm-round-panel .sm-home-widget-body {
     background-color: #2b2e30
 }
 

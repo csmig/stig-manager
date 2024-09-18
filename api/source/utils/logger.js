@@ -103,7 +103,7 @@ function requestLogger (req, res, next) {
   res.svcStatus = {}
 
   // Response body handling for privileged requests
-  let responseBody = undefined
+  let responseBody
   if (req.query.elevate === true || req.query.elevate === 'true' ) {
     responseBody = ''
     const originalSend = res.send
@@ -148,7 +148,6 @@ function requestLogger (req, res, next) {
     }    
 
     if (config.log.mode === 'combined') {
-
       writeInfo(req.component || 'rest', 'transaction', {
         request: serializeRequest(res.req),
         response: {
@@ -181,7 +180,6 @@ function requestLogger (req, res, next) {
   next()
 }
 
-
 function serializeEnvironment () {
   let env = {}
   for (const [key, value] of Object.entries(process.env)) {
@@ -201,49 +199,48 @@ function trackOperationStats(operationId, durationMs, res) {
       totalRequests: 0,
       totalDuration: 0,
       elevatedRequests: 0,
-      minDuration: Infinity,
+      minDuration: 0,
       maxDuration: 0,
       maxDurationUpdates: 0,
       get averageDuration() {
-        return this.totalRequests ? Math.round(this.totalDuration / this.totalRequests) : 0;
+        return this.totalRequests ? Math.round(this.totalDuration / this.totalRequests) : 0
       },
       clients: {},
-      users: {},
-    };
+      users: {}
+    }
   }
 
-
   // Get the stats object for this operationId
-  const stats = overallOpStats.operationIdStats[operationId];
+  const stats = overallOpStats.operationIdStats[operationId]
   // Increment total requests and total duration for this operationId
-  stats.totalRequests++;
-  stats.totalDuration += durationMs;
+  stats.totalRequests++
+  stats.totalDuration += durationMs
 
   // Update min and max duration
-  stats.minDuration = Math.min(stats.minDuration, durationMs);
+  stats.minDuration = Math.min(stats.minDuration, durationMs)
   if (durationMs > stats.maxDuration) {
-    stats.maxDuration = durationMs;
-    stats.maxDurationUpdates++;
+    stats.maxDuration = durationMs
+    stats.maxDurationUpdates++
   }
 
   // Check token for userid
-  let userId = res.req.userObject?.userId || 'unknown';
+  let userId = res.req.userObject?.userId || 'unknown'
   // Increment user count for this operationId
-  stats.users[userId] = (stats.users[userId] || 0) + 1;  
+  stats.users[userId] = (stats.users[userId] || 0) + 1  
 
   // Check token for client id
-  let client = res.req.access_token?.azp || 'unknown';
+  let client = res.req.access_token?.azp || 'unknown'
   // Increment client count for this operationId
-  stats.clients[client] = (stats.clients[client] || 0) + 1;
+  stats.clients[client] = (stats.clients[client] || 0) + 1
 
   // Increment elevated request count if elevate query param is true
   if (res.req.query?.elevate === true) {
-    stats.elevatedRequests = (stats.elevatedRequests || 0) + 1;
+    stats.elevatedRequests = (stats.elevatedRequests || 0) + 1
   }
 
   // If projections are defined, track stats for each projection
   if (res.req.query?.projection?.length > 0) {
-    stats.projections = stats.projections || {};
+    stats.projections = stats.projections || {}
     for (const projection of res.req.query.projection) {
       // Ensure the projection stats object exists
       stats.projections[projection] = stats.projections[projection] || {
@@ -252,19 +249,18 @@ function trackOperationStats(operationId, durationMs, res) {
         maxDuration: 0,
         totalDuration: 0,
         get averageDuration() {
-          return this.totalRequests ? Math.round(this.totalDuration / this.totalRequests) : 0;
+          return this.totalRequests ? Math.round(this.totalDuration / this.totalRequests) : 0
         }        
-      };
+      }
 
-      const projStats = stats.projections[projection];
+      const projStats = stats.projections[projection]
       // Increment projection count and update duration stats
-      projStats.totalRequests++;
-      projStats.minDuration = Math.min(projStats.minDuration, durationMs);
-      projStats.maxDuration = Math.max(projStats.maxDuration, durationMs);
-      projStats.totalDuration += durationMs;
+      projStats.totalRequests++
+      projStats.minDuration = Math.min(projStats.minDuration, durationMs)
+      projStats.maxDuration = Math.max(projStats.maxDuration, durationMs)
+      projStats.totalDuration += durationMs
     }
   }
-
 }
 
 module.exports = { 
@@ -277,5 +273,4 @@ module.exports = {
   writeInfo, 
   writeDebug,
   overallOpStats
-
 }

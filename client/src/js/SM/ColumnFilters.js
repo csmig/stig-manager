@@ -22,7 +22,7 @@ SM.ColumnFilters.extend = function extend (extended = Ext.grid.GridView) {
         var colModel  = this.cm,
         header    = this.findHeaderCell(target),
         index     = this.getCellIndex(header),
-        sortable  = colModel.isSortable(index),
+        sortable  = colModel?.isSortable(index),
         menu      = this.hmenu,
         menuItems = menu.items,
         menuCls   = this.headerMenuOpenCls,

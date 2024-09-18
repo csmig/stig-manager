@@ -887,11 +887,7 @@ exports.getDetails = async function() {
       variablesRaw: createObjectFromKeyValue(mySqlVariablesRaw, "variable_name", "value"),
       statusRaw: createObjectFromKeyValue(mySqlStatusRaw, "variable_name", "value")
     },
-    nodejs: {
-      uptime: process.uptime(),
-      version: process.version,
-      memory: process.memoryUsage()
-    },
+    nodejs: getNodeValues(),
     uniqueRuleCountOfOrphanedReviews: orphanedReviews[0].uniqueOrphanedRules
     // nodeUptime: getNodeUptime(),
     // nodeMemoryUsageInMb: getNodeMemoryUsage(),
@@ -981,7 +977,36 @@ exports.getDetails = async function() {
       }
     }
     return roleCounts
-  }  
+  }
+
+  function getNodeValues() {
+    const {environmentVariables, header, resourceUsage} = process.report.getReport()
+    
+    const environment = {}
+    for (const [key, value] of Object.entries(environmentVariables)) {
+      if (/^(NODE|STIGMAN)_/.test(key)) {
+        environment[key] = key === 'STIGMAN_DB_PASSWORD' ? '*' : value
+      }
+    }
+    const {platform, arch, nodejsVersion, cpus, osMachine, osName, osRelease} = header
+
+    const memory = process.memoryUsage()
+    memory.maxRss = resourceUsage.maxRss
+    return {
+      version: nodejsVersion,
+      uptime: process.uptime(),
+      os: {
+        platform,
+        arch,
+        osMachine,
+        osName,
+        osRelease
+      },
+      environment,
+      memory,
+      cpus
+    }
+  }
 
   function getNodeUptime() {
     let uptime = process.uptime()

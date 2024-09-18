@@ -186,9 +186,9 @@
 .sm-round-inner-panel {
   border-radius: 6px;
   overflow: hidden;
-  margin: 12px
+  margin: 12px;
 }
-.sm-round-inner-panel .x-panel-body {
+.sm-round-panel .sm-round-inner-panel .x-panel-body {
   background-color: #fff;
   border-bottom-left-radius: 6px;
   border-bottom-right-radius: 6px
@@ -1041,12 +1041,15 @@ td.x-grid3-hd-over .x-grid3-hd-inner {
   background-color: #fcfcfc
 }
 .x-border-layout-ct {
-  background-color: #586574
+  background-color: hsl(220 8% 50% / 1);
 }
 .sm-round-panel {
   border-radius: 6px;
-  background-color: #fff;
+  /* background-color: #bd1d1d; */
   overflow: hidden
+}
+.sm-round-panel .x-panel-body {
+	background-color: hsl(0 0% 95% / 1);
 }
 .sm-round-panel .x-panel-header {
   background-color: #ccc;
@@ -1060,7 +1063,7 @@ td.x-grid3-hd-over .x-grid3-hd-inner {
   border-radius: 6px 6px 0 0;
   padding: 5px 8px 4px 8px;
 }
-.sm-home-widget-body {
+.sm-round-panel .sm-home-widget-body {
   background-color: #dedede;
   border-radius: 25px;
   border: none;
@@ -2289,4 +2292,17 @@ td.x-grid3-hd-over .x-grid3-hd-inner {
 .sm-json-icon {
   background-image: url(../img/json.svg);
   background-size: 16px;
+}
+
+.x-layout-split {
+    background-color: transparent;
+    transition-property: background-color;
+    transition-duration: 0.25s;
+    transition-delay: 0s;
+}
+
+.x-layout-split:hover {
+    background-color: hsl(0 0% 66% / 1);
+    transition-duration: 0.25s;
+    transition-delay: 0s;
 }

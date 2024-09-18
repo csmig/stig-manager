@@ -7,6 +7,17 @@ Ext.ns("SM.AppInfo.Nodejs")
 
 SM.AppInfo.numberRenderer = new Intl.NumberFormat().format
 
+SM.AppInfo.uptimeString = function uptimeString(uptime) {
+  const days = Math.floor(uptime / 86400)
+  uptime %= 86400
+  const hours = Math.floor(uptime / 3600)
+  uptime %= 3600
+  const minutes = Math.floor(uptime / 60)
+  const seconds = Math.floor(uptime % 60)
+  return `${days} day${days !== 1 ? 's' : ''}, ${hours} hour${hours !== 1 ? 's' : ''}, ${minutes} minute${minutes !== 1 ? 's' : ''}, ${seconds} second${seconds !== 1 ? 's' : ''}`
+}
+
+
 SM.AppInfo.KeyValueGrid = Ext.extend(Ext.grid.GridPanel, {
   initComponent: function () {
     const fields = [
@@ -24,17 +35,21 @@ SM.AppInfo.KeyValueGrid = Ext.extend(Ext.grid.GridPanel, {
       }
     })
 
-    const columns = [
-      {
-        header: this.keyColumnName ?? "key",
-        width: this.keyColumnWidth ?? 100,
+    const keyColumn = {
+      ...{
+        header: 'key',
+        width: 100,
         dataIndex: 'key',
         sortable: true,
         filter: { type: 'string' }
       },
-      {
-        header: this.valueColumnName ?? "value",
-        width: this.valueColumnWidth ?? 100,
+      ...this.keyColumnConfig
+    }
+
+    const valueColumn = {
+      ...{
+        header: 'value',
+        width: 100,
         dataIndex: 'value',
         sortable: true,
         align: 'right',
@@ -42,7 +57,13 @@ SM.AppInfo.KeyValueGrid = Ext.extend(Ext.grid.GridPanel, {
           const rendered = SM.AppInfo.numberRenderer(v)
           return rendered === 'NaN' ? v : rendered
         }
-      }
+      },
+      ...this.valueColumnConfig
+    }
+
+    const columns = [
+      keyColumn,
+      valueColumn
     ]
 
     const sm = new Ext.grid.RowSelectionModel({
@@ -52,7 +73,7 @@ SM.AppInfo.KeyValueGrid = Ext.extend(Ext.grid.GridPanel, {
     const view = new SM.ColumnFilters.GridView({
       emptyText: this.emptyText || 'No records to display',
       deferEmptyText: false,
-      // forceFit: true,
+      forceFit: this.forceFit ?? false,
       markDirty: false,
       listeners: {
         filterschanged: function (view) {
@@ -85,12 +106,22 @@ SM.AppInfo.KeyValueGrid = Ext.extend(Ext.grid.GridPanel, {
       ]
     })
 
+    function loadData(o) {
+      const rows = []
+      for (const key in o) {
+        rows.push({key, value: o[key]})
+      }
+      this.store.loadData(rows)
+    }
+
     const config = {
+      cls: this.cls ?? 'sm-round-panel',
       store,
       view,
       sm,
       columns,
-      bbar
+      bbar,
+      loadData
     }
     Ext.apply(this, Ext.apply(this.initialConfig, config))
     this.superclass().initComponent.call(this)
@@ -105,17 +136,17 @@ SM.AppInfo.JsonTreePanel = Ext.extend(Ext.Panel, {
       tree.isExpanded = true
       if (this.body) {
         this.body.dom.textContent = ''
-        JsonView.render(tree, this.body)
+        JsonView.render(tree, this.body.dom)
       }
     }
     function renderTree() {
       if (tree) {
-        JsonView.render(tree, this.body)
+        JsonView.render(tree, this.body.dom)
       } 
     }
 
     const config = {
-      html: '',
+      bodyStyle: 'overflow-y:auto;',
       loadData
     }
     Ext.apply(this, Ext.apply(this.initialConfig, config))
@@ -123,7 +154,6 @@ SM.AppInfo.JsonTreePanel = Ext.extend(Ext.Panel, {
     this.on('render', renderTree)
   }
 })
-
 
 SM.AppInfo.Collections.Grid = Ext.extend(Ext.grid.GridPanel, {
   initComponent: function () {
@@ -428,7 +458,6 @@ SM.AppInfo.Collections.Grid = Ext.extend(Ext.grid.GridPanel, {
   }
 })
 
-
 SM.AppInfo.Database.TablesGrid = Ext.extend(Ext.grid.GridPanel, {
   initComponent: function () {
     const fields = [
@@ -594,69 +623,65 @@ SM.AppInfo.Database.TablesGrid = Ext.extend(Ext.grid.GridPanel, {
   }
 })
 
-SM.AppInfo.Database.Panel = Ext.extend(Ext.Panel, {
+SM.AppInfo.Database.Container = Ext.extend(Ext.Container, {
   initComponent: function () {
+    function loadData(data) {
+      const dbProp = data.mysql ?? data.dbInfo
+      const variablesObj = dbProp.variablesRaw ?? data.mySqlVariablesRaw 
+      const statusObj = dbProp.statusRaw ?? data.mySqlStatusRaw 
+
+      tablesGrid.setTitle(`Tables | Version ${dbProp.version} | up ${SM.AppInfo.uptimeString(statusObj.Uptime)}`)
+      const tables = []
+      for (const key in dbProp.tables) {
+        tables.push({tableName: key, ...dbProp.tables[key]})
+      }
+      tablesGrid.store.loadData(tables)
+      variablesGrid.loadData(variablesObj)
+      statusGrid.loadData(statusObj)
+    }
+
     const tablesGrid = new SM.AppInfo.Database.TablesGrid({
+      title: 'XY',
+      cls: 'sm-round-panel',
       region: 'center'
     })
 
     const variablesGrid = new SM.AppInfo.KeyValueGrid({
-      // title: 'Variables',
-      // iconCls: 'sm-database-save-icon',
+      title: 'Variables',
       flex: 1,
-      height: 300,
-      keyColumnName: 'variable',
-      keyColumnWidth: 200,
+      // margins: {top: 0, right: 5, bottom: 0, left: 0},
+      keyColumnConfig: {header: 'Variable', width: 200},
+      valueColumnConfig: {header: 'Value'},
       exportName: 'variables',
       rowCountNoun: 'variable'
     })
 
     const statusGrid = new SM.AppInfo.KeyValueGrid({
-      // title: 'Status',
-      // iconCls: 'sm-database-save-icon',
+      title: 'Status',
       flex: 1,
-      height: 300,
-      keyColumnName: 'status',
-      keyColumnWidth: 200,
+      // margins: {top: 0, right: 0, bottom: 0, left: 5},
+      keyColumnConfig: {header: 'Variable', width: 200},
+      valueColumnConfig: {header: 'Value'},
       exportName: 'status',
       rowCountNoun: 'status'
     })
 
     const childPanel = new Ext.Panel({
       region: 'south',
+      split: true,
       height: 300,
       layout: 'hbox',
+      bodyStyle: 'background-color: transparent;',
+      layoutConfig: {
+        align: 'stretch',
+        defaultMargins: {top: 5, right: 10, bottom: 0, left: 10}
+      },
       border: false,
       items: [
         variablesGrid,
         statusGrid
       ]
     })
-
-    function loadData(data) {
-      const tables = []
-      const dbProp = data.mysql ?? data.dbInfo
-      for (const key in dbProp.tables) {
-        tables.push({tableName: key, ...dbProp.tables[key]})
-      }
-      tablesGrid.store.loadData(tables)
-
-      const variables = []
-      const variablesObj = dbProp.variablesRaw ?? data.mySqlVariablesRaw 
-      variables.push({key: 'mysql_version', value: variablesObj.version ?? data.MySqlVersion})
-      for (const key in variablesObj) {
-        variables.push({key, value: variablesObj[key]})
-      }
-      variablesGrid.store.loadData(variables)
-
-      const status = []
-      const statusObj = dbProp.statusRaw ?? data.mySqlStatusRaw 
-      status.push({key: 'mysql_version', value: dbProp.version ?? data.MySqlVersion})
-      for (const key in statusObj) {
-        status.push({key, value: statusObj[key]})
-      }
-      statusGrid.store.loadData(status)
-    }
 
     const config = {
       layout: 'border',
@@ -670,7 +695,6 @@ SM.AppInfo.Database.Panel = Ext.extend(Ext.Panel, {
     this.superclass().initComponent.call(this)
   }
 })
-
 
 SM.AppInfo.Operations.ParentGrid = Ext.extend(Ext.grid.GridPanel, {
   initComponent: function () {
@@ -958,19 +982,23 @@ SM.AppInfo.Operations.Panel = Ext.extend(Ext.Panel, {
       onRowSelect
     })
     const usersGrid = new SM.AppInfo.KeyValueGrid({
-      region: 'east',
-      keyColumnName: 'User',
-      valueColumnName: 'Requests',
-      width: '25%',
+      title: 'User requests',
+      style: 'padding: 10px;',
+      keyColumnConfig: {header: 'User'},
+      valueColumnConfig: {header: 'Requests'},
+      width: 300,
     })
     const clientsGrid = new SM.AppInfo.KeyValueGrid({
-      region: 'west',
-      keyColumnName: 'Client',
-      valueColumnName: 'Requests',
-      width: '25%',
+      title: 'Client requests',
+      style: 'padding: 10px;',
+      keyColumnConfig: {header: 'Client'},
+      valueColumnConfig: {header: 'Requests'},
+      width: 300,
     })
     const projectionsGrid = new SM.AppInfo.Operations.ProjectionsGrid({
-      region: 'center'
+      title: 'Projections',
+      flex: 1,
+      style: 'padding: 10px;'
     })
 
     function onRowSelect(sm, index, record) {
@@ -993,9 +1021,14 @@ SM.AppInfo.Operations.Panel = Ext.extend(Ext.Panel, {
     }
 
     const childPanel = new Ext.Panel({
-      height: 300,
       region: 'south',
-      layout: 'border',
+      split: true,
+      height: 300,
+      layout: 'hbox',
+      layoutConfig: {
+        align: 'stretch',
+        defaultMargins: {top: 10, right: 10, bottom: 10, left: 10}
+      },
       border: false,
       items: [
         usersGrid,
@@ -1020,7 +1053,6 @@ SM.AppInfo.Operations.Panel = Ext.extend(Ext.Panel, {
     this.superclass().initComponent.call(this)
   }
 })
-
 
 SM.AppInfo.Users.Grid = Ext.extend(Ext.grid.GridPanel, {
   initComponent: function () {
@@ -1136,6 +1168,80 @@ SM.AppInfo.Users.Grid = Ext.extend(Ext.grid.GridPanel, {
   }
 })
 
+SM.AppInfo.Nodejs.Container = Ext.extend(Ext.Container, {
+  initComponent: function () {
+    // expects just the value of appinfo.nodejs
+    function loadData(data) {
+      envGrid.setTitle(`Environment | Version ${data.version.slice(1)} | up ${SM.AppInfo.uptimeString(data.uptime)}`)
+      memoryGrid.loadData(data.memory)
+      osGrid.loadData(data.os)
+      cpusGrid.loadData(data.cpus)
+      envGrid.loadData(data.environment)
+    }
+
+    const memoryGrid = new SM.AppInfo.KeyValueGrid({
+      title: 'Memory',
+      flex: 1,
+      keyColumnConfig: {header: 'Property'},
+      valueColumnConfig: {header: 'Value'},
+      exportName: 'memory',
+      rowCountNoun: 'bytes'
+    })
+    const osGrid = new SM.AppInfo.KeyValueGrid({
+      title: 'OS',
+      flex: 1,
+      keyColumnConfig: {header: 'Property'},
+      valueColumnConfig: {header: 'Value', align: 'left'},
+      exportName: 'os',
+      rowCountNoun: 'item'
+    })
+    const cpusGrid = new SM.AppInfo.KeyValueGrid({
+      title: 'CPU',
+      flex: 1,
+      keyColumnConfig: {header: 'CPU', width: 200},
+      valueColumnConfig: {header: 'Value'},
+      exportName: 'os',
+      rowCountNoun: 'cpu'
+    })
+    const envGrid = new SM.AppInfo.KeyValueGrid({
+      title: 'Environment',
+      region: 'center',
+      keyColumnConfig: {header: 'Variable', width: 240},
+      valueColumnConfig: {header: 'Value', align: 'left', width: 370},
+      forceFit: true,
+      exportName: 'environment',
+      rowCountNoun: 'item'
+    })
+
+    const panel = new Ext.Panel({
+      region: 'south',
+      split: true,
+      height: 300,
+      bodyStyle: 'background-color: transparent;',
+      layout: 'hbox',
+      layoutConfig: {
+        align: 'stretch',
+        defaultMargins: {top: 5, right: 10, bottom: 0, left: 10}
+      },
+      border: false,
+      // headerStyle: '{font-size: larger;}',
+      items: [
+        cpusGrid,
+        memoryGrid,
+        osGrid,
+      ]
+    })
+
+    const config = {
+      layout: 'border',
+      items: [envGrid, panel],
+      loadData,
+    }
+    Ext.apply(this, Ext.apply(this.initialConfig, config))
+    this.superclass().initComponent.call(this)
+  }
+})
+
 
 SM.AppInfo.TabPanel = Ext.extend(Ext.TabPanel, {
   initComponent: function () {
@@ -1154,14 +1260,14 @@ SM.AppInfo.TabPanel = Ext.extend(Ext.TabPanel, {
       iconCls: 'sm-api-icon'
     })
 
-    const dbPanel = new SM.AppInfo.Database.Panel({
-      title: 'Database',
+    const dbContainer = new SM.AppInfo.Database.Container({
+      title: 'MySQL',
       iconCls: 'sm-database-save-icon'
     })
 
-    const nodeJsPanel = new Ext.Panel({
+    const nodejsContainer = new SM.AppInfo.Nodejs.Container({
       title: 'Node.js',
-      iconCls: 'sm-nodejs-icon'
+      iconCls: 'sm-nodejs-icon',
     })
 
     const jsonPanel = new SM.AppInfo.JsonTreePanel({
@@ -1170,7 +1276,14 @@ SM.AppInfo.TabPanel = Ext.extend(Ext.TabPanel, {
       layout: 'fit'
     })
 
-
+    const items = [
+      collectionsGrid,
+      usersGrid,
+      opsPanel,
+      dbContainer,
+      nodejsContainer,
+      jsonPanel,
+    ]
 
     function loadData(data) {
       const collections = []
@@ -1194,21 +1307,16 @@ SM.AppInfo.TabPanel = Ext.extend(Ext.TabPanel, {
       }
       usersGrid.store.loadData(users)
 
-      dbPanel.loadData(data)
+      dbContainer.loadData(data)
+      // nodeJsPanel.loadData(data.nodejs)
+      nodejsContainer.loadData(data.nodejs ?? {version: 'vMISSING', os:{}, environment:{},cpus:{},memory:{}})
       jsonPanel.loadData(data)
 
     }
   
     const config = {
       loadData,
-      items: [
-        collectionsGrid,
-        usersGrid,
-        opsPanel,
-        dbPanel,
-        nodeJsPanel,
-        jsonPanel
-      ]
+      items
     }
     Ext.apply(this, Ext.apply(this.initialConfig, config))
     this.superclass().initComponent.call(this)
@@ -1257,7 +1365,7 @@ SM.AppInfo.SourcePanel = Ext.extend(Ext.Panel, {
     })
 
 
-    const bbar = new Ext.Toolbar({
+    const tbar = new Ext.Toolbar({
       items: [
         selectFileBtn,
         '-',
@@ -1285,7 +1393,7 @@ SM.AppInfo.SourcePanel = Ext.extend(Ext.Panel, {
         versionDisplayField,
         commitDisplayField
       ],
-      bbar,
+      tbar,
       loadData
     }
     Ext.apply(this, Ext.apply(this.initialConfig, config))
@@ -1305,7 +1413,7 @@ SM.AppInfo.fetchFromApi = async function () {
 }
 
 SM.AppInfo.validateData = function (data) {
-  return (data.countsByCollection && (data.dateGenerated ?? data.date))
+  return ((data.countsByCollection ?? data.collections) && (data.dateGenerated ?? data.date))
 }
 
 SM.AppInfo.showAppInfoTab = async function (options) {
