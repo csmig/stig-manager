@@ -27,17 +27,28 @@ SM.AppInfo.NormalizeJson = function (input) {
     return false
   }
 
-  const {totalRequests, totalApiRequests, totalRequestDuration, operationIdStats} = input.operationalStats
+  function normalizeCountsByCollection(i) {
+    const o = {}
+    for (const id in i) {
+      const {assetStigByCollection, restrictedGrantCountsByUser, ...collectionsPreserved} = i[id]
+      o[id] = {
+        ...collectionsPreserved,
+        assetStigRanges: assetStigByCollection,
+        restrictedUsers: restrictedGrantCountsByUser || {}
+      }
+    }
+    return o
+  }
+
+  const {operationIdStats, ...requestsPreserved} = input.operationalStats
   const norm = {
     date: input.dateGenerated,
     schema: 'stig-manager-appinfo-v1.0',
     version: input.stigmanVersion,
     commit: input.stigmanCommit,
-    collections: input.countsByCollection,
+    collections: normalizeCountsByCollection(input.countsByCollection),
     requests: {
-      totalRequests,
-      totalApiRequests,
-      totalRequestDuration,
+      ...requestsPreserved,
       operationIds: operationIdStats
     },
     users: {
@@ -227,7 +238,8 @@ SM.AppInfo.Collections.OverviewGrid = Ext.extend(Ext.grid.GridPanel, {
       'stigAssignments',
       'ruleCnt',
       'reviewCntTotal',
-      'reviewCntDisabled'
+      'reviewCntDisabled',
+      'restrictedUsers'
     ]
 
     const store = new Ext.data.JsonStore({
@@ -237,6 +249,9 @@ SM.AppInfo.Collections.OverviewGrid = Ext.extend(Ext.grid.GridPanel, {
       sortInfo: {
         field: 'collectionId',
         direction: 'ASC' // or 'DESC' (case sensitive for local sorting)
+      },
+      listeners: {
+        load: () => sm.selectFirstRow()
       }
     })
 
@@ -389,17 +404,20 @@ SM.AppInfo.Collections.RestrictedUsersGrid = Ext.extend(Ext.grid.GridPanel, {
     const store = new Ext.data.JsonStore({
       fields,
       root: '',
-      idProperty: 'collectionId',
+      idProperty: 'userId',
       sortInfo: {
-        field: 'name',
+        field: 'username',
         direction: 'ASC' // or 'DESC' (case sensitive for local sorting)
+      },
+      listeners: {
+        load: () => sm.selectFirstRow()
       }
     })
 
     const columns = [
       {
         header: "Id",
-        // width: 25,
+        hidden: true,
         dataIndex: 'userId',
         sortable: true,
       },
@@ -503,6 +521,9 @@ SM.AppInfo.Collections.AssetStigGrid = Ext.extend(Ext.grid.GridPanel, {
       sortInfo: {
         field: 'name',
         direction: 'ASC' // or 'DESC' (case sensitive for local sorting)
+      },
+      listeners: {
+        load: () => sm.selectFirstRow()
       }
     })
 
@@ -644,6 +665,9 @@ SM.AppInfo.Collections.GrantsGrid = Ext.extend(Ext.grid.GridPanel, {
       sortInfo: {
         field: 'name',
         direction: 'ASC' // or 'DESC' (case sensitive for local sorting)
+      },
+      listeners: {
+        load: () => sm.selectFirstRow()
       }
     })
 
@@ -778,6 +802,9 @@ SM.AppInfo.Collections.LabelsGrid = Ext.extend(Ext.grid.GridPanel, {
       sortInfo: {
         field: 'name',
         direction: 'ASC' // or 'DESC' (case sensitive for local sorting)
+      },
+      listeners: {
+        load: () => sm.selectFirstRow()
       }
     })
 
@@ -902,37 +929,66 @@ SM.AppInfo.Collections.Container = Ext.extend(Ext.Container, {
     }
 
     function overviewOnRowSelect(sm, index, record) {
-      const data = record.data
-      for (const userId in data.restrictedGrantCountsByUser) {
+      const data = record.data.restrictedUsers
+      const rows = []
+      for (const userId in data) {
+        rows.push({userId, username: SM.AppInfo.usernameLookup[userId], ...data[userId]})
+      }
+      restrictedUsersGrid.store.loadData(rows)
+    }
 
+    function onRowDblClick(grid, rowIndex, e) {
+      const sourceRecord = grid.store.getAt(rowIndex)
+      console.log(sourceRecord)
+      for (const peeredGrid of peeredGrids) {
+        if (grid.title !== peeredGrid.title) {
+          const destRecord = peeredGrid.store.getById(sourceRecord.id)
+          const destIndex = peeredGrid.store.indexOf(destRecord)
+          peeredGrid.selModel.selectRow(destIndex)
+          peeredGrid.view.focusRow(destIndex)
+        }
       }
     }
 
     const overviewGrid = new SM.AppInfo.Collections.OverviewGrid({
       title: 'Overview',
-      region: 'center'
+      region: 'center',
+      onRowSelect: overviewOnRowSelect,
+      listeners: {
+        rowdblclick: onRowDblClick
+      }
     })
     const restrictedUsersGrid = new SM.AppInfo.Collections.RestrictedUsersGrid({
       title: 'Restricted Users',
       split: true,
       region: 'east',
-      width: 300
+      width: 340
     })
     const grantsGrid = new SM.AppInfo.Collections.GrantsGrid({
       title: 'Grants',
       margins: {top: 0, right: 5, bottom: 0, left: 0},
-      flex: 1
+      flex: 1,
+      listeners: {
+        rowdblclick: onRowDblClick
+      }
     })
     const labelsGrid = new SM.AppInfo.Collections.LabelsGrid({
       title: 'Labels',
       margins: {top: 0, right: 5, bottom: 0, left: 5},
-      flex: 1
+      flex: 1,
+      listeners: {
+        rowdblclick: onRowDblClick
+      }
     })
     const assetStigGrid = new SM.AppInfo.Collections.AssetStigGrid({
       title: 'STIG Assignment Ranges',
       margins: {top: 0, right: 0, bottom: 0, left: 5},
-      flex: 1
+      flex: 1,
+      listeners: {
+        rowdblclick: onRowDblClick
+      }
     })
+    const peeredGrids = [overviewGrid, grantsGrid, labelsGrid, assetStigGrid]
 
     const centerContainer = new Ext.Container({
       region: 'center',
@@ -1224,6 +1280,11 @@ SM.AppInfo.Requests.OperationsGrid = Ext.extend(Ext.grid.GridPanel, {
       sortInfo: {
         field: 'operationId',
         direction: 'ASC' // or 'DESC' (case sensitive for local sorting)
+      },
+      listeners: {
+        load: function () {
+          // sm.selectFirstRow()
+        }
       }
     })
 
@@ -1311,7 +1372,8 @@ SM.AppInfo.Requests.OperationsGrid = Ext.extend(Ext.grid.GridPanel, {
       singleSelect: true,
       listeners: {
         rowselect: this.onRowSelect ?? Ext.emptyFn
-      }
+      },
+      grid: this
     })
 
     const view = new SM.ColumnFilters.GridView({
@@ -1897,6 +1959,7 @@ SM.AppInfo.TabPanel = Ext.extend(Ext.TabPanel, {
     }
   
     const config = {
+      deferredRender: false,
       loadData,
       items
     }
@@ -2033,7 +2096,7 @@ SM.AppInfo.showAppInfoTab = async function (options) {
       tabPanel.loadData(data) 
     }
     finally {
-      thisTab.getEl().unmask()
+      thisTab.getEl()?.unmask()
     }
   }
 
@@ -2073,11 +2136,17 @@ SM.AppInfo.showAppInfoTab = async function (options) {
     margins: { top: SM.Margin.adjacent, right: SM.Margin.edge, bottom: SM.Margin.bottom, left: SM.Margin.edge },
     region: 'center',
     border: false,
-    activeTab: 0
+    activeTab: 0,
+    listeners: {
+      tabchange: function () {
+        console.log('tabPanel event')
+      }
+    }
+
   })
 
   const thisTab = Ext.getCmp('main-tab-panel').add({
-    id: 'appdata-admin-tab',
+    id: 'appinfo-tab',
     sm_treePath: treePath,
     iconCls: 'sm-database-save-icon',
     title: 'Application Info',
@@ -2087,6 +2156,6 @@ SM.AppInfo.showAppInfoTab = async function (options) {
     items: [sourcePanel, tabPanel]
   })
   thisTab.show()
-
+  
   await onFetchFromApi()
 }
