@@ -202,6 +202,8 @@ function trackOperationStats(operationId, durationMs, res) {
       minDuration: 0,
       maxDuration: 0,
       maxDurationUpdates: 0,
+      retried: 0,
+      averageRetries: 0,
       get averageDuration() {
         return this.totalRequests ? Math.round(this.totalDuration / this.totalRequests) : 0
       },
@@ -223,6 +225,11 @@ function trackOperationStats(operationId, durationMs, res) {
     stats.maxDurationUpdates++
   }
 
+  // Update retries
+  if (res.svcStatus?.retries) {
+    stats.retried++
+    stats.averageRetries = stats.averageRetries + (res.svcStatus.retries - stats.averageRetries) / stats.retried
+  }
   // Check token for userid
   let userId = res.req.userObject?.userId || 'unknown'
   // Increment user count for this operationId
@@ -248,6 +255,8 @@ function trackOperationStats(operationId, durationMs, res) {
         minDuration: Infinity,
         maxDuration: 0,
         totalDuration: 0,
+        retried: 0,
+        averageRetries: 0,
         get averageDuration() {
           return this.totalRequests ? Math.round(this.totalDuration / this.totalRequests) : 0
         }        
@@ -259,6 +268,11 @@ function trackOperationStats(operationId, durationMs, res) {
       projStats.minDuration = Math.min(projStats.minDuration, durationMs)
       projStats.maxDuration = Math.max(projStats.maxDuration, durationMs)
       projStats.totalDuration += durationMs
+      // Update retries
+      if (res.svcStatus?.retries) {
+        projStats.retried++
+        projStats.averageRetries = projStats.averageRetries + (res.svcStatus.retries - projStats.averageRetries) / projStats.retried
+      }
     }
   }
 }

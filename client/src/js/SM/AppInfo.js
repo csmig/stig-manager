@@ -19,7 +19,7 @@ SM.AppInfo.uptimeString = function uptimeString(uptime) {
   return `${days} day${days !== 1 ? 's' : ''}, ${hours} hour${hours !== 1 ? 's' : ''}, ${minutes} minute${minutes !== 1 ? 's' : ''}, ${seconds} second${seconds !== 1 ? 's' : ''}`
 }
 
-SM.AppInfo.NormalizeJson = function (input) {
+SM.AppInfo.transformSchema = function (input) {
   if (input.schema === 'stig-manager-appinfo-v1.0') {
     return input
   }
@@ -27,7 +27,7 @@ SM.AppInfo.NormalizeJson = function (input) {
     return false
   }
 
-  function normalizeCountsByCollection(i) {
+  function transformCountsByCollection(i) {
     const o = {}
     for (const id in i) {
       const {assetStigByCollection, restrictedGrantCountsByUser, ...collectionsPreserved} = i[id]
@@ -46,7 +46,7 @@ SM.AppInfo.NormalizeJson = function (input) {
     schema: 'stig-manager-appinfo-v1.0',
     version: input.stigmanVersion,
     commit: input.stigmanCommit,
-    collections: normalizeCountsByCollection(input.countsByCollection),
+    collections: transformCountsByCollection(input.countsByCollection),
     requests: {
       ...requestsPreserved,
       operationIds: operationIdStats
@@ -247,7 +247,7 @@ SM.AppInfo.Collections.OverviewGrid = Ext.extend(Ext.grid.GridPanel, {
       root: '',
       idProperty: 'collectionId',
       sortInfo: {
-        field: 'collectionId',
+        field: 'name',
         direction: 'ASC' // or 'DESC' (case sensitive for local sorting)
       },
       listeners: {
@@ -847,7 +847,7 @@ SM.AppInfo.Collections.LabelsGrid = Ext.extend(Ext.grid.GridPanel, {
         renderer: SM.AppInfo.numberRenderer
       },
       {
-        header: "Assignments",
+        header: "Tags",
         // width: 25,
         dataIndex: 'assetLabelCount',
         sortable: true,
@@ -1268,6 +1268,8 @@ SM.AppInfo.Requests.OperationsGrid = Ext.extend(Ext.grid.GridPanel, {
       'maxDuration',
       'maxDurationUpdates',
       'averageDuration',
+      'retried',
+      'averageRetries',
       'clients',
       'users',
       'projections'
@@ -1350,22 +1352,22 @@ SM.AppInfo.Requests.OperationsGrid = Ext.extend(Ext.grid.GridPanel, {
         sortable: true,
         align: 'right',
       },
-      // {
-      //   header: "clients",
-      //   // width: 25,
-      //   dataIndex: 'clients',
-      //   sortable: true,
-      //   align: 'right',
-      //   renderer: v => JSON.stringify(v)
-      // },
-      // {
-      //   header: "users",
-      //   // width: 25,
-      //   dataIndex: 'users',
-      //   sortable: true,
-      //   align: 'right',
-      //   renderer: v => JSON.stringify(v)
-      // }
+      {
+        header: "retried",
+        // width: 25,
+        dataIndex: 'retried',
+        sortable: true,
+        align: 'right',
+        renderer: SM.AppInfo.numberRenderer
+      },
+      {
+        header: "averageRetries",
+        // width: 25,
+        dataIndex: 'averageRetries',
+        sortable: true,
+        align: 'right',
+        renderer: SM.AppInfo.numberRenderer
+      }
     ]
 
     const sm = new Ext.grid.RowSelectionModel({
@@ -1433,7 +1435,9 @@ SM.AppInfo.Requests.ProjectionsGrid = Ext.extend(Ext.grid.GridPanel, {
       'minDuration',
       'maxDuration',
       'totalDuration',
-      'averageDuration'
+      'averageDuration',
+      'retried',
+      'averageRetries'
     ]
 
     const store = new Ext.data.JsonStore({
@@ -1488,6 +1492,20 @@ SM.AppInfo.Requests.ProjectionsGrid = Ext.extend(Ext.grid.GridPanel, {
         sortable: true,
         align: 'right',
         renderer: SM.AppInfo.numberRenderer
+      },
+      {
+        header: 'retried',
+        dataIndex: 'retried',
+        sortable: true,
+        align: 'right',
+        renderer: SM.AppInfo.numberRenderer
+      },
+      {
+        header: 'averageRetries',
+        dataIndex: 'averageRetries',
+        sortable: true,
+        align: 'right',
+        renderer: SM.AppInfo.numberRenderer
       }
     ]
 
@@ -1498,7 +1516,7 @@ SM.AppInfo.Requests.ProjectionsGrid = Ext.extend(Ext.grid.GridPanel, {
     const view = new SM.ColumnFilters.GridView({
       emptyText: this.emptyText || 'No records to display',
       deferEmptyText: false,
-      // forceFit: true,
+      forceFit: true,
       markDirty: false,
       listeners: {
         filterschanged: function (view) {
@@ -2071,7 +2089,7 @@ SM.AppInfo.showAppInfoTab = async function (options) {
     try {
       let input = uploadField.fileInput.dom
       const text = await input.files[0].text()
-      data = SM.AppInfo.NormalizeJson(SM.safeJSONParse(text))
+      data = SM.AppInfo.transformSchema(SM.safeJSONParse(text))
       if (data) {
         sourcePanel.loadData({data, source: input.files[0].name})
         tabPanel.loadData(data) 
