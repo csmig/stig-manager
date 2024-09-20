@@ -251,7 +251,7 @@ SM.AppInfo.Collections.OverviewGrid = Ext.extend(Ext.grid.GridPanel, {
         direction: 'ASC' // or 'DESC' (case sensitive for local sorting)
       },
       listeners: {
-        load: () => sm.selectFirstRow()
+        // load: () => sm.selectFirstRow()
       }
     })
 
@@ -382,6 +382,316 @@ SM.AppInfo.Collections.OverviewGrid = Ext.extend(Ext.grid.GridPanel, {
       view,
       sm,
       columns,
+      bbar
+    }
+    Ext.apply(this, Ext.apply(this.initialConfig, config))
+    this.superclass().initComponent.call(this)
+  }
+})
+
+SM.AppInfo.Collections.OverviewGridLocked = Ext.extend(Ext.grid.GridPanel, {
+  initComponent: function () {
+    const fields = [
+      {
+        name: 'collectionId',
+        type: 'int'
+      },
+      'name',
+      'state',
+      'assetsTotal',
+      'assetsDisabled',
+      'uniqueStigs',
+      'stigAssignments',
+      'ruleCnt',
+      'reviewCntTotal',
+      'reviewCntDisabled',
+      'restrictedUsers',
+      {
+        name: 'assetStigCnt',
+        mapping: 'assetStigRanges.assetCnt'
+      },
+      {
+        name: 'range01to05',
+        mapping: 'assetStigRanges.range01to05'
+      },
+      {
+        name: 'range06to10',
+        mapping: 'assetStigRanges.range06to10'
+      },
+      {
+        name: 'range11to15',
+        mapping: 'assetStigRanges.range11to15'
+      },
+      {
+        name: 'range16plus',
+        mapping: 'assetStigRanges.range16plus'
+      },
+      {
+        name: 'accessLevel1',
+        mapping: 'grantCounts.accessLevel1'
+      },
+      {
+        name: 'accessLevel2',
+        mapping: 'grantCounts.accessLevel2'
+      },
+      {
+        name: 'accessLevel3',
+        mapping: 'grantCounts.accessLevel3'
+      },
+      {
+        name: 'accessLevel4',
+        mapping: 'grantCounts.accessLevel4'
+      },
+      {
+        name: 'collectionLabelCount',
+        mapping: 'labelCounts.collectionLabelCount'
+      },
+      {
+        name: 'labeledAssetCount',
+        mapping: 'labelCounts.labeledAssetCount'
+      },
+      {
+        name: 'assetLabelCount',
+        mapping: 'labelCounts.assetLabelCount'
+      }
+    ]
+
+    const store = new Ext.data.JsonStore({
+      fields,
+      root: '',
+      idProperty: 'collectionId',
+      sortInfo: {
+        field: 'name',
+        direction: 'ASC' // or 'DESC' (case sensitive for local sorting)
+      },
+      listeners: {
+        // load: () => sm.selectFirstRow()
+      }
+    })
+
+    const columns = [
+      {
+        header: "Id",
+        locked: true,
+        dataIndex: 'collectionId',
+        sortable: true,
+      },
+      {
+        header: "name",
+        locked: true,
+        dataIndex: 'name',
+        sortable: true,
+        filter: { type: 'string' }
+      },
+      {
+        header: "state",
+        // width: 25,
+        dataIndex: 'state',
+        sortable: true,
+        filter: { type: 'values' }
+      },
+      {
+        header: "assetsTotal",
+        // width: 25,
+        dataIndex: 'assetsTotal',
+        sortable: true,
+        align: 'right',
+        renderer: SM.AppInfo.numberRenderer
+      },
+      {
+        header: "assetsDisabled",
+        // width: 25,
+        dataIndex: 'assetsDisabled',
+        sortable: true,
+        align: 'right',
+        renderer: SM.AppInfo.numberRenderer
+      },
+      {
+        header: "uniqueStigs",
+        // width: 25,
+        dataIndex: 'uniqueStigs',
+        sortable: true,
+        align: 'right',
+        renderer: SM.AppInfo.numberRenderer
+      },
+      {
+        header: "stigAssignments",
+        // width: 25,
+        dataIndex: 'stigAssignments',
+        sortable: true,
+        align: 'right',
+        renderer: SM.AppInfo.numberRenderer
+      },
+      {
+        header: "ruleCnt",
+        // width: 25,
+        dataIndex: 'ruleCnt',
+        sortable: true,
+        align: 'right',
+        renderer: SM.AppInfo.numberRenderer
+      },
+      {
+        header: "reviewCntTotal",
+        // width: 25,
+        dataIndex: 'reviewCntTotal',
+        sortable: true,
+        align: 'right',
+        renderer: SM.AppInfo.numberRenderer
+      },
+      {
+        header: "reviewCntDisabled",
+        // width: 25,
+        dataIndex: 'reviewCntDisabled',
+        sortable: true,
+        align: 'right',
+        renderer: SM.AppInfo.numberRenderer
+      },
+      {
+        header: "assetStigCnt",
+        // width: 25,
+        dataIndex: 'assetStigCnt',
+        sortable: true,
+        align: 'right',
+        renderer: SM.AppInfo.numberRenderer
+      },
+      {
+        header: "range01to05",
+        // width: 25,
+        dataIndex: 'range01to05',
+        sortable: true,
+        align: 'right',
+        renderer: SM.AppInfo.numberRenderer
+      },
+      {
+        header: "range06to10",
+        // width: 25,
+        dataIndex: 'range06to10',
+        sortable: true,
+        align: 'right',
+        renderer: SM.AppInfo.numberRenderer
+      },
+      {
+        header: "range11to15",
+        // width: 25,
+        dataIndex: 'range11to15',
+        sortable: true,
+        align: 'right',
+        renderer: SM.AppInfo.numberRenderer
+      },
+      {
+        header: "range16plus",
+        // width: 25,
+        dataIndex: 'range16plus',
+        sortable: true,
+        align: 'right',
+        renderer: SM.AppInfo.numberRenderer
+      },
+      {
+        header: "accessLevel1",
+        // width: 25,
+        dataIndex: 'accessLevel1',
+        sortable: true,
+        align: 'right',
+        renderer: SM.AppInfo.numberRenderer
+      },
+      {
+        header: "accessLevel2",
+        // width: 25,
+        dataIndex: 'accessLevel2',
+        sortable: true,
+        align: 'right',
+        renderer: SM.AppInfo.numberRenderer
+      },
+      {
+        header: "accessLevel3",
+        // width: 25,
+        dataIndex: 'accessLevel3',
+        sortable: true,
+        align: 'right',
+        renderer: SM.AppInfo.numberRenderer
+      },
+      {
+        header: "accessLevel4",
+        // width: 25,
+        dataIndex: 'accessLevel4',
+        sortable: true,
+        align: 'right',
+        renderer: SM.AppInfo.numberRenderer
+      },
+      {
+        header: "collectionLabelCount",
+        // width: 25,
+        dataIndex: 'collectionLabelCount',
+        sortable: true,
+        align: 'right',
+        renderer: SM.AppInfo.numberRenderer
+      },
+      {
+        header: "labeledAssetCount",
+        // width: 25,
+        dataIndex: 'labeledAssetCount',
+        sortable: true,
+        align: 'right',
+        renderer: SM.AppInfo.numberRenderer
+      },
+      {
+        header: "assetLabelCount",
+        // width: 25,
+        dataIndex: 'assetLabelCount',
+        sortable: true,
+        align: 'right',
+        renderer: SM.AppInfo.numberRenderer
+      }
+    ]
+
+    const sm = new Ext.grid.RowSelectionModel({
+      singleSelect: true,
+      listeners: {
+        rowselect: this.onRowSelect ?? Ext.emptyFn
+      }
+    })
+
+    const view = new SM.ColumnFilters.GridViewLocking({
+      emptyText: this.emptyText || 'No records to display',
+      // forceFit: true,
+      listeners: {
+        filterschanged: function (view) {
+          store.filter(view.getFilterFns())  
+        }
+      },
+      getRowClass: record => record.data.state === 'disabled' ? 'sm-row-disabled' : ''
+    })
+
+    const bbar = new Ext.Toolbar({
+      items: [
+        {
+          xtype: 'exportbutton',
+          hasMenu: false,
+          grid: this,
+          gridBasename: this.exportName || this.title || 'collections',
+          iconCls: 'sm-export-icon',
+          text: 'CSV'
+        },
+        {
+          xtype: 'tbfill'
+        },
+        {
+          xtype: 'tbseparator'
+        },
+        new SM.RowCountTextItem({
+          store,
+          noun: 'collection',
+          iconCls: 'sm-collection-icon'
+        })
+      ]
+    })
+
+    const config = {
+      cls: this.cls ?? 'sm-round-panel',
+      store,
+      view,
+      sm,
+      colModel: new Ext.ux.grid.LockingColumnModel(columns),
       bbar
     }
     Ext.apply(this, Ext.apply(this.initialConfig, config))
@@ -1017,6 +1327,49 @@ SM.AppInfo.Collections.Container = Ext.extend(Ext.Container, {
         centerContainer,
         southContainer
       ],
+      loadData
+    }
+    Ext.apply(this, Ext.apply(this.initialConfig, config))
+    this.superclass().initComponent.call(this)
+  }
+})
+
+SM.AppInfo.Collections.ContainerLocked = Ext.extend(Ext.Container, {
+  initComponent: function () {
+    function loadData(data) {
+      // expects just the collections property of the full object
+      const overview = []
+      for (const collectionId in data) {
+        const {name = collectionId, ...rest} = data[collectionId]
+        overview.push({collectionId, name, ...rest})
+      }
+      overviewGrid.store.loadData(overview)
+    }
+
+    function overviewOnRowSelect(sm, index, record) {
+      const data = record.data.restrictedUsers
+      const rows = []
+      for (const userId in data) {
+        rows.push({userId, username: SM.AppInfo.usernameLookup[userId], ...data[userId]})
+      }
+      restrictedUsersGrid.store.loadData(rows)
+    }
+
+    const overviewGrid = new SM.AppInfo.Collections.OverviewGridLocked({
+      title: 'Overview',
+      region: 'center',
+      onRowSelect: overviewOnRowSelect
+    })
+    const restrictedUsersGrid = new SM.AppInfo.Collections.RestrictedUsersGrid({
+      title: 'Restricted Users',
+      split: true,
+      region: 'east',
+      width: 340
+    })
+
+    const config = {
+      layout: 'border',
+      items: [overviewGrid, restrictedUsersGrid],
       loadData
     }
     Ext.apply(this, Ext.apply(this.initialConfig, config))
@@ -1930,6 +2283,11 @@ SM.AppInfo.TabPanel = Ext.extend(Ext.TabPanel, {
       iconCls: 'sm-collection-icon'
     })
 
+    const collectionsContainerLocked = new SM.AppInfo.Collections.ContainerLocked({
+      title: 'CollectionsL',
+      iconCls: 'sm-collection-icon'
+    })
+
     const usersContainer = new SM.AppInfo.Users.Container({
       title: 'Users',
       iconCls: 'sm-users-icon'
@@ -1958,6 +2316,7 @@ SM.AppInfo.TabPanel = Ext.extend(Ext.TabPanel, {
 
     const items = [
       collectionsContainer,
+      collectionsContainerLocked,
       usersContainer,
       requestsContainer,
       mysqlContainer,
@@ -1969,6 +2328,7 @@ SM.AppInfo.TabPanel = Ext.extend(Ext.TabPanel, {
       // users MUST be loaded first so the username lookup object is built
       usersContainer.loadData(data.users)
       collectionsContainer.loadData(data.collections)
+      collectionsContainerLocked.loadData(data.collections)
       requestsContainer.loadData(data.requests)
       mysqlContainer.loadData(data.mysql)
       nodejsContainer.loadData(data.nodejs)

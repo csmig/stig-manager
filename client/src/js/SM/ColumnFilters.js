@@ -316,6 +316,7 @@ SM.ColumnFilters.extend = function extend (extended = Ext.grid.GridView) {
 
 SM.ColumnFilters.GridView = SM.ColumnFilters.extend(Ext.grid.GridView)
 SM.ColumnFilters.GridViewBuffered = SM.ColumnFilters.extend(Ext.ux.grid.BufferView)
+SM.ColumnFilters.GridViewLocking = SM.ColumnFilters.extend(Ext.ux.grid.LockingGridView)
 
 SM.ColumnFilters.StringMatchTextField = Ext.extend(Ext.form.TextField, {
   initComponent: function () {

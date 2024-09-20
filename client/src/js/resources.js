@@ -7,7 +7,8 @@ const stylesheets = [
   'css/RowEditor.css',
   'css/jsonview.bundle.css',
   'css/diff2html.min.css',
-  'css/dark-mode.css'
+  'css/dark-mode.css',
+  'ext/ux/css/LockingGridView.css'
 ]
 
 const scripts = [
@@ -47,6 +48,7 @@ const scripts = [
   'js/SM/CollectionGrant.js',
   'js/SM/CollectionPanel.js',
   'js/SM/MetaPanel.js',
+  'js/LockingGridView.js',
   'js/SM/ColumnFilters.js',
   'js/SM/FindingsPanel.js',
   'js/SM/Assignments.js',
