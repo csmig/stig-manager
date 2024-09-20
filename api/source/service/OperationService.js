@@ -682,7 +682,7 @@ exports.getDetails = async function() {
     coalesce(
       JSON_EXTRACT(user_data.lastClaims, "$.${config.oauth.claims.privilegesPath}"),
       json_array()
-    ) as roles
+    ) as privileges
   from 
     stigman.user_data
   `
@@ -809,8 +809,14 @@ exports.getDetails = async function() {
     tables[result[0][0].tableName].rowCount = result[0][0].rowCount
   }
 
-  //count role assignments and break out by lastAccess time periods
-  const userPrivilegeCounts = breakOutRoleUsage(userInfo)
+  // remove strings from user privileges array that are not meaningful to stigman
+  const stigmanPrivs = ['admin', 'create_collection']
+  for (const user of userInfo ) {
+    user.privileges = user.privileges.filter(v => stigmanPrivs.includes(v))
+  }
+
+  //count privilege assignments and break out by lastAccess time periods
+  const userPrivilegeCounts = breakOutPrivilegeUsage(userInfo)
 
   //create working copy of operational stats
   const requests = _.cloneDeep(logger.requestStats)
@@ -824,7 +830,7 @@ exports.getDetails = async function() {
   restrictedGrantCountsByCollection = createObjectFromKeyValue(restrictedGrantCountsByCollection, "collectionId")
   grantCountsByCollection = createObjectFromKeyValue(grantCountsByCollection, "collectionId")
 
-  //Bundle "byCollection" stats together by collectionId
+  // Bundle "byCollection" stats together by collectionId
   for(const collectionId in countsByCollection) {
     // Add assetStig data to countsByCollection 
     if (assetStigByCollection[collectionId]) {
@@ -869,8 +875,6 @@ exports.getDetails = async function() {
     },
     nodejs: getNodeValues(),
     uniqueRuleCountOfOrphanedReviews: orphanedReviews[0].uniqueOrphanedRules
-    // nodeUptime: getNodeUptime(),
-    // nodeMemoryUsageInMb: getNodeMemoryUsage(),
   })
 
   // Reduce an array of objects to a single object, using the value of one property as keys
@@ -925,38 +929,37 @@ exports.getDetails = async function() {
     return sortedObj
   }
 
-  function breakOutRoleUsage(userInfo) {
-    let roleCounts = {
-      overall: {},
-      activeInLast30Days: {},
-      activeInLast90Days: {}
+  function breakOutPrivilegeUsage(userInfo) {
+    let privilegeCounts = {
+      overall: {none:0},
+      activeInLast30Days: {none:0},
+      activeInLast90Days: {none:0}
     }
     
     // Calculate the timestamps for 30 and 90 days ago
     const currentTime = Math.floor(Date.now() / 1000)
     const thirtyDaysAgo = currentTime - (30 * 24 * 60 * 60)
     const ninetyDaysAgo = currentTime - (90 * 24 * 60 * 60)
-    const updateCounts = (roleCounts, roles) => {
-      for (const role of roles) {
-        if (roleCounts[role]) {
-          roleCounts[role]++
-        } else {
-          roleCounts[role] = 1
-        }
+    const updateCounts = (categoryCounts, userPrivs) => {
+      if (userPrivs.length === 0) {
+        categoryCounts.none++
+      }
+      for (const privilege of userPrivs) {
+        categoryCounts[privilege] = categoryCounts[privilege] ? categoryCounts[privilege] + 1 : 1
       }
     }
 
     for (const user of userInfo) {
-      updateCounts(roleCounts.overall, user.roles)
+      updateCounts(privilegeCounts.overall, user.privileges)
       // Update counts for the last 30 and 90 days based on lastAccess
       if (user.lastAccess >= ninetyDaysAgo) {
-        updateCounts(roleCounts.activeInLast90Days, user.roles)
+        updateCounts(privilegeCounts.activeInLast90Days, user.privileges)
       }
       if (user.lastAccess >= thirtyDaysAgo) {
-        updateCounts(roleCounts.activeInLast30Days, user.roles)
+        updateCounts(privilegeCounts.activeInLast30Days, user.privileges)
       }
     }
-    return roleCounts
+    return privilegeCounts
   }
 
   function getNodeValues() {
@@ -987,28 +990,6 @@ exports.getDetails = async function() {
       environment,
       memory,
       cpus
-    }
-  }
-
-  function getNodeUptime() {
-    let uptime = process.uptime()
-    const days = Math.floor(uptime / 86400)
-    uptime %= 86400
-    const hours = Math.floor(uptime / 3600)
-    uptime %= 3600
-    const minutes = Math.floor(uptime / 60)
-    const seconds = Math.floor(uptime % 60)
-    return `${days} days, ${hours} hours, ${minutes} minutes, ${seconds} seconds`
-  }
-
-  function getNodeMemoryUsage() {
-    const memoryData = process.memoryUsage()
-    const formatMemoryUsage = (data) => `${Math.round(data / 1024 / 1024 * 100) / 100}`
-    return {
-        rss: `${formatMemoryUsage(memoryData.rss)}`, //Resident Set Size - total memory allocated for the process execution
-        heapTotal: `${formatMemoryUsage(memoryData.heapTotal)}`, // total size of the allocated heap
-        heapUsed: `${formatMemoryUsage(memoryData.heapUsed)}`, // actual memory used during the execution
-        external: `${formatMemoryUsage(memoryData.external)}` // V8 external memory
     }
   }
 }

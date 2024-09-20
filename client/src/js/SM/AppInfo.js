@@ -19,7 +19,7 @@ SM.AppInfo.uptimeString = function uptimeString(uptime) {
   return `${days} day${days !== 1 ? 's' : ''}, ${hours} hour${hours !== 1 ? 's' : ''}, ${minutes} minute${minutes !== 1 ? 's' : ''}, ${seconds} second${seconds !== 1 ? 's' : ''}`
 }
 
-SM.AppInfo.transformSchema = function (input) {
+SM.AppInfo.transformPreviousSchemas = function (input) {
   if (input.schema === 'stig-manager-appinfo-v1.0') {
     return input
   }
@@ -27,12 +27,13 @@ SM.AppInfo.transformSchema = function (input) {
     return false
   }
 
+  // renames properties "assetStigByCollection" and "restrictedGrantCountsByUser"
   function transformCountsByCollection(i) {
     const o = {}
     for (const id in i) {
-      const {assetStigByCollection, restrictedGrantCountsByUser, ...collectionsPreserved} = i[id]
+      const {assetStigByCollection, restrictedGrantCountsByUser, ...keep} = i[id]
       o[id] = {
-        ...collectionsPreserved,
+        ...keep,
         assetStigRanges: assetStigByCollection,
         restrictedUsers: restrictedGrantCountsByUser || {}
       }
@@ -40,7 +41,61 @@ SM.AppInfo.transformSchema = function (input) {
     return o
   }
 
-  const {operationIdStats, ...requestsPreserved} = input.operationalStats
+  // renames property "roles" and removes the string "other"
+  function transformUserInfo(i) {
+    const stigmanPrivs = ['admin', 'create_collection']
+    const o = {}
+    for (const id in i) {
+      const {roles, ...keep} = i[id]
+      o[id] = {
+        ...keep,
+        privileges: roles?.filter(v=>v !== 'other') || []
+      }
+    }
+    return o
+  }
+
+  // remove counts of the "other" string
+  function transformUserPrivilegeCounts(i) {
+    for (const category in i) {
+      delete i[category].other
+    }
+    return i
+  }
+
+  // add count of privilege "none" to each category
+  // must be called after transforming userInfo
+  function addNoPrivilegeCount(i) {
+    const dataTime = Math.floor(new Date(i.dateGenerated) / 1000)
+    const thirtyDaysAgo = dataTime - (30 * 24 * 60 * 60)
+    const ninetyDaysAgo = dataTime - (90 * 24 * 60 * 60)
+
+    i.userPrivilegeCounts.overall.none = 0
+    i.userPrivilegeCounts.activeInLast90Days.none = 0
+    i.userPrivilegeCounts.activeInLast30Days.none = 0
+
+    for (const userId in i.userInfo) {
+      const user = i.userInfo[userId]
+      if (user.privileges.length === 0) {
+        i.userPrivilegeCounts.overall.none++
+        // Update counts for the last 30 and 90 days based on lastAccess
+        if (user.lastAccess >= ninetyDaysAgo) {
+          i.userPrivilegeCounts.activeInLast90Days.none++
+        }
+        if (user.lastAccess >= thirtyDaysAgo) {
+          i.userPrivilegeCounts.activeInLast30Days.none++
+        }
+      }
+    }
+  }
+
+
+  const {operationIdStats, ...requestsKeep} = input.operationalStats
+  
+  input.userInfo = transformUserInfo(input.userInfo)
+  addNoPrivilegeCount(input)
+  transformUserPrivilegeCounts(input.userPrivilegeCounts)
+
   const norm = {
     date: input.dateGenerated,
     schema: 'stig-manager-appinfo-v1.0',
@@ -48,7 +103,7 @@ SM.AppInfo.transformSchema = function (input) {
     commit: input.stigmanCommit,
     collections: transformCountsByCollection(input.countsByCollection),
     requests: {
-      ...requestsPreserved,
+      ...requestsKeep,
       operationIds: operationIdStats
     },
     users: {
@@ -251,7 +306,7 @@ SM.AppInfo.Collections.OverviewGrid = Ext.extend(Ext.grid.GridPanel, {
         direction: 'ASC' // or 'DESC' (case sensitive for local sorting)
       },
       listeners: {
-        // load: () => sm.selectFirstRow()
+        // // load: () => sm.selectFirstRow()
       }
     })
 
@@ -465,7 +520,7 @@ SM.AppInfo.Collections.OverviewGridLocked = Ext.extend(Ext.grid.GridPanel, {
         direction: 'ASC' // or 'DESC' (case sensitive for local sorting)
       },
       listeners: {
-        // load: () => sm.selectFirstRow()
+        // // load: () => sm.selectFirstRow()
       }
     })
 
@@ -720,7 +775,7 @@ SM.AppInfo.Collections.RestrictedUsersGrid = Ext.extend(Ext.grid.GridPanel, {
         direction: 'ASC' // or 'DESC' (case sensitive for local sorting)
       },
       listeners: {
-        load: () => sm.selectFirstRow()
+        // load: () => sm.selectFirstRow()
       }
     })
 
@@ -833,7 +888,7 @@ SM.AppInfo.Collections.AssetStigGrid = Ext.extend(Ext.grid.GridPanel, {
         direction: 'ASC' // or 'DESC' (case sensitive for local sorting)
       },
       listeners: {
-        load: () => sm.selectFirstRow()
+        // // load: () => sm.selectFirstRow()
       }
     })
 
@@ -977,7 +1032,7 @@ SM.AppInfo.Collections.GrantsGrid = Ext.extend(Ext.grid.GridPanel, {
         direction: 'ASC' // or 'DESC' (case sensitive for local sorting)
       },
       listeners: {
-        load: () => sm.selectFirstRow()
+        // load: () => sm.selectFirstRow()
       }
     })
 
@@ -1114,7 +1169,7 @@ SM.AppInfo.Collections.LabelsGrid = Ext.extend(Ext.grid.GridPanel, {
         direction: 'ASC' // or 'DESC' (case sensitive for local sorting)
       },
       listeners: {
-        load: () => sm.selectFirstRow()
+        // load: () => sm.selectFirstRow()
       }
     })
 
@@ -1236,6 +1291,13 @@ SM.AppInfo.Collections.Container = Ext.extend(Ext.Container, {
       assetStigGrid.store.loadData(assetStig)
       grantsGrid.store.loadData(grants)
       labelsGrid.store.loadData(labels)
+
+      const overviewLocked = []
+      for (const collectionId in data) {
+        const {name = collectionId, ...rest} = data[collectionId]
+        overviewLocked.push({collectionId, name, ...rest})
+      }
+      overviewGridLocked.store.loadData(overviewLocked)
     }
 
     function overviewOnRowSelect(sm, index, record) {
@@ -1260,22 +1322,75 @@ SM.AppInfo.Collections.Container = Ext.extend(Ext.Container, {
       }
     }
 
+    function bbarBtnHandler(btn) {
+      centerContainer.removeAll(false)
+      if (btn.text === 'Join') {
+        centerContainer.add(overviewGridLocked)
+        sepContainer.hide()
+        overviewGridLocked.show()
+      }
+      else {
+        centerContainer.add(sepContainer)
+        overviewGridLocked.hide()
+        sepContainer.show()
+      }
+      centerContainer.doLayout()
+    }
+
+    function toolHandler(event, toolEl, panel, tc) {
+      console.log(panel)
+      centerContainer.removeAll(false)
+      if (tc.id === 'collapse-grids') {
+        centerContainer.add(overviewGridLocked)
+        sepContainer.hide()
+        overviewGridLocked.show()
+      }
+      else if (tc.id === 'expand-grid') {
+        centerContainer.add(sepContainer)
+        overviewGridLocked.hide()
+        sepContainer.show()
+      }
+      centerContainer.doLayout()
+    }
+
+    const collapseToolConfig = {
+      id: 'collapse-grids',
+      qtip: 'Collapse into a single grid',
+      handler: toolHandler
+    }
     const overviewGrid = new SM.AppInfo.Collections.OverviewGrid({
       title: 'Overview',
+      tools: [collapseToolConfig],
       region: 'center',
       onRowSelect: overviewOnRowSelect,
+      bbarBtnHandler,
       listeners: {
         rowdblclick: onRowDblClick
       }
     })
+    const overviewGridLocked = new SM.AppInfo.Collections.OverviewGridLocked({
+      title: 'Overview',
+      tools: [{
+        id: 'expand-grid',
+        qtip: 'Expand into multiple grids',
+        handler: toolHandler
+      }],
+      id: 'appinfo-locked',
+      autoDestroy: false,
+      layout: 'fit',
+      bbarBtnHandler
+    })
+
     const restrictedUsersGrid = new SM.AppInfo.Collections.RestrictedUsersGrid({
       title: 'Restricted Users',
-      split: true,
+      // autoDestroy: false,
       region: 'east',
+      split: true,
       width: 340
     })
     const grantsGrid = new SM.AppInfo.Collections.GrantsGrid({
       title: 'Grants',
+      tools: [collapseToolConfig],
       margins: {top: 0, right: 5, bottom: 0, left: 0},
       flex: 1,
       listeners: {
@@ -1284,6 +1399,7 @@ SM.AppInfo.Collections.Container = Ext.extend(Ext.Container, {
     })
     const labelsGrid = new SM.AppInfo.Collections.LabelsGrid({
       title: 'Labels',
+      tools: [collapseToolConfig],
       margins: {top: 0, right: 5, bottom: 0, left: 5},
       flex: 1,
       listeners: {
@@ -1292,6 +1408,7 @@ SM.AppInfo.Collections.Container = Ext.extend(Ext.Container, {
     })
     const assetStigGrid = new SM.AppInfo.Collections.AssetStigGrid({
       title: 'STIG Assignment Ranges',
+      tools: [collapseToolConfig],
       margins: {top: 0, right: 0, bottom: 0, left: 5},
       flex: 1,
       listeners: {
@@ -1300,14 +1417,9 @@ SM.AppInfo.Collections.Container = Ext.extend(Ext.Container, {
     })
     const peeredGrids = [overviewGrid, grantsGrid, labelsGrid, assetStigGrid]
 
-    const centerContainer = new Ext.Container({
-      region: 'center',
-      layout: 'border',
-      items: [overviewGrid, restrictedUsersGrid]
-    })
-
     const southContainer = new Ext.Container({
       region: 'south',
+      // autoDestroy: false,
       height: 300,
       split: true,
       layout: 'hbox',
@@ -1321,55 +1433,29 @@ SM.AppInfo.Collections.Container = Ext.extend(Ext.Container, {
       ]
     })
 
+    const sepContainer = new Ext.Container({
+      id: 'appinfo-sep',
+      layout: 'border',
+      autoDestroy: false,
+      items: [overviewGrid, southContainer]
+    })
+
+    const centerContainer = new Ext.Container({
+      id: 'appinfo-center',
+      region: 'center',
+      // autoDestroy: false,
+      border: false,
+      layout: 'fit',
+      items: [sepContainer]
+    })
+
     const config = {
       layout: 'border',
+      // autoDestroy: false,
       items: [
         centerContainer,
-        southContainer
+        restrictedUsersGrid
       ],
-      loadData
-    }
-    Ext.apply(this, Ext.apply(this.initialConfig, config))
-    this.superclass().initComponent.call(this)
-  }
-})
-
-SM.AppInfo.Collections.ContainerLocked = Ext.extend(Ext.Container, {
-  initComponent: function () {
-    function loadData(data) {
-      // expects just the collections property of the full object
-      const overview = []
-      for (const collectionId in data) {
-        const {name = collectionId, ...rest} = data[collectionId]
-        overview.push({collectionId, name, ...rest})
-      }
-      overviewGrid.store.loadData(overview)
-    }
-
-    function overviewOnRowSelect(sm, index, record) {
-      const data = record.data.restrictedUsers
-      const rows = []
-      for (const userId in data) {
-        rows.push({userId, username: SM.AppInfo.usernameLookup[userId], ...data[userId]})
-      }
-      restrictedUsersGrid.store.loadData(rows)
-    }
-
-    const overviewGrid = new SM.AppInfo.Collections.OverviewGridLocked({
-      title: 'Overview',
-      region: 'center',
-      onRowSelect: overviewOnRowSelect
-    })
-    const restrictedUsersGrid = new SM.AppInfo.Collections.RestrictedUsersGrid({
-      title: 'Restricted Users',
-      split: true,
-      region: 'east',
-      width: 340
-    })
-
-    const config = {
-      layout: 'border',
-      items: [overviewGrid, restrictedUsersGrid],
       loadData
     }
     Ext.apply(this, Ext.apply(this.initialConfig, config))
@@ -2012,7 +2098,7 @@ SM.AppInfo.Users.InfoGrid = Ext.extend(Ext.grid.GridPanel, {
       'username',
       'created',
       'lastAccess',
-      'roles'
+      'privileges'
     ]
 
     const store = new Ext.data.JsonStore({
@@ -2047,8 +2133,8 @@ SM.AppInfo.Users.InfoGrid = Ext.extend(Ext.grid.GridPanel, {
         renderer: v => new Date(v * 1000).toISOString()
       },
       {
-        header: 'roles',
-        dataIndex: 'roles',
+        header: 'privileges',
+        dataIndex: 'privileges',
         width: 250,
         sortable: true,
         align: 'right',
@@ -2283,11 +2369,6 @@ SM.AppInfo.TabPanel = Ext.extend(Ext.TabPanel, {
       iconCls: 'sm-collection-icon'
     })
 
-    const collectionsContainerLocked = new SM.AppInfo.Collections.ContainerLocked({
-      title: 'CollectionsL',
-      iconCls: 'sm-collection-icon'
-    })
-
     const usersContainer = new SM.AppInfo.Users.Container({
       title: 'Users',
       iconCls: 'sm-users-icon'
@@ -2316,7 +2397,6 @@ SM.AppInfo.TabPanel = Ext.extend(Ext.TabPanel, {
 
     const items = [
       collectionsContainer,
-      collectionsContainerLocked,
       usersContainer,
       requestsContainer,
       mysqlContainer,
@@ -2328,7 +2408,6 @@ SM.AppInfo.TabPanel = Ext.extend(Ext.TabPanel, {
       // users MUST be loaded first so the username lookup object is built
       usersContainer.loadData(data.users)
       collectionsContainer.loadData(data.collections)
-      collectionsContainerLocked.loadData(data.collections)
       requestsContainer.loadData(data.requests)
       mysqlContainer.loadData(data.mysql)
       nodejsContainer.loadData(data.nodejs)
@@ -2449,7 +2528,7 @@ SM.AppInfo.showAppInfoTab = async function (options) {
     try {
       let input = uploadField.fileInput.dom
       const text = await input.files[0].text()
-      data = SM.AppInfo.transformSchema(SM.safeJSONParse(text))
+      data = SM.AppInfo.transformPreviousSchemas(SM.safeJSONParse(text))
       if (data) {
         sourcePanel.loadData({data, source: input.files[0].name})
         tabPanel.loadData(data) 
