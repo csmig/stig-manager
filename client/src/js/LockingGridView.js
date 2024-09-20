@@ -532,7 +532,7 @@ Ext.ux.grid.LockingGridView = Ext.extend(Ext.grid.GridView, {
             p.css = (i === 0 ? 'x-grid3-cell-first ' : (i == last ? 'x-grid3-cell-last ' : '')) +
                 (cm.config[i].headerCls ? ' ' + cm.config[i].headerCls : '');
             if(cm.config[i].align == 'right'){
-                p.istyle = 'padding-right:16px';
+                p.istyle = 'padding-right:4px';
             } else {
                 delete p.istyle;
             }

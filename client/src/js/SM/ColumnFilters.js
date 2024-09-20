@@ -1,15 +1,16 @@
 Ext.ns('SM.ColumnFilters')
 
-SM.ColumnFilters.extend = function extend (extended = Ext.grid.GridView) {
+SM.ColumnFilters.extend = function extend (extended, ex) {
   return Ext.extend(extended, {
     constructor: function (config) {
       // Ext.apply(this, config);
+      this.extends = ex
       this.addEvents(
         'filterschanged',
         'columnfiltered',
         'columnunfiltered'
       ) 
-      SM.ColumnFilters.GridView.superclass.constructor.call(this, config);
+      SM.ColumnFilters[ex].superclass.constructor.call(this, config);
     },
     handleHdDown: function (e, target) {
       // Modifies superclass method to support lastHide
@@ -153,7 +154,7 @@ SM.ColumnFilters.extend = function extend (extended = Ext.grid.GridView) {
       const _this = this
       const dynamicColumns = []
   
-      SM.ColumnFilters.GridView.superclass.afterRenderUI.call(this)
+      SM.ColumnFilters[this.extends].superclass.afterRenderUI.call(this)
   
       const hmenu = this.hmenu
       hmenu.filterItems = {
@@ -314,9 +315,9 @@ SM.ColumnFilters.extend = function extend (extended = Ext.grid.GridView) {
   })
 }
 
-SM.ColumnFilters.GridView = SM.ColumnFilters.extend(Ext.grid.GridView)
-SM.ColumnFilters.GridViewBuffered = SM.ColumnFilters.extend(Ext.ux.grid.BufferView)
-SM.ColumnFilters.GridViewLocking = SM.ColumnFilters.extend(Ext.ux.grid.LockingGridView)
+SM.ColumnFilters.GridView = SM.ColumnFilters.extend(Ext.grid.GridView, 'GridView')
+SM.ColumnFilters.GridViewBuffered = SM.ColumnFilters.extend(Ext.ux.grid.BufferView, 'GridViewBuffered')
+SM.ColumnFilters.GridViewLocking = SM.ColumnFilters.extend(Ext.ux.grid.LockingGridView, 'GridViewLocking')
 
 SM.ColumnFilters.StringMatchTextField = Ext.extend(Ext.form.TextField, {
   initComponent: function () {
