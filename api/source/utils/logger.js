@@ -102,17 +102,19 @@ function requestLogger (req, res, next) {
   res._startTime = undefined
   res.svcStatus = {}
 
-  // Response body handling for privileged requests
+  // Response body length for appinfo and content for privileged requests
   let responseBody
-  if (req.query.elevate === true || req.query.elevate === 'true' ) {
+  res.sm_responseLength = 0
     responseBody = ''
     const originalSend = res.send
     res.send = function (chunk) {
-      responseBody += chunk
+      if (req.query.elevate === true || req.query.elevate === 'true' ) {
+        responseBody += chunk
+      }
+      res.sm_responseLength += chunk.length
       originalSend.apply(res, arguments)
       res.end()
     }
-  }
 
   // record request start
   recordStartTime.call(req)
@@ -191,6 +193,9 @@ function serializeEnvironment () {
 }
 
 function trackOperationStats(operationId, durationMs, res) {
+
+  const acceptsRequestBody = (res.req.method === 'POST' || res.req.method === 'PUT' || res.req.method === 'PATCH')
+
   //increment total api requests
   requestStats.totalApiRequests++
   // Ensure the operationIds object exists for the operationId
@@ -199,36 +204,62 @@ function trackOperationStats(operationId, durationMs, res) {
       totalRequests: 0,
       totalDuration: 0,
       elevatedRequests: 0,
-      minDuration: 0,
+      minDuration: Infinity,
       maxDuration: 0,
       maxDurationUpdates: 0,
       retried: 0,
       averageRetries: 0,
-      get averageDuration() {
-        return this.totalRequests ? Math.round(this.totalDuration / this.totalRequests) : 0
-      },
+      totalResLength: 0,
+      minResLength: Infinity,
+      maxResLength: 0,
       clients: {},
       users: {}
+    }
+    if (acceptsRequestBody) {
+      requestStats.operationIds[operationId].totalReqLength = 0
+      requestStats.operationIds[operationId].minReqLength = Infinity
+      requestStats.operationIds[operationId].maxReqLength = 0
     }
   }
 
   // Get the stats object for this operationId
   const stats = requestStats.operationIds[operationId]
-  // Increment total requests and total duration for this operationId
-  stats.totalRequests++
-  stats.totalDuration += durationMs
 
-  // Update min and max duration
+  // Update max duration
   stats.minDuration = Math.min(stats.minDuration, durationMs)
   if (durationMs > stats.maxDuration) {
     stats.maxDuration = durationMs
     stats.maxDurationUpdates++
   }
 
+  // Increment total requests and total duration for this operationId
+  stats.totalRequests++
+  stats.totalDuration += durationMs
+
+  stats.totalResLength += res.sm_responseLength
+  // Update max response length
+  stats.minResLength = Math.min(stats.minResLength, res.sm_responseLength)
+  if (res.sm_responseLength > stats.maxResLength) {
+    stats.maxResLength = res.sm_responseLength
+  }
+
+  if (acceptsRequestBody) {
+    const requestLength = parseInt(res.req.headers['content-length'] ?? '0')
+    stats.totalReqLength += requestLength
+    stats.minReqLength = Math.min(stats.minReqLength, requestLength)
+    if (requestLength > stats.maxReqLength) {
+      stats.maxReqLength = requestLength
+    }
+  }
+
   // Update retries
   if (res.svcStatus?.retries) {
     stats.retried++
-    stats.averageRetries = stats.averageRetries + (res.svcStatus.retries - stats.averageRetries) / stats.retried
+    stats.averageRetries = runningAverage({
+      currentAvg: stats.averageRetries,
+      counter: stats.retried,
+      newValue: res.svcStatus.retries
+    })    
   }
   // Check token for userid
   let userId = res.req.userObject?.userId || 'unknown'
@@ -268,12 +299,17 @@ function trackOperationStats(operationId, durationMs, res) {
       projStats.minDuration = Math.min(projStats.minDuration, durationMs)
       projStats.maxDuration = Math.max(projStats.maxDuration, durationMs)
       projStats.totalDuration += durationMs
+      
       // Update retries
       if (res.svcStatus?.retries) {
         projStats.retried++
         projStats.averageRetries = projStats.averageRetries + (res.svcStatus.retries - projStats.averageRetries) / projStats.retried
       }
     }
+  }
+
+  function runningAverage({currentAvg, counter, newValue}) {
+    return currentAvg + (newValue - currentAvg) / counter
   }
 }
 

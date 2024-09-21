@@ -89,7 +89,6 @@ SM.AppInfo.transformPreviousSchemas = function (input) {
     }
   }
 
-
   const {operationIdStats, ...requestsKeep} = input.operationalStats
   
   input.userInfo = transformUserInfo(input.userInfo)
@@ -313,13 +312,13 @@ SM.AppInfo.Collections.OverviewGrid = Ext.extend(Ext.grid.GridPanel, {
     const columns = [
       {
         header: "Id",
-        // width: 25,
+        hidden: true,
         dataIndex: 'collectionId',
         sortable: true,
       },
       {
         header: "name",
-        // width: 25,
+        width: 180,
         dataIndex: 'name',
         sortable: true,
         filter: { type: 'string' }
@@ -528,12 +527,14 @@ SM.AppInfo.Collections.OverviewGridLocked = Ext.extend(Ext.grid.GridPanel, {
       {
         header: "Id",
         locked: true,
+        hidden: true,
         dataIndex: 'collectionId',
         sortable: true,
       },
       {
         header: "name",
         locked: true,
+        width: 180,
         dataIndex: 'name',
         sortable: true,
         filter: { type: 'string' }
@@ -708,7 +709,6 @@ SM.AppInfo.Collections.OverviewGridLocked = Ext.extend(Ext.grid.GridPanel, {
 
     const view = new SM.ColumnFilters.GridViewLocking({
       emptyText: this.emptyText || 'No records to display',
-      // forceFit: true,
       listeners: {
         filterschanged: function (view) {
           store.filter(view.getFilterFns())  
@@ -1702,13 +1702,22 @@ SM.AppInfo.Requests.OperationsGrid = Ext.extend(Ext.grid.GridPanel, {
       'operationId',
       'totalRequests',
       'totalDuration',
-      'elevatedRequests',
       'minDuration',
       'maxDuration',
       'maxDurationUpdates',
-      'averageDuration',
+      {
+        name: 'averageDuration',
+        convert: (v, r) => Math.round(r.totalDuration/r.totalRequests)
+      },
+      'elevatedRequests',
       'retried',
       'averageRetries',
+      'totalReqLength',
+      'minReqLength',
+      'maxReqLength',
+      'totalResLength',
+      'minResLength',
+      'maxResLength',
       'clients',
       'users',
       'projections'
@@ -1738,14 +1747,14 @@ SM.AppInfo.Requests.OperationsGrid = Ext.extend(Ext.grid.GridPanel, {
         filter: { type: 'string' }
       },
       {
-        header: "totalRequests",
+        header: "Requests",
         dataIndex: 'totalRequests',
         sortable: true,
         align: 'right',
         renderer: SM.AppInfo.numberRenderer
       },
       {
-        header: "totalDuration",
+        header: "Duration",
         // width: 25,
         dataIndex: 'totalDuration',
         sortable: true,
@@ -1753,15 +1762,15 @@ SM.AppInfo.Requests.OperationsGrid = Ext.extend(Ext.grid.GridPanel, {
         renderer: SM.AppInfo.numberRenderer
       },
       {
-        header: "elevatedRequests",
+        header: "DurAvg",
+        hidden: true,
         // width: 25,
-        dataIndex: 'elevatedRequests',
+        dataIndex: 'averageDuration',
         sortable: true,
         align: 'right',
-        renderer: SM.AppInfo.numberRenderer
       },
       {
-        header: "minDuration",
+        header: "DurMin",
         // width: 25,
         dataIndex: 'minDuration',
         sortable: true,
@@ -1769,7 +1778,7 @@ SM.AppInfo.Requests.OperationsGrid = Ext.extend(Ext.grid.GridPanel, {
         renderer: SM.AppInfo.numberRenderer
       },
       {
-        header: "maxDuration",
+        header: "DurMax",
         // width: 25,
         dataIndex: 'maxDuration',
         sortable: true,
@@ -1777,22 +1786,23 @@ SM.AppInfo.Requests.OperationsGrid = Ext.extend(Ext.grid.GridPanel, {
         renderer: SM.AppInfo.numberRenderer
       },
       {
-        header: "maxDurationUpdates",
-        // width: 25,
+        header: "DurMaxUpdates",
+        hidden: true,
         dataIndex: 'maxDurationUpdates',
         sortable: true,
         align: 'right',
         renderer: SM.AppInfo.numberRenderer
       },
       {
-        header: "averageDuration",
+        header: "Elevated",
         // width: 25,
-        dataIndex: 'averageDuration',
+        dataIndex: 'elevatedRequests',
         sortable: true,
         align: 'right',
+        renderer: SM.AppInfo.numberRenderer
       },
       {
-        header: "retried",
+        header: "Retried",
         // width: 25,
         dataIndex: 'retried',
         sortable: true,
@@ -1800,9 +1810,57 @@ SM.AppInfo.Requests.OperationsGrid = Ext.extend(Ext.grid.GridPanel, {
         renderer: SM.AppInfo.numberRenderer
       },
       {
-        header: "averageRetries",
+        header: "RetriesAvg",
         // width: 25,
         dataIndex: 'averageRetries',
+        sortable: true,
+        align: 'right',
+        renderer: SM.AppInfo.numberRenderer
+      },
+      {
+        header: "ResLen",
+        // width: 25,
+        dataIndex: 'totalResLength',
+        sortable: true,
+        align: 'right',
+        renderer: SM.AppInfo.numberRenderer
+      },
+      {
+        header: "ResLenMin",
+        // width: 25,
+        dataIndex: 'minResLength',
+        sortable: true,
+        align: 'right',
+        renderer: SM.AppInfo.numberRenderer
+      },
+      {
+        header: "ResLenMax",
+        // width: 25,
+        dataIndex: 'maxResLength',
+        sortable: true,
+        align: 'right',
+        renderer: SM.AppInfo.numberRenderer
+      },
+      {
+        header: "ReqLen",
+        // width: 25,
+        dataIndex: 'totalReqLength',
+        sortable: true,
+        align: 'right',
+        renderer: SM.AppInfo.numberRenderer
+      },
+      {
+        header: "ReqLenMin",
+        // width: 25,
+        dataIndex: 'minReqLength',
+        sortable: true,
+        align: 'right',
+        renderer: SM.AppInfo.numberRenderer
+      },
+      {
+        header: "ReqLenMin",
+        // width: 25,
+        dataIndex: 'maxReqLength',
         sortable: true,
         align: 'right',
         renderer: SM.AppInfo.numberRenderer
