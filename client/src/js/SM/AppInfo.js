@@ -4,6 +4,7 @@ Ext.ns("SM.AppInfo.MySql")
 Ext.ns("SM.AppInfo.Requests")
 Ext.ns("SM.AppInfo.Users")
 Ext.ns("SM.AppInfo.Nodejs")
+Ext.ns("SM.AppInfo.ShareFile")
 
 SM.AppInfo.numberRenderer = new Intl.NumberFormat().format
 
@@ -31,7 +32,7 @@ SM.AppInfo.transformPreviousSchemas = function (input) {
   function transformCountsByCollection(i) {
     const o = {}
     for (const id in i) {
-      const {assetStigByCollection, restrictedGrantCountsByUser, ...keep} = i[id]
+      const { assetStigByCollection, restrictedGrantCountsByUser, ...keep } = i[id]
       o[id] = {
         ...keep,
         assetStigRanges: assetStigByCollection,
@@ -43,13 +44,12 @@ SM.AppInfo.transformPreviousSchemas = function (input) {
 
   // renames property "roles" and removes the string "other"
   function transformUserInfo(i) {
-    const stigmanPrivs = ['admin', 'create_collection']
     const o = {}
     for (const id in i) {
-      const {roles, ...keep} = i[id]
+      const { roles, ...keep } = i[id]
       o[id] = {
         ...keep,
-        privileges: roles?.filter(v=>v !== 'other') || []
+        privileges: roles?.filter(v => v !== 'other') || []
       }
     }
     return o
@@ -89,8 +89,8 @@ SM.AppInfo.transformPreviousSchemas = function (input) {
     }
   }
 
-  const {operationIdStats, ...requestsKeep} = input.operationalStats
-  
+  const { operationIdStats, ...requestsKeep } = input.operationalStats
+
   input.userInfo = transformUserInfo(input.userInfo)
   addNoPrivilegeCount(input)
   transformUserPrivilegeCounts(input.userPrivilegeCounts)
@@ -128,10 +128,10 @@ SM.AppInfo.transformPreviousSchemas = function (input) {
 
   function parseNodeUptimeString(uptimeString) {
     const values = uptimeString.match(/\d+/g)
-    return (parseInt(values[0]) * 86400) + 
-    (parseInt(values[1]) * 3600) + 
-    (parseInt(values[2]) * 60) + 
-    parseInt(values[3])
+    return (parseInt(values[0]) * 86400) +
+      (parseInt(values[1]) * 3600) +
+      (parseInt(values[2]) * 60) +
+      parseInt(values[3])
   }
 }
 
@@ -197,7 +197,7 @@ SM.AppInfo.KeyValueGrid = Ext.extend(Ext.grid.GridPanel, {
       markDirty: false,
       listeners: {
         filterschanged: function (view) {
-          store.filter(view.getFilterFns())  
+          store.filter(view.getFilterFns())
         }
       }
     })
@@ -229,7 +229,7 @@ SM.AppInfo.KeyValueGrid = Ext.extend(Ext.grid.GridPanel, {
     function loadData(o) {
       const rows = []
       for (const key in o) {
-        rows.push({key, value: o[key]})
+        rows.push({ key, value: o[key] })
       }
       this.store.loadData(rows)
     }
@@ -264,7 +264,7 @@ SM.AppInfo.JsonTreePanel = Ext.extend(Ext.Panel, {
     function renderTree() {
       if (tree) {
         JsonView.render(tree, this.body.dom)
-      } 
+      }
     }
 
     const config = {
@@ -400,7 +400,7 @@ SM.AppInfo.Collections.OverviewGrid = Ext.extend(Ext.grid.GridPanel, {
       forceFit: true,
       listeners: {
         filterschanged: function (view) {
-          store.filter(view.getFilterFns())  
+          store.filter(view.getFilterFns())
         }
       },
       getRowClass: record => record.data.state === 'disabled' ? 'sm-row-disabled' : ''
@@ -711,7 +711,7 @@ SM.AppInfo.Collections.OverviewGridLocked = Ext.extend(Ext.grid.GridPanel, {
       emptyText: this.emptyText || 'No records to display',
       listeners: {
         filterschanged: function (view) {
-          store.filter(view.getFilterFns())  
+          store.filter(view.getFilterFns())
         }
       },
       getRowClass: record => record.data.state === 'disabled' ? 'sm-row-disabled' : ''
@@ -821,7 +821,7 @@ SM.AppInfo.Collections.RestrictedUsersGrid = Ext.extend(Ext.grid.GridPanel, {
       markDirty: false,
       listeners: {
         filterschanged: function (view) {
-          store.filter(view.getFilterFns())  
+          store.filter(view.getFilterFns())
         }
       }
     })
@@ -966,7 +966,7 @@ SM.AppInfo.Collections.AssetStigGrid = Ext.extend(Ext.grid.GridPanel, {
       forceFit: true,
       listeners: {
         filterschanged: function (view) {
-          store.filter(view.getFilterFns())  
+          store.filter(view.getFilterFns())
         }
       }
     })
@@ -1104,7 +1104,7 @@ SM.AppInfo.Collections.GrantsGrid = Ext.extend(Ext.grid.GridPanel, {
       markDirty: false,
       listeners: {
         filterschanged: function (view) {
-          store.filter(view.getFilterFns())  
+          store.filter(view.getFilterFns())
         }
       }
     })
@@ -1230,7 +1230,7 @@ SM.AppInfo.Collections.LabelsGrid = Ext.extend(Ext.grid.GridPanel, {
       forceFit: true,
       listeners: {
         filterschanged: function (view) {
-          store.filter(view.getFilterFns())  
+          store.filter(view.getFilterFns())
         }
       }
     })
@@ -1281,11 +1281,11 @@ SM.AppInfo.Collections.Container = Ext.extend(Ext.Container, {
       const grants = []
       const labels = []
       for (const collectionId in data) {
-        const {assetStigRanges, grantCounts, labelCounts, name = collectionId, state, ...rest} = data[collectionId]
-        overview.push({collectionId, name, state, ...rest})
-        assetStig.push({collectionId, name, state, ...assetStigRanges})
-        grants.push({collectionId, name, state, ...grantCounts})
-        labels.push({collectionId, name, state, ...labelCounts})
+        const { assetStigRanges, grantCounts, labelCounts, name = collectionId, state, ...rest } = data[collectionId]
+        overview.push({ collectionId, name, state, ...rest })
+        assetStig.push({ collectionId, name, state, ...assetStigRanges })
+        grants.push({ collectionId, name, state, ...grantCounts })
+        labels.push({ collectionId, name, state, ...labelCounts })
       }
       overviewGrid.store.loadData(overview)
       assetStigGrid.store.loadData(assetStig)
@@ -1294,8 +1294,8 @@ SM.AppInfo.Collections.Container = Ext.extend(Ext.Container, {
 
       const overviewLocked = []
       for (const collectionId in data) {
-        const {name = collectionId, ...rest} = data[collectionId]
-        overviewLocked.push({collectionId, name, ...rest})
+        const { name = collectionId, ...rest } = data[collectionId]
+        overviewLocked.push({ collectionId, name, ...rest })
       }
       overviewGridLocked.store.loadData(overviewLocked)
     }
@@ -1304,7 +1304,7 @@ SM.AppInfo.Collections.Container = Ext.extend(Ext.Container, {
       const data = record.data.restrictedUsers
       const rows = []
       for (const userId in data) {
-        rows.push({userId, username: SM.AppInfo.usernameLookup[userId], ...data[userId]})
+        rows.push({ userId, username: SM.AppInfo.usernameLookup[userId], ...data[userId] })
       }
       restrictedUsersGrid.store.loadData(rows)
     }
@@ -1383,7 +1383,7 @@ SM.AppInfo.Collections.Container = Ext.extend(Ext.Container, {
 
     const restrictedUsersGrid = new SM.AppInfo.Collections.RestrictedUsersGrid({
       title: 'Restricted Users',
-      // autoDestroy: false,
+      collapsible: true,
       region: 'east',
       split: true,
       width: 340
@@ -1391,7 +1391,7 @@ SM.AppInfo.Collections.Container = Ext.extend(Ext.Container, {
     const grantsGrid = new SM.AppInfo.Collections.GrantsGrid({
       title: 'Grants',
       tools: [collapseToolConfig],
-      margins: {top: 0, right: 5, bottom: 0, left: 0},
+      margins: { top: 0, right: 5, bottom: 0, left: 0 },
       flex: 1,
       listeners: {
         rowdblclick: onRowDblClick
@@ -1400,7 +1400,7 @@ SM.AppInfo.Collections.Container = Ext.extend(Ext.Container, {
     const labelsGrid = new SM.AppInfo.Collections.LabelsGrid({
       title: 'Labels',
       tools: [collapseToolConfig],
-      margins: {top: 0, right: 5, bottom: 0, left: 5},
+      margins: { top: 0, right: 5, bottom: 0, left: 5 },
       flex: 1,
       listeners: {
         rowdblclick: onRowDblClick
@@ -1409,7 +1409,7 @@ SM.AppInfo.Collections.Container = Ext.extend(Ext.Container, {
     const assetStigGrid = new SM.AppInfo.Collections.AssetStigGrid({
       title: 'STIG Assignment Ranges',
       tools: [collapseToolConfig],
-      margins: {top: 0, right: 0, bottom: 0, left: 5},
+      margins: { top: 0, right: 0, bottom: 0, left: 5 },
       flex: 1,
       listeners: {
         rowdblclick: onRowDblClick
@@ -1585,7 +1585,7 @@ SM.AppInfo.MySql.TablesGrid = Ext.extend(Ext.grid.GridPanel, {
       forceFit: true,
       listeners: {
         filterschanged: function (view) {
-          store.filter(view.getFilterFns())  
+          store.filter(view.getFilterFns())
         }
       }
     })
@@ -1633,7 +1633,7 @@ SM.AppInfo.MySql.Container = Ext.extend(Ext.Container, {
       tablesGrid.setTitle(`Tables | Version ${data.variables.version} | up ${SM.AppInfo.uptimeString(data.status.Uptime)}`)
       const tables = []
       for (const key in data.tables) {
-        tables.push({tableName: key, ...data.tables[key]})
+        tables.push({ tableName: key, ...data.tables[key] })
       }
       tablesGrid.store.loadData(tables)
       variablesGrid.loadData(data.variables)
@@ -1649,9 +1649,9 @@ SM.AppInfo.MySql.Container = Ext.extend(Ext.Container, {
     const variablesGrid = new SM.AppInfo.KeyValueGrid({
       title: 'Variables',
       flex: 1,
-      margins: {top: 0, right: 5, bottom: 0, left: 0},
-      keyColumnConfig: {header: 'Variable', width: 200},
-      valueColumnConfig: {header: 'Value'},
+      margins: { top: 0, right: 5, bottom: 0, left: 0 },
+      keyColumnConfig: { header: 'Variable', width: 200 },
+      valueColumnConfig: { header: 'Value' },
       exportName: 'variables',
       rowCountNoun: 'variable'
     })
@@ -1659,9 +1659,9 @@ SM.AppInfo.MySql.Container = Ext.extend(Ext.Container, {
     const statusGrid = new SM.AppInfo.KeyValueGrid({
       title: 'Status',
       flex: 1,
-      margins: {top: 0, right: 0, bottom: 0, left: 5},
-      keyColumnConfig: {header: 'Variable', width: 200},
-      valueColumnConfig: {header: 'Value'},
+      margins: { top: 0, right: 0, bottom: 0, left: 5 },
+      keyColumnConfig: { header: 'Variable', width: 200 },
+      valueColumnConfig: { header: 'Value' },
       exportName: 'status',
       rowCountNoun: 'status'
     })
@@ -1707,7 +1707,7 @@ SM.AppInfo.Requests.OperationsGrid = Ext.extend(Ext.grid.GridPanel, {
       'maxDurationUpdates',
       {
         name: 'averageDuration',
-        convert: (v, r) => Math.round(r.totalDuration/r.totalRequests)
+        convert: (v, r) => Math.round(r.totalDuration / r.totalRequests)
       },
       'elevatedRequests',
       'retried',
@@ -1882,7 +1882,7 @@ SM.AppInfo.Requests.OperationsGrid = Ext.extend(Ext.grid.GridPanel, {
       markDirty: false,
       listeners: {
         filterschanged: function (view) {
-          store.filter(view.getFilterFns())  
+          store.filter(view.getFilterFns())
         }
       }
     })
@@ -2017,7 +2017,7 @@ SM.AppInfo.Requests.ProjectionsGrid = Ext.extend(Ext.grid.GridPanel, {
       markDirty: false,
       listeners: {
         filterschanged: function (view) {
-          store.filter(view.getFilterFns())  
+          store.filter(view.getFilterFns())
         }
       }
     })
@@ -2041,7 +2041,7 @@ SM.AppInfo.Requests.ProjectionsGrid = Ext.extend(Ext.grid.GridPanel, {
         new SM.RowCountTextItem({
           store,
           noun: this.rowCountNoun ?? 'projection',
-          iconCls: 'sm-api-icon'
+          iconCls: 'sm-browser-icon'
         })
       ]
     })
@@ -2068,22 +2068,22 @@ SM.AppInfo.Requests.Container = Ext.extend(Ext.Container, {
     })
     const usersGrid = new SM.AppInfo.KeyValueGrid({
       title: 'User requests',
-      margins: {top: 0, right: 5, bottom: 0, left: 0},
-      keyColumnConfig: {header: 'User'},
-      valueColumnConfig: {header: 'Requests'},
+      margins: { top: 0, right: 5, bottom: 0, left: 0 },
+      keyColumnConfig: { header: 'User' },
+      valueColumnConfig: { header: 'Requests' },
       width: 200,
     })
     const clientsGrid = new SM.AppInfo.KeyValueGrid({
       title: 'Client requests',
-      margins: {top: 0, right: 5, bottom: 0, left: 5},
-      keyColumnConfig: {header: 'Client'},
-      valueColumnConfig: {header: 'Requests'},
+      margins: { top: 0, right: 5, bottom: 0, left: 5 },
+      keyColumnConfig: { header: 'Client' },
+      valueColumnConfig: { header: 'Requests' },
       width: 200,
     })
     const projectionsGrid = new SM.AppInfo.Requests.ProjectionsGrid({
       title: 'Projections',
       flex: 1,
-      margins: {top: 0, right: 0, bottom: 0, left: 5}
+      margins: { top: 0, right: 0, bottom: 0, left: 5 }
     })
 
     function onRowSelect(sm, index, record) {
@@ -2092,13 +2092,13 @@ SM.AppInfo.Requests.Container = Ext.extend(Ext.Container, {
       const projections = []
       const data = record.data
       for (const userId in data.users) {
-        users.push({key: SM.AppInfo.usernameLookup[userId] || 'unkown', value: data.users[userId]})
+        users.push({ key: SM.AppInfo.usernameLookup[userId] || 'unkown', value: data.users[userId] })
       }
       for (const client in data.clients) {
-        clients.push({key: client, value: data.clients[client]})
+        clients.push({ key: client, value: data.clients[client] })
       }
       for (const projection of Object.keys(data.projections)) {
-        projections.push({projection, ...data.projections[projection]})
+        projections.push({ projection, ...data.projections[projection] })
       }
       usersGrid.store.loadData(users)
       clientsGrid.store.loadData(clients)
@@ -2127,7 +2127,7 @@ SM.AppInfo.Requests.Container = Ext.extend(Ext.Container, {
       const nr = SM.AppInfo.numberRenderer
       const operationIds = []
       for (const key in data.operationIds) {
-        operationIds.push({operationId: key, ...data.operationIds[key]})
+        operationIds.push({ operationId: key, ...data.operationIds[key] })
       }
       operationsGrid.store.loadData(operationIds)
       operationsGrid.setTitle(`API Operations | ${nr(data.totalRequests)} total requests, ${nr(data.totalApiRequests)} to API, duration ${nr(data.totalRequestDuration)}ms`)
@@ -2188,7 +2188,7 @@ SM.AppInfo.Users.InfoGrid = Ext.extend(Ext.grid.GridPanel, {
         width: 150,
         sortable: true,
         align: 'right',
-        renderer: v => new Date(v * 1000).toISOString()
+        renderer: v => v ? new Date(v * 1000).toISOString() : '-'
       },
       {
         header: 'privileges',
@@ -2219,7 +2219,7 @@ SM.AppInfo.Users.InfoGrid = Ext.extend(Ext.grid.GridPanel, {
       markDirty: false,
       listeners: {
         filterschanged: function (view) {
-          store.filter(view.getFilterFns())  
+          store.filter(view.getFilterFns())
         }
       }
     })
@@ -2266,7 +2266,7 @@ SM.AppInfo.Users.Container = Ext.extend(Ext.Container, {
     function loadData(data) {
       const rows = []
       for (const key in data.userInfo) {
-        rows.push({userId: key, username: key, ...data.userInfo[key]})
+        rows.push({ userId: key, username: key, ...data.userInfo[key] })
       }
       infoGrid.store.loadData(rows)
 
@@ -2276,15 +2276,15 @@ SM.AppInfo.Users.Container = Ext.extend(Ext.Container, {
         SM.AppInfo.usernameLookup[row.userId] = row.username
       }
 
-      for (const key in data.userPrivilegeCounts) {      
+      for (const key in data.userPrivilegeCounts) {
         privilegePropertyGridMap[key].loadData(data.userPrivilegeCounts[key])
       }
     }
 
     const privilegeGridOptions = {
       flex: 1,
-      keyColumnConfig: {header: 'Privilege'},
-      valueColumnConfig: {header: 'User count'},
+      keyColumnConfig: { header: 'Privilege' },
+      valueColumnConfig: { header: 'User count' },
       forceFit: true,
       exportName: 'overall',
       rowCountNoun: 'privilege'
@@ -2292,17 +2292,17 @@ SM.AppInfo.Users.Container = Ext.extend(Ext.Container, {
 
     const overallGrid = new SM.AppInfo.KeyValueGrid({
       title: 'Privileges - Overall',
-      margins: {top: 0, right: 0, bottom: 5, left: 0},
+      margins: { top: 0, right: 0, bottom: 5, left: 0 },
       ...privilegeGridOptions
     })
     const last30Grid = new SM.AppInfo.KeyValueGrid({
       title: 'Privileges - Active last 30d',
-      margins: {top: 5, right: 0, bottom: 5, left: 0},
+      margins: { top: 5, right: 0, bottom: 5, left: 0 },
       ...privilegeGridOptions
     })
     const last90Grid = new SM.AppInfo.KeyValueGrid({
       title: 'Privileges - Active last 90d',
-      margins: {top: 5, right: 0, bottom: 0, left: 0},
+      margins: { top: 5, right: 0, bottom: 0, left: 0 },
       ...privilegeGridOptions
     })
 
@@ -2358,8 +2358,8 @@ SM.AppInfo.Nodejs.Container = Ext.extend(Ext.Container, {
     const envGrid = new SM.AppInfo.KeyValueGrid({
       title: 'Environment',
       region: 'center',
-      keyColumnConfig: {header: 'Variable', width: 240},
-      valueColumnConfig: {header: 'Value', align: 'left', width: 370},
+      keyColumnConfig: { header: 'Variable', width: 240 },
+      valueColumnConfig: { header: 'Value', align: 'left', width: 370 },
       forceFit: true,
       exportName: 'environment',
       rowCountNoun: 'item'
@@ -2367,27 +2367,27 @@ SM.AppInfo.Nodejs.Container = Ext.extend(Ext.Container, {
     const cpusGrid = new SM.AppInfo.KeyValueGrid({
       title: 'CPU',
       flex: 1,
-      margins: {top: 0, right: 5, bottom: 0, left: 0},
-      keyColumnConfig: {header: 'CPU', width: 200},
-      valueColumnConfig: {header: 'Value', renderer: v=>JSON.stringify(v)},
+      margins: { top: 0, right: 5, bottom: 0, left: 0 },
+      keyColumnConfig: { header: 'CPU', width: 200 },
+      valueColumnConfig: { header: 'Value', renderer: v => JSON.stringify(v) },
       exportName: 'os',
       rowCountNoun: 'cpu'
     })
     const memoryGrid = new SM.AppInfo.KeyValueGrid({
       title: 'Memory',
       flex: 1,
-      margins: {top: 0, right: 5, bottom: 0, left: 5},
-      keyColumnConfig: {header: 'Property'},
-      valueColumnConfig: {header: 'Value'},
+      margins: { top: 0, right: 5, bottom: 0, left: 5 },
+      keyColumnConfig: { header: 'Property' },
+      valueColumnConfig: { header: 'Value' },
       exportName: 'memory',
       rowCountNoun: 'bytes'
     })
     const osGrid = new SM.AppInfo.KeyValueGrid({
       title: 'OS',
       flex: 1,
-      margins: {top: 0, right: 0, bottom: 0, left: 5},
-      keyColumnConfig: {header: 'Property'},
-      valueColumnConfig: {header: 'Value', align: 'left'},
+      margins: { top: 0, right: 0, bottom: 0, left: 5 },
+      keyColumnConfig: { header: 'Property' },
+      valueColumnConfig: { header: 'Value', align: 'left' },
       exportName: 'os',
       rowCountNoun: 'item'
     })
@@ -2434,7 +2434,7 @@ SM.AppInfo.TabPanel = Ext.extend(Ext.TabPanel, {
 
     const requestsContainer = new SM.AppInfo.Requests.Container({
       title: 'Requests',
-      iconCls: 'sm-api-icon'
+      iconCls: 'sm-browser-icon'
     })
 
     const mysqlContainer = new SM.AppInfo.MySql.Container({
@@ -2472,11 +2472,88 @@ SM.AppInfo.TabPanel = Ext.extend(Ext.TabPanel, {
       jsonPanel.loadData(data)
 
     }
-  
+
     const config = {
       deferredRender: false,
       loadData,
       items
+    }
+    Ext.apply(this, Ext.apply(this.initialConfig, config))
+    this.superclass().initComponent.call(this)
+  }
+})
+
+SM.AppInfo.ShareFile.OptionsFieldSet = Ext.extend(Ext.form.FieldSet, {
+  initComponent: function () {
+    const collectionNames = new Ext.form.Checkbox({
+      prop: 'collectionName',
+      boxLabel: 'Replace each Collection name with its ID'
+    })
+    const usernames = new Ext.form.Checkbox({
+      prop: 'username',
+      boxLabel: 'Replace each User name with its ID'
+    })
+    const clientIds = new Ext.form.Checkbox({
+      prop: 'clientId',
+      boxLabel: 'Replace each Request clientId with a generated value'
+    })
+    const envvars = new Ext.form.Checkbox({
+      prop: 'envvar',
+      boxLabel: 'Exclude Node.js environment variables'
+    })
+
+    const items = [
+      collectionNames,
+      usernames,
+      clientIds,
+      envvars
+    ]
+
+    function getValues() {
+      const values = {}
+      for (const item of items) {
+        values[item.prop] = item.getValue()
+      }
+      return values
+    }
+    const config = {
+      title: this.title || 'Options',
+      defaults: {
+        hideLabel: true,
+        checked: true
+      },
+      autoHeight: true,
+      items,
+      getValues
+    }
+    Ext.apply(this, Ext.apply(this.initialConfig, config))
+    this.superclass().initComponent.call(this)
+  }
+})
+
+SM.AppInfo.ShareFile.Panel = Ext.extend(Ext.Panel, {
+  initComponent: function () {
+    const saveFn = this.onSaveShared || Ext.emptyFn
+    const _this = this
+    const fieldset = new SM.AppInfo.ShareFile.OptionsFieldSet()
+    const button = new Ext.Button({
+      style: 'float: right; margin-top: 6px;',
+      cls: 'x-toolbar',
+      text: 'Save for sharing',
+      iconCls: 'sm-share-icon',
+      handler: () => {
+        const fieldsetValues = fieldset.getValues()
+        if (_this.menu) _this.menu.hide()
+        saveFn(fieldsetValues)
+      }
+    })
+    const config = {
+      border: false,
+      autoWidth: true,
+      items: [
+        fieldset,
+        button
+      ]
     }
     Ext.apply(this, Ext.apply(this.initialConfig, config))
     this.superclass().initComponent.call(this)
@@ -2502,7 +2579,7 @@ SM.AppInfo.SourcePanel = Ext.extend(Ext.Panel, {
       width: 200
     })
 
-    function loadData({data, source}) {
+    function loadData({ data, source }) {
       sourceDisplayField.setValue(source)
       dateDisplayField.setValue(data.dateGenerated ?? data.date)
       versionDisplayField.setValue(data.stigmanVersion ?? data.version)
@@ -2524,15 +2601,31 @@ SM.AppInfo.SourcePanel = Ext.extend(Ext.Panel, {
       }
     })
 
+    const saveSharedPanel = new SM.AppInfo.ShareFile.Panel({
+      onSaveShared: this.onSaveShared
+    })
+
+    const saveSharedMenu = new Ext.menu.Menu({
+      plain: true,
+      style: 'padding: 10px;',
+      items: saveSharedPanel
+    })
+    saveSharedPanel.menu = saveSharedMenu
 
     const tbar = new Ext.Toolbar({
       items: [
         selectFileBtn,
         '-',
         {
-          text: 'Save to file...',
+          text: 'Save to file',
           iconCls: 'sm-export-icon',
-          handler: this.onFileSave || Ext.emptyFn
+          handler: this.onSaveFull || Ext.emptyFn
+        },
+        '-',
+        {
+          text: 'Save for sharing',
+          iconCls: 'sm-share-icon',
+          menu: saveSharedMenu
         },
         '-',
         {
@@ -2543,7 +2636,7 @@ SM.AppInfo.SourcePanel = Ext.extend(Ext.Panel, {
 
       ]
     })
-  
+
     const config = {
       layout: 'form',
       padding: '10px 10px 10px 10px',
@@ -2572,8 +2665,60 @@ SM.AppInfo.fetchFromApi = async function () {
   })
 }
 
+SM.AppInfo.generateSharable = function (data, options) {
+  const kloned = SM.Klona(data)
+  const { collections, requests, users, nodejs } = kloned
+  if (options.collectionName) {
+    for (const id in collections) {
+      collections[id].name = id
+    }
+  }
+  if (options.username) {
+    for (const id in users.userInfo) {
+      users.userInfo[id].username = id
+    }
+  }
+  if (options.clientId) {
+    obfuscateClients(requests.operationIds)
+  }
+  if (options.envvar) {
+    delete nodejs.environment
+  }
+  return kloned
+
+  function obfuscateClients(operationIds) {
+    const obfuscationMap = {
+      [STIGMAN.Env.oauth.clientId]: 'webapp'
+    }
+    let obfuscatedCounter = 1
+
+    function getObfuscatedKey(client) {
+      if (client === 'unknown' || client === 'webapp') {
+        return client
+      }
+      if (!obfuscationMap[client]) {
+        obfuscationMap[client] = `client${obfuscatedCounter++}`
+      }
+      return obfuscationMap[client]
+    }
+
+    for (const id in operationIds) {
+      if (operationIds[id].clients) {
+        const clients = operationIds[id].clients
+        const newClients = {}
+        for (const client in clients) {
+          const obfuscatedName = getObfuscatedKey(client)
+          newClients[obfuscatedName] = clients[client]
+        }
+        operationIds[id].clients = newClients
+      }
+    }
+  }
+
+}
+
 SM.AppInfo.showAppInfoTab = async function (options) {
-  const {treePath} = options
+  const { treePath } = options
   const tab = Ext.getCmp('main-tab-panel').getItem(`appinfo-tab`)
   if (tab) {
     Ext.getCmp('main-tab-panel').setActiveTab(tab.id)
@@ -2582,14 +2727,14 @@ SM.AppInfo.showAppInfoTab = async function (options) {
 
   let data = ''
 
-  async function onFileSelected (uploadField) {
+  async function onFileSelected(uploadField) {
     try {
       let input = uploadField.fileInput.dom
       const text = await input.files[0].text()
       data = SM.AppInfo.transformPreviousSchemas(SM.safeJSONParse(text))
       if (data) {
-        sourcePanel.loadData({data, source: input.files[0].name})
-        tabPanel.loadData(data) 
+        sourcePanel.loadData({ data, source: input.files[0].name })
+        tabPanel.loadData(data)
       }
       else {
         Ext.Msg.alert('Unrecognized data', 'The file contents could not be understood as Application information.')
@@ -2607,22 +2752,30 @@ SM.AppInfo.showAppInfoTab = async function (options) {
     try {
       thisTab.getEl().mask('Fetching from API...')
       data = await SM.AppInfo.fetchFromApi()
-      sourcePanel.loadData({data, source: 'API'})
-      tabPanel.loadData(data) 
+      sourcePanel.loadData({ data, source: 'API' })
+      tabPanel.loadData(data)
     }
     finally {
       thisTab.getEl()?.unmask()
     }
   }
 
-  function onFileSave() {
+  function onSaveFull() {
     if (data) {
-      const blob = new Blob([JSON.stringify(data)], {type: 'application/json'})
+      const blob = new Blob([JSON.stringify(data)], { type: 'application/json' })
       downloadBlob(blob, SM.Global.filenameEscaped(`stig-manager-details_${SM.Global.filenameComponentFromDate()}.json`))
     }
   }
 
-  function downloadBlob (blob, filename) {
+  function onSaveShared(options) {
+    console.log(options)
+    const kloned = SM.AppInfo.generateSharable(data, options)
+    console.log(kloned)
+    const blob = new Blob([JSON.stringify(kloned)], { type: 'application/json' })
+    downloadBlob(blob, SM.Global.filenameEscaped(`stig-manager-details-shareable_${SM.Global.filenameComponentFromDate()}.json`))
+  }
+
+  function downloadBlob(blob, filename) {
     let a = document.createElement('a')
     a.style.display = "none"
     let url = window.URL.createObjectURL(blob)
@@ -2637,13 +2790,14 @@ SM.AppInfo.showAppInfoTab = async function (options) {
   const sourcePanel = new SM.AppInfo.SourcePanel({
     cls: 'sm-round-panel',
     margins: { top: SM.Margin.top, right: SM.Margin.edge, bottom: SM.Margin.adjacent, left: SM.Margin.edge },
-    title:'Source',
+    title: 'Source',
     region: 'north',
     border: false,
     height: 150,
     onFileSelected,
     onFetchFromApi,
-    onFileSave
+    onSaveFull,
+    onSaveShared
   })
 
   const tabPanel = new SM.AppInfo.TabPanel({
@@ -2671,6 +2825,6 @@ SM.AppInfo.showAppInfoTab = async function (options) {
     items: [sourcePanel, tabPanel]
   })
   thisTab.show()
-  
+
   await onFetchFromApi()
 }

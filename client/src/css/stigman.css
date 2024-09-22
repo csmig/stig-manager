@@ -2128,6 +2128,18 @@ td.x-grid3-hd-over .x-grid3-hd-inner {
   background-size: 10px 10px;
   background-position: 4px 4px;
 }
+.x-tool.x-tool-toggle.x-tool-collapse-east {
+  background-image: url(../img/collapse-right.svg);
+  background-repeat: no-repeat;
+  background-size: 10px 10px;
+  background-position: 2px 3px;
+}
+.x-tool.x-tool-expand-east {
+  background-image: url(../img/collapse-left.svg);
+  background-repeat: no-repeat;
+  background-size: 10px 10px;
+  background-position: 4px 4px;
+}
 .x-tool:hover {
   filter: brightness(50%)
 }
@@ -2289,8 +2301,8 @@ td.x-grid3-hd-over .x-grid3-hd-inner {
   background-image: url(../img/match-word.svg);
   background-size: contain;
 }
-.sm-api-icon {
-  background-image: url(../img/rest-api.svg);
+.sm-browser-icon {
+  background-image: url(../img/browser.svg);
   background-size: 16px;
 }
 .sm-nodejs-icon {
@@ -2320,4 +2332,8 @@ td.x-grid3-hd-over .x-grid3-hd-inner {
 }
 .sm-row-disabled {
 	color: #a15e5e
+}
+.sm-share-icon {
+  background-image: url(../img/share.svg);
+  background-size: 16px;
 }
