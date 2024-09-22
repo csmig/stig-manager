@@ -573,7 +573,7 @@ exports.getDetails = async function() {
   const sqlCollectionAssetStigs = `
   SELECT
     CAST(sub.collectionId as char) as collectionId,
-    sum(case when sub.assetId then 1 else 0 end) as assetCnt,
+    sum(case when sub.assetId is not null and sub.stigAssetCnt = 0 then 1 else 0 end) as range00,
     sum(case when sub.stigAssetCnt >= 1 and sub.stigAssetCnt <= 5 then 1 else 0 end) as range01to05,
     sum(case when sub.stigAssetCnt >= 6 and sub.stigAssetCnt <= 10 then 1 else 0 end) as range06to10,
     sum(case when sub.stigAssetCnt >= 11 and sub.stigAssetCnt <= 15 then 1 else 0 end) as range11to15,

@@ -31,11 +31,13 @@ SM.AppInfo.transformPreviousSchemas = function (input) {
   // renames properties "assetStigByCollection" and "restrictedGrantCountsByUser"
   function transformCountsByCollection(i) {
     const o = {}
+    const padLength = Object.keys(i).at(-1).length
     for (const id in i) {
       const { assetStigByCollection, restrictedGrantCountsByUser, ...keep } = i[id]
-      o[id] = {
+
+      o[id.padStart(padLength, '0')] = {
         ...keep,
-        assetStigRanges: assetStigByCollection,
+        assetStigRanges: transformAssetStigByCollection(assetStigByCollection),
         restrictedUsers: restrictedGrantCountsByUser || {}
       }
     }
@@ -45,9 +47,10 @@ SM.AppInfo.transformPreviousSchemas = function (input) {
   // renames property "roles" and removes the string "other"
   function transformUserInfo(i) {
     const o = {}
+    const padLength = Object.keys(i).at(-1).length
     for (const id in i) {
       const { roles, ...keep } = i[id]
-      o[id] = {
+      o[id.padStart(padLength, '0')] = {
         ...keep,
         privileges: roles?.filter(v => v !== 'other') || []
       }
@@ -89,6 +92,12 @@ SM.AppInfo.transformPreviousSchemas = function (input) {
     }
   }
 
+  function transformAssetStigByCollection(i) {
+    i.range00 = i.assetCnt - (i.range01to05 + i.range06to10 + i.range11to15 + i.range16plus)
+    delete i.assetCnt
+    return i
+  }
+
   const { operationIdStats, ...requestsKeep } = input.operationalStats
 
   input.userInfo = transformUserInfo(input.userInfo)
@@ -121,7 +130,7 @@ SM.AppInfo.transformPreviousSchemas = function (input) {
       os: {},
       environment: {},
       memory: input.nodeMemoryUsageInMb,
-      cpus: {}
+      cpus: []
     }
   }
   return norm
@@ -133,6 +142,14 @@ SM.AppInfo.transformPreviousSchemas = function (input) {
       (parseInt(values[2]) * 60) +
       parseInt(values[3])
   }
+}
+
+SM.AppInfo.objectToRowsArray = function (obj, keyPropertyName) {
+  const rows = []
+  for (const prop of obj) {
+    rows.push({[keyPropertyName]: prop, ...obj[prop]})
+  }
+  return rows
 }
 
 SM.AppInfo.KeyValueGrid = Ext.extend(Ext.grid.GridPanel, {
@@ -288,11 +305,19 @@ SM.AppInfo.Collections.OverviewGrid = Ext.extend(Ext.grid.GridPanel, {
       'state',
       'assetsTotal',
       'assetsDisabled',
+      {
+        name: 'assetsEnabled',
+        convert: (v, r) => r.assetsTotal - r.assetsDisabled
+      },
       'uniqueStigs',
       'stigAssignments',
       'ruleCnt',
       'reviewCntTotal',
       'reviewCntDisabled',
+      {
+        name: 'reviewCntEnabled',
+        convert: (v, r) => r.reviewCntTotal - r.reviewCntDisabled
+      },
       'restrictedUsers'
     ]
 
@@ -317,75 +342,81 @@ SM.AppInfo.Collections.OverviewGrid = Ext.extend(Ext.grid.GridPanel, {
         sortable: true,
       },
       {
-        header: "name",
+        header: "Name",
         width: 180,
         dataIndex: 'name',
         sortable: true,
         filter: { type: 'string' }
       },
       {
-        header: "state",
-        // width: 25,
+        header: "State",
         dataIndex: 'state',
         sortable: true,
         filter: { type: 'values' }
       },
       {
-        header: "assetsTotal",
-        // width: 25,
-        dataIndex: 'assetsTotal',
+        header: "Assets",
+        dataIndex: 'assetsEnabled',
         sortable: true,
         align: 'right',
         renderer: SM.AppInfo.numberRenderer
       },
       {
-        header: "assetsDisabled",
-        // width: 25,
+        header: "Assets Disabled",
         dataIndex: 'assetsDisabled',
         sortable: true,
         align: 'right',
         renderer: SM.AppInfo.numberRenderer
       },
       {
-        header: "uniqueStigs",
-        // width: 25,
+        header: "Assets Total",
+        dataIndex: 'assetsTotal',
+        sortable: true,
+        align: 'right',
+        renderer: SM.AppInfo.numberRenderer
+      },
+      {
+        header: "STIGs",
         dataIndex: 'uniqueStigs',
         sortable: true,
         align: 'right',
         renderer: SM.AppInfo.numberRenderer
       },
       {
-        header: "stigAssignments",
-        // width: 25,
+        header: "Assignments",
         dataIndex: 'stigAssignments',
         sortable: true,
         align: 'right',
         renderer: SM.AppInfo.numberRenderer
       },
       {
-        header: "ruleCnt",
-        // width: 25,
+        header: "Rules",
         dataIndex: 'ruleCnt',
         sortable: true,
         align: 'right',
         renderer: SM.AppInfo.numberRenderer
       },
       {
-        header: "reviewCntTotal",
-        // width: 25,
+        header: "Reviews",
+        dataIndex: 'reviewCntEnabled',
+        sortable: true,
+        align: 'right',
+        renderer: SM.AppInfo.numberRenderer
+      },
+      {
+        header: "Reviews Total",
         dataIndex: 'reviewCntTotal',
         sortable: true,
         align: 'right',
         renderer: SM.AppInfo.numberRenderer
       },
       {
-        header: "reviewCntDisabled",
-        // width: 25,
+        header: "Reviews Disabled",
         dataIndex: 'reviewCntDisabled',
         sortable: true,
         align: 'right',
         renderer: SM.AppInfo.numberRenderer
-      }
+      },
     ]
 
     const sm = new Ext.grid.RowSelectionModel({
@@ -454,15 +485,23 @@ SM.AppInfo.Collections.OverviewGridLocked = Ext.extend(Ext.grid.GridPanel, {
       'state',
       'assetsTotal',
       'assetsDisabled',
+      {
+        name: 'assetsEnabled',
+        convert: (v, r) => r.assetsTotal - r.assetsDisabled
+      },
       'uniqueStigs',
       'stigAssignments',
       'ruleCnt',
       'reviewCntTotal',
       'reviewCntDisabled',
+      {
+        name: 'reviewCntEnabled',
+        convert: (v, r) => r.reviewCntTotal - r.reviewCntDisabled
+      },
       'restrictedUsers',
       {
-        name: 'assetStigCnt',
-        mapping: 'assetStigRanges.assetCnt'
+        name: 'range00',
+        mapping: 'assetStigRanges.range00'
       },
       {
         name: 'range01to05',
@@ -526,93 +565,96 @@ SM.AppInfo.Collections.OverviewGridLocked = Ext.extend(Ext.grid.GridPanel, {
     const columns = [
       {
         header: "Id",
-        locked: true,
         hidden: true,
         dataIndex: 'collectionId',
         sortable: true,
       },
       {
-        header: "name",
-        locked: true,
+        header: "Name",
         width: 180,
         dataIndex: 'name',
         sortable: true,
         filter: { type: 'string' }
       },
       {
-        header: "state",
-        // width: 25,
+        header: "State",
         dataIndex: 'state',
         sortable: true,
         filter: { type: 'values' }
       },
       {
-        header: "assetsTotal",
-        // width: 25,
-        dataIndex: 'assetsTotal',
+        header: "Assets",
+        dataIndex: 'assetsEnabled',
         sortable: true,
         align: 'right',
         renderer: SM.AppInfo.numberRenderer
       },
       {
-        header: "assetsDisabled",
-        // width: 25,
+        header: "Assets Disabled",
         dataIndex: 'assetsDisabled',
         sortable: true,
         align: 'right',
         renderer: SM.AppInfo.numberRenderer
       },
       {
-        header: "uniqueStigs",
-        // width: 25,
+        header: "Assets Total",
+        hidden: true,
+        dataIndex: 'assetsTotal',
+        sortable: true,
+        align: 'right',
+        renderer: SM.AppInfo.numberRenderer
+      },
+      {
+        header: "STIGs",
         dataIndex: 'uniqueStigs',
         sortable: true,
         align: 'right',
         renderer: SM.AppInfo.numberRenderer
       },
       {
-        header: "stigAssignments",
-        // width: 25,
+        header: "Assignments",
         dataIndex: 'stigAssignments',
         sortable: true,
         align: 'right',
         renderer: SM.AppInfo.numberRenderer
       },
       {
-        header: "ruleCnt",
-        // width: 25,
+        header: "Rules",
         dataIndex: 'ruleCnt',
         sortable: true,
         align: 'right',
         renderer: SM.AppInfo.numberRenderer
       },
       {
-        header: "reviewCntTotal",
-        // width: 25,
+        header: "Reviews",
+        dataIndex: 'reviewCntEnabled',
+        sortable: true,
+        align: 'right',
+        renderer: SM.AppInfo.numberRenderer
+      },
+      {
+        header: "Reviews Total",
         dataIndex: 'reviewCntTotal',
         sortable: true,
         align: 'right',
         renderer: SM.AppInfo.numberRenderer
       },
       {
-        header: "reviewCntDisabled",
-        // width: 25,
+        header: "Reviews Disabled",
         dataIndex: 'reviewCntDisabled',
         sortable: true,
         align: 'right',
         renderer: SM.AppInfo.numberRenderer
       },
       {
-        header: "assetStigCnt",
-        // width: 25,
-        dataIndex: 'assetStigCnt',
+        header: "range00",
+        dataIndex: 'range00',
         sortable: true,
         align: 'right',
         renderer: SM.AppInfo.numberRenderer
       },
       {
         header: "range01to05",
-        // width: 25,
         dataIndex: 'range01to05',
         sortable: true,
         align: 'right',
@@ -620,7 +662,6 @@ SM.AppInfo.Collections.OverviewGridLocked = Ext.extend(Ext.grid.GridPanel, {
       },
       {
         header: "range06to10",
-        // width: 25,
         dataIndex: 'range06to10',
         sortable: true,
         align: 'right',
@@ -628,7 +669,6 @@ SM.AppInfo.Collections.OverviewGridLocked = Ext.extend(Ext.grid.GridPanel, {
       },
       {
         header: "range11to15",
-        // width: 25,
         dataIndex: 'range11to15',
         sortable: true,
         align: 'right',
@@ -636,7 +676,6 @@ SM.AppInfo.Collections.OverviewGridLocked = Ext.extend(Ext.grid.GridPanel, {
       },
       {
         header: "range16plus",
-        // width: 25,
         dataIndex: 'range16plus',
         sortable: true,
         align: 'right',
@@ -644,7 +683,6 @@ SM.AppInfo.Collections.OverviewGridLocked = Ext.extend(Ext.grid.GridPanel, {
       },
       {
         header: "accessLevel1",
-        // width: 25,
         dataIndex: 'accessLevel1',
         sortable: true,
         align: 'right',
@@ -652,7 +690,6 @@ SM.AppInfo.Collections.OverviewGridLocked = Ext.extend(Ext.grid.GridPanel, {
       },
       {
         header: "accessLevel2",
-        // width: 25,
         dataIndex: 'accessLevel2',
         sortable: true,
         align: 'right',
@@ -660,7 +697,6 @@ SM.AppInfo.Collections.OverviewGridLocked = Ext.extend(Ext.grid.GridPanel, {
       },
       {
         header: "accessLevel3",
-        // width: 25,
         dataIndex: 'accessLevel3',
         sortable: true,
         align: 'right',
@@ -668,7 +704,6 @@ SM.AppInfo.Collections.OverviewGridLocked = Ext.extend(Ext.grid.GridPanel, {
       },
       {
         header: "accessLevel4",
-        // width: 25,
         dataIndex: 'accessLevel4',
         sortable: true,
         align: 'right',
@@ -676,7 +711,6 @@ SM.AppInfo.Collections.OverviewGridLocked = Ext.extend(Ext.grid.GridPanel, {
       },
       {
         header: "collectionLabelCount",
-        // width: 25,
         dataIndex: 'collectionLabelCount',
         sortable: true,
         align: 'right',
@@ -684,7 +718,6 @@ SM.AppInfo.Collections.OverviewGridLocked = Ext.extend(Ext.grid.GridPanel, {
       },
       {
         header: "labeledAssetCount",
-        // width: 25,
         dataIndex: 'labeledAssetCount',
         sortable: true,
         align: 'right',
@@ -692,7 +725,6 @@ SM.AppInfo.Collections.OverviewGridLocked = Ext.extend(Ext.grid.GridPanel, {
       },
       {
         header: "assetLabelCount",
-        // width: 25,
         dataIndex: 'assetLabelCount',
         sortable: true,
         align: 'right',
@@ -872,7 +904,7 @@ SM.AppInfo.Collections.AssetStigGrid = Ext.extend(Ext.grid.GridPanel, {
       },
       'name',
       'state',
-      'assetCnt',
+      'range00',
       'range01to05',
       'range06to10',
       'range11to15',
@@ -900,32 +932,27 @@ SM.AppInfo.Collections.AssetStigGrid = Ext.extend(Ext.grid.GridPanel, {
         sortable: true,
       },
       {
-        header: "name",
-        // width: 25,
+        header: "Name",
         dataIndex: 'name',
         sortable: true,
         filter: { type: 'string' }
       },
       {
-        header: "state",
-        // width: 25,
+        header: "State",
         hidden: true,
         dataIndex: 'state',
         sortable: true,
         filter: { type: 'values' }
       },
       {
-        header: "assetCnt",
-        // width: 25,
-        hidden: true,
-        dataIndex: 'assetCnt',
+        header: "0",
+        dataIndex: 'range00',
         sortable: true,
         align: 'right',
         renderer: SM.AppInfo.numberRenderer
       },
       {
         header: "1-5",
-        // width: 25,
         dataIndex: 'range01to05',
         sortable: true,
         align: 'right',
@@ -933,7 +960,6 @@ SM.AppInfo.Collections.AssetStigGrid = Ext.extend(Ext.grid.GridPanel, {
       },
       {
         header: "6-10",
-        // width: 25,
         dataIndex: 'range06to10',
         sortable: true,
         align: 'right',
@@ -941,7 +967,6 @@ SM.AppInfo.Collections.AssetStigGrid = Ext.extend(Ext.grid.GridPanel, {
       },
       {
         header: "11-15",
-        // width: 25,
         dataIndex: 'range11to15',
         sortable: true,
         align: 'right',
@@ -949,7 +974,6 @@ SM.AppInfo.Collections.AssetStigGrid = Ext.extend(Ext.grid.GridPanel, {
       },
       {
         header: "16+",
-        // width: 25,
         dataIndex: 'range16plus',
         sortable: true,
         align: 'right',
@@ -2344,6 +2368,112 @@ SM.AppInfo.Users.Container = Ext.extend(Ext.Container, {
   }
 })
 
+SM.AppInfo.Nodejs.CpusGrid = Ext.extend(Ext.grid.GridPanel, {
+  initComponent: function () {
+    // expects the nodejs.cpus array as data
+    function loadData(data) {
+      let index = 0
+      const rows = data?.map(item => ({
+        cpu: index++,
+        ...item
+      })) || []
+      store.loadData(rows)
+    }
+    const fields = [
+      {
+        name: 'cpu',
+        type: 'int'
+      },
+      'model',
+      'speed'
+    ]
+
+    const store = new Ext.data.JsonStore({
+      fields,
+      root: '',
+      idProperty: 'cpu',
+      sortInfo: {
+        field: 'cpu',
+        direction: 'ASC'
+      }
+    })
+
+    const columns = [
+      {
+        header: 'CPU',
+        dataIndex: 'cpu',
+        width: 15,
+        sortable: true,
+      },
+      {
+        header: 'Model',
+        dataIndex: 'model',
+        width: 60,
+        sortable: true,
+        filter: { type: 'string' }
+      },
+      {
+        header: 'Speed (MHz)',
+        dataIndex: 'speed',
+        width: 25,
+        align: 'right',
+        sortable: true
+      }
+    ]
+
+    const sm = new Ext.grid.RowSelectionModel({
+      singleSelect: true
+    })
+
+    const view = new SM.ColumnFilters.GridView({
+      emptyText: this.emptyText || 'No records to display',
+      deferEmptyText: false,
+      forceFit: true,
+      markDirty: false,
+      listeners: {
+        filterschanged: function (view) {
+          store.filter(view.getFilterFns())
+        }
+      }
+    })
+
+    const bbar = new Ext.Toolbar({
+      items: [
+        {
+          xtype: 'exportbutton',
+          hasMenu: false,
+          grid: this,
+          gridBasename: this.exportName || this.title || 'cpus',
+          iconCls: 'sm-export-icon',
+          text: 'CSV'
+        },
+        {
+          xtype: 'tbfill'
+        },
+        {
+          xtype: 'tbseparator'
+        },
+        new SM.RowCountTextItem({
+          store,
+          noun: this.rowCountNoun ?? 'cpu',
+          iconCls: 'sm-cpu-icon'
+        })
+      ]
+    })
+
+    const config = {
+      store,
+      view,
+      sm,
+      columns,
+      bbar,
+      loadData
+    }
+    Ext.apply(this, Ext.apply(this.initialConfig, config))
+    this.superclass().initComponent.call(this)
+  }
+})
+
 SM.AppInfo.Nodejs.Container = Ext.extend(Ext.Container, {
   initComponent: function () {
     // expects just the value of appinfo.nodejs
@@ -2364,14 +2494,10 @@ SM.AppInfo.Nodejs.Container = Ext.extend(Ext.Container, {
       exportName: 'environment',
       rowCountNoun: 'item'
     })
-    const cpusGrid = new SM.AppInfo.KeyValueGrid({
+    const cpusGrid = new SM.AppInfo.Nodejs.CpusGrid({
       title: 'CPU',
       flex: 1,
-      margins: { top: 0, right: 5, bottom: 0, left: 0 },
-      keyColumnConfig: { header: 'CPU', width: 200 },
-      valueColumnConfig: { header: 'Value', renderer: v => JSON.stringify(v) },
-      exportName: 'os',
-      rowCountNoun: 'cpu'
+      margins: { top: 0, right: 5, bottom: 0, left: 0 }
     })
     const memoryGrid = new SM.AppInfo.KeyValueGrid({
       title: 'Memory',
@@ -2669,13 +2795,15 @@ SM.AppInfo.generateSharable = function (data, options) {
   const kloned = SM.Klona(data)
   const { collections, requests, users, nodejs } = kloned
   if (options.collectionName) {
+    const padLength = Object.keys(collections).at(-1).length
     for (const id in collections) {
-      collections[id].name = id
+      collections[id].name = id.padStart(padLength, '0')
     }
   }
   if (options.username) {
+    const padLength = Object.keys(users.userInfo).at(-1).length
     for (const id in users.userInfo) {
-      users.userInfo[id].username = id
+      users.userInfo[id].username = id.padStart(padLength, '0')
     }
   }
   if (options.clientId) {
@@ -2798,6 +2926,19 @@ SM.AppInfo.showAppInfoTab = async function (options) {
     onFetchFromApi,
     onSaveFull,
     onSaveShared
+  })
+
+  const messagePanel = new Ext.Panel({
+    html: 'Hello there',
+    width: 200,
+    height: 200
+  })
+
+  const sourceContainer = new Ext.Container({
+    layout: 'hbox',
+    region: 'north',
+    border: false,
+
   })
 
   const tabPanel = new SM.AppInfo.TabPanel({
