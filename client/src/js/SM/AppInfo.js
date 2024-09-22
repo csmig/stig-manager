@@ -238,7 +238,7 @@ SM.AppInfo.KeyValueGrid = Ext.extend(Ext.grid.GridPanel, {
         new SM.RowCountTextItem({
           store,
           noun: this.rowCountNoun ?? 'key',
-          iconCls: 'sm-database-icon'
+          iconCls: 'sm-circle-icon'
         })
       ]
     })
@@ -336,17 +336,17 @@ SM.AppInfo.Collections.OverviewGrid = Ext.extend(Ext.grid.GridPanel, {
 
     const columns = [
       {
-        header: "Id",
-        hidden: true,
-        dataIndex: 'collectionId',
-        sortable: true,
-      },
-      {
         header: "Name",
         width: 180,
         dataIndex: 'name',
         sortable: true,
         filter: { type: 'string' }
+      },
+      {
+        header: "Id",
+        hidden: true,
+        dataIndex: 'collectionId',
+        sortable: true,
       },
       {
         header: "State",
@@ -564,17 +564,18 @@ SM.AppInfo.Collections.OverviewGridLocked = Ext.extend(Ext.grid.GridPanel, {
 
     const columns = [
       {
-        header: "Id",
-        hidden: true,
-        dataIndex: 'collectionId',
-        sortable: true,
-      },
-      {
         header: "Name",
+        locked: true,
         width: 180,
         dataIndex: 'name',
         sortable: true,
         filter: { type: 'string' }
+      },
+      {
+        header: "Id",
+        hidden: true,
+        dataIndex: 'collectionId',
+        sortable: true,
       },
       {
         header: "State",
@@ -774,6 +775,7 @@ SM.AppInfo.Collections.OverviewGridLocked = Ext.extend(Ext.grid.GridPanel, {
     })
 
     const config = {
+      enableColLock: false,
       cls: this.cls ?? 'sm-round-panel',
       store,
       view,
@@ -992,7 +994,8 @@ SM.AppInfo.Collections.AssetStigGrid = Ext.extend(Ext.grid.GridPanel, {
         filterschanged: function (view) {
           store.filter(view.getFilterFns())
         }
-      }
+      },
+      getRowClass: record => record.data.state === 'disabled' ? 'sm-row-disabled' : ''
     })
 
     const bbar = new Ext.Toolbar({
@@ -1130,7 +1133,8 @@ SM.AppInfo.Collections.GrantsGrid = Ext.extend(Ext.grid.GridPanel, {
         filterschanged: function (view) {
           store.filter(view.getFilterFns())
         }
-      }
+      },
+      getRowClass: record => record.data.state === 'disabled' ? 'sm-row-disabled' : ''
     })
 
     const bbar = new Ext.Toolbar({
@@ -1256,7 +1260,8 @@ SM.AppInfo.Collections.LabelsGrid = Ext.extend(Ext.grid.GridPanel, {
         filterschanged: function (view) {
           store.filter(view.getFilterFns())
         }
-      }
+      },
+      getRowClass: record => record.data.state === 'disabled' ? 'sm-row-disabled' : ''
     })
 
     const bbar = new Ext.Toolbar({
@@ -1384,6 +1389,7 @@ SM.AppInfo.Collections.Container = Ext.extend(Ext.Container, {
     }
     const overviewGrid = new SM.AppInfo.Collections.OverviewGrid({
       title: 'Overview',
+      border: false,
       tools: [collapseToolConfig],
       region: 'center',
       onRowSelect: overviewOnRowSelect,
@@ -1394,6 +1400,7 @@ SM.AppInfo.Collections.Container = Ext.extend(Ext.Container, {
     })
     const overviewGridLocked = new SM.AppInfo.Collections.OverviewGridLocked({
       title: 'Overview',
+      border: false,
       tools: [{
         id: 'expand-grid',
         qtip: 'Expand into multiple grids',
@@ -1407,6 +1414,7 @@ SM.AppInfo.Collections.Container = Ext.extend(Ext.Container, {
 
     const restrictedUsersGrid = new SM.AppInfo.Collections.RestrictedUsersGrid({
       title: 'Restricted Users',
+      border: false,
       collapsible: true,
       region: 'east',
       split: true,
@@ -1414,6 +1422,7 @@ SM.AppInfo.Collections.Container = Ext.extend(Ext.Container, {
     })
     const grantsGrid = new SM.AppInfo.Collections.GrantsGrid({
       title: 'Grants',
+      border: false,
       tools: [collapseToolConfig],
       margins: { top: 0, right: 5, bottom: 0, left: 0 },
       flex: 1,
@@ -1423,6 +1432,7 @@ SM.AppInfo.Collections.Container = Ext.extend(Ext.Container, {
     })
     const labelsGrid = new SM.AppInfo.Collections.LabelsGrid({
       title: 'Labels',
+      border: false,
       tools: [collapseToolConfig],
       margins: { top: 0, right: 5, bottom: 0, left: 5 },
       flex: 1,
@@ -1432,6 +1442,7 @@ SM.AppInfo.Collections.Container = Ext.extend(Ext.Container, {
     })
     const assetStigGrid = new SM.AppInfo.Collections.AssetStigGrid({
       title: 'STIG Assignment Ranges',
+      border: false,
       tools: [collapseToolConfig],
       margins: { top: 0, right: 0, bottom: 0, left: 5 },
       flex: 1,
@@ -1665,13 +1676,15 @@ SM.AppInfo.MySql.Container = Ext.extend(Ext.Container, {
     }
 
     const tablesGrid = new SM.AppInfo.MySql.TablesGrid({
-      title: 'XY',
+      title: ' ',
+      border: false,
       cls: 'sm-round-panel',
       region: 'center'
     })
 
     const variablesGrid = new SM.AppInfo.KeyValueGrid({
       title: 'Variables',
+      border: false,
       flex: 1,
       margins: { top: 0, right: 5, bottom: 0, left: 0 },
       keyColumnConfig: { header: 'Variable', width: 200 },
@@ -1682,6 +1695,7 @@ SM.AppInfo.MySql.Container = Ext.extend(Ext.Container, {
 
     const statusGrid = new SM.AppInfo.KeyValueGrid({
       title: 'Status',
+      border: false,
       flex: 1,
       margins: { top: 0, right: 0, bottom: 0, left: 5 },
       keyColumnConfig: { header: 'Variable', width: 200 },
@@ -1700,7 +1714,6 @@ SM.AppInfo.MySql.Container = Ext.extend(Ext.Container, {
         align: 'stretch',
         // defaultMargins: {top: 5, right: 10, bottom: 0, left: 10}
       },
-      border: false,
       items: [
         variablesGrid,
         statusGrid
@@ -2065,7 +2078,7 @@ SM.AppInfo.Requests.ProjectionsGrid = Ext.extend(Ext.grid.GridPanel, {
         new SM.RowCountTextItem({
           store,
           noun: this.rowCountNoun ?? 'projection',
-          iconCls: 'sm-browser-icon'
+          iconCls: 'sm-circle-icon'
         })
       ]
     })
@@ -2087,11 +2100,13 @@ SM.AppInfo.Requests.Container = Ext.extend(Ext.Container, {
   initComponent: function () {
     const operationsGrid = new SM.AppInfo.Requests.OperationsGrid({
       title: 'Operations',
+      border: false,
       region: 'center',
       onRowSelect
     })
     const usersGrid = new SM.AppInfo.KeyValueGrid({
       title: 'User requests',
+      border: false,
       margins: { top: 0, right: 5, bottom: 0, left: 0 },
       keyColumnConfig: { header: 'User' },
       valueColumnConfig: { header: 'Requests' },
@@ -2099,6 +2114,7 @@ SM.AppInfo.Requests.Container = Ext.extend(Ext.Container, {
     })
     const clientsGrid = new SM.AppInfo.KeyValueGrid({
       title: 'Client requests',
+      border: false,
       margins: { top: 0, right: 5, bottom: 0, left: 5 },
       keyColumnConfig: { header: 'Client' },
       valueColumnConfig: { header: 'Requests' },
@@ -2106,6 +2122,7 @@ SM.AppInfo.Requests.Container = Ext.extend(Ext.Container, {
     })
     const projectionsGrid = new SM.AppInfo.Requests.ProjectionsGrid({
       title: 'Projections',
+      border: false,
       flex: 1,
       margins: { top: 0, right: 0, bottom: 0, left: 5 }
     })
@@ -2139,7 +2156,6 @@ SM.AppInfo.Requests.Container = Ext.extend(Ext.Container, {
         align: 'stretch',
         // defaultMargins: {top: 10, right: 10, bottom: 10, left: 10}
       },
-      border: false,
       items: [
         usersGrid,
         clientsGrid,
@@ -2195,16 +2211,16 @@ SM.AppInfo.Users.InfoGrid = Ext.extend(Ext.grid.GridPanel, {
 
     const columns = [
       {
-        header: 'Id',
-        dataIndex: 'userId',
-        sortable: true,
-      },
-      {
         header: 'username',
         dataIndex: 'username',
         sortable: true,
-        align: 'right',
         filter: { type: 'string' }
+      },
+      {
+        header: 'Id',
+        dataIndex: 'userId',
+        hidden: true,
+        sortable: true,
       },
       {
         header: 'lastAccess',
@@ -2267,7 +2283,7 @@ SM.AppInfo.Users.InfoGrid = Ext.extend(Ext.grid.GridPanel, {
         new SM.RowCountTextItem({
           store,
           noun: this.rowCountNoun ?? 'user',
-          iconCls: 'sm-user-icon'
+          iconCls: 'sm-users-icon'
         })
       ]
     })
@@ -2306,6 +2322,7 @@ SM.AppInfo.Users.Container = Ext.extend(Ext.Container, {
     }
 
     const privilegeGridOptions = {
+      border: false,
       flex: 1,
       keyColumnConfig: { header: 'Privilege' },
       valueColumnConfig: { header: 'User count' },
@@ -2338,6 +2355,7 @@ SM.AppInfo.Users.Container = Ext.extend(Ext.Container, {
 
     const infoGrid = new SM.AppInfo.Users.InfoGrid({
       title: 'User details',
+      border: false,
       region: 'center'
     })
 
@@ -2487,6 +2505,7 @@ SM.AppInfo.Nodejs.Container = Ext.extend(Ext.Container, {
 
     const envGrid = new SM.AppInfo.KeyValueGrid({
       title: 'Environment',
+      border: false,
       region: 'center',
       keyColumnConfig: { header: 'Variable', width: 240 },
       valueColumnConfig: { header: 'Value', align: 'left', width: 370 },
@@ -2496,11 +2515,13 @@ SM.AppInfo.Nodejs.Container = Ext.extend(Ext.Container, {
     })
     const cpusGrid = new SM.AppInfo.Nodejs.CpusGrid({
       title: 'CPU',
+      border: false,
       flex: 1,
       margins: { top: 0, right: 5, bottom: 0, left: 0 }
     })
     const memoryGrid = new SM.AppInfo.KeyValueGrid({
       title: 'Memory',
+      border: false,
       flex: 1,
       margins: { top: 0, right: 5, bottom: 0, left: 5 },
       keyColumnConfig: { header: 'Property' },
@@ -2510,6 +2531,7 @@ SM.AppInfo.Nodejs.Container = Ext.extend(Ext.Container, {
     })
     const osGrid = new SM.AppInfo.KeyValueGrid({
       title: 'OS',
+      border: false,
       flex: 1,
       margins: { top: 0, right: 0, bottom: 0, left: 5 },
       keyColumnConfig: { header: 'Property' },
@@ -2549,6 +2571,7 @@ SM.AppInfo.Nodejs.Container = Ext.extend(Ext.Container, {
 SM.AppInfo.TabPanel = Ext.extend(Ext.TabPanel, {
   initComponent: function () {
     const collectionsContainer = new SM.AppInfo.Collections.Container({
+      border: false,
       title: 'Collections',
       iconCls: 'sm-collection-icon'
     })
@@ -2928,18 +2951,6 @@ SM.AppInfo.showAppInfoTab = async function (options) {
     onSaveShared
   })
 
-  const messagePanel = new Ext.Panel({
-    html: 'Hello there',
-    width: 200,
-    height: 200
-  })
-
-  const sourceContainer = new Ext.Container({
-    layout: 'hbox',
-    region: 'north',
-    border: false,
-
-  })
 
   const tabPanel = new SM.AppInfo.TabPanel({
     cls: 'sm-round-panel',

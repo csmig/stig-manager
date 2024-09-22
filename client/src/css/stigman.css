@@ -2337,3 +2337,33 @@ td.x-grid3-hd-over .x-grid3-hd-inner {
   background-image: url(../img/share.svg);
   background-size: 16px;
 }
+.xg-hmenu-sort-asc .x-menu-item-icon {
+    background-image: url("../img/up.svg");
+    background-size: 16px 16px;
+}
+
+.xg-hmenu-sort-desc .x-menu-item-icon {
+    background-image: url("../img/down.svg");
+    background-size: 16px 16px;
+}
+.x-cols-icon {
+    background-image: url("../img/columns.svg");
+    background-size: 16px 16px;
+}
+.sort-asc .x-grid3-sort-icon {
+    background-image: url("../img/up.svg");
+    background-size: 10px;
+    background-position: center
+}
+
+.sort-desc .x-grid3-sort-icon {
+    background-image: url("../img/down.svg");
+    background-size: 10px;
+    background-position: center
+}
+.sm-circle-icon {
+  background-image: url("../img/circle.svg");
+  background-size: 7px 7px;
+  background-position: top 5px left 5px;
+}
+

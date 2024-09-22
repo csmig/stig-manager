@@ -1189,14 +1189,6 @@ td.sort-asc .x-grid3-hd-inner, td.sort-desc .x-grid3-hd-inner, td.x-grid3-hd-men
     background-image: url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHhtbG5zOnhsaW5rPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5L3hsaW5rIiB3aWR0aD0iMiIgaGVpZ2h0PSIyMiI+PGRlZnM+PGZpbHRlciBpZD0iZGFya3JlYWRlci1pbWFnZS1maWx0ZXIiPjxmZUNvbG9yTWF0cml4IHR5cGU9Im1hdHJpeCIgdmFsdWVzPSIwLjMzMyAtMC42NjcgLTAuNjY3IDAuMDAwIDEuMDAwIC0wLjY2NyAwLjMzMyAtMC42NjcgMC4wMDAgMS4wMDAgLTAuNjY3IC0wLjY2NyAwLjMzMyAwLjAwMCAxLjAwMCAwLjAwMCAwLjAwMCAwLjAwMCAxLjAwMCAwLjAwMCIgLz48L2ZpbHRlcj48L2RlZnM+PGltYWdlIHdpZHRoPSIyIiBoZWlnaHQ9IjIyIiBmaWx0ZXI9InVybCgjZGFya3JlYWRlci1pbWFnZS1maWx0ZXIpIiB4bGluazpocmVmPSJkYXRhOmltYWdlL2dpZjtiYXNlNjQsUjBsR09EbGhBZ0FXQUxNQUFOcmEydWJtNXVYbDVlTGk0dDNkM2R2YjI5N2UzdC9mMzd5OHZPSGg0ZVRrNU9QajQrRGc0TnpjM0FBQUFBQUFBQ0g1QkFBQUFBQUFMQUFBQUFBQ0FCWUFBQVFZTU1ncHFsQnFyY0ZIU2d4empFWkpuRVJUckVEcklrZ0VBRHM9IiAvPjwvc3ZnPg==")
 }
 
-.sort-asc .x-grid3-sort-icon {
-    background-image: url("../ext/resources/images/gray/grid/sort_asc.gif")
-}
-
-.sort-desc .x-grid3-sort-icon {
-    background-image: url("../ext/resources/images/gray/grid/sort_desc.gif")
-}
-
 .x-grid3-cell-text, .x-grid3-hd-text {
     color: #e8e6e3
 }
@@ -1272,14 +1264,6 @@ td.sort-asc .x-grid3-hd-inner, td.sort-desc .x-grid3-hd-inner, td.x-grid3-hd-men
     background-color: #181a1b!important
 }
 
-.xg-hmenu-sort-asc .x-menu-item-icon {
-    background-image: url("../ext/resources/images/default/grid/hmenu-asc.gif")
-}
-
-.xg-hmenu-sort-desc .x-menu-item-icon {
-    background-image: url("../ext/resources/images/default/grid/hmenu-desc.gif")
-}
-
 .xg-hmenu-lock .x-menu-item-icon {
     background-image: url("../ext/resources/images/default/grid/hmenu-lock.gif")
 }
@@ -1326,10 +1310,6 @@ td.sort-asc .x-grid3-hd-inner, td.sort-desc .x-grid3-hd-inner, td.x-grid3-hd-men
 
 .x-group-by-icon {
     background-image: url("../ext/resources/images/default/grid/group-by.gif")
-}
-
-.x-cols-icon {
-    background-image: url("../ext/resources/images/default/grid/columns.gif")
 }
 
 .x-show-groups-icon {
