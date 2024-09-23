@@ -2975,6 +2975,7 @@ paths:
       summary: Export application data
       operationId: getAppData
       parameters:
+        - $ref: '#/components/parameters/AppDataFormatQuery'
         - $ref: '#/components/parameters/ElevateQuery'
       responses:
         '200':
@@ -3031,6 +3032,32 @@ paths:
       security:
         - oauth:
             - stig-manager:op
+  /op/appdata/tables:
+    get:
+      tags:
+        - Operation
+      summary: Get the name and data length of each table
+      operationId: getAppDataTables
+      parameters:
+        - $ref: '#/components/parameters/ElevateQuery'
+      responses:
+        '200':
+          description: An array of table names and lengths
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/AppDataTable'
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      security:
+        - oauth:
+            - stig-manager:op:read
   /op/configuration:
     get:
       tags:
@@ -3825,6 +3852,21 @@ components:
         - type: array
     ApiVersion:
       $ref: '#/components/schemas/Version'
+    AppDataFormat:
+      type: string
+      default: 'json'
+      enum:
+        - json
+        - gzip
+    AppDataTable:
+      type: object
+      properties:
+        name:
+          $ref: '#/components/schemas/String255'
+        rows:
+          type: number
+        dataLength:
+          type: number
     Asset:
       additionalProperties: false
       type: object
@@ -7219,6 +7261,12 @@ components:
     VersionString:
       $ref: '#/components/schemas/String255'
   parameters:
+    AppDataFormatQuery:
+      name: format
+      in: query
+      description: The format of the appdata
+      schema:
+        $ref: '#/components/schemas/AppDataFormat'
     AssetIdArrayQuery:
       name: assetId
       in: query

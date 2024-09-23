@@ -29,8 +29,19 @@ module.exports.getAppData = async function getAppData (req, res, next) {
     if (!req.query.elevate) throw new SmError.PrivilegeError()
     res.attachment(`appdata-v${config.lastMigration}_${escape.filenameComponentFromDate()}.gz`)
     // the service method will stream the appdata file to the response object
-    await OperationService.getAppData(res)
+    OperationService.getAppData(res)
     // the service ends the response by closing the gzip stream
+  }
+  catch (err) {
+    next(err)
+  }
+}
+
+module.exports.getAppDataTables = async function (req, res, next) {
+  try {
+    if (!req.query.elevate) throw new SmError.PrivilegeError()
+    const response = await OperationService.getAppDataTables()
+    res.json(response)
   }
   catch (err) {
     next(err)

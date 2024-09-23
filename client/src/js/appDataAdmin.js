@@ -2,7 +2,7 @@ async function addAppDataAdmin( params ) {
   let detailBodyWrapEl
   try {
     let { treePath } = params
-    const tab = Ext.getCmp('main-tab-panel').getItem('appdata-admin-tab')
+    const tab = Ext.getCmp('main-tab-panel').getItem('appinfo-admin-tab')
     if (tab) {
       tab.show()
       return
@@ -11,6 +11,7 @@ async function addAppDataAdmin( params ) {
     const detailJson = new Ext.Panel({
       region: 'center',
       title: 'Anonymized Deployment Details',
+      border: false,
       cls: 'sm-round-panel',
       margins: { top: SM.Margin.top, right: SM.Margin.edge, bottom: SM.Margin.adjacent, left: SM.Margin.edge },
       autoScroll: true,
@@ -27,17 +28,6 @@ async function addAppDataAdmin( params ) {
           }
         }
       ]
-    })
-
-    const appDataPanel = new SM.AppData.ManagePanel({
-      region: 'north',
-      title: 'Application Data <span class="sm-navtree-sprite">experimental</span>',
-      margins: { top: SM.Margin.adjacent, right: SM.Margin.edge, bottom: SM.Margin.bottom, left: SM.Margin.edge },
-      cls: 'sm-round-panel',
-      height: 200,
-      labelWidth: 1,
-      hideLabel: true,
-      padding: 10
     })
 
     async function getDetail () {
@@ -64,14 +54,14 @@ async function addAppDataAdmin( params ) {
 
 
     const thisTab = Ext.getCmp('main-tab-panel').add({
-      id: 'appdata-admin-tab',
+      id: 'appinfo-admin-tab',
       sm_treePath: treePath,
-      iconCls: 'sm-database-save-icon',
+      iconCls: 'sm-info-circle-icon',
       title: 'Application Info',
       closable: true,
       layout: 'border',
       border: false,
-      items: [detailJson, appDataPanel]
+      items: [detailJson]
     })
     thisTab.show()
 
@@ -91,6 +81,6 @@ async function addAppDataAdmin( params ) {
     SM.Error.handleError(e)
   }
   finally {
-    detailBodyWrapEl.unmask()
+    detailBodyWrapEl?.unmask()
   }
 }

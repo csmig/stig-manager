@@ -229,7 +229,6 @@ SM.NavTree.TreePanel = Ext.extend(Ext.tree.TreePanel, {
     },
     loadTree: async function (node, cb) {
         try {
-          let match, collectionGrant
           // Root node
           if (node == 'stigman-root') {
             let content = []
@@ -261,11 +260,17 @@ SM.NavTree.TreePanel = Ext.extend(Ext.tree.TreePanel, {
                       iconCls: 'sm-stig-icon'
                     },
                     {
+                      id: 'appinfo-admin',
+                      text: 'Application Information',
+                      leaf: true,
+                      iconCls: 'sm-info-circle-icon'
+                    },
+                    {
                       id: 'appdata-admin',
-                      text: 'Application Info',
+                      text: 'Export/Import Data <span class="sm-navtree-sprite">experimental</span>',
                       leaf: true,
                       iconCls: 'sm-database-save-icon'
-                    }
+                    },
                   ]
                 }
               )
@@ -372,10 +377,7 @@ SM.NavTree.TreePanel = Ext.extend(Ext.tree.TreePanel, {
           SM.Error.handleError(e)
         }
     },
-    treeClick: function (n, e) {
-        let idAppend;
-        let tab;
-        
+    treeClick: function (n, e) {      
         if (!n.leaf) {
           return
         }
@@ -474,6 +476,10 @@ SM.NavTree.TreePanel = Ext.extend(Ext.tree.TreePanel, {
             addStigAdmin( { treePath: n.getPath() })
             break
           case 'appdata-admin':
+            // addAppDataAdmin( { treePath: n.getPath() })
+            SM.AppData.showAppDataTab({treePath: n.getPath()})
+            break
+          case 'appinfo-admin':
             addAppDataAdmin( { treePath: n.getPath() })
             break
           case 'whats-new':

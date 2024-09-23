@@ -385,3 +385,34 @@ SM.AppData.doReplace = function () {
     }
   }
 }
+
+SM.AppData.showAppDataTab = function (params) {
+  let { treePath } = params
+  const tab = Ext.getCmp('main-tab-panel').getItem('appdata-admin-tab')
+  if (tab) {
+    tab.show()
+    return
+  }
+
+  const appDataPanel = new SM.AppData.ManagePanel({
+    border: false,
+    // title: 'Application Data <span class="sm-navtree-sprite">experimental</span>',
+    margins: { top: SM.Margin.adjacent, right: SM.Margin.edge, bottom: SM.Margin.bottom, left: SM.Margin.edge },
+    cls: 'sm-round-panel',
+    height: 200,
+    labelWidth: 1,
+    hideLabel: true,
+    padding: 10
+  })
+
+  const thisTab = Ext.getCmp('main-tab-panel').add({
+    id: 'appdata-admin-tab',
+    sm_treePath: treePath,
+    iconCls: 'sm-database-save-icon',
+    title: 'Export/Import Data',
+    closable: true,
+    layout: 'fit',
+    items: [appDataPanel]
+  })
+  thisTab.show()
+}

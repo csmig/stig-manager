@@ -59,9 +59,11 @@ exports.getAppData = async function (res) {
   ]
 
   /** @type {zlib.Gzip} transform stream to compress JSONL records and write to the response */
-  const gzip = zlib.createGzip()
-  gzip.pipe(res)
-  gzip.setMaxListeners(Infinity)
+  // const gzip = zlib.createGzip()
+  // gzip.pipe(res)
+  // gzip.setMaxListeners(Infinity)
+
+  const gzip = res
   
   // Write metadata record {version, commit, date, lastMigration}
   const {version, commit, lastMigration} = config
@@ -165,6 +167,21 @@ exports.getAppData = async function (res) {
 
   // ending gzip will also end the response
   gzip.end()
+}
+
+exports.getAppDataTables = async function () {
+  const sql = `SELECT
+    TABLE_NAME as name,
+    TABLE_ROWS as \`rows\`,
+    DATA_LENGTH as dataLength
+  FROM
+    information_schema.TABLES
+  WHERE
+    TABLE_SCHEMA=? and TABLE_TYPE='BASE TABLE'
+  ORDER BY
+    TABLE_NAME`
+  const [rows] = await dbUtils.pool.query(sql, [config.database.schema])
+  return (rows)
 }
 
 /**
