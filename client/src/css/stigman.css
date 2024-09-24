@@ -2366,4 +2366,7 @@ td.x-grid3-hd-over .x-grid3-hd-inner {
   background-size: 7px 7px;
   background-position: top 5px left 5px;
 }
+.x-menu {
+	background-image: none
+}
 

@@ -17,7 +17,7 @@ SM.AppInfo.uptimeString = function uptimeString(uptime) {
   uptime %= 3600
   const minutes = Math.floor(uptime / 60)
   const seconds = Math.floor(uptime % 60)
-  return `${days} day${days !== 1 ? 's' : ''}, ${hours} hour${hours !== 1 ? 's' : ''}, ${minutes} minute${minutes !== 1 ? 's' : ''}, ${seconds} second${seconds !== 1 ? 's' : ''}`
+  return `${days}d ${hours}h ${minutes}m ${seconds}s`
 }
 
 SM.AppInfo.transformPreviousSchemas = function (input) {
@@ -131,7 +131,8 @@ SM.AppInfo.transformPreviousSchemas = function (input) {
       environment: {},
       memory: input.nodeMemoryUsageInMb,
       cpus: []
-    }
+    },
+    uniqueRuleCountOfOrphanedReviews: input.uniqueRuleCountOfOrphanedReviews
   }
   return norm
 
@@ -1665,7 +1666,6 @@ SM.AppInfo.MySql.Container = Ext.extend(Ext.Container, {
   initComponent: function () {
     function loadData(data) {
       // expects only mysql property from full appinfo object
-      tablesGrid.setTitle(`Tables | Version ${data.variables.version} | up ${SM.AppInfo.uptimeString(data.status.Uptime)}`)
       const tables = []
       for (const key in data.tables) {
         tables.push({ tableName: key, ...data.tables[key] })
@@ -1673,7 +1673,35 @@ SM.AppInfo.MySql.Container = Ext.extend(Ext.Container, {
       tablesGrid.store.loadData(tables)
       variablesGrid.loadData(data.variables)
       statusGrid.loadData(data.status)
+      const lengths = getTotalLengths(data.tables)
+      const sep = '<span style="color:gray">&#xFF5C;</span>'
+      tablesGrid.setTitle(`Tables ${sep} Data &thickapprox; ${formatBytes(lengths.data)}  ${sep} Indexes &thickapprox; ${formatBytes(lengths.index)}  ${sep} Version ${data.variables.version} ${sep} Up ${SM.AppInfo.uptimeString(data.status.Uptime)} `)
     }
+
+    function getTotalLengths(tables) {
+      const lengths = {
+        data: 0,
+        index: 0
+      }
+      for (const table in tables) {
+        lengths.data += tables[table].dataLength
+        lengths.index += tables[table].indexLength
+      }
+      return lengths
+    }
+
+    function formatBytes(bytes, decimals = 2) {
+      if (!+bytes) return '0 Bytes'
+  
+      const k = 1024
+      const dm = decimals < 0 ? 0 : decimals
+      const sizes = ['Bytes', 'KiB', 'MiB', 'GiB', 'TiB', 'PiB', 'EiB', 'ZiB', 'YiB']
+  
+      const i = Math.floor(Math.log(bytes) / Math.log(k))
+  
+      return `${parseFloat((bytes / Math.pow(k, i)).toFixed(dm))} ${sizes[i]}`
+  }
+  
 
     const tablesGrid = new SM.AppInfo.MySql.TablesGrid({
       title: ' ',
@@ -2170,7 +2198,8 @@ SM.AppInfo.Requests.Container = Ext.extend(Ext.Container, {
         operationIds.push({ operationId: key, ...data.operationIds[key] })
       }
       operationsGrid.store.loadData(operationIds)
-      operationsGrid.setTitle(`API Operations | ${nr(data.totalRequests)} total requests, ${nr(data.totalApiRequests)} to API, duration ${nr(data.totalRequestDuration)}ms`)
+      const sep = `<span style="color:gray">&#xFF5C;</span>`
+      operationsGrid.setTitle(`API Operations ${sep} ${nr(data.totalRequests)} total requests, ${nr(data.totalApiRequests)} to API, duration ${nr(data.totalRequestDuration)}ms`)
     }
 
     const config = {
@@ -2496,7 +2525,8 @@ SM.AppInfo.Nodejs.Container = Ext.extend(Ext.Container, {
   initComponent: function () {
     // expects just the value of appinfo.nodejs
     function loadData(data) {
-      envGrid.setTitle(`Environment | Version ${data.version.slice(1)} | up ${SM.AppInfo.uptimeString(data.uptime)}`)
+      const sep = '<span style="color:gray">&#xFF5C;</span>'
+      envGrid.setTitle(`Environment ${sep} Version ${data.version.slice(1)} ${sep} up ${SM.AppInfo.uptimeString(data.uptime)}`)
       memoryGrid.loadData(data.memory)
       osGrid.loadData(data.os)
       cpusGrid.loadData(data.cpus)
@@ -2709,11 +2739,16 @@ SM.AppInfo.ShareFile.Panel = Ext.extend(Ext.Panel, {
   }
 })
 
+SM.AppInfo.SourceMessage = {
+  header: 'Help the STIG Manager dev team',
+  text: 'The <span class="sm-share-icon" style="padding-left: 14px;background-size: 12px 12px;background-repeat: no-repeat;background-blend-mode: multiply;background-position: left;font-weight: 600;">Save for Sharing</span> option can create a file without identifiers or compliance data. Send to stigman_devs@us.navy.mil.'
+}
+// padding-left: 14px;background-size: 12px 12px;background-repeat: no-repeat;background-blend-mode: multiply;background-position: left;font-weight: 600;
 SM.AppInfo.SourcePanel = Ext.extend(Ext.Panel, {
   initComponent: function () {
     const sourceDisplayField = new Ext.form.DisplayField({
       fieldLabel: 'Source',
-      width: 400
+      width: 300
     })
     const dateDisplayField = new Ext.form.DisplayField({
       fieldLabel: 'Date',
@@ -2723,16 +2758,20 @@ SM.AppInfo.SourcePanel = Ext.extend(Ext.Panel, {
       fieldLabel: 'Version',
       width: 200
     })
-    const commitDisplayField = new Ext.form.DisplayField({
-      fieldLabel: 'Commit',
-      width: 200
+
+    const fieldContainer = new Ext.Container({
+      layout: 'form',
+      items: [
+        sourceDisplayField,
+        dateDisplayField,
+        versionDisplayField
+      ]
     })
 
     function loadData({ data, source }) {
       sourceDisplayField.setValue(source)
       dateDisplayField.setValue(data.dateGenerated ?? data.date)
       versionDisplayField.setValue(data.stigmanVersion ?? data.version)
-      commitDisplayField.setValue(JSON.stringify(data.stigmanCommit ?? data.commit))
     }
 
     const selectFileBtn = new Ext.ux.form.FileUploadField({
@@ -2787,13 +2826,20 @@ SM.AppInfo.SourcePanel = Ext.extend(Ext.Panel, {
     })
 
     const config = {
-      layout: 'form',
+      layout: 'hbox',
       padding: '10px 10px 10px 10px',
       items: [
-        sourceDisplayField,
-        dateDisplayField,
-        versionDisplayField,
-        // commitDisplayField
+        fieldContainer,
+        {
+          xtype: 'container',
+          tpl: new Ext.XTemplate(
+            `<div class="sm-round-panel" style="background-color:gray;width:250px;height:60px;color:black;padding:5px;">`,
+            `<div style="font-weight:bold">{header}</div>`,
+            `<div>{text}</div>`,
+            `</div>`
+          ),
+          data: SM.AppInfo.SourceMessage
+        }
       ],
       tbar,
       loadData
