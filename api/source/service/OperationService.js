@@ -548,7 +548,7 @@ exports.replaceAppData = async function (importOpts, appData, userObject, res ) 
   }
 }
 
-exports.getDetails = async function() {
+exports.getAppInfo = async function() {
   const schema = 'stig-manager-appinfo-v1.0'
   const sqlAnalyze = `ANALYZE TABLE collection, asset, review, review_history, user`
   const sqlInfoSchema = `
@@ -860,7 +860,6 @@ exports.getDetails = async function() {
     date: new Date().toISOString(),
     schema,
     version: config.version,
-    commit: config.commit,
     collections: countsByCollection,
     requests,
     users: {
@@ -977,7 +976,7 @@ exports.getDetails = async function() {
     const memory = process.memoryUsage()
     memory.maxRss = resourceUsage.maxRss
     return {
-      version: nodejsVersion,
+      version: nodejsVersion.substring(1),
       uptime: process.uptime(),
       os: {
         platform,

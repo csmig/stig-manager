@@ -2369,4 +2369,15 @@ td.x-grid3-hd-over .x-grid3-hd-inner {
 .x-menu {
 	background-image: none
 }
+.sm-appinfo-message {
+  background-color: #e0e0e0;
+  width: 250px;
+  height: 60px;
+  color: #484848;
+  padding: 7px;
+}
 
+.sm-info-circle-icon {
+  background-image: url(../img/info-circle.svg)!important;
+  background-size: 16px 16px;
+}

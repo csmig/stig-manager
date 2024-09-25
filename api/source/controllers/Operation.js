@@ -129,11 +129,11 @@ module.exports.getDefinition = async function getDefinition (req, res, next) {
   }
 }
 
-module.exports.getDetails = async function getDetails (req, res, next) {
+module.exports.getAppInfo = async function getAppInfo (req, res, next) {
   try {
     let elevate = req.query.elevate
     if ( elevate ) {
-      const response = await OperationService.getDetails()
+      const response = await OperationService.getAppInfo()
       res.json(response)
     }
     else {
@@ -144,3 +144,5 @@ module.exports.getDetails = async function getDetails (req, res, next) {
     next(err)
   }
 }
+
+module.exports.getDetails = module.exports.getAppInfo

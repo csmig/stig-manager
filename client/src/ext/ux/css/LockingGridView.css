@@ -25,6 +25,7 @@ Build date: 2013-04-03 15:07:25
 
 .x-grid3-locked {
 	border-right: 1px solid #808080;
+	box-sizing: border-box;
 }
 
 .x-grid3-locked .x-grid3-scroller {

@@ -3165,4 +3165,9 @@ embed[type="application/pdf"] {
 .sm-grabbing *, .sm-grabbing .sm-grid3-draggable .x-grid3-row-selected *, .sm-grabbing .sm-grid3-draggable .x-grid3-row-selected {
     cursor: url("../img/drag-drop-dark.svg"), grabbing;
 }
+.sm-appinfo-message {
+    background-color: #2d2d2d;
+    color: #999999;
+  }
+  
   

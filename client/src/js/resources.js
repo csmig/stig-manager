@@ -67,7 +67,6 @@ const scripts = [
   'js/collectionAdmin.js',
   'js/collectionManager.js',
   'js/stigAdmin.js',
-  'js/appDataAdmin.js',
   'js/completionStatus.js',
   'js/findingsSummary.js',
   'js/review.js',

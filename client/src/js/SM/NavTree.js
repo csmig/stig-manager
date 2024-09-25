@@ -261,10 +261,10 @@ SM.NavTree.TreePanel = Ext.extend(Ext.tree.TreePanel, {
                       iconCls: 'sm-stig-icon'
                     },
                     {
-                      id: 'appdata-admin',
+                      id: 'appinfo-admin',
                       text: 'Application Info',
                       leaf: true,
-                      iconCls: 'sm-database-save-icon'
+                      iconCls: 'sm-info-circle-icon'
                     }
                   ]
                 }
@@ -473,8 +473,7 @@ SM.NavTree.TreePanel = Ext.extend(Ext.tree.TreePanel, {
           case 'stig-admin':
             addStigAdmin( { treePath: n.getPath() })
             break
-          case 'appdata-admin':
-            // addAppDataAdmin( { treePath: n.getPath() })
+          case 'appinfo-admin':
             SM.AppInfo.showAppInfoTab({treePath: n.getPath()})
             break
           case 'whats-new':
