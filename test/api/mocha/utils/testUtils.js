@@ -1,6 +1,6 @@
 const axios = require('axios')
 const config = require('../testConfig.json')
-const FormData = require('form-data')
+// const FormData = require('form-data')
 const fs = require('fs')
 const path = require('path')
 
@@ -18,28 +18,19 @@ const metricsOutputToJSON = (testCaseName, username, responseData, outputJsonFil
 }
 
 const loadAppData = async (appdataFileName = 'appdata.json') => {
-
-  //const appdataFile = path.join(__dirname, '../../form-data-files/appdata.json')
   const appdataFile = path.join(__dirname, `../../form-data-files/${appdataFileName}`)
   const formData = new FormData()
-  formData.append('importFile', fs.createReadStream(appdataFile), {
-    filename: 'appdata.json',
-    contentType: 'application/json'
-  })
-  const axiosConfig = {
+  const blob = new Blob([fs.readFileSync(appdataFile)], {type: 'application/json'})
+  formData.set('importFile', blob, appdataFileName)
+  const url = `${config.baseUrl}/op/appdata?elevate=true`
+  const fetchConfig = {
     method: 'post',
-    url: `${config.baseUrl}/op/appdata?elevate=true`,
     headers: {
-      ...formData.getHeaders(),
       Authorization: `Bearer ${adminToken}`
     },
-    data: formData
+    body: formData
   }
-  try {
-    const response = await axios(axiosConfig)
-  } catch (error) {
-    throw error
-  }
+  return await(await(fetch(url, fetchConfig))).text()
 }
 
 const createTempCollection = async (collectionPost) => {
@@ -250,26 +241,18 @@ const uploadTestStig = async (filename) => {
   const directoryPath = path.join(__dirname, '../../form-data-files/')
   const filePath = path.join(directoryPath, filename)
   const formData = new FormData()
-  formData.append('importFile', fs.createReadStream(filePath), {
-    filename,
-    contentType: 'text/xml'
-  })
+  const blob = new Blob([fs.readFileSync(filePath)], {type: 'text/xml'})
+  formData.append('importFile', blob, filename)
 
-  const axiosConfig = {
+  const url = `${config.baseUrl}/stigs?elevate=true&clobber=true`
+  const fetchConfig = {
     method: 'post', 
-    url: `${config.baseUrl}/stigs?elevate=true&clobber=true`,
     headers: {
-      ...formData.getHeaders(),
       Authorization: `Bearer ${adminToken}`
     },
-    data: formData
+    body: formData
   }
-
-  try {
-    const response = await axios(axiosConfig)
-  } catch (error) {
-    throw error
-  }
+  await(await(fetch(url, fetchConfig))).json()
 }
 
 const uploadTestStigs = async () => {
@@ -288,26 +271,19 @@ const uploadTestStigs = async () => {
   for (const filename of testFilenames) {
     const formData = new FormData()
     const filePath = path.join(directoryPath, filename)
-    formData.append('importFile', fs.createReadStream(filePath), {
-      filename,
-      contentType: 'text/xml'
-    })
+    const blob = new Blob([fs.readFileSync(filePath)], {type: 'text/xml'})
+    formData.append('importFile', blob, filename)
+    const url = `${config.baseUrl}/stigs?elevate=true&clobber=true`
 
-    const axiosConfig = {
+    const fetchConfig = {
       method: 'post',
-      url: `${config.baseUrl}/stigs?elevate=true&clobber=true`,
       headers: {
-        ...formData.getHeaders(),
         Authorization: `Bearer ${adminToken}`
       },
-      data: formData
+      body: formData
     }
-
-    try {
-      const response = await axios(axiosConfig)
-    } catch (error) {
-      throw error
-    }
+    const response = await fetch(url, fetchConfig)
+    await response.json()
   }
 }
 
