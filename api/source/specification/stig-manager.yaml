@@ -3862,7 +3862,15 @@ components:
           $ref: '#/components/schemas/AppInfoMySql'
         nodejs:
           $ref: '#/components/schemas/AppInfoNodejs'
-
+      required:
+        - date
+        - schema
+        - version
+        - collections
+        - requests
+        - users
+        - mysql
+        - nodejs
     AppInfoNodejs:
       type: object
       properties:

@@ -603,10 +603,7 @@ exports.getAppInfo = async function() {
     c.name,
     c.state,
     count(distinct a.assetId) as assetsTotal,
-    count( distinct 
-      if(a.state = "disabled", a.assetId, null)
-      ) 
-      as assetsDisabled,
+    count(distinct if(a.state = "disabled", a.assetId, null)) as assetsDisabled,
     count(distinct sa.benchmarkId) as uniqueStigs,
     count(sa.saId) as stigAssignments,
     coalesce(sum(rev.ruleCount),0) 
@@ -619,7 +616,7 @@ exports.getAppInfo = async function() {
       as reviewCntDisabled
   FROM
     collection c
-    left join asset a on c.collectionId = a.collectionId 
+    left join asset a on c.collectionId = a.collectionId
     left join stig_asset_map sa on a.assetId = sa.assetId
     left join default_rev dr on c.collectionId = dr.collectionId and sa.benchmarkId = dr.benchmarkId
     left join revision rev on dr.revId = rev.revId
