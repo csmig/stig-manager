@@ -105,16 +105,18 @@ function requestLogger (req, res, next) {
   // Response body length for appinfo and content for privileged requests
   let responseBody
   res.sm_responseLength = 0
-    responseBody = ''
-    const originalSend = res.send
-    res.send = function (chunk) {
+  responseBody = ''
+  const originalSend = res.send
+  res.send = function (chunk) {
+    if (chunk !== undefined) {
       if (req.query.elevate === true || req.query.elevate === 'true' ) {
         responseBody += chunk
       }
-      res.sm_responseLength += chunk.length
-      originalSend.apply(res, arguments)
-      res.end()
+      res.sm_responseLength += chunk.length || 0
     }
+    originalSend.apply(res, arguments)
+    res.end()
+  }
 
   // record request start
   recordStartTime.call(req)
