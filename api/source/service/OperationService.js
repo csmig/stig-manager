@@ -602,18 +602,13 @@ exports.getAppInfo = async function() {
     cast(c.collectionId as char) as collectionId,
     c.name,
     c.state,
-    count(distinct a.assetId) as assetsTotal,
+	  count(distinct if(a.state = "enabled", a.assetId, null)) as assets,
     count(distinct if(a.state = "disabled", a.assetId, null)) as assetsDisabled,
-    count(distinct sa.benchmarkId) as uniqueStigs,
-    count(sa.saId) as stigAssignments,
-    coalesce(sum(rev.ruleCount),0) 
-      as ruleCnt,
-    coalesce(
-        sum(sa.pass + sa.fail + sa.notapplicable + sa.notchecked + sa.notselected + sa.informational + sa.fixed + sa.unknown + sa.error),0) 
-        as reviewCntTotal,
-    coalesce(
-      sum(if(a.state = "disabled", (sa.pass + sa.fail + sa.notapplicable + sa.notchecked + sa.notselected + sa.informational + sa.fixed + sa.unknown + sa.error), 0)))
-      as reviewCntDisabled
+    count(distinct if(a.state = "enabled", sa.benchmarkId, null)) as uniqueStigs,
+    sum(if(a.state = "enabled" and sa.saId, 1, 0)) as stigAssignments,
+    sum(if(a.state = "enabled",rev.ruleCount,0)) as rules,
+    sum(if(a.state = "enabled", (sa.pass + sa.fail + sa.notapplicable + sa.notchecked + sa.notselected + sa.informational + sa.fixed + sa.unknown + sa.error), 0)) as reviews,
+    sum(if(a.state = "disabled", (sa.pass + sa.fail + sa.notapplicable + sa.notchecked + sa.notselected + sa.informational + sa.fixed + sa.unknown + sa.error), 0)) as reviewsDisabled
   FROM
     collection c
     left join asset a on c.collectionId = a.collectionId

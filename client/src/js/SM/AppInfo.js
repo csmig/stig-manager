@@ -33,9 +33,22 @@ SM.AppInfo.transformPreviousSchemas = function (input) {
     const o = {}
     const padLength = Object.keys(i).at(-1).length
     for (const id in i) {
-      const { assetStigByCollection, restrictedGrantCountsByUser, ...keep } = i[id]
+
+      const { 
+        assetStigByCollection, 
+        restrictedGrantCountsByUser, 
+        assetsTotal, 
+        assetsDisabled, 
+        ruleCnt, 
+        reviewCntTotal, 
+        reviewCntDisabled, ...keep } = i[id]
 
       o[id.padStart(padLength, '0')] = {
+        assets: assetsTotal - assetsDisabled,
+        assetsDisabled,
+        rules: ruleCnt,
+        reviews: reviewCntTotal - reviewCntDisabled,
+        reviewsDisabled: reviewCntDisabled,
         ...keep,
         assetStigRanges: transformAssetStigByCollection(assetStigByCollection),
         restrictedUsers: restrictedGrantCountsByUser || {}
@@ -304,20 +317,20 @@ SM.AppInfo.Collections.OverviewGrid = Ext.extend(Ext.grid.GridPanel, {
       },
       'name',
       'state',
-      'assetsTotal',
+      'assets',
       'assetsDisabled',
       {
-        name: 'assetsEnabled',
-        convert: (v, r) => r.assetsTotal - r.assetsDisabled
+        name: 'assetsTotal',
+        convert: (v, r) => r.assets + r.assetsDisabled
       },
       'uniqueStigs',
       'stigAssignments',
-      'ruleCnt',
-      'reviewCntTotal',
-      'reviewCntDisabled',
+      'rules',
+      'reviews',
+      'reviewsDisabled',
       {
-        name: 'reviewCntEnabled',
-        convert: (v, r) => r.reviewCntTotal - r.reviewCntDisabled
+        name: 'reviewsTotal',
+        convert: (v, r) => r.reviews + r.reviewsDisabled
       },
       'restrictedUsers'
     ]
@@ -357,7 +370,7 @@ SM.AppInfo.Collections.OverviewGrid = Ext.extend(Ext.grid.GridPanel, {
       },
       {
         header: "Assets",
-        dataIndex: 'assetsEnabled',
+        dataIndex: 'assets',
         sortable: true,
         align: 'right',
         renderer: SM.AppInfo.numberRenderer
@@ -371,6 +384,7 @@ SM.AppInfo.Collections.OverviewGrid = Ext.extend(Ext.grid.GridPanel, {
       },
       {
         header: "Assets Total",
+        hidden: true,
         dataIndex: 'assetsTotal',
         sortable: true,
         align: 'right',
@@ -392,28 +406,29 @@ SM.AppInfo.Collections.OverviewGrid = Ext.extend(Ext.grid.GridPanel, {
       },
       {
         header: "Rules",
-        dataIndex: 'ruleCnt',
+        dataIndex: 'rules',
         sortable: true,
         align: 'right',
         renderer: SM.AppInfo.numberRenderer
       },
       {
         header: "Reviews",
-        dataIndex: 'reviewCntEnabled',
-        sortable: true,
-        align: 'right',
-        renderer: SM.AppInfo.numberRenderer
-      },
-      {
-        header: "Reviews Total",
-        dataIndex: 'reviewCntTotal',
+        dataIndex: 'reviews',
         sortable: true,
         align: 'right',
         renderer: SM.AppInfo.numberRenderer
       },
       {
         header: "Reviews Disabled",
-        dataIndex: 'reviewCntDisabled',
+        dataIndex: 'reviewsDisabled',
+        sortable: true,
+        align: 'right',
+        renderer: SM.AppInfo.numberRenderer
+      },
+      {
+        header: "Reviews Total",
+        dataIndex: 'reviewsTotal',
+        hidden: true,
         sortable: true,
         align: 'right',
         renderer: SM.AppInfo.numberRenderer
@@ -484,20 +499,20 @@ SM.AppInfo.Collections.OverviewGridLocked = Ext.extend(Ext.grid.GridPanel, {
       },
       'name',
       'state',
-      'assetsTotal',
+      'assets',
       'assetsDisabled',
       {
-        name: 'assetsEnabled',
-        convert: (v, r) => r.assetsTotal - r.assetsDisabled
+        name: 'assetsTotal',
+        convert: (v, r) => r.assets + r.assetsDisabled
       },
       'uniqueStigs',
       'stigAssignments',
-      'ruleCnt',
-      'reviewCntTotal',
-      'reviewCntDisabled',
+      'rules',
+      'reviews',
+      'reviewsDisabled',
       {
-        name: 'reviewCntEnabled',
-        convert: (v, r) => r.reviewCntTotal - r.reviewCntDisabled
+        name: 'reviewsTotal',
+        convert: (v, r) => r.reviews + r.reviewsDisabled
       },
       'restrictedUsers',
       {
@@ -586,7 +601,7 @@ SM.AppInfo.Collections.OverviewGridLocked = Ext.extend(Ext.grid.GridPanel, {
       },
       {
         header: "Assets",
-        dataIndex: 'assetsEnabled',
+        dataIndex: 'assets',
         sortable: true,
         align: 'right',
         renderer: SM.AppInfo.numberRenderer
@@ -622,28 +637,29 @@ SM.AppInfo.Collections.OverviewGridLocked = Ext.extend(Ext.grid.GridPanel, {
       },
       {
         header: "Rules",
-        dataIndex: 'ruleCnt',
+        dataIndex: 'rules',
         sortable: true,
         align: 'right',
         renderer: SM.AppInfo.numberRenderer
       },
       {
         header: "Reviews",
-        dataIndex: 'reviewCntEnabled',
-        sortable: true,
-        align: 'right',
-        renderer: SM.AppInfo.numberRenderer
-      },
-      {
-        header: "Reviews Total",
-        dataIndex: 'reviewCntTotal',
+        dataIndex: 'reviews',
         sortable: true,
         align: 'right',
         renderer: SM.AppInfo.numberRenderer
       },
       {
         header: "Reviews Disabled",
-        dataIndex: 'reviewCntDisabled',
+        dataIndex: 'reviewsDisabled',
+        sortable: true,
+        align: 'right',
+        renderer: SM.AppInfo.numberRenderer
+      },
+      {
+        header: "Reviews Total",
+        dataIndex: 'reviewsTotal',
+        hidden: true,
         sortable: true,
         align: 'right',
         renderer: SM.AppInfo.numberRenderer
@@ -2318,6 +2334,7 @@ SM.AppInfo.Users.InfoGrid = Ext.extend(Ext.grid.GridPanel, {
     })
 
     const config = {
+      cls: this.cls ?? 'sm-round-panel',
       store,
       view,
       sm,
@@ -2740,15 +2757,15 @@ SM.AppInfo.ShareFile.Panel = Ext.extend(Ext.Panel, {
 })
 
 SM.AppInfo.SourceMessage = {
-  header: 'Help the STIG Manager dev team',
+  header: 'Help by sharing with the STIG Manager project',
   text: 'The <span class="sm-share-icon" style="padding-left: 14px;background-size: 12px 12px;background-repeat:no-repeat;background-position:left;font-weight:600;">Save for Sharing</span> option can create a file without identifiers or compliance data. Send to RMF_Tools@us.navy.mil.'
 }
-// padding-left: 14px;background-size: 12px 12px;background-repeat: no-repeat;background-blend-mode: multiply;background-position: left;font-weight: 600;
+
 SM.AppInfo.SourcePanel = Ext.extend(Ext.Panel, {
   initComponent: function () {
     const sourceDisplayField = new Ext.form.DisplayField({
       fieldLabel: 'Source',
-      width: 300
+      width: 370
     })
     const dateDisplayField = new Ext.form.DisplayField({
       fieldLabel: 'Date',
@@ -2834,7 +2851,7 @@ SM.AppInfo.SourcePanel = Ext.extend(Ext.Panel, {
           xtype: 'container',
           tpl: new Ext.XTemplate(
             `<div class="sm-round-panel sm-appinfo-message">`,
-            `<div style="font-weight:bold">{header}</div>`,
+            `<div style="font-weight:bold;text-align:center;padding-bottom:8px;">{header}</div>`,
             `<div>{text}</div>`,
             `</div>`
           ),
@@ -2960,7 +2977,7 @@ SM.AppInfo.showAppInfoTab = async function (options) {
   function onSaveFull() {
     if (data) {
       const blob = new Blob([JSON.stringify(data)], { type: 'application/json' })
-      downloadBlob(blob, SM.Global.filenameEscaped(`stig-manager-details_${SM.Global.filenameComponentFromDate()}.json`))
+      downloadBlob(blob, SM.Global.filenameEscaped(`stig-manager-appinfo_${SM.Global.filenameComponentFromDate()}.json`))
     }
   }
 
@@ -2969,7 +2986,7 @@ SM.AppInfo.showAppInfoTab = async function (options) {
     const kloned = SM.AppInfo.generateSharable(data, options)
     console.log(kloned)
     const blob = new Blob([JSON.stringify(kloned)], { type: 'application/json' })
-    downloadBlob(blob, SM.Global.filenameEscaped(`stig-manager-details-shareable_${SM.Global.filenameComponentFromDate()}.json`))
+    downloadBlob(blob, SM.Global.filenameEscaped(`stig-manager-appinfo-shareable_${SM.Global.filenameComponentFromDate()}.json`))
   }
 
   function downloadBlob(blob, filename) {
