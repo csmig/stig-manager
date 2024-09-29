@@ -602,6 +602,7 @@ exports.getAppInfo = async function() {
     cast(c.collectionId as char) as collectionId,
     c.name,
     c.state,
+    c.settings,
 	  count(distinct if(a.state = "enabled", a.assetId, null)) as assets,
     count(distinct if(a.state = "disabled", a.assetId, null)) as assetsDisabled,
     count(distinct if(a.state = "enabled", sa.benchmarkId, null)) as uniqueStigs,
@@ -677,14 +678,6 @@ exports.getAppInfo = async function() {
     ) as privileges
   from 
     stigman.user_data
-  `
-  const sqlOrphanedReviews = `
-  SELECT 
-    count(distinct r.ruleId) as uniqueOrphanedRules
-  FROM 
-    review r 
-  where 
-    r.ruleId not in (select ruleId from rule_version_check_digest)
   `
   const sqlMySqlVersion = `SELECT VERSION() as version`
 
@@ -771,7 +764,6 @@ exports.getAppInfo = async function() {
     [labelCountsByCollection],
     [restrictedGrantCountsByCollection],
     [grantCountsByCollection],
-    [orphanedReviews],
     [userInfo],
     [mySqlVersion],
     [mySqlVariables],
@@ -783,7 +775,6 @@ exports.getAppInfo = async function() {
     dbUtils.pool.query(sqlLabelCountsByCollection),
     dbUtils.pool.query(sqlRestrictedGrantCountsByCollection),
     dbUtils.pool.query(sqlGrantCounts),
-    dbUtils.pool.query(sqlOrphanedReviews),
     dbUtils.pool.query(sqlUserInfo),
     dbUtils.pool.query(sqlMySqlVersion),
     dbUtils.pool.query(sqlMySqlVariablesValues),
@@ -864,8 +855,7 @@ exports.getAppInfo = async function() {
       variables: createObjectFromKeyValue(mySqlVariables, "variable_name", "value"),
       status: createObjectFromKeyValue(mySqlStatus, "variable_name", "value")
     },
-    nodejs: getNodeValues(),
-    uniqueRuleCountOfOrphanedReviews: orphanedReviews[0].uniqueOrphanedRules
+    nodejs: getNodeValues()
   })
 
   // Reduce an array of objects to a single object, using the value of one property as keys

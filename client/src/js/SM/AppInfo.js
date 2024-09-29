@@ -51,7 +51,25 @@ SM.AppInfo.transformPreviousSchemas = function (input) {
         reviewsDisabled: reviewCntDisabled,
         ...keep,
         assetStigRanges: transformAssetStigByCollection(assetStigByCollection),
-        restrictedUsers: restrictedGrantCountsByUser || {}
+        restrictedUsers: restrictedGrantCountsByUser || {},
+        settings: {
+          fields: {
+            detail: {
+              enabled: null,
+              required: null
+            },
+            comment: {
+              enabled: null,
+              required: null
+            }
+          },
+          status: {
+            canAccept: null,
+            resetCriteria: null,
+            minAcceptGrant: null
+          }
+
+        }
       }
     }
     return o
@@ -121,7 +139,6 @@ SM.AppInfo.transformPreviousSchemas = function (input) {
     date: input.dateGenerated,
     schema: 'stig-manager-appinfo-v1.0',
     version: input.stigmanVersion,
-    commit: input.stigmanCommit,
     collections: transformCountsByCollection(input.countsByCollection),
     requests: {
       ...requestsKeep,
@@ -144,8 +161,7 @@ SM.AppInfo.transformPreviousSchemas = function (input) {
       environment: {},
       memory: input.nodeMemoryUsageInMb,
       cpus: []
-    },
-    uniqueRuleCountOfOrphanedReviews: input.uniqueRuleCountOfOrphanedReviews
+    }
   }
   return norm
 
@@ -490,7 +506,7 @@ SM.AppInfo.Collections.OverviewGrid = Ext.extend(Ext.grid.GridPanel, {
   }
 })
 
-SM.AppInfo.Collections.OverviewGridLocked = Ext.extend(Ext.grid.GridPanel, {
+SM.AppInfo.Collections.FullGridLocked = Ext.extend(Ext.grid.GridPanel, {
   initComponent: function () {
     const fields = [
       {
@@ -562,6 +578,34 @@ SM.AppInfo.Collections.OverviewGridLocked = Ext.extend(Ext.grid.GridPanel, {
       {
         name: 'assetLabelCount',
         mapping: 'labelCounts.assetLabelCount'
+      },
+      {
+        name: 'detailEnabled',
+        mapping: 'settings.fields.detail.enabled'
+      },
+      {
+        name: 'detailRequired',
+        mapping: 'settings.fields.detail.required'
+      },
+      {
+        name: 'commentEnabled',
+        mapping: 'settings.fields.comment.enabled'
+      },
+      {
+        name: 'commentRequired',
+        mapping: 'settings.fields.comment.required'
+      },
+      {
+        name: 'canAccept',
+        mapping: 'settings.status.canAccept'
+      },
+      {
+        name: 'resetCriteria',
+        mapping: 'settings.status.resetCriteria'
+      },
+      {
+        name: 'minAcceptGrant',
+        mapping: 'settings.status.minAcceptGrant'
       }
     ]
 
@@ -747,6 +791,41 @@ SM.AppInfo.Collections.OverviewGridLocked = Ext.extend(Ext.grid.GridPanel, {
         sortable: true,
         align: 'right',
         renderer: SM.AppInfo.numberRenderer
+      },
+      {
+        header: "detailEnabled",
+        dataIndex: 'detailEnabled',
+        sortable: true
+      },
+      {
+        header: "detailRequired",
+        dataIndex: 'detailRequired',
+        sortable: true
+      },
+      {
+        header: "commentlEnabled",
+        dataIndex: 'commentEnabled',
+        sortable: true
+      },
+      {
+        header: "commentRequired",
+        dataIndex: 'commentRequired',
+        sortable: true
+      },
+      {
+        header: "canAccept",
+        dataIndex: 'canAccept',
+        sortable: true
+      },
+      {
+        header: "resetCriteria",
+        dataIndex: 'resetCriteria',
+        sortable: true
+      },
+      {
+        header: "minAcceptGrant",
+        dataIndex: 'minAcceptGrant',
+        sortable: true
       }
     ]
 
@@ -1001,7 +1080,10 @@ SM.AppInfo.Collections.AssetStigGrid = Ext.extend(Ext.grid.GridPanel, {
     ]
 
     const sm = new Ext.grid.RowSelectionModel({
-      singleSelect: true
+      singleSelect: true,
+      listeners: {
+        rowselect: this.onRowSelect ?? Ext.emptyFn
+      }
     })
 
     const view = new SM.ColumnFilters.GridView({
@@ -1138,7 +1220,10 @@ SM.AppInfo.Collections.GrantsGrid = Ext.extend(Ext.grid.GridPanel, {
     ]
 
     const sm = new Ext.grid.RowSelectionModel({
-      singleSelect: true
+      singleSelect: true,
+      listeners: {
+        rowselect: this.onRowSelect ?? Ext.emptyFn
+      }
     })
 
     const view = new SM.ColumnFilters.GridView({
@@ -1267,7 +1352,174 @@ SM.AppInfo.Collections.LabelsGrid = Ext.extend(Ext.grid.GridPanel, {
     ]
 
     const sm = new Ext.grid.RowSelectionModel({
-      singleSelect: true
+      singleSelect: true,
+      listeners: {
+        rowselect: this.onRowSelect ?? Ext.emptyFn
+      }
+    })
+
+    const view = new SM.ColumnFilters.GridView({
+      emptyText: this.emptyText || 'No records to display',
+      forceFit: true,
+      listeners: {
+        filterschanged: function (view) {
+          store.filter(view.getFilterFns())
+        }
+      },
+      getRowClass: record => record.data.state === 'disabled' ? 'sm-row-disabled' : ''
+    })
+
+    const bbar = new Ext.Toolbar({
+      items: [
+        {
+          xtype: 'exportbutton',
+          hasMenu: false,
+          grid: this,
+          gridBasename: this.exportName || this.title || 'collections',
+          iconCls: 'sm-export-icon',
+          text: 'CSV'
+        },
+        {
+          xtype: 'tbfill'
+        },
+        {
+          xtype: 'tbseparator'
+        },
+        new SM.RowCountTextItem({
+          store,
+          noun: 'collection',
+          iconCls: 'sm-collection-icon'
+        })
+      ]
+    })
+
+    const config = {
+      cls: this.cls ?? 'sm-round-panel',
+      store,
+      view,
+      sm,
+      columns,
+      bbar
+    }
+    Ext.apply(this, Ext.apply(this.initialConfig, config))
+    this.superclass().initComponent.call(this)
+  }
+})
+
+SM.AppInfo.Collections.SettingsGrid = Ext.extend(Ext.grid.GridPanel, {
+  initComponent: function () {
+    const fields = [
+      {
+        name: 'collectionId',
+        type: 'int'
+      },
+      'name',
+      'state',
+      {
+        name: 'detailEnabled',
+        mapping: 'fields.detail.enabled'
+      },
+      {
+        name: 'detailRequired',
+        mapping: 'fields.detail.required'
+      },
+      {
+        name: 'commentEnabled',
+        mapping: 'fields.comment.enabled'
+      },
+      {
+        name: 'commentRequired',
+        mapping: 'fields.comment.required'
+      },
+      {
+        name: 'canAccept',
+        mapping: 'status.canAccept'
+      },
+      {
+        name: 'resetCriteria',
+        mapping: 'status.resetCriteria'
+      },
+      {
+        name: 'minAcceptGrant',
+        mapping: 'status.minAcceptGrant'
+      }
+    ]
+
+    const store = new Ext.data.JsonStore({
+      fields,
+      root: '',
+      idProperty: 'collectionId',
+      sortInfo: {
+        field: 'name',
+        direction: 'ASC' // or 'DESC' (case sensitive for local sorting)
+      },
+      listeners: {
+        // load: () => sm.selectFirstRow()
+      }
+    })
+
+    const columns = [
+      {
+        header: "Id",
+        hidden: true,
+        dataIndex: 'collectionId',
+        sortable: true,
+      },
+      {
+        header: "name",
+        dataIndex: 'name',
+        sortable: true,
+        filter: { type: 'string' }
+      },
+      {
+        header: "state",
+        hidden: true,
+        dataIndex: 'state',
+        sortable: true,
+        filter: { type: 'values' }
+      },
+      {
+        header: "detailEnabled",
+        dataIndex: 'detailEnabled',
+        sortable: true
+      },
+      {
+        header: "detailRequired",
+        dataIndex: 'detailRequired',
+        sortable: true
+      },
+      {
+        header: "commentlEnabled",
+        dataIndex: 'commentEnabled',
+        sortable: true
+      },
+      {
+        header: "commentRequired",
+        dataIndex: 'commentRequired',
+        sortable: true
+      },
+      {
+        header: "canAccept",
+        dataIndex: 'canAccept',
+        sortable: true
+      },
+      {
+        header: "resetCriteria",
+        dataIndex: 'resetCriteria',
+        sortable: true
+      },
+      {
+        header: "minAcceptGrant",
+        dataIndex: 'minAcceptGrant',
+        sortable: true
+      }
+    ]
+
+    const sm = new Ext.grid.RowSelectionModel({
+      singleSelect: true,
+      listeners: {
+        rowselect: this.onRowSelect ?? Ext.emptyFn
+      }
     })
 
     const view = new SM.ColumnFilters.GridView({
@@ -1326,27 +1578,30 @@ SM.AppInfo.Collections.Container = Ext.extend(Ext.Container, {
       const assetStig = []
       const grants = []
       const labels = []
+      const settingRows = []
       for (const collectionId in data) {
-        const { assetStigRanges, grantCounts, labelCounts, name = collectionId, state, ...rest } = data[collectionId]
+        const { settings, assetStigRanges, grantCounts, labelCounts, name = collectionId, state, ...rest } = data[collectionId]
         overview.push({ collectionId, name, state, ...rest })
         assetStig.push({ collectionId, name, state, ...assetStigRanges })
         grants.push({ collectionId, name, state, ...grantCounts })
         labels.push({ collectionId, name, state, ...labelCounts })
+        settingRows.push({ collectionId, name, state, ...settings })
       }
       overviewGrid.store.loadData(overview)
       assetStigGrid.store.loadData(assetStig)
       grantsGrid.store.loadData(grants)
       labelsGrid.store.loadData(labels)
+      settingsGrid.store.loadData(settingRows)
 
       const overviewLocked = []
       for (const collectionId in data) {
         const { name = collectionId, ...rest } = data[collectionId]
         overviewLocked.push({ collectionId, name, ...rest })
       }
-      overviewGridLocked.store.loadData(overviewLocked)
+      fullGridLocked.store.loadData(overviewLocked)
     }
 
-    function overviewOnRowSelect(sm, index, record) {
+    function loadRestrictedUsers(sm, index, record) {
       const data = record.data.restrictedUsers
       const rows = []
       for (const userId in data) {
@@ -1355,78 +1610,37 @@ SM.AppInfo.Collections.Container = Ext.extend(Ext.Container, {
       restrictedUsersGrid.store.loadData(rows)
     }
 
-    function onRowDblClick(grid, rowIndex, e) {
-      const sourceRecord = grid.store.getAt(rowIndex)
+    function syncGridsOnRowSelect(sm, rowIndex, e) {
+      const sourceRecord = sm.grid.store.getAt(rowIndex)
       console.log(sourceRecord)
       for (const peeredGrid of peeredGrids) {
-        if (grid.title !== peeredGrid.title) {
+        if (sm.grid.title !== peeredGrid.title) {
           const destRecord = peeredGrid.store.getById(sourceRecord.id)
           const destIndex = peeredGrid.store.indexOf(destRecord)
+          peeredGrid.selModel.suspendEvents()
           peeredGrid.selModel.selectRow(destIndex)
+          peeredGrid.selModel.resumeEvents()
           peeredGrid.view.focusRow(destIndex)
         }
       }
+      // load restricted users grid, record in overviewGrid contains restrictedUsers field
+      loadRestrictedUsers(null, null, overviewGrid.store.getById(sourceRecord.id))
     }
 
-    function bbarBtnHandler(btn) {
-      centerContainer.removeAll(false)
-      if (btn.text === 'Join') {
-        centerContainer.add(overviewGridLocked)
-        sepContainer.hide()
-        overviewGridLocked.show()
-      }
-      else {
-        centerContainer.add(sepContainer)
-        overviewGridLocked.hide()
-        sepContainer.show()
-      }
-      centerContainer.doLayout()
-    }
-
-    function toolHandler(event, toolEl, panel, tc) {
-      console.log(panel)
-      centerContainer.removeAll(false)
-      if (tc.id === 'collapse-grids') {
-        centerContainer.add(overviewGridLocked)
-        sepContainer.hide()
-        overviewGridLocked.show()
-      }
-      else if (tc.id === 'expand-grid') {
-        centerContainer.add(sepContainer)
-        overviewGridLocked.hide()
-        sepContainer.show()
-      }
-      centerContainer.doLayout()
-    }
-
-    const collapseToolConfig = {
-      id: 'collapse-grids',
-      qtip: 'Collapse into a single grid',
-      handler: toolHandler
-    }
     const overviewGrid = new SM.AppInfo.Collections.OverviewGrid({
       title: 'Overview',
       border: false,
-      tools: [collapseToolConfig],
       region: 'center',
-      onRowSelect: overviewOnRowSelect,
-      bbarBtnHandler,
-      listeners: {
-        rowdblclick: onRowDblClick
-      }
+      onRowSelect: syncGridsOnRowSelect,
+      hideMode: 'offsets'
     })
-    const overviewGridLocked = new SM.AppInfo.Collections.OverviewGridLocked({
-      title: 'Overview',
+    const fullGridLocked = new SM.AppInfo.Collections.FullGridLocked({
+      title: 'All Fields',
       border: false,
-      tools: [{
-        id: 'expand-grid',
-        qtip: 'Expand into multiple grids',
-        handler: toolHandler
-      }],
       id: 'appinfo-locked',
       autoDestroy: false,
-      layout: 'fit',
-      bbarBtnHandler
+      onRowSelect: syncGridsOnRowSelect,
+      hideMode: 'offsets'
     })
 
     const restrictedUsersGrid = new SM.AppInfo.Collections.RestrictedUsersGrid({
@@ -1440,72 +1654,39 @@ SM.AppInfo.Collections.Container = Ext.extend(Ext.Container, {
     const grantsGrid = new SM.AppInfo.Collections.GrantsGrid({
       title: 'Grants',
       border: false,
-      tools: [collapseToolConfig],
-      margins: { top: 0, right: 5, bottom: 0, left: 0 },
-      flex: 1,
-      listeners: {
-        rowdblclick: onRowDblClick
-      }
+      onRowSelect: syncGridsOnRowSelect,
+      hideMode: 'offsets'
     })
     const labelsGrid = new SM.AppInfo.Collections.LabelsGrid({
       title: 'Labels',
       border: false,
-      tools: [collapseToolConfig],
-      margins: { top: 0, right: 5, bottom: 0, left: 5 },
-      flex: 1,
-      listeners: {
-        rowdblclick: onRowDblClick
-      }
+      onRowSelect: syncGridsOnRowSelect,
+      hideMode: 'offsets'
     })
     const assetStigGrid = new SM.AppInfo.Collections.AssetStigGrid({
       title: 'STIG Assignment Ranges',
       border: false,
-      tools: [collapseToolConfig],
-      margins: { top: 0, right: 0, bottom: 0, left: 5 },
-      flex: 1,
-      listeners: {
-        rowdblclick: onRowDblClick
-      }
+      onRowSelect: syncGridsOnRowSelect,
+      hideMode: 'offsets'
     })
-    const peeredGrids = [overviewGrid, grantsGrid, labelsGrid, assetStigGrid]
-
-    const southContainer = new Ext.Container({
-      region: 'south',
-      // autoDestroy: false,
-      height: 300,
-      split: true,
-      layout: 'hbox',
-      layoutConfig: {
-        align: 'stretch',
-      },
-      items: [
-        grantsGrid,
-        labelsGrid,
-        assetStigGrid,
-      ]
-    })
-
-    const sepContainer = new Ext.Container({
-      id: 'appinfo-sep',
-      layout: 'border',
-      autoDestroy: false,
-      items: [overviewGrid, southContainer]
-    })
-
-    const centerContainer = new Ext.Container({
-      id: 'appinfo-center',
-      region: 'center',
-      // autoDestroy: false,
+    const settingsGrid = new SM.AppInfo.Collections.SettingsGrid({
+      title: 'Settings',
       border: false,
-      layout: 'fit',
-      items: [sepContainer]
+      onRowSelect: syncGridsOnRowSelect,
+      hideMode: 'offsets'
     })
-
+    const peeredGrids = [overviewGrid, grantsGrid, labelsGrid, assetStigGrid, settingsGrid, fullGridLocked]
+    const centerTp = new Ext.TabPanel({
+      region: 'center',
+      boder: false,
+      activeTab: 0,
+      deferredRender: false,
+      items: peeredGrids,
+    })
     const config = {
       layout: 'border',
-      // autoDestroy: false,
       items: [
-        centerContainer,
+        centerTp,
         restrictedUsersGrid
       ],
       loadData
@@ -2757,15 +2938,15 @@ SM.AppInfo.ShareFile.Panel = Ext.extend(Ext.Panel, {
 })
 
 SM.AppInfo.SourceMessage = {
-  header: 'Help by sharing with the STIG Manager project',
-  text: 'The <span class="sm-share-icon" style="padding-left: 14px;background-size: 12px 12px;background-repeat:no-repeat;background-position:left;font-weight:600;">Save for Sharing</span> option can create a file without identifiers or compliance data. Send to RMF_Tools@us.navy.mil.'
+  header: 'Help the STIG Manager OSS project by sharing',
+  text: 'The <span class="sm-share-icon" style="padding-left: 14px;background-size: 12px 12px;background-repeat:no-repeat;background-position:left;font-weight:600;">Save for Sharing</span> option can create a file without identifiers or compliance data. Mail to <a href="mailto:RMF_Tools@us.navy.mil">RMF_Tools@us.navy.mil</a>.'
 }
 
 SM.AppInfo.SourcePanel = Ext.extend(Ext.Panel, {
   initComponent: function () {
     const sourceDisplayField = new Ext.form.DisplayField({
       fieldLabel: 'Source',
-      width: 370
+      width: 330
     })
     const dateDisplayField = new Ext.form.DisplayField({
       fieldLabel: 'Date',
