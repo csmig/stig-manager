@@ -6,7 +6,11 @@ Ext.ns("SM.AppInfo.Users")
 Ext.ns("SM.AppInfo.Nodejs")
 Ext.ns("SM.AppInfo.ShareFile")
 
-SM.AppInfo.numberRenderer = new Intl.NumberFormat().format
+SM.AppInfo.numberFormat = new Intl.NumberFormat().format
+
+SM.AppInfo.numberRenderer = function (value) {
+    return value !== 0 ? SM.AppInfo.numberFormat(value) : `<span class="sm-render-zero">${value}</span>`
+}
 
 SM.AppInfo.usernameLookup = {}
 
@@ -83,7 +87,13 @@ SM.AppInfo.transformPreviousSchemas = function (input) {
       const { roles, ...keep } = i[id]
       o[id.padStart(padLength, '0')] = {
         ...keep,
-        privileges: roles?.filter(v => v !== 'other') || []
+        privileges: roles?.filter(v => v !== 'other') || [],
+        roles: {
+          restricted: null,
+          full: null,
+          manage: null,
+          owner: null
+        }
       }
     }
     return o
@@ -1678,7 +1688,7 @@ SM.AppInfo.Collections.Container = Ext.extend(Ext.Container, {
     const peeredGrids = [overviewGrid, grantsGrid, labelsGrid, assetStigGrid, settingsGrid, fullGridLocked]
     const centerTp = new Ext.TabPanel({
       region: 'center',
-      boder: false,
+      border: false,
       activeTab: 0,
       deferredRender: false,
       items: peeredGrids,
@@ -2422,7 +2432,31 @@ SM.AppInfo.Users.InfoGrid = Ext.extend(Ext.grid.GridPanel, {
       'username',
       'created',
       'lastAccess',
-      'privileges'
+      'privileges',
+      {
+        name: 'restricted',
+        mapping: 'roles.restricted',
+        useNull: true,
+        type: 'int'
+      },
+      {
+        name: 'full',
+        mapping: 'roles.full',
+        useNull: true,
+        type: 'int'
+      },
+      {
+        name: 'manage',
+        mapping: 'roles.manage',
+        useNull: true,
+        type: 'int'
+      },
+      {
+        name: 'owner',
+        mapping: 'roles.owner',
+        useNull: true,
+        type: 'int'
+      }
     ]
 
     const store = new Ext.data.JsonStore({
@@ -2434,6 +2468,10 @@ SM.AppInfo.Users.InfoGrid = Ext.extend(Ext.grid.GridPanel, {
         direction: 'ASC'
       }
     })
+
+    const dimZerosRenderer = function (value) {
+      return value !== 0 ? value : `<span class="sm-render-zero">${value}</span>`
+    }
 
     const columns = [
       {
@@ -2455,6 +2493,38 @@ SM.AppInfo.Users.InfoGrid = Ext.extend(Ext.grid.GridPanel, {
         sortable: true,
         align: 'right',
         renderer: v => v ? new Date(v * 1000).toISOString() : '-'
+      },
+      {
+        header: 'Owner',
+        dataIndex: 'owner',
+        width: 150,
+        sortable: true,
+        align: 'right',
+        renderer: dimZerosRenderer
+      },
+      {
+        header: 'Manage',
+        dataIndex: 'manage',
+        width: 150,
+        sortable: true,
+        align: 'right',
+        renderer: dimZerosRenderer
+      },
+      {
+        header: 'Full',
+        dataIndex: 'full',
+        width: 150,
+        sortable: true,
+        align: 'right',
+        renderer: dimZerosRenderer
+      },
+      {
+        header: 'Restricted',
+        dataIndex: 'restricted',
+        width: 150,
+        sortable: true,
+        align: 'right',
+        renderer: dimZerosRenderer
       },
       {
         header: 'privileges',
