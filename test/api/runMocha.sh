@@ -11,8 +11,8 @@ usage() {
   exit 
 }
 
-DEFAULT_COMMAND="npx mocha --reporter mochawesome --no-timeouts --showFailed --exit './mocha/**/*.test.js'"
-COMMAND="npx mocha --reporter mochawesome --no-timeouts --showFailed --exit"
+DEFAULT_COMMAND="npx mocha --reporter mochawesome --no-timeouts --showFailed --bail --exit './mocha/**/*.test.js'"
+COMMAND="npx mocha --reporter mochawesome --no-timeouts --showFailed --bail --exit"
 
 PATTERNS=()
 FILES=()
@@ -76,3 +76,4 @@ fi
 
 echo "Running command: $COMMAND"
 eval $COMMAND
+cp dark.css mochawesome-report/assets/app.css

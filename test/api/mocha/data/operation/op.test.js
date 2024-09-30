@@ -5,6 +5,7 @@ const expect = chai.expect
 const config = require('../../testConfig.json')
 const utils = require('../../utils/testUtils.js')
 const iterations = require('../../iterations.js')
+const reference = require('../../referenceData.js')
 
 describe('GET - Op', () => {
   let disabledCollection
@@ -54,12 +55,14 @@ describe('GET - Op', () => {
           }
           expect(res).to.have.status(200)
           expect(res.body).to.be.an('object')
+          const rtc = reference.testCollection
           expect(res.body).to.nested.include({
             schema: 'stig-manager-appinfo-v1.0',
-            'collections.21.assets': 4,
-            'collections.21.assetsDisabled': 1,
-            'collections.21.reviews': 17,
-            'collections.21.reviewsDisabled': 1,
+            [`collections.${rtc.collectionId}.state`]: rtc.appinfo.state,
+            [`collections.${rtc.collectionId}.assets`]: rtc.appinfo.assets,
+            [`collections.${rtc.collectionId}.assetsDisabled`]: rtc.appinfo.assetsDisabled,
+            [`collections.${rtc.collectionId}.reviews`]: rtc.appinfo.reviews,
+            [`collections.${rtc.collectionId}.reviewsDisabled`]: rtc.appinfo.reviewsDisabled,
             [`collections.${disabledCollection.collectionId}.state`]: 'disabled'
           })
         })

@@ -9,7 +9,7 @@ Ext.ns("SM.AppInfo.ShareFile")
 SM.AppInfo.numberFormat = new Intl.NumberFormat().format
 
 SM.AppInfo.numberRenderer = function (value) {
-    return value !== 0 ? SM.AppInfo.numberFormat(value) : `<span class="sm-render-zero">${value}</span>`
+    return value && value !== 0 ? SM.AppInfo.numberFormat(value) : `<span class="sm-render-zero">${value}</span>`
 }
 
 SM.AppInfo.usernameLookup = {}
@@ -37,7 +37,6 @@ SM.AppInfo.transformPreviousSchemas = function (input) {
     const o = {}
     const padLength = Object.keys(i).at(-1).length
     for (const id in i) {
-
       const { 
         assetStigByCollection, 
         restrictedGrantCountsByUser, 
@@ -45,7 +44,27 @@ SM.AppInfo.transformPreviousSchemas = function (input) {
         assetsDisabled, 
         ruleCnt, 
         reviewCntTotal, 
-        reviewCntDisabled, ...keep } = i[id]
+        reviewCntDisabled,
+        labelCounts,
+        ...keep } = i[id]
+
+      // rename restrictedGrantCountsByUser properties to match aclCounts schema
+      for (const userId in restrictedGrantCountsByUser) {
+        restrictedGrantCountsByUser[userId].ruleCounts = {
+          rw: restrictedGrantCountsByUser[userId].stigAssetCount,
+          r: 0,
+          none: 0
+        }
+        delete restrictedGrantCountsByUser[userId].stigAssetCount
+      }
+
+      // rename labelCounts properties
+      labelCounts.collectionLabels = labelCounts.collectionLabelCount
+      delete labelCounts.collectionLabelCount
+      labelCounts.labeledAssets = labelCounts.labeledAssetCount
+      delete labelCounts.labeledAssetCount
+      labelCounts.assetLabels = labelCounts.assetLabelCount
+      delete labelCounts.assetLabelCount
 
       o[id.padStart(padLength, '0')] = {
         assets: assetsTotal - assetsDisabled,
@@ -55,7 +74,10 @@ SM.AppInfo.transformPreviousSchemas = function (input) {
         reviewsDisabled: reviewCntDisabled,
         ...keep,
         assetStigRanges: transformAssetStigByCollection(assetStigByCollection),
-        restrictedUsers: restrictedGrantCountsByUser || {},
+        aclCounts: {
+          users: restrictedGrantCountsByUser || {}
+        },
+        labelCounts,
         settings: {
           fields: {
             detail: {
@@ -85,8 +107,9 @@ SM.AppInfo.transformPreviousSchemas = function (input) {
     const padLength = Object.keys(i).at(-1).length
     for (const id in i) {
       const { roles, ...keep } = i[id]
-      o[id.padStart(padLength, '0')] = {
-        ...keep,
+      // o[id.padStart(padLength, '0')] = {
+      o[id] = {
+          ...keep,
         privileges: roles?.filter(v => v !== 'other') || [],
         roles: {
           restricted: null,
@@ -358,7 +381,11 @@ SM.AppInfo.Collections.OverviewGrid = Ext.extend(Ext.grid.GridPanel, {
         name: 'reviewsTotal',
         convert: (v, r) => r.reviews + r.reviewsDisabled
       },
-      'restrictedUsers'
+      'aclCounts',
+      {
+        name: 'aclCountUsers',
+        convert: (v, r) => Object.keys(r.aclCounts.users).length || 0
+      }
     ]
 
     const store = new Ext.data.JsonStore({
@@ -459,6 +486,13 @@ SM.AppInfo.Collections.OverviewGrid = Ext.extend(Ext.grid.GridPanel, {
         align: 'right',
         renderer: SM.AppInfo.numberRenderer
       },
+      {
+        header: "User ACLs",
+        dataIndex: 'aclCountUsers',
+        sortable: true,
+        align: 'right',
+        renderer: SM.AppInfo.numberRenderer
+      }
     ]
 
     const sm = new Ext.grid.RowSelectionModel({
@@ -540,7 +574,7 @@ SM.AppInfo.Collections.FullGridLocked = Ext.extend(Ext.grid.GridPanel, {
         name: 'reviewsTotal',
         convert: (v, r) => r.reviews + r.reviewsDisabled
       },
-      'restrictedUsers',
+      'aclCounts',
       {
         name: 'range00',
         mapping: 'assetStigRanges.range00'
@@ -578,16 +612,16 @@ SM.AppInfo.Collections.FullGridLocked = Ext.extend(Ext.grid.GridPanel, {
         mapping: 'grantCounts.accessLevel4'
       },
       {
-        name: 'collectionLabelCount',
-        mapping: 'labelCounts.collectionLabelCount'
+        name: 'collectionLabels',
+        mapping: 'labelCounts.collectionLabels'
       },
       {
-        name: 'labeledAssetCount',
-        mapping: 'labelCounts.labeledAssetCount'
+        name: 'labeledAssets',
+        mapping: 'labelCounts.labeledAssets'
       },
       {
-        name: 'assetLabelCount',
-        mapping: 'labelCounts.assetLabelCount'
+        name: 'assetLabels',
+        mapping: 'labelCounts.assetLabels'
       },
       {
         name: 'detailEnabled',
@@ -719,85 +753,85 @@ SM.AppInfo.Collections.FullGridLocked = Ext.extend(Ext.grid.GridPanel, {
         renderer: SM.AppInfo.numberRenderer
       },
       {
-        header: "range00",
+        header: "Range 0",
         dataIndex: 'range00',
         sortable: true,
         align: 'right',
         renderer: SM.AppInfo.numberRenderer
       },
       {
-        header: "range01to05",
+        header: "Range 1-5",
         dataIndex: 'range01to05',
         sortable: true,
         align: 'right',
         renderer: SM.AppInfo.numberRenderer
       },
       {
-        header: "range06to10",
+        header: "Range 6-10",
         dataIndex: 'range06to10',
         sortable: true,
         align: 'right',
         renderer: SM.AppInfo.numberRenderer
       },
       {
-        header: "range11to15",
+        header: "Range 11-15",
         dataIndex: 'range11to15',
         sortable: true,
         align: 'right',
         renderer: SM.AppInfo.numberRenderer
       },
       {
-        header: "range16plus",
+        header: "Range 16+",
         dataIndex: 'range16plus',
         sortable: true,
         align: 'right',
         renderer: SM.AppInfo.numberRenderer
       },
       {
-        header: "accessLevel1",
+        header: "Restricted",
         dataIndex: 'accessLevel1',
         sortable: true,
         align: 'right',
         renderer: SM.AppInfo.numberRenderer
       },
       {
-        header: "accessLevel2",
+        header: "Full",
         dataIndex: 'accessLevel2',
         sortable: true,
         align: 'right',
         renderer: SM.AppInfo.numberRenderer
       },
       {
-        header: "accessLevel3",
+        header: "Manage",
         dataIndex: 'accessLevel3',
         sortable: true,
         align: 'right',
         renderer: SM.AppInfo.numberRenderer
       },
       {
-        header: "accessLevel4",
+        header: "Owner",
         dataIndex: 'accessLevel4',
         sortable: true,
         align: 'right',
         renderer: SM.AppInfo.numberRenderer
       },
       {
-        header: "collectionLabelCount",
-        dataIndex: 'collectionLabelCount',
+        header: "Labels",
+        dataIndex: 'collectionLabels',
         sortable: true,
         align: 'right',
         renderer: SM.AppInfo.numberRenderer
       },
       {
-        header: "labeledAssetCount",
-        dataIndex: 'labeledAssetCount',
+        header: "Labeled",
+        dataIndex: 'labeledAssets',
         sortable: true,
         align: 'right',
         renderer: SM.AppInfo.numberRenderer
       },
       {
-        header: "assetLabelCount",
-        dataIndex: 'assetLabelCount',
+        header: "Tags",
+        dataIndex: 'assetLabels',
         sortable: true,
         align: 'right',
         renderer: SM.AppInfo.numberRenderer
@@ -894,7 +928,7 @@ SM.AppInfo.Collections.FullGridLocked = Ext.extend(Ext.grid.GridPanel, {
   }
 })
 
-SM.AppInfo.Collections.RestrictedUsersGrid = Ext.extend(Ext.grid.GridPanel, {
+SM.AppInfo.Collections.AclGrid = Ext.extend(Ext.grid.GridPanel, {
   initComponent: function () {
     const fields = [
       {
@@ -903,7 +937,23 @@ SM.AppInfo.Collections.RestrictedUsersGrid = Ext.extend(Ext.grid.GridPanel, {
       },
       'username',
       'uniqueAssets',
-      'stigAssetCount'
+      'uniqueAssetsDisabled',
+      'uniqueStigs',
+      'uniqueStigsDisabled',
+      {
+        name: 'ruleCountRw',
+        mapping: 'ruleCounts.rw'
+      },
+      {
+        name: 'ruleCountR',
+        mapping: 'ruleCounts.r'
+      },
+      {
+        name: 'ruleCountNone',
+        mapping: 'ruleCounts.none'
+      },
+      'role',
+      'access'
     ]
 
     const store = new Ext.data.JsonStore({
@@ -912,10 +962,7 @@ SM.AppInfo.Collections.RestrictedUsersGrid = Ext.extend(Ext.grid.GridPanel, {
       idProperty: 'userId',
       sortInfo: {
         field: 'username',
-        direction: 'ASC' // or 'DESC' (case sensitive for local sorting)
-      },
-      listeners: {
-        // load: () => sm.selectFirstRow()
+        direction: 'ASC'
       }
     })
 
@@ -927,27 +974,66 @@ SM.AppInfo.Collections.RestrictedUsersGrid = Ext.extend(Ext.grid.GridPanel, {
         sortable: true,
       },
       {
-        header: "username",
-        // width: 25,
+        header: "Grantee",
         dataIndex: 'username',
         sortable: true,
         filter: { type: 'string' }
       },
       {
-        header: "uniqueAssets",
-        // width: 25,
-        dataIndex: 'uniqueAssets',
+        header: "Role",
+        dataIndex: 'role',
         sortable: true,
-        renderer: SM.AppInfo.numberRenderer
+        filter: { type: 'string' }
       },
       {
-        header: "stigAssetCount",
-        // width: 25,
-        dataIndex: 'stigAssetCount',
+        header: "Rules RW",
+        dataIndex: 'ruleCountRw',
         sortable: true,
         align: 'right',
         renderer: SM.AppInfo.numberRenderer
-      }
+      },
+      {
+        header: "Rules R",
+        dataIndex: 'ruleCountR',
+        sortable: true,
+        align: 'right',
+        renderer: SM.AppInfo.numberRenderer
+      },
+      {
+        header: "Rules None",
+        dataIndex: 'ruleCountNone',
+        sortable: true,
+        align: 'right',
+        renderer: SM.AppInfo.numberRenderer
+      },
+      {
+        header: "Assets",
+        dataIndex: 'uniqueAssets',
+        sortable: true,
+        align: 'right',
+        renderer: SM.AppInfo.numberRenderer
+      },
+      {
+        header: "Assets Disabled",
+        dataIndex: 'uniqueAssetsDisabled',
+        sortable: true,
+        align: 'right',
+        renderer: SM.AppInfo.numberRenderer
+      },
+      {
+        header: "STIGs",
+        dataIndex: 'uniqueStigs',
+        sortable: true,
+        align: 'right',
+        renderer: SM.AppInfo.numberRenderer
+      },
+      {
+        header: "STIGs Disabled",
+        dataIndex: 'uniqueStigsDisabled',
+        sortable: true,
+        align: 'right',
+        renderer: SM.AppInfo.numberRenderer
+      },
     ]
 
     const sm = new Ext.grid.RowSelectionModel({
@@ -957,7 +1043,7 @@ SM.AppInfo.Collections.RestrictedUsersGrid = Ext.extend(Ext.grid.GridPanel, {
     const view = new SM.ColumnFilters.GridView({
       emptyText: this.emptyText || 'No records to display',
       deferEmptyText: false,
-      // forceFit: true,
+      forceFit: true,
       markDirty: false,
       listeners: {
         filterschanged: function (view) {
@@ -972,7 +1058,7 @@ SM.AppInfo.Collections.RestrictedUsersGrid = Ext.extend(Ext.grid.GridPanel, {
           xtype: 'exportbutton',
           hasMenu: false,
           grid: this,
-          gridBasename: this.exportName || this.title || 'collections',
+          gridBasename: this.exportName || this.title || 'acls',
           iconCls: 'sm-export-icon',
           text: 'CSV'
         },
@@ -984,7 +1070,7 @@ SM.AppInfo.Collections.RestrictedUsersGrid = Ext.extend(Ext.grid.GridPanel, {
         },
         new SM.RowCountTextItem({
           store,
-          noun: 'collection',
+          noun: 'ACL',
           iconCls: 'sm-collection-icon'
         })
       ]
@@ -1295,9 +1381,9 @@ SM.AppInfo.Collections.LabelsGrid = Ext.extend(Ext.grid.GridPanel, {
       },
       'name',
       'state',
-      'collectionLabelCount',
-      'labeledAssetCount',
-      'assetLabelCount'
+      'collectionLabels',
+      'labeledAssets',
+      'assetLabels'
     ]
 
     const store = new Ext.data.JsonStore({
@@ -1337,24 +1423,21 @@ SM.AppInfo.Collections.LabelsGrid = Ext.extend(Ext.grid.GridPanel, {
       },
       {
         header: "Labels",
-        // width: 25,
-        dataIndex: 'collectionLabelCount',
+        dataIndex: 'collectionLabels',
         sortable: true,
         align: 'right',
         renderer: SM.AppInfo.numberRenderer
       },
       {
         header: "Labeled",
-        // width: 25,
-        dataIndex: 'labeledAssetCount',
+        dataIndex: 'labeledAssets',
         sortable: true,
         align: 'right',
         renderer: SM.AppInfo.numberRenderer
       },
       {
         header: "Tags",
-        // width: 25,
-        dataIndex: 'assetLabelCount',
+        dataIndex: 'assetLabels',
         sortable: true,
         align: 'right',
         renderer: SM.AppInfo.numberRenderer
@@ -1602,6 +1685,7 @@ SM.AppInfo.Collections.Container = Ext.extend(Ext.Container, {
       grantsGrid.store.loadData(grants)
       labelsGrid.store.loadData(labels)
       settingsGrid.store.loadData(settingRows)
+      aclGrid.store.removeAll()
 
       const overviewLocked = []
       for (const collectionId in data) {
@@ -1611,13 +1695,13 @@ SM.AppInfo.Collections.Container = Ext.extend(Ext.Container, {
       fullGridLocked.store.loadData(overviewLocked)
     }
 
-    function loadRestrictedUsers(sm, index, record) {
-      const data = record.data.restrictedUsers
+    function loadAce(sm, index, record) {
+      const data = record.data.aclCounts?.users
       const rows = []
       for (const userId in data) {
         rows.push({ userId, username: SM.AppInfo.usernameLookup[userId], ...data[userId] })
       }
-      restrictedUsersGrid.store.loadData(rows)
+      aclGrid.store.loadData(rows)
     }
 
     function syncGridsOnRowSelect(sm, rowIndex, e) {
@@ -1634,7 +1718,7 @@ SM.AppInfo.Collections.Container = Ext.extend(Ext.Container, {
         }
       }
       // load restricted users grid, record in overviewGrid contains restrictedUsers field
-      loadRestrictedUsers(null, null, overviewGrid.store.getById(sourceRecord.id))
+      loadAce(null, null, overviewGrid.store.getById(sourceRecord.id))
     }
 
     const overviewGrid = new SM.AppInfo.Collections.OverviewGrid({
@@ -1653,13 +1737,13 @@ SM.AppInfo.Collections.Container = Ext.extend(Ext.Container, {
       hideMode: 'offsets'
     })
 
-    const restrictedUsersGrid = new SM.AppInfo.Collections.RestrictedUsersGrid({
-      title: 'Restricted Users',
+    const aclGrid = new SM.AppInfo.Collections.AclGrid({
+      title: 'Access Control Lists',
       border: false,
       collapsible: true,
-      region: 'east',
+      region: 'south',
       split: true,
-      width: 340
+      height: 240
     })
     const grantsGrid = new SM.AppInfo.Collections.GrantsGrid({
       title: 'Grants',
@@ -1697,7 +1781,7 @@ SM.AppInfo.Collections.Container = Ext.extend(Ext.Container, {
       layout: 'border',
       items: [
         centerTp,
-        restrictedUsersGrid
+        aclGrid
       ],
       loadData
     }
@@ -2407,6 +2491,9 @@ SM.AppInfo.Requests.Container = Ext.extend(Ext.Container, {
       operationsGrid.store.loadData(operationIds)
       const sep = `<span style="color:gray">&#xFF5C;</span>`
       operationsGrid.setTitle(`API Operations ${sep} ${nr(data.totalRequests)} total requests, ${nr(data.totalApiRequests)} to API, duration ${nr(data.totalRequestDuration)}ms`)
+      usersGrid.store.removeAll()
+      clientsGrid.store.removeAll()
+      projectionsGrid.store.removeAll()
     }
 
     const config = {
@@ -2489,7 +2576,7 @@ SM.AppInfo.Users.InfoGrid = Ext.extend(Ext.grid.GridPanel, {
       {
         header: 'lastAccess',
         dataIndex: 'lastAccess',
-        width: 150,
+        // width: 150,
         sortable: true,
         align: 'right',
         renderer: v => v ? new Date(v * 1000).toISOString() : '-'
@@ -2497,7 +2584,7 @@ SM.AppInfo.Users.InfoGrid = Ext.extend(Ext.grid.GridPanel, {
       {
         header: 'Owner',
         dataIndex: 'owner',
-        width: 150,
+        // width: 10,
         sortable: true,
         align: 'right',
         renderer: dimZerosRenderer
@@ -2505,7 +2592,7 @@ SM.AppInfo.Users.InfoGrid = Ext.extend(Ext.grid.GridPanel, {
       {
         header: 'Manage',
         dataIndex: 'manage',
-        width: 150,
+        // width: 150,
         sortable: true,
         align: 'right',
         renderer: dimZerosRenderer
@@ -2513,7 +2600,7 @@ SM.AppInfo.Users.InfoGrid = Ext.extend(Ext.grid.GridPanel, {
       {
         header: 'Full',
         dataIndex: 'full',
-        width: 150,
+        // width: 150,
         sortable: true,
         align: 'right',
         renderer: dimZerosRenderer
@@ -2521,7 +2608,7 @@ SM.AppInfo.Users.InfoGrid = Ext.extend(Ext.grid.GridPanel, {
       {
         header: 'Restricted',
         dataIndex: 'restricted',
-        width: 150,
+        // width: 150,
         sortable: true,
         align: 'right',
         renderer: dimZerosRenderer
@@ -2529,7 +2616,7 @@ SM.AppInfo.Users.InfoGrid = Ext.extend(Ext.grid.GridPanel, {
       {
         header: 'privileges',
         dataIndex: 'privileges',
-        width: 250,
+        // width: 250,
         sortable: true,
         align: 'right',
         renderer: v => JSON.stringify(v)
@@ -2537,7 +2624,7 @@ SM.AppInfo.Users.InfoGrid = Ext.extend(Ext.grid.GridPanel, {
       {
         header: 'created',
         dataIndex: 'created',
-        width: 150,
+        // width: 150,
         sortable: true,
         align: 'right'
       }
@@ -2630,17 +2717,17 @@ SM.AppInfo.Users.Container = Ext.extend(Ext.Container, {
 
     const overallGrid = new SM.AppInfo.KeyValueGrid({
       title: 'Privileges - Overall',
-      margins: { top: 0, right: 0, bottom: 5, left: 0 },
+      margins: { top: 0, right: 5, bottom: 0, left: 0 },
       ...privilegeGridOptions
     })
     const last30Grid = new SM.AppInfo.KeyValueGrid({
       title: 'Privileges - Active last 30d',
-      margins: { top: 5, right: 0, bottom: 5, left: 0 },
+      margins: { top: 0, right: 5, bottom: 0, left: 5 },
       ...privilegeGridOptions
     })
     const last90Grid = new SM.AppInfo.KeyValueGrid({
       title: 'Privileges - Active last 90d',
-      margins: { top: 5, right: 0, bottom: 0, left: 0 },
+      margins: { top: 0, right: 0, bottom: 0, left: 5 },
       ...privilegeGridOptions
     })
 
@@ -2657,11 +2744,11 @@ SM.AppInfo.Users.Container = Ext.extend(Ext.Container, {
     })
 
     const privilegeContainer = new Ext.Container({
-      region: 'east',
+      region: 'south',
       split: true,
-      width: 300,
+      height: 200,
       bodyStyle: 'background-color: transparent;',
-      layout: 'vbox',
+      layout: 'hbox',
       layoutConfig: {
         align: 'stretch',
       },
@@ -3194,6 +3281,7 @@ SM.AppInfo.showAppInfoTab = async function (options) {
 
   async function onFileSelected(uploadField) {
     try {
+      thisTab.getEl().mask('Loading from file...')
       let input = uploadField.fileInput.dom
       const text = await input.files[0].text()
       data = SM.AppInfo.transformPreviousSchemas(SM.safeJSONParse(text))
@@ -3210,6 +3298,7 @@ SM.AppInfo.showAppInfoTab = async function (options) {
     }
     finally {
       uploadField.reset()
+      thisTab.getEl()?.unmask()
     }
   }
 
@@ -3258,7 +3347,7 @@ SM.AppInfo.showAppInfoTab = async function (options) {
     title: 'Source',
     region: 'north',
     border: false,
-    height: 150,
+    height: 145,
     onFileSelected,
     onFetchFromApi,
     onSaveFull,
@@ -3276,7 +3365,8 @@ SM.AppInfo.showAppInfoTab = async function (options) {
       tabchange: function () {
         console.log('tabPanel event')
       }
-    }
+    },
+    flex: 1
 
   })
 
@@ -3286,7 +3376,10 @@ SM.AppInfo.showAppInfoTab = async function (options) {
     iconCls: 'sm-info-circle-icon',
     title: 'Application Info',
     closable: true,
-    layout: 'border',
+    layout: 'vbox',
+    layoutConfig: {
+      align: 'stretch'
+    },
     border: false,
     items: [sourcePanel, tabPanel]
   })

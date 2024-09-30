@@ -631,27 +631,49 @@ exports.getAppInfo = async function() {
     collection c
     left join collection_label cl on cl.collectionId = c.collectionId
     left join collection_label_asset_map clam on clam.clId = cl.clId
+    left join asset a on clam.assetId = a.assetId and a.state = "enabled"
   GROUP BY
     c.collectionId
   `  
-  const sqlRestrictedGrantCountsByCollection = `
-  select 
-    collectionId, 
-    json_arrayagg(perUser) as restrictedUserGrantCounts
-  from 
-    (select
+  const sqlAclUserCountsByCollection = `
+    with ctePerUser as (select
       a.collectionId, 
-      json_object('user', usam.userId, 'stigAssetCount', count(usam.saId), 'uniqueAssets', count(distinct sam.assetId)) as perUser
+      json_object(
+      'userId', usam.userId, 
+      'ruleCounts', json_object(
+        'rw', count(usam.saId),
+        'r', 0,
+        'none', 0
+      ), 
+      'uniqueAssets', count(distinct if(a.state = 'enabled', sam.assetId, null)),
+      'uniqueAssetsDisabled', count(distinct if(a.state = 'disabled', sam.assetId, null)),
+      'uniqueStigs', count(distinct if(a.state = 'enabled', sam.benchmarkId, null)),
+      'uniqueStigsDisabled', count(distinct if(a.state = 'disabled', sam.benchmarkId, null)),
+      'role', 
+        case when cg.accessLevel = 1 then 'restricted' else 
+          case when cg.accessLevel = 2 then 'full' else
+            case when cg.accessLevel = 3 then 'manage' else
+              case when cg.accessLevel = 4 then 'owner'
+              end
+            end
+          end
+        end
+      ) as perUser
     from 
       user_stig_asset_map usam
       left join stig_asset_map sam on sam.saId=usam.saId
       left join asset a on a.assetId = sam.assetId
+      left join collection_grant cg on usam.userId = cg.userId and a.collectionId = cg.collectionId
     group by
-      userId, collectionId)
-    as sub
-  group by 
-    sub.collectionId
-`
+      usam.userId, a.collectionId)
+    select 
+      collectionId, 
+      json_arrayagg(perUser) as aclCounts
+    from 
+      ctePerUser
+    group by 
+      collectionId
+  `
   const sqlGrantCounts = `
   SELECT 
     collectionId,
@@ -668,16 +690,25 @@ exports.getAppInfo = async function() {
   `
   const sqlUserInfo = `
   select 
-    userId,
-    username,
-    created, 
-    lastAccess,
+    ud.userId,
+    ud.username,
+    ud.created, 
+    ud.lastAccess,
     coalesce(
-      JSON_EXTRACT(user_data.lastClaims, "$.${config.oauth.claims.privilegesPath}"),
+      JSON_EXTRACT(ud.lastClaims, "$.${config.oauth.claims.privilegesPath}"),
       json_array()
-    ) as privileges
+    ) as privileges,
+    json_object(
+		  "restricted", sum(case when cg.accessLevel = 1 then 1 else 0 end),
+      "full", sum(case when cg.accessLevel = 2 then 1 else 0 end),
+		  "manage", sum(case when cg.accessLevel = 3 then 1 else 0 end),
+      "owner", sum(case when cg.accessLevel = 4 then 1 else 0 end)
+	  ) as roles
   from 
-    stigman.user_data
+    user_data ud
+    left join collection_grant cg using (userId)
+  group by
+	  ud.userId
   `
   const sqlMySqlVersion = `SELECT VERSION() as version`
 
@@ -762,7 +793,7 @@ exports.getAppInfo = async function() {
     [assetStigByCollection],
     [countsByCollection],
     [labelCountsByCollection],
-    [restrictedGrantCountsByCollection],
+    [aclUserCountsByCollection],
     [grantCountsByCollection],
     [userInfo],
     [mySqlVersion],
@@ -773,7 +804,7 @@ exports.getAppInfo = async function() {
     dbUtils.pool.query(sqlCollectionAssetStigs),
     dbUtils.pool.query(sqlCountsByCollection),
     dbUtils.pool.query(sqlLabelCountsByCollection),
-    dbUtils.pool.query(sqlRestrictedGrantCountsByCollection),
+    dbUtils.pool.query(sqlAclUserCountsByCollection),
     dbUtils.pool.query(sqlGrantCounts),
     dbUtils.pool.query(sqlUserInfo),
     dbUtils.pool.query(sqlMySqlVersion),
@@ -810,7 +841,7 @@ exports.getAppInfo = async function() {
   countsByCollection = createObjectFromKeyValue(countsByCollection, "collectionId")
   labelCountsByCollection = createObjectFromKeyValue(labelCountsByCollection, "collectionId")
   assetStigByCollection = createObjectFromKeyValue(assetStigByCollection, "collectionId")
-  restrictedGrantCountsByCollection = createObjectFromKeyValue(restrictedGrantCountsByCollection, "collectionId")
+  aclUserCountsByCollection = createObjectFromKeyValue(aclUserCountsByCollection, "collectionId")
   grantCountsByCollection = createObjectFromKeyValue(grantCountsByCollection, "collectionId")
 
   // Bundle "byCollection" stats together by collectionId
@@ -819,12 +850,18 @@ exports.getAppInfo = async function() {
     if (assetStigByCollection[collectionId]) {
       countsByCollection[collectionId].assetStigRanges = assetStigByCollection[collectionId]
     }
-    // Add restrictedGrant data to countsByCollection
-    if (restrictedGrantCountsByCollection[collectionId]) {
-      countsByCollection[collectionId].restrictedUsers = createObjectFromKeyValue(restrictedGrantCountsByCollection[collectionId].restrictedUserGrantCounts, "user")
+    // Add acl data to countsByCollection
+    if (aclUserCountsByCollection[collectionId]) {
+      countsByCollection[collectionId].aclCounts = {
+        users: createObjectFromKeyValue(aclUserCountsByCollection[collectionId].aclCounts, "userId"),
+        groups: {}
+      }
     }
     else {
-      countsByCollection[collectionId].restrictedUsers = {}
+      countsByCollection[collectionId].aclCounts = {
+        users: {},
+        groups: {}
+      }
     }
     // Add grant data to countsByCollection
     if (grantCountsByCollection[collectionId]) {
