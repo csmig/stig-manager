@@ -576,6 +576,10 @@ SM.AppInfo.Collections.FullGridLocked = Ext.extend(Ext.grid.GridPanel, {
       },
       'aclCounts',
       {
+        name: 'aclCountUsers',
+        convert: (v, r) => Object.keys(r.aclCounts.users).length || 0
+      },
+      {
         name: 'range00',
         mapping: 'assetStigRanges.range00'
       },
@@ -596,20 +600,20 @@ SM.AppInfo.Collections.FullGridLocked = Ext.extend(Ext.grid.GridPanel, {
         mapping: 'assetStigRanges.range16plus'
       },
       {
-        name: 'accessLevel1',
-        mapping: 'grantCounts.accessLevel1'
+        name: 'restricted',
+        mapping: 'grantCounts.restricted'
       },
       {
-        name: 'accessLevel2',
-        mapping: 'grantCounts.accessLevel2'
+        name: 'full',
+        mapping: 'grantCounts.full'
       },
       {
-        name: 'accessLevel3',
-        mapping: 'grantCounts.accessLevel3'
+        name: 'manage',
+        mapping: 'grantCounts.manage'
       },
       {
-        name: 'accessLevel4',
-        mapping: 'grantCounts.accessLevel4'
+        name: 'owner',
+        mapping: 'grantCounts.owner'
       },
       {
         name: 'collectionLabels',
@@ -753,6 +757,13 @@ SM.AppInfo.Collections.FullGridLocked = Ext.extend(Ext.grid.GridPanel, {
         renderer: SM.AppInfo.numberRenderer
       },
       {
+        header: "User ACLs",
+        dataIndex: 'aclCountUsers',
+        sortable: true,
+        align: 'right',
+        renderer: SM.AppInfo.numberRenderer
+      },     
+      {
         header: "Range 0",
         dataIndex: 'range00',
         sortable: true,
@@ -789,28 +800,28 @@ SM.AppInfo.Collections.FullGridLocked = Ext.extend(Ext.grid.GridPanel, {
       },
       {
         header: "Restricted",
-        dataIndex: 'accessLevel1',
+        dataIndex: 'restricted',
         sortable: true,
         align: 'right',
         renderer: SM.AppInfo.numberRenderer
       },
       {
         header: "Full",
-        dataIndex: 'accessLevel2',
+        dataIndex: 'full',
         sortable: true,
         align: 'right',
         renderer: SM.AppInfo.numberRenderer
       },
       {
         header: "Manage",
-        dataIndex: 'accessLevel3',
+        dataIndex: 'manage',
         sortable: true,
         align: 'right',
         renderer: SM.AppInfo.numberRenderer
       },
       {
         header: "Owner",
-        dataIndex: 'accessLevel4',
+        dataIndex: 'owner',
         sortable: true,
         align: 'right',
         renderer: SM.AppInfo.numberRenderer
@@ -1239,10 +1250,10 @@ SM.AppInfo.Collections.GrantsGrid = Ext.extend(Ext.grid.GridPanel, {
       },
       'name',
       'state',
-      'accessLevel1',
-      'accessLevel2',
-      'accessLevel3',
-      'accessLevel4'
+      'restricted',
+      'full',
+      'manage',
+      'owner'
     ]
 
     const store = new Ext.data.JsonStore({
@@ -1284,7 +1295,7 @@ SM.AppInfo.Collections.GrantsGrid = Ext.extend(Ext.grid.GridPanel, {
       {
         header: "Restricted",
         width: 40,
-        dataIndex: 'accessLevel1',
+        dataIndex: 'restricted',
         sortable: true,
         align: 'right',
         renderer: SM.AppInfo.numberRenderer
@@ -1292,7 +1303,7 @@ SM.AppInfo.Collections.GrantsGrid = Ext.extend(Ext.grid.GridPanel, {
       {
         header: "Full",
         width: 40,
-        dataIndex: 'accessLevel2',
+        dataIndex: 'full',
         sortable: true,
         align: 'right',
         renderer: SM.AppInfo.numberRenderer
@@ -1300,7 +1311,7 @@ SM.AppInfo.Collections.GrantsGrid = Ext.extend(Ext.grid.GridPanel, {
       {
         header: "Manage",
         width: 40,
-        dataIndex: 'accessLevel3',
+        dataIndex: 'manage',
         sortable: true,
         align: 'right',
         renderer: SM.AppInfo.numberRenderer
@@ -1308,7 +1319,7 @@ SM.AppInfo.Collections.GrantsGrid = Ext.extend(Ext.grid.GridPanel, {
       {
         header: "Owner",
         width: 40,
-        dataIndex: 'accessLevel4',
+        dataIndex: 'owner',
         sortable: true,
         align: 'right',
         renderer: SM.AppInfo.numberRenderer
@@ -2746,7 +2757,7 @@ SM.AppInfo.Users.Container = Ext.extend(Ext.Container, {
     const privilegeContainer = new Ext.Container({
       region: 'south',
       split: true,
-      height: 200,
+      height: 160,
       bodyStyle: 'background-color: transparent;',
       layout: 'hbox',
       layoutConfig: {
@@ -3008,7 +3019,7 @@ SM.AppInfo.TabPanel = Ext.extend(Ext.TabPanel, {
     }
 
     const config = {
-      deferredRender: false,
+      deferredRender: true,
       loadData,
       items
     }
@@ -3096,7 +3107,7 @@ SM.AppInfo.ShareFile.Panel = Ext.extend(Ext.Panel, {
 
 SM.AppInfo.SourceMessage = {
   header: 'Help the STIG Manager OSS project by sharing',
-  text: 'The <span class="sm-share-icon" style="padding-left: 14px;background-size: 12px 12px;background-repeat:no-repeat;background-position:left;font-weight:600;">Save for Sharing</span> option can create a file without identifiers or compliance data. Mail to <a href="mailto:RMF_Tools@us.navy.mil">RMF_Tools@us.navy.mil</a>.'
+  text: 'The <span class="sm-share-icon">Save for Sharing</span> option can create a file without identifiers or compliance data. Mail to <a href="mailto:RMF_Tools@us.navy.mil">RMF_Tools@us.navy.mil</a>.'
 }
 
 SM.AppInfo.SourcePanel = Ext.extend(Ext.Panel, {

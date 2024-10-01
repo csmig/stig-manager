@@ -2386,3 +2386,13 @@ td.x-grid3-hd-over .x-grid3-hd-inner {
 .sm-render-zero {
 	color: #444444
 }
+.sm-appinfo-message a:link {
+	text-decoration: none
+}
+.sm-appinfo-message .sm-share-icon {
+  padding-left: 14px;
+  background-size: 12px 12px;
+  background-repeat:no-repeat;
+  background-position:left;
+  font-weight:600;
+}

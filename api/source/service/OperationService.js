@@ -4,6 +4,19 @@ const config = require('../utils/config')
 const logger = require('../utils/logger')
 const os = require('node:os')
 const _ = require('lodash')
+const { performance } = require('node:perf_hooks')
+
+function reportAndClearPerformance () {
+  const marks = performance.getEntriesByType('mark')
+  let lastMark
+  for (const mark of marks) {
+    if (lastMark) {
+      console.log(`${lastMark.name}: ${mark.startTime - lastMark.startTime}`)
+    }
+    lastMark = mark
+  }
+  performance.clearMarks()
+}
 
 /**
  * Return version information
@@ -677,10 +690,10 @@ exports.getAppInfo = async function() {
   const sqlGrantCounts = `
   SELECT 
     collectionId,
-    SUM(CASE WHEN accessLevel = 1 THEN 1 ELSE 0 END) AS accessLevel1,
-    SUM(CASE WHEN accessLevel = 2 THEN 1 ELSE 0 END) AS accessLevel2,
-    SUM(CASE WHEN accessLevel = 3 THEN 1 ELSE 0 END) AS accessLevel3,
-    SUM(CASE WHEN accessLevel = 4 THEN 1 ELSE 0 END) AS accessLevel4
+    SUM(CASE WHEN accessLevel = 1 THEN 1 ELSE 0 END) AS restricted,
+    SUM(CASE WHEN accessLevel = 2 THEN 1 ELSE 0 END) AS full,
+    SUM(CASE WHEN accessLevel = 3 THEN 1 ELSE 0 END) AS manage,
+    SUM(CASE WHEN accessLevel = 4 THEN 1 ELSE 0 END) AS owner
   FROM 
     collection_grant
   GROUP BY 
@@ -786,7 +799,9 @@ exports.getAppInfo = async function() {
   ORDER by variable_name
   `
 
+  performance.mark('sqlAnalyze')
   await dbUtils.pool.query(sqlAnalyze)
+  performance.mark('batchQueries PromiseAll')
 
   let [
     [schemaInfoArray],
@@ -812,8 +827,10 @@ exports.getAppInfo = async function() {
     dbUtils.pool.query(sqlMySqlStatusValues)
   ])
 
-  // append accurate row counts to the dbInfo.tables object
   const tables = createObjectFromKeyValue(schemaInfoArray, "tableName")
+
+  // append accurate row counts to the dbInfo.tables object
+  performance.mark('rowCount with PromiseAll')
   const rowCountQueries = []
   for (const table in tables) {
     rowCountQueries.push(dbUtils.pool.query(`SELECT "${table}" as tableName, count(*) as rowCount from ${table}`))
@@ -824,20 +841,25 @@ exports.getAppInfo = async function() {
   }
 
   // remove strings from user privileges array that are not meaningful to stigman
+  performance.mark('remove privs')
   const stigmanPrivs = ['admin', 'create_collection']
   for (const user of userInfo ) {
     user.privileges = user.privileges.filter(v => stigmanPrivs.includes(v))
   }
 
   //count privilege assignments and break out by lastAccess time periods
+  performance.mark('breakOutPrivilegeUsage')
   const userPrivilegeCounts = breakOutPrivilegeUsage(userInfo)
 
   //create working copy of operational stats
+  performance.mark('cloneDeep')
   const requests = _.cloneDeep(logger.requestStats)
 
+  performance.mark('sort keys')
   requests.operationIds = sortObjectByKeys(requests.operationIds)
 
   // Create objects keyed by collectionId from arrays of objects
+  performance.mark('create objects')
   countsByCollection = createObjectFromKeyValue(countsByCollection, "collectionId")
   labelCountsByCollection = createObjectFromKeyValue(labelCountsByCollection, "collectionId")
   assetStigByCollection = createObjectFromKeyValue(assetStigByCollection, "collectionId")
@@ -845,6 +867,7 @@ exports.getAppInfo = async function() {
   grantCountsByCollection = createObjectFromKeyValue(grantCountsByCollection, "collectionId")
 
   // Bundle "byCollection" stats together by collectionId
+  performance.mark('bundle')
   for(const collectionId in countsByCollection) {
     // Add assetStig data to countsByCollection 
     if (assetStigByCollection[collectionId]) {
@@ -868,7 +891,12 @@ exports.getAppInfo = async function() {
       countsByCollection[collectionId].grantCounts = grantCountsByCollection[collectionId]
     }
     else {
-      countsByCollection[collectionId].grantCounts = 0
+      countsByCollection[collectionId].grantCounts = {
+        restricted: 0,
+        full: 0,
+        manage: 0,
+        owner: 0
+      }
     }    
     // Add labelCounts data to countsByCollection
     if (labelCountsByCollection[collectionId]) {
@@ -876,7 +904,7 @@ exports.getAppInfo = async function() {
     }
   }
 
-  return ({
+  const returnObj = {
     date: new Date().toISOString(),
     schema,
     version: config.version,
@@ -893,7 +921,10 @@ exports.getAppInfo = async function() {
       status: createObjectFromKeyValue(mySqlStatus, "variable_name", "value")
     },
     nodejs: getNodeValues()
-  })
+  }
+  performance.mark('return')
+  reportAndClearPerformance()
+  return returnObj
 
   // Reduce an array of objects to a single object, using the value of one property as keys
   // and either assigning the rest of the object or the value of a second property as the value.

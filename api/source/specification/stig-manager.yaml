@@ -3959,6 +3959,7 @@ components:
           format: date-time
         lastAccess:
           type: number
+          nullable: true
         privileges:
           type: array
           items:
