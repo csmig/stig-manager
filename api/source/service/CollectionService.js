@@ -323,9 +323,9 @@ exports.queryCollections = async function ({projections = [], filter = {}, eleva
             (SELECT
             (select accessLevel from cteGrantees where collectionId = c.collectionId and userId = ?) as accessLevel,
             (select count(userId) from cteGrantees where collectionId = c.collectionId) as userCount,
-            (select count(distinct a.assetId) from asset a where a.collectionId = c.collectionId) as assetCount,
+            (select count(distinct a.assetId) from asset a where a.collectionId = c.collectionId and a.state = "enabled") as assetCount,
             (select count(distinct sa.assetId) from cteAclEffective cae left join stig_asset_map sa using (saId) where cae.collectionId = c.collectionId) as assetGrantedCount,
-            (select count(sa.saId) from asset a left join stig_asset_map sa using (assetId) where a.collectionId = c.collectionId) as checklistCount,
+            (select count(sa.saId) from asset a left join stig_asset_map sa using (assetId) where a.collectionId = c.collectionId and a.state = "enabled") as checklistCount,
             (select count(saId) from cteAclEffective where collectionId = c.collectionId) as checklistGrantedCount
           ) dt4
         ) as statistics`)
@@ -343,8 +343,8 @@ exports.queryCollections = async function ({projections = [], filter = {}, eleva
           from 
             (SELECT
             (select count(userId) from cteGrantees where collectionId = c.collectionId) as userCount,
-            (select count(distinct a.assetId) from asset a where a.collectionId = c.collectionId) as assetCount,
-            (select count(sa.saId) from asset a left join stig_asset_map sa using (assetId) where a.collectionId = c.collectionId) as checklistCount) dt4
+            (select count(distinct a.assetId) from asset a where a.collectionId = c.collectionId and a.state = "enabled") as assetCount,
+            (select count(sa.saId) from asset a left join stig_asset_map sa using (assetId) where a.collectionId = c.collectionId and a.state = "enabled") as checklistCount) dt4
           ) as statistics`)
       }
     }
