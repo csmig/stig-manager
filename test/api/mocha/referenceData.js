@@ -14,6 +14,11 @@ const reference = {
   // grantCheckUserId: "85",
   // lvl1ValidStigs: ["VPN_SRG_TEST"],
   // testAssetLvl1NoAccess: "62",
+      // 42 = "Collection_X_lvl1_asset-1"
+    // 29 = ACHERNAR_Collection_X_asset
+    // 62 = Collection_X_asset
+    // 154 = Collection_X_lvl1_asset-2
+    // full label = 755
   testCollection: {
     name: "Collection X",
     collectionId: "21",
@@ -40,6 +45,11 @@ const reference = {
       "755b8a28-9a68-11ec-b1bc-0242ac110002",
       "5130dc84-9a68-11ec-b1bc-0242ac110002",
     ],
+    labelsMap: {
+      "test-label-full": "755b8a28-9a68-11ec-b1bc-0242ac110002",
+      "test-label-lvl1": "5130dc84-9a68-11ec-b1bc-0242ac110002"
+    },
+
     allMetadata: [
       {
         key: "pocEmail",
