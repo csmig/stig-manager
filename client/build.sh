@@ -153,6 +153,7 @@ uglifyjs \
 'SM/Inventory.js' \
 'SM/AssetSelection.js' \
 'SM/AppInfo.js' \
+'SM/AppData.js' \
 'library.js' \
 'userAdmin.js' \
 'collectionAdmin.js' \

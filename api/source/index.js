@@ -224,6 +224,9 @@ const STIGMAN = {
           privileges: "${config.oauth.claims.privileges}",
           email: "${config.oauth.claims.email}"
         }
+    },
+    experimental: {
+      appData: "${config.experimental.appData}"
     }
   }
 }    
