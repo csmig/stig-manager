@@ -1977,7 +1977,7 @@ SM.AppInfo.MySql.Container = Ext.extend(Ext.Container, {
       statusGrid.loadData(data.status)
       const lengths = getTotalLengths(data.tables)
       const sep = '<span style="color:gray">&#xFF5C;</span>'
-      tablesGrid.setTitle(`Tables ${sep} Data &thickapprox; ${formatBytes(lengths.data)}  ${sep} Indexes &thickapprox; ${formatBytes(lengths.index)}  ${sep} Version ${data.variables.version} ${sep} Up ${SM.AppInfo.uptimeString(data.status.Uptime)} `)
+      tablesGrid.setTitle(`Tables ${sep} Data &thickapprox; ${formatBytes(lengths.data)}  ${sep} Indexes &thickapprox; ${formatBytes(lengths.index)}  ${sep} Version ${data.version} ${sep} Up ${SM.AppInfo.uptimeString(data.status.Uptime)} `)
     }
 
     function getTotalLengths(tables) {
