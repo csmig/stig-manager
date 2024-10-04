@@ -215,7 +215,8 @@ function trackOperationStats(operationId, durationMs, res) {
       minResLength: Infinity,
       maxResLength: 0,
       clients: {},
-      users: {}
+      users: {},
+      errors: {}
     }
     if (acceptsRequestBody) {
       requestStats.operationIds[operationId].totalReqLength = 0
@@ -226,6 +227,12 @@ function trackOperationStats(operationId, durationMs, res) {
 
   // Get the stats object for this operationId
   const stats = requestStats.operationIds[operationId]
+
+  // errors
+  if (res.statusCode >= 500) {
+    const code = res.errorBody?.code || 'nocode'
+    stats.errors[code] = (stats.errors[code] || 0) + 1
+  }
 
   // Update max duration
   stats.minDuration = Math.min(stats.minDuration, durationMs)
