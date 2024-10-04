@@ -163,6 +163,9 @@ SM.AppInfo.transformPreviousSchemas = function (input) {
   }
 
   const { operationIdStats, ...requestsKeep } = input.operationalStats
+  for (const opId in operationIdStats) {
+    operationIdStats[opId].errors = {}
+  }
 
   input.userInfo = transformUserInfo(input.userInfo)
   addNoPrivilegeCount(input)
@@ -2087,7 +2090,12 @@ SM.AppInfo.Requests.OperationsGrid = Ext.extend(Ext.grid.GridPanel, {
       'maxResLength',
       'clients',
       'users',
-      'projections'
+      'projections',
+      'errors',
+      {
+        name: 'errorCount',
+        convert: (v, r) => Object.values(r.errors).reduce((a, v) => a+v, 0)
+      }
     ]
 
     const store = new Ext.data.JsonStore({
@@ -2116,6 +2124,13 @@ SM.AppInfo.Requests.OperationsGrid = Ext.extend(Ext.grid.GridPanel, {
       {
         header: "Requests",
         dataIndex: 'totalRequests',
+        sortable: true,
+        align: 'right',
+        renderer: SM.AppInfo.numberRenderer
+      },
+      {
+        header: "Errors",
+        dataIndex: 'errorCount',
         sortable: true,
         align: 'right',
         renderer: SM.AppInfo.numberRenderer
@@ -2450,6 +2465,14 @@ SM.AppInfo.Requests.Container = Ext.extend(Ext.Container, {
       valueColumnConfig: { header: 'Requests' },
       width: 200,
     })
+    const errorsGrid = new SM.AppInfo.KeyValueGrid({
+      title: 'Errors',
+      border: false,
+      margins: { top: 0, right: 5, bottom: 0, left: 5 },
+      keyColumnConfig: { header: 'Code' },
+      valueColumnConfig: { header: 'Requests' },
+      width: 200,
+    })
     const projectionsGrid = new SM.AppInfo.Requests.ProjectionsGrid({
       title: 'Projections',
       border: false,
@@ -2460,6 +2483,7 @@ SM.AppInfo.Requests.Container = Ext.extend(Ext.Container, {
     function onRowSelect(sm, index, record) {
       const users = []
       const clients = []
+      const errors= []
       const projections = []
       const data = record.data
       for (const userId in data.users) {
@@ -2468,11 +2492,15 @@ SM.AppInfo.Requests.Container = Ext.extend(Ext.Container, {
       for (const client in data.clients) {
         clients.push({ key: client, value: data.clients[client] })
       }
+      for (const code in data.errors) {
+        errors.push({ key: code, value: data.errors[code] })
+      }
       for (const projection of Object.keys(data.projections)) {
         projections.push({ projection, ...data.projections[projection] })
       }
       usersGrid.store.loadData(users)
       clientsGrid.store.loadData(clients)
+      errorsGrid.store.loadData(errors)
       projectionsGrid.store.loadData(projections)
     }
 
@@ -2484,11 +2512,11 @@ SM.AppInfo.Requests.Container = Ext.extend(Ext.Container, {
       layout: 'hbox',
       layoutConfig: {
         align: 'stretch',
-        // defaultMargins: {top: 10, right: 10, bottom: 10, left: 10}
       },
       items: [
         usersGrid,
         clientsGrid,
+        errorsGrid,
         projectionsGrid
       ]
     })
