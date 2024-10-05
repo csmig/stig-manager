@@ -15,62 +15,62 @@ const requestBodies = {
     // none: [],
     // all: [],
    
-      labelBenchmark_rw_assetBenchmark_r: {
-        put: [{"benchmarkId": reference.testCollection.benchmark,"labelId":reference.testCollection.fullLabel,"access":"rw"},{"benchmarkId":reference.testCollection.benchmark,"assetId": reference.testAsset.assetId,"access":"r"}],
-        response: [
-          {
-            access: "rw",
-            asset: {
-              name: "Collection_X_asset",
-              assetId: "62",
-            },
-            benchmarkId: reference.testCollection.benchmark,
-            aclSources: [
-              {
-                aclRule: {
-                  label: {
-                    name: reference.testCollection.fullLabelName,
-                    labelId: reference.testCollection.fullLabel,
-                  },
-                  access: "rw",
-                  benchmarkId: reference.testCollection.benchmark,
-                },
-                grantee: {
-                  userId: 85,
-                  username: "lvl1",
-                  accessLevel: 1,
-                },
-              },
-            ],
-          },
-          {
-            access: "r",
-            asset: {
-              name: "Collection_X_lvl1_asset-1",
-              assetId: reference.testAsset.assetId,
-            },
-            benchmarkId: reference.testCollection.benchmark,
-            aclSources: [
-              {
-                aclRule: {
-                  asset: {
-                    name: "Collection_X_lvl1_asset-1",
-                    assetId: reference.testAsset.assetId,
-                  },
-                  access: "r",
-                  benchmarkId: reference.testCollection.benchmark,
-                },
-                grantee: {
-                  userId: 85,
-                  username: "lvl1",
-                  accessLevel: 1,
-                },
-              },
-            ],
-          },
-        ]
-        // assigns all assets in full label and VPN stig to RW, asset 42 with VPN stig is R
-      }, 
+      // labelBenchmark_rw_assetBenchmark_r: {
+      //   put: [{"benchmarkId": reference.testCollection.benchmark,"labelId":reference.testCollection.fullLabel,"access":"rw"},{"benchmarkId":reference.testCollection.benchmark,"assetId": reference.testAsset.assetId,"access":"r"}],
+      //   response: [
+      //     {
+      //       access: "rw",
+      //       asset: {
+      //         name: "Collection_X_asset",
+      //         assetId: "62",
+      //       },
+      //       benchmarkId: reference.testCollection.benchmark,
+      //       aclSources: [
+      //         {
+      //           aclRule: {
+      //             label: {
+      //               name: reference.testCollection.fullLabelName,
+      //               labelId: reference.testCollection.fullLabel,
+      //             },
+      //             access: "rw",
+      //             benchmarkId: reference.testCollection.benchmark,
+      //           },
+      //           grantee: {
+      //             userId: 85,
+      //             username: "lvl1",
+      //             accessLevel: 1,
+      //           },
+      //         },
+      //       ],
+      //     },
+      //     {
+      //       access: "r",
+      //       asset: {
+      //         name: "Collection_X_lvl1_asset-1",
+      //         assetId: reference.testAsset.assetId,
+      //       },
+      //       benchmarkId: reference.testCollection.benchmark,
+      //       aclSources: [
+      //         {
+      //           aclRule: {
+      //             asset: {
+      //               name: "Collection_X_lvl1_asset-1",
+      //               assetId: reference.testAsset.assetId,
+      //             },
+      //             access: "r",
+      //             benchmarkId: reference.testCollection.benchmark,
+      //           },
+      //           grantee: {
+      //             userId: 85,
+      //             username: "lvl1",
+      //             accessLevel: 1,
+      //           },
+      //         },
+      //       ],
+      //     },
+      //   ]
+      //   // assigns all assets in full label and VPN stig to RW, asset 42 with VPN stig is R
+      // }, 
       label_rw: {
        put: [{"labelId":reference.testCollection.fullLabel,"access":"rw"}],
        response: [
@@ -290,32 +290,534 @@ const requestBodies = {
               name: reference.testAsset.name,
               assetId: reference.testAsset.assetId,
             },
-            benchmarkId: reference.benchmark,
+            benchmarkId: reference.testCollection.benchmark,
             aclSources: [
-
-            ]
+              {
+                aclRule: {
+                  benchmarkId: reference.testCollection.benchmark,
+                  access: "rw",
+                },
+                grantee: {
+                  userId: 85,
+                  username: "lvl1",
+                  accessLevel: 1,
+                },
+              },
+            ],
+          },
+          {
+            access: "rw",
+            asset: {
+              name: "Collection_X_asset",
+              assetId: "62",
+            },
+            benchmarkId: reference.testCollection.benchmark,
+            aclSources: [
+              {
+                aclRule: {
+                  benchmarkId: reference.testCollection.benchmark,
+                  access: "rw",
+                },
+                grantee: {
+                  userId: 85,
+                  username: "lvl1",
+                  accessLevel: 1,
+                },
+              },
+            ],
+          },
+          {
+            access: "rw",
+            asset: {
+              name: "Collection_X_lvl1_asset-2",
+              assetId: "154",
+            },
+            benchmarkId: reference.testCollection.benchmark,
+            aclSources: [
+              {
+                aclRule: {
+                  benchmarkId: reference.testCollection.benchmark,
+                  access: "rw",
+                },
+                grantee: {
+                  userId: 85,
+                  username: "lvl1",
+                  accessLevel: 1,
+                },
+              },
+            ],
           }
         ]
       },
-      benchmark_r: [{"benchmarkId":reference.testCollection.benchmark,"access":"r"}],
-      benchmark_none: [{"benchmarkId":reference.testCollection.benchmark,"access":"none"}],
-      
-      asset_rw: [{"assetId":reference.testAsset.assetId,"access":"rw"}],
-      asset_r: [{"assetId":reference.testAsset.assetId,"access":"r"}],
-      asset_none: [{"assetId":reference.testAsset.assetId,"access":"none"}],
-      
-      assetBenchmark_rw: [{"benchmarkId":reference.testCollection.benchmark,"assetId":reference.testAsset.assetId,"access":"rw"}],
-      assetBenchmark_r: [{"benchmarkId":reference.testCollection.benchmark,"assetId":reference.testAsset.assetId,"access":"r"}],
-      assetBenchmark_none: [{"benchmarkId":reference.testCollection.benchmark,"assetId":reference.testAsset.assetId,"access":"none"}],
-  
-      labelBenchmark_rw: [{"benchmarkId":reference.testCollection.benchmark,"labelId":reference.testCollection.fullLabel,"access":"rw"}],
-      labelBenchmark_r: [{"benchmarkId":reference.testCollection.benchmark,"labelId":reference.testCollection.fullLabel,"access":"r"}],
-      labelBenchmark_none: [{"benchmarkId":reference.testCollection.benchmark,"labelId":reference.testCollection.fullLabel,"access":"none"}],
+      benchmark_r: {
+        put:[{"benchmarkId":reference.testCollection.benchmark,"access":"r"}],
+        response: [
+          {
+            access: "r",
+            asset: {
+              name: reference.testAsset.name,
+              assetId: reference.testAsset.assetId,
+            },
+            benchmarkId: reference.testCollection.benchmark,
+            aclSources: [
+              {
+                aclRule: {
+                  benchmarkId: reference.testCollection.benchmark,
+                  access: "r",
+                },
+                grantee: {
+                  userId: 85,
+                  username: "lvl1",
+                  accessLevel: 1,
+                },
+              },
+            ],
+          },
+          {
+            access: "r",
+            asset: {
+              name: "Collection_X_asset",
+              assetId: "62",
+            },
+            benchmarkId: reference.testCollection.benchmark,
+            aclSources: [
+              {
+                aclRule: {
+                  benchmarkId: reference.testCollection.benchmark,
+                  access: "r",
+                },
+                grantee: {
+                  userId: 85,
+                  username: "lvl1",
+                  accessLevel: 1,
+                },
+              },
+            ],
+          },
+          {
+            access: "r",
+            asset: {
+              name: "Collection_X_lvl1_asset-2",
+              assetId: "154",
+            },
+            benchmarkId: reference.testCollection.benchmark,
+            aclSources: [
+              {
+                aclRule: {
+                  benchmarkId: reference.testCollection.benchmark,
+                  access: "r",
+                },
+                grantee: {
+                  userId: 85,
+                  username: "lvl1",
+                  accessLevel: 1,
+                },
+              },
+            ],
+          }
+        ]
+      },
+      benchmark_none: {
+        put: [{"benchmarkId":reference.testCollection.benchmark,"access":"none"}],
+        response: []
+      },
     
+      asset_rw: {
+        put: [{"assetId":reference.testAsset.assetId,"access":"rw"}],
+        response: [
+          {
+            access: "rw",
+            asset: {
+              name: reference.testAsset.name,
+              assetId: reference.testAsset.assetId,
+            },
+            benchmarkId: reference.testCollection.benchmark,
+            aclSources: [
+              {
+                aclRule: {
+                  asset: {
+                    name: reference.testAsset.name,
+                    assetId: reference.testAsset.assetId,
+                  },
+                  access: "rw",
+                },
+                grantee: {
+                  userId: 85,
+                  username: "lvl1",
+                  accessLevel: 1,
+                },
+              },
+            ],
+          },
+          {
+            access: "rw",
+            asset: {
+              name: reference.testAsset.name,
+              assetId: reference.testAsset.assetId,
+            },
+            benchmarkId: reference.windowsBenchmark,
+            aclSources: [
+              {
+                aclRule: {
+                  asset: {
+                    name: reference.testAsset.name,
+                    assetId: reference.testAsset.assetId,
+                  },
+                  access: "rw",
+                },
+                grantee: {
+                  userId: 85,
+                  username: "lvl1",
+                  accessLevel: 1,
+                },
+              },
+            ],
+          }
+        ]
+      },
+      asset_r: {
+        put: [{"assetId":reference.testAsset.assetId,"access":"r"}],
+        response: [
+          {
+            access: "r",
+            asset: {
+              name: reference.testAsset.name,
+              assetId: reference.testAsset.assetId,
+            },
+            benchmarkId: reference.testCollection.benchmark,
+            aclSources: [
+              {
+                aclRule: {
+                  asset: {
+                    name: reference.testAsset.name,
+                    assetId: reference.testAsset.assetId,
+                  },
+                  access: "r",
+                },
+                grantee: {
+                  userId: 85,
+                  username: "lvl1",
+                  accessLevel: 1,
+                },
+              },
+            ],
+          },
+          {
+            access: "r",
+            asset: {
+              name: reference.testAsset.name,
+              assetId: reference.testAsset.assetId,
+            },
+            benchmarkId: reference.windowsBenchmark,
+            aclSources: [
+              {
+                aclRule: {
+                  asset: {
+                    name: reference.testAsset.name,
+                    assetId: reference.testAsset.assetId,
+                  },
+                  access: "r",
+                },
+                grantee: {
+                  userId: 85,
+                  username: "lvl1",
+                  accessLevel: 1,
+                },
+              },
+            ],
+          }
+        ]
+      },
+      asset_none: {
+        put: [{"assetId":reference.testAsset.assetId,"access":"none"}],
+        response: []
+      },
+      
+      assetBenchmark_rw: {
+        put: [{"benchmarkId":reference.testCollection.benchmark,"assetId":reference.testAsset.assetId,"access":"rw"}],
+        response: [
+          {
+            access: "rw",
+            asset: {
+              name: reference.testAsset.name,
+              assetId: reference.testAsset.assetId,
+            },
+            benchmarkId: reference.testCollection.benchmark,
+            aclSources: [
+              {
+                aclRule: {
+                  asset: {
+                    name: reference.testAsset.name,
+                    assetId: reference.testAsset.assetId,
+                  },
+                  access: "rw",
+                  benchmarkId: reference.testCollection.benchmark,
+                },
+                grantee: {
+                  userId: 85,
+                  username: "lvl1",
+                  accessLevel: 1,
+                },
+              },
+            ],
+          }
+        ]
+      },
+      assetBenchmark_r: {
+        put: [{"benchmarkId":reference.testCollection.benchmark,"assetId":reference.testAsset.assetId,"access":"r"}],
+        response: [
+          {
+            access: "r",
+            asset: {
+              name: reference.testAsset.name,
+              assetId: reference.testAsset.assetId,
+            },
+            benchmarkId: reference.testCollection.benchmark,
+            aclSources: [
+              {
+                aclRule: {
+                  asset: {
+                    name: reference.testAsset.name,
+                    assetId: reference.testAsset.assetId,
+                  },
+                  access: "r",
+                  benchmarkId: reference.testCollection.benchmark,
+                },
+                grantee: {
+                  userId: 85,
+                  username: "lvl1",
+                  accessLevel: 1,
+                },
+              },
+            ],
+          }
+        ]
+      },
+      assetBenchmark_none: {
+        put: [{"benchmarkId":reference.testCollection.benchmark,"assetId":reference.testAsset.assetId,"access":"none"}],
+        response: []
+      },
+  
+      labelBenchmark_rw: {
+        put: [{"benchmarkId":reference.testCollection.benchmark,"labelId":reference.testCollection.fullLabel,"access":"rw"}],
+        response: [
+          {
+            access: "rw",
+            asset: {
+              name: reference.testAsset.name,
+              assetId: reference.testAsset.assetId,
+            },
+            benchmarkId: reference.testCollection.benchmark,
+            aclSources: [
+              {
+                aclRule: {
+                  label: {
+                    name: reference.testCollection.fullLabelName,
+                    labelId: reference.testCollection.fullLabel,
+                  },
+                  access: "rw",
+                  benchmarkId: reference.testCollection.benchmark,
+                },
+                grantee: {
+                  userId: 85,
+                  username: "lvl1",
+                  accessLevel: 1,
+                },
+              },
+            ],
+          },
+          {
+            access: "rw",
+            asset: {
+              name: "Collection_X_asset",
+              assetId: "62",
+            },
+            benchmarkId: reference.testCollection.benchmark,
+            aclSources: [
+              {
+                aclRule: {
+                  label: {
+                    name: reference.testCollection.fullLabelName,
+                    labelId: reference.testCollection.fullLabel,
+                  },
+                  access: "rw",
+                  benchmarkId: reference.testCollection.benchmark,
+                },
+                grantee: {
+                  userId: 85,
+                  username: "lvl1",
+                  accessLevel: 1,
+                },
+              },
+            ],
+          }
+        ]
+      },
+      labelBenchmark_r: {
+        put: [{"benchmarkId":reference.testCollection.benchmark,"labelId":reference.testCollection.fullLabel,"access":"r"}],
+        response: [
+          {
+            access: "r",
+            asset: {
+              name: reference.testAsset.name,
+              assetId: reference.testAsset.assetId,
+            },
+            benchmarkId: reference.testCollection.benchmark,
+            aclSources: [
+              {
+                aclRule: {
+                  label: {
+                    name: reference.testCollection.fullLabelName,
+                    labelId: reference.testCollection.fullLabel,
+                  },
+                  access: "r",
+                  benchmarkId: reference.testCollection.benchmark,
+                },
+                grantee: {
+                  userId: 85,
+                  username: "lvl1",
+                  accessLevel: 1,
+                },
+              },
+            ],
+          },
+          {
+            access: "r",
+            asset: {
+              name: "Collection_X_asset", 
+              assetId: "62",
+            },
+            benchmarkId: reference.testCollection.benchmark,
+            aclSources: [
+              {
+                aclRule: {
+                  label: {
+                    name: reference.testCollection.fullLabelName,
+                    labelId: reference.testCollection.fullLabel,
+                  },
+                  access: "r",
+                  benchmarkId: reference.testCollection.benchmark,
+                },
+                grantee: {
+                  userId: 85,
+                  username: "lvl1",
+                  accessLevel: 1,
+                },
+              },
+            ],
+          }
+        ]
+      },
+      labelBenchmark_none: {
+         put: [{"benchmarkId":reference.testCollection.benchmark,"labelId":reference.testCollection.fullLabel,"access":"none"}],
+         response: []
+      },
 
-    double:{
+   
       //double asset +/- asset
-      asset_rw_asset_rw: [{"assetId":reference.testAsset.assetId,"access":"rw"},{"assetId":"154","access":"rw"}],
+      asset_rw_asset_rw: {
+        put:[{"assetId":reference.testAsset.assetId,"access":"rw"},{"assetId":"154","access":"rw"}],
+        response: [
+        {
+          access: "rw",
+          asset: {
+            name: reference.testAsset.name,
+            assetId: reference.testAsset.assetId,
+          },
+          benchmarkId: reference.testCollection.benchmark,
+          aclSources: [
+            {
+              aclRule: {
+                asset: {
+                  name: reference.testAsset.name,
+                  assetId: reference.testAsset.assetId,
+                },
+                access: "rw",
+              },
+              grantee: {
+                userId: 85,
+                username: "lvl1",
+                accessLevel: 1,
+              },
+            },
+          ],
+        },
+        {
+          access: "rw",
+          asset: {
+            name: reference.testAsset.name,
+            assetId: reference.testAsset.assetId,
+          },
+          benchmarkId: reference.windowsBenchmark,
+          aclSources: [
+            {
+              aclRule: {
+                asset: {
+                  name: reference.testAsset.name,
+                  assetId: reference.testAsset.assetId,
+                },
+                access: "rw",
+              },
+              grantee: {
+                userId: 85,
+                username: "lvl1",
+                accessLevel: 1,
+              },
+            },
+          ],
+        },
+        {
+          access: "rw",
+          asset: {
+            name: "Collection_X_lvl1_asset-2",
+            assetId: "154",
+          },
+          benchmarkId: reference.windowsBenchmark,
+          aclSources: [
+            {
+              aclRule: {
+                asset: {
+                  name: "Collection_X_lvl1_asset-2",
+                  assetId: "154",
+                },
+                access: "rw",
+              },
+              grantee: {
+                userId: 85,
+                username: "lvl1",
+                accessLevel: 1,
+              },
+            },
+          ],
+        },
+        {
+          access: "rw",
+          asset: {
+            name: "Collection_X_lvl1_asset-2",
+            assetId: "154",
+          },
+          benchmarkId: reference.testCollection.benchmark,
+          aclSources: [
+            {
+              aclRule: {
+                asset: {
+                  name: "Collection_X_lvl1_asset-2",
+                  assetId: "154",
+                },
+                access: "rw",
+              },
+              grantee: {
+                userId: 85,
+                username: "lvl1",
+                accessLevel: 1,
+              },
+            },
+          ],
+        }
+      ]
+      },
+
+
       asset_rw_asset_r: [{"assetId":reference.testAsset.assetId,"access":"rw"},{"assetId":"154","access":"r"}],
       asset_rw_asset_none: [{"assetId":reference.testAsset.assetId,"access":"rw"},{"assetId":"154","access":"none"}],
       asset_r_asset_rw: [{"assetId":reference.testAsset.assetId,"access":"r"},{"assetId":"154","access":"rw"}],
@@ -323,7 +825,6 @@ const requestBodies = {
       asset_r_asset_none: [{"assetId":reference.testAsset.assetId,"access":"r"},{"assetId":"154","access":"none"}],
       asset_none_asset_rw: [{"assetId":reference.testAsset.assetId,"access":"none"},{"assetId":"154","access":"rw"}],
       asset_none_asset_r: [{"assetId":reference.testAsset.assetId,"access":"none"},{"assetId":"154","access":"r"}],
-      //asset_none_asset_none: [{"assetId":reference.testAsset.assetId,"access":"none"},{"assetId":"154","access":"none"}],
       
       // double assetBenchmark +/- label
       assetBenchmark_rw_label_rw: [{"benchmarkId":reference.testCollection.benchmark,"assetId":"154","access":"rw"},{"labelId":reference.testCollection.fullLabel,"access":"rw"}],
@@ -334,7 +835,6 @@ const requestBodies = {
       //assetBenchmark_r_label_none: [{"benchmarkId":reference.testCollection.benchmark,"assetId":"154","access":"r"},{"labelId":reference.testCollection.fullLabel,"access":"none"}],
       assetBenchmark_none_label_rw: [{"benchmarkId":reference.testCollection.benchmark,"assetId":"62","access":"none"},{"labelId":reference.testCollection.fullLabel,"access":"rw"}],
       assetBenchmark_none_label_r: [{"benchmarkId":reference.testCollection.benchmark,"assetId":"62","access":"none"},{"labelId":reference.testCollection.fullLabel,"access":"r"}],
-     // assetBenchmark_none_label_none: [{"benchmarkId":reference.testCollection.benchmark,"assetId":"154","access":"none"},{"labelId":reference.testCollection.fullLabel,"access":"none"}],
 
       // double assetBenchmark +/- benchmark
       assetBenchmark_rw_benchmark_rw: [{"benchmarkId":reference.testCollection.benchmark,"assetId":"154","access":"rw"},{"benchmarkId":reference.windowsBenchmark,"access":"rw"}],
@@ -345,7 +845,6 @@ const requestBodies = {
     //  assetBenchmark_r_benchmark_none: [{"benchmarkId":reference.testCollection.benchmark,"assetId":"154","access":"r"},{"benchmarkId":reference.windowsBenchmark,"access":"none"}],
       assetBenchmark_none_benchmark_rw: [{"benchmarkId":reference.windowsBenchmark,"assetId":"62","access":"none"},{"benchmarkId":reference.windowsBenchmark,"access":"rw"}],
       assetBenchmark_none_benchmark_r: [{"benchmarkId":reference.windowsBenchmark,"assetId":"62","access":"none"},{"benchmarkId":reference.windowsBenchmark,"access":"r"}],
-      //assetBenchmark_none_benchmark_none: [{"benchmarkId":reference.testCollection.benchmark,"assetId":"154","access":"none"},{"benchmarkId":reference.windowsBenchmark,"access":"none"}],
 
       // double assetBenchmark +/- asset
       assetBenchmark_rw_asset_rw: [{"benchmarkId":reference.testCollection.benchmark,"assetId":"154","access":"rw"},{"assetId":reference.testAsset.assetId,"access":"rw"}],
@@ -358,6 +857,8 @@ const requestBodies = {
       assetBenchmark_none_asset_r: [{"benchmarkId":reference.testCollection.benchmark,"assetId":reference.testAsset.assetId,"access":"none"},{"assetId":reference.testAsset.assetId,"access":"r"}],
    //   assetBenchmark_none_asset_none: [{"benchmarkId":reference.testCollection.benchmark,"assetId":"154","access":"none"},{"assetId":reference.testAsset.assetId,"access":"none"}],
       
+
+   // leaggvin goff here 
       // double assetBenchmark +/- assetBenchmark 
       assetBenchmark_rw_benchmark_rw: [{"benchmarkId":reference.testCollection.benchmark,"assetId":reference.testAsset.assetId,"access":"rw"},{"benchmarkId":reference.windowsBenchmark,"access":"rw"}],
       assetBenchmark_rw_benchmark_r: [{"benchmarkId":reference.testCollection.benchmark,"assetId":reference.testAsset.assetId,"access":"rw"},{"benchmarkId":reference.windowsBenchmark,"access":"r"}],
@@ -367,7 +868,6 @@ const requestBodies = {
       //assetBenchmark_r_benchmark_none: [{"benchmarkId":reference.testCollection.benchmark,"assetId":"154","access":"r"},{"benchmarkId":reference.windowsBenchmark,"access":"none"}],
       assetBenchmark_none_benchmark_rw: [{"benchmarkId":reference.testCollection.benchmark,"assetId":reference.testAsset.assetId,"access":"none"},{"benchmarkId":reference.testCollection.benchmark,"access":"rw"}],
       assetBenchmark_none_benchmark_r: [{"benchmarkId":reference.testCollection.benchmark,"assetId":reference.testAsset.assetId,"access":"none"},{"benchmarkId":reference.testCollection.benchmark,"access":"r"}],
-      //assetBenchmark_none_benchmark_none: [{"benchmarkId":reference.testCollection.benchmark,"assetId":"154","access":"none"},{"benchmarkId":reference.windowsBenchmark,"access":"none"}],
 
       // double label +/- benchmark
       // dont think the data will allow this one to happen
@@ -380,8 +880,6 @@ const requestBodies = {
       label_r_benchmark_r: [{"labelId":reference.testCollection.fullLabel,"access":"r"},{"benchmarkId":reference.testCollection.benchmark,"access":"r"}], // all r
       //label_r_benchmark_none: [],
       label_none_benchmark_rw: [{"labelId":reference.testCollection.fullLabel,"access":"none"},{"benchmarkId":reference.testCollection.benchmark,"access":"rw"}], // only get asset not in that label with VPN
-      //label_none_benchmark_r: [],// redundant
-      //label_none_benchmark_none: [],
 
       // double label +/- asset
       label_rw_asset_rw: [{"labelId":reference.testCollection.fullLabel,"access":"rw"},{"assetId":"154","access":"rw"}],
@@ -391,8 +889,6 @@ const requestBodies = {
       label_r_asset_r: [{"labelId":reference.testCollection.fullLabel,"access":"r"},{"assetId":"154","access":"r"}],
       label_r_asset_none: [{"labelId":reference.testCollection.fullLabel,"access":"r"},{"assetId":reference.testAsset.assetId,"access":"none"}],
       label_none_asset_rw: [{"labelId":reference.testCollection.fullLabel,"access":"none"},{"assetId":"154","access":"rw"}],// tie so go with none and get nothing 
-      // label_none_asset_r: [{"labelId":reference.testCollection.fullLabel,"access":"none"},{"assetId":"154","access":"r"}],
-      // label_none_asset_none: [{"labelId":reference.testCollection.fullLabel,"access":"none"},{"assetId":"154","access":"none"}],
 
       // double label +/- label 
       label_rw_label_rw: [{"labelId":reference.testCollection.fullLabel,"access":"rw"},{"labelId":"5130dc84-9a68-11ec-b1bc-0242ac110002","access":"rw"}],
@@ -403,7 +899,6 @@ const requestBodies = {
       label_r_label_none: [{"labelId":reference.testCollection.fullLabel,"access":"r"},{"labelId":"5130dc84-9a68-11ec-b1bc-0242ac110002","access":"none"}],
       label_none_label_rw: [{"labelId":reference.testCollection.fullLabel,"access":"none"},{"labelId":"5130dc84-9a68-11ec-b1bc-0242ac110002","access":"rw"}],
       label_none_label_r: [{"labelId":reference.testCollection.fullLabel,"access":"none"},{"labelId":"5130dc84-9a68-11ec-b1bc-0242ac110002","access":"r"}],
- //     label_none_label_none: [{"labelId":reference.testCollection.fullLabel,"access":"none"},{"labelId":"5130dc84-9a68-11ec-b1bc-0242ac110002","access":"none"}],
 
       // double benchmark +/- asset
       // could use better data but not really too neccessary
@@ -416,7 +911,6 @@ const requestBodies = {
       benchmark_r_asset_none: [{"benchmarkId":reference.testCollection.benchmark,"access":"r"},{"assetId":reference.testAsset.assetId,"access":"none"}], // removes asset (redundant)
       benchmark_none_asset_rw: [{"benchmarkId":reference.testCollection.benchmark,"access":"none"},{"assetId":"29","access":"rw"}], // no overlap here, means nothing ? 
       benchmark_none_asset_r: [{"benchmarkId":reference.testCollection.benchmark,"access":"none"},{"assetId":reference.testAsset.assetId,"access":"r"}], // removes a benchmark from asset
- //     benchmark_none_asset_none: [{"benchmarkId":reference.testCollection.benchmark,"access":"none"},{"assetId":"29","access":"none"}],
 
       // double benchmark +/- benchmark
       benchmark_rw_benchmark_rw: [{"benchmarkId":reference.testCollection.benchmark,"access":"rw"},{"benchmarkId":reference.windowsBenchmark,"access":"rw"}], // asset stig for both 
@@ -427,11 +921,10 @@ const requestBodies = {
       labelBenchmark_rw_label_r: [{"benchmarkId":reference.testCollection.benchmark,"labelId":"5130dc84-9a68-11ec-b1bc-0242ac110002","access":"rw"},{"labelId":reference.testCollection.fullLabel,"access":"r"}], // collsion at 42 rw wins 
       //labelBenchmark_rw_label_none: [{"benchmarkId":reference.testCollection.benchmark,"labelId":"5130dc84-9a68-11ec-b1bc-0242ac110002","access":"rw"},{"labelId":reference.testCollection.fullLabel,"access":"none"}], only 
       labelBenchmark_r_label_rw: [{"benchmarkId":reference.testCollection.benchmark,"labelId":reference.testCollection.fullLabel,"access":"r"},{"labelId":reference.testCollection.fullLabel,"access":"rw"}], // test stigs are r 
-      //labelBenchmark_r_label_r: [{"benchmarkId":reference.testCollection.benchmark,"labelId":"5130dc84-9a68-11ec-b1bc-0242ac110002","access":"r"},{"labelId":reference.testCollection.fullLabel,"access":"r"}], // does nothing
-      //labelBenchmark_r_label_none: [],
+      labelBenchmark_r_label_r: [{"benchmarkId":reference.testCollection.benchmark,"labelId":"5130dc84-9a68-11ec-b1bc-0242ac110002","access":"r"},{"labelId":reference.testCollection.fullLabel,"access":"r"}], // does nothing
+      labelBenchmark_r_label_none: [],
       labelBenchmark_none_label_rw: [{"benchmarkId":reference.testCollection.benchmark,"labelId":"5130dc84-9a68-11ec-b1bc-0242ac110002","access":"none"},{"labelId":reference.testCollection.fullLabel,"access":"rw"}], // removes the VPN for asset 42
       labelBenchmark_none_label_r: [{"benchmarkId":reference.testCollection.benchmark,"labelId":reference.testCollection.fullLabel,"access":"none"},{"labelId":reference.testCollection.fullLabel,"access":"r"}], // removes the VPN stigs
-      //labelBenchmark_none_label_none: [],
 
       // labelBenchmark +/- benchmark
       labelBenchmark_rw_benchmark_rw: [{"benchmarkId":reference.testCollection.benchmark,"labelId":reference.testCollection.fullLabel,"access":"rw"},{"benchmarkId":reference.windowsBenchmark,"access":"rw"}], // adds benchmark + labelBenchmark 
@@ -441,7 +934,6 @@ const requestBodies = {
       //labelBenchmark_r_benchmark_none: [], // redundant?
       labelBenchmark_none_benchmark_rw: [{"benchmarkId":reference.testCollection.benchmark,"labelId":reference.testCollection.fullLabel,"access":"none"},{"benchmarkId":reference.testCollection.benchmark,"access":"rw"}], //benchmark minus those in label
       labelBenchmark_none_benchmark_r: [{"benchmarkId":reference.windowsBenchmark,"labelId":reference.testCollection.fullLabel,"access":"none"},{"benchmarkId":reference.windowsBenchmark,"access":"rw"}], // jst the benchamrk kinda redundant
-    //  labelBenchmark_none_benchmark_none: [],
 
       // labelBenchmark +/- asset
       labelBenchmark_rw_asset_rw: [{"benchmarkId":reference.testCollection.benchmark,"labelId":reference.testCollection.fullLabel,"access":"rw"},{"assetId":"154","access":"rw"}], // adds asset to label
@@ -452,7 +944,6 @@ const requestBodies = {
       //labelBenchmark_r_asset_none: [],
       labelBenchmark_none_asset_rw: [{"benchmarkId":reference.testCollection.benchmark,"labelId":reference.testCollection.fullLabel,"access":"none"},{"assetId":reference.testAsset.assetId,"access":"rw"}], // will only get windows stig rw on that asset 
       labelBenchmark_none_asset_r: [{"benchmarkId":reference.testCollection.benchmark,"labelId":reference.testCollection.fullLabel,"access":"none"},{"assetId":"154","access":"r"}], // asset outside of label kinda dumb test
-      //labelBenchmark_none_asset_none: [],
 
       // labelBenchmark +/- assetBenchmark
       labelBenchmark_rw_assetBenchmark_rw: [{"benchmarkId":reference.testCollection.benchmark,"labelId":reference.testCollection.fullLabel,"access":"rw"},{"benchmarkId":reference.windowsBenchmark,"assetId":"154","access":"none"}], // adds asset
@@ -463,7 +954,6 @@ const requestBodies = {
       //labelBenchmark_r_assetBenchmark_none: [],
       labelBenchmark_none_assetBenchmark_rw: [{"benchmarkId":reference.testCollection.benchmark,"labelId":reference.testCollection.fullLabel,"access":"none"},{"benchmarkId":reference.testCollection.benchmark,"assetId":reference.testAsset.assetId,"access":"rw"}], // only asset 154 rw
       labelBenchmark_none_assetBenchmark_r: [{"benchmarkId":reference.windowsBenchmark,"labelId":reference.testCollection.fullLabel,"access":"none"},{"benchmarkId":reference.windowsBenchmark,"assetId":reference.testAsset.assetId,"access":"r"}], // only asset 154 r
-//      labelBenchmark_none_assetBenchmark_none: [],
 
       // labelBenchmark +/- labelBenchmark
       labelBenchmark_rw_labelBenchmark_rw: [{"benchmarkId":reference.testCollection.benchmark,"labelId":"5130dc84-9a68-11ec-b1bc-0242ac110002","access":"rw"},{"benchmarkId":reference.windowsBenchmark,"labelId":reference.testCollection.fullLabel,"access":"rw"}], // adds two labels
@@ -474,8 +964,7 @@ const requestBodies = {
       //labelBenchmark_r_labelBenchmark_none: [],
       //labelBenchmark_none_labelBenchmark_rw: [],
       //labelBenchmark_none_labelBenchmark_r: [],
-      //labelBenchmark_none_labelBenchmark_none: [],
-    },
+    
 
 //     triple: {
 //       // triple label benchmark asset

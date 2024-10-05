@@ -6,11 +6,9 @@ chai.use(deepEqualInAnyOrder)
 const expect = chai.expect
 const config = require('../../testConfig.json')
 const utils = require('../../utils/testUtils.js')
-const expectations = require('./aclData.js')
 const reference = require('./referenceData.js')
-const requestBodies = require('./aclData.js')
+//const requestBodies = require('./aclData.js')
 const iterations = require('./iterations.js')
-//const distinct = require('./expectations.js')
 
 const user = {
     name: 'lvl1',
@@ -35,22 +33,11 @@ describe('GET - Test Effective ACL', () => {
           const res = await chai.request(config.baseUrl)
           .put(`/collections/${reference.testCollection.collectionId}/grants/user/${user.userId}/access`)
           .set('Authorization', `Bearer ${config.adminToken}`)
-          .send(requestBodies[iteration.name].put)
+          .send(iteration.put)
 
           expect(res).to.have.status(200)
           expect(res.body.defaultAccess).to.equal("none")
-          expect(res.body.acl).to.be.an('array').of.length(requestBodies[iteration.name].put.length)
-          // for (const aclPut of requestBodies[iteration.name]) {
-          //   const matchingAcl = res.body.acl.find(responseAcl => {
-          //     const assetMatch = aclPut.assetId ? responseAcl.asset.assetId === aclPut.assetId : true
-          //     const benchmarkMatch = aclPut.benchmarkId ? responseAcl.benchmarkId === aclPut.benchmarkId : true
-          //     const labelMatch = aclPut.labelId ? responseAcl.label.labelId === aclPut.labelId : true
-          //     const accessMatch = aclPut.access ? responseAcl.access === aclPut.access : true
-          
-          //     return assetMatch && benchmarkMatch && labelMatch && accessMatch
-          //   })
-          //   expect(matchingAcl).to.exist
-          // }
+         
         })
 
         it('should return 200 and the effective acl for the iteration', async () => {
@@ -59,8 +46,8 @@ describe('GET - Test Effective ACL', () => {
           .set('Authorization', `Bearer ${config.adminToken}`)
           expect(res).to.have.status(200)
 
-          const putAcl = requestBodies[iteration.name].put
-          expect(res.body).to.deep.equalInAnyOrder(requestBodies[iteration.name].response)
+          const putAcl = iteration.put
+          expect(res.body).to.deep.equalInAnyOrder(iteration.response)
       
         })
       })

@@ -35,6 +35,10 @@ const reference = {
       "755b8a28-9a68-11ec-b1bc-0242ac110002",
       "5130dc84-9a68-11ec-b1bc-0242ac110002"
     ],
+    labelsMap: {
+      "test-label-full": "755b8a28-9a68-11ec-b1bc-0242ac110002",
+      "test-label-lvl1": "5130dc84-9a68-11ec-b1bc-0242ac110002"
+    },
     allMetadata: [
       {
         key: "pocEmail",
