@@ -2,21 +2,8 @@
 const dbUtils = require('./utils')
 const config = require('../utils/config')
 const logger = require('../utils/logger')
+const klona = require('../utils/klona')
 const os = require('node:os')
-const _ = require('lodash')
-const { performance } = require('node:perf_hooks')
-
-function reportAndClearPerformance () {
-  const marks = performance.getEntriesByType('mark')
-  let lastMark
-  for (const mark of marks) {
-    if (lastMark) {
-      console.log(`${lastMark.name}: ${mark.startTime - lastMark.startTime}`)
-    }
-    lastMark = mark
-  }
-  performance.clearMarks()
-}
 
 /**
  * Return version information
@@ -571,7 +558,6 @@ exports.getAppInfo = async function() {
     TABLE_COLLATION as tableCollation,
     AVG_ROW_LENGTH as avgRowLength,
     DATA_LENGTH as dataLength,
-    MAX_DATA_LENGTH as maxDataLength,
     INDEX_LENGTH as indexLength,
     AUTO_INCREMENT as autoIncrement,
     CREATE_TIME as createTime,
@@ -799,9 +785,7 @@ exports.getAppInfo = async function() {
   ORDER by variable_name
   `
 
-  performance.mark('sqlAnalyze')
   await dbUtils.pool.query(sqlAnalyze)
-  performance.mark('batchQueries PromiseAll')
 
   let [
     [schemaInfoArray],
@@ -830,7 +814,6 @@ exports.getAppInfo = async function() {
   const tables = createObjectFromKeyValue(schemaInfoArray, "tableName")
 
   // append accurate row counts to the dbInfo.tables object
-  performance.mark('rowCount with PromiseAll')
   const rowCountQueries = []
   for (const table in tables) {
     rowCountQueries.push(dbUtils.pool.query(`SELECT "${table}" as tableName, count(*) as rowCount from ${table}`))
@@ -841,25 +824,20 @@ exports.getAppInfo = async function() {
   }
 
   // remove strings from user privileges array that are not meaningful to stigman
-  performance.mark('remove privs')
   const stigmanPrivs = ['admin', 'create_collection']
   for (const user of userInfo ) {
     user.privileges = user.privileges.filter(v => stigmanPrivs.includes(v))
   }
 
   //count privilege assignments and break out by lastAccess time periods
-  performance.mark('breakOutPrivilegeUsage')
   const userPrivilegeCounts = breakOutPrivilegeUsage(userInfo)
 
   //create working copy of operational stats
-  performance.mark('cloneDeep')
-  const requests = _.cloneDeep(logger.requestStats)
+  const requests = klona(logger.requestStats)
 
-  performance.mark('sort keys')
   requests.operationIds = sortObjectByKeys(requests.operationIds)
 
   // Create objects keyed by collectionId from arrays of objects
-  performance.mark('create objects')
   countsByCollection = createObjectFromKeyValue(countsByCollection, "collectionId")
   labelCountsByCollection = createObjectFromKeyValue(labelCountsByCollection, "collectionId")
   assetStigByCollection = createObjectFromKeyValue(assetStigByCollection, "collectionId")
@@ -867,7 +845,6 @@ exports.getAppInfo = async function() {
   grantCountsByCollection = createObjectFromKeyValue(grantCountsByCollection, "collectionId")
 
   // Bundle "byCollection" stats together by collectionId
-  performance.mark('bundle')
   for(const collectionId in countsByCollection) {
     // Add assetStig data to countsByCollection 
     if (assetStigByCollection[collectionId]) {
@@ -922,8 +899,6 @@ exports.getAppInfo = async function() {
     },
     nodejs: getNodeValues()
   }
-  performance.mark('return')
-  reportAndClearPerformance()
   return returnObj
 
   // Reduce an array of objects to a single object, using the value of one property as keys
@@ -935,39 +910,6 @@ exports.getAppInfo = async function() {
       return acc
     }, {})
   }
-
-  // function obfuscateClients(operationalStats) {
-  //   const obfuscationMap = {}
-  //   let obfuscatedCounter = 1
-
-  //   function getObfuscatedKey(client) {
-  //     if (client === "unknown") {
-  //       return client
-  //     }
-  //     if (!obfuscationMap[client]) {
-  //       obfuscationMap[client] = `client${obfuscatedCounter++}`
-  //     }
-  //     return obfuscationMap[client]
-  //   }
-
-  //   const operationIdStats = operationalStats.operationIdStats
-
-  //   for (const operationId in operationIdStats) {
-  //     if (operationIdStats[operationId].clients) {
-  //       const clients = operationIdStats[operationId].clients
-  //       const newClients = {}
-        
-  //       for (const clientName in clients) {
-  //         const obfuscatedName = getObfuscatedKey(clientName)
-  //         newClients[obfuscatedName] = clients[clientName]
-  //       }
-        
-  //       operationIdStats[operationId].clients = newClients
-  //     }
-  //   }
-
-  //   return operationalStats
-  // }
 
   function sortObjectByKeys(obj) {
     // Create a new object and add properties in sorted order

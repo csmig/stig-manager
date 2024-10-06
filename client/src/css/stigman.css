@@ -1341,6 +1341,7 @@ td.x-grid3-hd-over .x-grid3-hd-inner {
 }
 .sm-copy-icon {
   background-image: url(../img/copy.svg)!important;
+  background-repeat: no-repeat;
   background-size: 16px 16px
 }
 .sm-clone-icon {
@@ -2384,7 +2385,7 @@ td.x-grid3-hd-over .x-grid3-hd-inner {
   background-size: 16px 16px;
 }
 .sm-render-zero {
-	color: #444444
+	color: #cccccc
 }
 .sm-appinfo-message a:link {
 	text-decoration: none
@@ -2396,3 +2397,8 @@ td.x-grid3-hd-over .x-grid3-hd-inner {
   background-position:left;
   font-weight:600;
 }
+
+.sm-appinfo-message .sm-email {
+	font-weight:600;
+	color: cadetblue;
+} 

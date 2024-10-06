@@ -58,6 +58,15 @@ SM.AppInfo.transformPreviousSchemas = function (input) {
         delete restrictedGrantCountsByUser[userId].stigAssetCount
       }
 
+      // rename grantCounts properties
+      const grantCounts = {
+        restricted: keep.grantCounts.accessLevel1,
+        full: keep.grantCounts.accessLevel2,
+        manage: keep.grantCounts.accessLevel3,
+        owner: keep.grantCounts.accessLevel4        
+      }
+      delete keep.grantCounts
+
       // rename labelCounts properties
       labelCounts.collectionLabels = labelCounts.collectionLabelCount
       delete labelCounts.collectionLabelCount
@@ -66,7 +75,8 @@ SM.AppInfo.transformPreviousSchemas = function (input) {
       labelCounts.assetLabels = labelCounts.assetLabelCount
       delete labelCounts.assetLabelCount
 
-      o[id.padStart(padLength, '0')] = {
+      o[id] = {
+        name: id.padStart(padLength, '0'),
         assets: assetsTotal - assetsDisabled,
         assetsDisabled,
         rules: ruleCnt,
@@ -77,6 +87,7 @@ SM.AppInfo.transformPreviousSchemas = function (input) {
         aclCounts: {
           users: restrictedGrantCountsByUser || {}
         },
+        grantCounts,
         labelCounts,
         settings: {
           fields: {
@@ -107,8 +118,8 @@ SM.AppInfo.transformPreviousSchemas = function (input) {
     const padLength = Object.keys(i).at(-1).length
     for (const id in i) {
       const { roles, ...keep } = i[id]
-      // o[id.padStart(padLength, '0')] = {
       o[id] = {
+        username: id.padStart(padLength, '0'),
           ...keep,
         privileges: roles?.filter(v => v !== 'other') || [],
         roles: {
@@ -251,7 +262,6 @@ SM.AppInfo.KeyValueGrid = Ext.extend(Ext.grid.GridPanel, {
       ...{
         header: 'value',
         id: valueColumnId,
-        // width: 100,
         dataIndex: 'value',
         sortable: true,
         align: 'right',
@@ -274,7 +284,6 @@ SM.AppInfo.KeyValueGrid = Ext.extend(Ext.grid.GridPanel, {
 
     const view = new SM.ColumnFilters.GridView({
       emptyText: this.emptyText || 'No records to display',
-      // autoFill: true,
       deferEmptyText: false,
       forceFit: this.forceFit ?? false,
       markDirty: false,
@@ -397,16 +406,13 @@ SM.AppInfo.Collections.OverviewGrid = Ext.extend(Ext.grid.GridPanel, {
       idProperty: 'collectionId',
       sortInfo: {
         field: 'name',
-        direction: 'ASC' // or 'DESC' (case sensitive for local sorting)
-      },
-      listeners: {
-        // // load: () => sm.selectFirstRow()
+        direction: 'ASC'
       }
     })
 
     const columns = [
       {
-        header: "Name",
+        header: "Collection",
         width: 180,
         dataIndex: 'name',
         sortable: true,
@@ -666,10 +672,7 @@ SM.AppInfo.Collections.FullGridLocked = Ext.extend(Ext.grid.GridPanel, {
       idProperty: 'collectionId',
       sortInfo: {
         field: 'name',
-        direction: 'ASC' // or 'DESC' (case sensitive for local sorting)
-      },
-      listeners: {
-        // // load: () => sm.selectFirstRow()
+        direction: 'ASC'
       }
     })
 
@@ -851,37 +854,37 @@ SM.AppInfo.Collections.FullGridLocked = Ext.extend(Ext.grid.GridPanel, {
         renderer: SM.AppInfo.numberRenderer
       },
       {
-        header: "detailEnabled",
+        header: "Detail Enabled",
         dataIndex: 'detailEnabled',
         sortable: true
       },
       {
-        header: "detailRequired",
+        header: "Detail Required",
         dataIndex: 'detailRequired',
         sortable: true
       },
       {
-        header: "commentlEnabled",
+        header: "Comment Enabled",
         dataIndex: 'commentEnabled',
         sortable: true
       },
       {
-        header: "commentRequired",
+        header: "Comment Required",
         dataIndex: 'commentRequired',
         sortable: true
       },
       {
-        header: "canAccept",
+        header: "Can Accept",
         dataIndex: 'canAccept',
         sortable: true
       },
       {
-        header: "resetCriteria",
+        header: "Reset Criteria",
         dataIndex: 'resetCriteria',
         sortable: true
       },
       {
-        header: "minAcceptGrant",
+        header: "Accept Grant",
         dataIndex: 'minAcceptGrant',
         sortable: true
       }
@@ -1125,10 +1128,7 @@ SM.AppInfo.Collections.AssetStigGrid = Ext.extend(Ext.grid.GridPanel, {
       idProperty: 'collectionId',
       sortInfo: {
         field: 'name',
-        direction: 'ASC' // or 'DESC' (case sensitive for local sorting)
-      },
-      listeners: {
-        // // load: () => sm.selectFirstRow()
+        direction: 'ASC'
       }
     })
 
@@ -1140,7 +1140,7 @@ SM.AppInfo.Collections.AssetStigGrid = Ext.extend(Ext.grid.GridPanel, {
         sortable: true,
       },
       {
-        header: "Name",
+        header: "Collection",
         dataIndex: 'name',
         sortable: true,
         filter: { type: 'string' }
@@ -1265,31 +1265,25 @@ SM.AppInfo.Collections.GrantsGrid = Ext.extend(Ext.grid.GridPanel, {
       idProperty: 'collectionId',
       sortInfo: {
         field: 'name',
-        direction: 'ASC' // or 'DESC' (case sensitive for local sorting)
-      },
-      listeners: {
-        // load: () => sm.selectFirstRow()
+        direction: 'ASC'
       }
     })
 
     const columns = [
       {
         header: "Id",
-        // width: 25,
         hidden: true,
         dataIndex: 'collectionId',
         sortable: true,
       },
       {
-        header: "name",
-        // width: 25,
+        header: "Collection",
         dataIndex: 'name',
         sortable: true,
         filter: { type: 'string' }
       },
       {
-        header: "state",
-        // width: 25,
+        header: "State",
         hidden: true,
         dataIndex: 'state',
         sortable: true,
@@ -1406,10 +1400,7 @@ SM.AppInfo.Collections.LabelsGrid = Ext.extend(Ext.grid.GridPanel, {
       idProperty: 'collectionId',
       sortInfo: {
         field: 'name',
-        direction: 'ASC' // or 'DESC' (case sensitive for local sorting)
-      },
-      listeners: {
-        // load: () => sm.selectFirstRow()
+        direction: 'ASC'
       }
     })
 
@@ -1421,15 +1412,13 @@ SM.AppInfo.Collections.LabelsGrid = Ext.extend(Ext.grid.GridPanel, {
         sortable: true,
       },
       {
-        header: "name",
-        // width: 25,
+        header: "Collection",
         dataIndex: 'name',
         sortable: true,
         filter: { type: 'string' }
       },
       {
-        header: "state",
-        // width: 25,
+        header: "State",
         hidden: true,
         dataIndex: 'state',
         sortable: true,
@@ -1558,10 +1547,7 @@ SM.AppInfo.Collections.SettingsGrid = Ext.extend(Ext.grid.GridPanel, {
       idProperty: 'collectionId',
       sortInfo: {
         field: 'name',
-        direction: 'ASC' // or 'DESC' (case sensitive for local sorting)
-      },
-      listeners: {
-        // load: () => sm.selectFirstRow()
+        direction: 'ASC'
       }
     })
 
@@ -1573,50 +1559,50 @@ SM.AppInfo.Collections.SettingsGrid = Ext.extend(Ext.grid.GridPanel, {
         sortable: true,
       },
       {
-        header: "name",
+        header: "Collection",
         dataIndex: 'name',
         sortable: true,
         filter: { type: 'string' }
       },
       {
-        header: "state",
+        header: "State",
         hidden: true,
         dataIndex: 'state',
         sortable: true,
         filter: { type: 'values' }
       },
       {
-        header: "detailEnabled",
+        header: "Detail Enabled",
         dataIndex: 'detailEnabled',
         sortable: true
       },
       {
-        header: "detailRequired",
+        header: "Detail Required",
         dataIndex: 'detailRequired',
         sortable: true
       },
       {
-        header: "commentlEnabled",
+        header: "Comment Enabled",
         dataIndex: 'commentEnabled',
         sortable: true
       },
       {
-        header: "commentRequired",
+        header: "Comment Required",
         dataIndex: 'commentRequired',
         sortable: true
       },
       {
-        header: "canAccept",
+        header: "Can Accept",
         dataIndex: 'canAccept',
         sortable: true
       },
       {
-        header: "resetCriteria",
+        header: "Reset Criteria",
         dataIndex: 'resetCriteria',
         sortable: true
       },
       {
-        header: "minAcceptGrant",
+        header: "Accept Grant",
         dataIndex: 'minAcceptGrant',
         sortable: true
       }
@@ -1687,12 +1673,12 @@ SM.AppInfo.Collections.Container = Ext.extend(Ext.Container, {
       const labels = []
       const settingRows = []
       for (const collectionId in data) {
-        const { settings, assetStigRanges, grantCounts, labelCounts, name = collectionId, state, ...rest } = data[collectionId]
-        overview.push({ collectionId, name, state, ...rest })
-        assetStig.push({ collectionId, name, state, ...assetStigRanges })
-        grants.push({ collectionId, name, state, ...grantCounts })
-        labels.push({ collectionId, name, state, ...labelCounts })
-        settingRows.push({ collectionId, name, state, ...settings })
+        const { settings, assetStigRanges, grantCounts, labelCounts, name, ...rest } = data[collectionId]
+        overview.push({ collectionId, name, ...rest })
+        assetStig.push({ collectionId, name, ...assetStigRanges })
+        grants.push({ collectionId, name, ...grantCounts })
+        labels.push({ collectionId, name, ...labelCounts })
+        settingRows.push({ collectionId, name, ...settings })
       }
       overviewGrid.store.loadData(overview)
       assetStigGrid.store.loadData(assetStig)
@@ -1703,8 +1689,7 @@ SM.AppInfo.Collections.Container = Ext.extend(Ext.Container, {
 
       const overviewLocked = []
       for (const collectionId in data) {
-        const { name = collectionId, ...rest } = data[collectionId]
-        overviewLocked.push({ collectionId, name, ...rest })
+        overviewLocked.push({ collectionId, ...data[collectionId] })
       }
       fullGridLocked.store.loadData(overviewLocked)
     }
@@ -1813,7 +1798,6 @@ SM.AppInfo.MySql.TablesGrid = Ext.extend(Ext.grid.GridPanel, {
       'tableCollation',
       'avgRowLength',
       'dataLength',
-      'maxDataLength',
       'indexLength',
       'autoIncrement',
       'createTime',
@@ -1826,91 +1810,75 @@ SM.AppInfo.MySql.TablesGrid = Ext.extend(Ext.grid.GridPanel, {
       idProperty: 'tableName',
       sortInfo: {
         field: 'tableName',
-        direction: 'ASC' // or 'DESC' (case sensitive for local sorting)
+        direction: 'ASC'
       }
     })
 
     const columns = [
       {
-        header: "tableName",
+        header: "Table",
         width: 160,
         dataIndex: 'tableName',
         sortable: true,
         filter: { type: 'string' }
       },
       {
-        header: "rowCount",
-        // width: 25,
+        header: "RowCount",
         dataIndex: 'rowCount',
         sortable: true,
         align: 'right',
         renderer: SM.AppInfo.numberRenderer
       },
       {
-        header: "tableRows",
-        // width: 25,
+        header: "TableRows",
         dataIndex: 'tableRows',
         sortable: true,
         align: 'right',
         renderer: SM.AppInfo.numberRenderer
       },
       {
-        header: "tableCollation",
-        // width: 25,
+        header: "Collation",
+        hidden: true,
         dataIndex: 'tableCollation',
         sortable: true,
         align: 'right',
       },
       {
-        header: "avgRowLength",
-        // width: 25,
+        header: "RowLengthAvg",
         dataIndex: 'avgRowLength',
         sortable: true,
         align: 'right',
         renderer: SM.AppInfo.numberRenderer
       },
       {
-        header: "dataLength",
-        // width: 25,
+        header: "DataLength",
         dataIndex: 'dataLength',
         sortable: true,
         align: 'right',
         renderer: SM.AppInfo.numberRenderer
       },
       {
-        header: "maxDataLength",
-        // width: 25,
-        dataIndex: 'maxDataLength',
-        sortable: true,
-        align: 'right',
-        renderer: SM.AppInfo.numberRenderer
-      },
-      {
-        header: "indexLength",
-        // width: 25,
+        header: "IndexLength",
         dataIndex: 'indexLength',
         sortable: true,
         align: 'right',
         renderer: SM.AppInfo.numberRenderer
       },
       {
-        header: "autoIncrement",
-        // width: 25,
+        header: "AutoIncrement",
         dataIndex: 'autoIncrement',
         sortable: true,
         align: 'right',
         renderer: SM.AppInfo.numberRenderer
       },
       {
-        header: "createTime",
-        // width: 25,
+        header: "Created",
         dataIndex: 'createTime',
         sortable: true,
         align: 'right',
       },
       {
-        header: "updateTime",
-        // width: 25,
+        header: "Updated",
         dataIndex: 'updateTime',
         sortable: true,
         align: 'right',
@@ -2034,7 +2002,7 @@ SM.AppInfo.MySql.Container = Ext.extend(Ext.Container, {
       keyColumnConfig: { header: 'Variable', width: 200 },
       valueColumnConfig: { header: 'Value' },
       exportName: 'status',
-      rowCountNoun: 'status'
+      rowCountNoun: 'variable'
     })
 
     const childContainer = new Ext.Container({
@@ -2045,7 +2013,6 @@ SM.AppInfo.MySql.Container = Ext.extend(Ext.Container, {
       bodyStyle: 'background-color: transparent;',
       layoutConfig: {
         align: 'stretch',
-        // defaultMargins: {top: 5, right: 10, bottom: 0, left: 10}
       },
       items: [
         variablesGrid,
@@ -2104,18 +2071,13 @@ SM.AppInfo.Requests.OperationsGrid = Ext.extend(Ext.grid.GridPanel, {
       idProperty: 'operationId',
       sortInfo: {
         field: 'operationId',
-        direction: 'ASC' // or 'DESC' (case sensitive for local sorting)
-      },
-      listeners: {
-        load: function () {
-          // sm.selectFirstRow()
-        }
+        direction: 'ASC'
       }
     })
 
     const columns = [
       {
-        header: "operationId",
+        header: "Operation",
         width: 160,
         dataIndex: 'operationId',
         sortable: true,
@@ -2137,7 +2099,6 @@ SM.AppInfo.Requests.OperationsGrid = Ext.extend(Ext.grid.GridPanel, {
       },
       {
         header: "Duration",
-        // width: 25,
         dataIndex: 'totalDuration',
         sortable: true,
         align: 'right',
@@ -2146,14 +2107,12 @@ SM.AppInfo.Requests.OperationsGrid = Ext.extend(Ext.grid.GridPanel, {
       {
         header: "DurAvg",
         hidden: true,
-        // width: 25,
         dataIndex: 'averageDuration',
         sortable: true,
         align: 'right',
       },
       {
         header: "DurMin",
-        // width: 25,
         dataIndex: 'minDuration',
         sortable: true,
         align: 'right',
@@ -2161,7 +2120,6 @@ SM.AppInfo.Requests.OperationsGrid = Ext.extend(Ext.grid.GridPanel, {
       },
       {
         header: "DurMax",
-        // width: 25,
         dataIndex: 'maxDuration',
         sortable: true,
         align: 'right',
@@ -2177,7 +2135,6 @@ SM.AppInfo.Requests.OperationsGrid = Ext.extend(Ext.grid.GridPanel, {
       },
       {
         header: "Elevated",
-        // width: 25,
         dataIndex: 'elevatedRequests',
         sortable: true,
         align: 'right',
@@ -2185,7 +2142,6 @@ SM.AppInfo.Requests.OperationsGrid = Ext.extend(Ext.grid.GridPanel, {
       },
       {
         header: "Retried",
-        // width: 25,
         dataIndex: 'retried',
         sortable: true,
         align: 'right',
@@ -2193,7 +2149,6 @@ SM.AppInfo.Requests.OperationsGrid = Ext.extend(Ext.grid.GridPanel, {
       },
       {
         header: "RetriesAvg",
-        // width: 25,
         dataIndex: 'averageRetries',
         sortable: true,
         align: 'right',
@@ -2201,7 +2156,6 @@ SM.AppInfo.Requests.OperationsGrid = Ext.extend(Ext.grid.GridPanel, {
       },
       {
         header: "ResLen",
-        // width: 25,
         dataIndex: 'totalResLength',
         sortable: true,
         align: 'right',
@@ -2209,7 +2163,6 @@ SM.AppInfo.Requests.OperationsGrid = Ext.extend(Ext.grid.GridPanel, {
       },
       {
         header: "ResLenMin",
-        // width: 25,
         dataIndex: 'minResLength',
         sortable: true,
         align: 'right',
@@ -2217,7 +2170,6 @@ SM.AppInfo.Requests.OperationsGrid = Ext.extend(Ext.grid.GridPanel, {
       },
       {
         header: "ResLenMax",
-        // width: 25,
         dataIndex: 'maxResLength',
         sortable: true,
         align: 'right',
@@ -2225,7 +2177,6 @@ SM.AppInfo.Requests.OperationsGrid = Ext.extend(Ext.grid.GridPanel, {
       },
       {
         header: "ReqLen",
-        // width: 25,
         dataIndex: 'totalReqLength',
         sortable: true,
         align: 'right',
@@ -2233,7 +2184,6 @@ SM.AppInfo.Requests.OperationsGrid = Ext.extend(Ext.grid.GridPanel, {
       },
       {
         header: "ReqLenMin",
-        // width: 25,
         dataIndex: 'minReqLength',
         sortable: true,
         align: 'right',
@@ -2241,7 +2191,6 @@ SM.AppInfo.Requests.OperationsGrid = Ext.extend(Ext.grid.GridPanel, {
       },
       {
         header: "ReqLenMin",
-        // width: 25,
         dataIndex: 'maxReqLength',
         sortable: true,
         align: 'right',
@@ -2288,7 +2237,7 @@ SM.AppInfo.Requests.OperationsGrid = Ext.extend(Ext.grid.GridPanel, {
         new SM.RowCountTextItem({
           store,
           noun: 'operation',
-          iconCls: 'sm-import-icon'
+          iconCls: 'sm-circle-icon'
         })
       ]
     })
@@ -2338,49 +2287,49 @@ SM.AppInfo.Requests.ProjectionsGrid = Ext.extend(Ext.grid.GridPanel, {
         filter: { type: 'string' }
       },
       {
-        header: 'totalRequests',
+        header: 'Requests',
         dataIndex: 'totalRequests',
         sortable: true,
         align: 'right',
         renderer: SM.AppInfo.numberRenderer
       },
       {
-        header: 'minDuration',
-        dataIndex: 'minDuration',
-        sortable: true,
-        align: 'right',
-        renderer: SM.AppInfo.numberRenderer
-      },
-      {
-        header: 'maxDuration',
-        dataIndex: 'maxDuration',
-        sortable: true,
-        align: 'right',
-        renderer: SM.AppInfo.numberRenderer
-      },
-      {
-        header: 'totalDuration',
+        header: 'Duration',
         dataIndex: 'totalDuration',
         sortable: true,
         align: 'right',
         renderer: SM.AppInfo.numberRenderer
       },
       {
-        header: 'averageDuration',
+        header: 'DurMin',
+        dataIndex: 'minDuration',
+        sortable: true,
+        align: 'right',
+        renderer: SM.AppInfo.numberRenderer
+      },
+      {
+        header: 'DurMax',
+        dataIndex: 'maxDuration',
+        sortable: true,
+        align: 'right',
+        renderer: SM.AppInfo.numberRenderer
+      },
+      {
+        header: 'DurationAvg',
         dataIndex: 'averageDuration',
         sortable: true,
         align: 'right',
         renderer: SM.AppInfo.numberRenderer
       },
       {
-        header: 'retried',
+        header: 'Retried',
         dataIndex: 'retried',
         sortable: true,
         align: 'right',
         renderer: SM.AppInfo.numberRenderer
       },
       {
-        header: 'averageRetries',
+        header: 'RetriesAvg',
         dataIndex: 'averageRetries',
         sortable: true,
         align: 'right',
@@ -2453,9 +2402,10 @@ SM.AppInfo.Requests.Container = Ext.extend(Ext.Container, {
       title: 'User requests',
       border: false,
       margins: { top: 0, right: 5, bottom: 0, left: 0 },
-      keyColumnConfig: { header: 'User' },
+      keyColumnConfig: { header: 'Username' },
       valueColumnConfig: { header: 'Requests' },
       width: 200,
+      rowCountNoun: 'user'
     })
     const clientsGrid = new SM.AppInfo.KeyValueGrid({
       title: 'Client requests',
@@ -2464,6 +2414,7 @@ SM.AppInfo.Requests.Container = Ext.extend(Ext.Container, {
       keyColumnConfig: { header: 'Client' },
       valueColumnConfig: { header: 'Requests' },
       width: 200,
+      rowCountNoun: 'client'
     })
     const errorsGrid = new SM.AppInfo.KeyValueGrid({
       title: 'Errors',
@@ -2472,6 +2423,7 @@ SM.AppInfo.Requests.Container = Ext.extend(Ext.Container, {
       keyColumnConfig: { header: 'Code' },
       valueColumnConfig: { header: 'Requests' },
       width: 200,
+      rowCountNoun: 'error'
     })
     const projectionsGrid = new SM.AppInfo.Requests.ProjectionsGrid({
       title: 'Projections',
@@ -2507,7 +2459,7 @@ SM.AppInfo.Requests.Container = Ext.extend(Ext.Container, {
     const childContainer = new Ext.Container({
       region: 'south',
       split: true,
-      height: 300,
+      height: 200,
       bodyStyle: 'background-color: transparent;',
       layout: 'hbox',
       layoutConfig: {
@@ -2532,6 +2484,7 @@ SM.AppInfo.Requests.Container = Ext.extend(Ext.Container, {
       operationsGrid.setTitle(`API Operations ${sep} ${nr(data.totalRequests)} total requests, ${nr(data.totalApiRequests)} to API, duration ${nr(data.totalRequestDuration)}ms`)
       usersGrid.store.removeAll()
       clientsGrid.store.removeAll()
+      errorsGrid.store.removeAll()
       projectionsGrid.store.removeAll()
     }
 
@@ -2590,18 +2543,14 @@ SM.AppInfo.Users.InfoGrid = Ext.extend(Ext.grid.GridPanel, {
       root: '',
       idProperty: 'userId',
       sortInfo: {
-        field: 'userId',
+        field: 'username',
         direction: 'ASC'
       }
     })
 
-    const dimZerosRenderer = function (value) {
-      return value !== 0 ? value : `<span class="sm-render-zero">${value}</span>`
-    }
-
     const columns = [
       {
-        header: 'username',
+        header: 'Username',
         dataIndex: 'username',
         sortable: true,
         filter: { type: 'string' }
@@ -2613,9 +2562,8 @@ SM.AppInfo.Users.InfoGrid = Ext.extend(Ext.grid.GridPanel, {
         sortable: true,
       },
       {
-        header: 'lastAccess',
+        header: 'Last Access',
         dataIndex: 'lastAccess',
-        // width: 150,
         sortable: true,
         align: 'right',
         renderer: v => v ? new Date(v * 1000).toISOString() : '-'
@@ -2623,47 +2571,41 @@ SM.AppInfo.Users.InfoGrid = Ext.extend(Ext.grid.GridPanel, {
       {
         header: 'Owner',
         dataIndex: 'owner',
-        // width: 10,
         sortable: true,
         align: 'right',
-        renderer: dimZerosRenderer
+        renderer: SM.AppInfo.numberRenderer
       },
       {
         header: 'Manage',
         dataIndex: 'manage',
-        // width: 150,
         sortable: true,
         align: 'right',
-        renderer: dimZerosRenderer
+        renderer: SM.AppInfo.numberRenderer
       },
       {
         header: 'Full',
         dataIndex: 'full',
-        // width: 150,
         sortable: true,
         align: 'right',
-        renderer: dimZerosRenderer
+        renderer: SM.AppInfo.numberRenderer
       },
       {
         header: 'Restricted',
         dataIndex: 'restricted',
-        // width: 150,
         sortable: true,
         align: 'right',
-        renderer: dimZerosRenderer
+        renderer: SM.AppInfo.numberRenderer
       },
       {
-        header: 'privileges',
+        header: 'Privileges',
         dataIndex: 'privileges',
-        // width: 250,
         sortable: true,
         align: 'right',
         renderer: v => JSON.stringify(v)
       },
       {
-        header: 'created',
+        header: 'Created',
         dataIndex: 'created',
-        // width: 150,
         sortable: true,
         align: 'right'
       }
@@ -2729,7 +2671,7 @@ SM.AppInfo.Users.Container = Ext.extend(Ext.Container, {
     function loadData(data) {
       const rows = []
       for (const key in data.userInfo) {
-        rows.push({ userId: key, username: key, ...data.userInfo[key] })
+        rows.push({ userId: key, ...data.userInfo[key] })
       }
       infoGrid.store.loadData(rows)
 
@@ -2903,6 +2845,7 @@ SM.AppInfo.Nodejs.CpusGrid = Ext.extend(Ext.grid.GridPanel, {
     })
 
     const config = {
+      cls: this.cls ?? 'sm-round-panel',
       store,
       view,
       sm,
@@ -2948,20 +2891,18 @@ SM.AppInfo.Nodejs.Container = Ext.extend(Ext.Container, {
       border: false,
       flex: 1,
       margins: { top: 0, right: 5, bottom: 0, left: 5 },
-      keyColumnConfig: { header: 'Property' },
+      keyColumnConfig: { header: 'Key' },
       valueColumnConfig: { header: 'Value' },
-      exportName: 'memory',
-      rowCountNoun: 'bytes'
+      exportName: 'memory'
     })
     const osGrid = new SM.AppInfo.KeyValueGrid({
       title: 'OS',
       border: false,
       flex: 1,
       margins: { top: 0, right: 0, bottom: 0, left: 5 },
-      keyColumnConfig: { header: 'Property' },
+      keyColumnConfig: { header: 'Key' },
       valueColumnConfig: { header: 'Value', align: 'left' },
-      exportName: 'os',
-      rowCountNoun: 'item'
+      exportName: 'os'
     })
 
     const panel = new Ext.Panel({
@@ -2971,8 +2912,7 @@ SM.AppInfo.Nodejs.Container = Ext.extend(Ext.Container, {
       bodyStyle: 'background-color: transparent;',
       layout: 'hbox',
       layoutConfig: {
-        align: 'stretch',
-        // defaultMargins: {top: 5, right: 10, bottom: 0, left: 10}
+        align: 'stretch'
       },
       border: false,
       items: [
@@ -3027,9 +2967,9 @@ SM.AppInfo.TabPanel = Ext.extend(Ext.TabPanel, {
     })
 
     const items = [
+      requestsContainer,
       collectionsContainer,
       usersContainer,
-      requestsContainer,
       mysqlContainer,
       nodejsContainer,
       jsonPanel,
@@ -3135,7 +3075,7 @@ SM.AppInfo.ShareFile.Panel = Ext.extend(Ext.Panel, {
 
 SM.AppInfo.SourceMessage = {
   header: 'Help the STIG Manager OSS project by sharing',
-  text: 'The <span class="sm-share-icon">Save for Sharing</span> option can create a file without identifiers or compliance data. Mail to <a href="mailto:RMF_Tools@us.navy.mil">RMF_Tools@us.navy.mil</a>.'
+  text: 'The <span class="sm-share-icon">Save for Sharing</span> option can create a file without identifiers or compliance data. Mail to <span class="sm-email">RMF_Tools@us.navy.mil</span>'
 }
 
 SM.AppInfo.SourcePanel = Ext.extend(Ext.Panel, {
@@ -3413,6 +3353,7 @@ SM.AppInfo.showAppInfoTab = async function (options) {
     id: 'appinfo-tab',
     sm_treePath: treePath,
     iconCls: 'sm-info-circle-icon',
+    bodyStyle: "background-color:transparent;",
     title: 'Application Info',
     closable: true,
     layout: 'vbox',

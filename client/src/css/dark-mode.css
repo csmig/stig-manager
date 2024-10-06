@@ -3172,6 +3172,7 @@ embed[type="application/pdf"] {
     background-color: #2d2d2d;
     color: #999999;
 }
-
-  
+.sm-render-zero {
+	color: #444444
+}
   
