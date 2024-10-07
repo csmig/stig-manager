@@ -143,7 +143,7 @@ function requestLogger (req, res, next) {
     if (operationId ) {
       trackOperationStats(operationId, durationMs, res)
       // If including stats in log entries, add to operationStats object
-      if (config.log.optStats === 'true') {
+      if (config.log.optStats) {
         operationStats = {
           ...operationStats,
           ...requestStats.operationIds[operationId]

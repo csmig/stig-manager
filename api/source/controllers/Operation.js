@@ -33,6 +33,9 @@ module.exports.setConfigurationItem = async function setConfigurationItem (req, 
 
 module.exports.getAppData = async function getAppData (req, res, next) {
   try {
+    if (!config.experimental.appData) {
+      throw new SmError.NotFoundError('endpoint disabled, to enable set STIGMAN_EXPERIMENTAL_APPDATA=true')
+    }
     let elevate = req.query.elevate
     if ( elevate ) {
       let collections = await Collection.exportCollections( ['grants', 'labels', 'stigs'], elevate, req.userObject )
@@ -81,6 +84,9 @@ module.exports.getAppData = async function getAppData (req, res, next) {
 
 module.exports.replaceAppData = async function replaceAppData (req, res, next) {
   try {
+    if (!config.experimental.appData) {
+      throw new SmError.NotFoundError('endpoint disabled, to enable set STIGMAN_EXPERIMENTAL_APPDATA=true')
+    }
     req.noCompression = true
     let elevate = req.query.elevate
     let appdata

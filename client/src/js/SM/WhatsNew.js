@@ -2,6 +2,14 @@ Ext.ns('SM.WhatsNew')
 
 SM.WhatsNew.Sources = [
   {
+    date: '2024-10-09',
+    header: `Application Information for Application Managers`,
+    body: `
+    <p>Application Managers can view detailed information about the application from the Application Management tree node. This feature expands on and replaces the "Anonymized Deployment Details" feature.</p>
+    <p>To provide insights useful to the local deployment, the information is not anonymized by default. However, it can be saved with all identifiers removed for sharing with the STIGMAN OSS Project Team.</p>
+    `    
+  },     
+  {
     date: '2024-03-17',
     header: `Bulk Checklist Imports Now Available to All Users`,
     body: `
@@ -11,7 +19,6 @@ SM.WhatsNew.Sources = [
     <p><img src="img/whatsnew/2024-03-15-dashboard-import.png"/></p>
     `    
   },     
-
   {
     date: '2024-03-01',
     header: `Review Age Info Now Available In All Review Grids`,
@@ -37,8 +44,6 @@ SM.WhatsNew.Sources = [
     `    
 
   },    
-
-
   {
     date: '2024-01-17',
     header: `New Meta Dashboard`,
@@ -55,7 +60,6 @@ SM.WhatsNew.Sources = [
     <p><img src="img/whatsnew/2024-01-17-meta-collection-panel-overview-filters.png"/></p>
     `    
   },      
-  
   {
     date: '2023-10-31',
     header: `New Interfaces for Managing Asset Labels and STIG Assignments`,
@@ -124,7 +128,6 @@ SM.WhatsNew.Sources = [
 
     <p><img src="img/whatsnew/2023-08-08-collection-clone-status-bar.png"/></p>`    
   },  
-
   {
     date: '2023-06-20',
     header: `Set the Default STIG Revision for a Collection`,
@@ -140,7 +143,6 @@ SM.WhatsNew.Sources = [
 
     <p><img src="img/whatsnew/2023-06-20-revision-pinning.png"/></p>`    
   },  
-
   {
     date: '2023-05-20',
     header: `Tally Sprites for Most Display Grids`,
@@ -167,7 +169,6 @@ SM.WhatsNew.Sources = [
 
     <p>There are a very small number of exceptions to this behavior, please see the <a target="_blank" href="docs/user-guide/rule-exceptions.html">STIG Manager Documentation for more details.</a></p>`    
   },
-
   {
     date: '2023-01-11',
     header: `New Collection Dashboard!`,
@@ -211,7 +212,6 @@ SM.WhatsNew.Sources = [
 
     <p>Please see the <a target="_blank" href="docs/user-guide/user-guide.html#collection-dashboard">STIG Manager Documentation for more details about this new feature!</a></p>`
   },       
-
   {
     date: '2023-01-10',
     header: `New STIG Revision Compare Tool!`,
@@ -223,7 +223,6 @@ SM.WhatsNew.Sources = [
 
     <p><img src="img/whatsnew/2023-01-09-stig-compare-tool-crop.png" width="800"/></p>`
   },     
-  
   {
     date: '2022-10-12',
     header: `New Metrics Report Replaces Status Report`,

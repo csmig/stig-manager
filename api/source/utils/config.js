@@ -1,6 +1,6 @@
 const package = require("../package.json")
 
-let config = {
+const config = {
     version: package.version,
     commit: {
         branch: process.env.COMMIT_BRANCH || 'na',
@@ -84,11 +84,10 @@ let config = {
     log: {
         level: parseInt(process.env.STIGMAN_LOG_LEVEL) || 3,
         mode: process.env.STIGMAN_LOG_MODE || 'combined',
-        // if STIGMAN_DEV_OPT_STATS_IN_LOGS = true, add performance stats to logs:
-        optStats: process.env.STIGMAN_DEV_LOG_OPT_STATS || "false"
+        optStats: process.env.STIGMAN_DEV_LOG_OPT_STATS === "true"
     },
     experimental: {
-        appData: process.env.STIGMAN_EXPERIMENTAL_APPDATA || "false"
+        appData: process.env.STIGMAN_EXPERIMENTAL_APPDATA === "true"
     }
 }
 
