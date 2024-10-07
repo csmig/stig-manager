@@ -48,7 +48,7 @@ const createTempCollection = async (collectionPost) => {
     if (!collectionPost) {
       collectionPost = 
         {
-          name: 'tempCollection' + Math.floor(Math.random() * 1000) + Date.now(),
+          name: 'temoCollection' + Math.floor(Math.random() * 1000) + Date.now(),
           description: 'Collection TEST description',
           settings: {
             fields: {
