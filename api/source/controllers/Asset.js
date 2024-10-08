@@ -84,7 +84,6 @@ module.exports.getAsset = async function (req, res, next) {
 
     const grant = await dbUtils.getGrantByAssetId(assetId, req.userObject.grants)
     if (!grant) throw new SmError.PrivilegeError()
-    if (projections?.includes('stigGrants') && grant.accessLevel < 3) throw new SmError.PrivilegeError('Projection stigGrants not allowed for this user')
 
     const response = await AssetService.getAsset({assetId, projections, grant})
     if (!response) throw new SmError.PrivilegeError()
@@ -109,7 +108,6 @@ module.exports.getAssets = async function (req, res, next) {
     const grant = req.userObject.grants[collectionId]
 
     if (!grant) throw new SmError.PrivilegeError('No Grant in Collection')
-    if (projections?.includes('stigGrants') && grant.accessLevel < 3) throw new SmError.PrivilegeError('Projection stigGrants not allowed for this user')
     
     const response = await AssetService.getAssets({
       filter: {

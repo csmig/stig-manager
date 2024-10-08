@@ -94,10 +94,10 @@ describe('POST - Asset', function () {
           }
           expect(res).to.have.status(422)
         })
-        it('Create an Asset (with stigGrants projection)', async function () {
+        it('Create an Asset', async function () {
           const res = await chai
             .request(config.baseUrl)
-            .post('/assets?projection=stigGrants')
+            .post('/assets')
             .set('Authorization', 'Bearer ' + iteration.token)
             .send({
               name: 'TestAsset' + Date.now(),
@@ -119,16 +119,7 @@ describe('POST - Asset', function () {
             expect(res).to.have.status(403)
             return
           }
-          
-          expect(res).to.have.status(201)
-           
-          for(const stig of res.body.stigGrants) {
-            expect(stig.benchmarkId).to.be.oneOf(reference.testCollection.validStigs)
-          }
-          const effectedAsset = await utils.getAsset(res.body.assetId)
-          for(const stig of effectedAsset.stigGrants) {
-            expect(stig.benchmarkId).to.be.oneOf(reference.testCollection.validStigs)
-          }
+          expect(res).to.have.status(201)         
         })
       })
     })

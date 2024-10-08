@@ -65,21 +65,21 @@ exports.queryAssets = async function ({projections = [], filter = {}, grant = {}
           FIND_IN_SET(saStatusStats.saId, GROUP_CONCAT(sa.saId))
         ) as "statusStats"`)
     }
-    if (projections.includes('stigGrants')) {
-      columns.push(`cast(
-        concat('[', 
-          coalesce (
-            group_concat(distinct 
-              case when sa.benchmarkId is not null then 
-                json_object(
-                  'benchmarkId', sa.benchmarkId, 
-                  'users', json_array())
-              else null end 
-            order by sa.benchmarkId),
-            ''),
-        ']')
-      as json) as "stigGrants"`)
-    }
+    // if (projections.includes('stigGrants')) {
+    //   columns.push(`cast(
+    //     concat('[', 
+    //       coalesce (
+    //         group_concat(distinct 
+    //           case when sa.benchmarkId is not null then 
+    //             json_object(
+    //               'benchmarkId', sa.benchmarkId, 
+    //               'users', json_array())
+    //           else null end 
+    //         order by sa.benchmarkId),
+    //         ''),
+    //     ']')
+    //   as json) as "stigGrants"`)
+    // }
     if (projections.includes('stigs')) {
       //iterate: If benchmarkId is a predicate in main query, this incorrectly only shows that STIG
       joins.push('left join default_rev dr on (sa.benchmarkId=dr.benchmarkId and a.collectionId = dr.collectionId)')

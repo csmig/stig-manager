@@ -163,7 +163,7 @@ const createTempAsset = async asset => {
 const deleteAsset = async assetId => {
   try {
     await axios.delete(
-      `${config.baseUrl}/assets/${assetId}?projection=statusStats&projection=stigs&projection=stigGrants`,
+      `${config.baseUrl}/assets/${assetId}`,
       {
         headers: {
           Authorization: `Bearer ${adminToken}`,
@@ -349,7 +349,7 @@ const deleteStig = async (benchmarkId) => {
 const getAsset = async assetId => {
   try {
     const res = await axios.get(
-      `${config.baseUrl}/assets/${assetId}?projection=statusStats&projection=stigs&projection=stigGrants`,
+      `${config.baseUrl}/assets/${assetId}?projection=statusStats&projection=stigs`,
       {
         headers: {
           Authorization: `Bearer ${adminToken}`,

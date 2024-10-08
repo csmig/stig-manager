@@ -4501,10 +4501,6 @@ components:
             submittedCount:
               nullable: true
               type: integer
-        stigGrants:
-          type: array
-          items:
-            $ref: '#/components/schemas/StigUserBasic'
         stigs:
           type: array
           description: The benchmarkIds mapped to this Asset
@@ -8014,7 +8010,6 @@ components:
           enum:
             - statusStats
             - stigs
-            - stigGrants
     BenchmarkIdArrayQuery:
       name: benchmarkId
       in: query

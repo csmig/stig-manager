@@ -284,35 +284,22 @@ describe('PUT - setStigAssetsByCollectionUser - /collections/{collectionId}/gran
                 expect(item.asset.assetId).to.equal(reference.testAsset.assetId)
             }
         })
-        it('Assets accessible to the requester (with STIG grants projection) -statusStats', async () => {
+        it('Assets accessible to the requester -statusStats', async () => {
 
             const res = await chai.request(config.baseUrl)
-                .get(`/assets?collectionId=${reference.testCollection.collectionId}&projection=statusStats&projection=stigGrants`)
+                .get(`/assets?collectionId=${reference.testCollection.collectionId}&projection=statusStats`)
                 .set('Authorization', `Bearer ${user.token}`)
                
             expect(res).to.have.status(200)
                     
-            let returnedAssetIds=[];
-    
-            var regex = new RegExp("asset")
+            const regex = /asset/
             for (let asset of res.body){
-
                 expect(asset.name).to.match(regex)
                 returnedAssetIds.push(asset.assetId)
                 expect(asset.statusStats).to.exist
-
                 if (asset.assetId == reference.testAsset.assetId){ 
                     expect(asset.statusStats.ruleCount).to.eql(368)
                     expect(asset.statusStats.stigCount).to.eql(2)
-
-                    expect(asset.stigGrants).to.exist
-                    for (let grant of asset.stigGrants){
-                        expect(grant.benchmarkId).to.be.oneOf(reference.testCollection.validStigs)
-                        if(grant.benchmarkId == reference.testCollection.benchmark){
-                            expect(grant.users).to.have.lengthOf(2)
-                            expect(reference.scrapLvl1User.userId).to.be.oneOf(grant.users.map(user => user.userId))
-                        }
-                    }
                 }
             }
         })
@@ -1519,7 +1506,7 @@ describe('GET - putAssetsByCollectionLabelId - /collections/{collectionId}/label
         it('Merge provided properties with an Asset Copy', async () => {
 
             const res = await chai.request(config.baseUrl)
-                .patch(`/assets/${reference.scrapAsset.assetId}?projection=statusStats&projection=stigs&projection=stigGrants`)
+                .patch(`/assets/${reference.scrapAsset.assetId}?projection=statusStats&projection=stigs`)
                 .set('Authorization', `Bearer ${user.token}`)
                 .send({
                     "collectionId": reference.scrapCollection.collectionId,
@@ -1587,9 +1574,8 @@ describe('GET - putAssetsByCollectionLabelId - /collections/{collectionId}/label
             expect(assetGetToPost(res.body)).to.eql(request)
         })
         it('Set all properties of an Asset Copy', async () => {
-
             const res = await chai.request(config.baseUrl)
-                .put(`/assets/${reference.scrapAsset.assetId}?projection=statusStats&projection=stigs&projection=stigGrants`)
+                .put(`/assets/${reference.scrapAsset.assetId}`)
                 .set('Authorization', `Bearer ${user.token}`)
                 .send({
                     "name": 'TestAsset' + Math.floor(Math.random() * 1000),
@@ -1616,9 +1602,8 @@ describe('GET - putAssetsByCollectionLabelId - /collections/{collectionId}/label
             expect(res).to.have.status(200)
         })
         it('check that request body without collectionId properly sets labels - GH-1293', async () => {
-
             const res = await chai.request(config.baseUrl)
-                .patch(`/assets/${reference.scrapAsset.assetId}?projection=statusStats&projection=stigs&projection=stigGrants`)
+                .patch(`/assets/${reference.scrapAsset.assetId}`)
                 .set('Authorization', `Bearer ${user.token}`)
                 .send({
                     "labelIds": [

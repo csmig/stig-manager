@@ -48,7 +48,6 @@ describe('GET - Collection', function () {
             expect(testCollectionOwnerArray, "proper owners").to.have.members(reference.testCollection.owners)
             expect(testCollection.statistics.assetCount, "asset count").to.equal(distinct.assetIds.length)
             expect(testCollection.statistics.checklistCount, "checklist count").to.equal(distinct.checklistCnt)
-            expect(testCollection.statistics.grantCount, "grant count").to.equal(distinct.grantCnt)
           })
         }
 
@@ -235,9 +234,7 @@ describe('GET - Collection', function () {
           expect(res.body.stigs).to.have.lengthOf(distinct.validStigs.length)
           for(const stig of res.body.stigs){
             expect(distinct.validStigs).to.include(stig.benchmarkId)
-          }
-          expect(res.body.statistics).to.have.property('grantCount', distinct.grantCnt)
-            
+          }          
         })
       })
 

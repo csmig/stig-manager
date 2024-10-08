@@ -41,7 +41,7 @@ describe('PATCH - Asset', function () {
         it('Merge provided properties with an Asset - Change Collection - Fail for all iterations', async function () {
           const res = await chai
             .request(config.baseUrl)
-            .patch(`/assets/${reference.testAsset.assetId}?projection=statusStats&projection=stigs&projection=stigGrants`)
+            .patch(`/assets/${reference.testAsset.assetId}?projection=statusStats&projection=stigs`)
             .set('Authorization', 'Bearer ' + iteration.token)
             .send({ 
               "collectionId": reference.scrapLvl1User.userId,
@@ -62,7 +62,7 @@ describe('PATCH - Asset', function () {
         it('Merge provided properties with an Asset - Change Collection - valid for lvl3 and lvl4 only (IE works for admin for me)', async function () {
           const res = await chai
             .request(config.baseUrl)
-            .patch(`/assets/${reference.testAsset.assetId}?projection=statusStats&projection=stigs&projection=stigGrants`)
+            .patch(`/assets/${reference.testAsset.assetId}?projection=statusStats&projection=stigs`)
             .set('Authorization', 'Bearer ' + iteration.token)
             .send({
               "collectionId": reference.scrapCollection.collectionId,
@@ -94,9 +94,6 @@ describe('PATCH - Asset', function () {
               'RHEL_7_STIG_TEST'
             ])
           }
-          for (const stigGrant of res.body.stigGrants) {
-            expect(stigGrant.users).to.have.lengthOf(0);
-          }
           const effectedAsset = await utils.getAsset(res.body.assetId)
           expect(effectedAsset.collection.collectionId).to.equal(reference.scrapCollection.collectionId)
           expect(effectedAsset.description).to.equal('test desc')
@@ -115,7 +112,7 @@ describe('PATCH - Asset', function () {
         
           const res = await chai
             .request(config.baseUrl)
-            .patch(`/assets/${reference.scrapAsset.assetId}?projection=statusStats&projection=stigs&projection=stigGrants`)
+            .patch(`/assets/${reference.scrapAsset.assetId}?projection=statusStats&projection=stigs`)
             .set('Authorization', 'Bearer ' + iteration.token)
             .send({
               "collectionId": reference.scrapCollection.collectionId,

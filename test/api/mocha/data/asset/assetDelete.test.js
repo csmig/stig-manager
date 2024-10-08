@@ -94,7 +94,7 @@ describe('DELETE - Asset', function () {
         it('Delete scrap Asset', async function () {
           const res = await chai
             .request(config.baseUrl)
-            .delete(`/assets/${localTestAsset.assetId}?projection=statusStats&projection=stigs&projection=stigGrants`)
+            .delete(`/assets/${localTestAsset.assetId}?projection=statusStats&projection=stigs`)
             .set('Authorization', 'Bearer ' + iteration.token) 
           if(!distinct.canModifyCollection){
             expect(res).to.have.status(403)

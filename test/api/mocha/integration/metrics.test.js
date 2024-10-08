@@ -61,7 +61,7 @@ describe('GET - getMetricsDetailByCollection - /collections/{collectionId}/metri
 
         const res = await chai
             .request(config.baseUrl)
-            .put(`/assets/${reference.testAsset.assetId}?projection=statusStats&projection=stigs&projection=stigGrants`)
+            .put(`/assets/${reference.testAsset.assetId}`)
             .set('Authorization', `Bearer ${user.token}`)
             .send({
                 "name": "Collection_X_lvl1_asset-1",
@@ -78,9 +78,6 @@ describe('GET - getMetricsDetailByCollection - /collections/{collectionId}/metri
             })
         expect(res).to.have.status(200)
         expect(res.body.collection.collectionId, "collectionId").to.equal(reference.scrapCollection.collectionId)
-        for (const stigGrant of res.body.stigGrants) {
-            expect(stigGrant.users).to.have.lengthOf(0);
-        }
     })
     it('verify metrics were recalculated relative to new pinned rev after transfer', async () => {
 

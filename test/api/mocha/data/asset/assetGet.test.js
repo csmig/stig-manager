@@ -28,19 +28,17 @@ describe(`GET - Asset`, function () {
 
       describe(`getAsset - /assets/{assetId}`, function () {
       
-        it(`Return test asset (with STIGgrants projection)`, async function () {
+        it(`Return test asset`, async function () {
           const res = await chai
             .request(config.baseUrl)
-            .get(`/assets/${reference.testAsset.assetId}?projection=statusStats&projection=stigs&projection=stigGrants`)
+            .get(`/assets/${reference.testAsset.assetId}?projection=statusStats&projection=stigs`)
             .set(`Authorization`, `Bearer ` + iteration.token)
 
-          if(distinct.canModifyCollection === false){
+          if(distinct.hasAccessToTestAsset === false){
             expect(res).to.have.status(403)
             return
           }
-          else{
-            expect(res).to.have.status(200)
-          }
+          expect(res).to.have.status(200)
           expect(res.body.name, `expect asset name to equal test asset ${reference.testAsset.name}`).to.eql(reference.testAsset.name)
           expect(res.body.collection.collectionId, `expect asset to be a part of test collection ${reference.testAsset.collectionId}`).to.eql(reference.testAsset.collectionId)
           expect(res.body.collection.name, `expect collection name to equal test collection ${reference.testCollection.name}`).to.eql(reference.testCollection.name)
@@ -51,13 +49,6 @@ describe(`GET - Asset`, function () {
           expect(res.body.metadata, "expect metadata to equal test metadata").to.deep.equal({
             [reference.testAsset.metadataKey]: reference.testAsset.metadataValue
           })
-          expect(res.body.stigGrants, `Expect a length of stigGrants, ${distinct.testAssetStigs.length}`).to.be.an("array").of.length(distinct.testAssetStigs.length)
-          for (let grant of res.body.stigGrants){
-              expect(grant.benchmarkId).to.be.oneOf(distinct.testAssetStigs)
-              for(let user of grant.users){
-                expect(user.userId).to.be.oneOf(reference.testAsset.usersWithGrant);
-              }
-          }
           // stigs projection
           expect(res.body.stigs).to.be.an("array").of.length(distinct.testAssetStigs.length)
           for (let stig of res.body.stigs){
@@ -72,13 +63,13 @@ describe(`GET - Asset`, function () {
           expect(res.body.statusStats.submittedCount, "submitted count").to.eql(distinct.testAssetStats.submittedCount)
 
         })
-        it(`Return an Asset with no assigned stigs (with STIGgrants projection)`, async function () {
+        it(`Return an Asset with no assigned stigs`, async function () {
           const res = await chai
             .request(config.baseUrl)
-            .get(`/assets/${reference.testAssetNoStigs.assetId}?projection=statusStats&projection=stigs&projection=stigGrants`)
+            .get(`/assets/${reference.testAssetNoStigs.assetId}?projection=statusStats&projection=stigs`)
             .set(`Authorization`, `Bearer ` + iteration.token)
 
-          if(distinct.canModifyCollection === false){
+          if(distinct.hasAccessToTestAssetNoStigs === false){
             expect(res).to.have.status(403)
             return
           }
@@ -88,10 +79,6 @@ describe(`GET - Asset`, function () {
           expect(res.body.name).to.eql(reference.testAssetNoStigs.name)
           expect(res.body.collection.collectionId).to.eql(reference.testAssetNoStigs.collectionId)
           expect(res.body.labelIds).to.be.an(`array`).of.length(reference.testAssetNoStigs.labels.length)
-
-          // stig grants
-          expect(res.body.stigGrants).to.exist;
-          expect(res.body.stigGrants).to.be.an("array").of.length(0)
 
           // stigs
           expect(res.body.stigs).to.be.an("array").of.length(reference.testAssetNoStigs.stigs.length)
@@ -106,7 +93,7 @@ describe(`GET - Asset`, function () {
           expect(res.body.statusStats.acceptedCount, "accepted count").to.eql(reference.testAssetNoStigs.stats.acceptedCount)
 
         })
-        it(`Return test asset (without STIGgrants projection)`, async function () {
+        it(`Return test asset`, async function () {
           const res = await chai
             .request(config.baseUrl)
             .get(`/assets/${reference.testAsset.assetId}?projection=statusStats&projection=stigs`)
@@ -145,7 +132,7 @@ describe(`GET - Asset`, function () {
           expect(res.body.statusStats.submittedCount, "submitted count").to.eql(distinct.testAssetStats.submittedCount)
 
         })
-        it(`Return an Asset  with no assigned stigs (without STIGgrants projection)`, async function () {
+        it(`Return an Asset  with no assigned stigs`, async function () {
           const res = await chai
             .request(config.baseUrl)
             .get(`/assets/${reference.testAssetNoStigs.assetId}?projection=statusStats&projection=stigs`)
@@ -251,18 +238,18 @@ describe(`GET - Asset`, function () {
       })
       describe(`getAssets - /assets`, function () {
 
-        it(`Assets accessible to the requester (with STIG grants projection) benchmark projection with test benchmark`, async function () {
+        it(`Assets accessible to the requester benchmark projection with test benchmark`, async function () {
           const res = await chai
-            .request(config.baseUrl).get(`/assets?collectionId=${reference.testCollection.collectionId}&benchmarkId=${reference.benchmark}&projection=stigs&projection=stigGrants`)
+            .request(config.baseUrl).get(`/assets?collectionId=${reference.testCollection.collectionId}&benchmarkId=${reference.benchmark}&projection=stigs`)
             .set(`Authorization`, `Bearer ` + iteration.token)
-          if(distinct.canModifyCollection === false){
+          if(distinct.hasAccessToTestAsset === false){
             expect(res).to.have.status(403)
             return
           }
           expect(res).to.have.status(200)
-          expect(res.body).to.be.an(`array`).of.length(distinct.assetsAvailableStigGrants.length)
+          expect(res.body).to.be.an(`array`).of.length(distinct.assetsAvailableBenchmark.length)
           for(const asset of res.body){
-            expect(asset.assetId).to.be.oneOf(distinct.assetsAvailableStigGrants)
+            expect(asset.assetId).to.be.oneOf(distinct.assetsAvailableBenchmark)
             expect(reference.benchmark).to.be.oneOf(asset.stigs.map(stig => stig.benchmarkId))
             if(asset.assetId === reference.testAsset.assetId){
               expect(asset.name, "expect asset name to equal test asset").to.eql(reference.testAsset.name)
@@ -285,18 +272,16 @@ describe(`GET - Asset`, function () {
           }
         })
 
-        it(`Assets accessible to the requester (with STIG grants projection)`, async function () {
+        it(`Assets accessible to the requester`, async function () {
           const res = await chai
-            .request(config.baseUrl).get(`/assets?collectionId=${reference.testCollection.collectionId}&projection=statusStats&projection=stigs&projection=stigGrants`)
+            .request(config.baseUrl).get(`/assets?collectionId=${reference.testCollection.collectionId}&projection=statusStats&projection=stigs`)
             .set(`Authorization`, `Bearer ` + iteration.token)
 
-          if(distinct.canModifyCollection === false){
+          if(distinct.hasAccessToTestAsset === false){
             expect(res).to.have.status(403)
             return
           }
-
           expect(res).to.have.status(200)
-
           expect(res.body).to.be.an(`array`).of.length(distinct.assetIds.length)
         
           const jsonData = res.body;
@@ -308,9 +293,6 @@ describe(`GET - Asset`, function () {
 
             for(let stig of asset.stigs){
               expect(stig.benchmarkId).to.be.oneOf(reference.testCollection.validStigs);
-            }
-            for(let grant of asset.stigGrants){
-              expect(grant.benchmarkId).to.be.oneOf(reference.testCollection.validStigs);
             }
             if(asset.assetId === reference.testAsset.assetId){
               expect(asset.name, "expect asset name to equal test asset").to.eql(reference.testAsset.name)
@@ -373,7 +355,7 @@ describe(`GET - Asset`, function () {
           await utils.deleteAsset(assetWithMetadata.data.assetId)
         })
 
-        it(`Assets accessible to the requester - No StigGrants projection(for lvl1 iteration success)`, async function () {
+        it(`Assets accessible to the requester`, async function () {
           const res = await chai
             .request(config.baseUrl).get(`/assets?collectionId=${reference.testCollection.collectionId}&benchmarkId=${reference.benchmark}`)
             .set(`Authorization`, `Bearer ` + iteration.token)
@@ -766,7 +748,7 @@ describe(`GET - Asset`, function () {
             .set(`Authorization`, `Bearer ` + iteration.token)
 
           if(!distinct.hasAccessToTestAsset){
-            expect(res).to.have.status(204)
+            expect(res).to.have.status(403)
             return
           }
 
@@ -807,7 +789,7 @@ describe(`GET - Asset`, function () {
             .set(`Authorization`, `Bearer ` + iteration.token)
 
           if(!distinct.hasAccessToTestAsset){
-            expect(res).to.have.status(204)
+            expect(res).to.have.status(403)
             return
           }
 
@@ -839,11 +821,11 @@ describe(`GET - Asset`, function () {
             .set(`Authorization`, `Bearer ` + iteration.token)
 
           if(!distinct.hasAccessToTestAsset){
-            expect(res).to.have.status(204)
+            expect(res).to.have.status(403)
             return
           }
           expect(res).to.have.status(200)
-          expect(res.body).to.be.an(`array`).of.length(reference.checklistLength)
+          expect(res.body.checklist).to.be.an(`array`).of.length(reference.checklistLength)
         })
       })
       describe(`getStigsByAsset - /assets/{assetId}/stigs`, function () {
@@ -854,11 +836,11 @@ describe(`GET - Asset`, function () {
             .request(config.baseUrl)
             .get(`/assets/${reference.testAsset.assetId}/stigs`)
             .set(`Authorization`, `Bearer ` + iteration.token)
-          expect(res).to.have.status(200)
           if(!distinct.hasAccessToTestAsset){
-            expect(res.body).to.eql([])
+            expect(res).to.have.status(403)
             return
           }
+          expect(res).to.have.status(200)
           expect(res.body).to.be.an(`array`).of.length(distinct.validStigs.length)
           for(let stig of res.body){
             expect(stig.benchmarkId).to.be.oneOf(reference.testCollection.validStigs)

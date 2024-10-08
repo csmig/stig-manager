@@ -197,17 +197,17 @@ module.exports.getPoamByCollection = async function getPoamByCollection (req, re
   }
 }
 
-module.exports.getStigAssetsByCollectionUser = async function getStigAssetsByCollectionUser (req, res, next) {
-  try {
-    const userId = req.params.userId
-    const { collectionId } = getCollectionInfoAndCheckPermission(req)
-    const response = await CollectionService.getStigAssetsByCollectionUser(collectionId, userId, req.userObject )
-    res.json(response)
-  }
-  catch (err) {
-    next(err)
-  }
-}
+// module.exports.getStigAssetsByCollectionUser = async function getStigAssetsByCollectionUser (req, res, next) {
+//   try {
+//     const userId = req.params.userId
+//     const { collectionId } = getCollectionInfoAndCheckPermission(req)
+//     const response = await CollectionService.getStigAssetsByCollectionUser(collectionId, userId, req.userObject )
+//     res.json(response)
+//   }
+//   catch (err) {
+//     next(err)
+//   }
+// }
 
 module.exports.getStigsByCollection = async function getStigsByCollection (req, res, next) {
   try {

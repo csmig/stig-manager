@@ -42,7 +42,7 @@ exports.queryCollection = async function ({collectionId, projections = [], eleva
       'name', name)`,
       orderBy: 'name'
       })}, json_array()) from
-      ${requesterAccessLevel === 1 ? 'cteAssets' : 'asset where collectionId = c.collectionId'}) as assets`
+      ${requesterAccessLevel === 1 ? 'cteAssets' : 'asset where collectionId = c.collectionId and state = "enabled"'}) as assets`
       if (requesterAccessLevel === 1) {
       requireCteAcls = true
       requireCteAssets = true
@@ -195,7 +195,7 @@ exports.queryCollection = async function ({collectionId, projections = [], eleva
         from 
           (SELECT
           (select count(userId) from cteGrantees where collectionId = c.collectionId) as userCount,
-          (select count(distinct a.assetId) from asset a where a.collectionId = c.collectionId) as assetCount,
+          (select count(distinct a.assetId) from asset a where a.collectionId = c.collectionId and state = "enabled") as assetCount,
           (select count(saId) from asset a left join stig_asset_map sa using (assetId) where a.collectionId = c.collectionId) as checklistCount) dt4
         ) as statistics`)
 
@@ -2725,9 +2725,9 @@ exports.queryReviewAcl = async function ({cgId, collectionId, userId, userGroupI
   ]
   let joins = [
     'collection_grant cg',
-    'left join collection c on cg.collectionId = c.collectionId and c.state = "enabled"',
+    'inner join collection c on cg.collectionId = c.collectionId and c.state = "enabled"',
     'left join collection_grant_acl cga on cg.cgId = cga.cgId',
-    'left join asset a on cga.assetId = a.assetId and a.state = "enabled"',
+    'inner join asset a on cga.assetId = a.assetId and a.state = "enabled"',
     'left join collection_label cl on cga.clId = cl.clId'
     ]
   // PREDICATES

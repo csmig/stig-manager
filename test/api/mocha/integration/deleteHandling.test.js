@@ -248,15 +248,15 @@ describe('DELETE - deleteAsset - /assets/{assetId} - DELETE - deleteCollection -
 
             const res = await chai
                 .request(config.baseUrl)
-                .delete(`/assets/${reference.testAsset.assetId}?projection=statusStats&projection=stigs&projection=stigGrants`)
+                .delete(`/assets/${reference.testAsset.assetId}`)
                 .set("Authorization", `Bearer ${user.token}`)
             expect(res).to.have.status(200)
         })
         it('get asset, it should return 403 because asset is deleted', async () => {
-
+            
             const res = await chai
                 .request(config.baseUrl)
-                .get(`/assets/${reference.testAsset.assetId}?projection=statusStats&projection=stigs&projection=stigGrants`)
+                .get(`/assets/${reference.testAsset.assetId}`)
                 .set("Authorization", `Bearer ${user.token}`)
             expect(res).to.have.status(403)
         })

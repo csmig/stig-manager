@@ -28,7 +28,7 @@ describe('PUT - Asset', function () {
         
         it('Set all properties of an Asset', async function () {
           const res = await chai.request(config.baseUrl)
-            .put(`/assets/${reference.scrapAsset.assetId}?projection=statusStats&projection=stigs&projection=stigGrants`)
+            .put(`/assets/${reference.scrapAsset.assetId}?projection=statusStats&projection=stigs`)
             .set('Authorization', 'Bearer ' + iteration.token)
             .send({
               "name": 'TestAsset' + Math.floor(Math.random() * 1000),
@@ -80,14 +80,6 @@ describe('PUT - Asset', function () {
               "RHEL_7_STIG_TEST"
           ])
           }
-          expect(res.body.stigGrants).to.be.an('array').of.length(3)
-          for (let stig of res.body.stigGrants) {
-            expect(stig.benchmarkId).to.be.oneOf([
-              "VPN_SRG_TEST",
-              "Windows_10_STIG_TEST",
-              "RHEL_7_STIG_TEST"
-          ])
-          }
           const effectedAsset = await utils.getAsset(res.body.assetId)
           expect(effectedAsset.collection.collectionId).to.equal(reference.scrapCollection.collectionId)
           expect(effectedAsset.description).to.equal('test desc')
@@ -105,7 +97,7 @@ describe('PUT - Asset', function () {
 
         it('Set all properties of an Asset - assign new STIG', async function () {
           const res = await chai.request(config.baseUrl)
-            .put(`/assets/${reference.testAsset.assetId}?projection=statusStats&projection=stigs&projection=stigGrants`)
+            .put(`/assets/${reference.testAsset.assetId}?projection=statusStats&projection=stigs`)
             .set('Authorization', 'Bearer ' + iteration.token)
             .send({
               "name": 'TestAsset' + Math.floor(Math.random() * 1000),
@@ -142,27 +134,16 @@ describe('PUT - Asset', function () {
             ])
           }
           
-          expect(res.body.stigGrants).to.be.an('array').of.length(4)
-            for(const stig of res.body.stigGrants) {
-              expect(stig.benchmarkId).to.be.oneOf([ "VPN_SRG_TEST",
-                "VPN_SRG_OTHER",
-                "Windows_10_STIG_TEST",
-                "RHEL_7_STIG_TEST"
-              ])
-              if(stig.benchmarkId === "VPN_SRG_TEST"){
-                expect(stig.users[0].userId).to.equal(reference.lvl1User.userId)
-              }
-            }
-            const effectedAsset = await utils.getAsset(res.body.assetId)
-            expect(effectedAsset.collection.collectionId).to.equal(reference.testCollection.collectionId)
-            expect(effectedAsset.stigs).to.be.an('array').of.length(4)
-            for (const stig of effectedAsset.stigs) {
-              expect(stig.benchmarkId).to.be.oneOf([ "VPN_SRG_TEST",
-                "VPN_SRG_OTHER",
-                "Windows_10_STIG_TEST",
-                "RHEL_7_STIG_TEST"
-             ])
-            }
+          const effectedAsset = await utils.getAsset(res.body.assetId)
+          expect(effectedAsset.collection.collectionId).to.equal(reference.testCollection.collectionId)
+          expect(effectedAsset.stigs).to.be.an('array').of.length(4)
+          for (const stig of effectedAsset.stigs) {
+            expect(stig.benchmarkId).to.be.oneOf([ "VPN_SRG_TEST",
+              "VPN_SRG_OTHER",
+              "Windows_10_STIG_TEST",
+              "RHEL_7_STIG_TEST"
+            ])
+          }
         })
 
         it('Set all properties of an Asset- with metadata', async function () {
