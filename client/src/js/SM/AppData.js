@@ -164,7 +164,7 @@ SM.AppData.doReplace = function () {
     items: rp,
     onEsc: Ext.emptyFn
   }).show(document.body)
-  rp.updateStatusText('No file has been selected', true, true)
+  rp.updateStatusText('IMPORTANT: Content from the imported file will replace ALL existing application data!', true, true)
 
   function btnHandler (btn) {
     if (btn.fileObj) upload(btn.fileObj)
