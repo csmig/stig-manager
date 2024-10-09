@@ -784,6 +784,24 @@ exports.getAppInfo = async function() {
     )
   ORDER by variable_name
   `
+  const sqlDupCounts = `with cteDups as (select
+    collectionId, assetId, count(reviewId) as dupCount
+  from
+    review
+    left join asset using (assetId)
+  group by
+    assetId, version, checkDigest
+  having
+    count(reviewId) > 1)
+  select
+    collectionId,
+    coalesce(count(assetId),0) as reviewDups,
+    sum(dupCount) as reviewDupsSum
+  from
+    cteDups
+  group by
+    collectionId
+`
 
   await dbUtils.pool.query(sqlAnalyze)
 
@@ -794,6 +812,7 @@ exports.getAppInfo = async function() {
     [labelCountsByCollection],
     [aclUserCountsByCollection],
     [grantCountsByCollection],
+    [dupCountsByCollection],
     [userInfo],
     [mySqlVersion],
     [mySqlVariables],
@@ -805,6 +824,7 @@ exports.getAppInfo = async function() {
     dbUtils.pool.query(sqlLabelCountsByCollection),
     dbUtils.pool.query(sqlAclUserCountsByCollection),
     dbUtils.pool.query(sqlGrantCounts),
+    dbUtils.pool.query(sqlDupCounts),
     dbUtils.pool.query(sqlUserInfo),
     dbUtils.pool.query(sqlMySqlVersion),
     dbUtils.pool.query(sqlMySqlVariablesValues),
@@ -843,14 +863,13 @@ exports.getAppInfo = async function() {
   assetStigByCollection = createObjectFromKeyValue(assetStigByCollection, "collectionId")
   aclUserCountsByCollection = createObjectFromKeyValue(aclUserCountsByCollection, "collectionId")
   grantCountsByCollection = createObjectFromKeyValue(grantCountsByCollection, "collectionId")
+  dupCountsByCollection = createObjectFromKeyValue(dupCountsByCollection, "collectionId")
 
   // Bundle "byCollection" stats together by collectionId
   for(const collectionId in countsByCollection) {
-    // Add assetStig data to countsByCollection 
     if (assetStigByCollection[collectionId]) {
       countsByCollection[collectionId].assetStigRanges = assetStigByCollection[collectionId]
     }
-    // Add acl data to countsByCollection
     if (aclUserCountsByCollection[collectionId]) {
       countsByCollection[collectionId].aclCounts = {
         users: createObjectFromKeyValue(aclUserCountsByCollection[collectionId].aclCounts, "userId"),
@@ -863,7 +882,6 @@ exports.getAppInfo = async function() {
         groups: {}
       }
     }
-    // Add grant data to countsByCollection
     if (grantCountsByCollection[collectionId]) {
       countsByCollection[collectionId].grantCounts = grantCountsByCollection[collectionId]
     }
@@ -875,10 +893,11 @@ exports.getAppInfo = async function() {
         owner: 0
       }
     }    
-    // Add labelCounts data to countsByCollection
     if (labelCountsByCollection[collectionId]) {
       countsByCollection[collectionId].labelCounts = labelCountsByCollection[collectionId]
     }
+    countsByCollection[collectionId].reviewDups = dupCountsByCollection[collectionId]?.reviewDups ?? 0
+    countsByCollection[collectionId].reviewDupsSum = dupCountsByCollection[collectionId]?.reviewDupsSum ?? 0
   }
 
   const returnObj = {
