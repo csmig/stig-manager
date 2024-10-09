@@ -3,10 +3,20 @@ Ext.ns('SM.WhatsNew')
 SM.WhatsNew.Sources = [
   {
     date: '2024-10-09',
-    header: `Application Information for Application Managers`,
+    header: `New Application Information Report for Application Managers`,
     body: `
-    <p>Application Managers can view detailed information about the application from the Application Management tree node. This feature expands on and replaces the "Anonymized Deployment Details" feature.</p>
-    <p>To provide insights useful to the local deployment, the information is not anonymized by default. However, it can be saved with all identifiers removed for sharing with the STIGMAN OSS Project Team.</p>
+    <p>Application Managers can now view detailed information about the application from the Application Management tree node. This feature expands on and replaces the "Anonymized Deployment Details" feature.</p>
+    <p>To provide insights useful to the local deployment, the information is not anonymized by default. However, the data can be saved with all identifiers removed for sharing with the STIG Manager OSS Project Team. The STIGMan team encourages you to contribute your report, which will be used to recreate production-like scenarios that help us target new features and improve overall performance of the application.</p>
+    <p>The report can be submitted to:</p>
+    <b>RMF_Tools@us.navy.mil</b>
+    <p><b>Thank you for your help!</b></p>
+
+    <p>To access the new report, click on the "Application Information" node in the Application Management tree. Click the "Save for sharing" button to download the report and send to the team:</p>
+
+    <p><img src="img/whatsnew/2024-10-09-app-info-share.png"/></p>
+
+    <p><b>NOTE:</b> The "Experimental" Export/Import Data feature that used to share the "App Info" tab was unable to reliably scale with the current size of production deployments. As it was intended mainly for use with testing and demo data sets, it must now be enabled specifically with a deployment configuration option. See the documentation for more details.</p>
+
     `    
   },     
   {
