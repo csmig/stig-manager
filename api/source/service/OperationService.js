@@ -977,10 +977,13 @@ exports.getAppInfo = async function() {
     const environment = {}
     for (const [key, value] of Object.entries(environmentVariables)) {
       if (/^(NODE|STIGMAN)_/.test(key)) {
-        environment[key] = key === 'STIGMAN_DB_PASSWORD' ? '*' : value
+        environment[key] = key === 'STIGMAN_DB_PASSWORD' ? '***' : value
       }
     }
     const {platform, arch, nodejsVersion, cpus, osMachine, osName, osRelease} = header
+    for (let x = 0; x < cpus.length; x++) {
+      cpus[x] = {model: cpus[x].model, speed: cpus[x].speed}
+    }
     const loadAverage = os.loadavg().join(', ')
 
     const memory = process.memoryUsage()
