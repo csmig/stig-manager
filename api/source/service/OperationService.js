@@ -784,25 +784,6 @@ exports.getAppInfo = async function() {
     )
   ORDER by variable_name
   `
-  const sqlDupCounts = `with cteDups as (select
-    collectionId, assetId, count(reviewId) as dupCount
-  from
-    review
-    left join asset using (assetId)
-  group by
-    assetId, version, checkDigest
-  having
-    count(reviewId) > 1)
-  select
-    collectionId,
-    coalesce(count(assetId),0) as reviewDups,
-    sum(dupCount) as reviewDupsSum
-  from
-    cteDups
-  group by
-    collectionId
-`
-
   await dbUtils.pool.query(sqlAnalyze)
   const [schemaInfoArray] = await dbUtils.pool.query(sqlInfoSchema, [config.database.schema])
   const tables = createObjectFromKeyValue(schemaInfoArray, "tableName")
@@ -818,7 +799,6 @@ exports.getAppInfo = async function() {
     [labelCountsByCollection],
     [aclUserCountsByCollection],
     [grantCountsByCollection],
-    [dupCountsByCollection],
     [userInfo],
     [mySqlVersion],
     [mySqlVariables],
@@ -830,7 +810,6 @@ exports.getAppInfo = async function() {
     dbUtils.pool.query(sqlLabelCountsByCollection),
     dbUtils.pool.query(sqlAclUserCountsByCollection),
     dbUtils.pool.query(sqlGrantCounts),
-    dbUtils.pool.query(sqlDupCounts),
     dbUtils.pool.query(sqlUserInfo),
     dbUtils.pool.query(sqlMySqlVersion),
     dbUtils.pool.query(sqlMySqlVariablesValues),
@@ -862,7 +841,6 @@ exports.getAppInfo = async function() {
   assetStigByCollection = createObjectFromKeyValue(assetStigByCollection, "collectionId")
   aclUserCountsByCollection = createObjectFromKeyValue(aclUserCountsByCollection, "collectionId")
   grantCountsByCollection = createObjectFromKeyValue(grantCountsByCollection, "collectionId")
-  dupCountsByCollection = createObjectFromKeyValue(dupCountsByCollection, "collectionId")
 
   // Bundle "byCollection" stats together by collectionId
   for(const collectionId in countsByCollection) {
@@ -895,8 +873,6 @@ exports.getAppInfo = async function() {
     if (labelCountsByCollection[collectionId]) {
       countsByCollection[collectionId].labelCounts = labelCountsByCollection[collectionId]
     }
-    countsByCollection[collectionId].reviewDups = dupCountsByCollection[collectionId]?.reviewDups ?? 0
-    countsByCollection[collectionId].reviewDupsSum = dupCountsByCollection[collectionId]?.reviewDupsSum ?? 0
   }
 
   const returnObj = {

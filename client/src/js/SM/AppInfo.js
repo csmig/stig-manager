@@ -389,8 +389,6 @@ SM.AppInfo.Collections.OverviewGrid = Ext.extend(Ext.grid.GridPanel, {
       'rules',
       'reviews',
       'reviewsDisabled',
-      'reviewDups',
-      'reviewDupsSum',
       {
         name: 'reviewsTotal',
         convert: (v, r) => r.reviews + r.reviewsDisabled
@@ -490,20 +488,6 @@ SM.AppInfo.Collections.OverviewGrid = Ext.extend(Ext.grid.GridPanel, {
         renderer: SM.AppInfo.numberRenderer
       },
       {
-        header: "Review Dups",
-        dataIndex: 'reviewDups',
-        sortable: true,
-        align: 'right',
-        renderer: SM.AppInfo.numberRenderer
-      },
-      {
-        header: "Review Dups Sum",
-        dataIndex: 'reviewDupsSum',
-        sortable: true,
-        align: 'right',
-        renderer: SM.AppInfo.numberRenderer
-      },
-      {
         header: "Reviews Total",
         dataIndex: 'reviewsTotal',
         hidden: true,
@@ -595,8 +579,6 @@ SM.AppInfo.Collections.FullGridLocked = Ext.extend(Ext.grid.GridPanel, {
       'rules',
       'reviews',
       'reviewsDisabled',
-      'reviewDups',
-      'reviewDupsSum',
       {
         name: 'reviewsTotal',
         convert: (v, r) => r.reviews + r.reviewsDisabled
@@ -768,20 +750,6 @@ SM.AppInfo.Collections.FullGridLocked = Ext.extend(Ext.grid.GridPanel, {
       {
         header: "Reviews Disabled",
         dataIndex: 'reviewsDisabled',
-        sortable: true,
-        align: 'right',
-        renderer: SM.AppInfo.numberRenderer
-      },
-      {
-        header: "Review Dups",
-        dataIndex: 'reviewDups',
-        sortable: true,
-        align: 'right',
-        renderer: SM.AppInfo.numberRenderer
-      },
-      {
-        header: "Review Dups Sum",
-        dataIndex: 'reviewDupsSum',
         sortable: true,
         align: 'right',
         renderer: SM.AppInfo.numberRenderer
