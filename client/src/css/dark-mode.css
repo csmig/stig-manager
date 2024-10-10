@@ -3175,4 +3175,8 @@ embed[type="application/pdf"] {
 .sm-render-zero {
 	color: #444444
 }
+.sm-whats-new img {
+  border: 1px solid hsl(0 0% 20% / 1)
+}
+
   

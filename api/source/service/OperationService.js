@@ -804,9 +804,15 @@ exports.getAppInfo = async function() {
 `
 
   await dbUtils.pool.query(sqlAnalyze)
+  const [schemaInfoArray] = await dbUtils.pool.query(sqlInfoSchema, [config.database.schema])
+  const tables = createObjectFromKeyValue(schemaInfoArray, "tableName")
+
+  const rowCountQueries = []
+  for (const table in tables) {
+    rowCountQueries.push(dbUtils.pool.query(`SELECT "${table}" as tableName, count(*) as rowCount from ${table}`))
+  }
 
   let [
-    [schemaInfoArray],
     [assetStigByCollection],
     [countsByCollection],
     [labelCountsByCollection],
@@ -816,9 +822,9 @@ exports.getAppInfo = async function() {
     [userInfo],
     [mySqlVersion],
     [mySqlVariables],
-    [mySqlStatus]
+    [mySqlStatus],
+    rowCountResults
   ] = await Promise.all([
-    dbUtils.pool.query(sqlInfoSchema, [config.database.schema]),
     dbUtils.pool.query(sqlCollectionAssetStigs),
     dbUtils.pool.query(sqlCountsByCollection),
     dbUtils.pool.query(sqlLabelCountsByCollection),
@@ -828,17 +834,10 @@ exports.getAppInfo = async function() {
     dbUtils.pool.query(sqlUserInfo),
     dbUtils.pool.query(sqlMySqlVersion),
     dbUtils.pool.query(sqlMySqlVariablesValues),
-    dbUtils.pool.query(sqlMySqlStatusValues)
+    dbUtils.pool.query(sqlMySqlStatusValues),
+    Promise.all(rowCountQueries)
   ])
 
-  const tables = createObjectFromKeyValue(schemaInfoArray, "tableName")
-
-  // append accurate row counts to the dbInfo.tables object
-  const rowCountQueries = []
-  for (const table in tables) {
-    rowCountQueries.push(dbUtils.pool.query(`SELECT "${table}" as tableName, count(*) as rowCount from ${table}`))
-  }
-  const rowCountResults = await Promise.all(rowCountQueries)
   for (const result of rowCountResults) {
     tables[result[0][0].tableName].rowCount = result[0][0].rowCount
   }

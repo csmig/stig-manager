@@ -13,7 +13,7 @@ SM.WhatsNew.Sources = [
 
     <p>To access the new report, click on the "Application Information" node in the Application Management tree. Click the "Save for sharing" button to download the report and send to the team:</p>
 
-    <p><img src="img/whatsnew/2024-10-09-app-info-share.png"/></p>
+    <p><img src="img/whatsnew/2024-10-09-app-info-share.png" width=750/></p>
 
     <p><b>NOTE:</b> The "Experimental" Export/Import Data feature that used to share the "App Info" tab was unable to reliably scale with the current size of production deployments. As it was intended mainly for use with testing and demo data sets, it must now be enabled specifically with a deployment configuration option. See the documentation for more details.</p>
 
