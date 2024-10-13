@@ -39,7 +39,7 @@ module.exports.deleteAsset = async function deleteAsset (req, res, next) {
     let projections = req.query.projection
     const { assetId, grant } = await getAssetInfoAndVerifyAccess(req)
     const response = await AssetService.getAsset({assetId, projections, grant})
-    await AssetService.deleteAsset(assetId, req.userObject.userId)
+    await AssetService.deleteAsset(assetId, req.userObject.userId, res.svcStatus)
     res.json(response)
   }
   catch (err) {
@@ -51,7 +51,7 @@ module.exports.removeStigFromAsset = async function (req, res, next) {
   try {
     let benchmarkId = req.params.benchmarkId
     const {assetId, grant} = await getAssetInfoAndVerifyAccess(req)
-    await AssetService.removeStigFromAsset({assetId, benchmarkId, grant})
+    await AssetService.removeStigFromAsset({assetId, benchmarkId, grant, svcStatus: res.svcStatus})
     const response = await AssetService.getStigsByAsset({assetId, grant})
     res.json(response)
   }
@@ -63,7 +63,7 @@ module.exports.removeStigFromAsset = async function (req, res, next) {
 module.exports.removeStigsFromAsset = async function removeStigsFromAsset (req, res, next) {
   try {
     const {assetId, grant} = await getAssetInfoAndVerifyAccess(req)
-    await AssetService.removeStigsFromAsset(assetId, grant)
+    await AssetService.removeStigsFromAsset(assetId, grant, res.svcStatus)
     const response = await AssetService.getStigsByAsset({assetId, grant})
     res.json(response)
   }

@@ -7,7 +7,8 @@ const stylesheets = [
   'css/RowEditor.css',
   'css/jsonview.bundle.css',
   'css/diff2html.min.css',
-  'css/dark-mode.css'
+  'css/dark-mode.css',
+  'ext/ux/css/LockingGridView.css'
 ]
 
 const scripts = [
@@ -46,6 +47,7 @@ const scripts = [
   'js/SM/CollectionAsset.js',
   'js/SM/CollectionPanel.js',
   'js/SM/MetaPanel.js',
+  'js/LockingGridView.js',
   'js/SM/ColumnFilters.js',
   'js/SM/FindingsPanel.js',
   'js/SM/Assignments.js',
@@ -60,12 +62,13 @@ const scripts = [
   'js/SM/AssetSelection.js',
   'js/SM/User.js',
   'js/SM/UserGroup.js',
+  'js/SM/AppInfo.js',
+  'js/SM/AppData.js',
   'js/library.js',
   'js/userAdmin.js',
   'js/collectionAdmin.js',
   'js/collectionManager.js',
   'js/stigAdmin.js',
-  'js/appDataAdmin.js',
   'js/completionStatus.js',
   'js/findingsSummary.js',
   'js/review.js',
