@@ -115,7 +115,6 @@ describe('POST - Collection - not all tests run for all iterations', function ()
           // statistics projection
           expect(res.body.statistics.assetCount).to.equal(0)
           expect(res.body.statistics.checklistCount).to.equal(0)
-          expect(res.body.statistics.grantCount).to.equal(1)
       
           // stigs projection
           expect(res.body.stigs).to.have.lengthOf(0)
@@ -140,7 +139,7 @@ describe('POST - Collection - not all tests run for all iterations', function ()
             }
             expect(res).to.have.status(422)
             expect(res.body.error).to.equal("Unprocessable Entity.")
-            expect(res.body.detail).to.equal("Duplicate user in grant array")
+            expect(res.body.detail).to.equal("Duplicate user or user group in grant array")
         })
         it("should throw SmError.UnprocessableError due to duplicate name exists ",async function () {
           const post = JSON.parse(JSON.stringify(requestBodies.createCollection))
@@ -215,7 +214,6 @@ describe('POST - Collection - not all tests run for all iterations', function ()
                         expect(messageObj.collection.owners).to.have.same.deep.members(reference.testCollection.ownersProjected)
                         // statistics
                         expect(messageObj.collection.statistics.assetCount).to.eql(reference.testCollection.statisticsProjected.assetCount);
-                        expect(messageObj.collection.statistics.grantCount).to.eql(reference.testCollection.statisticsProjected.grantCount);
                         expect(messageObj.collection.statistics.checklistCount).to.eql(reference.testCollection.statisticsProjected.checklistCount);
                         // // stigs 
                         expect(messageObj.collection.stigs).to.deep.equalInAnyOrder(reference.testCollection.stigsProjected)

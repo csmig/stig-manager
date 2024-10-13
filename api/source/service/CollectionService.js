@@ -2708,8 +2708,13 @@ exports._getCollectionGrant = async function ({collectionId, userId, userGroupId
 }
 
 exports.queryReviewAcl = async function ({cgId, collectionId, userId, userGroupId}) {
-  let columns = [
-    `case when cg.accessLevel = 1 then 'none' else 'rw' end as defaultAccess`,
+  const colDeafultAccess = [
+    'case when cg.accessLevel = 1 then "none" else "rw" end'
+  ]
+  const joinsDefaultAccess = [
+    'collection_grant cg'
+  ]
+  const columns = [
     `case when count(cga.cgAclId) = 0
       THEN json_array()
       ELSE json_arrayagg(
@@ -2723,15 +2728,15 @@ exports.queryReviewAcl = async function ({cgId, collectionId, userId, userGroupI
         ), '$.x'))
       END as acl`
   ]
-  let joins = [
+  const joins = [
     'collection_grant cg',
     'inner join collection c on cg.collectionId = c.collectionId and c.state = "enabled"',
     'left join collection_grant_acl cga on cg.cgId = cga.cgId',
     'inner join asset a on cga.assetId = a.assetId and a.state = "enabled"',
     'left join collection_label cl on cga.clId = cl.clId'
     ]
-  // PREDICATES
-  let predicates = {
+
+    const predicates = {
     statements: [],
     binds: []
   }
@@ -2749,8 +2754,11 @@ exports.queryReviewAcl = async function ({cgId, collectionId, userId, userGroupI
     predicates.binds.push(userGroupId, collectionId)
   }
 
-  const sql = dbUtils.makeQueryString({columns, joins, predicates})
+  const defaultAccessSql = dbUtils.makeQueryString({columns: colDeafultAccess, joins: joinsDefaultAccess, predicates, format: true})
+  columns.push(`(${defaultAccessSql}) as defaultAccess`)
 
-  let [rows] = await dbUtils.pool.query(sql, predicates.binds)
+  const sql = dbUtils.makeQueryString({columns, joins, predicates, format: true})
+
+  let [rows] = await dbUtils.pool.query(sql)
   return (rows?.[0])
 }

@@ -21,7 +21,6 @@ describe('DELETE - Asset', function () {
   let localScrapAsset = null
 
   beforeEach(async function () {
-    this.timeout(4000)
     await utils.resetTestAsset()
   })
   for(const iteration of iterations){
@@ -85,7 +84,6 @@ describe('DELETE - Asset', function () {
       describe(`deleteAsset - /assets/{assetId}`, function () {
 
         before(async function () {
-          this.timeout(4000)
           if(distinct.canModifyCollection){
             localTestAsset = await createTempAsset()
           }

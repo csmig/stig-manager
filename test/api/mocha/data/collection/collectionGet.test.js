@@ -14,7 +14,6 @@ const reference = require('../../referenceData.js')
 describe('GET - Collection', function () {
 
   before(async function () {
-    this.timeout(4000)
     await utils.uploadTestStigs()
     await utils.loadAppData()
     await utils.createDisabledCollectionsandAssets()
@@ -110,10 +109,6 @@ describe('GET - Collection', function () {
                 {
                   userId: '1',
                   accessLevel: 4
-                },
-                {
-                  userId: '85',
-                  accessLevel: 1
                 }
               ],
               labels: [
@@ -533,10 +528,6 @@ describe('GET - Collection', function () {
               {
                 userId: '1',
                 accessLevel: 4
-              },
-              {
-                userId: '85',
-                accessLevel: 1
               },
               {
                 userId: '21',

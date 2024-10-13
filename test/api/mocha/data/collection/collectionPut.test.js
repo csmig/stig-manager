@@ -73,7 +73,6 @@ describe('PUT - Collection', function () {
             // statistics projection
             expect(res.body.statistics.assetCount).to.equal(reference.testCollection.assetIds.length)
             expect(res.body.statistics.checklistCount).to.equal(reference.testCollection.statisticsProjected.checklistCount)
-            expect(res.body.statistics.grantCount).to.equal(putRequest.grants.length)
         
             // stigs projection
             expect(res.body.stigs).to.have.lengthOf(reference.testCollection.validStigs.length)              
@@ -213,7 +212,7 @@ describe('PUT - Collection', function () {
                 expect(item.asset.assetId).to.equal(reference.scrapAsset.assetId)
             }
         })
-        it("should throw SmError.NotFoundError when attempting to set asset stig for a user that does not exist with access level 1",async function () {
+        it("should throw SmError.Unprocessable Entity when attempting to set asset stig for a user that does not exist with access level 1",async function () {
           const randomUserId = Math.floor(Math.random() * 1002230)
           const res = await chai.request(config.baseUrl)
               .put(`/collections/${reference.scrapCollection.collectionId}/grants/${randomUserId}/access`)
@@ -226,9 +225,9 @@ describe('PUT - Collection', function () {
               expect(res).to.have.status(403)
               return
             }
-            expect(res).to.have.status(404)
-            expect(res.body.error).to.equal("Resource not found.")
-            expect(res.body.detail).to.equal("User not found in this Collection with accessLevel === 1.")
+            expect(res).to.have.status(422)
+            expect(res.body.error).to.equal("Unprocessable Entity.")
+            expect(res.body.detail).to.equal("user has no direct grant in collection")
         })
       })
 

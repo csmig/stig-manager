@@ -164,19 +164,16 @@ const reference = {
     ],
     ownersProjected: [
       {
-        email: "admin@admin.com",
         userId: "87",
         username: "admin",
         displayName: "Admin Burke",
       },
       {
-        email: null,
         userId: "1",
         username: "stigmanadmin",
         displayName: "STIGMAN Admin",
       },
       {
-        email: null,
         userId: "45",
         username: "lvl4",
         displayName: null,
