@@ -34,12 +34,12 @@ module.exports.deleteReviewByAssetRule = async function deleteReviewByAssetRule 
   try {
     let assetId = req.params.assetId
     let ruleId = req.params.ruleId
-    let projection = req.query.projection
+    let projections = req.query.projection
     
     const {collectionId, grant} = Collection.getCollectionInfoAndCheckPermission(req, Security.ACCESS_LEVEL.Restricted)
     const userHasRule = await ReviewService.checkRuleByAssetUser({ruleId, assetId, collectionId, grant, checkWritable: true})
     if (userHasRule) {
-      let response = await ReviewService.deleteReviewByAssetRule({assetId, ruleId, projection, grant, svcStatus: res.svcStatus})
+      let response = await ReviewService.deleteReviewByAssetRule({assetId, ruleId, projections, grant, svcStatus: res.svcStatus})
       res.status(response ? 200 : 204).json(response)
     }
     else {
