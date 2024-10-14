@@ -12,7 +12,6 @@ const metrics = require('./metaMetricsGet.js')
 
 describe('GET - MetaMetrics', function () { 
   before(async function () {
-    this.timeout(4000)
     await utils.uploadTestStigs()
     await utils.loadAppData("appdata-meta-metrics-with-pin.json")
     try{
@@ -21,7 +20,7 @@ describe('GET - MetaMetrics', function () {
     catch(err){
         console.log("no stig to upload")
     }
-    await utils.createDisabledCollectionsandAssets()
+    await utils.createDisabledCollectionsandAssets({context: 'meta'})
   })
 
   for(let iteration of iterations) {

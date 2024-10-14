@@ -161,26 +161,27 @@ const createTempAsset = async asset => {
 }
 
 const deleteAsset = async assetId => {
-  try {
-    await axios.delete(
-      `${config.baseUrl}/assets/${assetId}`,
-      {
-        headers: {
-          Authorization: `Bearer ${adminToken}`,
-          'Content-Type': 'application/json'
-        }
+  await axios.delete(
+    `${config.baseUrl}/assets/${assetId}?projection=statusStats&projection=stigs`,
+    {
+      headers: {
+        Authorization: `Bearer ${adminToken}`,
+        'Content-Type': 'application/json'
       }
-    )
-  } catch (e) {
-    throw e;
-  }
+    }
+  )
 }
 
-const createDisabledCollectionsandAssets = async () => {
+const createDisabledCollectionsandAssets = async ({context = 'full'} = {}) => {
   // this also should create stig grants for a user, add reviews too .
   const collection = await createTempCollection()
   const asset = await createTempAsset()
-  await setStigGrants(21, 85, asset.data.assetId)
+  if (context === 'meta') {
+    await setStigGrantsMeta(21, 85, asset.data.assetId)
+  }
+  else {
+    await setStigGrants(21, 85, asset.data.assetId)
+  }
   await importReview(21, asset.data.assetId)
   await deleteAsset(asset.data.assetId)
   await deleteCollection(collection.data.collectionId)
@@ -244,6 +245,30 @@ const setStigGrants = async (collectionId, userId, assetId) => {
     throw e;
   }
 }
+
+const setStigGrantsMeta = async (collectionId, userId, assetId) => {
+  const res = await axios.put(
+    `${config.baseUrl}/collections/${collectionId}/grants/${userId}/access`,
+    [
+      {
+          "benchmarkId": "VPN_SRG_TEST",
+          "assetId": `${assetId}`
+      },
+      {
+          "benchmarkId": "VPN_SRG_TEST",
+          "assetId": "42"
+      }      
+  ],
+  {
+    headers: {
+      Authorization: `Bearer ${adminToken}`,
+      'Content-Type': 'application/json'
+    }
+  }
+  )
+  return res
+}
+
 
 const uploadTestStig = async (filename) => {
 
@@ -349,7 +374,7 @@ const deleteStig = async (benchmarkId) => {
 const getAsset = async assetId => {
   try {
     const res = await axios.get(
-      `${config.baseUrl}/assets/${assetId}?projection=statusStats&projection=stigs`,
+      `${config.baseUrl}/assets/${assetId}?projection=statusStats&projection=stigs&projection=stigGrants`,
       {
         headers: {
           Authorization: `Bearer ${adminToken}`,
@@ -361,7 +386,7 @@ const getAsset = async assetId => {
   }
   catch (e) {
     if (e.response && e.response.status === 403) {
-      return { status: 403 } // return an object with the 404 status
+      return { status: 403 } // return an object with the 403 status
     }
     throw e 
   }

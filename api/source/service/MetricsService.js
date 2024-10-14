@@ -163,7 +163,7 @@ module.exports.queryMetaMetrics = async function ({
     'left join stig on rev.benchmarkId = stig.benchmarkId'
   ]
   const predicates = {
-    statements: [],
+    statements: ['a.state != "disabled"'],
     binds: []
   }
   const groupBy = []
