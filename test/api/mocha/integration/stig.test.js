@@ -117,6 +117,7 @@ describe(`POST - importBenchmark - /stigs`, () => {
           .send(reqData)
 
           const expectedReview = {
+            access: "rw",
             assetId: "42",
             assetName: "Collection_X_lvl1_asset-1",
             assetLabelIds: [

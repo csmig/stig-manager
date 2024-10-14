@@ -269,17 +269,18 @@ describe('PUT - setStigAssetsByCollectionUser - /collections/{collectionId}/gran
         it('set stig-asset grant to create conditions leading to issue gh-761', async () => {
 
             const res = await chai.request(config.baseUrl)
-                .put(`/collections/${reference.testCollection.collectionId}/grants/${reference.scrapLvl1User.userId}/access`)
+                .put(`/collections/${reference.testCollection.collectionId}/grants/user/${reference.scrapLvl1User.userId}/access`)
                 .set('Authorization', `Bearer ${user.token}`)
                 .send([
                     {
                         "benchmarkId": `${reference.testCollection.benchmark}`,
-                        "assetId": `${reference.testAsset.assetId}`
+                        "assetId": `${reference.testAsset.assetId}`,
+                        "access": "rw"
                     }
                 ])
             expect(res).to.have.status(200)
-            expect(res.body).to.have.lengthOf(1)
-            for(const item of res.body){
+            expect(res.body.acl).to.have.lengthOf(1)
+            for(const item of res.body.acl){
                 expect(item.benchmarkId).to.equal(reference.testCollection.benchmark)
                 expect(item.asset.assetId).to.equal(reference.testAsset.assetId)
             }
@@ -295,7 +296,6 @@ describe('PUT - setStigAssetsByCollectionUser - /collections/{collectionId}/gran
             const regex = /asset/
             for (let asset of res.body){
                 expect(asset.name).to.match(regex)
-                returnedAssetIds.push(asset.assetId)
                 expect(asset.statusStats).to.exist
                 if (asset.assetId == reference.testAsset.assetId){ 
                     expect(asset.statusStats.ruleCount).to.eql(368)
@@ -1658,20 +1658,18 @@ describe('PUT - setStigAssetsByCollectionUser - /collections/{collectionId}/gran
         it('set stig-asset grants for a lvl1 user in test collection, with asset from another collection', async () => {
 
             const res = await chai.request(config.baseUrl)
-                .put(`/collections/${reference.testCollection.collectionId}/grants/${reference.lvl1User.userId}/access`)
+                .put(`/collections/${reference.testCollection.collectionId}/grants/user/${reference.lvl1User.userId}/access`)
                 .set('Authorization', `Bearer ${user.token}`)
                 .send([
                     {
                         "benchmarkId": reference.benchmark,
-                        "assetId": "240"
+                        "assetId": "62",
+                        "access": "rw"
                     },
                     {
                         "benchmarkId": reference.benchmark,
-                        "assetId": "62"
-                    },
-                    {
-                        "benchmarkId": reference.benchmark,
-                        "assetId": "42"
+                        "assetId": "42",
+                        "access": "rw"
                     }     
                 ])
             expect(res).to.have.status(200)

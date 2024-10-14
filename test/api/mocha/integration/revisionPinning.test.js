@@ -418,6 +418,7 @@ describe(`POST - writeStigPropsByCollectionStig - /collections/{collectionId}/st
                             return
                         }
                         const expectedReview = {
+                            access: "rw",
                             assetId: "42",
                             assetName: "Collection_X_lvl1_asset-1",
                             assetLabelIds: [
@@ -488,6 +489,7 @@ describe(`POST - writeStigPropsByCollectionStig - /collections/{collectionId}/st
                             pinnedState = false
                         }
                         const expectedReview = {
+                            access: "rw",
                             assetId: "42",
                             assetName: "Collection_X_lvl1_asset-1",
                             assetLabelIds: [
@@ -558,6 +560,7 @@ describe(`POST - writeStigPropsByCollectionStig - /collections/{collectionId}/st
                             pinnedState = false
                         }
                         const expectedReview = {
+                            access: "rw",
                             assetId: "42",
                             assetName: "Collection_X_lvl1_asset-1",
                             assetLabelIds: [
