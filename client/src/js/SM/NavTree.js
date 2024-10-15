@@ -247,16 +247,16 @@ SM.NavTree.TreePanel = Ext.extend(Ext.tree.TreePanel, {
                   iconCls: 'sm-users-icon'
                 },
                 {
-                  id: 'stig-admin',
-                  text: 'STIG Benchmarks',
-                  leaf: true,
-                  iconCls: 'sm-stig-icon'
-                },
-                {
                   id: 'user-group-admin',
                   text: 'User Groups',
                   leaf: true,
                   iconCls: 'sm-users-icon'
+                },
+                {
+                  id: 'stig-admin',
+                  text: 'STIG Benchmarks',
+                  leaf: true,
+                  iconCls: 'sm-stig-icon'
                 },
                 {
                   id: 'appinfo-admin',

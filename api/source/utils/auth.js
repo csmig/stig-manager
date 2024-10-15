@@ -70,7 +70,7 @@ const verifyRequest = async function (req, requiredScopes, securityDefinition) {
     if (!userObject?.lastAccess || now - userObject?.lastAccess >= config.settings.lastAccessResolution) {
         refreshFields.lastAccess = now
     }
-    if (!userObject?.lastClaims || decoded.jti !== userObject?.lastClaims?.jti) {
+    if (!userObject?.lastClaims || decoded[config.oauth.claims.assertion] !== userObject?.lastClaims?.[config.oauth.claims.assertion]) {
         refreshFields.lastClaims = decoded
     }
     if (refreshFields.lastAccess || refreshFields.lastClaims) {

@@ -285,11 +285,6 @@ function trackOperationStats(operationId, durationMs, res) {
     stats.elevatedRequests = (stats.elevatedRequests || 0) + 1
   }
 
-  // Increment elevated request count if elevate query param is true
-  if (res.req.query?.elevate === true) {
-    stats.elevatedRequests = (stats.elevatedRequests || 0) + 1;
-  }
-
   // If projections are defined, track stats for each projection
   if (res.req.query?.projection?.length > 0) {
     stats.projections = stats.projections || {}
