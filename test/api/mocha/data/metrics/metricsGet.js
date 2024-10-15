@@ -5747,6 +5747,86 @@ const metrics = {
             medium: 612
           }
         }
+      },
+      {
+        labelId: "5130dc84-9a68-11ec-b1bc-0242ac110002",
+        name: "test-label-lvl1",
+        color: "99CCFF",
+        description: "",
+        assets: 1,
+        metrics: {
+          maxTs: "2022-02-03T00:07:05Z",
+          minTs: "2020-08-11T22:27:26Z",
+          results: {
+            fail: {
+              total: 4,
+              resultEngine: 0
+            },
+            pass: {
+              total: 4,
+              resultEngine: 0
+            },
+            error: {
+              total: 0,
+              resultEngine: 0
+            },
+            fixed: {
+              total: 0,
+              resultEngine: 0
+            },
+            unknown: {
+              total: 0,
+              resultEngine: 0
+            },
+            notchecked: {
+              total: 0,
+              resultEngine: 0
+            },
+            notselected: {
+              total: 0,
+              resultEngine: 0
+            },
+            informational: {
+              total: 0,
+              resultEngine: 0
+            },
+            notapplicable: {
+              total: 1,
+              resultEngine: 0
+            }
+          },
+          assessed: 9,
+          findings: {
+            low: 1,
+            high: 0,
+            medium: 3
+          },
+          statuses: {
+            saved: {
+              total: 2,
+              resultEngine: 0
+            },
+            accepted: {
+              total: 0,
+              resultEngine: 0
+            },
+            rejected: {
+              total: 0,
+              resultEngine: 0
+            },
+            submitted: {
+              total: 7,
+              resultEngine: 0
+            }
+          },
+          maxTouchTs: "2022-02-03T00:07:07Z",
+          assessments: 368,
+          assessmentsBySeverity: {
+            low: 25,
+            high: 37,
+            medium: 306
+          }
+        }
       }
     ],
     lvl1: [
@@ -5822,6 +5902,86 @@ const metrics = {
             }
           },
           maxTouchTs: '2022-02-03T00:07:07Z',
+          assessments: 81,
+          assessmentsBySeverity: {
+            low: 7,
+            high: 11,
+            medium: 63
+          }
+        }
+      },
+      {
+        labelId: "5130dc84-9a68-11ec-b1bc-0242ac110002",
+        name: "test-label-lvl1",
+        color: "99CCFF",
+        description: "",
+        assets: 1,
+        metrics: {
+          maxTs: "2022-02-03T00:07:05Z",
+          minTs: "2020-08-11T22:27:26Z",
+          results: {
+            fail: {
+              total: 3,
+              resultEngine: 0
+            },
+            pass: {
+              total: 2,
+              resultEngine: 0
+            },
+            error: {
+              total: 0,
+              resultEngine: 0
+            },
+            fixed: {
+              total: 0,
+              resultEngine: 0
+            },
+            unknown: {
+              total: 0,
+              resultEngine: 0
+            },
+            notchecked: {
+              total: 0,
+              resultEngine: 0
+            },
+            notselected: {
+              total: 0,
+              resultEngine: 0
+            },
+            informational: {
+              total: 0,
+              resultEngine: 0
+            },
+            notapplicable: {
+              total: 1,
+              resultEngine: 0
+            }
+          },
+          assessed: 6,
+          findings: {
+            low: 1,
+            high: 0,
+            medium: 2
+          },
+          statuses: {
+            saved: {
+              total: 1,
+              resultEngine: 0
+            },
+            accepted: {
+              total: 0,
+              resultEngine: 0
+            },
+            rejected: {
+              total: 0,
+              resultEngine: 0
+            },
+            submitted: {
+              total: 5,
+              resultEngine: 0
+            }
+          },
+          maxTouchTs: "2022-02-03T00:07:07Z",
           assessments: 81,
           assessmentsBySeverity: {
             low: 7,
@@ -5913,6 +6073,86 @@ const metrics = {
             medium: 306
           }
         }
+      },
+      {
+        labelId: "755b8a28-9a68-11ec-b1bc-0242ac110002",
+        name: "test-label-full",
+        color: "FF99CC",
+        description: "",
+        assets: 1,
+        metrics: {
+          maxTs: "2022-02-03T00:07:05Z",
+          minTs: "2020-08-11T22:27:26Z",
+          results: {
+            fail: {
+              total: 4,
+              resultEngine: 0
+            },
+            pass: {
+              total: 4,
+              resultEngine: 0
+            },
+            error: {
+              total: 0,
+              resultEngine: 0
+            },
+            fixed: {
+              total: 0,
+              resultEngine: 0
+            },
+            unknown: {
+              total: 0,
+              resultEngine: 0
+            },
+            notchecked: {
+              total: 0,
+              resultEngine: 0
+            },
+            notselected: {
+              total: 0,
+              resultEngine: 0
+            },
+            informational: {
+              total: 0,
+              resultEngine: 0
+            },
+            notapplicable: {
+              total: 1,
+              resultEngine: 0
+            }
+          },
+          assessed: 9,
+          findings: {
+            low: 1,
+            high: 0,
+            medium: 3
+          },
+          statuses: {
+            saved: {
+              total: 2,
+              resultEngine: 0
+            },
+            accepted: {
+              total: 0,
+              resultEngine: 0
+            },
+            rejected: {
+              total: 0,
+              resultEngine: 0
+            },
+            submitted: {
+              total: 7,
+              resultEngine: 0
+            }
+          },
+          maxTouchTs: "2022-02-03T00:07:07Z",
+          assessments: 368,
+          assessmentsBySeverity: {
+            low: 25,
+            high: 37,
+            medium: 306
+          }
+        }
       }
     ],
     lvl1: [
@@ -5988,6 +6228,86 @@ const metrics = {
             }
           },
           maxTouchTs: '2022-02-03T00:07:07Z',
+          assessments: 81,
+          assessmentsBySeverity: {
+            low: 7,
+            high: 11,
+            medium: 63
+          }
+        }
+      },
+      {
+        labelId: "755b8a28-9a68-11ec-b1bc-0242ac110002",
+        name: "test-label-full",
+        color: "FF99CC",
+        description: "",
+        assets: 1,
+        metrics: {
+          maxTs: "2022-02-03T00:07:05Z",
+          minTs: "2020-08-11T22:27:26Z",
+          results: {
+            fail: {
+              total: 3,
+              resultEngine: 0
+            },
+            pass: {
+              total: 2,
+              resultEngine: 0
+            },
+            error: {
+              total: 0,
+              resultEngine: 0
+            },
+            fixed: {
+              total: 0,
+              resultEngine: 0
+            },
+            unknown: {
+              total: 0,
+              resultEngine: 0
+            },
+            notchecked: {
+              total: 0,
+              resultEngine: 0
+            },
+            notselected: {
+              total: 0,
+              resultEngine: 0
+            },
+            informational: {
+              total: 0,
+              resultEngine: 0
+            },
+            notapplicable: {
+              total: 1,
+              resultEngine: 0
+            }
+          },
+          assessed: 6,
+          findings: {
+            low: 1,
+            high: 0,
+            medium: 2
+          },
+          statuses: {
+            saved: {
+              total: 1,
+              resultEngine: 0
+            },
+            accepted: {
+              total: 0,
+              resultEngine: 0
+            },
+            rejected: {
+              total: 0,
+              resultEngine: 0
+            },
+            submitted: {
+              total: 5,
+              resultEngine: 0
+            }
+          },
+          maxTouchTs: "2022-02-03T00:07:07Z",
           assessments: 81,
           assessmentsBySeverity: {
             low: 7,
@@ -9900,6 +10220,37 @@ const metrics = {
           maxTouchTs: '2022-02-03T00:07:07Z',
           assessments: 736
         }
+      },
+      {
+        labelId: "5130dc84-9a68-11ec-b1bc-0242ac110002",
+        name: "test-label-lvl1",
+        color: "99CCFF",
+        description: "",
+        assets: 1,
+        metrics: {
+          maxTs: "2022-02-03T00:07:05Z",
+          minTs: "2020-08-11T22:27:26Z",
+          results: {
+            fail: 4,
+            pass: 4,
+            unassessed: 0,
+            notapplicable: 1
+          },
+          assessed: 9,
+          findings: {
+            low: 1,
+            high: 0,
+            medium: 3
+          },
+          statuses: {
+            saved: 2,
+            accepted: 0,
+            rejected: 0,
+            submitted: 7
+          },
+          maxTouchTs: "2022-02-03T00:07:07Z",
+          assessments: 368
+        }
       }
     ],
     lvl1: [
@@ -9931,6 +10282,37 @@ const metrics = {
             submitted: 5
           },
           maxTouchTs: '2022-02-03T00:07:07Z',
+          assessments: 81
+        }
+      },
+      {
+        labelId: "5130dc84-9a68-11ec-b1bc-0242ac110002",
+        name: "test-label-lvl1",
+        color: "99CCFF",
+        description: "",
+        assets: 1,
+        metrics: {
+          maxTs: "2022-02-03T00:07:05Z",
+          minTs: "2020-08-11T22:27:26Z",
+          results: {
+            fail: 3,
+            pass: 2,
+            unassessed: 0,
+            notapplicable: 1
+          },
+          assessed: 6,
+          findings: {
+            low: 1,
+            high: 0,
+            medium: 2
+          },
+          statuses: {
+            saved: 1,
+            accepted: 0,
+            rejected: 0,
+            submitted: 5
+          },
+          maxTouchTs: "2022-02-03T00:07:07Z",
           assessments: 81
         }
       }
@@ -9968,6 +10350,37 @@ const metrics = {
           maxTouchTs: '2022-02-03T00:07:07Z',
           assessments: 368
         }
+      },
+      {
+        labelId: "755b8a28-9a68-11ec-b1bc-0242ac110002",
+        name: "test-label-full",
+        color: "FF99CC",
+        description: "",
+        assets: 1,
+        metrics: {
+          maxTs: "2022-02-03T00:07:05Z",
+          minTs: "2020-08-11T22:27:26Z",
+          results: {
+            fail: 4,
+            pass: 4,
+            unassessed: 0,
+            notapplicable: 1
+          },
+          assessed: 9,
+          findings: {
+            low: 1,
+            high: 0,
+            medium: 3
+          },
+          statuses: {
+            saved: 2,
+            accepted: 0,
+            rejected: 0,
+            submitted: 7
+          },
+          maxTouchTs: "2022-02-03T00:07:07Z",
+          assessments: 368
+        }
       }
     ],
     lvl1: [
@@ -9999,6 +10412,37 @@ const metrics = {
             submitted: 5
           },
           maxTouchTs: '2022-02-03T00:07:07Z',
+          assessments: 81
+        }
+      },
+      {
+        labelId: "755b8a28-9a68-11ec-b1bc-0242ac110002",
+        name: "test-label-full",
+        color: "FF99CC",
+        description: "",
+        assets: 1,
+        metrics: {
+          maxTs: "2022-02-03T00:07:05Z",
+          minTs: "2020-08-11T22:27:26Z",
+          results: {
+            fail: 3,
+            pass: 2,
+            unassessed: 0,
+            notapplicable: 1
+          },
+          assessed: 6,
+          findings: {
+            low: 1,
+            high: 0,
+            medium: 2
+          },
+          statuses: {
+            saved: 1,
+            accepted: 0,
+            rejected: 0,
+            submitted: 5
+          },
+          maxTouchTs: "2022-02-03T00:07:07Z",
           assessments: 81
         }
       }
