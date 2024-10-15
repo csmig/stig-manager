@@ -133,34 +133,35 @@ describe('PATCH - patchReviewByAssetRule - /collections/{collectionId}/reviews/{
                     }
                     expect(res).to.have.status(201)
                     const expectedResponse = {  
-                        assetId: "42",
-                        assetName: "Collection_X_lvl1_asset-1",
-                        assetLabelIds: [
-                        "755b8a28-9a68-11ec-b1bc-0242ac110002",
-                        "5130dc84-9a68-11ec-b1bc-0242ac110002"
-                        ],
-                        ruleId: reference.freshRuleId,
-                    ruleIds: [
+                      access: "rw",
+                      assetId: "42",
+                      assetName: "Collection_X_lvl1_asset-1",
+                      assetLabelIds: [
+                      "755b8a28-9a68-11ec-b1bc-0242ac110002",
+                      "5130dc84-9a68-11ec-b1bc-0242ac110002"
+                      ],
+                      ruleId: reference.freshRuleId,
+                      ruleIds: [
                         reference.freshRuleId
-                        ],  
-                        result: putBody.result,
-                        resultEngine: null,
-                        detail: putBody.detail,
-                        autoResult: false,
-                        comment: "",
-                        userId: user.userId,
-                        username: user.name,
-                        ts: res.body.ts,
-                        touchTs: res.body.touchTs,
-                        status: {
-                            ts: res.body.status.ts,
-                            text: null,
-                            user: {
-                                userId: user.userId,
-                                username: user.name
-                            },
-                            label: putBody.status
-                        }
+                      ],  
+                      result: putBody.result,
+                      resultEngine: null,
+                      detail: putBody.detail,
+                      autoResult: false,
+                      comment: "",
+                      userId: user.userId,
+                      username: user.name,
+                      ts: res.body.ts,
+                      touchTs: res.body.touchTs,
+                      status: {
+                        ts: res.body.status.ts,
+                        text: null,
+                        user: {
+                          userId: user.userId,
+                          username: user.name
+                        },
+                        label: putBody.status
+                      }
                     }
                 
                     expect(res.body).to.be.an('object')
