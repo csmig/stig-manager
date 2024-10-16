@@ -6,6 +6,7 @@ const escape = require('../utils/escape')
 const CollectionService = require(`../service/CollectionService`)
 const AssetService = require(`../service/AssetService`)
 const STIGService = require(`../service/STIGService`)
+const UserService = require(`../service/UserService`)
 const Serialize = require(`../utils/serializers`)
 const Security = require('../utils/accessLevels')
 const SmError = require('../utils/error')
@@ -1052,6 +1053,9 @@ module.exports.setGrantByCollectionUser = async function (req, res, next) {
     const {collectionId} = getCollectionInfoAndCheckPermission(req, Security.ACCESS_LEVEL.Manage)
     const userId = req.params.userId
     const accessLevel = req.body.accessLevel
+    // check if user exists
+    const user = await UserService.getUserByUserId(userId)
+    if (!user) throw new SmError.NotFoundError('User not found')
     const httpStatus = await CollectionService.setGrantByCollection({collectionId, userId, accessLevel})
     const response  = await CollectionService.getGrantByCollectionUser({collectionId, userId})
     res.status(httpStatus).json(response[0])
@@ -1145,12 +1149,14 @@ module.exports.getEffectiveAclByCollectionUser =  async function (req, res, next
   try{
     const {collectionId} = getCollectionInfoAndCheckPermission(req, Security.ACCESS_LEVEL.Manage)
     const userId = req.params.userId
+    const grant = await CollectionService._getCollectionGrant({collectionId, userId})
+    if (!grant) throw new SmError.UnprocessableError('user has no direct grant in collection')
     const response = await CollectionService.getEffectiveAclByCollectionUser({collectionId, userId})
     res.json(response)
   }
   catch(err){
     next(err)
-  }
+   }
 }
 
 module.exports.setReviewAclByCollectionUser = async function setReviewAclByCollectionUser (req, res, next) {
