@@ -1581,7 +1581,7 @@ SM.CollectionPanel.AggLabelPanel = Ext.extend(Ext.Panel, {
       else {
         params.labelMatch = 'null'
       }
-      await aggAssetGrid.store.loadPromise(params)
+      await loadAggAssetGrid(params)
       unaggGrid.store.removeAll()
       aggAssetGrid.setTitle(`Assets for ${record.data.name}`)
     }
@@ -1590,6 +1590,30 @@ SM.CollectionPanel.AggLabelPanel = Ext.extend(Ext.Panel, {
         assetId: record.data.assetId
       })
       unaggGrid.setTitle(`Checklists for ${record.data.name}`)
+    }
+    async function loadAggAssetGrid(params) {
+      const url = new URL(aggAssetGrid.proxy.url, document.baseURI)
+      for (const [key, value] of Object.entries(params)) {
+        if (Array.isArray(value)) {
+          for (const item of value) {
+            url.searchParams.append(key, item)
+          }
+        }
+        else {
+          url.searchParams.append(key, value)
+        }
+      }
+      await window.oidcProvider.updateToken(10)
+      const fetchOptions = {
+        method: 'GET',
+        headers: {'Authorization': `Bearer ${window.oidcProvider.token}`}
+      }
+      let assets = await(await fetch(url, fetchOptions)).json()
+      
+      if (_this.baseParams.labelId) {
+        assets = assets.filter(asset => asset.labels.some(label => _this.baseParams.labelId.includes(label.labelId)) || (_this.baseParams.labelMatch === 'null' ? asset.labels.length === 0 : false))
+      }
+      aggAssetGrid.store.loadData(assets)
     }
 
     aggLabelGrid.getSelectionModel().on('rowselect', onRowSelectLabel)
@@ -1635,7 +1659,7 @@ SM.CollectionPanel.AggLabelPanel = Ext.extend(Ext.Panel, {
         aggLabelGrid.view.focusRow(currentIndexLabel)
         savedLoadMaskDisabled = aggAssetGrid.loadMask.disabled
         aggAssetGrid.loadMask.disabled = loadMasksDisabled
-        await aggAssetGrid.store.loadPromise({
+        await loadAggAssetGrid({
           labelId: currentRecordLabel.data.labelId
         })
         aggAssetGrid.loadMask.disabled = savedLoadMaskDisabled
