@@ -678,27 +678,16 @@ SM.User.GroupSelectingPanel = Ext.extend(Ext.Panel, {
       removeBtn.setDisabled(this.role === 'selections')
     }
 
-    async function initPanel({ userId }) {
-      const promises = [
-        Ext.Ajax.requestPromise({
-          responseType: 'json',
-          url: `${STIGMAN.Env.apiBase}/user-groups`,
-          params: {
-            projection: ['users']
-          },
-          method: 'GET'
-        }),
-        Ext.Ajax.requestPromise({
-          responseType: 'json',
-          url: `${STIGMAN.Env.apiBase}/users/${userId}`,
-          params: {
-            elevate: curUser.privileges.canAdmin,
-            projection: ['userGroups']
-          },
-          method: 'GET'
-        })
-      ]
-      const [apiAvailableUserGroups, apiUser] = await Promise.all(promises)
+    async function initPanel(apiUser) {
+      const apiAvailableUserGroups = await Ext.Ajax.requestPromise({
+        responseType: 'json',
+        url: `${STIGMAN.Env.apiBase}/user-groups`,
+        params: {
+          projection: ['users']
+        },
+        method: 'GET'
+      })
+      
       const assignedUserGroupIds = apiUser?.userGroups?.map(userGroup => userGroup.userGroupId) ?? []
       _this.originalUserGroupIds = assignedUserGroupIds
       const availableUserGroups = []
@@ -711,7 +700,7 @@ SM.User.GroupSelectingPanel = Ext.extend(Ext.Panel, {
 
       availableGrid.store.loadData(availableUserGroups)
       selectionsGrid.store.loadData(assignedUserGroups)
-      _this.trackedProperty = { dataProperty: 'usernames', value: apiUser.username }
+      // _this.trackedProperty = { dataProperty: 'usernames', value: apiUser.username }
 
     }
 
@@ -1263,9 +1252,6 @@ SM.User.showUserProps = async function showUserProps(userId) {
       }
     })
 
-    /******************************************************/
-    // Form window
-    /******************************************************/
     const appwindow = new Ext.Window({
       title: userId ? 'User ID ' + userId : 'Pre-register User',
       cls: 'sm-dialog-window sm-round-panel',
@@ -1278,45 +1264,45 @@ SM.User.showUserProps = async function showUserProps(userId) {
       bodyStyle: 'padding:5px;',
       buttonAlign: 'right',
       items: userPropsFormPanel
-    });
+    })
 
+    appwindow.show(Ext.getBody())
 
-    appwindow.show(Ext.getBody());
-
-    const privilegeGetter = new Function("obj", "return obj?." + STIGMAN.Env.oauth.claims.privileges + " || [];");
-
+    let apiUser
     if (userId) {
-      const result = await Ext.Ajax.requestPromise({
+      apiUser = await Ext.Ajax.requestPromise({
+        responseType: 'json',
         url: `${STIGMAN.Env.apiBase}/users/${userId}`,
         params: {
           elevate: curUser.privileges.canAdmin,
-          projection: ['statistics', 'collectionGrants']
+          projection: ['statistics', 'collectionGrants', 'userGroups']
         },
         method: 'GET'
       })
-      const apiUser = JSON.parse(result.response.responseText)
-        ;['iat', 'exp', 'auth_time'].forEach(claim => {
-          if (apiUser.statistics.lastClaims[claim]) {
-            apiUser.statistics.lastClaims[claim] = new Date(apiUser.statistics.lastClaims[claim] * 1000)
-          }
-        })
+      for (const claim of ['iat', 'exp', 'auth_time']) {
+        if (apiUser.statistics.lastClaims[claim]) {
+          apiUser.statistics.lastClaims[claim] = new Date(apiUser.statistics.lastClaims[claim] * 1000)
+        }
+      }
       if (apiUser.statistics.lastClaims.scope) {
         apiUser.statistics.lastClaims.scope = apiUser.statistics.lastClaims.scope.split(' ')
       }
+      const privilegeGetter = new Function("obj", "return obj?." + STIGMAN.Env.oauth.claims.privileges + " || [];")
+      const privileges = privilegeGetter(apiUser.statistics.lastClaims)
       const formValues = {
         username: apiUser.username,
         displayName: apiUser.displayName,
         email: apiUser.email,
-        privileges: privilegeGetter(apiUser.statistics.lastClaims).join(', '),
-        canCreateCollection: privilegeGetter(apiUser.statistics.lastClaims).includes('create_collection'),
-        canAdmin: privilegeGetter(apiUser.statistics.lastClaims).includes('admin'),
+        privileges: privileges.join(', '),
+        canCreateCollection: privileges.includes('create_collection'),
+        canAdmin: privileges.includes('admin'),
         lastClaims: apiUser.statistics.lastClaims,
         collectionGrants: apiUser.collectionGrants || [],
         effectiveGrants: apiUser.collectionGrants || []
       }
       userPropsFormPanel.getForm().setValues(formValues)
     }
-    await userPropsFormPanel.userGroupsPanel.initPanel({ userId })
+    await userPropsFormPanel.userGroupsPanel.initPanel(apiUser)
 
     Ext.getBody().unmask();
   }
