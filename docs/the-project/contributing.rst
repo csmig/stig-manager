@@ -10,6 +10,8 @@ Reporting Bugs & Issues
 
 Please file bug reports or feature requests on the `STIG Manager 
 issue tracker <https://github.com/NUWCDIVNPT/stig-manager/issues>`__. When reporting a bug, please provide as much detail as possible to help us understand and reproduce the issue. Include:
+Please file bug reports or feature requests on the `STIG Manager 
+issue tracker <https://github.com/NUWCDIVNPT/stig-manager/issues>`__. When reporting a bug, please provide as much detail as possible to help us understand and reproduce the issue. Include:
 
 -  Install type: Hosted, Local, Docker, etc
 -  Detailed steps to reproduce the issue
@@ -121,10 +123,9 @@ This section outlines the main components of the STIG Manager project, their tec
      - | `DB <https://github.com/NUWCDIVNPT/stig-manager/issues?q=is%3Aopen+is%3Aissue+label%3ADB>`__
        | `API <https://github.com/NUWCDIVNPT/stig-manager/issues?q=is%3Aopen+is%3Aissue+label%3AAPI>`__
    * - Test suites
-     - | Postman
-       | newman
-       | Mocha
+     - | Mocha
        | Chai
+       | Chai-http
      - @cd-rite
      - - Automated UI Testing
        - Help would be appreciated identifying additional test cases. 
@@ -132,7 +133,6 @@ This section outlines the main components of the STIG Manager project, their tec
    * - CI/CD pipelines
      - | GitHub Actions
        | Docker
-       | newman
      - | @cd-rite
        | @csmig
      - - Integration of additional automated security scanning. 
@@ -199,7 +199,7 @@ The team regularly uses these tools:
   - Docker: For containerization and testing
   - VS Code: Recommended IDE for development
   - Node.js: For running the application and tests
-  - Mocha, Chai, Postman: For writing and running tests
+  - Mocha, Chai, Chai-http: For writing and running tests
 
 
 Software Components

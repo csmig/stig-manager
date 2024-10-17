@@ -26,6 +26,9 @@ module.exports.setConfigurationItem = async function setConfigurationItem (req, 
 
 module.exports.getAppData = async function getAppData (req, res, next) {
   try {
+    if (!config.experimental.appData) {
+      throw new SmError.NotFoundError('endpoint disabled, to enable set STIGMAN_EXPERIMENTAL_APPDATA=true')
+    }
     if (!req.query.elevate) throw new SmError.PrivilegeError()
     res.attachment(`appdata-v${config.lastMigration}_${escape.filenameComponentFromDate()}.gz`)
     // the service method will stream the appdata file to the response object
@@ -55,6 +58,9 @@ module.exports.replaceAppData = async function replaceAppData (req, res, next) {
   }
   
   try {
+    if (!config.experimental.appData) {
+      throw new SmError.NotFoundError('endpoint disabled, to enable set STIGMAN_EXPERIMENTAL_APPDATA=true')
+    }
     if (!req.query.elevate) throw new SmError.PrivilegeError()
     res.setHeader('Content-Type', 'application/x-ndjson; charset=utf-8')
     res.setHeader('Transfer-Encoding', 'chunked')
@@ -84,11 +90,11 @@ module.exports.getDefinition = async function getDefinition (req, res, next) {
   }
 }
 
-module.exports.getDetails = async function getDetails (req, res, next) {
+module.exports.getAppInfo = async function getAppInfo (req, res, next) {
   try {
     let elevate = req.query.elevate
     if ( elevate ) {
-      const response = await OperationService.getDetails()
+      const response = await OperationService.getAppInfo()
       res.json(response)
     }
     else {
@@ -99,3 +105,5 @@ module.exports.getDetails = async function getDetails (req, res, next) {
     next(err)
   }
 }
+
+module.exports.getDetails = module.exports.getAppInfo

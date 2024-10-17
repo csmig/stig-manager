@@ -233,6 +233,40 @@ SM.NavTree.TreePanel = Ext.extend(Ext.tree.TreePanel, {
           if (node == 'stigman-root') {
             let content = []
             if (curUser.privileges.canAdmin) {
+              const children = [
+                {
+                  id: 'collection-admin',
+                  text: 'Collections',
+                  leaf: true,
+                  iconCls: 'sm-collection-icon'
+                },
+                {
+                  id: 'user-admin',
+                  text: 'User Grants',
+                  leaf: true,
+                  iconCls: 'sm-users-icon'
+                },
+                {
+                  id: 'stig-admin',
+                  text: 'STIG Benchmarks',
+                  leaf: true,
+                  iconCls: 'sm-stig-icon'
+                },
+                {
+                  id: 'appinfo-admin',
+                  text: 'Application Info',
+                  leaf: true,
+                  iconCls: 'sm-info-circle-icon'
+                }
+              ]
+              if (STIGMAN.Env.experimental.appData === 'true') {
+                children.push({
+                    id: 'appdata-admin',
+                    text: 'Export/Import Data <span class="sm-navtree-sprite">experimental</span>',
+                    leaf: true,
+                    iconCls: 'sm-database-save-icon'
+                  })
+              }
               content.push(
                 {
                   id: `admin-root`,
@@ -475,12 +509,11 @@ SM.NavTree.TreePanel = Ext.extend(Ext.tree.TreePanel, {
           case 'stig-admin':
             addStigAdmin( { treePath: n.getPath() })
             break
-          case 'appdata-admin':
-            // addAppDataAdmin( { treePath: n.getPath() })
-            SM.AppData.showAppDataTab({treePath: n.getPath()})
-            break
           case 'appinfo-admin':
-            addAppDataAdmin( { treePath: n.getPath() })
+            SM.AppInfo.showAppInfoTab({treePath: n.getPath()})
+            break
+          case 'appdata-admin':
+            SM.AppData.showAppDataTab({treePath: n.getPath()})
             break
           case 'whats-new':
             SM.WhatsNew.addTab( { treePath: n.getPath() })
