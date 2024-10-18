@@ -2974,7 +2974,7 @@ paths:
       summary: Export application data
       operationId: getAppData
       parameters:
-        - $ref: '#/components/parameters/AppDataFormatQuery'
+        # - $ref: '#/components/parameters/AppDataFormatQuery'
         - $ref: '#/components/parameters/ElevateQuery'
       responses:
         '200':
