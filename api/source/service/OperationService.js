@@ -59,12 +59,10 @@ exports.getAppData = async function (res) {
   ]
 
   /** @type {zlib.Gzip} transform stream to compress JSONL records and write to the response */
-  // const gzip = zlib.createGzip()
-  // gzip.pipe(res)
-  // gzip.setMaxListeners(Infinity)
+  const gzip = zlib.createGzip()
+  gzip.pipe(res)
+  gzip.setMaxListeners(Infinity)
 
-  const gzip = res
-  
   // Write metadata record {version, commit, date, lastMigration}
   const {version, commit, lastMigration} = config
   gzip.write(JSON.stringify({version, commit, date: new Date(), lastMigration}) + '\n')
