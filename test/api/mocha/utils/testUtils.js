@@ -17,14 +17,14 @@ const metricsOutputToJSON = (testCaseName, username, responseData, outputJsonFil
   fs.writeFileSync(metricsFilePath, JSON.stringify(metricsData, null, 2), 'utf8')
 }
 
-const loadAppData = async (appdataFileName = 'appdata.json.gz') => {
+const loadAppData = async (appdataFileName = 'appdata.jsonl') => {
 
-  //const appdataFile = path.join(__dirname, '../../form-data-files/appdata.json')
+  //const appdataFile = path.join(__dirname, '../../form-data-files/appdata.jsonl')
   const appdataFile = path.join(__dirname, `../../form-data-files/${appdataFileName}`)
   const formData = new FormData()
   formData.append('importFile', fs.createReadStream(appdataFile), {
-    filename: 'appdata.json.gz',
-    contentType: 'application/gzip'
+    filename: 'appdata.jsonl',
+    contentType: 'text/jsonl'
   })
   const axiosConfig = {
     method: 'post',

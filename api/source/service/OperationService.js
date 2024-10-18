@@ -32,12 +32,12 @@ exports.setConfigurationItem = async function (key, value) {
 }
 
 /**
- * getAppData - streams GZip compressed JSONL records to the response. The JSONL are either
+ * getAppData - streams JSONL records to the response. The JSONL are either
  * data records from a MySQL table (always an array) or metadata records (always an object).
  * 
  * @param {import('express').Response} res express response
  * @returns {undefined}
- * @example Abbreviated example of JSONL which is streamed compressed to the response:
+ * @example Abbreviated example of JSONL which is streamed to the response:
  *  {"version":"1.4.13","commit":{"branch":"na","sha":"na","tag":"na","describe":"na"},"date":"2024-08-18T15:29:16.784Z","lastMigration":33}\n
     {"tables":[{"table":"stig","rowCount":4}, ... ], "totalRows": 4}\n
     {"table":"stig","columns":"`benchmarkId`, `title`","rowCount":4}\n
@@ -46,7 +46,7 @@ exports.setConfigurationItem = async function (key, value) {
     ["VPN_SRG_Rule-fingerprint-match-test","Virtual Private Network (VPN) Security Requirements Guide - replaced"]\n
     ["Windows_10_STIG_TEST","Windows 10 Security Technical Implementation Guide"]\n ...
  */
-exports.getAppData = async function (res) {
+exports.getAppData = async function (res, format) {
   /** @type {string[]} tables to exclude from the appdata file */
   const excludedTables = [
     '_migrations', 
@@ -58,14 +58,22 @@ exports.getAppData = async function (res) {
     'config'
   ]
 
-  /** @type {zlib.Gzip} transform stream to compress JSONL records and write to the response */
-  const gzip = zlib.createGzip()
-  gzip.pipe(res)
-  gzip.setMaxListeners(Infinity)
+  let sink
+  if (format === 'gzip') {
+    /** @type {zlib.Gzip} transform stream to compress JSONL records and write to the response */
+    sink = zlib.createGzip()
+    sink.pipe(res)
+  }
+  else {
+    /** @type {http.ServerResponse} */
+    sink = res
+  }
+  sink.setMaxListeners(Infinity)
+
 
   // Write metadata record {version, commit, date, lastMigration}
   const {version, commit, lastMigration} = config
-  gzip.write(JSON.stringify({version, commit, date: new Date(), lastMigration}) + '\n')
+  sink.write(JSON.stringify({version, commit, date: new Date(), lastMigration}) + '\n')
    
   // Execute SQL to retrieve a list of tables and their non-generated columns. The query binds
   // to the schema name and the excluded tables.
@@ -123,7 +131,7 @@ exports.getAppData = async function (res) {
   }
 
   // Write metadata record {tables, totalRows}
-  gzip.write(JSON.stringify({tables, totalRows}) + '\n')
+  sink.write(JSON.stringify({tables, totalRows}) + '\n')
 
   for (const table of tableNames) {
     // create readable stream using the non-promise interface of dbUtils.pool.pool
@@ -148,7 +156,7 @@ exports.getAppData = async function (res) {
      }).stream()
 
     // Write metadata record {table, columns, rowCount}
-    gzip.write(JSON.stringify({table, ...tableMetadata[table]}) + '\n')
+    sink.write(JSON.stringify({table, ...tableMetadata[table]}) + '\n')
 
     /** @type {Transform} writes a JSONL data record for each tuple of row data*/
     const bjson = new Transform({
@@ -159,12 +167,12 @@ exports.getAppData = async function (res) {
       }
     })
 
-    // pipeline writes data records [field, field, ...] to gzip, ends without closing gzip
-    await pipeline(queryStream, bjson, gzip, { end: false })
+    // pipeline writes data records [field, field, ...] to sink, ends without closing sink
+    await pipeline(queryStream, bjson, sink, { end: false })
   }
 
-  // ending gzip will also end the response
-  gzip.end()
+  // ending sink will also end the response
+  sink.end()
 }
 
 exports.getAppDataTables = async function () {
@@ -185,11 +193,11 @@ exports.getAppDataTables = async function () {
 /**
  * replaceAppData - process a file created by getAppData() and execute SQL queries with progress messages
  * 
- * @param {Buffer} bufferGz - buffer with file content
+ * @param {Buffer} buffer - buffer with file content
  * @param {function(Object)} progressCb - optional, argument is an object with progress status
  * @returns {undefined}
  */
-exports.replaceAppData = async function (bufferGz, progressCb = () => {}) {
+exports.replaceAppData = async function (buffer, format, progressCb = () => {}) {
   /**
    * ParseJSONLStream - Transform chunks of JSONL records into individual parsed AppData records (N:1).
    * @extends Transform
@@ -361,10 +369,15 @@ exports.replaceAppData = async function (bufferGz, progressCb = () => {}) {
   try {
     connection = await dbUtils.pool.getConnection()
     await connection.query('SET FOREIGN_KEY_CHECKS=0')
-    const gunzip = zlib.createGunzip()
     const jsonl = new ParseJSONLStream({jsonParser: BJSON.parse})
     const queries = new AppDataQueryStream({maxValues: 10000, onTablesFn: progressCb, onMigrationFn})
-    pipeline(Readable.from(bufferGz), gunzip, jsonl, queries)
+    if (format === 'gzip') {
+      const gunzip = zlib.createGunzip()
+      pipeline(Readable.from(buffer), gunzip, jsonl, queries)
+    }
+    else {
+      pipeline(Readable.from(buffer), jsonl, queries)
+    }
     let seq = 0
     for await (const data of queries) {
       await connection.query(data.sql)

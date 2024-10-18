@@ -2974,7 +2974,7 @@ paths:
       summary: Export application data
       operationId: getAppData
       parameters:
-        # - $ref: '#/components/parameters/AppDataFormatQuery'
+        - $ref: '#/components/parameters/AppDataFormatQuery'
         - $ref: '#/components/parameters/ElevateQuery'
       responses:
         '200':
@@ -3871,9 +3871,9 @@ components:
       $ref: '#/components/schemas/Version'
     AppDataFormat:
       type: string
-      default: 'json'
+      default: 'gzip'
       enum:
-        - json
+        - jsonl
         - gzip
     AppDataTable:
       type: object

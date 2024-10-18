@@ -26,13 +26,15 @@ module.exports.setConfigurationItem = async function setConfigurationItem (req, 
 
 module.exports.getAppData = async function getAppData (req, res, next) {
   try {
-    if (!config.experimental.appData) {
-      throw new SmError.NotFoundError('endpoint disabled, to enable set STIGMAN_EXPERIMENTAL_APPDATA=true')
-    }
+    if (!config.experimental.appData) throw new SmError.NotFoundError('endpoint disabled, to enable set STIGMAN_EXPERIMENTAL_APPDATA=true')
     if (!req.query.elevate) throw new SmError.PrivilegeError()
-    res.attachment(`appdata-v${config.lastMigration}_${escape.filenameComponentFromDate()}.gz`)
+    const format = req.query.format || 'gzip'
+    res.attachment(`appdata-v${config.lastMigration}_${escape.filenameComponentFromDate()}.${format==='jsonl'?'jsonl':'gz'}`)
+    if (format === 'jsonl') res.type('text/jsonl')
+    req.noCompression = true
+
     // the service method will stream the appdata file to the response object
-    OperationService.getAppData(res)
+    OperationService.getAppData(res, format)
     // the service ends the response by closing the gzip stream
   }
   catch (err) {
@@ -58,16 +60,24 @@ module.exports.replaceAppData = async function replaceAppData (req, res, next) {
   }
   
   try {
-    if (!config.experimental.appData) {
-      throw new SmError.NotFoundError('endpoint disabled, to enable set STIGMAN_EXPERIMENTAL_APPDATA=true')
-    }
+    if (!config.experimental.appData) throw new SmError.NotFoundError('endpoint disabled, to enable set STIGMAN_EXPERIMENTAL_APPDATA=true')
     if (!req.query.elevate) throw new SmError.PrivilegeError()
-    res.setHeader('Content-Type', 'application/x-ndjson; charset=utf-8')
+    let format
+  if (req.file.mimetype === 'text/jsonl' || req.file.mimetype === 'application/jsonl') {
+    format = 'jsonl'
+  }
+  else if (req.file.mimetype === 'application/gzip') {
+    format = 'gzip'
+  }
+  else {
+    throw new SmError.UnprocessableError(`Cannot handle mimetype ${req.file.mimetype}`)
+  }
+    res.setHeader('Content-Type', 'text/jsonl; charset=utf-8')
     res.setHeader('Transfer-Encoding', 'chunked')
 
     req.noCompression = true
     // req.file.buffer contains the uploaded file data
-    await OperationService.replaceAppData(req.file.buffer, progressCb )
+    await OperationService.replaceAppData(req.file.buffer, format, progressCb )
     res.end()
   }
   catch (err) {

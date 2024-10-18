@@ -1,5 +1,29 @@
 Ext.ns('SM.AppData')
 
+SM.AppData.FormatComboBox = Ext.extend(Ext.form.ComboBox, {
+  initComponent: function () {
+      const config = {
+        fieldLabel: 'Format',
+        displayField: 'display',
+        valueField: 'value',
+        triggerAction: 'all',
+        mode: 'local',
+        editable: false,
+        value: 'gzip'
+      }
+      this.store = new Ext.data.SimpleStore({
+        fields: ['value', 'display'],
+        data: [
+          ['gzip', 'GZip'],
+          ['jsonl', 'JSONL']
+        ]
+      })
+
+      Ext.apply(this, Ext.apply(this.initialConfig, config))
+      this.superclass().initComponent.call(this)
+  }
+})
+
 SM.AppData.DownloadButton = Ext.extend(Ext.Button, {
   initComponent: function () {
     const config = {
@@ -13,7 +37,7 @@ SM.AppData.DownloadButton = Ext.extend(Ext.Button, {
   },
   _handler: async function () {
     try {
-      await SM.AppData.doDownload()
+      await SM.AppData.doDownload(this.formatCombo.value)
     }
     catch (e) {
       SM.Error.handleError(e)
@@ -50,8 +74,12 @@ SM.AppData.ReplaceButton = Ext.extend(Ext.Button, {
 
 SM.AppData.ManagePanel = Ext.extend(Ext.Panel, {
   initComponent: function () {
+    this.formatCombo = new SM.AppData.FormatComboBox({
+      width: 120
+    })
     this.downloadBtn = new SM.AppData.DownloadButton({
-      padding: 10
+      padding: 10,
+      formatCombo: this.formatCombo
     })
     this.replaceBtn = new SM.AppData.ReplaceButton({
       padding: 10
@@ -60,9 +88,13 @@ SM.AppData.ManagePanel = Ext.extend(Ext.Panel, {
       items: [
         {
           xtype: 'fieldset',
+          labelWidth: 50,
           width: 200,
           title: 'Export',
-          items: [this.downloadBtn]
+          items: [
+            this.formatCombo, 
+            this.downloadBtn
+          ]
         },
         {
           xtype: 'fieldset',
@@ -81,7 +113,7 @@ SM.AppData.ReplacePanel = Ext.extend(Ext.Panel, {
   initComponent: function () {
     this.selectFileBtn = new Ext.ux.form.FileUploadField({
       buttonOnly: true,
-      accept: '.gz',
+      accept: '.gz, .jsonl',
       webkitdirectory: false,
       multiple: false,
       style: 'width: 95px;',
@@ -147,11 +179,11 @@ SM.AppData.ReplacePanel = Ext.extend(Ext.Panel, {
   }
 })
 
-SM.AppData.doDownload = async function () {
+SM.AppData.doDownload = async function (format = 'gzip') {
   try {
     await window.oidcProvider.updateToken(10)
     const fetchInit = {
-      url: `${STIGMAN.Env.apiBase}/op/appdata?elevate=true`,
+      url: `${STIGMAN.Env.apiBase}/op/appdata?format=${format}&elevate=true`,
       method: 'GET',
       headers: {
         'Authorization': `Bearer ${window.oidcProvider.token}`
@@ -275,11 +307,20 @@ SM.AppData.doReplace = function () {
       rp.updateProgress(0, 'Analyzing')
       rp.updateStatusText('', true, true)
 
-      const objectStream = fileObj.stream()
+      let objectStream
+      if (fileObj.type === 'application/gzip') {
+        objectStream = fileObj.stream()
+          .pipeThrough(new SM.AppData.FileReaderProgressStream(fileObj.size, rp.updateProgress.bind(rp)))
+          .pipeThrough(new DecompressionStream("gzip"))
+          .pipeThrough(new TextDecoderStream())
+          .pipeThrough(new SM.AppData.JSONLObjectStream())
+      }
+      else {
+        objectStream = fileObj.stream()
         .pipeThrough(new SM.AppData.FileReaderProgressStream(fileObj.size, rp.updateProgress.bind(rp)))
-        .pipeThrough(new DecompressionStream("gzip"))
         .pipeThrough(new TextDecoderStream())
         .pipeThrough(new SM.AppData.JSONLObjectStream())
+      }
 
       const fileData = {
         version: false,
@@ -329,6 +370,9 @@ SM.AppData.doReplace = function () {
 
   async function upload (fileObj) {
     try {
+      if (fileObj.name.endsWith('.jsonl') ) {
+        fileObj = new File([fileObj], fileObj.name, {type: 'text/jsonl'})
+      }
       rp.actionButton.disable()
       rp.ownerCt.getTool('close')?.hide()
 
