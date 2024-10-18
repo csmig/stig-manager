@@ -10,8 +10,6 @@ Reporting Bugs & Issues
 
 Please file bug reports or feature requests on the `STIG Manager 
 issue tracker <https://github.com/NUWCDIVNPT/stig-manager/issues>`__. When reporting a bug, please provide as much detail as possible to help us understand and reproduce the issue. Include:
-Please file bug reports or feature requests on the `STIG Manager 
-issue tracker <https://github.com/NUWCDIVNPT/stig-manager/issues>`__. When reporting a bug, please provide as much detail as possible to help us understand and reproduce the issue. Include:
 
 -  Install type: Hosted, Local, Docker, etc
 -  Detailed steps to reproduce the issue

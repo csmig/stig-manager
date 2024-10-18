@@ -274,38 +274,7 @@ SM.NavTree.TreePanel = Ext.extend(Ext.tree.TreePanel, {
                   text: 'Application Management',
                   iconCls: 'sm-setting-icon',
                   expanded: false,
-                  children: [
-                    {
-                      id: 'collection-admin',
-                      text: 'Collections',
-                      leaf: true,
-                      iconCls: 'sm-collection-icon'
-                    },
-                    {
-                      id: 'user-admin',
-                      text: 'User Grants',
-                      leaf: true,
-                      iconCls: 'sm-users-icon'
-                    },
-                    {
-                      id: 'stig-admin',
-                      text: 'STIG Benchmarks',
-                      leaf: true,
-                      iconCls: 'sm-stig-icon'
-                    },
-                    {
-                      id: 'appinfo-admin',
-                      text: 'Application Information',
-                      leaf: true,
-                      iconCls: 'sm-info-circle-icon'
-                    },
-                    {
-                      id: 'appdata-admin',
-                      text: 'Export/Import Data <span class="sm-navtree-sprite">experimental</span>',
-                      leaf: true,
-                      iconCls: 'sm-database-save-icon'
-                    },
-                  ]
+                  children
                 }
               )
             }
