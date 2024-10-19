@@ -9,6 +9,8 @@ const { pipeline } = require("node:stream/promises")
 const zlib = require("node:zlib")
 const klona = require('../utils/klona')
 const os = require('node:os')
+const Umzug = require('umzug')
+const path = require('path')
 
 /**
  * Return version information
@@ -202,6 +204,9 @@ exports.replaceAppData = async function (buffer, format, progressCb = () => {}) 
    * ParseJSONLStream - Transform chunks of JSONL records into individual parsed AppData records (N:1).
    * @extends Transform
    */
+  
+  /** @type {boolean} hasMigrations - indicates if migrations are required */
+  let hasMigrations = false
   class ParseJSONLStream extends Transform {
     /**
      * @param {Object} param
@@ -276,7 +281,7 @@ exports.replaceAppData = async function (buffer, format, progressCb = () => {}) 
      * @param {function(Object): any} param.onTablesFn - called when record {tables, ...} is read
      * @param {function(Object): any} param.onMigrationFn - called when record {..., lastMigration} is read
      */
-    constructor({maxValues = 10000, onTablesFn = new Function(), onMigrationFn = new Function()}) {
+    constructor({maxValues = 10000, onTablesFn = new Function(), onMigrationFn = async function () {}}) {
       super({objectMode: true})
       Object.assign(this, { maxValues, onTablesFn, onMigrationFn })
       
@@ -292,7 +297,7 @@ exports.replaceAppData = async function (buffer, format, progressCb = () => {}) 
      * @param {string} encoding usually 'utf8'
      * @param {function()} cb signals completion
      */
-    _transform(chunk, encoding, cb) {
+    async _transform(chunk, encoding, cb) {
       if (Array.isArray(chunk)) {
         this.currentBinds.push(chunk)
         if (this.currentBinds.length === this.maxValues || this.currentBinds.length === 0) {
@@ -302,7 +307,7 @@ exports.replaceAppData = async function (buffer, format, progressCb = () => {}) 
       }
       else if (chunk.lastMigration) {
         try {
-          this.onMigrationFn(chunk)
+          await this.onMigrationFn(chunk)
         }
         catch (e) {
           cb(e)
@@ -359,9 +364,54 @@ exports.replaceAppData = async function (buffer, format, progressCb = () => {}) 
    * @returns {undefined}
    * @throws {Error}
    */
-  function onMigrationFn(record) {
-    if (record.lastMigration !== config.lastMigration)
-      throw new Error(`Appdata migration v${record.lastMigration} not equal to v${config.lastMigration}`)
+  async function onMigrationFn(record) {
+    if (record.lastMigration === config.lastMigration) return
+    if (record.lastMigration > config.lastMigration) {
+      throw new Error(`API migration v${config.lastMigration} is less than the source migration v${record.lastMigration}`) 
+    }
+    hasMigrations = true
+    await resetDatabase()
+    await migrateTo(record.lastMigration)
+  }
+
+  async function migrateTo(migration = config.lastMigration) {
+    const endMigration = migration.toString().padStart(4, '0') + '.js'
+    const umzug = new Umzug({
+      migrations: {
+        path: path.join(__dirname, './migrations'),
+        params: [dbUtils.pool]
+      },
+      storage: path.join(__dirname, './migrations/lib/umzug-mysql-storage'),
+      storageOptions: {
+        pool: dbUtils.pool
+      }
+    })
+    umzug.on('migrating', (name) => {
+      progressCb({migration: name, status: 'started'})
+    })
+    umzug.on('migrated', (name) => {
+      progressCb({migration: name, status: 'finished'})
+    })
+    await umzug.up({to: endMigration})
+  }
+
+  async function resetDatabase() {
+    const connection = await dbUtils.pool.getConnection()
+    const sql = `SELECT
+    table_name,
+    table_type
+      FROM
+        information_schema.TABLES
+      WHERE
+        TABLE_SCHEMA=?`
+    const [tables] = await connection.query(sql,[config.database.schema])
+    connection.query('SET FOREIGN_KEY_CHECKS = 0')
+    for (const table of tables) {
+      const drop = `DROP ${table.TABLE_TYPE === 'BASE TABLE' ? 'TABLE' : 'VIEW'} ${table.TABLE_NAME}`
+      await connection.query(drop)
+      progressCb({sql: drop})
+    }
+    await connection.release()
   }
   
   /** @type {import('mysql2/promise').PoolConnection} */
@@ -384,7 +434,8 @@ exports.replaceAppData = async function (buffer, format, progressCb = () => {}) 
       seq++
       progressCb({seq, table: data.table, valueCount: data.valueCount})
     }
-    progressCb({status: 'success', legacyStatus: 'Commit successful'})
+    if (hasMigrations) await migrateTo(config.lastMigration)
+    progressCb({status: 'success'})
 
   }
   catch (err) {

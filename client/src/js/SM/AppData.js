@@ -78,7 +78,7 @@ SM.AppData.ManagePanel = Ext.extend(Ext.Panel, {
       width: 120
     })
     this.downloadBtn = new SM.AppData.DownloadButton({
-      padding: 10,
+      style: 'padding-top: 5px',
       formatCombo: this.formatCombo
     })
     this.replaceBtn = new SM.AppData.ReplaceButton({
@@ -335,9 +335,9 @@ SM.AppData.doReplace = function () {
           }
           if (object.lastMigration) {
             fileData.lastMigration = object.lastMigration
-            rp.updateStatusText(`File is for lastMigration ${object.lastMigration}`)
-            if (fileData.lastMigration != STIGMAN.apiConfig.lastMigration) {
-              rp.updateStatusText(`Incompatible migration`)
+            rp.updateStatusText(`File is from migration ${object.lastMigration}. Current API migration is ${STIGMAN.apiConfig.lastMigration}.`)
+            if (fileData.lastMigration > STIGMAN.apiConfig.lastMigration) {
+              rp.updateStatusText(`Cannot import to lower API migration.`)
               break
             }
           }
@@ -346,14 +346,14 @@ SM.AppData.doReplace = function () {
         if (object.table) rp.updateStatusText(`Found data for table: ${object.table}, rowCount: ${object.rowCount}`)
         await new Promise(resolve => setTimeout(resolve, 10))
       }
-      if (fileData.lastMigration === STIGMAN.apiConfig.lastMigration && fileData.tableData) {
+      if (fileData.lastMigration <= STIGMAN.apiConfig.lastMigration && fileData.tableData) {
         rp.updateProgress(1, 'Valid')
-        rp.updateStatusText(`\n**** Valid appdata file, press "Replace Application Data" to upload to API`)
+        rp.updateStatusText(`\n**** VALID source file, click "Replace Application Data" to upload to API`)
         rp.actionButton.fileObj = fileObj
         rp.actionButton.enable()
       }
       else {
-        rp.updateStatusText(`\n**** INVALID appdata file ****`)
+        rp.updateStatusText(`\n**** INVALID source file ****`)
         rp.updateProgress(1, `Invalid`)
         rp.setProgressErrorState(true)
         rp.actionButton.disable()
@@ -376,7 +376,7 @@ SM.AppData.doReplace = function () {
       rp.actionButton.disable()
       rp.ownerCt.getTool('close')?.hide()
 
-      rp.updateStatusText('Awaiting API response...', false, true)
+      rp.updateStatusText('Sending file. Awaiting API response...', false, true)
       let formData = new FormData()
       formData.append('importFile', fileObj);
 
