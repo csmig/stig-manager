@@ -2980,9 +2980,13 @@ paths:
         '200':
           description: Exported data
           content:
-            application/json:
+            application/jsonl:
               schema:
-                type: object
+                type: string
+            application/gzip:
+              schema:
+                type: string
+                format: binary
         default:
           description: unexpected error
           content:
@@ -3002,19 +3006,14 @@ paths:
       requestBody:
         required: false
         content:
-          application/json:
+          application/gzip:
             schema:
-              type: object
-              properties:
-                collections:
-                  type: string
-          multipart/form-data:
+              type: string
+              format: binary
+          application/jsonl:
             schema:
-              type: object
-              properties:
-                importFile:
-                  type: string
-                  format: binary
+              type: string
+              format: binary
       responses:
         '200':
           description: Import successful

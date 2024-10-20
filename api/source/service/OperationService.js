@@ -197,16 +197,16 @@ exports.getAppDataTables = async function () {
  * 
  * @param {Buffer} buffer - buffer with file content
  * @param {function(Object)} progressCb - optional, argument is an object with progress status
- * @returns {undefined}
+ * @returns {Promise} promise
  */
-exports.replaceAppData = async function (buffer, format, progressCb = () => {}) {
+exports.replaceAppData = async function (buffer, contentType, progressCb = () => {}) {
   /**
    * ParseJSONLStream - Transform chunks of JSONL records into individual parsed AppData records (N:1).
    * @extends Transform
    */
   
-  /** @type {boolean} hasMigrations - indicates if migrations are required */
-  let hasMigrations = false
+  /** @type {boolean} needsMigrations - indicates if migrations are required */
+  let needsMigrations = false
   class ParseJSONLStream extends Transform {
     /**
      * @param {Object} param
@@ -270,7 +270,8 @@ exports.replaceAppData = async function (buffer, format, progressCb = () => {}) 
       cb()
     }
   }
-    /**
+
+  /**
    * AppDataQueryStream - Transform AppData records into an SQL query object (N:1)
    * @extends Transform
    */
@@ -369,7 +370,7 @@ exports.replaceAppData = async function (buffer, format, progressCb = () => {}) 
     if (record.lastMigration > config.lastMigration) {
       throw new Error(`API migration v${config.lastMigration} is less than the source migration v${record.lastMigration}`) 
     }
-    hasMigrations = true
+    needsMigrations = true
     await resetDatabase()
     await migrateTo(record.lastMigration)
   }
@@ -405,13 +406,30 @@ exports.replaceAppData = async function (buffer, format, progressCb = () => {}) 
       WHERE
         TABLE_SCHEMA=?`
     const [tables] = await connection.query(sql,[config.database.schema])
-    connection.query('SET FOREIGN_KEY_CHECKS = 0')
+    await connection.query('SET FOREIGN_KEY_CHECKS = 0')
     for (const table of tables) {
       const drop = `DROP ${table.TABLE_TYPE === 'BASE TABLE' ? 'TABLE' : 'VIEW'} ${table.TABLE_NAME}`
       await connection.query(drop)
       progressCb({sql: drop})
     }
+    await connection.query('SET FOREIGN_KEY_CHECKS = 1')
     await connection.release()
+  }
+
+  function createChunkedReadable(buffer, chunkSize = 64 * 1024) {
+    let offset = 0
+    return new Readable({
+      read() {
+        if (offset >= buffer.length) {
+          this.push(null) // No more data, signal end of stream
+        } 
+        else {
+          const chunk = buffer.subarray(offset, offset + chunkSize)
+          this.push(chunk) // Push the next chunk
+          offset += chunkSize
+        }
+      }
+    })
   }
   
   /** @type {import('mysql2/promise').PoolConnection} */
@@ -421,12 +439,11 @@ exports.replaceAppData = async function (buffer, format, progressCb = () => {}) 
     await connection.query('SET FOREIGN_KEY_CHECKS=0')
     const jsonl = new ParseJSONLStream({jsonParser: BJSON.parse})
     const queries = new AppDataQueryStream({maxValues: 10000, onTablesFn: progressCb, onMigrationFn})
-    if (format === 'gzip') {
-      const gunzip = zlib.createGunzip()
-      pipeline(Readable.from(buffer), gunzip, jsonl, queries)
+    if (contentType === 'application/gzip') {
+      pipeline(Readable.from(buffer), zlib.createGunzip(), jsonl, queries)
     }
     else {
-      pipeline(Readable.from(buffer), jsonl, queries)
+      pipeline(createChunkedReadable(buffer, 10 * 1024 * 1024), jsonl, queries)
     }
     let seq = 0
     for await (const data of queries) {
@@ -434,7 +451,7 @@ exports.replaceAppData = async function (buffer, format, progressCb = () => {}) 
       seq++
       progressCb({seq, table: data.table, valueCount: data.valueCount})
     }
-    if (hasMigrations) await migrateTo(config.lastMigration)
+    if (needsMigrations) await migrateTo(config.lastMigration)
     progressCb({status: 'success'})
 
   }

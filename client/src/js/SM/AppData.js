@@ -371,14 +371,12 @@ SM.AppData.doReplace = function () {
   async function upload (fileObj) {
     try {
       if (fileObj.name.endsWith('.jsonl') ) {
-        fileObj = new File([fileObj], fileObj.name, {type: 'text/jsonl'})
+        fileObj = new File([fileObj], fileObj.name, {type: 'application/jsonl'})
       }
       rp.actionButton.disable()
       rp.ownerCt.getTool('close')?.hide()
 
       rp.updateStatusText('Sending file. Awaiting API response...', false, true)
-      let formData = new FormData()
-      formData.append('importFile', fileObj);
 
       await window.oidcProvider.updateToken(10)
       const response = await fetch(`${STIGMAN.Env.apiBase}/op/appdata?elevate=true`, {
@@ -386,7 +384,7 @@ SM.AppData.doReplace = function () {
         headers: new Headers({
           'Authorization': `Bearer ${window.oidcProvider.token}`
         }),
-        body: formData
+        body: fileObj
       })
 
       const objectStream = response.body

@@ -11,7 +11,6 @@ const reference = require(`../../referenceData.js`)
 
 describe(`GET - Asset`, function () {
   before(async function () {
-    this.timeout(4000)
     await utils.uploadTestStigs()
     await utils.loadAppData()
     await utils.createDisabledCollectionsandAssets()
