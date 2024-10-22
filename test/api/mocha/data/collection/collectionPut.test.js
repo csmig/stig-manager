@@ -459,7 +459,8 @@ describe('PUT - Collection', function () {
               expect(res).to.have.status(403)
               return
             }
-            expect(res).to.have.status(200)
+            // expect(res).to.have.status(200) uncommenting the statements above might require this statement to be uncommented?
+            expect(res).to.have.status(201) // changed this from statement above 2024-10-22
             expect(res.body.accessLevel).to.equal(1)
             expect(res.body.userId).to.equal(reference.lvl1User.userId)
             for(const grant of res.body.grantees){

@@ -196,7 +196,7 @@ exports.queryCollection = async function ({collectionId, projections = [], eleva
           (SELECT
           (select count(userId) from cteGrantees where collectionId = c.collectionId) as userCount,
           (select count(distinct a.assetId) from asset a where a.collectionId = c.collectionId and state = "enabled") as assetCount,
-          (select count(saId) from asset a left join stig_asset_map sa using (assetId) where a.collectionId = c.collectionId) as checklistCount) dt4
+          (select count(saId) from asset a left join stig_asset_map sa using (assetId) where a.collectionId = c.collectionId and a.state = 'enabled') as checklistCount) dt4
         ) as statistics`)
 
     }
