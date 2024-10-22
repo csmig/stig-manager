@@ -1,9 +1,12 @@
 //This data contains expected response data that varies by iteration "scenario" or "iteration" for each test case. These expectations are relative to the "referenceData.js" data used to construct the API requests. 
-
+const reference = require('../../referenceData.js')
 
 const distinct = {
   stigmanadmin: {
     iteration: "admin",
+    acl: [],
+    defaultAccess: "rw",
+    accessLevel: 4,
     userId: "87",
     canElevate: true,
     canCreateCollection: true,
@@ -39,10 +42,29 @@ const distinct = {
     },
     canDeleteCollection: true,
     canModifyCollection: true
-    },
+  },
   lvl1:{
     iteration: "lvl1",
+    acl: [
+    {
+      access: "rw",
+      asset: {
+        assetId: "154",
+        name: "Collection_X_lvl1_asset-2"
+      },
+      benchmarkId: reference.benchmark
+    },
+    {
+      access: "rw",
+      asset: {
+        assetId: reference.testAsset.assetId,
+        name: reference.testAsset.name
+      },
+      benchmarkId: reference.benchmark
+    }],
+    defaultAccess: "none",
     userId: "85",
+    accessLevel: 1,
     canElevate: false,
     canCreateCollection: false,
     collectionCount: 1,
@@ -79,6 +101,9 @@ const distinct = {
   lvl2: {
     iteration: "lvl2",
     userId: "87",
+    acl: [],
+    defaultAccess: "rw",
+    accessLevel: 2,
     canElevate: false,
     canCreateCollection: false,
     collectionCount: 2,
@@ -111,10 +136,13 @@ const distinct = {
     },    
     canDeleteCollection: false,
     canModifyCollection: false
-    },
+  },
   lvl3: {
     iteration: "lvl3",
+    acl: [],
+    defaultAccess: "rw",
     userId: "87",
+    accessLevel: 3,
     canElevate: false,
     collectionCount: 2,
     collectionIdsAccess: ["21", "1"],
@@ -147,10 +175,13 @@ const distinct = {
     },    
     canDeleteCollection: false,
     canModifyCollection: true
-    },
+  },
   lvl4: {
     iteration: "lvl4",
+    acl: [],
+    defaultAccess: "rw",
     userId: "87",
+    accessLevel: 4,
     canCreateCollection: false,
     canElevate: false,
     collectionCount: 3,
@@ -183,43 +214,43 @@ const distinct = {
     },    
     canDeleteCollection: true,
     canModifyCollection: true
+  },
+  collectioncreator:{
+    iteration: "collectioncreator",
+    userId: "82",
+    canElevate: false,
+    canCreateCollection: true,
+    collectionCount: 0,
+    collectionIdsAccess: [],
+    collectionMatch: {
+      collectionExactMatchCnt: 0,
+      collectionContainsMatchCnt: 0,
+      collectionStartMatchCnt: 0,
+      collectionEndMatchCnt: 0,
+      collectionMetadataMatchCnt: 0,     
+      collectionDeleteMatchCnt: 0, 
     },
-    collectioncreator:{
-      iteration: "collectioncreator",
-      userId: "82",
-      canElevate: false,
-      canCreateCollection: true,
-      collectionCount: 0,
-      collectionIdsAccess: [],
-      collectionMatch: {
-        collectionExactMatchCnt: 0,
-        collectionContainsMatchCnt: 0,
-        collectionStartMatchCnt: 0,
-        collectionEndMatchCnt: 0,
-        collectionMetadataMatchCnt: 0,     
-        collectionDeleteMatchCnt: 0, 
-      },
-      //relative to testCollection
-      grant: "none",
-      fullLabelUses: 0,
-      lvl1LabelUses: 0,
-      historyResponseStatus: 403,
-      checklistCnt: 0,
-      grantCnt: 0,
-      assetIds:[],
-      validStigs: [],
-      testBenchmarkAssignedCount: 0,
-      findings: {
-        findingsCnt: 0,
-        findingsByGroupCnt: 0,
-        findingsByRuleCnt: 0,
-        findingsByRuleForAssetCnt: 0,
-        findingsByRuleForBenchmarkCnt: 0,
-        findingsByCciCnt: 0,
-      },      
-      canDeleteCollection: false,
-      canModifyCollection: false
+    //relative to testCollection
+    grant: "none",
+    fullLabelUses: 0,
+    lvl1LabelUses: 0,
+    historyResponseStatus: 403,
+    checklistCnt: 0,
+    grantCnt: 0,
+    assetIds:[],
+    validStigs: [],
+    testBenchmarkAssignedCount: 0,
+    findings: {
+      findingsCnt: 0,
+      findingsByGroupCnt: 0,
+      findingsByRuleCnt: 0,
+      findingsByRuleForAssetCnt: 0,
+      findingsByRuleForBenchmarkCnt: 0,
+      findingsByCciCnt: 0,
+    },      
+    canDeleteCollection: false,
+    canModifyCollection: false
 
-    },    
+  },    
 }
 module.exports = distinct;

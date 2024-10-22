@@ -1,10 +1,10 @@
 const chai = require('chai')
+const deepEqualInAnyOrder = require('deep-equal-in-any-order')
 const chaiHttp = require('chai-http')
 const { v4: uuidv4 } = require('uuid')
 chai.use(chaiHttp)
-const expect = chai.expect
-const deepEqualInAnyOrder = require('deep-equal-in-any-order')
 chai.use(deepEqualInAnyOrder)
+const expect = chai.expect
 const config = require('../../testConfig.json')
 const utils = require('../../utils/testUtils')
 const iterations = require('../../iterations.js')
@@ -375,6 +375,7 @@ describe('GET - Collection', function () {
         })
       })
 
+      // note: this is deprecated 
       describe('getStigAssetsByCollectionUser - /collections/{collectionId}/grants/{userId}/access', function () {
 
         it('Return stig-asset grants for a lvl1 iteration in this collection.',async function () {
@@ -398,6 +399,135 @@ describe('GET - Collection', function () {
               expect(stigAssetGrant.benchmarkId).to.be.oneOf(reference.testCollection.validStigs)
               expect(stigAssetGrant.asset.assetId).to.be.oneOf(distinct.assetIds)
             }
+        })
+      })
+
+      describe('getGrantByCollectionUser - /collections/{collectionId}/grants/user/{userId}', function () {
+
+        it("should return the grant for the user in the collection",async function () {
+          
+          const res = await chai.request(config.baseUrl)
+            .get(`/collections/${reference.testCollection.collectionId}/grants/user/${iteration.userId}`)
+            .set('Authorization', `Bearer ${iteration.token}`)
+            if (distinct.grant === "none" || distinct.canModifyCollection === false){
+              expect(res).to.have.status(403)
+              return
+            }
+            expect(res).to.have.status(200)
+            expect(res.body.accessLevel).to.equal(distinct.accessLevel)
+            expect(res.body.userId).to.equal(iteration.userId)
+            for(const grant of res.body.grantees){
+              expect(grant.userId).to.equal(iteration.userId)
+              expect(grant.username).to.equal(iteration.name)
+            }
+        })
+
+        it("should return the grant for the user in the collection all with admin token so lvl1 can be tested",async function () {
+          
+          const res = await chai.request(config.baseUrl)
+            .get(`/collections/${reference.testCollection.collectionId}/grants/user/${iteration.userId}`)
+            .set('Authorization', `Bearer ${iterations[0].token}`)
+            if (distinct.grant === "none" ){
+              expect(res).to.have.status(404)
+              return
+            }
+            expect(res).to.have.status(200)
+            expect(res.body.accessLevel).to.equal(distinct.accessLevel)
+            expect(res.body.userId).to.equal(iteration.userId)
+            for(const grant of res.body.grantees){
+              expect(grant.userId).to.equal(iteration.userId)
+              expect(grant.username).to.equal(iteration.name)
+            }
+        })
+
+        it("should return Error, userID doesnt exist ",async function () {
+          const randomUserId = Math.floor(Math.random() * 1002230)
+          const res = await chai.request(config.baseUrl)
+          .get(`/collections/${reference.testCollection.collectionId}/grants/user/${randomUserId}`)
+              .set('Authorization', `Bearer ${iteration.token}`)
+              .send({
+                "accessLevel": 1
+              })
+            if(distinct.canModifyCollection === false){
+              expect(res).to.have.status(403)
+              return
+            }
+            expect(res, "response is 404 because userID doesnt exist").to.have.status(404)
+            expect(res.body.error).to.equal("Resource not found.")
+        })
+      
+      })
+
+
+      describe('getReviewAclByCollectionUser - /collections/{collectionId}/grants/user/{userId}/access', function () {
+
+        it("should return the review ACL for the user in the test collection reject for users who dont have access",async function () {
+          const res = await chai.request(config.baseUrl)
+            .get(`/collections/${reference.testCollection.collectionId}/grants/user/${iteration.userId}/access`)
+            .set('Authorization', `Bearer ${iteration.token}`)
+            if (distinct.accessLevel < 3 || distinct.grant === "none"){
+              expect(res).to.have.status(403)
+              return
+            }
+            expect(res).to.have.status(200)
+            expect(res.body.acl, "expect all access i.e []").to.be.an('array').of.length(0)
+            expect(res.body.defaultAccess).to.equal("rw")
+
+        })
+        it("should return SmError.UnprocessableError because the user has no direct grant in the collection",async function () {
+
+          const res = await chai.request(config.baseUrl)
+            .get(`/collections/${reference.testCollection.collectionId}/grants/user/${reference.wfTest.userId}/access`)
+            .set('Authorization', `Bearer ${iteration.token}`)
+            if (distinct.accessLevel < 3 || distinct.grant === "none"){
+              expect(res).to.have.status(403)
+              return
+            }
+            expect(res).to.have.status(422)
+            expect(res.body.error).to.equal("Unprocessable Entity.")
+        })
+        it("should return review ACL for the user in the collection, but only using admin token. This is so we can test restricted",async function () {
+          // get admin token 
+          const stigmanadminToken = iterations.find(iter => iter.name === 'stigmanadmin').token
+
+          const res = await chai.request(config.baseUrl)
+            .get(`/collections/${reference.testCollection.collectionId}/grants/user/${iteration.userId}/access`)
+            .set('Authorization', `Bearer ${stigmanadminToken}`)
+
+          if (distinct.grant === "none"){
+            expect(res).to.have.status(422)
+            return
+          }
+          expect(res).to.have.status(200)
+          expect(res.body.acl).to.deep.equalInAnyOrder(distinct.acl)
+        })
+      })
+
+      describe('getEffectiveAclByCollectionUser - /collections/{collectionId}/grants/user/{userId}/access/effective', function () {
+
+        it("should return the effective ACL for the user in the collection",async function () {
+          const res = await chai.request(config.baseUrl)
+            .get(`/collections/${reference.testCollection.collectionId}/grants/user/${iteration.userId}/access/effective`)
+            .set('Authorization', `Bearer ${iteration.token}`)
+            if (distinct.grant === "none" || distinct.canModifyCollection === false){
+              expect(res).to.have.status(403)
+              return
+            }
+            expect(res).to.have.status(200)
+            expect(res.body).to.deep.equalInAnyOrder(distinct.acl)
+        })
+        it("should return SmError.UnprocessableError because the user has no direct grant in the collection",async function () {
+
+          const random = Math.floor(Math.random() * 1002230)
+          const res = await chai.request(config.baseUrl)
+            .get(`/collections/${reference.testCollection.collectionId}/grants/user/${random}/access/effective`)
+            .set('Authorization', `Bearer ${iteration.token}`)
+            if (distinct.grant === "none" || distinct.canModifyCollection === false){
+              expect(res).to.have.status(403)
+              return
+            }
+            expect(res).to.have.status(422)
+            expect(res.body.error).to.equal("Unprocessable Entity.")
         })
       })
     

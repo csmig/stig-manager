@@ -15,8 +15,9 @@ describe('PUT - Collection', function () {
 
   before(async function () {
       this.timeout(4000)
+      await utils.loadAppData()
       await utils.uploadTestStigs()
-  //    await utils.createDisabledCollectionsandAssets()
+      await utils.createDisabledCollectionsandAssets()
   })
 
   for(const iteration of iterations){
@@ -190,6 +191,7 @@ describe('PUT - Collection', function () {
 
       })
 
+      // note: this is deprecated
       describe('setStigAssetsByCollectionUser - /collections/{collectionId}/grants/{userId}/access', function () {
 
         it('set stig-asset grants for a lvl1 user in this collection.',async function () {
@@ -269,6 +271,236 @@ describe('PUT - Collection', function () {
           expect(res).to.have.status(204)
         })
       })
+
+      // needs work 
+      describe('setReviewAclByCollectionUser - /collections/{collectionId}/grants/user/{userId}/access', function () {
+
+        // it(`should set all users acls to all [] ${iteration.name}`, async () => {
+        //   const res = await chai.request(config.baseUrl)
+        //   .put(`/collections/${reference.testCollection.collectionId}/grants/user/${iteration.userId}/access`)
+        //   .set('Authorization', `Bearer ${iteration.token}`)
+        //   .send([])
+        //   if(distinct.canModifyCollection === false){
+        //     expect(res).to.have.status(403)
+        //     return
+        //   }
+        //   expect(res).to.have.status(200)
+        //   expect(res.body.defaultAccess).to.equal(distinct.defaultAccess)
+        //   //expect(res.body.acl).to.deep.equalInAnyOrder([])
+        // })
+
+        // cant be tested until its fixed 
+        // it(`should set all users acls to the same thing. will use admin token for all  ${iteration.name}`, async () => {
+        //   const res = await chai.request(config.baseUrl)
+        //   .put(`/collections/${reference.testCollection.collectionId}/grants/user/${iteration.userId}/access`)
+        //   .set('Authorization', `Bearer ${iterations[0].token}`)
+        //   .send([{"labelId":reference.testCollection.fullLabel,"access":"r"},{"benchmarkId":reference.testCollection.benchmark,"access":"rw"}])
+        //   if(distinct.canModifyCollection === false){
+        //     expect(res).to.have.status(403)
+        //     return
+        //   }
+        //   expect(res).to.have.status(200)
+        //   expect(res.body.defaultAccess).to.equal(distinct.defaultAccess)
+        //   expect(res.body.acl).to.deep.equalInAnyOrder([
+        //     {
+        //       access: "rw",
+        //       asset: {
+        //         name: "Collection_X_asset",
+        //         assetId: "62",
+        //       },
+        //       benchmarkId: "VPN_SRG_TEST",
+        //       aclSources: [
+        //         {
+        //           aclRule: {
+        //             label: {
+        //               name: "test-label-full",
+        //               labelId: "755b8a28-9a68-11ec-b1bc-0242ac110002",
+        //             },
+        //             access: "rw",
+        //           },
+        //           grantee: {
+        //             userId: 85,
+        //             username: "lvl1",
+        //             accessLevel: 1,
+        //           },
+        //         },
+        //         {
+        //           aclRule: {
+        //             access: "rw",
+        //             benchmarkId: "VPN_SRG_TEST",
+        //           },
+        //           grantee: {
+        //             userId: 85,
+        //             username: "lvl1",
+        //             accessLevel: 1,
+        //           },
+        //         },
+        //       ],
+        //     },
+        //     {
+        //       access: "rw",
+        //       asset: {
+        //         name: "Collection_X_asset",
+        //         assetId: "62",
+        //       },
+        //       benchmarkId: "Windows_10_STIG_TEST",
+        //       aclSources: [
+        //         {
+        //           aclRule: {
+        //             label: {
+        //               name: "test-label-full",
+        //               labelId: "755b8a28-9a68-11ec-b1bc-0242ac110002",
+        //             },
+        //             access: "rw",
+        //           },
+        //           grantee: {
+        //             userId: 85,
+        //             username: "lvl1",
+        //             accessLevel: 1,
+        //           },
+        //         },
+        //       ],
+        //     },
+        //     {
+        //       access: "rw",
+        //       asset: {
+        //         name: "Collection_X_lvl1_asset-1",
+        //         assetId: "42",
+        //       },
+        //       benchmarkId: "VPN_SRG_TEST",
+        //       aclSources: [
+        //         {
+        //           aclRule: {
+        //             label: {
+        //               name: "test-label-full",
+        //               labelId: "755b8a28-9a68-11ec-b1bc-0242ac110002",
+        //             },
+        //             access: "rw",
+        //           },
+        //           grantee: {
+        //             userId: 85,
+        //             username: "lvl1",
+        //             accessLevel: 1,
+        //           },
+        //         },
+        //         {
+        //           aclRule: {
+        //             access: "rw",
+        //             benchmarkId: "VPN_SRG_TEST",
+        //           },
+        //           grantee: {
+        //             userId: 85,
+        //             username: "lvl1",
+        //             accessLevel: 1,
+        //           },
+        //         },
+        //       ],
+        //     },
+        //     {
+        //       access: "rw",
+        //       asset: {
+        //         name: "Collection_X_lvl1_asset-1",
+        //         assetId: "42",
+        //       },
+        //       benchmarkId: "Windows_10_STIG_TEST",
+        //       aclSources: [
+        //         {
+        //           aclRule: {
+        //             label: {
+        //               name: "test-label-full",
+        //               labelId: "755b8a28-9a68-11ec-b1bc-0242ac110002",
+        //             },
+        //             access: "rw",
+        //           },
+        //           grantee: {
+        //             userId: 85,
+        //             username: "lvl1",
+        //             accessLevel: 1,
+        //           },
+        //         },
+        //       ],
+        //     },
+        //     {
+        //       access: "rw",
+        //       asset: {
+        //         name: "Collection_X_lvl1_asset-2",
+        //         assetId: "154",
+        //       },
+        //       benchmarkId: "VPN_SRG_TEST",
+        //       aclSources: [
+        //         {
+        //           aclRule: {
+        //             access: "rw",
+        //             benchmarkId: "VPN_SRG_TEST",
+        //           },
+        //           grantee: {
+        //             userId: 85,
+        //             username: "lvl1",
+        //             accessLevel: 1,
+        //           },
+        //         },
+        //       ],
+        //     },
+        //   ])
+        // })
+      })
+
+      describe('setGrantByCollectionUser - /collections/{collectionId}/grants/user/{userId}', function () {
+
+        it('set stig-asset grants for a lvl1 user in this collection.',async function () {
+          const res = await chai.request(config.baseUrl)
+              .put(`/collections/${reference.testCollection.collectionId}/grants/user/${reference.lvl1User.userId}`)
+              .set('Authorization', `Bearer ${iteration.token}`)
+              .send({
+                "accessLevel": 1
+              })
+
+            if (distinct.grant === "none" || distinct.canModifyCollection === false){
+              expect(res).to.have.status(403)
+              return
+            }
+            expect(res).to.have.status(200)
+            expect(res.body.accessLevel).to.equal(1)
+            expect(res.body.userId).to.equal(reference.lvl1User.userId)
+            for(const grant of res.body.grantees){
+              expect(grant.userId).to.equal(reference.lvl1User.userId)
+              expect(grant.username).to.equal(reference.lvl1User.username)
+            }
+        })
+        it('set stig-asset grants for a lvl1 user in this collection but only use admin token to test lvl1, lvl2 and collection creator.',async function () {
+          const res = await chai.request(config.baseUrl)
+              .put(`/collections/${reference.testCollection.collectionId}/grants/user/${reference.lvl1User.userId}`)
+              .set('Authorization', `Bearer ${iterations[0].token}`)
+              .send({
+                "accessLevel": 1
+              })
+            expect(res).to.have.status(200)
+            expect(res.body.accessLevel).to.equal(1)
+            expect(res.body.userId).to.equal(reference.lvl1User.userId)
+            for(const grant of res.body.grantees){
+              expect(grant.userId).to.equal(reference.lvl1User.userId)
+              expect(grant.username).to.equal(reference.lvl1User.username)
+            }
+        })
+        it("should throw SmError.Unprocessable Entity when attempting to set asset stig for a user that does not exist with access level 1",async function () {
+          const randomUserId = Math.floor(Math.random() * 1002230)
+          const res = await chai.request(config.baseUrl)
+          .put(`/collections/${reference.testCollection.collectionId}/grants/user/${randomUserId}`)
+              .set('Authorization', `Bearer ${iteration.token}`)
+              .send({
+                "accessLevel": 1
+              })
+            if(distinct.canModifyCollection === false){
+              expect(res).to.have.status(403)
+              return
+            }
+            expect(res).to.have.status(404)
+            expect(res.body.error).to.equal("Resource not found.")
+            expect(res.body.detail).to.equal("User not found")
+        })
+       
+      })
+
     })
   }
 

@@ -145,6 +145,41 @@ describe('DELETE - Collection ', function () {
             expect(res.body.HistoryEntriesDeleted).to.be.equal(reference.testCollection.reviewHistory.deletedEntriesByDateAsset)
         })
       })
+
+      describe('deleteGrantByCollectionUser - /collections/{collectionId}/grants/user/{userId}', function () {
+          
+          beforeEach(async function () {
+            await utils.loadAppData()
+          })
+          it('Delete a grant for a user',async function () {
+              const res = await chai.request(config.baseUrl)
+                  .delete(`/collections/${reference.testCollection.collectionId}/grants/user/${reference.scrapLvl1User.userId}`)
+                  .set('Authorization', `Bearer ${iteration.token}`)
+                  
+              if(distinct.canModifyCollection === false){
+                expect(res).to.have.status(403)
+                return
+              }
+              expect(res).to.have.status(200)
+              expect(res.body.accessLevel).to.equal(1)
+              for(const grant of res.body.grantees){
+                expect(grant.userId).to.equal(reference.scrapLvl1User.userId)
+              }
+          })
+
+          it("should return 200 when deleting a non-existent grant.",async function () {
+
+            const randomUserId = Math.floor(Math.random() * 1002230)
+            const res = await chai.request(config.baseUrl)
+                .delete(`/collections/${reference.testCollection.collectionId}/grants/user/${randomUserId}`)
+                .set('Authorization', `Bearer ${iteration.token}`)
+            if(distinct.canModifyCollection === false){
+              expect(res).to.have.status(403)
+              return
+            }
+            expect(res).to.have.status(200)
+          })
+      })
     })
   }
 })
