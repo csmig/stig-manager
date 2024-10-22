@@ -200,17 +200,22 @@ module.exports.setUserData = async function setUserData (username, fields) {
   }
 }
 /* c8 ignore end */
-
 module.exports.createUserGroup = async (req, res, next) => {
   try {
     if (!req.query.elevate) throw new SmError.PrivilegeError()
     const {userIds, ...userGroupFields} = req.body
-    const userGroupId = await UserService.addOrUpdateUserGroup({
-      userGroupFields,
-      userIds,
-      createdUserId: req.userObject.userId,
-      modifiedUserId: req.userObject.userId
-    })
+    let userGroupId
+    try{
+      userGroupId = await UserService.addOrUpdateUserGroup({
+        userGroupFields,
+        userIds,
+        createdUserId: req.userObject.userId,
+        modifiedUserId: req.userObject.userId
+      })
+    }
+    catch (err) {
+      throw err.code === 'ER_DUP_ENTRY' ? new SmError.UnprocessableError('Group name is already in use.') : err
+    }
     const response = await UserService.queryUserGroups({
       projections: req.query.projection,
       filters: {userGroupId}

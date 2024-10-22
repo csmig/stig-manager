@@ -263,7 +263,7 @@ module.exports.putReviewMetadata = async function (req, res, next) {
       res.json(response)
     }
     else {
-      throw new SmError.PrivilegeError('User has insufficient privilege to patch the review of this rule.')
+      throw new SmError.PrivilegeError('User has insufficient privilege to put the review of this rule.')
     }
   }
   catch (err) {
