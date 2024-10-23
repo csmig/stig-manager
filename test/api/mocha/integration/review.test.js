@@ -21,7 +21,7 @@ describe('PUT - putReviewByAssetRule - /collections/{collectionId}/reviews/{asse
  
     before(async function () {
             this.timeout(4000)
-            await utils.uploadTestStigs()
+            // await utils.uploadTestStigs()
             await utils.loadAppData()
             // await utils.createDisabledCollectionsandAssets()
         })
@@ -102,7 +102,7 @@ describe('PATCH - patchReviewByAssetRule - /collections/{collectionId}/reviews/{
 
         before(async function () {
             this.timeout(4000)
-            // await utils.uploadTestStigs()
+            // // await utils.uploadTestStigs()
             await utils.loadAppData()
             // await utils.createDisabledCollectionsandAssets()
         })
@@ -153,7 +153,7 @@ describe('POST - postReviewsByAsset - /collections/{collectionId}/reviews/{asset
                 before(async function () {
                     this.timeout(4000)
                     await utils.loadAppData()
-                    await utils.uploadTestStigs()
+                    // await utils.uploadTestStigs()
                 })
 
                 it('Set collection history max reviews to 2', async () => {

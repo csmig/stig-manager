@@ -15,7 +15,7 @@ describe('PUT - Review', () => {
     let deletedCollection, deletedAsset
     before(async function () {
         this.timeout(4000)
-        await utils.uploadTestStigs()
+        // await utils.uploadTestStigs()
         await utils.loadAppData()
         const deletedItems = await utils.createDisabledCollectionsandAssets()
         deletedCollection = deletedItems.collection

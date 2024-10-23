@@ -14,20 +14,9 @@ const requestBodies = require('./requestBodies.js')
 describe('POST - Collection - not all tests run for all iterations', function () {
 
   before(async function () {
-    // this.timeout(4000)
-    await utils.uploadTestStigs()
-    try{
-      await utils.uploadTestStig("U_VPN_SRG_V1R0_Manual-xccdf.xml")
-    }
-    catch(err){
-        console.log("no stig to upload")
-    }
     await utils.loadAppData()
+    await utils.uploadTestStig("U_VPN_SRG_V1R0_Manual-xccdf.xml")
     await utils.createDisabledCollectionsandAssets()
-  })
-
-  after(async function () {
-    await utils.deleteStigByRevision("VPN_SRG_TEST", "V1R0")
   })
 
   for(const iteration of iterations) {
@@ -38,22 +27,13 @@ describe('POST - Collection - not all tests run for all iterations', function ()
     describe(`iteration:${iteration.name}`, function () {
       const distinct = expectations[iteration.name]
       
-      // before(async function () {
-      //   // this.timeout(4000)
-      //   await utils.uploadTestStigs()
-      //   try{
-      //     await utils.uploadTestStig("U_VPN_SRG_V1R0_Manual-xccdf.xml")
-      //   }
-      //   catch(err){
-      //       console.log("no stig to upload")
-      //   }
-      //   await utils.loadAppData()
-      //   await utils.createDisabledCollectionsandAssets()
-      // })
+      before(async function () {
+        await utils.uploadTestStig("U_VPN_SRG_V1R0_Manual-xccdf.xml")
+      })
 
-      // after(async function () {
-      //   await utils.deleteStigByRevision("VPN_SRG_TEST", "V1R0")
-      // })
+      after(async function () {
+        await utils.deleteStigByRevision("VPN_SRG_TEST", "V1R0")
+      })
   
       describe("createCollection - /collections", function () {
 
@@ -261,9 +241,8 @@ describe('POST - Collection - not all tests run for all iterations', function ()
       describe("exportToCollection - /collections/{collectionId}/export-to/{dstCollectionId}", function () {
 
         before(async function () {
-          // this.timeout(4000)
-          // await utils.uploadTestStigs()
           await utils.loadAppData()
+          await utils.uploadTestStig("U_VPN_SRG_V1R0_Manual-xccdf.xml")
         })
         
         it("export entire asset to another collection, should create asset in destination",async function () {
@@ -377,8 +356,9 @@ describe('POST - Collection - not all tests run for all iterations', function ()
       describe("writeStigPropsByCollectionStig - /collections/{collectionId}/stigs/{benchmarkId}", function () {
         before(async function () {
           this.timeout(4000)
-          // await utils.uploadTestStigs()
+          // // await utils.uploadTestStigs()
           await utils.loadAppData()
+          await utils.uploadTestStig("U_VPN_SRG_V1R0_Manual-xccdf.xml")
         })
 
         it("Set revision v1r1 of test benchmark to assets",async function () {

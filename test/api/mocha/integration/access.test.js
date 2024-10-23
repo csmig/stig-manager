@@ -198,7 +198,7 @@ describe(`Test Restricted user access controls`, () => {
 
     before(async function () {
         this.timeout(4000)
-        await utils.uploadTestStigs()
+        // await utils.uploadTestStigs()
         await utils.loadAppData()
     })
     it(`should set users ACL in test collection `, async () => {
@@ -313,7 +313,7 @@ describe(`Test manage user access control`, () => {`  `
 
     before(async function () {
         this.timeout(4000)
-        await utils.uploadTestStigs()
+        // await utils.uploadTestStigs()
         await utils.loadAppData()
     })
     it(`should set users ACL in test collection `, async () => {

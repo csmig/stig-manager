@@ -25,8 +25,8 @@ const admin = {
 
 describe("lvl1 cross-boundary tests", () => {
     before(async () => {
-        await utils.uploadTestStigs()
         await utils.loadAppData()
+        // await utils.uploadTestStigs()
         await utils.createDisabledCollectionsandAssets()
     })
     describe('GET - getUserObject - /user', () => {

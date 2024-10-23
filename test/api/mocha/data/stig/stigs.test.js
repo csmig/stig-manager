@@ -16,7 +16,7 @@ describe('GET - Stig', () => {
 
     before(async function () {
         this.timeout(4000)
-        await utils.uploadTestStigs()
+        // await utils.uploadTestStigs()
         try{
             await utils.uploadTestStig("U_VPN_SRG_V1R0_Manual-xccdf.xml")
         }
@@ -412,7 +412,7 @@ describe('POST - Stig', () => {
                 it('should throw SmError.ClientError not xml file', async () => {
                 
                     const directoryPath = path.join(__dirname, '../../../form-data-files/')
-                    const testStigfile = 'appdata.json'
+                    const testStigfile = 'appdata.jsonl'
                     const filePath = path.join(directoryPath, testStigfile)
             
                     const res = await chai.request(config.baseUrl)

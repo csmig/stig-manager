@@ -18,7 +18,7 @@ describe('DELETE - deleteAsset - /assets/{assetId} - DELETE - deleteCollection -
         before(async function () {
             this.timeout(4000)
             await utils.loadAppData()
-            await utils.uploadTestStigs()
+            // await utils.uploadTestStigs()
         })
 
         let collectionToDelete = null

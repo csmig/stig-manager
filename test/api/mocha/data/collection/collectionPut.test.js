@@ -16,7 +16,7 @@ describe('PUT - Collection', function () {
   before(async function () {
       this.timeout(4000)
       await utils.loadAppData()
-      await utils.uploadTestStigs()
+      // await utils.uploadTestStigs()
       await utils.createDisabledCollectionsandAssets()
   })
 

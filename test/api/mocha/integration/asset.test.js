@@ -19,7 +19,7 @@ describe(`PUT - attachAssetsToStig - /collections/{collectionId}/stigs/{benchmar
 
     before(async function () {
       this.timeout(4000)
-      await utils.uploadTestStigs()
+      // await utils.uploadTestStigs()
       await utils.loadAppData()
       // await utils.createDisabledCollectionsandAssets()
     })
@@ -55,7 +55,7 @@ describe(`GET - getChecklistByAssetStig - /assets/{assetId}/checklists/{benchmar
 
     before(async function () {
       this.timeout(4000)
-      await utils.uploadTestStigs()
+      // await utils.uploadTestStigs()
       await utils.loadAppData()
     })
     

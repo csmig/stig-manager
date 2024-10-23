@@ -11,7 +11,7 @@ describe('GET - Op', () => {
   let disabledCollection
   before(async function () {
     this.timeout(4000)
-    await utils.uploadTestStigs()
+    // await utils.uploadTestStigs()
     await utils.loadAppData()
     ;({collection: disabledCollection} = await utils.createDisabledCollectionsandAssets())
   })
@@ -21,7 +21,7 @@ describe('GET - Op', () => {
       describe('getAppData - /op/appdata', () => {
         it('Export application data', async () => {
         const res = await chai.request(config.baseUrl)
-            .get(`/op/appdata?elevate=true`)
+            .get(`/op/appdata?format=jsonl&elevate=true`)
             .set('Authorization', `Bearer ${iteration.token}`)
         if(iteration.name !== "stigmanadmin"){
           expect(res).to.have.status(403)

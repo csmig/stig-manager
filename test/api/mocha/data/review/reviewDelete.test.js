@@ -13,7 +13,7 @@ describe('DELETE - Review', () => {
   before(async function () {
     // this.timeout(4000)
     await utils.loadAppData()
-    await utils.uploadTestStigs()
+    // await utils.uploadTestStigs()
   })
     
   for(const iteration of iterations) {

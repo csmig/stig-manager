@@ -22,7 +22,7 @@ describe('GET - Test Effective ACL', () => {
 
   before(async () => {
     await utils.loadAppData()
-    await utils.uploadTestStigs()
+    // await utils.uploadTestStigs()
   })
 
   for(const iteration of iterations){

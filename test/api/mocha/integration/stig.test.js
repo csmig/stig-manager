@@ -22,7 +22,7 @@ describe(`POST - importBenchmark - /stigs`, () => {
 
     before(async function () {
       this.timeout(4000)
-      await utils.uploadTestStigs()
+      // await utils.uploadTestStigs()
       await utils.loadAppData()
       await utils.uploadTestStig('U_VPN_SRG_V2R3_Manual-xccdf-reviewKeyChange.xml')
       // await utils.createDisabledCollectionsandAssets()
@@ -188,7 +188,7 @@ describe(`POST - importBenchmark - /stigs`, () => {
 
     before(async function () {
       this.timeout(4000)
-      await utils.uploadTestStigs()
+      // await utils.uploadTestStigs()
       await utils.deleteStigByRevision("VPN_SRG_OTHER", "V2R2")
       await utils.loadAppData()
     })
@@ -293,7 +293,7 @@ describe(`POST - importBenchmark - /stigs`, () => {
 
     before(async function () {
       this.timeout(4000)
-      await utils.uploadTestStigs()
+      // await utils.uploadTestStigs()
       try{
         await utils.deleteStigByRevision("VPN_SRG_TEST", "V1R0")
       }

@@ -14,7 +14,7 @@ const reference = require('../../referenceData.js')
 describe('GET - Collection', function () {
 
   before(async function () {
-    await utils.uploadTestStigs()
+    // await utils.uploadTestStigs()
     await utils.loadAppData()
     await utils.createDisabledCollectionsandAssets()
   })

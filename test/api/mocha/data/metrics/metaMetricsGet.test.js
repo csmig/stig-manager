@@ -12,8 +12,9 @@ const metrics = require('./metaMetricsGet.js')
 
 describe('GET - MetaMetrics', function () { 
   before(async function () {
-    await utils.uploadTestStigs()
-    await utils.loadAppData("appdata-meta-metrics-with-pin.json")
+    // this.timeout(4000)
+    // await utils.uploadTestStigs()
+    const response = await utils.loadAppData("appdata-meta-metrics-with-pin.jsonl")
     try{
         await utils.uploadTestStig("U_VPN_SRG_V1R0_Manual-xccdf.xml")
     }

@@ -12,7 +12,7 @@ describe('GET - Review', () => {
   
   before(async function () {
     this.timeout(4000)
-    await utils.uploadTestStigs()
+    // await utils.uploadTestStigs()
     await utils.loadAppData()
     //await utils.createDisabledCollectionsandAssets()
   })

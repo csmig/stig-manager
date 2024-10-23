@@ -17,29 +17,17 @@ const metricsOutputToJSON = (testCaseName, username, responseData, outputJsonFil
   fs.writeFileSync(metricsFilePath, JSON.stringify(metricsData, null, 2), 'utf8')
 }
 
-const loadAppData = async (appdataFileName = 'appdata.json') => {
-
-  //const appdataFile = path.join(__dirname, '../../form-data-files/appdata.json')
-  const appdataFile = path.join(__dirname, `../../form-data-files/${appdataFileName}`)
-  const formData = new FormData()
-  formData.append('importFile', fs.createReadStream(appdataFile), {
-    filename: 'appdata.json',
-    contentType: 'application/json'
-  })
-  const axiosConfig = {
+const loadAppData = (appdataFileName = 'appdata.jsonl') => {
+  console.log(`Loading ${appdataFileName}`)
+  return axios({
     method: 'post',
     url: `${config.baseUrl}/op/appdata?elevate=true`,
     headers: {
-      ...formData.getHeaders(),
+      'Content-Type': 'application/jsonl',
       Authorization: `Bearer ${adminToken}`
     },
-    data: formData
-  }
-  try {
-    const response = await axios(axiosConfig)
-  } catch (error) {
-    throw error
-  }
+    data: fs.readFileSync(path.join(__dirname, `../../appdata/${appdataFileName}`))
+  })
 }
 
 const createTempCollection = async (collectionPost) => {
@@ -271,7 +259,7 @@ const setStigGrantsMeta = async (collectionId, userId, assetId) => {
 
 
 const uploadTestStig = async (filename) => {
-
+  console.log(`Uploading STIG ${filename}`)
   const directoryPath = path.join(__dirname, '../../form-data-files/')
   const filePath = path.join(directoryPath, filename)
   const formData = new FormData()
@@ -297,47 +285,48 @@ const uploadTestStig = async (filename) => {
   }
 }
 
-const uploadTestStigs = async () => {
-  const testFilenames = [
-    'U_MS_Windows_10_STIG_V1R23_Manual-xccdf.xml',
-    'U_RHEL_7_STIG_V3R0-3_Manual-xccdf.xml',
-    'U_VPN_SRG_V1R1_Manual-xccdf-replace.xml',
-    'U_VPN_SRG_V1R1_Manual-xccdf.xml',
-   // 'U_VPN_SRG_V2R3_Manual-xccdf-reviewKeyChange.xml',
-    'U_VPN_SRG-OTHER_V1R1_Manual-xccdf.xml',
-   // 'U_VPN_SRG_V1R0_Manual-xccdf.xml',
-    'U_VPN_SRG-OTHER_V1R1_twoRules-matchingFingerprints.xml'
-  ]
-  const directoryPath = path.join(__dirname, '../../form-data-files/')
+// const uploadTestStigs = async () => {
+//   const testFilenames = [
+//     'U_MS_Windows_10_STIG_V1R23_Manual-xccdf.xml',
+//     'U_RHEL_7_STIG_V3R0-3_Manual-xccdf.xml',
+//     'U_VPN_SRG_V1R1_Manual-xccdf-replace.xml',
+//     'U_VPN_SRG_V1R1_Manual-xccdf.xml',
+//    // 'U_VPN_SRG_V2R3_Manual-xccdf-reviewKeyChange.xml',
+//     'U_VPN_SRG-OTHER_V1R1_Manual-xccdf.xml',
+//    // 'U_VPN_SRG_V1R0_Manual-xccdf.xml',
+//     'U_VPN_SRG-OTHER_V1R1_twoRules-matchingFingerprints.xml'
+//   ]
+//   const directoryPath = path.join(__dirname, '../../form-data-files/')
 
-  for (const filename of testFilenames) {
-    const formData = new FormData()
-    const filePath = path.join(directoryPath, filename)
-    formData.append('importFile', fs.createReadStream(filePath), {
-      filename,
-      contentType: 'text/xml'
-    })
+//   for (const filename of testFilenames) {
+//     const formData = new FormData()
+//     const filePath = path.join(directoryPath, filename)
+//     formData.append('importFile', fs.createReadStream(filePath), {
+//       filename,
+//       contentType: 'text/xml'
+//     })
 
-    const axiosConfig = {
-      method: 'post',
-      url: `${config.baseUrl}/stigs?elevate=true&clobber=true`,
-      headers: {
-        ...formData.getHeaders(),
-        Authorization: `Bearer ${adminToken}`
-      },
-      data: formData
-    }
+//     const axiosConfig = {
+//       method: 'post',
+//       url: `${config.baseUrl}/stigs?elevate=true&clobber=true`,
+//       headers: {
+//         ...formData.getHeaders(),
+//         Authorization: `Bearer ${adminToken}`
+//       },
+//       data: formData
+//     }
 
-    try {
-      const response = await axios(axiosConfig)
-    } catch (error) {
-      throw error
-    }
-  }
-}
+//     try {
+//       const response = await axios(axiosConfig)
+//     } catch (error) {
+//       throw error
+//     }
+//   }
+// }
 
 const deleteStigByRevision = async (benchmarkId, revisionStr) => {
   try {
+    console.log(`Removing ${benchmarkId} ${revisionStr}`)
     const res = await axios.delete(
       `${config.baseUrl}/stigs/${benchmarkId}/revisions/${revisionStr}?elevate=true&force=true`,
       {
@@ -740,7 +729,7 @@ module.exports = {
   setRestrictedUsers,
   loadAppData,
   deleteCollection,
-  uploadTestStigs,
+  // uploadTestStigs,
   deleteAsset,
   putAsset,
   setDefaultRevision,
