@@ -21,21 +21,22 @@ describe('GET - getMetricsDetailByCollection - /collections/{collectionId}/metri
       // this.timeout(4000)
       // await utils.uploadTestStigs()
       await utils.loadAppData()
+      await utils.uploadTestStig(reference.testStigfileNonLatest)
       await utils.createDisabledCollectionsandAssets()
     })
-    it('Import a new STIG - VPN R1V0 Copy 2', async () => {
-      const directoryPath = path.join(__dirname, '../../form-data-files/')
-      const testStigfile = reference.testStigfile
-      const filePath = path.join(directoryPath, testStigfile)
+    // it('Import a new STIG - VPN R1V0 Copy 2', async () => {
+    //   const directoryPath = path.join(__dirname, '../../form-data-files/')
+    //   const testStigfile = reference.testStigfile
+    //   const filePath = path.join(directoryPath, testStigfile)
 
-      const res = await chai
-        .request(config.baseUrl)
-        .post('/stigs?clobber=true&elevate=true')
-        .set('Authorization', `Bearer ${user.token}`)
-        .set('Content-Type', `multipart/form-data`)
-        .attach('importFile', fs.readFileSync(filePath), testStigfile) // Attach the file here
-      expect(res).to.have.status(200)
-    })
+    //   const res = await chai
+    //     .request(config.baseUrl)
+    //     .post('/stigs?clobber=true&elevate=true')
+    //     .set('Authorization', `Bearer ${user.token}`)
+    //     .set('Content-Type', `multipart/form-data`)
+    //     .attach('importFile', fs.readFileSync(filePath), testStigfile) // Attach the file here
+    //   expect(res).to.have.status(200)
+    // })
     it('Set the Assets mapped to a STIG - default rev only - scrap collection for transfer test', async () => {
 
         const res = await chai
