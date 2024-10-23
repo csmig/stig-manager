@@ -11,7 +11,7 @@ const reference = require('../../referenceData.js')
 describe('DELETE - Review', () => {
 
   before(async function () {
-    // this.timeout(4000)
+    // // this.timeout(4000)
     await utils.loadAppData()
     // await utils.uploadTestStigs()
   })
@@ -27,7 +27,7 @@ describe('DELETE - Review', () => {
       describe('DELETE - deleteReviewByAssetRule - /collections/{collectionId}/reviews/{assetId}/{ruleId}', () => {
         let review = null
         beforeEach(async function () {
-          this.timeout(4000)
+          // this.timeout(4000)
           review = await utils.importReview(reference.testCollection.collectionId, reference.testAsset.assetId, reference.testAsset.testRuleId)
         })
         
@@ -56,7 +56,7 @@ describe('DELETE - Review', () => {
       describe('DELETE - deleteReviewMetadataKey - /collections/{collectionId}/reviews/{assetId}/{ruleId}/metadata/keys/{key}', () => {
 
         before(async function () {
-          this.timeout(4000)
+          // this.timeout(4000)
           review = await utils.importReview(reference.testCollection.collectionId, reference.testAsset.assetId, reference.testAsset.testRuleId)
         })
 

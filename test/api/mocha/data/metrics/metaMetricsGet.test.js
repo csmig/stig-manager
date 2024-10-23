@@ -12,7 +12,7 @@ const metrics = require('./metaMetricsGet.js')
 
 describe('GET - MetaMetrics', function () { 
   before(async function () {
-    // this.timeout(4000)
+    // // this.timeout(4000)
     // await utils.uploadTestStigs()
     const response = await utils.loadAppData("appdata-meta-metrics-with-pin.jsonl")
     try{

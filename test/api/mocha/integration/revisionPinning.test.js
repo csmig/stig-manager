@@ -20,7 +20,7 @@ describe(`POST - writeStigPropsByCollectionStig - /collections/{collectionId}/st
             describe('Revision Pinning', () => {
 
                 before(async function () {
-                    this.timeout(4000)
+                    // this.timeout(4000)
                     // await utils.uploadTestStigs()
                     await utils.loadAppData()
                     await utils.createDisabledCollectionsandAssets()
@@ -33,7 +33,7 @@ describe(`POST - writeStigPropsByCollectionStig - /collections/{collectionId}/st
                    
                 })
                 after(async function () {
-                    this.timeout(4000)
+                    // this.timeout(4000)
                     try{
                         await utils.deleteStigByRevision("VPN_SRG_TEST", "V1R0")
                     }

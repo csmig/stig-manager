@@ -32,7 +32,7 @@ describe('PATCH - updateCollection - /collections/{collectionId}', () => {
     describe('Verify manager grant restrictions (ensure a manager cannot modify an "owner" grant)', () => {
 
         before(async function () {
-            this.timeout(4000)
+            // this.timeout(4000)
             // await utils.uploadTestStigs()
             await utils.loadAppData()
             // await utils.createDisabledCollectionsandAssets()
@@ -261,7 +261,7 @@ describe('PUT - setStigAssetsByCollectionUser - /collections/{collectionId}/gran
     describe('gh-761 - statusStats (statusStats projection for /assets returns inaccurate rules count when more than one user has the same restricted grant)', () =>{
 
         before(async function () {
-            this.timeout(4000)
+            // this.timeout(4000)
             await utils.loadAppData()
             // // await utils.uploadTestStigs()
             // await utils.createDisabledCollectionsandAssets()
@@ -310,7 +310,7 @@ describe('POST - cloneCollection - /collections/{collectionId}/clone - test vari
     describe('Collection Cloning', () =>{
 
         before(async function () {
-            this.timeout(4000)
+            // this.timeout(4000)
             // // await utils.uploadTestStigs()
             await utils.loadAppData()
         })
@@ -956,7 +956,7 @@ describe('POST - exportToCollection - /collections/{collectionId}/export-to/{dst
     describe('export-to', () => {
 
         before(async function () {
-            this.timeout(4000)
+            // this.timeout(4000)
             // // await utils.uploadTestStigs()
             await utils.loadAppData()
         })
@@ -1273,7 +1273,7 @@ describe('POST - postReviewsByAsset - /collections/{collectionId}/reviews/{asset
     describe('Duplicate RuleIds/Rule Fingerprint', () => {
 
         before(async function () {
-            this.timeout(4000)
+            // this.timeout(4000)
             // await utils.uploadTestStigs()
             await utils.loadAppData()
         })
@@ -1498,7 +1498,7 @@ describe('GET - putAssetsByCollectionLabelId - /collections/{collectionId}/label
     describe(`valid label checks - ensure asset labels are valid for that asset's collection.`, () => {
 
         before(async function () {
-            this.timeout(4000)
+            // this.timeout(4000)
             // await utils.uploadTestStigs()
             await utils.loadAppData()
         })

@@ -10,7 +10,7 @@ const reference = require('../../referenceData.js')
 describe('GET - Op', () => {
   let disabledCollection
   before(async function () {
-    this.timeout(4000)
+    // this.timeout(4000)
     // await utils.uploadTestStigs()
     await utils.loadAppData()
     ;({collection: disabledCollection} = await utils.createDisabledCollectionsandAssets())

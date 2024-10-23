@@ -197,7 +197,7 @@ const lvl3TestAcl = {
 describe(`Test Restricted user access controls`, () => {
 
     before(async function () {
-        this.timeout(4000)
+        // this.timeout(4000)
         // await utils.uploadTestStigs()
         await utils.loadAppData()
     })
@@ -312,7 +312,7 @@ describe(`Test Restricted user access controls`, () => {
 describe(`Test manage user access control`, () => {`  `
 
     before(async function () {
-        this.timeout(4000)
+        // this.timeout(4000)
         // await utils.uploadTestStigs()
         await utils.loadAppData()
     })

@@ -71,7 +71,7 @@ describe('POST - Review', () => {
         describe(`Batch Review Editing`, () => {
 
             beforeEach(async function () {
-              this.timeout(4000)
+              // this.timeout(4000)
                 // // await utils.uploadTestStigs()
                 await utils.loadAppData("batch-test-data.jsonl")
             })
@@ -791,7 +791,7 @@ describe('POST - Review', () => {
         describe(`Batch Review Editing - Validation Errors, expect failure. `, () => {
               
           beforeEach(async function () {
-            this.timeout(4000)
+            // this.timeout(4000)
             await utils.loadAppData("batch-test-data.jsonl")
           })
           it(`POST batch Review: target by assets, and one rule, expect validation failure - invalid result for status`, async () => {
@@ -1011,7 +1011,7 @@ describe('POST - Review', () => {
         describe('Batch Review Editing - In code errors', () => {
           let tempCollectionCanAcceptFalse
           before(async function () {
-            this.timeout(4000)
+            // this.timeout(4000)
             tempCollectionCanAcceptFalse = await utils.createTempCollection({
               name: 'temoCollection',
               description: 'Collection TEST description',
@@ -1114,7 +1114,7 @@ describe('POST - Review', () => {
 
         let deletedCollection, deletedAsset
         before(async function () {
-          this.timeout(4000)
+          // this.timeout(4000)
           //await utils.putReviewByAssetRule(reference.testCollection.collectionId, reference.testAsset.assetId, reference.testCollection.ruleId, requestBodies.requestBodies)
           await utils.deleteReviewsByAssetRule(reference.testCollection.collectionId, reference.testAsset.assetId, reference.testCollection.ruleId)
           const deletedItems = await utils.createDisabledCollectionsandAssets()

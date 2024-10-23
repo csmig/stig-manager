@@ -18,7 +18,7 @@ describe(`PUT - attachAssetsToStig - /collections/{collectionId}/stigs/{benchmar
   describe('gh-756 - stig-assignments issue', () => {
 
     before(async function () {
-      this.timeout(4000)
+      // this.timeout(4000)
       // await utils.uploadTestStigs()
       await utils.loadAppData()
       // await utils.createDisabledCollectionsandAssets()
@@ -54,7 +54,7 @@ describe(`GET - getChecklistByAssetStig - /assets/{assetId}/checklists/{benchmar
   describe('Testing that a valid filename can be produced from an asset that contains os reserved chars', () => {
 
     before(async function () {
-      this.timeout(4000)
+      // this.timeout(4000)
       // await utils.uploadTestStigs()
       await utils.loadAppData()
     })

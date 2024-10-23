@@ -148,7 +148,7 @@ describe('POST - Collection - not all tests run for all iterations', function ()
 
         // this is flakey should be redesigned.
         before(async function () {
-          // this.timeout(4000)
+          // // this.timeout(4000)
           await utils.setDefaultRevision(reference.testCollection.collectionId, reference.benchmark, reference.testCollection.pinRevision)
         })
         it("Clone test collection and check that cloned collection matches source ",async function () {
@@ -355,7 +355,7 @@ describe('POST - Collection - not all tests run for all iterations', function ()
 
       describe("writeStigPropsByCollectionStig - /collections/{collectionId}/stigs/{benchmarkId}", function () {
         before(async function () {
-          this.timeout(4000)
+          // this.timeout(4000)
           // // await utils.uploadTestStigs()
           await utils.loadAppData()
           await utils.uploadTestStig("U_VPN_SRG_V1R0_Manual-xccdf.xml")

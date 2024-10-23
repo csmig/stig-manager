@@ -13,7 +13,7 @@ describe('PATCH - patchReviewByAssetRule - /collections/{collectionId}/reviews/{
         describe(`user:${user.name}`, () => {
             describe('resultEngine tests', () => {
                 before(async function () {
-                    this.timeout(4000)
+                    // this.timeout(4000)
                     // await utils.uploadTestStigs()
                     await utils.loadAppData()
                 })

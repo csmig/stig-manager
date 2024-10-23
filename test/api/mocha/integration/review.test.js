@@ -20,7 +20,7 @@ const user =
 describe('PUT - putReviewByAssetRule - /collections/{collectionId}/reviews/{assetId}/{ruleId}', () => {
  
     before(async function () {
-            this.timeout(4000)
+            // this.timeout(4000)
             // await utils.uploadTestStigs()
             await utils.loadAppData()
             // await utils.createDisabledCollectionsandAssets()
@@ -101,7 +101,7 @@ describe('PATCH - patchReviewByAssetRule - /collections/{collectionId}/reviews/{
     describe('review status reset check', () => {
 
         before(async function () {
-            this.timeout(4000)
+            // this.timeout(4000)
             // // await utils.uploadTestStigs()
             await utils.loadAppData()
             // await utils.createDisabledCollectionsandAssets()
@@ -151,7 +151,7 @@ describe('POST - postReviewsByAsset - /collections/{collectionId}/reviews/{asset
             describe('test history prune', () => {
 
                 before(async function () {
-                    this.timeout(4000)
+                    // this.timeout(4000)
                     await utils.loadAppData()
                     // await utils.uploadTestStigs()
                 })

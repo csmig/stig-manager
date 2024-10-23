@@ -12,7 +12,7 @@ const metrics = require('./metricsGet.js')
 
 describe('GET - Metrics', function () { 
   before(async function () {
-    this.timeout(4000)
+    // this.timeout(4000)
     // await utils.uploadTestStigs()
     await utils.loadAppData()
     await utils.createDisabledCollectionsandAssets()

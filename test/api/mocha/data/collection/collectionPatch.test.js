@@ -13,7 +13,7 @@ const requestBodies = require('./requestBodies.js')
 describe('PATCH - Collection', function () {
 
     before(async function () {
-        this.timeout(4000)
+        // this.timeout(4000)
         await utils.loadAppData()
         // await utils.uploadTestStigs()
     })

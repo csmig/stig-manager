@@ -18,7 +18,7 @@ const user = {
 describe('GET - getMetricsDetailByCollection - /collections/{collectionId}/metrics/detail', () => {
   describe('transfer metrics recalculation', () => {
     before(async function () {
-      this.timeout(4000)
+      // this.timeout(4000)
       // await utils.uploadTestStigs()
       await utils.loadAppData()
       await utils.createDisabledCollectionsandAssets()
@@ -193,7 +193,7 @@ describe('GET - getMetricsSummaryByCollectionAggStig - /collections/{collectionI
 
     describe('default-rev-recalc', function () {
         before(async function () {
-            this.timeout(4000)
+            // this.timeout(4000)
             // await utils.uploadTestStigs()
             await utils.loadAppData()
             await utils.createDisabledCollectionsandAssets()
