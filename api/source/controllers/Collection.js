@@ -1131,6 +1131,7 @@ module.exports.getReviewAclByCollectionUser = async function getReviewAclByColle
     next(err)
   }
 }
+
 module.exports.getReviewAclByCollectionUserGroup = async function (req, res, next) {
   try {
     const userGroupId = req.params.userGroupId
@@ -1149,8 +1150,7 @@ module.exports.getEffectiveAclByCollectionUser =  async function (req, res, next
   try{
     const {collectionId} = getCollectionInfoAndCheckPermission(req, Security.ACCESS_LEVEL.Manage)
     const userId = req.params.userId
-    const grant = await CollectionService._getCollectionGrant({collectionId, userId})
-    if (!grant) throw new SmError.UnprocessableError('user has no direct grant in collection')
+    if (!await CollectionService._hasCollectionGrant({collectionId, userId})) throw new SmError.UnprocessableError('user has no direct or group grant in collection')
     const response = await CollectionService.getEffectiveAclByCollectionUser({collectionId, userId})
     res.json(response)
   }
@@ -1215,7 +1215,6 @@ module.exports.setReviewAclByCollectionUserGroup = async function (req, res, nex
   }
 }
 
-
 module.exports.setStigAssetsByCollectionUser = async function (req, res, next) {
   try {
     const userId = req.params.userId
@@ -1257,5 +1256,3 @@ module.exports.getStigAssetsByCollectionUser = async function (req, res, next) {
     next(err)
   }
 }
-
-

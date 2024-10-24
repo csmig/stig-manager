@@ -2707,6 +2707,19 @@ exports._getCollectionGrant = async function ({collectionId, userId, userGroupId
   return response?.[0]
 }
 
+exports._hasCollectionGrant = async function ({collectionId, userId}) {
+
+    const sql = `SELECT cg.cgId
+      FROM collection_grant cg 
+      LEFT JOIN user_group ug ON cg.userGroupId = ug.userGroupId
+      LEFT JOIN user_data ud on cg.userID = ud.userId
+      LEFT JOIN user_group_user_map ugu ON ug.userGroupId = ugu.userGroupId
+      WHERE cg.collectionId = ? AND (ud.userId = ? OR ugu.userId = ?)`
+
+  const [response] = await dbUtils.pool.query(sql, [collectionId, userId, userId])
+  return !!response[0]
+}
+
 exports.queryReviewAcl = async function ({cgId, collectionId, userId, userGroupId}) {
   const columns = [
     `case when cg.accessLevel = 1 then 'none' else 'rw' end as defaultAccess`,
