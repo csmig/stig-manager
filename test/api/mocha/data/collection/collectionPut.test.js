@@ -303,146 +303,19 @@ describe('PUT - Collection', function () {
           }
           expect(res).to.have.status(200)
           expect(res.body.defaultAccess).to.equal(distinct.defaultAccess)
-          expect(res.body.acl).to.deep.equalInAnyOrder( [
+          expect(res.body.acl).to.deep.equalInAnyOrder([
             {
-              access: "r",
-              asset: {
-                name: "Collection_X_asset",
-                assetId: "62",
+              label: {
+                name: "test-label-full",
+                color: "FF99CC",
+                labelId: "755b8a28-9a68-11ec-b1bc-0242ac110002"
               },
-              benchmarkId: "VPN_SRG_TEST",
-              aclSources: [
-                {
-                  aclRule: {
-                    label: {
-                      name: "test-label-full",
-                      labelId: "755b8a28-9a68-11ec-b1bc-0242ac110002",
-                    },
-                    access: "r",
-                  },
-                  grantee: {
-                    userId: 85,
-                    username: "lvl1",
-                    accessLevel: 1,
-                  },
-                },
-                {
-                  aclRule: {
-                    access: "r",
-                    benchmarkId: "VPN_SRG_TEST",
-                  },
-                  grantee: {
-                    userId: 85,
-                    username: "lvl1",
-                    accessLevel: 1,
-                  },
-                },
-              ],
+              access: "r"
             },
             {
               access: "r",
-              asset: {
-                name: "Collection_X_asset",
-                assetId: "62",
-              },
-              benchmarkId: "Windows_10_STIG_TEST",
-              aclSources: [
-                {
-                  aclRule: {
-                    label: {
-                      name: "test-label-full",
-                      labelId: "755b8a28-9a68-11ec-b1bc-0242ac110002",
-                    },
-                    access: "r",
-                  },
-                  grantee: {
-                    userId: 85,
-                    username: "lvl1",
-                    accessLevel: 1,
-                  },
-                },
-              ],
-            },
-            {
-              access: "r",
-              asset: {
-                name: "Collection_X_lvl1_asset-1",
-                assetId: "42",
-              },
-              benchmarkId: "VPN_SRG_TEST",
-              aclSources: [
-                {
-                  aclRule: {
-                    label: {
-                      name: "test-label-full",
-                      labelId: "755b8a28-9a68-11ec-b1bc-0242ac110002",
-                    },
-                    access: "r",
-                  },
-                  grantee: {
-                    userId: 85,
-                    username: "lvl1",
-                    accessLevel: 1,
-                  },
-                },
-                {
-                  aclRule: {
-                    access: "r",
-                    benchmarkId: "VPN_SRG_TEST",
-                  },
-                  grantee: {
-                    userId: 85,
-                    username: "lvl1",
-                    accessLevel: 1,
-                  },
-                },
-              ],
-            },
-            {
-              access: "r",
-              asset: {
-                name: "Collection_X_lvl1_asset-1",
-                assetId: "42",
-              },
-              benchmarkId: "Windows_10_STIG_TEST",
-              aclSources: [
-                {
-                  aclRule: {
-                    label: {
-                      name: "test-label-full",
-                      labelId: "755b8a28-9a68-11ec-b1bc-0242ac110002",
-                    },
-                    access: "r",
-                  },
-                  grantee: {
-                    userId: 85,
-                    username: "lvl1",
-                    accessLevel: 1,
-                  },
-                },
-              ],
-            },
-            {
-              access: "r",
-              asset: {
-                name: "Collection_X_lvl1_asset-2",
-                assetId: "154",
-              },
-              benchmarkId: "VPN_SRG_TEST",
-              aclSources: [
-                {
-                  aclRule: {
-                    access: "r",
-                    benchmarkId: "VPN_SRG_TEST",
-                  },
-                  grantee: {
-                    userId: 85,
-                    username: "lvl1",
-                    accessLevel: 1,
-                  },
-                },
-              ],
-            },
+              benchmarkId: "VPN_SRG_TEST"
+            }
           ])
         })
 
@@ -459,101 +332,13 @@ describe('PUT - Collection', function () {
           expect(res.body.defaultAccess).to.equal(distinct.defaultAccess)
           expect(res.body.acl).to.deep.equalInAnyOrder([
             {
-              access: "r",
-              asset: {
-                name: reference.testAsset.name,
-                assetId: reference.testAsset.assetId,
+              label: {
+                name: "test-label-full",
+                color: "FF99CC",
+                labelId: "755b8a28-9a68-11ec-b1bc-0242ac110002"
               },
-              benchmarkId: reference.benchmark,
-              aclSources: [
-                {
-                  aclRule: {
-                    label: {
-                      name: reference.testCollection.fullLabelName,
-                      labelId: reference.testCollection.fullLabel,
-                    },
-                    access: "r",
-                  },
-                  grantee: {
-                    userId: 85,
-                    username: "lvl1",
-                    accessLevel: 1,
-                  },
-                },
-              ],
-            },
-            {
-              access: "r",
-              asset: {
-                name: reference.testAsset.name,
-                assetId: reference.testAsset.assetId,
-              },
-              benchmarkId: reference.windowsBenchmark,
-              aclSources: [
-                {
-                  aclRule: {
-                    label: {
-                      name: reference.testCollection.fullLabelName,
-                      labelId: reference.testCollection.fullLabel,
-                    },
-                    access: "r",
-                  },
-                  grantee: {
-                    userId: 85,
-                    username: "lvl1",
-                    accessLevel: 1,
-                  },
-                },
-              ],
-            },
-            {
-              access: "r",
-              asset: {
-                name: "Collection_X_asset",
-                assetId: "62",
-              },
-              benchmarkId: reference.testCollection.benchmark,
-              aclSources: [
-                {
-                  aclRule: {
-                    label: {
-                      name: reference.testCollection.fullLabelName,
-                      labelId: "755b8a28-9a68-11ec-b1bc-0242ac110002",
-                    },
-                    access: "r",
-                  },
-                  grantee: {
-                    userId: 85,
-                    username: "lvl1",
-                    accessLevel: 1,
-                  },
-                },
-              ],
-            },
-            {
-              access: "r",
-              asset: {
-                name: "Collection_X_asset",
-                assetId: "62",
-              },
-              benchmarkId: reference.windowsBenchmark,
-              aclSources: [
-                {
-                  aclRule: {
-                    label: {
-                      name: reference.testCollection.fullLabelName,
-                      labelId: reference.testCollection.fullLabel,
-                    },
-                    access: "r",
-                  },
-                  grantee: {
-                    userId: 85,
-                    username: "lvl1",
-                    accessLevel: 1,
-                  },
-                },
-              ],
-            },
+              access: "r"
+            }
           ])
         })
       })
