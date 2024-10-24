@@ -31,6 +31,10 @@ describe('PUT - Collection', function () {
     
       describe('replaceCollection - /collections/{collectionId}', function () {
 
+        after(async function () {
+          await utils.loadAppData()
+        })
+
         it('Set all properties of a Collection',async function () {
 
             const putRequest = requestBodies.replaceCollection
@@ -272,177 +276,286 @@ describe('PUT - Collection', function () {
         })
       })
 
-      // needs work 
       describe('setReviewAclByCollectionUser - /collections/{collectionId}/grants/user/{userId}/access', function () {
 
-        // it(`should set all users acls to all [] ${iteration.name}`, async () => {
-        //   const res = await chai.request(config.baseUrl)
-        //   .put(`/collections/${reference.testCollection.collectionId}/grants/user/${iteration.userId}/access`)
-        //   .set('Authorization', `Bearer ${iteration.token}`)
-        //   .send([])
-        //   if(distinct.canModifyCollection === false){
-        //     expect(res).to.have.status(403)
-        //     return
-        //   }
-        //   expect(res).to.have.status(200)
-        //   expect(res.body.defaultAccess).to.equal(distinct.defaultAccess)
-        //   //expect(res.body.acl).to.deep.equalInAnyOrder([])
-        // })
+        it(`should set all users acls to all []`, async () => {
+          const res = await chai.request(config.baseUrl)
+          .put(`/collections/${reference.testCollection.collectionId}/grants/user/${iteration.userId}/access`)
+          .set('Authorization', `Bearer ${iteration.token}`)
+          .send([])
+          if(distinct.canModifyCollection === false){
+            expect(res).to.have.status(403)
+            return
+          }
+          expect(res).to.have.status(200)
+          expect(res.body.defaultAccess).to.equal(distinct.defaultAccess)
+          //expect(res.body.acl).to.deep.equalInAnyOrder([])
+        })
 
-        // cant be tested until its fixed 
-        // it(`should set all users acls to the same thing. will use admin token for all  ${iteration.name}`, async () => {
-        //   const res = await chai.request(config.baseUrl)
-        //   .put(`/collections/${reference.testCollection.collectionId}/grants/user/${iteration.userId}/access`)
-        //   .set('Authorization', `Bearer ${iterations[0].token}`)
-        //   .send([{"labelId":reference.testCollection.fullLabel,"access":"r"},{"benchmarkId":reference.testCollection.benchmark,"access":"rw"}])
-        //   if(distinct.canModifyCollection === false){
-        //     expect(res).to.have.status(403)
-        //     return
-        //   }
-        //   expect(res).to.have.status(200)
-        //   expect(res.body.defaultAccess).to.equal(distinct.defaultAccess)
-        //   expect(res.body.acl).to.deep.equalInAnyOrder([
-        //     {
-        //       access: "rw",
-        //       asset: {
-        //         name: "Collection_X_asset",
-        //         assetId: "62",
-        //       },
-        //       benchmarkId: "VPN_SRG_TEST",
-        //       aclSources: [
-        //         {
-        //           aclRule: {
-        //             label: {
-        //               name: "test-label-full",
-        //               labelId: "755b8a28-9a68-11ec-b1bc-0242ac110002",
-        //             },
-        //             access: "rw",
-        //           },
-        //           grantee: {
-        //             userId: 85,
-        //             username: "lvl1",
-        //             accessLevel: 1,
-        //           },
-        //         },
-        //         {
-        //           aclRule: {
-        //             access: "rw",
-        //             benchmarkId: "VPN_SRG_TEST",
-        //           },
-        //           grantee: {
-        //             userId: 85,
-        //             username: "lvl1",
-        //             accessLevel: 1,
-        //           },
-        //         },
-        //       ],
-        //     },
-        //     {
-        //       access: "rw",
-        //       asset: {
-        //         name: "Collection_X_asset",
-        //         assetId: "62",
-        //       },
-        //       benchmarkId: "Windows_10_STIG_TEST",
-        //       aclSources: [
-        //         {
-        //           aclRule: {
-        //             label: {
-        //               name: "test-label-full",
-        //               labelId: "755b8a28-9a68-11ec-b1bc-0242ac110002",
-        //             },
-        //             access: "rw",
-        //           },
-        //           grantee: {
-        //             userId: 85,
-        //             username: "lvl1",
-        //             accessLevel: 1,
-        //           },
-        //         },
-        //       ],
-        //     },
-        //     {
-        //       access: "rw",
-        //       asset: {
-        //         name: "Collection_X_lvl1_asset-1",
-        //         assetId: "42",
-        //       },
-        //       benchmarkId: "VPN_SRG_TEST",
-        //       aclSources: [
-        //         {
-        //           aclRule: {
-        //             label: {
-        //               name: "test-label-full",
-        //               labelId: "755b8a28-9a68-11ec-b1bc-0242ac110002",
-        //             },
-        //             access: "rw",
-        //           },
-        //           grantee: {
-        //             userId: 85,
-        //             username: "lvl1",
-        //             accessLevel: 1,
-        //           },
-        //         },
-        //         {
-        //           aclRule: {
-        //             access: "rw",
-        //             benchmarkId: "VPN_SRG_TEST",
-        //           },
-        //           grantee: {
-        //             userId: 85,
-        //             username: "lvl1",
-        //             accessLevel: 1,
-        //           },
-        //         },
-        //       ],
-        //     },
-        //     {
-        //       access: "rw",
-        //       asset: {
-        //         name: "Collection_X_lvl1_asset-1",
-        //         assetId: "42",
-        //       },
-        //       benchmarkId: "Windows_10_STIG_TEST",
-        //       aclSources: [
-        //         {
-        //           aclRule: {
-        //             label: {
-        //               name: "test-label-full",
-        //               labelId: "755b8a28-9a68-11ec-b1bc-0242ac110002",
-        //             },
-        //             access: "rw",
-        //           },
-        //           grantee: {
-        //             userId: 85,
-        //             username: "lvl1",
-        //             accessLevel: 1,
-        //           },
-        //         },
-        //       ],
-        //     },
-        //     {
-        //       access: "rw",
-        //       asset: {
-        //         name: "Collection_X_lvl1_asset-2",
-        //         assetId: "154",
-        //       },
-        //       benchmarkId: "VPN_SRG_TEST",
-        //       aclSources: [
-        //         {
-        //           aclRule: {
-        //             access: "rw",
-        //             benchmarkId: "VPN_SRG_TEST",
-        //           },
-        //           grantee: {
-        //             userId: 85,
-        //             username: "lvl1",
-        //             accessLevel: 1,
-        //           },
-        //         },
-        //       ],
-        //     },
-        //   ])
-        // })
+        it(`should set all users acls to the same thing. will use admin token for all `, async () => {
+          const res = await chai.request(config.baseUrl)
+          .put(`/collections/${reference.testCollection.collectionId}/grants/user/${iteration.userId}/access`)
+          .set('Authorization', `Bearer ${iterations[0].token}`)
+          .send([{"labelId":reference.testCollection.fullLabel,"access":"r"},{"benchmarkId":reference.testCollection.benchmark,"access":"r"}])
+          if(iteration.name === "collectioncreator"){
+            expect(res).to.have.status(422)
+            return
+          }
+          expect(res).to.have.status(200)
+          expect(res.body.defaultAccess).to.equal(distinct.defaultAccess)
+          expect(res.body.acl).to.deep.equalInAnyOrder( [
+            {
+              access: "r",
+              asset: {
+                name: "Collection_X_asset",
+                assetId: "62",
+              },
+              benchmarkId: "VPN_SRG_TEST",
+              aclSources: [
+                {
+                  aclRule: {
+                    label: {
+                      name: "test-label-full",
+                      labelId: "755b8a28-9a68-11ec-b1bc-0242ac110002",
+                    },
+                    access: "r",
+                  },
+                  grantee: {
+                    userId: 85,
+                    username: "lvl1",
+                    accessLevel: 1,
+                  },
+                },
+                {
+                  aclRule: {
+                    access: "r",
+                    benchmarkId: "VPN_SRG_TEST",
+                  },
+                  grantee: {
+                    userId: 85,
+                    username: "lvl1",
+                    accessLevel: 1,
+                  },
+                },
+              ],
+            },
+            {
+              access: "r",
+              asset: {
+                name: "Collection_X_asset",
+                assetId: "62",
+              },
+              benchmarkId: "Windows_10_STIG_TEST",
+              aclSources: [
+                {
+                  aclRule: {
+                    label: {
+                      name: "test-label-full",
+                      labelId: "755b8a28-9a68-11ec-b1bc-0242ac110002",
+                    },
+                    access: "r",
+                  },
+                  grantee: {
+                    userId: 85,
+                    username: "lvl1",
+                    accessLevel: 1,
+                  },
+                },
+              ],
+            },
+            {
+              access: "r",
+              asset: {
+                name: "Collection_X_lvl1_asset-1",
+                assetId: "42",
+              },
+              benchmarkId: "VPN_SRG_TEST",
+              aclSources: [
+                {
+                  aclRule: {
+                    label: {
+                      name: "test-label-full",
+                      labelId: "755b8a28-9a68-11ec-b1bc-0242ac110002",
+                    },
+                    access: "r",
+                  },
+                  grantee: {
+                    userId: 85,
+                    username: "lvl1",
+                    accessLevel: 1,
+                  },
+                },
+                {
+                  aclRule: {
+                    access: "r",
+                    benchmarkId: "VPN_SRG_TEST",
+                  },
+                  grantee: {
+                    userId: 85,
+                    username: "lvl1",
+                    accessLevel: 1,
+                  },
+                },
+              ],
+            },
+            {
+              access: "r",
+              asset: {
+                name: "Collection_X_lvl1_asset-1",
+                assetId: "42",
+              },
+              benchmarkId: "Windows_10_STIG_TEST",
+              aclSources: [
+                {
+                  aclRule: {
+                    label: {
+                      name: "test-label-full",
+                      labelId: "755b8a28-9a68-11ec-b1bc-0242ac110002",
+                    },
+                    access: "r",
+                  },
+                  grantee: {
+                    userId: 85,
+                    username: "lvl1",
+                    accessLevel: 1,
+                  },
+                },
+              ],
+            },
+            {
+              access: "r",
+              asset: {
+                name: "Collection_X_lvl1_asset-2",
+                assetId: "154",
+              },
+              benchmarkId: "VPN_SRG_TEST",
+              aclSources: [
+                {
+                  aclRule: {
+                    access: "r",
+                    benchmarkId: "VPN_SRG_TEST",
+                  },
+                  grantee: {
+                    userId: 85,
+                    username: "lvl1",
+                    accessLevel: 1,
+                  },
+                },
+              ],
+            },
+          ])
+        })
+
+        it(`should set all users acls to read only on test full label `, async () => {
+          const res = await chai.request(config.baseUrl)
+          .put(`/collections/${reference.testCollection.collectionId}/grants/user/${iteration.userId}/access`)
+          .set('Authorization', `Bearer ${iterations[0].token}`)
+          .send([{"labelId":reference.testCollection.fullLabel,"access":"r"}])
+          if(iteration.name === "collectioncreator"){
+            expect(res).to.have.status(422)
+            return
+          }
+          expect(res).to.have.status(200)
+          expect(res.body.defaultAccess).to.equal(distinct.defaultAccess)
+          expect(res.body.acl).to.deep.equalInAnyOrder([
+            {
+              access: "r",
+              asset: {
+                name: reference.testAsset.name,
+                assetId: reference.testAsset.assetId,
+              },
+              benchmarkId: reference.benchmark,
+              aclSources: [
+                {
+                  aclRule: {
+                    label: {
+                      name: reference.testCollection.fullLabelName,
+                      labelId: reference.testCollection.fullLabel,
+                    },
+                    access: "r",
+                  },
+                  grantee: {
+                    userId: 85,
+                    username: "lvl1",
+                    accessLevel: 1,
+                  },
+                },
+              ],
+            },
+            {
+              access: "r",
+              asset: {
+                name: reference.testAsset.name,
+                assetId: reference.testAsset.assetId,
+              },
+              benchmarkId: reference.windowsBenchmark,
+              aclSources: [
+                {
+                  aclRule: {
+                    label: {
+                      name: reference.testCollection.fullLabelName,
+                      labelId: reference.testCollection.fullLabel,
+                    },
+                    access: "r",
+                  },
+                  grantee: {
+                    userId: 85,
+                    username: "lvl1",
+                    accessLevel: 1,
+                  },
+                },
+              ],
+            },
+            {
+              access: "r",
+              asset: {
+                name: "Collection_X_asset",
+                assetId: "62",
+              },
+              benchmarkId: reference.testCollection.benchmark,
+              aclSources: [
+                {
+                  aclRule: {
+                    label: {
+                      name: reference.testCollection.fullLabelName,
+                      labelId: "755b8a28-9a68-11ec-b1bc-0242ac110002",
+                    },
+                    access: "r",
+                  },
+                  grantee: {
+                    userId: 85,
+                    username: "lvl1",
+                    accessLevel: 1,
+                  },
+                },
+              ],
+            },
+            {
+              access: "r",
+              asset: {
+                name: "Collection_X_asset",
+                assetId: "62",
+              },
+              benchmarkId: reference.windowsBenchmark,
+              aclSources: [
+                {
+                  aclRule: {
+                    label: {
+                      name: reference.testCollection.fullLabelName,
+                      labelId: reference.testCollection.fullLabel,
+                    },
+                    access: "r",
+                  },
+                  grantee: {
+                    userId: 85,
+                    username: "lvl1",
+                    accessLevel: 1,
+                  },
+                },
+              ],
+            },
+          ])
+        })
       })
 
       describe('setGrantByCollectionUser - /collections/{collectionId}/grants/user/{userId}', function () {
@@ -459,8 +572,7 @@ describe('PUT - Collection', function () {
               expect(res).to.have.status(403)
               return
             }
-            // expect(res).to.have.status(200) uncommenting the statements above might require this statement to be uncommented?
-            expect(res).to.have.status(201) // changed this from statement above 2024-10-22
+            expect(res).to.have.status(200) 
             expect(res.body.accessLevel).to.equal(1)
             expect(res.body.userId).to.equal(reference.lvl1User.userId)
             for(const grant of res.body.grantees){
@@ -499,11 +611,8 @@ describe('PUT - Collection', function () {
             expect(res.body.error).to.equal("Resource not found.")
             expect(res.body.detail).to.equal("User not found")
         })
-       
       })
-
     })
   }
-
 })
 
