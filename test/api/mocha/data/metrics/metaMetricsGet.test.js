@@ -21,7 +21,7 @@ describe('GET - MetaMetrics', function () {
     catch(err){
         console.log("no stig to upload")
     }
-    await utils.createDisabledCollectionsandAssets({context: 'meta'})
+//    await utils.createDisabledCollectionsandAssets({context: 'meta'})
   })
 
   for(let iteration of iterations) {

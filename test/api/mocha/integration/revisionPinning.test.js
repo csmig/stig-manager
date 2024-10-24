@@ -23,7 +23,7 @@ describe(`POST - writeStigPropsByCollectionStig - /collections/{collectionId}/st
                     // this.timeout(4000)
                     // await utils.uploadTestStigs()
                     await utils.loadAppData()
-                    await utils.createDisabledCollectionsandAssets()
+                    //await utils.createDisabledCollectionsandAssets()
                     try{
                         await utils.uploadTestStig("U_VPN_SRG_V1R0_Manual-xccdf.xml")
                     }

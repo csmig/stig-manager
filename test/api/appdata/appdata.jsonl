@@ -1,6 +1,6 @@
-{"version":"1.4.17","commit":{"branch":"na","sha":"na","tag":"na","describe":"na"},"date":"2024-10-23T10:35:45.800Z","lastMigration":35}
-{"tables":[{"table":"asset","rowCount":14},{"table":"check_content","rowCount":614},{"table":"collection","rowCount":7},{"table":"collection_grant","rowCount":22},{"table":"collection_grant_acl","rowCount":3},{"table":"collection_label","rowCount":3},{"table":"collection_label_asset_map","rowCount":3},{"table":"collection_rev_map","rowCount":0},{"table":"current_rev","rowCount":5},{"table":"default_rev","rowCount":6},{"table":"fix_text","rowCount":615},{"table":"rev_group_rule_cci_map","rowCount":844},{"table":"rev_group_rule_map","rowCount":620},{"table":"review","rowCount":19},{"table":"review_history","rowCount":7},{"table":"revision","rowCount":5},{"table":"rule_version_check_digest","rowCount":618},{"table":"stig","rowCount":5},{"table":"stig_asset_map","rowCount":14},{"table":"user_data","rowCount":10},{"table":"user_group","rowCount":0},{"table":"user_group_user_map","rowCount":0},{"table":"user_stig_asset_map","rowCount":4}],"totalRows":3438}
-{"table":"asset","columns":"`assetId`,`name`,`fqdn`,`collectionId`,`ip`,`mac`,`description`,`noncomputing`,`metadata`,`state`,`stateDate`,`stateUserId`","rowCount":14}
+{"version":"1.4.17","commit":{"branch":"na","sha":"na","tag":"na","describe":"na"},"date":"2024-10-23T21:13:34.328Z","lastMigration":35}
+{"tables":[{"table":"asset","rowCount":15},{"table":"check_content","rowCount":614},{"table":"collection","rowCount":8},{"table":"collection_grant","rowCount":24},{"table":"collection_grant_acl","rowCount":3},{"table":"collection_label","rowCount":3},{"table":"collection_label_asset_map","rowCount":3},{"table":"collection_rev_map","rowCount":0},{"table":"current_rev","rowCount":5},{"table":"default_rev","rowCount":8},{"table":"fix_text","rowCount":615},{"table":"rev_group_rule_cci_map","rowCount":844},{"table":"rev_group_rule_map","rowCount":620},{"table":"review","rowCount":19},{"table":"review_history","rowCount":7},{"table":"revision","rowCount":5},{"table":"rule_version_check_digest","rowCount":618},{"table":"stig","rowCount":5},{"table":"stig_asset_map","rowCount":16},{"table":"user_data","rowCount":10},{"table":"user_group","rowCount":0},{"table":"user_group_user_map","rowCount":0},{"table":"user_stig_asset_map","rowCount":4}],"totalRows":3446}
+{"table":"asset","columns":"`assetId`,`name`,`fqdn`,`collectionId`,`ip`,`mac`,`description`,`noncomputing`,`metadata`,`state`,`stateDate`,`stateUserId`","rowCount":15}
 [29,"ACHERNAR_Collection_X_asset",null,21,"10.0.0.18",null,"",false,"{}","enabled",null,null]
 [34,"test asset stigmanadmin",null,1,"1.1.1.1",null,"test desc",true,"{}","enabled",null,null]
 [38,"FOMALHAUT",null,1,"10.0.0.27",null,"",false,"{}","enabled",null,null]
@@ -15,6 +15,7 @@
 [244,"wat",null,85,"",null,"",false,"{}","enabled",null,null]
 [245,"testasset",null,92,"",null,"test desc",false,"{}","enabled",null,null]
 [246,"tesetest",null,92,"",null,"",false,"{}","enabled",null,null]
+[247,"deletedAsset","",93,"1.1.1.1","","test desc",true,"{}","disabled","2024-10-23 21:13:22",87]
 {"table":"check_content","columns":"`ccId`,`content`","rowCount":614}
 [1,"Verify domain-joined systems are using Windows 10 Enterprise Edition 64-bit version.\n\nFor standalone systems, this is NA.\n\nOpen \"Settings\".\n\nSelect \"System\", then \"About\".\n\nIf \"Edition\" is not \"Windows 10 Enterprise\", this is a finding.\n\nIf \"System type\" is not \"64-bit operating system…\", this is a finding."]
 [2,"If the following registry value does not exist or is not configured as specified, this is a finding:\n\nRegistry Hive: HKEY_LOCAL_MACHINE\nRegistry Path: \\SOFTWARE\\Policies\\Microsoft\\Windows\\Installer\\\n\nValue Name: EnableUserControl\n\nValue Type: REG_DWORD\nValue: 0"]
@@ -630,7 +631,7 @@
 [616,"Verify the VPN Gateway uses FIPS-validated SHA-2 or higher hash function for digital signature generation and verification (non-legacy use).\n\nIf the VPN Gateway does not use FIPS-validated SHA-2 or higher hash function for digital signature generation and verification (non-legacy use), this is a finding."]
 [617,"If L2TP communications protocol is not used, this is not applicable.\n\nVerify L2TPv3 sessions are configured to authenticate the traffic before transit. L2TPv3 sessions must be authenticated prior to transporting traffic.\n\nIf L2TPv3 sessions do not require authentication, this is a finding."]
 [618,"This check content has been replaced!"]
-{"table":"collection","columns":"`collectionId`,`name`,`description`,`settings`,`metadata`,`created`,`state`,`createdUserId`,`stateDate`,`stateUserId`","rowCount":7}
+{"table":"collection","columns":"`collectionId`,`name`,`description`,`settings`,`metadata`,`created`,`state`,`createdUserId`,`stateDate`,`stateUserId`","rowCount":8}
 [1,"Collection Z put",null,"{\"fields\": {\"detail\": {\"enabled\": \"always\", \"required\": \"always\"}, \"comment\": {\"enabled\": \"findings\", \"required\": \"findings\"}}, \"status\": {\"canAccept\": true, \"resetCriteria\": \"result\", \"minAcceptGrant\": 3}}","{\"reqRar\": \"true\", \"pocName\": \"poc2Put\", \"pocEmail\": \"pocEmailPut@email.com\", \"pocPhone\": \"12342\"}","2024-10-23 10:29:57","enabled",null,null,null]
 [21,"Collection X",null,"{\"fields\": {\"detail\": {\"enabled\": \"always\", \"required\": \"always\"}, \"comment\": {\"enabled\": \"always\", \"required\": \"findings\"}}, \"status\": {\"canAccept\": true, \"resetCriteria\": \"result\", \"minAcceptGrant\": 3}}","{\"reqRar\": \"true\", \"pocName\": \"poc2Patched\", \"pocEmail\": \"pocEmail@email.com\", \"pocPhone\": \"12342\"}","2024-10-23 10:29:57","enabled",null,null,null]
 [83,"Collection Y",null,"{\"fields\": {\"detail\": {\"enabled\": \"always\", \"required\": \"always\"}, \"comment\": {\"enabled\": \"findings\", \"required\": \"findings\"}}, \"status\": {\"canAccept\": true, \"resetCriteria\": \"result\", \"minAcceptGrant\": 3}}","{\"reqRar\": \"true\", \"pocName\": \"string\", \"pocEmail\": \"string\", \"pocPhone\": \"string\"}","2024-10-23 10:29:57","enabled",null,null,null]
@@ -638,7 +639,8 @@
 [85,"delete Collection lvl4",null,"{\"fields\": {\"detail\": {\"enabled\": \"always\", \"required\": \"always\"}, \"comment\": {\"enabled\": \"findings\", \"required\": \"findings\"}}, \"status\": {\"canAccept\": true, \"resetCriteria\": \"result\", \"minAcceptGrant\": 3}}","{}","2024-10-23 10:29:57","enabled",null,null,null]
 [86,"delete Collection NONE",null,"{\"fields\": {\"detail\": {\"enabled\": \"always\", \"required\": \"always\"}, \"comment\": {\"enabled\": \"findings\", \"required\": \"findings\"}}, \"status\": {\"canAccept\": true, \"resetCriteria\": \"result\", \"minAcceptGrant\": 3}}","{}","2024-10-23 10:29:57","enabled",null,null,null]
 [92,"test Collection",null,"{\"fields\": {\"detail\": {\"enabled\": \"always\", \"required\": \"always\"}, \"comment\": {\"enabled\": \"findings\", \"required\": \"findings\"}}, \"status\": {\"canAccept\": true, \"resetCriteria\": \"result\", \"minAcceptGrant\": 3}}","{}","2024-10-23 10:29:57","enabled",null,null,null]
-{"table":"collection_grant","columns":"`cgId`,`collectionId`,`userId`,`userGroupId`,`accessLevel`","rowCount":22}
+[93,"deletedCollection","","{\"fields\": {\"detail\": {\"enabled\": \"always\", \"required\": \"always\"}, \"comment\": {\"enabled\": \"findings\", \"required\": \"findings\"}}, \"status\": {\"canAccept\": true, \"resetCriteria\": \"result\", \"minAcceptGrant\": 3}, \"history\": {\"maxReviews\": 5}}","{}","2024-10-23 21:11:48","disabled",null,"2024-10-23 21:13:26",87]
+{"table":"collection_grant","columns":"`cgId`,`collectionId`,`userId`,`userGroupId`,`accessLevel`","rowCount":24}
 [1,21,86,null,1]
 [2,21,85,null,1]
 [3,21,21,null,2]
@@ -661,6 +663,8 @@
 [20,85,45,null,4]
 [21,92,87,null,4]
 [22,92,1,null,4]
+[23,93,87,null,4]
+[24,93,1,null,4]
 {"table":"collection_grant_acl","columns":"`cgAclId`,`cgId`,`benchmarkId`,`assetId`,`clId`,`access`,`modifiedUserId`,`modifiedDate`","rowCount":3}
 [1,2,"VPN_SRG_TEST",42,null,"rw",null,null]
 [2,1,"Windows_10_STIG_TEST",42,null,"rw",null,null]
@@ -680,13 +684,15 @@
 ["VPN_SRG_Rule-fingerprint-match-test-2-2","VPN_SRG_Rule-fingerprint-match-test",2,"2","19 Jul 2001","2001-07-19","accepted","2001-07-26","This description replaces the old description",1,3,3,3,0,3,0]
 ["VPN_SRG_TEST-1-1","VPN_SRG_TEST",1,"1","19 Jul 2019","2019-07-19","accepted","2019-07-26","This Security Requirements Guide is published as a tool to improve the security of Department of Defense (DoD) information systems. The requirements are derived from the National Institute of Standards and Technology (NIST) 800-53 and related documents. Comments or proposed revisions to this document should be sent via e-mail to the following address: disa.stig_spt@mail.mil.",1,81,81,81,7,63,11]
 ["Windows_10_STIG_TEST-1-23","Windows_10_STIG_TEST",1,"23","17 Jun 2020","2020-06-17","accepted","2020-06-15","The Windows 10 Security Technical Implementation Guide (STIG) is published as a tool to improve the security of Department of Defense (DoD) information systems. Comments or proposed revisions to this document should be sent via e-mail to the following address: disa.stig_spt@mail.mil.",1,287,287,287,18,243,26]
-{"table":"default_rev","columns":"`vdId`,`collectionId`,`benchmarkId`,`revId`,`revisionPinned`","rowCount":6}
-[1,1,"RHEL_7_STIG_TEST","RHEL_7_STIG_TEST-3-0.3",0]
-[2,1,"VPN_SRG_TEST","VPN_SRG_TEST-1-1",0]
-[3,21,"VPN_SRG_TEST","VPN_SRG_TEST-1-1",0]
-[4,83,"VPN_SRG_TEST","VPN_SRG_TEST-1-1",0]
-[5,1,"Windows_10_STIG_TEST","Windows_10_STIG_TEST-1-23",0]
-[6,21,"Windows_10_STIG_TEST","Windows_10_STIG_TEST-1-23",0]
+{"table":"default_rev","columns":"`vdId`,`collectionId`,`benchmarkId`,`revId`,`revisionPinned`","rowCount":8}
+[10,1,"RHEL_7_STIG_TEST","RHEL_7_STIG_TEST-3-0.3",0]
+[11,1,"VPN_SRG_TEST","VPN_SRG_TEST-1-1",0]
+[12,21,"VPN_SRG_TEST","VPN_SRG_TEST-1-1",0]
+[13,83,"VPN_SRG_TEST","VPN_SRG_TEST-1-1",0]
+[14,93,"VPN_SRG_TEST","VPN_SRG_TEST-1-1",0]
+[15,1,"Windows_10_STIG_TEST","Windows_10_STIG_TEST-1-23",0]
+[16,21,"Windows_10_STIG_TEST","Windows_10_STIG_TEST-1-23",0]
+[17,93,"Windows_10_STIG_TEST","Windows_10_STIG_TEST-1-23",0]
 {"table":"fix_text","columns":"`ftId`,`text`","rowCount":615}
 [1,"Use Windows 10 Enterprise 64-bit version for domain-joined systems."]
 [2,"Configure the policy value for Computer Configuration >> Administrative Templates >> Windows Components >> Windows Installer >> \"Allow user control over installs\" to \"Disabled\"."]
@@ -3428,7 +3434,7 @@
 ["VPN_SRG_OTHER","Virtual Private Network (VPN) Security Requirements Guide - replaced"]
 ["VPN_SRG_Rule-fingerprint-match-test","Virtual Private Network (VPN) Security Requirements Guide - replaced"]
 ["Windows_10_STIG_TEST","Windows 10 Security Technical Implementation Guide"]
-{"table":"stig_asset_map","columns":"`saId`,`benchmarkId`,`assetId`,`userIds`,`minTs`,`maxTs`,`saved`,`savedResultEngine`,`submitted`,`submittedResultEngine`,`rejected`,`rejectedResultEngine`,`accepted`,`acceptedResultEngine`,`highCount`,`mediumCount`,`lowCount`,`notchecked`,`notcheckedResultEngine`,`notapplicable`,`notapplicableResultEngine`,`pass`,`passResultEngine`,`fail`,`failResultEngine`,`unknown`,`unknownResultEngine`,`error`,`errorResultEngine`,`notselected`,`notselectedResultEngine`,`informational`,`informationalResultEngine`,`fixed`,`fixedResultEngine`,`maxTouchTs`","rowCount":14}
+{"table":"stig_asset_map","columns":"`saId`,`benchmarkId`,`assetId`,`userIds`,`minTs`,`maxTs`,`saved`,`savedResultEngine`,`submitted`,`submittedResultEngine`,`rejected`,`rejectedResultEngine`,`accepted`,`acceptedResultEngine`,`highCount`,`mediumCount`,`lowCount`,`notchecked`,`notcheckedResultEngine`,`notapplicable`,`notapplicableResultEngine`,`pass`,`passResultEngine`,`fail`,`failResultEngine`,`unknown`,`unknownResultEngine`,`error`,`errorResultEngine`,`notselected`,`notselectedResultEngine`,`informational`,`informationalResultEngine`,`fixed`,`fixedResultEngine`,`maxTouchTs`","rowCount":16}
 [1,"VPN_SRG_TEST",62,"[]","2020-08-11 23:37:48","2022-01-26 01:23:06",1,0,2,0,0,0,0,0,0,1,0,0,0,2,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,"2022-01-26 01:23:06"]
 [2,"Windows_10_STIG_TEST",62,"[]",null,null,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,null]
 [3,"VPN_SRG_TEST",42,"[85]","2020-08-11 22:27:26","2022-02-03 00:07:05",1,0,5,0,0,0,0,0,0,2,1,0,0,1,0,2,0,3,0,0,0,0,0,0,0,0,0,0,0,"2022-02-03 00:07:07"]
@@ -3443,6 +3449,8 @@
 [12,"RHEL_7_STIG_TEST",34,"[]",null,null,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,null]
 [13,"VPN_SRG_TEST",34,"[]",null,null,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,null]
 [14,"Windows_10_STIG_TEST",34,"[]",null,null,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,null]
+[15,"Windows_10_STIG_TEST",247,null,null,null,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,null]
+[16,"VPN_SRG_TEST",247,null,null,null,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,null]
 {"table":"user_data","columns":"`userId`,`username`,`created`,`lastAccess`,`lastClaims`","rowCount":10}
 [1,"stigmanadmin","2024-10-23 10:29:57",1643160098,"{\"acr\": \"0\", \"aud\": [\"realm-management\", \"account\"], \"azp\": \"stig-manager\", \"exp\": 1670394347, \"iat\": 1605631412, \"iss\": \"http://localhost:8080/auth/realms/stigman\", \"jti\": \"daf8b741-73d1-4eba-96af-f855ab0bd226\", \"sub\": \"eb965d15-aa78-43fc-a2a6-3d86258c1eec\", \"typ\": \"Bearer\", \"nonce\": \"73937be3-4ccc-4fa7-8202-45685523dd2c\", \"scope\": \"openid stig-manager:collection stig-manager:stig:read stig-manager:user:read stig-manager:op stig-manager:user stig-manager:stig\", \"auth_time\": 1605594347, \"realm_access\": {\"roles\": [\"create_collection\", \"admin\", \"user\"]}, \"session_state\": \"5ac2a938-1074-4e6a-8c4b-e83e4e7d763b\", \"email_verified\": false, \"resource_access\": {\"account\": {\"roles\": [\"manage-account\", \"manage-account-links\", \"view-profile\"]}, \"realm-management\": {\"roles\": [\"view-users\", \"query-groups\", \"query-users\"]}}, \"preferred_username\": \"stigmanadmin\"}"]
 [21,"lvl2","2024-10-23 10:29:57",1602652507,"{\"acr\": \"1\", \"aud\": \"account\", \"azp\": \"stig-manager\", \"exp\": 1602652806, \"iat\": 1602652506, \"iss\": \"http://localhost:8080/auth/realms/stigman-test\", \"jti\": \"eb5cdbd4-c912-4fc5-a1b8-10cf737d374a\", \"sub\": \"51ea2e76-d3db-43ff-b551-68dfbdf01a38\", \"typ\": \"Bearer\", \"nonce\": \"8fbd4814-621a-4b63-af57-9e62b665a529\", \"scope\": \"openid stig-manager:user:read stig-manager:collection stig-manager:user stig-manager:op stig-manager:stig stig-manager:stig:read email profile\", \"auth_time\": 1602652506, \"realm_access\": {\"roles\": [\"user\"]}, \"session_state\": \"d5a18452-599d-4a50-af6f-75fb3808f2e9\", \"email_verified\": false, \"allowed-origins\": [\"*\"], \"resource_access\": {\"account\": {\"roles\": [\"manage-account\", \"manage-account-links\", \"view-profile\"]}}, \"preferred_username\": \"lvl2\"}"]
@@ -3453,7 +3461,7 @@
 [82,"collectioncreator","2024-10-23 10:29:57",1602652554,"{\"acr\": \"1\", \"aud\": \"account\", \"azp\": \"stig-manager\", \"exp\": 1602652854, \"iat\": 1602652554, \"iss\": \"http://localhost:8080/auth/realms/stigman-test\", \"jti\": \"dba7eae1-8a6b-4335-ae34-93097a78c948\", \"sub\": \"0afa914a-cdbb-4edb-baca-3a664dc20cd0\", \"typ\": \"Bearer\", \"nonce\": \"5337bda6-559e-4823-8764-488337bd390f\", \"scope\": \"openid stig-manager:user:read stig-manager:collection stig-manager:user stig-manager:op stig-manager:stig stig-manager:stig:read email profile\", \"auth_time\": 1602652553, \"realm_access\": {\"roles\": [\"create_collection\", \"user\"]}, \"session_state\": \"69ed7f9b-1858-4af3-b909-7b9120c08878\", \"email_verified\": false, \"allowed-origins\": [\"*\"], \"resource_access\": {\"account\": {\"roles\": [\"manage-account\", \"manage-account-links\", \"view-profile\"]}}, \"preferred_username\": \"collectioncreator\"}"]
 [85,"lvl1","2024-10-23 10:29:57",1602652493,"{\"acr\": \"1\", \"aud\": \"account\", \"azp\": \"stig-manager\", \"exp\": 1602652792, \"iat\": 1602652492, \"iss\": \"http://localhost:8080/auth/realms/stigman-test\", \"jti\": \"64ea09c4-e9fd-423c-b447-aff38d38f04e\", \"sub\": \"757dd598-d9d8-4c0b-8811-ec7f40925986\", \"typ\": \"Bearer\", \"nonce\": \"48fe2aae-66f8-4188-8af3-419129aa02e6\", \"scope\": \"openid stig-manager:user:read stig-manager:collection stig-manager:user stig-manager:op stig-manager:stig stig-manager:stig:read email profile\", \"auth_time\": 1602652492, \"realm_access\": {\"roles\": [\"user\"]}, \"session_state\": \"cbf87935-3521-4c5d-a22e-d8dd9e60e5e3\", \"email_verified\": false, \"allowed-origins\": [\"*\"], \"resource_access\": {\"account\": {\"roles\": [\"manage-account\", \"manage-account-links\", \"view-profile\"]}}, \"preferred_username\": \"lvl1\"}"]
 [86,"bizarroLvl1","2024-10-23 10:29:57",null,"{}"]
-[87,"admin","2024-10-23 10:29:57",1729679738,"{\"aud\": \"realm-management\", \"azp\": \"stig-manager\", \"exp\": 1729679918, \"iat\": 1729679738, \"iss\": \"http://localhost:8080/realms/stigman\", \"jti\": \"3544a089-87b5-470d-931d-f69a66a01b6d\", \"sid\": \"588f8c3f-0ab9-4aa2-9d47-91479e2f39fe\", \"sub\": \"bf87a16f-39e6-46d9-8971-f0ef51dd3f85\", \"typ\": \"Bearer\", \"name\": \"Admin Burke\", \"nonce\": \"63624d92-d6af-4956-afbd-7233abe2dfa7\", \"scope\": \"stig-manager:collection stig-manager:stig:read stig-manager:user:read stig-manager:op stig-manager:user stig-manager:stig\", \"auth_time\": 1729033132, \"given_name\": \"Admin\", \"family_name\": \"Burke\", \"realm_access\": {\"roles\": [\"create_collection\", \"admin\", \"user\"]}, \"session_state\": \"588f8c3f-0ab9-4aa2-9d47-91479e2f39fe\", \"resource_access\": {\"realm-management\": {\"roles\": [\"view-users\", \"query-groups\", \"query-users\"]}}, \"preferred_username\": \"admin\"}"]
+[87,"admin","2024-10-23 10:29:57",1729717998,"{\"aud\": \"realm-management\", \"azp\": \"stig-manager\", \"exp\": 1729731976, \"iat\": 1729717886, \"iss\": \"http://localhost:8080/realms/stigman\", \"jti\": \"c273c0b4-86c1-4ed3-b328-3bcbabbcdc72\", \"sid\": \"7dc23dc8-da38-41b5-9e1e-8e4e0d2bfe45\", \"sub\": \"bf87a16f-39e6-46d9-8971-f0ef51dd3f85\", \"typ\": \"Bearer\", \"name\": \"Admin Burke\", \"nonce\": \"3dd6a370-808e-432b-9c4c-f394324ccd80\", \"scope\": \"stig-manager:collection stig-manager:stig:read stig-manager:user:read stig-manager:op stig-manager:user stig-manager:stig\", \"auth_time\": 1729713976, \"given_name\": \"Admin\", \"family_name\": \"Burke\", \"realm_access\": {\"roles\": [\"create_collection\", \"admin\", \"user\"]}, \"session_state\": \"7dc23dc8-da38-41b5-9e1e-8e4e0d2bfe45\", \"resource_access\": {\"realm-management\": {\"roles\": [\"view-users\", \"query-groups\", \"query-users\"]}}, \"preferred_username\": \"admin\"}"]
 {"table":"user_group","columns":"`userGroupId`,`name`,`description`,`createdUserId`,`createdDate`,`modifiedUserId`,`modifiedDate`","rowCount":0}
 {"table":"user_group_user_map","columns":"`ugumId`,`userGroupId`,`userId`","rowCount":0}
 {"table":"user_stig_asset_map","columns":"`id`,`userId`,`saId`","rowCount":4}

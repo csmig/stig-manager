@@ -12,14 +12,14 @@ const requestBodies = require('./requestBodies.js')
 
 describe('PUT - Review', () => {
 
-    let deletedCollection, deletedAsset
+    let deletedCollection = reference.deletedCollection.collectionId
+    let deletedAsset = reference.deletedAsset.assetId    
     before(async function () {
         // this.timeout(4000)
         // await utils.uploadTestStigs()
         await utils.loadAppData()
-        const deletedItems = await utils.createDisabledCollectionsandAssets()
-        deletedCollection = deletedItems.collection
-        deletedAsset = deletedItems.asset
+       // const deletedItems = await utils.createDisabledCollectionsandAssets()
+       
     })
 
     for(const iteration of iterations){
@@ -238,7 +238,7 @@ describe('PUT - Review', () => {
                         status: 'submitted'
                     }
                     const res = await chai.request(config.baseUrl)
-                        .put(`/collections/${deletedCollection.collectionId}/reviews/${deletedAsset.assetId}/${reference.testCollection.ruleId}`)
+                        .put(`/collections/${deletedCollection}/reviews/${deletedAsset}/${reference.testCollection.ruleId}`)
                         .set('Authorization', `Bearer ${iteration.token}`)
                         .send(putBody)
 

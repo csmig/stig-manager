@@ -14,6 +14,16 @@ const reference = {
   // grantCheckUserId: "85",
   // lvl1ValidStigs: ["VPN_SRG_TEST"],
   // testAssetLvl1NoAccess: "62",
+
+  // in appdata.jsonl
+  deletedCollection: {
+    collectionId: "93"
+  },
+  // in appdata.jsonl
+  deletedAsset:{
+    assetId: "247"
+  },
+  
   testCollection: {
     name: "Collection X",
     collectionId: "21",

@@ -22,7 +22,7 @@ describe('GET - getMetricsDetailByCollection - /collections/{collectionId}/metri
       // await utils.uploadTestStigs()
       await utils.loadAppData()
       await utils.uploadTestStig(reference.testStigfileNonLatest)
-      await utils.createDisabledCollectionsandAssets()
+      //await utils.createDisabledCollectionsandAssets()
     })
     // it('Import a new STIG - VPN R1V0 Copy 2', async () => {
     //   const directoryPath = path.join(__dirname, '../../form-data-files/')
@@ -197,7 +197,7 @@ describe('GET - getMetricsSummaryByCollectionAggStig - /collections/{collectionI
             // this.timeout(4000)
             // await utils.uploadTestStigs()
             await utils.loadAppData()
-            await utils.createDisabledCollectionsandAssets()
+            //await utils.createDisabledCollectionsandAssets()
         })
 
         it('Import a new STIG - new Copy', async function () {

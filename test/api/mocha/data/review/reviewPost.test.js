@@ -1112,14 +1112,14 @@ describe('POST - Review', () => {
       })
       describe('POST - postReviewsByAsset - /collections/{collectionId}/reviews/{assetId}', () => {
 
-        let deletedCollection, deletedAsset
+        let deletedCollection = reference.deletedCollection.collectionId
+        let deletedAsset = reference.deletedAsset.assetId
         before(async function () {
           // this.timeout(4000)
           //await utils.putReviewByAssetRule(reference.testCollection.collectionId, reference.testAsset.assetId, reference.testCollection.ruleId, requestBodies.requestBodies)
           await utils.deleteReviewsByAssetRule(reference.testCollection.collectionId, reference.testAsset.assetId, reference.testCollection.ruleId)
-          const deletedItems = await utils.createDisabledCollectionsandAssets()
-          deletedCollection = deletedItems.collection
-          deletedAsset = deletedItems.asset
+         // const deletedItems = await utils.createDisabledCollectionsandAssets()
+         
         })
 
         it('Import one or more Reviews from a JSON body new ruleId', async () => {
@@ -1174,7 +1174,7 @@ describe('POST - Review', () => {
         })
         it('Import reviews for asset in deleted collection and deleted asset', async () => {
           const res = await chai.request(config.baseUrl)
-            .post(`/collections/${deletedCollection.collectionId}/reviews/${deletedAsset.assetId}`)
+            .post(`/collections/${deletedCollection}/reviews/${deletedAsset}`)
             .set('Authorization', `Bearer ${iteration.token}`)
             .send([
               {
@@ -1190,7 +1190,7 @@ describe('POST - Review', () => {
         })
         it('Import reviews for asset in deleted collection', async () => {
           const res = await chai.request(config.baseUrl)
-            .post(`/collections/${deletedCollection.collectionId}/reviews/${reference.testAsset.assetId}`)
+            .post(`/collections/${deletedCollection}/reviews/${reference.testAsset.assetId}`)
             .set('Authorization', `Bearer ${iteration.token}`)
             .send([
               {
@@ -1206,7 +1206,7 @@ describe('POST - Review', () => {
         })
         it('Import reviews for deleted asset', async () => {
           const res = await chai.request(config.baseUrl)
-            .post(`/collections/${deletedCollection.collectionId}/reviews/${reference.testAsset.assetId}`)
+            .post(`/collections/${deletedCollection}/reviews/${reference.testAsset.assetId}`)
             .set('Authorization', `Bearer ${iteration.token}`)
             .send([
               {

@@ -189,8 +189,8 @@ describe(`POST - importBenchmark - /stigs`, () => {
     before(async function () {
       // this.timeout(4000)
       // await utils.uploadTestStigs()
-      await utils.deleteStigByRevision("VPN_SRG_OTHER", "V2R2")
       await utils.loadAppData()
+      await utils.deleteStigByRevision("VPN_SRG_OTHER", "V2R2")
     })
 
     after(async function () { 
