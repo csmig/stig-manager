@@ -414,12 +414,12 @@ SM.NavTree.TreePanel = Ext.extend(Ext.tree.TreePanel, {
           })
         }
         if (n.attributes.action == 'collection-create') {
-          let fp = new SM.Collection.CreateForm({
+          let fp = new SM.Manage.Collection.FormPanel({
             btnText: 'Create',
             btnHandler: async () => {
               try {
                 let values = fp.getForm().getFieldValues()
-                await addOrUpdateCollection(0, values, {
+                await SM.Manage.Collection.ApiAddOrUpdate(0, values, {
                   showManager: true
                 })
                 appwindow.close()

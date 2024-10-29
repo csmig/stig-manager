@@ -294,13 +294,13 @@ function addCollectionAdmin( params ) {
 
 async function showCollectionProps(collectionId) {
   try {
-    let fp = new SM.Collection.CreateForm({
+    let fp = new SM.Manage.Collection.FormPanel({
       showGrantsOnly: true,
       btnText: collectionId ? 'Update' : 'Create',
       btnHandler: async () => {
         try {
           let values = fp.getForm().getFieldValues()
-          await addOrUpdateCollection(collectionId, values, {
+          await SM.Manage.Collection.ApiAddOrUpdate(collectionId, values, {
             elevate: true,
             showManager: true
           })

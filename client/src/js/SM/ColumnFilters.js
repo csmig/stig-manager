@@ -534,7 +534,7 @@ SM.ColumnFilters.Renderers = {
   labels: function (labelId, collectionId) {
     if (!labelId) return '<i>(No value)</i>'
     const labelObj = SM.Cache.getCollectionLabel(collectionId, labelId)
-    return SM.Collection.LabelTpl.apply(labelObj)
+    return SM.Manage.Collection.LabelTpl.apply(labelObj)
   },
   groups: function (v) {
     if (!v) return '<i>(No value)</i>'

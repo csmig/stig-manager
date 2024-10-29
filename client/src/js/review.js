@@ -890,7 +890,7 @@ async function addReview( params ) {
             }
             labels.sort((a,b) => a.name.localeCompare(b.name))
             metadata.attr = 'style="white-space:nowrap;text-overflow:clip"'
-            return SM.Collection.LabelArrayTpl.apply(labels)
+            return SM.Manage.Collection.LabelArrayTpl.apply(labels)
         }
       },
       {
@@ -1084,7 +1084,7 @@ async function addReview( params ) {
   /******************************************************/
   let labelSpans
   if (leaf.assetLabels) {
-    labelSpans = SM.Collection.LabelArrayTpl.apply(leaf.assetLabels)
+    labelSpans = SM.Manage.Collection.LabelArrayTpl.apply(leaf.assetLabels)
   }
   else {
     const labels = []
@@ -1093,7 +1093,7 @@ async function addReview( params ) {
         if (label) labels.push(label)
     }
     labels.sort((a,b) => a.name.localeCompare(b.name))
-    labelSpans = SM.Collection.LabelArrayTpl.apply(labels)
+    labelSpans = SM.Manage.Collection.LabelArrayTpl.apply(labels)
   }
 
   const reviewForm = new SM.Review.Form.Panel({

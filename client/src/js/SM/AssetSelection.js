@@ -51,7 +51,7 @@ SM.AssetSelection.GridPanel = Ext.extend(Ext.grid.GridPanel, {
             if (label) labels.push(label)
           }
           labels.sort((a, b) => a.name.localeCompare(b.name))
-          return SM.Collection.LabelArrayTpl.apply(labels)
+          return SM.Manage.Collection.LabelArrayTpl.apply(labels)
         }
       },
       {

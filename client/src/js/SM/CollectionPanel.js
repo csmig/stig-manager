@@ -276,7 +276,7 @@ SM.CollectionPanel.AggGrid = Ext.extend(Ext.grid.GridPanel, {
               }
               labels.sort((a, b) => a.name.localeCompare(b.name))
               metadata.attr = 'style="white-space:nowrap;text-overflow:clip;"'
-              return SM.styledEmptyRenderer(SM.Collection.LabelArrayTpl.apply(labels))
+              return SM.styledEmptyRenderer(SM.Manage.Collection.LabelArrayTpl.apply(labels))
             }
           },
           {
@@ -353,7 +353,7 @@ SM.CollectionPanel.AggGrid = Ext.extend(Ext.grid.GridPanel, {
               if (label) labels.push(label)
               labels.sort((a, b) => a.name.localeCompare(b.name))
               metadata.attr = 'style="white-space:normal;"'
-              return SM.styledEmptyRenderer(SM.Collection.LabelArrayTpl.apply(labels))
+              return SM.styledEmptyRenderer(SM.Manage.Collection.LabelArrayTpl.apply(labels))
             }
           },
           {
@@ -589,7 +589,7 @@ SM.CollectionPanel.UnaggGrid = Ext.extend(Ext.grid.GridPanel, {
               }
               labels.sort((a, b) => a.name.localeCompare(b.name))
               metadata.attr = 'style="white-space:nowrap;text-overflow:clip;"'
-              return SM.styledEmptyRenderer(SM.Collection.LabelArrayTpl.apply(labels))
+              return SM.styledEmptyRenderer(SM.Manage.Collection.LabelArrayTpl.apply(labels))
             }
           }
         )
@@ -1721,7 +1721,7 @@ SM.CollectionPanel.showCollectionTab = async function (options) {
       `Collection: {[values.labels ? values.labels : 'all']}`
     )
 
-    const labelsMenu = new SM.Collection.LabelsMenu({
+    const labelsMenu = new SM.Manage.Collection.LabelsMenu({
       labels: gState.filterableLabels,
       showHeader: true,
       showApply: true,
@@ -1792,7 +1792,7 @@ SM.CollectionPanel.showCollectionTab = async function (options) {
         }
       ],
       title: overviewTitleTpl.apply({
-        labels: SM.Collection.LabelSpritesByCollectionLabelId(collectionId, gState.labelIds)
+        labels: SM.Manage.Collection.GetLabelSprites(collectionId, gState.labelIds)
       }),
       margins: { top: SM.Margin.top, right: SM.Margin.edge, bottom: SM.Margin.bottom, left: SM.Margin.edge },
       region: 'west',
@@ -1954,7 +1954,7 @@ SM.CollectionPanel.showCollectionTab = async function (options) {
 
     function updateOverviewTitle() {
       const overviewTitle = overviewTitleTpl.apply({
-        labels: SM.Collection.LabelSpritesByCollectionLabelId(collectionId, gState.labelIds)
+        labels: SM.Manage.Collection.GetLabelSprites(collectionId, gState.labelIds)
       })
       overviewPanel.setTitle(overviewTitle)
     }

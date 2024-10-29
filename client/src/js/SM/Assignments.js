@@ -186,7 +186,7 @@ SM.Acl.ResourceTreePanel = Ext.extend(Ext.tree.TreePanel, {
             const content = apiLabels.map( label => ({
               collectionId: collectionId,
               label,
-              text: SM.Collection.LabelTpl.apply(label),
+              text: SM.Manage.Collection.LabelTpl.apply(label),
               node: 'label',
               iconCls: 'sm-label-icon',
               id: `${collectionId}-${label.name}-resource-labels-label-node`,
@@ -332,7 +332,7 @@ SM.Acl.AssignedRulesGrid = Ext.extend(Ext.grid.EditorGridPanel, {
         html += `<div class="sm-asset-icon sm-cell-with-icon">${record.data.assetName}</div>`
       }
       if (record.data.labelName) {
-        html += `<div class="sm-label-icon sm-cell-with-icon">${SM.Collection.LabelTpl.apply(record.data.label)}</div>`
+        html += `<div class="sm-label-icon sm-cell-with-icon">${SM.Manage.Collection.LabelTpl.apply(record.data.label)}</div>`
       }
       if (record.data.benchmarkId) {
         html += `<div class="sm-stig-icon sm-cell-with-icon">${record.data.benchmarkId}</div>`
@@ -635,4 +635,4 @@ SM.Acl.showAccess = async function(collectionId, grantRecord) {
         SM.Error.handleError(e)
         Ext.getBody().unmask()
   }	
-} //end showAssetProps
+}

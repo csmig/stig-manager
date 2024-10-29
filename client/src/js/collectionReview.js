@@ -950,7 +950,7 @@ async function addCollectionReview ( params ) {
 							}
 							labels.sort((a,b) => a.name.localeCompare(b.name))
 							metadata.attr = 'style="white-space:nowrap;text-overflow:clip;"'
-							return SM.Collection.LabelArrayTpl.apply(labels)
+							return SM.Manage.Collection.LabelArrayTpl.apply(labels)
 					}
 				},
 				{ 

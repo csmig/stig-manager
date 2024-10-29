@@ -192,7 +192,7 @@ SM.User.DirectGrantsGrid = Ext.extend(Ext.grid.GridPanel, {
       },
       autoLoad: true
     })
-    const accessLevelField = new SM.AccessLevelField({
+    const accessLevelField = new SM.RoleComboBox({
       submitValue: false,
       canModifyOwners: true,
       includeOwnerGrant: true,
@@ -214,7 +214,7 @@ SM.User.DirectGrantsGrid = Ext.extend(Ext.grid.GridPanel, {
         width: 100,
         dataIndex: 'accessLevel',
         sortable: true,
-        renderer: (v) => SM.AccessLevelStrings[v],
+        renderer: (v) => SM.RoleStrings[v],
         editor: accessLevelField
       }
     ]
@@ -394,7 +394,7 @@ SM.User.EffectiveGrantsGrid = Ext.extend(Ext.grid.GridPanel, {
         width: 100,
         dataIndex: 'accessLevel',
         sortable: true,
-        renderer: (v) => SM.AccessLevelStrings[v],
+        renderer: (v) => SM.RoleStrings[v],
       }
     ]
     const bbar = new Ext.Toolbar({

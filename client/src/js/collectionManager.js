@@ -27,7 +27,7 @@ async function addCollectionManager( params ) {
 			}
 		}
 	
-		let collectionPanel = new SM.Collection.ManagePanel({
+		let collectionPanel = new SM.Manage.Collection.Panel({
 			collectionId,
 			apiCollection,
 			title: `Manage Collection (${collectionId})`,
@@ -45,7 +45,7 @@ async function addCollectionManager( params ) {
 			allowClone: collectionGrant.accessLevel >= 3 && curUser.privileges.canCreateCollection,
 			canModifyOwners: collectionGrant.accessLevel === 4,
 		})
-		let assetGrid = new SM.CollectionAssetGrid({
+		let assetGrid = new SM.Manage.Asset.Grid({
 			collectionId: collectionId,
 			collectionName: collectionName,
 			apiFieldSettings: apiFieldSettings,
@@ -59,7 +59,7 @@ async function addCollectionManager( params ) {
 			height: '50%',
 			stripeRows: true
 		})
-		let stigGrid = new SM.CollectionStigsGrid({
+		let stigGrid = new SM.Manage.Stig.Grid({
 			collectionId: collectionId,
 			collectionName: collectionName,
 			url: `${STIGMAN.Env.apiBase}/collections/${collectionId}/metrics/summary/stig`,

@@ -131,12 +131,8 @@ uglifyjs \
 'SM/NavTree.js' \
 'SM/RowEditorToolbar.js' \
 'SM/BatchReview.js' \
-'SM/Collection.js' \
 'SM/CollectionClone.js' \
-'SM/CollectionStig.js' \
-'SM/CollectionForm.js' \
-'SM/CollectionAsset.js' \
-'SM/CollectionGrant.js' \
+'SM/Manage.js' \
 'SM/CollectionPanel.js' \
 'SM/MetaPanel.js' \
 'LockingGridView.js' \

@@ -383,6 +383,14 @@ SM.RuleContentTpl = new Ext.XTemplate(
 
   }
 
+  SM.getContrastYIQ = function (hexcolor){
+	const r = parseInt(hexcolor.substr(0,2),16);
+	const g = parseInt(hexcolor.substr(2,2),16);
+	const b = parseInt(hexcolor.substr(4,2),16);
+	const yiq = ((r*299)+(g*587)+(b*114))/1000;
+	return (yiq >= 128) ? '#080808' : '#f7f7f7';
+}
+
   SM.Global.HelperComboBox = Ext.extend(Ext.form.ComboBox, {
     initComponent: function () {
         const config = {
@@ -565,37 +573,87 @@ SM.Global.filenameEscaped = function (value) {
     .replace(osReserved, (match) => osReserveReplace[match])
     .replace(controlChars, (match) => `&#x${match.charCodeAt(0).toString().padStart(2,'0')};`)
     .substring(0, 255)
-  }
+}
 
-  SM.Klona = function klona(val) {
+SM.Klona = function klona(val) {
     // MIT License
     // Copyright (c) Luke Edwards <luke.edwards05@gmail.com> (lukeed.com)
     // https://github.com/lukeed/klona
 
     let k, out, tmp
 
-	if (Array.isArray(val)) {
-		out = Array(k=val.length)
-		while (k--) out[k] = (tmp=val[k]) && typeof tmp === 'object' ? klona(tmp) : tmp
-		return out
-	}
+    if (Array.isArray(val)) {
+        out = Array(k = val.length)
+        while (k--) out[k] = (tmp = val[k]) && typeof tmp === 'object' ? klona(tmp) : tmp
+        return out
+    }
 
-	if (Object.prototype.toString.call(val) === '[object Object]') {
-		out = {} // null
-		for (k in val) {
-			if (k === '__proto__') {
-				Object.defineProperty(out, k, {
-					value: klona(val[k]),
-					configurable: true,
-					enumerable: true,
-					writable: true,
-				})
-			} else {
-				out[k] = (tmp=val[k]) && typeof tmp === 'object' ? klona(tmp) : tmp
-			}
-		}
-		return out
-	}
+    if (Object.prototype.toString.call(val) === '[object Object]') {
+        out = {} // null
+        for (k in val) {
+            if (k === '__proto__') {
+                Object.defineProperty(out, k, {
+                    value: klona(val[k]),
+                    configurable: true,
+                    enumerable: true,
+                    writable: true,
+                })
+            } else {
+                out[k] = (tmp = val[k]) && typeof tmp === 'object' ? klona(tmp) : tmp
+            }
+        }
+        return out
+    }
 
-	return val
-  }
+    return val
+}
+
+SM.RoleStrings = [
+    'Undefined',
+    'Restricted',
+    'Full',
+    'Manage',
+    'Owner'
+]
+
+SM.RoleComboBox = Ext.extend(Ext.form.ComboBox, {
+    initComponent: function () {
+        const _this = this
+        this.includeOwnerGrant = !!this.includeOwnerGrant
+        const config = {
+            displayField: 'display',
+            valueField: 'value',
+            triggerAction: 'all',
+            mode: 'local',
+            editable: false,
+            validator: (v) => {
+                // Don't keep the form from validating when I'm not active
+                if (_this.grid.editor.editing == false) {
+                    return true
+                }
+                if (v === "") { return "Blank values not allowed" }
+            }
+        }
+
+        const data = [
+            [1, SM.RoleStrings[1]],
+            [2, SM.RoleStrings[2]],
+            [3, SM.RoleStrings[3]]
+        ]
+        if (this.includeOwnerGrant) {
+            data.push([4, SM.RoleStrings[4]])
+        }
+        this.store = new Ext.data.SimpleStore({
+            fields: ['value', 'display']
+        })
+        this.store.on('load', function (store) {
+            _this.setValue(store.getAt(0).get('value'))
+        })
+
+        Ext.apply(this, Ext.apply(this.initialConfig, config))
+        this.superclass().initComponent.call(this)
+
+        this.store.loadData(data)
+    }
+})
+
