@@ -1,9 +1,7 @@
 const reference = require('../../referenceData.js')
-const { benchmark } = require('./referenceData.js')
 
 const iterations = [
   {
-    
     name: 'label_rw',
     put: [{"labelId":reference.testCollection.fullLabel,"access":"rw"}],
     response: [
@@ -23,11 +21,11 @@ const iterations = [
              },
              access: "rw",
            },
-           grantee: {
-             userId: 85,
-             username: "lvl1",
-             accessLevel: 1,
-           },
+            grantee: {
+            userGroupId: 1,
+            name: "IterationTestgroup",
+            accessLevel: 1,
+          },
          },
        ],
      },
@@ -47,11 +45,11 @@ const iterations = [
              },
              access: "rw",
            },
-           grantee: {
-             userId: 85,
-             username: "lvl1",
-             accessLevel: 1,
-           },
+            grantee: {
+            userGroupId: 1,
+            name: "IterationTestgroup",
+            accessLevel: 1,
+          },
          },
        ],
      },
@@ -71,11 +69,11 @@ const iterations = [
              },
              access: "rw",
            },
-           grantee: {
-             userId: 85,
-             username: "lvl1",
-             accessLevel: 1,
-           },
+            grantee: {
+            userGroupId: 1,
+            name: "IterationTestgroup",
+            accessLevel: 1,
+          },
          },
        ],
      },
@@ -95,11 +93,11 @@ const iterations = [
              },
              access: "rw",
            },
-           grantee: {
-             userId: 85,
-             username: "lvl1",
-             accessLevel: 1,
-           },
+            grantee: {
+            userGroupId: 1,
+            name: "IterationTestgroup",
+            accessLevel: 1,
+          },
          },
        ],
      },
@@ -126,8 +124,8 @@ const iterations = [
                   access: "r",
                 },
                 grantee: {
-                  userId: 85,
-                  username: "lvl1",
+                  name: "IterationTestgroup",
+                  userGroupId: 1,
                   accessLevel: 1,
                 },
               },
@@ -150,8 +148,8 @@ const iterations = [
                   access: "r",
                 },
                 grantee: {
-                  userId: 85,
-                  username: "lvl1",
+                  userGroupId: 1,
+                  name: "IterationTestgroup",
                   accessLevel: 1,
                 },
               },
@@ -174,8 +172,8 @@ const iterations = [
                   access: "r",
                 },
                 grantee: {
-                  userId: 85,
-                  username: "lvl1",
+                  userGroupId: 1,
+                  name: "IterationTestgroup",
                   accessLevel: 1,
                 },
               },
@@ -198,15 +196,15 @@ const iterations = [
                   access: "r",
                 },
                 grantee: {
-                  userId: 85,
-                  username: "lvl1",
+                  userGroupId: 1,
+                  name: "IterationTestgroup",
                   accessLevel: 1,
                 },
               },
             ],
           },
         ]
-  },
+},
   {
     name: 'label_none',
     put:[{"labelId":reference.testCollection.fullLabel,"access":"none"}],
@@ -229,11 +227,11 @@ const iterations = [
               benchmarkId: reference.testCollection.benchmark,
               access: "rw",
             },
-            grantee: {
-              userId: 85,
-              username: "lvl1",
-              accessLevel: 1,
-            },
+             grantee: {
+                  userGroupId: 1,
+                  name: "IterationTestgroup",
+                  accessLevel: 1,
+                },
           },
         ],
       },
@@ -250,11 +248,11 @@ const iterations = [
               benchmarkId: reference.testCollection.benchmark,
               access: "rw",
             },
-            grantee: {
-              userId: 85,
-              username: "lvl1",
-              accessLevel: 1,
-            },
+             grantee: {
+                  userGroupId: 1,
+                  name: "IterationTestgroup",
+                  accessLevel: 1,
+                },
           },
         ],
       },
@@ -271,11 +269,11 @@ const iterations = [
               benchmarkId: reference.testCollection.benchmark,
               access: "rw",
             },
-            grantee: {
-              userId: 85,
-              username: "lvl1",
-              accessLevel: 1,
-            },
+             grantee: {
+                  userGroupId: 1,
+                  name: "IterationTestgroup",
+                  accessLevel: 1,
+                },
           },
         ],
       }
@@ -298,11 +296,11 @@ const iterations = [
               benchmarkId: reference.testCollection.benchmark,
               access: "r",
             },
-            grantee: {
-              userId: 85,
-              username: "lvl1",
-              accessLevel: 1,
-            },
+             grantee: {
+                  userGroupId: 1,
+                  name: "IterationTestgroup",
+                  accessLevel: 1,
+                },
           },
         ],
       },
@@ -319,11 +317,11 @@ const iterations = [
               benchmarkId: reference.testCollection.benchmark,
               access: "r",
             },
-            grantee: {
-              userId: 85,
-              username: "lvl1",
-              accessLevel: 1,
-            },
+             grantee: {
+                  userGroupId: 1,
+                  name: "IterationTestgroup",
+                  accessLevel: 1,
+                },
           },
         ],
       },
@@ -340,27 +338,27 @@ const iterations = [
               benchmarkId: reference.testCollection.benchmark,
               access: "r",
             },
-            grantee: {
-              userId: 85,
-              username: "lvl1",
-              accessLevel: 1,
-            },
+             grantee: {
+                  userGroupId: 1,
+                  name: "IterationTestgroup",
+                  accessLevel: 1,
+                },
           },
         ],
       }
     ]
-   
+
   },
   {
     name: 'benchmark_none',
     put: [{"benchmarkId":reference.testCollection.benchmark,"access":"none"}],
     response: []
-  
-   
+
+
   },
   {
     name: 'asset_rw',
-   
+
     put: [{"assetId":reference.testAsset.assetId,"access":"rw"}],
     response: [
       {
@@ -379,11 +377,11 @@ const iterations = [
               },
               access: "rw",
             },
-            grantee: {
-              userId: 85,
-              username: "lvl1",
-              accessLevel: 1,
-            },
+             grantee: {
+                  userGroupId: 1,
+                  name: "IterationTestgroup",
+                  accessLevel: 1,
+                },
           },
         ],
       },
@@ -403,11 +401,11 @@ const iterations = [
               },
               access: "rw",
             },
-            grantee: {
-              userId: 85,
-              username: "lvl1",
-              accessLevel: 1,
-            },
+             grantee: {
+                  userGroupId: 1,
+                  name: "IterationTestgroup",
+                  accessLevel: 1,
+                },
           },
         ],
       }
@@ -433,11 +431,11 @@ const iterations = [
               },
               access: "r",
             },
-            grantee: {
-              userId: 85,
-              username: "lvl1",
-              accessLevel: 1,
-            },
+             grantee: {
+                  userGroupId: 1,
+                  name: "IterationTestgroup",
+                  accessLevel: 1,
+                },
           },
         ],
       },
@@ -457,11 +455,11 @@ const iterations = [
               },
               access: "r",
             },
-            grantee: {
-              userId: 85,
-              username: "lvl1",
-              accessLevel: 1,
-            },
+             grantee: {
+                  userGroupId: 1,
+                  name: "IterationTestgroup",
+                  accessLevel: 1,
+                },
           },
         ],
       }
@@ -493,16 +491,16 @@ const iterations = [
               access: "rw",
               benchmarkId: reference.testCollection.benchmark,
             },
-            grantee: {
-              userId: 85,
-              username: "lvl1",
-              accessLevel: 1,
+             grantee: {
+                  userGroupId: 1,
+                  name: "IterationTestgroup",
+                  accessLevel: 1,
             },
           },
         ],
       }
     ]
-   
+
   },
   {
     name: 'assetBenchmark_r',
@@ -526,15 +524,15 @@ const iterations = [
                   benchmarkId: reference.testCollection.benchmark,
                 },
                 grantee: {
-                  userId: 85,
-                  username: "lvl1",
+                  name: "IterationTestgroup",
+                  userGroupId: 1,
                   accessLevel: 1,
                 },
               },
             ],
           }
         ]
-   
+
   },
   {
     name: 'assetBenchmark_none',
@@ -563,8 +561,8 @@ const iterations = [
                   benchmarkId: reference.testCollection.benchmark,
                 },
                 grantee: {
-                  userId: 85,
-                  username: "lvl1",
+                  name: "IterationTestgroup",
+                  userGroupId: 1,
                   accessLevel: 1,
                 },
               },
@@ -588,8 +586,8 @@ const iterations = [
                   benchmarkId: reference.testCollection.benchmark,
                 },
                 grantee: {
-                  userId: 85,
-                  username: "lvl1",
+                  name: "IterationTestgroup",
+                  userGroupId: 1,
                   accessLevel: 1,
                 },
               },
@@ -618,11 +616,11 @@ const iterations = [
               access: "r",
               benchmarkId: reference.testCollection.benchmark,
             },
-            grantee: {
-              userId: 85,
-              username: "lvl1",
-              accessLevel: 1,
-            },
+             grantee: {
+                  userGroupId: 1,
+                  name: "IterationTestgroup",
+                  accessLevel: 1,
+                },
           },
         ],
       },
@@ -643,11 +641,11 @@ const iterations = [
               access: "r",
               benchmarkId: reference.testCollection.benchmark,
             },
-            grantee: {
-              userId: 85,
-              username: "lvl1",
-              accessLevel: 1,
-            },
+             grantee: {
+                  userGroupId: 1,
+                  name: "IterationTestgroup",
+                  accessLevel: 1,
+                },
           },
         ],
       }
@@ -679,8 +677,8 @@ const iterations = [
             access: "rw",
           },
           grantee: {
-            userId: 85,
-            username: "lvl1",
+            name: "IterationTestgroup",
+            userGroupId: 1,
             accessLevel: 1,
           },
         },
@@ -703,8 +701,8 @@ const iterations = [
             access: "rw",
           },
           grantee: {
-            userId: 85,
-            username: "lvl1",
+            name: "IterationTestgroup",
+            userGroupId: 1,
             accessLevel: 1,
           },
         },
@@ -727,8 +725,8 @@ const iterations = [
             access: "rw",
           },
           grantee: {
-            userId: 85,
-            username: "lvl1",
+            name: "IterationTestgroup",
+            userGroupId: 1,
             accessLevel: 1,
           },
         },
@@ -751,8 +749,8 @@ const iterations = [
             access: "rw",
           },
           grantee: {
-            userId: 85,
-            username: "lvl1",
+            name: "IterationTestgroup",
+            userGroupId: 1,
             accessLevel: 1,
           },
         },
@@ -780,11 +778,11 @@ const iterations = [
               },
               access: "rw",
             },
-            grantee: {
-              userId: 85,
-              username: "lvl1",
-              accessLevel: 1,
-            },
+             grantee: {
+                  userGroupId: 1,
+                  name: "IterationTestgroup",
+                  accessLevel: 1,
+                },
           },
         ],
       },
@@ -804,11 +802,11 @@ const iterations = [
               },
               access: "rw",
             },
-            grantee: {
-              userId: 85,
-              username: "lvl1",
-              accessLevel: 1,
-            },
+             grantee: {
+                  userGroupId: 1,
+                  name: "IterationTestgroup",
+                  accessLevel: 1,
+                },
           },
         ],
       },
@@ -828,11 +826,11 @@ const iterations = [
               },
               access: "r",
             },
-            grantee: {
-              userId: 85,
-              username: "lvl1",
-              accessLevel: 1,
-            },
+             grantee: {
+                  userGroupId: 1,
+                  name: "IterationTestgroup",
+                  accessLevel: 1,
+                },
           },
         ],
       },
@@ -852,11 +850,11 @@ const iterations = [
               },
               access: "r",
             },
-            grantee: {
-              userId: 85,
-              username: "lvl1",
-              accessLevel: 1,
-            },
+             grantee: {
+                  userGroupId: 1,
+                  name: "IterationTestgroup",
+                  accessLevel: 1,
+                },
           },
         ],
       }
@@ -882,11 +880,11 @@ const iterations = [
               },
               access: "rw",
             },
-            grantee: {
-              userId: 85,
-              username: "lvl1",
-              accessLevel: 1,
-            },
+             grantee: {
+                  userGroupId: 1,
+                  name: "IterationTestgroup",
+                  accessLevel: 1,
+                },
           },
         ],
       },
@@ -906,11 +904,11 @@ const iterations = [
               },
               access: "rw",
             },
-            grantee: {
-              userId: 85,
-              username: "lvl1",
-              accessLevel: 1,
-            },
+             grantee: {
+                  userGroupId: 1,
+                  name: "IterationTestgroup",
+                  accessLevel: 1,
+                },
           },
         ],
       },
@@ -936,11 +934,11 @@ const iterations = [
               },
               access: "r",
             },
-            grantee: {
-              userId: 85,
-              username: "lvl1",
-              accessLevel: 1,
-            },
+             grantee: {
+                  userGroupId: 1,
+                  name: "IterationTestgroup",
+                  accessLevel: 1,
+                },
           },
         ],
       },
@@ -960,11 +958,11 @@ const iterations = [
               },
               access: "r",
             },
-            grantee: {
-              userId: 85,
-              username: "lvl1",
-              accessLevel: 1,
-            },
+             grantee: {
+                  userGroupId: 1,
+                  name: "IterationTestgroup",
+                  accessLevel: 1,
+                },
           },
         ],
       },
@@ -984,11 +982,11 @@ const iterations = [
               },
               access: "r",
             },
-            grantee: {
-              userId: 85,
-              username: "lvl1",
-              accessLevel: 1,
-            },
+             grantee: {
+                  userGroupId: 1,
+                  name: "IterationTestgroup",
+                  accessLevel: 1,
+                },
           },
         ],
       },
@@ -1008,11 +1006,11 @@ const iterations = [
               },
               access: "r",
             },
-            grantee: {
-              userId: 85,
-              username: "lvl1",
-              accessLevel: 1,
-            },
+             grantee: {
+                  userGroupId: 1,
+                  name: "IterationTestgroup",
+                  accessLevel: 1,
+                },
           },
         ],
       }
@@ -1038,11 +1036,11 @@ const iterations = [
               },
               access: "rw",
             },
-            grantee: {
-              userId: 85,
-              username: "lvl1",
-              accessLevel: 1,
-            },
+             grantee: {
+                  userGroupId: 1,
+                  name: "IterationTestgroup",
+                  accessLevel: 1,
+                },
           },
         ],
       },
@@ -1062,11 +1060,11 @@ const iterations = [
               },
               access: "rw",
             },
-            grantee: {
-              userId: 85,
-              username: "lvl1",
-              accessLevel: 1,
-            },
+             grantee: {
+                  userGroupId: 1,
+                  name: "IterationTestgroup",
+                  accessLevel: 1,
+                },
           },
         ],
       },
@@ -1087,11 +1085,11 @@ const iterations = [
               access: "rw",
               benchmarkId: reference.windowsBenchmark
             },
-            grantee: {
-              userId: 85,
-              username: "lvl1",
-              accessLevel: 1,
-            },
+             grantee: {
+                  userGroupId: 1,
+                  name: "IterationTestgroup",
+                  accessLevel: 1,
+                },
           },
         ],
       },
@@ -1117,11 +1115,11 @@ const iterations = [
               },
               access: "r",
             },
-            grantee: {
-              userId: 85,
-              username: "lvl1",
-              accessLevel: 1,
-            },
+             grantee: {
+                  userGroupId: 1,
+                  name: "IterationTestgroup",
+                  accessLevel: 1,
+                },
           },
         ],
       },
@@ -1141,11 +1139,11 @@ const iterations = [
               },
               access: "r",
             },
-            grantee: {
-              userId: 85,
-              username: "lvl1",
-              accessLevel: 1,
-            },
+             grantee: {
+                  userGroupId: 1,
+                  name: "IterationTestgroup",
+                  accessLevel: 1,
+                },
           },
         ],
       },
@@ -1165,11 +1163,11 @@ const iterations = [
               },
               access: "r",
             },
-            grantee: {
-              userId: 85,
-              username: "lvl1",
-              accessLevel: 1,
-            },
+             grantee: {
+                  userGroupId: 1,
+                  name: "IterationTestgroup",
+                  accessLevel: 1,
+                },
           },
         ],
       },
@@ -1189,11 +1187,11 @@ const iterations = [
               },
               access: "r",
             },
-            grantee: {
-              userId: 85,
-              username: "lvl1",
-              accessLevel: 1,
-            },
+             grantee: {
+                  userGroupId: 1,
+                  name: "IterationTestgroup",
+                  accessLevel: 1,
+                },
           },
         ],
       },
@@ -1214,11 +1212,11 @@ const iterations = [
               access: "rw",
               benchmarkId: reference.testCollection.benchmark,
             },
-            grantee: {
-              userId: 85,
-              username: "lvl1",
-              accessLevel: 1,
-            },
+             grantee: {
+                  userGroupId: 1,
+                  name: "IterationTestgroup",
+                  accessLevel: 1,
+                },
           },
         ]
       }
@@ -1244,11 +1242,11 @@ const iterations = [
               },
               access: "rw",
             },
-            grantee: {
-              userId: 85,
-              username: "lvl1",
-              accessLevel: 1,
-            },
+             grantee: {
+                  userGroupId: 1,
+                  name: "IterationTestgroup",
+                  accessLevel: 1,
+                },
           },
         ],
       },
@@ -1268,11 +1266,11 @@ const iterations = [
               },
               access: "rw",
             },
-            grantee: {
-              userId: 85,
-              username: "lvl1",
-              accessLevel: 1,
-            },
+             grantee: {
+                  userGroupId: 1,
+                  name: "IterationTestgroup",
+                  accessLevel: 1,
+                },
           },
         ],
       },
@@ -1292,11 +1290,11 @@ const iterations = [
               },
               access: "rw",
             },
-            grantee: {
-              userId: 85,
-              username: "lvl1",
-              accessLevel: 1,
-            },
+             grantee: {
+                  userGroupId: 1,
+                  name: "IterationTestgroup",
+                  accessLevel: 1,
+                },
           },
         ],
       },
@@ -1316,11 +1314,11 @@ const iterations = [
               },
               access: "rw",
             },
-            grantee: {
-              userId: 85,
-              username: "lvl1",
-              accessLevel: 1,
-            },
+             grantee: {
+                  userGroupId: 1,
+                  name: "IterationTestgroup",
+                  accessLevel: 1,
+                },
           },
         ],
       },
@@ -1341,11 +1339,11 @@ const iterations = [
               access: "r",
               benchmarkId: reference.testCollection.benchmark,
             },
-            grantee: {
-              userId: 85,
-              username: "lvl1",
-              accessLevel: 1,
-            },
+             grantee: {
+                  userGroupId: 1,
+                  name: "IterationTestgroup",
+                  accessLevel: 1,
+                },
           },
         ]
       }
@@ -1371,11 +1369,11 @@ const iterations = [
               },
               access: "rw",
             },
-            grantee: {
-              userId: 85,
-              username: "lvl1",
-              accessLevel: 1,
-            },
+             grantee: {
+                  userGroupId: 1,
+                  name: "IterationTestgroup",
+                  accessLevel: 1,
+                },
           },
         ],
       },
@@ -1395,11 +1393,11 @@ const iterations = [
               },
               access: "rw",
             },
-            grantee: {
-              userId: 85,
-              username: "lvl1",
-              accessLevel: 1,
-            },
+             grantee: {
+                  userGroupId: 1,
+                  name: "IterationTestgroup",
+                  accessLevel: 1,
+                },
           },
         ],
       },
@@ -1419,11 +1417,11 @@ const iterations = [
               },
               access: "rw",
             },
-            grantee: {
-              userId: 85,
-              username: "lvl1",
-              accessLevel: 1,
-            },
+             grantee: {
+                  userGroupId: 1,
+                  name: "IterationTestgroup",
+                  accessLevel: 1,
+                },
           },
         ],
       }
@@ -1449,11 +1447,11 @@ const iterations = [
               },
               access: "r",
             },
-            grantee: {
-              userId: 85,
-              username: "lvl1",
-              accessLevel: 1,
-            },
+             grantee: {
+                  userGroupId: 1,
+                  name: "IterationTestgroup",
+                  accessLevel: 1,
+                },
           },
         ],
       },
@@ -1473,11 +1471,11 @@ const iterations = [
               },
               access: "r",
             },
-            grantee: {
-              userId: 85,
-              username: "lvl1",
-              accessLevel: 1,
-            },
+             grantee: {
+                  userGroupId: 1,
+                  name: "IterationTestgroup",
+                  accessLevel: 1,
+                },
           },
         ],
       },
@@ -1497,11 +1495,11 @@ const iterations = [
               },
               access: "r",
             },
-            grantee: {
-              userId: 85,
-              username: "lvl1",
-              accessLevel: 1,
-            },
+             grantee: {
+                  userGroupId: 1,
+                  name: "IterationTestgroup",
+                  accessLevel: 1,
+                },
           },
         ],
       }
@@ -1528,11 +1526,11 @@ const iterations = [
               access: "rw",
               benchmarkId: reference.testCollection.benchmark,
             },
-            grantee: {
-              userId: 85,
-              username: "lvl1",
-              accessLevel: 1,
-            },
+             grantee: {
+                  userGroupId: 1,
+                  name: "IterationTestgroup",
+                  accessLevel: 1,
+                },
           },
         ],
       },
@@ -1549,15 +1547,15 @@ const iterations = [
               access: "rw",
               benchmarkId: reference.windowsBenchmark,
             },
-            grantee: {
-              userId: 85,
-              username: "lvl1",
-              accessLevel: 1,
-            },
+             grantee: {
+                  userGroupId: 1,
+                  name: "IterationTestgroup",
+                  accessLevel: 1,
+                },
           },
         ],
       },
-     
+    
       {
         access: "rw",
         asset: {
@@ -1571,11 +1569,11 @@ const iterations = [
               access: "rw",
               benchmarkId: reference.windowsBenchmark,
             },
-            grantee: {
-              userId: 85,
-              username: "lvl1",
-              accessLevel: 1,
-            },
+             grantee: {
+                  userGroupId: 1,
+                  name: "IterationTestgroup",
+                  accessLevel: 1,
+                },
           },
         ],
       },
@@ -1592,11 +1590,11 @@ const iterations = [
               access: "rw",
               benchmarkId: reference.windowsBenchmark,
             },
-            grantee: {
-              userId: 85,
-              username: "lvl1",
-              accessLevel: 1,
-            },
+             grantee: {
+                  userGroupId: 1,
+                  name: "IterationTestgroup",
+                  accessLevel: 1,
+                },
           },
         ],
       }
@@ -1623,11 +1621,11 @@ const iterations = [
               access: "rw",
               benchmarkId: reference.testCollection.benchmark,
             },
-            grantee: {
-              userId: 85,
-              username: "lvl1",
-              accessLevel: 1,
-            },
+             grantee: {
+                  userGroupId: 1,
+                  name: "IterationTestgroup",
+                  accessLevel: 1,
+                },
           },
         ],
       },
@@ -1644,15 +1642,15 @@ const iterations = [
               access: "r",
               benchmarkId: reference.windowsBenchmark,
             },
-            grantee: {
-              userId: 85,
-              username: "lvl1",
-              accessLevel: 1,
-            },
+             grantee: {
+                  userGroupId: 1,
+                  name: "IterationTestgroup",
+                  accessLevel: 1,
+                },
           },
         ],
       },
-     
+    
       {
         access: "r",
         asset: {
@@ -1666,11 +1664,11 @@ const iterations = [
               access: "r",
               benchmarkId: reference.windowsBenchmark,
             },
-            grantee: {
-              userId: 85,
-              username: "lvl1",
-              accessLevel: 1,
-            },
+             grantee: {
+                  userGroupId: 1,
+                  name: "IterationTestgroup",
+                  accessLevel: 1,
+                },
           },
         ],
       },
@@ -1687,11 +1685,11 @@ const iterations = [
               access: "r",
               benchmarkId: reference.windowsBenchmark,
             },
-            grantee: {
-              userId: 85,
-              username: "lvl1",
-              accessLevel: 1,
-            },
+             grantee: {
+                  userGroupId: 1,
+                  name: "IterationTestgroup",
+                  accessLevel: 1,
+                },
           },
         ],
       }
@@ -1718,15 +1716,15 @@ const iterations = [
               access: "r",
               benchmarkId: reference.testCollection.benchmark,
             },
-            grantee: {
-              userId: 85,
-              username: "lvl1",
-              accessLevel: 1,
-            },
+             grantee: {
+                  userGroupId: 1,
+                  name: "IterationTestgroup",
+                  accessLevel: 1,
+                },
           },
         ],
       },
-   
+
       {
         access: "rw",
         asset: {
@@ -1740,11 +1738,11 @@ const iterations = [
               access: "rw",
               benchmarkId: reference.testCollection.benchmark,
             },
-            grantee: {
-              userId: 85,
-              username: "lvl1",
-              accessLevel: 1,
-            },
+             grantee: {
+                  userGroupId: 1,
+                  name: "IterationTestgroup",
+                  accessLevel: 1,
+                },
           },
         ],
       },
@@ -1761,11 +1759,11 @@ const iterations = [
               access: "rw",
               benchmarkId: reference.testCollection.benchmark,
             },
-            grantee: {
-              userId: 85,
-              username: "lvl1",
-              accessLevel: 1,
-            },
+             grantee: {
+                  userGroupId: 1,
+                  name: "IterationTestgroup",
+                  accessLevel: 1,
+                },
           },
         ],
       }
@@ -1792,15 +1790,15 @@ const iterations = [
               access: "r",
               benchmarkId: reference.testCollection.benchmark,
             },
-            grantee: {
-              userId: 85,
-              username: "lvl1",
-              accessLevel: 1,
-            },
+             grantee: {
+                  userGroupId: 1,
+                  name: "IterationTestgroup",
+                  accessLevel: 1,
+                },
           },
         ],
       },
-     
+    
       {
         access: "r",
         asset: {
@@ -1814,11 +1812,11 @@ const iterations = [
               access: "r",
               benchmarkId: reference.testCollection.benchmark,
             },
-            grantee: {
-              userId: 85,
-              username: "lvl1",
-              accessLevel: 1,
-            },
+             grantee: {
+                  userGroupId: 1,
+                  name: "IterationTestgroup",
+                  accessLevel: 1,
+                },
           },
         ],
       },
@@ -1835,11 +1833,11 @@ const iterations = [
               access: "r",
               benchmarkId: reference.testCollection.benchmark,
             },
-            grantee: {
-              userId: 85,
-              username: "lvl1",
-              accessLevel: 1,
-            },
+             grantee: {
+                  userGroupId: 1,
+                  name: "IterationTestgroup",
+                  accessLevel: 1,
+                },
           },
         ],
       }
@@ -1862,11 +1860,11 @@ const iterations = [
               access: "r",
               benchmarkId: reference.windowsBenchmark,
             },
-            grantee: {
-              userId: 85,
-              username: "lvl1",
-              accessLevel: 1,
-            },
+             grantee: {
+                  userGroupId: 1,
+                  name: "IterationTestgroup",
+                  accessLevel: 1,
+                },
           },
         ],
       },
@@ -1883,11 +1881,11 @@ const iterations = [
               access: "r",
               benchmarkId: reference.windowsBenchmark,
             },
-            grantee: {
-              userId: 85,
-              username: "lvl1",
-              accessLevel: 1,
-            },
+             grantee: {
+                  userGroupId: 1,
+                  name: "IterationTestgroup",
+                  accessLevel: 1,
+                },
           },
         ],
       }
@@ -1914,11 +1912,11 @@ const iterations = [
               },
               benchmarkId: reference.testCollection.benchmark,
             },
-            grantee: {
-              userId: 85,
-              username: "lvl1",
-              accessLevel: 1,
-            },
+             grantee: {
+                  userGroupId: 1,
+                  name: "IterationTestgroup",
+                  accessLevel: 1,
+                },
           },
         ],
       },
@@ -1939,11 +1937,11 @@ const iterations = [
               },
               benchmarkId: reference.windowsBenchmark,
             },
-            grantee: {
-              userId: 85,
-              username: "lvl1",
-              accessLevel: 1,
-            },
+             grantee: {
+                  userGroupId: 1,
+                  name: "IterationTestgroup",
+                  accessLevel: 1,
+                },
           },
         ],
       }
@@ -1970,11 +1968,11 @@ const iterations = [
               },
               benchmarkId: reference.testCollection.benchmark,
             },
-            grantee: {
-              userId: 85,
-              username: "lvl1",
-              accessLevel: 1,
-            },
+             grantee: {
+                  userGroupId: 1,
+                  name: "IterationTestgroup",
+                  accessLevel: 1,
+                },
           },
         ],
       },
@@ -1995,11 +1993,11 @@ const iterations = [
               },
               benchmarkId: reference.windowsBenchmark,
             },
-            grantee: {
-              userId: 85,
-              username: "lvl1",
-              accessLevel: 1,
-            },
+             grantee: {
+                  userGroupId: 1,
+                  name: "IterationTestgroup",
+                  accessLevel: 1,
+                },
           },
         ],
       }
@@ -2026,11 +2024,11 @@ const iterations = [
               },
               benchmarkId: reference.testCollection.benchmark,
             },
-            grantee: {
-              userId: 85,
-              username: "lvl1",
-              accessLevel: 1,
-            },
+             grantee: {
+                  userGroupId: 1,
+                  name: "IterationTestgroup",
+                  accessLevel: 1,
+                },
           },
         ],
       },
@@ -2051,11 +2049,11 @@ const iterations = [
               },
               benchmarkId: reference.windowsBenchmark,
             },
-            grantee: {
-              userId: 85,
-              username: "lvl1",
-              accessLevel: 1,
-            },
+             grantee: {
+                  userGroupId: 1,
+                  name: "IterationTestgroup",
+                  accessLevel: 1,
+                },
           },
         ],
       }
@@ -2081,22 +2079,22 @@ const iterations = [
               },
               access: "rw",
             },
-            grantee: {
-              userId: 85,
-              username: "lvl1",
-              accessLevel: 1,
-            },
+             grantee: {
+                  userGroupId: 1,
+                  name: "IterationTestgroup",
+                  accessLevel: 1,
+                },
           },
           {
             aclRule: {
               access: "rw",
               benchmarkId: "VPN_SRG_TEST",
             },
-            grantee: {
-              userId: 85,
-              username: "lvl1",
-              accessLevel: 1,
-            },
+             grantee: {
+                  userGroupId: 1,
+                  name: "IterationTestgroup",
+                  accessLevel: 1,
+                },
           },
         ],
       },
@@ -2116,11 +2114,11 @@ const iterations = [
               },
               access: "rw",
             },
-            grantee: {
-              userId: 85,
-              username: "lvl1",
-              accessLevel: 1,
-            },
+             grantee: {
+                  userGroupId: 1,
+                  name: "IterationTestgroup",
+                  accessLevel: 1,
+                },
           },
         ],
       },
@@ -2140,22 +2138,22 @@ const iterations = [
               },
               access: "rw",
             },
-            grantee: {
-              userId: 85,
-              username: "lvl1",
-              accessLevel: 1,
-            },
+             grantee: {
+                  userGroupId: 1,
+                  name: "IterationTestgroup",
+                  accessLevel: 1,
+                },
           },
           {
             aclRule: {
               access: "rw",
               benchmarkId: "VPN_SRG_TEST",
             },
-            grantee: {
-              userId: 85,
-              username: "lvl1",
-              accessLevel: 1,
-            },
+             grantee: {
+                  userGroupId: 1,
+                  name: "IterationTestgroup",
+                  accessLevel: 1,
+                },
           },
         ],
       },
@@ -2175,11 +2173,11 @@ const iterations = [
               },
               access: "rw",
             },
-            grantee: {
-              userId: 85,
-              username: "lvl1",
-              accessLevel: 1,
-            },
+             grantee: {
+                  userGroupId: 1,
+                  name: "IterationTestgroup",
+                  accessLevel: 1,
+                },
           },
         ],
       },
@@ -2196,11 +2194,11 @@ const iterations = [
               access: "rw",
               benchmarkId: "VPN_SRG_TEST",
             },
-            grantee: {
-              userId: 85,
-              username: "lvl1",
-              accessLevel: 1,
-            },
+             grantee: {
+                  userGroupId: 1,
+                  name: "IterationTestgroup",
+                  accessLevel: 1,
+                },
           },
         ],
       },
@@ -2223,11 +2221,11 @@ const iterations = [
               access: "r",
               benchmarkId: "VPN_SRG_TEST",
             },
-            grantee: {
-              userId: 85,
-              username: "lvl1",
-              accessLevel: 1,
-            },
+             grantee: {
+                  userGroupId: 1,
+                  name: "IterationTestgroup",
+                  accessLevel: 1,
+                },
           },
         ],
       },
@@ -2247,11 +2245,11 @@ const iterations = [
               },
               access: "rw",
             },
-            grantee: {
-              userId: 85,
-              username: "lvl1",
-              accessLevel: 1,
-            },
+             grantee: {
+                  userGroupId: 1,
+                  name: "IterationTestgroup",
+                  accessLevel: 1,
+                },
           },
         ],
       },
@@ -2268,11 +2266,11 @@ const iterations = [
               access: "r",
               benchmarkId: "VPN_SRG_TEST",
             },
-            grantee: {
-              userId: 85,
-              username: "lvl1",
-              accessLevel: 1,
-            },
+             grantee: {
+                  userGroupId: 1,
+                  name: "IterationTestgroup",
+                  accessLevel: 1,
+                },
           },
         ],
       },
@@ -2292,11 +2290,11 @@ const iterations = [
               },
               access: "rw",
             },
-            grantee: {
-              userId: 85,
-              username: "lvl1",
-              accessLevel: 1,
-            },
+             grantee: {
+                  userGroupId: 1,
+                  name: "IterationTestgroup",
+                  accessLevel: 1,
+                },
           },
         ],
       },
@@ -2313,11 +2311,11 @@ const iterations = [
               access: "r",
               benchmarkId: "VPN_SRG_TEST",
             },
-            grantee: {
-              userId: 85,
-              username: "lvl1",
-              accessLevel: 1,
-            },
+             grantee: {
+                  userGroupId: 1,
+                  name: "IterationTestgroup",
+                  accessLevel: 1,
+                },
           },
         ],
       },
@@ -2343,11 +2341,11 @@ const iterations = [
               },
               access: "rw",
             },
-            grantee: {
-              userId: 85,
-              username: "lvl1",
-              accessLevel: 1,
-            },
+             grantee: {
+                  userGroupId: 1,
+                  name: "IterationTestgroup",
+                  accessLevel: 1,
+                },
           },
         ],
       },
@@ -2367,11 +2365,11 @@ const iterations = [
               },
               access: "rw",
             },
-            grantee: {
-              userId: 85,
-              username: "lvl1",
-              accessLevel: 1,
-            },
+             grantee: {
+                  userGroupId: 1,
+                  name: "IterationTestgroup",
+                  accessLevel: 1,
+                },
           },
         ],
       },
@@ -2394,11 +2392,11 @@ const iterations = [
               access: "r",
               benchmarkId: "VPN_SRG_TEST",
             },
-            grantee: {
-              userId: 85,
-              username: "lvl1",
-              accessLevel: 1,
-            },
+             grantee: {
+                  userGroupId: 1,
+                  name: "IterationTestgroup",
+                  accessLevel: 1,
+                },
           },
         ],
       },
@@ -2424,22 +2422,22 @@ const iterations = [
               },
               access: "r",
             },
-            grantee: {
-              userId: 85,
-              username: "lvl1",
-              accessLevel: 1,
-            },
+             grantee: {
+                  userGroupId: 1,
+                  name: "IterationTestgroup",
+                  accessLevel: 1,
+                },
           },
           {
             aclRule: {
               access: "r",
               benchmarkId: "VPN_SRG_TEST",
             },
-            grantee: {
-              userId: 85,
-              username: "lvl1",
-              accessLevel: 1,
-            },
+             grantee: {
+                  userGroupId: 1,
+                  name: "IterationTestgroup",
+                  accessLevel: 1,
+                },
           },
         ],
       },
@@ -2459,11 +2457,11 @@ const iterations = [
               },
               access: "r",
             },
-            grantee: {
-              userId: 85,
-              username: "lvl1",
-              accessLevel: 1,
-            },
+             grantee: {
+                  userGroupId: 1,
+                  name: "IterationTestgroup",
+                  accessLevel: 1,
+                },
           },
         ],
       },
@@ -2483,22 +2481,22 @@ const iterations = [
               },
               access: "r",
             },
-            grantee: {
-              userId: 85,
-              username: "lvl1",
-              accessLevel: 1,
-            },
+             grantee: {
+                  userGroupId: 1,
+                  name: "IterationTestgroup",
+                  accessLevel: 1,
+                },
           },
           {
             aclRule: {
               access: "r",
               benchmarkId: "VPN_SRG_TEST",
             },
-            grantee: {
-              userId: 85,
-              username: "lvl1",
-              accessLevel: 1,
-            },
+             grantee: {
+                  userGroupId: 1,
+                  name: "IterationTestgroup",
+                  accessLevel: 1,
+                },
           },
         ],
       },
@@ -2518,11 +2516,11 @@ const iterations = [
               },
               access: "r",
             },
-            grantee: {
-              userId: 85,
-              username: "lvl1",
-              accessLevel: 1,
-            },
+             grantee: {
+                  userGroupId: 1,
+                  name: "IterationTestgroup",
+                  accessLevel: 1,
+                },
           },
         ],
       },
@@ -2539,11 +2537,11 @@ const iterations = [
               access: "r",
               benchmarkId: "VPN_SRG_TEST",
             },
-            grantee: {
-              userId: 85,
-              username: "lvl1",
-              accessLevel: 1,
-            },
+             grantee: {
+                  userGroupId: 1,
+                  name: "IterationTestgroup",
+                  accessLevel: 1,
+                },
           },
         ],
       },
@@ -2570,11 +2568,11 @@ const iterations = [
               },
               access: "rw",
             },
-            grantee: {
-              userId: 85,
-              username: "lvl1",
-              accessLevel: 1,
-            },
+             grantee: {
+                  userGroupId: 1,
+                  name: "IterationTestgroup",
+                  accessLevel: 1,
+                },
           },
         ],
       },
@@ -2594,11 +2592,11 @@ const iterations = [
               },
               access: "rw",
             },
-            grantee: {
-              userId: 85,
-              username: "lvl1",
-              accessLevel: 1,
-            },
+             grantee: {
+                  userGroupId: 1,
+                  name: "IterationTestgroup",
+                  accessLevel: 1,
+                },
           },
         ],
       },
@@ -2618,11 +2616,11 @@ const iterations = [
               },
               access: "rw",
             },
-            grantee: {
-              userId: 85,
-              username: "lvl1",
-              accessLevel: 1,
-            },
+             grantee: {
+                  userGroupId: 1,
+                  name: "IterationTestgroup",
+                  accessLevel: 1,
+                },
           },
         ],
       },
@@ -2642,11 +2640,11 @@ const iterations = [
               },
               access: "rw",
             },
-            grantee: {
-              userId: 85,
-              username: "lvl1",
-              accessLevel: 1,
-            },
+             grantee: {
+                  userGroupId: 1,
+                  name: "IterationTestgroup",
+                  accessLevel: 1,
+                },
           },
         ],
       },
@@ -2666,11 +2664,11 @@ const iterations = [
                 assetId: "154",
               },
             },
-            grantee: {
-              userId: 85,
-              username: "lvl1",
-              accessLevel: 1,
-            },
+             grantee: {
+                  userGroupId: 1,
+                  name: "IterationTestgroup",
+                  accessLevel: 1,
+                },
           },
         ],
       },
@@ -2690,14 +2688,14 @@ const iterations = [
                 assetId: "154",
               },
             },
-            grantee: {
-              userId: 85,
-              username: "lvl1",
-              accessLevel: 1,
-            },
+             grantee: {
+                  userGroupId: 1,
+                  name: "IterationTestgroup",
+                  accessLevel: 1,
+                },
           },
         ],
-        
+    
       },
     ]
   },
@@ -2722,11 +2720,11 @@ const iterations = [
                 assetId: "62",
               },
             },
-            grantee: {
-              userId: 85,
-              username: "lvl1",
-              accessLevel: 1,
-            },
+             grantee: {
+                  userGroupId: 1,
+                  name: "IterationTestgroup",
+                  accessLevel: 1,
+                },
           },
         ],
       },
@@ -2746,11 +2744,11 @@ const iterations = [
                 assetId: "62",
               },
             },
-            grantee: {
-              userId: 85,
-              username: "lvl1",
-              accessLevel: 1,
-            },
+             grantee: {
+                  userGroupId: 1,
+                  name: "IterationTestgroup",
+                  accessLevel: 1,
+                },
           },
         ],
       },
@@ -2770,11 +2768,11 @@ const iterations = [
               },
               access: "rw",
             },
-            grantee: {
-              userId: 85,
-              username: "lvl1",
-              accessLevel: 1,
-            },
+             grantee: {
+                  userGroupId: 1,
+                  name: "IterationTestgroup",
+                  accessLevel: 1,
+                },
           },
         ],
       },
@@ -2794,11 +2792,11 @@ const iterations = [
               },
               access: "rw",
             },
-            grantee: {
-              userId: 85,
-              username: "lvl1",
-              accessLevel: 1,
-            },
+             grantee: {
+                  userGroupId: 1,
+                  name: "IterationTestgroup",
+                  accessLevel: 1,
+                },
           },
         ],
       },
@@ -2825,11 +2823,11 @@ const iterations = [
               },
               access: "rw",
             },
-            grantee: {
-              userId: 85,
-              username: "lvl1",
-              accessLevel: 1,
-            },
+             grantee: {
+                  userGroupId: 1,
+                  name: "IterationTestgroup",
+                  accessLevel: 1,
+                },
           },
         ],
       },
@@ -2849,11 +2847,11 @@ const iterations = [
               },
               access: "rw",
             },
-            grantee: {
-              userId: 85,
-              username: "lvl1",
-              accessLevel: 1,
-            },
+             grantee: {
+                  userGroupId: 1,
+                  name: "IterationTestgroup",
+                  accessLevel: 1,
+                },
           },
         ],
       },
@@ -2881,11 +2879,11 @@ const iterations = [
               access: "r",
 
             },
-            grantee: {
-              userId: 85,
-              username: "lvl1",
-              accessLevel: 1,
-            },
+             grantee: {
+                  userGroupId: 1,
+                  name: "IterationTestgroup",
+                  accessLevel: 1,
+                },
           },
         ],
       },
@@ -2905,11 +2903,11 @@ const iterations = [
               },
               access: "r",
             },
-            grantee: {
-              userId: 85,
-              username: "lvl1",
-              accessLevel: 1,
-            },
+             grantee: {
+                  userGroupId: 1,
+                  name: "IterationTestgroup",
+                  accessLevel: 1,
+                },
           },
         ],
       },
@@ -2929,11 +2927,11 @@ const iterations = [
               },
               access: "r",
             },
-            grantee: {
-              userId: 85,
-              username: "lvl1",
-              accessLevel: 1,
-            },
+             grantee: {
+                  userGroupId: 1,
+                  name: "IterationTestgroup",
+                  accessLevel: 1,
+                },
           },
         ],
       },
@@ -2953,11 +2951,11 @@ const iterations = [
               },
               access: "r",
             },
-            grantee: {
-              userId: 85,
-              username: "lvl1",
-              accessLevel: 1,
-            },
+             grantee: {
+                  userGroupId: 1,
+                  name: "IterationTestgroup",
+                  accessLevel: 1,
+                },
           },
         ],
       },
@@ -2984,11 +2982,11 @@ const iterations = [
               },
               access: "r",
             },
-            grantee: {
-              userId: 85,
-              username: "lvl1",
-              accessLevel: 1,
-            },
+             grantee: {
+                  userGroupId: 1,
+                  name: "IterationTestgroup",
+                  accessLevel: 1,
+                },
           },
         ],
       },
@@ -3008,11 +3006,11 @@ const iterations = [
               },
               access: "r",
             },
-            grantee: {
-              userId: 85,
-              username: "lvl1",
-              accessLevel: 1,
-            },
+             grantee: {
+                  userGroupId: 1,
+                  name: "IterationTestgroup",
+                  accessLevel: 1,
+                },
           },
         ],
       },
@@ -3039,11 +3037,11 @@ const iterations = [
               },
               access: "r",
             },
-            grantee: {
-              userId: 85,
-              username: "lvl1",
-              accessLevel: 1,
-            },
+             grantee: {
+                  userGroupId: 1,
+                  name: "IterationTestgroup",
+                  accessLevel: 1,
+                },
           },
         ],
       },
@@ -3063,11 +3061,11 @@ const iterations = [
               },
               access: "r",
             },
-            grantee: {
-              userId: 85,
-              username: "lvl1",
-              accessLevel: 1,
-            },
+             grantee: {
+                  userGroupId: 1,
+                  name: "IterationTestgroup",
+                  accessLevel: 1,
+                },
           },
         ],
       },
@@ -3087,11 +3085,11 @@ const iterations = [
               },
               access: "r",
             },
-            grantee: {
-              userId: 85,
-              username: "lvl1",
-              accessLevel: 1,
-            },
+             grantee: {
+                  userGroupId: 1,
+                  name: "IterationTestgroup",
+                  accessLevel: 1,
+                },
           },
         ],
       },
@@ -3111,11 +3109,11 @@ const iterations = [
               },
               access: "r",
             },
-            grantee: {
-              userId: 85,
-              username: "lvl1",
-              accessLevel: 1,
-            },
+             grantee: {
+                  userGroupId: 1,
+                  name: "IterationTestgroup",
+                  accessLevel: 1,
+                },
           },
         ],
       },
@@ -3135,11 +3133,11 @@ const iterations = [
                 assetId: "154",
               },
             },
-            grantee: {
-              userId: 85,
-              username: "lvl1",
-              accessLevel: 1,
-            },
+             grantee: {
+                  userGroupId: 1,
+                  name: "IterationTestgroup",
+                  accessLevel: 1,
+                },
           },
         ],
       },
@@ -3159,11 +3157,11 @@ const iterations = [
                 assetId: "154",
               },
             },
-            grantee: {
-              userId: 85,
-              username: "lvl1",
-              accessLevel: 1,
-            },
+             grantee: {
+                  userGroupId: 1,
+                  name: "IterationTestgroup",
+                  accessLevel: 1,
+                },
           },
         ],
       },
@@ -3189,11 +3187,11 @@ const iterations = [
               },
               access: "rw",
             },
-            grantee: {
-              userId: 85,
-              username: "lvl1",
-              accessLevel: 1,
-            },
+             grantee: {
+                  userGroupId: 1,
+                  name: "IterationTestgroup",
+                  accessLevel: 1,
+                },
           },
           {
             aclRule: {
@@ -3203,11 +3201,11 @@ const iterations = [
               },
               access: "rw",
             },
-            grantee: {
-              userId: 85,
-              username: "lvl1",
-              accessLevel: 1,
-            },
+             grantee: {
+                  userGroupId: 1,
+                  name: "IterationTestgroup",
+                  accessLevel: 1,
+                },
           }
         ],
       },
@@ -3227,11 +3225,11 @@ const iterations = [
               },
               access: "rw",
             },
-            grantee: {
-              userId: 85,
-              username: "lvl1",
-              accessLevel: 1,
-            },
+             grantee: {
+                  userGroupId: 1,
+                  name: "IterationTestgroup",
+                  accessLevel: 1,
+                },
           },
           {
             aclRule: {
@@ -3241,11 +3239,11 @@ const iterations = [
               },
               access: "rw",
             },
-            grantee: {
-              userId: 85,
-              username: "lvl1",
-              accessLevel: 1,
-            },
+             grantee: {
+                  userGroupId: 1,
+                  name: "IterationTestgroup",
+                  accessLevel: 1,
+                },
           }
         ],
       },
@@ -3265,11 +3263,11 @@ const iterations = [
               },
               access: "rw",
             },
-            grantee: {
-              userId: 85,
-              username: "lvl1",
-              accessLevel: 1,
-            },
+             grantee: {
+                  userGroupId: 1,
+                  name: "IterationTestgroup",
+                  accessLevel: 1,
+                },
           },
         ],
       },
@@ -3289,11 +3287,11 @@ const iterations = [
               },
               access: "rw",
             },
-            grantee: {
-              userId: 85,
-              username: "lvl1",
-              accessLevel: 1,
-            },
+             grantee: {
+                  userGroupId: 1,
+                  name: "IterationTestgroup",
+                  accessLevel: 1,
+                },
           },
         ],
       },
@@ -3319,11 +3317,11 @@ const iterations = [
               },
               access: "r",
             },
-            grantee: {
-              userId: 85,
-              username: "lvl1",
-              accessLevel: 1,
-            },
+             grantee: {
+                  userGroupId: 1,
+                  name: "IterationTestgroup",
+                  accessLevel: 1,
+                },
           }
         ],
       },
@@ -3343,11 +3341,11 @@ const iterations = [
               },
               access: "r",
             },
-            grantee: {
-              userId: 85,
-              username: "lvl1",
-              accessLevel: 1,
-            },
+             grantee: {
+                  userGroupId: 1,
+                  name: "IterationTestgroup",
+                  accessLevel: 1,
+                },
           }
         ],
       },
@@ -3367,11 +3365,11 @@ const iterations = [
               },
               access: "rw",
             },
-            grantee: {
-              userId: 85,
-              username: "lvl1",
-              accessLevel: 1,
-            },
+             grantee: {
+                  userGroupId: 1,
+                  name: "IterationTestgroup",
+                  accessLevel: 1,
+                },
           },
         ],
       },
@@ -3391,11 +3389,11 @@ const iterations = [
               },
               access: "rw",
             },
-            grantee: {
-              userId: 85,
-              username: "lvl1",
-              accessLevel: 1,
-            },
+             grantee: {
+                  userGroupId: 1,
+                  name: "IterationTestgroup",
+                  accessLevel: 1,
+                },
           },
         ],
       },
@@ -3421,11 +3419,11 @@ const iterations = [
               },
               access: "rw",
             },
-            grantee: {
-              userId: 85,
-              username: "lvl1",
-              accessLevel: 1,
-            },
+             grantee: {
+                  userGroupId: 1,
+                  name: "IterationTestgroup",
+                  accessLevel: 1,
+                },
           },
         ],
       },
@@ -3446,8 +3444,8 @@ const iterations = [
               access: "rw",
             },
             grantee: {
-              userId: 85,
-              username: "lvl1",
+              userGroupId: 1,
+              name: "IterationTestgroup",
               accessLevel: 1,
             },
           },
@@ -3462,7 +3460,7 @@ const iterations = [
     response: [
     ]
   },
-    {
+  {
     name: "benchmark_rw_asset_r",
     // test asset is r
     put: [{"benchmarkId":reference.testCollection.benchmark,"access":"rw"},{"assetId":reference.testAsset.assetId,"access":"r"}],
@@ -3483,11 +3481,11 @@ const iterations = [
                 },
                 access: "r",
               },
-              grantee: {
-                userId: 85,
-                username: "lvl1",
-                accessLevel: 1,
-              },
+               grantee: {
+                  userGroupId: 1,
+                  name: "IterationTestgroup",
+                  accessLevel: 1,
+                },
             },
           ],
         },
@@ -3507,11 +3505,11 @@ const iterations = [
                 },
                 access: "r",
               },
-              grantee: {
-                userId: 85,
-                username: "lvl1",
-                accessLevel: 1,
-              },
+               grantee: {
+                  userGroupId: 1,
+                  name: "IterationTestgroup",
+                  accessLevel: 1,
+                },
             },
           ],
         },
@@ -3528,11 +3526,11 @@ const iterations = [
                 benchmarkId: reference.testCollection.benchmark,
                 access: "rw",
               },
-              grantee: {
-                userId: 85,
-                username: "lvl1",
-                accessLevel: 1,
-              },
+               grantee: {
+                  userGroupId: 1,
+                  name: "IterationTestgroup",
+                  accessLevel: 1,
+                },
             },
           ],
         },
@@ -3549,11 +3547,11 @@ const iterations = [
                 benchmarkId: reference.testCollection.benchmark,
                 access: "rw",
               },
-              grantee: {
-                userId: 85,
-                username: "lvl1",
-                accessLevel: 1,
-              },
+               grantee: {
+                  userGroupId: 1,
+                  name: "IterationTestgroup",
+                  accessLevel: 1,
+                },
             },
           ],
         }
@@ -3577,11 +3575,11 @@ const iterations = [
                 benchmarkId: reference.testCollection.benchmark,
                 access: "rw",
               },
-              grantee: {
-                userId: 85,
-                username: "lvl1",
-                accessLevel: 1,
-              },
+               grantee: {
+                  userGroupId: 1,
+                  name: "IterationTestgroup",
+                  accessLevel: 1,
+                },
             },
           ],
         },
@@ -3598,11 +3596,11 @@ const iterations = [
                 benchmarkId: reference.testCollection.benchmark,
                 access: "rw",
               },
-              grantee: {
-                userId: 85,
-                username: "lvl1",
-                accessLevel: 1,
-              },
+               grantee: {
+                  userGroupId: 1,
+                  name: "IterationTestgroup",
+                  accessLevel: 1,
+                },
             },
           ],
         }
@@ -3626,11 +3624,11 @@ const iterations = [
                 benchmarkId: reference.testCollection.benchmark,
                 access: "r",
               },
-              grantee: {
-                userId: 85,
-                username: "lvl1",
-                accessLevel: 1,
-              },
+               grantee: {
+                  userGroupId: 1,
+                  name: "IterationTestgroup",
+                  accessLevel: 1,
+                },
             },
           ],
         },
@@ -3650,11 +3648,11 @@ const iterations = [
                 },
                 access: "rw",
               },
-              grantee: {
-                userId: 85,
-                username: "lvl1",
-                accessLevel: 1,
-              },
+               grantee: {
+                  userGroupId: 1,
+                  name: "IterationTestgroup",
+                  accessLevel: 1,
+                },
             },
           ],
         },
@@ -3671,11 +3669,11 @@ const iterations = [
                 benchmarkId: reference.testCollection.benchmark,
                 access: "r",
               },
-              grantee: {
-                userId: 85,
-                username: "lvl1",
-                accessLevel: 1,
-              },
+               grantee: {
+                  userGroupId: 1,
+                  name: "IterationTestgroup",
+                  accessLevel: 1,
+                },
             },
           ],
         },
@@ -3692,11 +3690,11 @@ const iterations = [
                 benchmarkId: reference.testCollection.benchmark,
                 access: "r",
               },
-              grantee: {
-                userId: 85,
-                username: "lvl1",
-                accessLevel: 1,
-              },
+               grantee: {
+                  userGroupId: 1,
+                  name: "IterationTestgroup",
+                  accessLevel: 1,
+                },
             },
           ],
         }
@@ -3720,11 +3718,11 @@ const iterations = [
                 benchmarkId: reference.testCollection.benchmark,
                 access: "r",
               },
-              grantee: {
-                userId: 85,
-                username: "lvl1",
-                accessLevel: 1,
-              },
+               grantee: {
+                  userGroupId: 1,
+                  name: "IterationTestgroup",
+                  accessLevel: 1,
+                },
             },
             {
               aclRule: {
@@ -3734,11 +3732,11 @@ const iterations = [
                 },
                 access: "r",
               },
-              grantee: {
-                userId: 85,
-                username: "lvl1",
-                accessLevel: 1,
-              },
+               grantee: {
+                  userGroupId: 1,
+                  name: "IterationTestgroup",
+                  accessLevel: 1,
+                },
             }
           ],
         },
@@ -3758,11 +3756,11 @@ const iterations = [
                 },
                 access: "r",
               },
-              grantee: {
-                userId: 85,
-                username: "lvl1",
-                accessLevel: 1,
-              },
+               grantee: {
+                  userGroupId: 1,
+                  name: "IterationTestgroup",
+                  accessLevel: 1,
+                },
             },
           ],
         },
@@ -3779,11 +3777,11 @@ const iterations = [
                 benchmarkId: reference.testCollection.benchmark,
                 access: "r",
               },
-              grantee: {
-                userId: 85,
-                username: "lvl1",
-                accessLevel: 1,
-              },
+               grantee: {
+                  userGroupId: 1,
+                  name: "IterationTestgroup",
+                  accessLevel: 1,
+                },
             },
           ],
         },
@@ -3800,11 +3798,11 @@ const iterations = [
                 benchmarkId: reference.testCollection.benchmark,
                 access: "r",
               },
-              grantee: {
-                userId: 85,
-                username: "lvl1",
-                accessLevel: 1,
-              },
+               grantee: {
+                  userGroupId: 1,
+                  name: "IterationTestgroup",
+                  accessLevel: 1,
+                },
             },
           ],
         }
@@ -3831,11 +3829,11 @@ const iterations = [
               },
               access: "r",
             },
-            grantee: {
-              userId: 85,
-              username: "lvl1",
-              accessLevel: 1,
-            },
+             grantee: {
+                  userGroupId: 1,
+                  name: "IterationTestgroup",
+                  accessLevel: 1,
+                },
           },
         ],
       },
@@ -3859,11 +3857,11 @@ const iterations = [
               benchmarkId: reference.testCollection.benchmark,
               access: "rw",
             },
-            grantee: {
-              userId: 85,
-              username: "lvl1",
-              accessLevel: 1,
-            },
+             grantee: {
+                  userGroupId: 1,
+                  name: "IterationTestgroup",
+                  accessLevel: 1,
+                },
           },
         ],
       },
@@ -3880,11 +3878,11 @@ const iterations = [
               benchmarkId: reference.windowsBenchmark,
               access: "rw",
             },
-            grantee: {
-              userId: 85,
-              username: "lvl1",
-              accessLevel: 1,
-            },
+             grantee: {
+                  userGroupId: 1,
+                  name: "IterationTestgroup",
+                  accessLevel: 1,
+                },
           },
         ],
       },
@@ -3901,11 +3899,11 @@ const iterations = [
               benchmarkId: reference.testCollection.benchmark,
               access: "rw",
             },
-            grantee: {
-              userId: 85,
-              username: "lvl1",
-              accessLevel: 1,
-            },
+             grantee: {
+                  userGroupId: 1,
+                  name: "IterationTestgroup",
+                  accessLevel: 1,
+                },
           },
         ],
       },
@@ -3922,11 +3920,11 @@ const iterations = [
               benchmarkId: reference.windowsBenchmark,
               access: "rw",
             },
-            grantee: {
-              userId: 85,
-              username: "lvl1",
-              accessLevel: 1,
-            },
+             grantee: {
+                  userGroupId: 1,
+                  name: "IterationTestgroup",
+                  accessLevel: 1,
+                },
           },
         ],
       },
@@ -3943,11 +3941,11 @@ const iterations = [
               benchmarkId: reference.testCollection.benchmark,
               access: "rw",
             },
-            grantee: {
-              userId: 85,
-              username: "lvl1",
-              accessLevel: 1,
-            },
+             grantee: {
+                  userGroupId: 1,
+                  name: "IterationTestgroup",
+                  accessLevel: 1,
+                },
           },
         ],
       },
@@ -3964,11 +3962,11 @@ const iterations = [
               benchmarkId: reference.windowsBenchmark,
               access: "rw",
             },
-            grantee: {
-              userId: 85,
-              username: "lvl1",
-              accessLevel: 1,
-            },
+             grantee: {
+                  userGroupId: 1,
+                  name: "IterationTestgroup",
+                  accessLevel: 1,
+                },
           },
         ],
       }
@@ -3992,11 +3990,11 @@ const iterations = [
               benchmarkId: reference.testCollection.benchmark,
               access: "rw",
             },
-            grantee: {
-              userId: 85,
-              username: "lvl1",
-              accessLevel: 1,
-            },
+             grantee: {
+                  userGroupId: 1,
+                  name: "IterationTestgroup",
+                  accessLevel: 1,
+                },
           },
         ],
       },
@@ -4013,11 +4011,11 @@ const iterations = [
               benchmarkId: reference.windowsBenchmark,
               access: "r",
             },
-            grantee: {
-              userId: 85,
-              username: "lvl1",
-              accessLevel: 1,
-            },
+             grantee: {
+                  userGroupId: 1,
+                  name: "IterationTestgroup",
+                  accessLevel: 1,
+                },
           },
         ],
       },
@@ -4034,11 +4032,11 @@ const iterations = [
               benchmarkId: reference.testCollection.benchmark,
               access: "rw",
             },
-            grantee: {
-              userId: 85,
-              username: "lvl1",
-              accessLevel: 1,
-            },
+             grantee: {
+                  userGroupId: 1,
+                  name: "IterationTestgroup",
+                  accessLevel: 1,
+                },
           },
         ],
       },
@@ -4055,11 +4053,11 @@ const iterations = [
               benchmarkId: reference.windowsBenchmark,
               access: "r",
             },
-            grantee: {
-              userId: 85,
-              username: "lvl1",
-              accessLevel: 1,
-            },
+             grantee: {
+                  userGroupId: 1,
+                  name: "IterationTestgroup",
+                  accessLevel: 1,
+                },
           },
         ],
       },
@@ -4076,11 +4074,11 @@ const iterations = [
               benchmarkId: reference.testCollection.benchmark,
               access: "rw",
             },
-            grantee: {
-              userId: 85,
-              username: "lvl1",
-              accessLevel: 1,
-            },
+             grantee: {
+                  userGroupId: 1,
+                  name: "IterationTestgroup",
+                  accessLevel: 1,
+                },
           },
         ],
       },
@@ -4097,11 +4095,11 @@ const iterations = [
               benchmarkId: reference.windowsBenchmark,
               access: "r",
             },
-            grantee: {
-              userId: 85,
-              username: "lvl1",
-              accessLevel: 1,
-            },
+             grantee: {
+                  userGroupId: 1,
+                  name: "IterationTestgroup",
+                  accessLevel: 1,
+                },
           },
         ],
       }
@@ -4125,11 +4123,11 @@ const iterations = [
               benchmarkId: reference.testCollection.benchmark,
               access: "rw",
             },
-            grantee: {
-              userId: 85,
-              username: "lvl1",
-              accessLevel: 1,
-            },
+             grantee: {
+                  userGroupId: 1,
+                  name: "IterationTestgroup",
+                  accessLevel: 1,
+                },
           },
         ],
       },
@@ -4146,11 +4144,11 @@ const iterations = [
               benchmarkId: reference.testCollection.benchmark,
               access: "rw",
             },
-            grantee: {
-              userId: 85,
-              username: "lvl1",
-              accessLevel: 1,
-            },
+             grantee: {
+                  userGroupId: 1,
+                  name: "IterationTestgroup",
+                  accessLevel: 1,
+                },
           },
         ],
       },
@@ -4167,11 +4165,11 @@ const iterations = [
               benchmarkId: reference.testCollection.benchmark,
               access: "rw",
             },
-            grantee: {
-              userId: 85,
-              username: "lvl1",
-              accessLevel: 1,
-            },
+             grantee: {
+                  userGroupId: 1,
+                  name: "IterationTestgroup",
+                  accessLevel: 1,
+                },
           },
         ],
       },
@@ -4197,11 +4195,11 @@ const iterations = [
               },
               access: "rw",
             },
-            grantee: {
-              userId: 85,
-              username: "lvl1",
-              accessLevel: 1,
-            },
+             grantee: {
+                  userGroupId: 1,
+                  name: "IterationTestgroup",
+                  accessLevel: 1,
+                },
           },
         ],
       },
@@ -4221,11 +4219,11 @@ const iterations = [
               },
               access: "rw",
             },
-            grantee: {
-              userId: 85,
-              username: "lvl1",
-              accessLevel: 1,
-            },
+             grantee: {
+                  userGroupId: 1,
+                  name: "IterationTestgroup",
+                  accessLevel: 1,
+                },
           },
         ],
       },
@@ -4246,11 +4244,11 @@ const iterations = [
               access: "rw",
               benchmarkId: "VPN_SRG_TEST",
             },
-            grantee: {
-              userId: 85,
-              username: "lvl1",
-              accessLevel: 1,
-            },
+             grantee: {
+                  userGroupId: 1,
+                  name: "IterationTestgroup",
+                  accessLevel: 1,
+                },
           },
         ],
       },
@@ -4270,11 +4268,11 @@ const iterations = [
               },
               access: "rw",
             },
-            grantee: {
-              userId: 85,
-              username: "lvl1",
-              accessLevel: 1,
-            },
+             grantee: {
+                  userGroupId: 1,
+                  name: "IterationTestgroup",
+                  accessLevel: 1,
+                },
           },
         ],
       },
@@ -4301,11 +4299,11 @@ const iterations = [
               },
               access: "r",
             },
-            grantee: {
-              userId: 85,
-              username: "lvl1",
-              accessLevel: 1,
-            },
+             grantee: {
+                  userGroupId: 1,
+                  name: "IterationTestgroup",
+                  accessLevel: 1,
+                },
           },
         ],
       },
@@ -4325,11 +4323,11 @@ const iterations = [
               },
               access: "r",
             },
-            grantee: {
-              userId: 85,
-              username: "lvl1",
-              accessLevel: 1,
-            },
+             grantee: {
+                  userGroupId: 1,
+                  name: "IterationTestgroup",
+                  accessLevel: 1,
+                },
           },
         ],
       },
@@ -4350,11 +4348,11 @@ const iterations = [
               access: "rw",
               benchmarkId: "VPN_SRG_TEST",
             },
-            grantee: {
-              userId: 85,
-              username: "lvl1",
-              accessLevel: 1,
-            },
+             grantee: {
+                  userGroupId: 1,
+                  name: "IterationTestgroup",
+                  accessLevel: 1,
+                },
           },
         ],
       },
@@ -4374,11 +4372,11 @@ const iterations = [
               },
               access: "r",
             },
-            grantee: {
-              userId: 85,
-              username: "lvl1",
-              accessLevel: 1,
-            },
+             grantee: {
+                  userGroupId: 1,
+                  name: "IterationTestgroup",
+                  accessLevel: 1,
+                },
           },
         ],
       },
@@ -4405,11 +4403,11 @@ const iterations = [
               },
               access: "r",
             },
-            grantee: {
-              userId: 85,
-              username: "lvl1",
-              accessLevel: 1,
-            },
+             grantee: {
+                  userGroupId: 1,
+                  name: "IterationTestgroup",
+                  accessLevel: 1,
+                },
           },
         ],
       },
@@ -4429,11 +4427,11 @@ const iterations = [
               },
               access: "r",
             },
-            grantee: {
-              userId: 85,
-              username: "lvl1",
-              accessLevel: 1,
-            },
+             grantee: {
+                  userGroupId: 1,
+                  name: "IterationTestgroup",
+                  accessLevel: 1,
+                },
           },
         ],
       },
@@ -4454,11 +4452,11 @@ const iterations = [
               access: "rw",
               benchmarkId: "VPN_SRG_TEST",
             },
-            grantee: {
-              userId: 85,
-              username: "lvl1",
-              accessLevel: 1,
-            },
+             grantee: {
+                  userGroupId: 1,
+                  name: "IterationTestgroup",
+                  accessLevel: 1,
+                },
           },
         ],
       },
@@ -4478,11 +4476,11 @@ const iterations = [
               },
               access: "r",
             },
-            grantee: {
-              userId: 85,
-              username: "lvl1",
-              accessLevel: 1,
-            },
+             grantee: {
+                  userGroupId: 1,
+                  name: "IterationTestgroup",
+                  accessLevel: 1,
+                },
           },
         ],
       },
@@ -4509,11 +4507,11 @@ const iterations = [
               },
               access: "r",
             },
-            grantee: {
-              userId: 85,
-              username: "lvl1",
-              accessLevel: 1,
-            },
+             grantee: {
+                  userGroupId: 1,
+                  name: "IterationTestgroup",
+                  accessLevel: 1,
+                },
           },
         ],
       },
@@ -4533,11 +4531,11 @@ const iterations = [
               },
               access: "r",
             },
-            grantee: {
-              userId: 85,
-              username: "lvl1",
-              accessLevel: 1,
-            },
+             grantee: {
+                  userGroupId: 1,
+                  name: "IterationTestgroup",
+                  accessLevel: 1,
+                },
           },
         ],
       },
@@ -4558,11 +4556,11 @@ const iterations = [
               access: "r",
               benchmarkId: "VPN_SRG_TEST",
             },
-            grantee: {
-              userId: 85,
-              username: "lvl1",
-              accessLevel: 1,
-            },
+             grantee: {
+                  userGroupId: 1,
+                  name: "IterationTestgroup",
+                  accessLevel: 1,
+                },
           },
         ],
       },
@@ -4582,11 +4580,11 @@ const iterations = [
               },
               access: "r",
             },
-            grantee: {
-              userId: 85,
-              username: "lvl1",
-              accessLevel: 1,
-            },
+             grantee: {
+                  userGroupId: 1,
+                  name: "IterationTestgroup",
+                  accessLevel: 1,
+                },
           },
         ],
       },
@@ -4614,11 +4612,11 @@ const iterations = [
               access: "r",
               benchmarkId: "VPN_SRG_TEST",
             },
-            grantee: {
-              userId: 85,
-              username: "lvl1",
-              accessLevel: 1,
-            },
+             grantee: {
+                  userGroupId: 1,
+                  name: "IterationTestgroup",
+                  accessLevel: 1,
+                },
           },
         ],
       }
@@ -4645,11 +4643,11 @@ const iterations = [
               },
               access: "rw",
             },
-            grantee: {
-              userId: 85,
-              username: "lvl1",
-              accessLevel: 1,
-            },
+             grantee: {
+                  userGroupId: 1,
+                  name: "IterationTestgroup",
+                  accessLevel: 1,
+                },
           },
         ],
       },
@@ -4669,11 +4667,11 @@ const iterations = [
               },
               access: "rw",
             },
-            grantee: {
-              userId: 85,
-              username: "lvl1",
-              accessLevel: 1,
-            },
+             grantee: {
+                  userGroupId: 1,
+                  name: "IterationTestgroup",
+                  accessLevel: 1,
+                },
           },
         ],
       },
@@ -4693,11 +4691,11 @@ const iterations = [
               },
               access: "rw",
             },
-            grantee: {
-              userId: 85,
-              username: "lvl1",
-              accessLevel: 1,
-            },
+             grantee: {
+                  userGroupId: 1,
+                  name: "IterationTestgroup",
+                  accessLevel: 1,
+                },
           },
         ],
       },
@@ -4725,11 +4723,11 @@ const iterations = [
               access: "rw",
               benchmarkId: "VPN_SRG_TEST",
             },
-            grantee: {
-              userId: 85,
-              username: "lvl1",
-              accessLevel: 1,
-            },
+             grantee: {
+                  userGroupId: 1,
+                  name: "IterationTestgroup",
+                  accessLevel: 1,
+                },
           },
         ],
       },
@@ -4746,11 +4744,11 @@ const iterations = [
               access: "rw",
               benchmarkId: "Windows_10_STIG_TEST",
             },
-            grantee: {
-              userId: 85,
-              username: "lvl1",
-              accessLevel: 1,
-            },
+             grantee: {
+                  userGroupId: 1,
+                  name: "IterationTestgroup",
+                  accessLevel: 1,
+                },
           },
         ],
       },
@@ -4771,11 +4769,11 @@ const iterations = [
               access: "rw",
               benchmarkId: "VPN_SRG_TEST",
             },
-            grantee: {
-              userId: 85,
-              username: "lvl1",
-              accessLevel: 1,
-            },
+             grantee: {
+                  userGroupId: 1,
+                  name: "IterationTestgroup",
+                  accessLevel: 1,
+                },
           },
         ],
       },
@@ -4792,11 +4790,11 @@ const iterations = [
               access: "rw",
               benchmarkId: "Windows_10_STIG_TEST",
             },
-            grantee: {
-              userId: 85,
-              username: "lvl1",
-              accessLevel: 1,
-            },
+             grantee: {
+                  userGroupId: 1,
+                  name: "IterationTestgroup",
+                  accessLevel: 1,
+                },
           },
         ],
       },
@@ -4813,11 +4811,11 @@ const iterations = [
               access: "rw",
               benchmarkId: "Windows_10_STIG_TEST",
             },
-            grantee: {
-              userId: 85,
-              username: "lvl1",
-              accessLevel: 1,
-            },
+             grantee: {
+                  userGroupId: 1,
+                  name: "IterationTestgroup",
+                  accessLevel: 1,
+                },
           },
         ],
       },
@@ -4846,11 +4844,11 @@ const iterations = [
               access: "rw",
               benchmarkId: "VPN_SRG_TEST",
             },
-            grantee: {
-              userId: 85,
-              username: "lvl1",
-              accessLevel: 1,
-            },
+             grantee: {
+                  userGroupId: 1,
+                  name: "IterationTestgroup",
+                  accessLevel: 1,
+                },
           },
         ],
       },
@@ -4871,11 +4869,11 @@ const iterations = [
               access: "rw",
               benchmarkId: "VPN_SRG_TEST",
             },
-            grantee: {
-              userId: 85,
-              username: "lvl1",
-              accessLevel: 1,
-            },
+             grantee: {
+                  userGroupId: 1,
+                  name: "IterationTestgroup",
+                  accessLevel: 1,
+                },
           },
         ],
       },
@@ -4892,11 +4890,11 @@ const iterations = [
               access: "r",
               benchmarkId: "VPN_SRG_TEST",
             },
-            grantee: {
-              userId: 85,
-              username: "lvl1",
-              accessLevel: 1,
-            },
+             grantee: {
+                  userGroupId: 1,
+                  name: "IterationTestgroup",
+                  accessLevel: 1,
+                },
           },
         ],
       },
@@ -4925,11 +4923,11 @@ const iterations = [
               access: "rw",
               benchmarkId: "VPN_SRG_TEST",
             },
-            grantee: {
-              userId: 85,
-              username: "lvl1",
-              accessLevel: 1,
-            },
+             grantee: {
+                  userGroupId: 1,
+                  name: "IterationTestgroup",
+                  accessLevel: 1,
+                },
           },
         ],
       },
@@ -4950,11 +4948,11 @@ const iterations = [
               access: "rw",
               benchmarkId: "VPN_SRG_TEST",
             },
-            grantee: {
-              userId: 85,
-              username: "lvl1",
-              accessLevel: 1,
-            },
+             grantee: {
+                  userGroupId: 1,
+                  name: "IterationTestgroup",
+                  accessLevel: 1,
+                },
           },
         ],
       }
@@ -4983,11 +4981,11 @@ const iterations = [
               access: "r",
               benchmarkId: "VPN_SRG_TEST",
             },
-            grantee: {
-              userId: 85,
-              username: "lvl1",
-              accessLevel: 1,
-            },
+             grantee: {
+                  userGroupId: 1,
+                  name: "IterationTestgroup",
+                  accessLevel: 1,
+                },
           },
         ],
       },
@@ -5008,11 +5006,11 @@ const iterations = [
               access: "r",
               benchmarkId: "VPN_SRG_TEST",
             },
-            grantee: {
-              userId: 85,
-              username: "lvl1",
-              accessLevel: 1,
-            },
+             grantee: {
+                  userGroupId: 1,
+                  name: "IterationTestgroup",
+                  accessLevel: 1,
+                },
           },
         ],
       },
@@ -5029,11 +5027,11 @@ const iterations = [
               access: "r",
               benchmarkId: "VPN_SRG_TEST",
             },
-            grantee: {
-              userId: 85,
-              username: "lvl1",
-              accessLevel: 1,
-            },
+             grantee: {
+                  userGroupId: 1,
+                  name: "IterationTestgroup",
+                  accessLevel: 1,
+                },
           },
         ],
       },
@@ -5058,11 +5056,11 @@ const iterations = [
               access: "r",
               benchmarkId: "VPN_SRG_TEST",
             },
-            grantee: {
-              userId: 85,
-              username: "lvl1",
-              accessLevel: 1,
-            },
+             grantee: {
+                  userGroupId: 1,
+                  name: "IterationTestgroup",
+                  accessLevel: 1,
+                },
           },
         ],
       },
@@ -5095,11 +5093,11 @@ const iterations = [
               access: "rw",
               benchmarkId: "VPN_SRG_TEST",
             },
-            grantee: {
-              userId: 85,
-              username: "lvl1",
-              accessLevel: 1,
-            },
+             grantee: {
+                  userGroupId: 1,
+                  name: "IterationTestgroup",
+                  accessLevel: 1,
+                },
           },
         ],
       },
@@ -5120,11 +5118,11 @@ const iterations = [
               access: "rw",
               benchmarkId: "VPN_SRG_TEST",
             },
-            grantee: {
-              userId: 85,
-              username: "lvl1",
-              accessLevel: 1,
-            },
+             grantee: {
+                  userGroupId: 1,
+                  name: "IterationTestgroup",
+                  accessLevel: 1,
+                },
           },
         ],
       },
@@ -5144,11 +5142,11 @@ const iterations = [
               },
               access: "rw",
             },
-            grantee: {
-              userId: 85,
-              username: "lvl1",
-              accessLevel: 1,
-            },
+             grantee: {
+                  userGroupId: 1,
+                  name: "IterationTestgroup",
+                  accessLevel: 1,
+                },
           },
         ],
       },
@@ -5168,11 +5166,11 @@ const iterations = [
               },
               access: "rw",
             },
-            grantee: {
-              userId: 85,
-              username: "lvl1",
-              accessLevel: 1,
-            },
+             grantee: {
+                  userGroupId: 1,
+                  name: "IterationTestgroup",
+                  accessLevel: 1,
+                },
           },
         ],
       },
@@ -5200,11 +5198,11 @@ const iterations = [
               access: "rw",
               benchmarkId: "VPN_SRG_TEST",
             },
-            grantee: {
-              userId: 85,
-              username: "lvl1",
-              accessLevel: 1,
-            },
+             grantee: {
+                  userGroupId: 1,
+                  name: "IterationTestgroup",
+                  accessLevel: 1,
+                },
           },
         ],
       },
@@ -5225,11 +5223,11 @@ const iterations = [
               access: "rw",
               benchmarkId: "VPN_SRG_TEST",
             },
-            grantee: {
-              userId: 85,
-              username: "lvl1",
-              accessLevel: 1,
-            },
+             grantee: {
+                  userGroupId: 1,
+                  name: "IterationTestgroup",
+                  accessLevel: 1,
+                },
           },
         ],
       },
@@ -5249,11 +5247,11 @@ const iterations = [
               },
               access: "r",
             },
-            grantee: {
-              userId: 85,
-              username: "lvl1",
-              accessLevel: 1,
-            },
+             grantee: {
+                  userGroupId: 1,
+                  name: "IterationTestgroup",
+                  accessLevel: 1,
+                },
           },
         ],
       },
@@ -5281,11 +5279,11 @@ const iterations = [
               access: "rw",
               benchmarkId: "VPN_SRG_TEST",
             },
-            grantee: {
-              userId: 85,
-              username: "lvl1",
-              accessLevel: 1,
-            },
+             grantee: {
+                  userGroupId: 1,
+                  name: "IterationTestgroup",
+                  accessLevel: 1,
+                },
           },
         ],
       },
@@ -5306,11 +5304,11 @@ const iterations = [
               access: "rw",
               benchmarkId: "VPN_SRG_TEST",
             },
-            grantee: {
-              userId: 85,
-              username: "lvl1",
-              accessLevel: 1,
-            },
+             grantee: {
+                  userGroupId: 1,
+                  name: "IterationTestgroup",
+                  accessLevel: 1,
+                },
           },
         ],
       },
@@ -5330,11 +5328,11 @@ const iterations = [
               },
               access: "r",
             },
-            grantee: {
-              userId: 85,
-              username: "lvl1",
-              accessLevel: 1,
-            },
+             grantee: {
+                  userGroupId: 1,
+                  name: "IterationTestgroup",
+                  accessLevel: 1,
+                },
           },
         ],
       },
@@ -5361,11 +5359,11 @@ const iterations = [
               access: "r",
               benchmarkId: "VPN_SRG_TEST",
             },
-            grantee: {
-              userId: 85,
-              username: "lvl1",
-              accessLevel: 1,
-            },
+             grantee: {
+                  userGroupId: 1,
+                  name: "IterationTestgroup",
+                  accessLevel: 1,
+                },
           },
         ],
       },
@@ -5386,11 +5384,11 @@ const iterations = [
               access: "r",
               benchmarkId: "VPN_SRG_TEST",
             },
-            grantee: {
-              userId: 85,
-              username: "lvl1",
-              accessLevel: 1,
-            },
+             grantee: {
+                  userGroupId: 1,
+                  name: "IterationTestgroup",
+                  accessLevel: 1,
+                },
           },
         ],
       },
@@ -5410,11 +5408,11 @@ const iterations = [
               },
               access: "rw",
             },
-            grantee: {
-              userId: 85,
-              username: "lvl1",
-              accessLevel: 1,
-            },
+             grantee: {
+                  userGroupId: 1,
+                  name: "IterationTestgroup",
+                  accessLevel: 1,
+                },
           },
         ],
       },
@@ -5441,11 +5439,11 @@ const iterations = [
               },
               access: "rw",
             },
-            grantee: {
-              userId: 85,
-              username: "lvl1",
-              accessLevel: 1,
-            },
+             grantee: {
+                  userGroupId: 1,
+                  name: "IterationTestgroup",
+                  accessLevel: 1,
+                },
           },
         ],
       }
@@ -5473,11 +5471,11 @@ const iterations = [
               access: "rw",
               benchmarkId: "VPN_SRG_TEST",
             },
-            grantee: {
-              userId: 85,
-              username: "lvl1",
-              accessLevel: 1,
-            },
+             grantee: {
+                  userGroupId: 1,
+                  name: "IterationTestgroup",
+                  accessLevel: 1,
+                },
           },
         ],
       },
@@ -5498,11 +5496,11 @@ const iterations = [
               access: "rw",
               benchmarkId: "VPN_SRG_TEST",
             },
-            grantee: {
-              userId: 85,
-              username: "lvl1",
-              accessLevel: 1,
-            },
+             grantee: {
+                  userGroupId: 1,
+                  name: "IterationTestgroup",
+                  accessLevel: 1,
+                },
           },
         ],
       },
@@ -5523,11 +5521,11 @@ const iterations = [
               access: "rw",
               benchmarkId: "Windows_10_STIG_TEST",
             },
-            grantee: {
-              userId: 85,
-              username: "lvl1",
-              accessLevel: 1,
-            },
+             grantee: {
+                  userGroupId: 1,
+                  name: "IterationTestgroup",
+                  accessLevel: 1,
+                },
           },
         ],
       },
@@ -5555,11 +5553,11 @@ const iterations = [
               access: "rw",
               benchmarkId: "VPN_SRG_TEST",
             },
-            grantee: {
-              userId: 85,
-              username: "lvl1",
-              accessLevel: 1,
-            },
+             grantee: {
+                  userGroupId: 1,
+                  name: "IterationTestgroup",
+                  accessLevel: 1,
+                },
           },
         ],
       },
@@ -5580,11 +5578,11 @@ const iterations = [
               access: "r",
               benchmarkId: "VPN_SRG_TEST",
             },
-            grantee: {
-              userId: 85,
-              username: "lvl1",
-              accessLevel: 1,
-            },
+             grantee: {
+                  userGroupId: 1,
+                  name: "IterationTestgroup",
+                  accessLevel: 1,
+                },
           },
         ],
       },
@@ -5612,11 +5610,11 @@ const iterations = [
               access: "rw",
               benchmarkId: "VPN_SRG_TEST",
             },
-            grantee: {
-              userId: 85,
-              username: "lvl1",
-              accessLevel: 1,
-            },
+             grantee: {
+                  userGroupId: 1,
+                  name: "IterationTestgroup",
+                  accessLevel: 1,
+                },
           },
         ],
       },
@@ -5644,11 +5642,11 @@ const iterations = [
               access: "rw",
               benchmarkId: "VPN_SRG_TEST",
             },
-            grantee: {
-              userId: 85,
-              username: "lvl1",
-              accessLevel: 1,
-            },
+             grantee: {
+                  userGroupId: 1,
+                  name: "IterationTestgroup",
+                  accessLevel: 1,
+                },
           },
         ],
       },
@@ -5669,11 +5667,11 @@ const iterations = [
               access: "r",
               benchmarkId: "VPN_SRG_TEST",
             },
-            grantee: {
-              userId: 85,
-              username: "lvl1",
-              accessLevel: 1,
-            },
+             grantee: {
+                  userGroupId: 1,
+                  name: "IterationTestgroup",
+                  accessLevel: 1,
+                },
           },
         ],
       },
@@ -5701,11 +5699,11 @@ const iterations = [
               access: "r",
               benchmarkId: "VPN_SRG_TEST",
             },
-            grantee: {
-              userId: 85,
-              username: "lvl1",
-              accessLevel: 1,
-            },
+             grantee: {
+                  userGroupId: 1,
+                  name: "IterationTestgroup",
+                  accessLevel: 1,
+                },
           },
         ],
       },
@@ -5732,11 +5730,11 @@ const iterations = [
               access: "rw",
               benchmarkId: "Windows_10_STIG_TEST",
             },
-            grantee: {
-              userId: 85,
-              username: "lvl1",
-              accessLevel: 1,
-            },
+             grantee: {
+                  userGroupId: 1,
+                  name: "IterationTestgroup",
+                  accessLevel: 1,
+                },
           },
         ],
       },
@@ -5757,11 +5755,11 @@ const iterations = [
               access: "rw",
               benchmarkId: "VPN_SRG_TEST",
             },
-            grantee: {
-              userId: 85,
-              username: "lvl1",
-              accessLevel: 1,
-            },
+             grantee: {
+                  userGroupId: 1,
+                  name: "IterationTestgroup",
+                  accessLevel: 1,
+                },
           },
         ],
       },
@@ -5782,11 +5780,11 @@ const iterations = [
               access: "rw",
               benchmarkId: "Windows_10_STIG_TEST",
             },
-            grantee: {
-              userId: 85,
-              username: "lvl1",
-              accessLevel: 1,
-            },
+             grantee: {
+                  userGroupId: 1,
+                  name: "IterationTestgroup",
+                  accessLevel: 1,
+                },
           },
         ],
       },
@@ -5813,11 +5811,11 @@ const iterations = [
               access: "r",
               benchmarkId: "Windows_10_STIG_TEST",
             },
-            grantee: {
-              userId: 85,
-              username: "lvl1",
-              accessLevel: 1,
-            },
+             grantee: {
+                  userGroupId: 1,
+                  name: "IterationTestgroup",
+                  accessLevel: 1,
+                },
           },
         ],
       },
@@ -5838,11 +5836,11 @@ const iterations = [
               access: "rw",
               benchmarkId: "VPN_SRG_TEST",
             },
-            grantee: {
-              userId: 85,
-              username: "lvl1",
-              accessLevel: 1,
-            },
+             grantee: {
+                  userGroupId: 1,
+                  name: "IterationTestgroup",
+                  accessLevel: 1,
+                },
           },
         ],
       },
@@ -5863,18 +5861,18 @@ const iterations = [
               access: "r",
               benchmarkId: "Windows_10_STIG_TEST",
             },
-            grantee: {
-              userId: 85,
-              username: "lvl1",
-              accessLevel: 1,
-            },
+             grantee: {
+                  userGroupId: 1,
+                  name: "IterationTestgroup",
+                  accessLevel: 1,
+                },
           },
         ],
       },
     ]
   },
   {
-    
+
       name: "labelBenchmark_r_labelBenchmark_r",
       put: [{"benchmarkId":reference.testCollection.benchmark,"labelId":"5130dc84-9a68-11ec-b1bc-0242ac110002","access":"r"},{"benchmarkId":reference.windowsBenchmark,"labelId":reference.testCollection.fullLabel,"access":"r"}],
       response: [
@@ -5895,11 +5893,11 @@ const iterations = [
               access: "r",
               benchmarkId: "Windows_10_STIG_TEST",
             },
-            grantee: {
-              userId: 85,
-              username: "lvl1",
-              accessLevel: 1,
-            },
+             grantee: {
+                  userGroupId: 1,
+                  name: "IterationTestgroup",
+                  accessLevel: 1,
+                },
           },
         ],
       },
@@ -5920,11 +5918,11 @@ const iterations = [
               access: "r",
               benchmarkId: "VPN_SRG_TEST",
             },
-            grantee: {
-              userId: 85,
-              username: "lvl1",
-              accessLevel: 1,
-            },
+             grantee: {
+                  userGroupId: 1,
+                  name: "IterationTestgroup",
+                  accessLevel: 1,
+                },
           },
         ],
       },
@@ -5945,19 +5943,19 @@ const iterations = [
               access: "r",
               benchmarkId: "Windows_10_STIG_TEST",
             },
-            grantee: {
-              userId: 85,
-              username: "lvl1",
-              accessLevel: 1,
-            },
+             grantee: {
+                  userGroupId: 1,
+                  name: "IterationTestgroup",
+                  accessLevel: 1,
+                },
           },
         ],
       },
     ]
-    
+
   },
   {
-    
+
     name: "labelBenchmark_r_labelBenchmark_none",
     put: [{"benchmarkId":reference.testCollection.benchmark,"labelId":"5130dc84-9a68-11ec-b1bc-0242ac110002","access":"r"},{"benchmarkId":reference.windowsBenchmark,"labelId":reference.testCollection.fullLabel,"access":"none"}],
     response: [
@@ -5979,15 +5977,15 @@ const iterations = [
             benchmarkId: "VPN_SRG_TEST",
           },
           grantee: {
-            userId: 85,
-            username: "lvl1",
+            name: "IterationTestgroup",
+            userGroupId: 1,
             accessLevel: 1,
           },
         },
       ],
     },
   ]
-  
+
   },
   {
     name: "label_rw_benchmark_r_asset_none",
@@ -6006,11 +6004,11 @@ const iterations = [
               access: "r",
               benchmarkId: "VPN_SRG_TEST",
             },
-            grantee: {
-              userId: 85,
-              username: "lvl1",
-              accessLevel: 1,
-            },
+             grantee: {
+                  userGroupId: 1,
+                  name: "IterationTestgroup",
+                  accessLevel: 1,
+                },
           },
         ],
       },
@@ -6030,11 +6028,11 @@ const iterations = [
               },
               access: "rw",
             },
-            grantee: {
-              userId: 85,
-              username: "lvl1",
-              accessLevel: 1,
-            },
+             grantee: {
+                  userGroupId: 1,
+                  name: "IterationTestgroup",
+                  accessLevel: 1,
+                },
           },
         ],
       },
@@ -6051,11 +6049,11 @@ const iterations = [
               access: "r",
               benchmarkId: "VPN_SRG_TEST",
             },
-            grantee: {
-              userId: 85,
-              username: "lvl1",
-              accessLevel: 1,
-            },
+             grantee: {
+                  userGroupId: 1,
+                  name: "IterationTestgroup",
+                  accessLevel: 1,
+                },
           },
         ],
       },
@@ -6078,11 +6076,11 @@ const iterations = [
               access: "r",
               benchmarkId: "VPN_SRG_TEST",
             },
-            grantee: {
-              userId: 85,
-              username: "lvl1",
-              accessLevel: 1,
-            },
+             grantee: {
+                  userGroupId: 1,
+                  name: "IterationTestgroup",
+                  accessLevel: 1,
+                },
           },
         ],
       },
@@ -6102,11 +6100,11 @@ const iterations = [
               },
               access: "rw",
             },
-            grantee: {
-              userId: 85,
-              username: "lvl1",
-              accessLevel: 1,
-            },
+             grantee: {
+                  userGroupId: 1,
+                  name: "IterationTestgroup",
+                  accessLevel: 1,
+                },
           },
         ],
       },
@@ -6126,11 +6124,11 @@ const iterations = [
               },
               access: "rw",
             },
-            grantee: {
-              userId: 85,
-              username: "lvl1",
-              accessLevel: 1,
-            },
+             grantee: {
+                  userGroupId: 1,
+                  name: "IterationTestgroup",
+                  accessLevel: 1,
+                },
           },
         ],
       },
@@ -6147,11 +6145,11 @@ const iterations = [
               access: "r",
               benchmarkId: "VPN_SRG_TEST",
             },
-            grantee: {
-              userId: 85,
-              username: "lvl1",
-              accessLevel: 1,
-            },
+             grantee: {
+                  userGroupId: 1,
+                  name: "IterationTestgroup",
+                  accessLevel: 1,
+                },
           },
         ],
       },
@@ -6178,11 +6176,11 @@ const iterations = [
               access: "r",
               benchmarkId: "VPN_SRG_TEST",
             },
-            grantee: {
-              userId: 85,
-              username: "lvl1",
-              accessLevel: 1,
-            },
+             grantee: {
+                  userGroupId: 1,
+                  name: "IterationTestgroup",
+                  accessLevel: 1,
+                },
           },
         ],
       },
@@ -6202,11 +6200,11 @@ const iterations = [
               },
               access: "rw",
             },
-            grantee: {
-              userId: 85,
-              username: "lvl1",
-              accessLevel: 1,
-            },
+             grantee: {
+                  userGroupId: 1,
+                  name: "IterationTestgroup",
+                  accessLevel: 1,
+                },
           },
         ],
       },
@@ -6232,11 +6230,11 @@ const iterations = [
               },
               access: "r",
             },
-            grantee: {
-              userId: 85,
-              username: "lvl1",
-              accessLevel: 1,
-            },
+             grantee: {
+                  userGroupId: 1,
+                  name: "IterationTestgroup",
+                  accessLevel: 1,
+                },
           },
         ],
       },
@@ -6256,11 +6254,11 @@ const iterations = [
               },
               access: "r",
             },
-            grantee: {
-              userId: 85,
-              username: "lvl1",
-              accessLevel: 1,
-            },
+             grantee: {
+                  userGroupId: 1,
+                  name: "IterationTestgroup",
+                  accessLevel: 1,
+                },
           },
         ],
       },
@@ -6280,11 +6278,11 @@ const iterations = [
               },
               access: "r",
             },
-            grantee: {
-              userId: 85,
-              username: "lvl1",
-              accessLevel: 1,
-            },
+             grantee: {
+                  userGroupId: 1,
+                  name: "IterationTestgroup",
+                  accessLevel: 1,
+                },
           },
         ],
       },
@@ -6304,11 +6302,11 @@ const iterations = [
               },
               access: "r",
             },
-            grantee: {
-              userId: 85,
-              username: "lvl1",
-              accessLevel: 1,
-            },
+             grantee: {
+                  userGroupId: 1,
+                  name: "IterationTestgroup",
+                  accessLevel: 1,
+                },
           },
         ],
       },
@@ -6334,11 +6332,11 @@ const iterations = [
               },
               access: "r",
             },
-            grantee: {
-              userId: 85,
-              username: "lvl1",
-              accessLevel: 1,
-            },
+             grantee: {
+                  userGroupId: 1,
+                  name: "IterationTestgroup",
+                  accessLevel: 1,
+                },
           },
         ],
       },
@@ -6358,11 +6356,11 @@ const iterations = [
               },
               access: "r",
             },
-            grantee: {
-              userId: 85,
-              username: "lvl1",
-              accessLevel: 1,
-            },
+             grantee: {
+                  userGroupId: 1,
+                  name: "IterationTestgroup",
+                  accessLevel: 1,
+                },
           },
         ],
       },
@@ -6379,11 +6377,11 @@ const iterations = [
               access: "rw",
               benchmarkId: "VPN_SRG_TEST",
             },
-            grantee: {
-              userId: 85,
-              username: "lvl1",
-              accessLevel: 1,
-            },
+             grantee: {
+                  userGroupId: 1,
+                  name: "IterationTestgroup",
+                  accessLevel: 1,
+                },
           },
         ],
       },
@@ -6410,11 +6408,11 @@ const iterations = [
               access: "rw",
               benchmarkId: "VPN_SRG_TEST",
             },
-            grantee: {
-              userId: 85,
-              username: "lvl1",
-              accessLevel: 1,
-            },
+             grantee: {
+                  userGroupId: 1,
+                  name: "IterationTestgroup",
+                  accessLevel: 1,
+                },
           },
         ],
       },
@@ -6434,11 +6432,11 @@ const iterations = [
               },
               access: "rw",
             },
-            grantee: {
-              userId: 85,
-              username: "lvl1",
-              accessLevel: 1,
-            },
+             grantee: {
+                  userGroupId: 1,
+                  name: "IterationTestgroup",
+                  accessLevel: 1,
+                },
           },
         ],
       },
@@ -6458,11 +6456,11 @@ const iterations = [
               },
               access: "rw",
             },
-            grantee: {
-              userId: 85,
-              username: "lvl1",
-              accessLevel: 1,
-            },
+             grantee: {
+                  userGroupId: 1,
+                  name: "IterationTestgroup",
+                  accessLevel: 1,
+                },
           },
         ],
       },
@@ -6482,17 +6480,16 @@ const iterations = [
               },
               access: "rw",
             },
-            grantee: {
-              userId: 85,
-              username: "lvl1",
-              accessLevel: 1,
-            },
+             grantee: {
+                  userGroupId: 1,
+                  name: "IterationTestgroup",
+                  accessLevel: 1,
+                },
           },
         ],
       },
     ]
   },
-  
 ]
 
 module.exports = iterations

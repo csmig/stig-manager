@@ -8,7 +8,7 @@ const config = require('../../testConfig.json')
 const utils = require('../../utils/testUtils.js')
 const reference = require('./referenceData.js')
 //const requestBodies = require('./aclData.js')
-const iterations = require('./iterations.js')
+const iterations = require('./directIterations.js')
 
 const user = {
     name: 'lvl1',
@@ -26,12 +26,8 @@ describe('GET - Test Effective ACL', () => {
   })
 
   for(const iteration of iterations){
-    // if (expectations[iteration.name] === undefined){
-    //   it(`No expectations for this iteration scenario: ${iteration.name}`, async function () {})
-    //   continue
-    // }
+    
     describe(`iteration:${iteration.name}`, () => {
-      //const distinct = expectations[iteration.name]
 
       describe(`getEffectiveAclByCollectionUser - /collection/{collectionId}/grants/user/{userId}/access/effective`, () => {
         
@@ -45,16 +41,40 @@ describe('GET - Test Effective ACL', () => {
           expect(res.body.defaultAccess).to.equal("none")
         })
 
-        // need to wait for endpoint to be fixed
-        // it("should confirm users acl was set", async () => {
-        //   const res = await chai.request(config.baseUrl)
-        //   .get(`/collections/${reference.testCollection.collectionId}/grants/user/${user.userId}/access`)
-        //   .set('Authorization', `Bearer ${config.adminToken}`)
-        //   expect(res).to.have.status(200)
-        //   expect(res.body).to.deep.equalInAnyOrder(iteration.put)
-        // })
-
-        // call get /collections/{collectionId}/grants/user/{userId}/access' herE??? 
+        it("should confirm users acl was set", async () => {
+          const res = await chai.request(config.baseUrl)
+            .get(`/collections/${reference.testCollection.collectionId}/grants/user/${user.userId}/access`)
+            .set('Authorization', `Bearer ${config.adminToken}`)
+          expect(res).to.have.status(200)
+          expect(res.body.defaultAccess).to.equal("none")
+          expect(res.body.acl.length).to.equal(iteration.put.length)
+          
+          for (const acl of iteration.put) {
+            // Look for an exact match in res.body.acl that satisfies all specified conditions
+            const exactMatch = res.body.acl.find(a => 
+              (acl.assetId ? a.asset?.assetId === acl.assetId : true) &&
+              (acl.labelId ? a.label?.labelId === acl.labelId : true) &&
+              (acl.benchmarkId ? a.benchmarkId === acl.benchmarkId : true) &&
+              (acl.access ? a.access === acl.access : true)
+            )
+            // Check if an exact match was found
+            expect(exactMatch).to.not.be.undefined
+          
+            // Verify each specified field to ensure full match
+            if (acl.assetId) {
+              expect(exactMatch.asset.assetId).to.equal(acl.assetId)
+            }
+            if (acl.labelId) {
+              expect(exactMatch.label.labelId).to.equal(acl.labelId)
+            }
+            if (acl.benchmarkId) {
+              expect(exactMatch.benchmarkId).to.equal(acl.benchmarkId)
+            }
+            if (acl.access) {
+              expect(exactMatch.access).to.equal(acl.access)
+            }
+          }
+        })
 
         it('should return 200 and the effective acl for the iteration', async () => {
           const res = await chai.request(config.baseUrl)
@@ -63,7 +83,7 @@ describe('GET - Test Effective ACL', () => {
           expect(res).to.have.status(200)
 
           const putAcl = iteration.put
-        expect(res.body).to.deep.equalInAnyOrder(iteration.response)
+          expect(res.body).to.deep.equalInAnyOrder(iteration.response)
       
         })
       })

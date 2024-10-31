@@ -14,10 +14,7 @@ const requestBodies = require('./requestBodies.js')
 describe('PUT - Collection', function () {
 
   before(async function () {
-      // this.timeout(4000)
       await utils.loadAppData()
-      // await utils.uploadTestStigs()
-   //   await utils.createDisabledCollectionsandAssets()
   })
 
   for(const iteration of iterations){
@@ -101,98 +98,97 @@ describe('PUT - Collection', function () {
             expect(res.body.detail).to.equal("Duplicate user in grant array")
         })
 
-        // it('Set all properties of a Collection- with metadata',async function () {
+        it('Set all properties of a Collection- with metadata',async function () {
 
-        //     const putRequest = {
-        //         name: "TestPutCollection",
-        //         settings: {
-        //         fields: {
-        //             detail: {
-        //             enabled: "findings",
-        //             required: "findings",
-        //             },
-        //             comment: {
-        //             enabled: "always",
-        //             required: "findings",
-        //             },
-        //         },
-        //         status: {
-        //             canAccept: true,
-        //             minAcceptGrant: 2,
-        //             resetCriteria: "result",
-        //         },
-        //         },
+            const putRequest = {
+                name: "TestPutCollection",
+                settings: {
+                fields: {
+                    detail: {
+                    enabled: "findings",
+                    required: "findings",
+                    },
+                    comment: {
+                    enabled: "always",
+                    required: "findings",
+                    },
+                },
+                status: {
+                    canAccept: true,
+                    minAcceptGrant: 2,
+                    resetCriteria: "result",
+                },
+                },
 
-        //         description: "hellodescription",
-        //         metadata: {
-        //         [reference.testCollection.metadataKey]: reference.testCollection.metadataValue,
-        //         },
-        //         grants: [
-        //         {
-        //             userId: "1",
-        //             accessLevel: 4,
-        //         },
-        //         {
-        //             userId: "21",
-        //             accessLevel: 2,
-        //         },
-        //         {
-        //             userId: "44",
-        //             accessLevel: 3,
-        //         },
-        //         {
-        //             userId: "45",
-        //             accessLevel: 4,
-        //         },
-        //         {
-        //             userId: "87",
-        //             accessLevel: 4,
-        //         },
-        //         ],
-        //     }
+                description: "hellodescription",
+                metadata: {
+                [reference.testCollection.metadataKey]: reference.testCollection.metadataValue,
+                },
+                grants: [
+                {
+                    userId: "1",
+                    accessLevel: 4,
+                },
+                {
+                    userId: "21",
+                    accessLevel: 2,
+                },
+                {
+                    userId: "44",
+                    accessLevel: 3,
+                },
+                {
+                    userId: "45",
+                    accessLevel: 4,
+                },
+                {
+                    userId: "87",
+                    accessLevel: 4,
+                },
+                ],
+            }
       
-        //     const res = await chai.request(config.baseUrl)
-        //         .put(`/collections/${reference.testCollection.collectionId}?projection=grants&projection=owners&projection=statistics&projection=stigs&projection=assets`)
-        //         .set('Authorization', `Bearer ${iteration.token}`)
-        //         .send(putRequest    )
-        //     if(iteration.name === "lvl1" || iteration.name === "lvl2") {
-        //       expect(res).to.have.status(403)
-        //       return
-        //     } 
-        //     expect(res).to.have.status(200)
-        //     expect(res.body.description).to.equal("hellodescription")
-        //     expect(res.body.name).to.equal("TestPutCollection")
-        //     expect(res.body.settings.fields.detail.enabled).to.equal(putRequest.settings.fields.detail.enabled)
-        //     expect(res.body.settings.fields.detail.required).to.equal(putRequest.settings.fields.detail.required)
-        //     expect(res.body.settings.fields.comment.enabled).to.equal(putRequest.settings.fields.comment.enabled)
-        //     expect(res.body.settings.fields.comment.required).to.equal(putRequest.settings.fields.comment.required)
-        //     expect(res.body.settings.status.canAccept).to.equal(putRequest.settings.status.canAccept)
-        //     expect(res.body.settings.status.minAcceptGrant).to.equal(putRequest.settings.status.minAcceptGrant)
-        //     expect(res.body.settings.status.resetCriteria).to.equal(putRequest.settings.status.resetCriteria)
-        //     expect(res.body.metadata.testkey).to.equal(reference.testCollection.metadataValue)
+            const res = await chai.request(config.baseUrl)
+                .put(`/collections/${reference.testCollection.collectionId}?projection=grants&projection=owners&projection=statistics&projection=stigs&projection=assets`)
+                .set('Authorization', `Bearer ${iteration.token}`)
+                .send(putRequest    )
+            if(distinct.canModifyCollection === false){ 
+              expect(res).to.have.status(403)
+              return
+            } 
+            expect(res).to.have.status(200)
+            expect(res.body.description).to.equal("hellodescription")
+            expect(res.body.name).to.equal("TestPutCollection")
+            expect(res.body.settings.fields.detail.enabled).to.equal(putRequest.settings.fields.detail.enabled)
+            expect(res.body.settings.fields.detail.required).to.equal(putRequest.settings.fields.detail.required)
+            expect(res.body.settings.fields.comment.enabled).to.equal(putRequest.settings.fields.comment.enabled)
+            expect(res.body.settings.fields.comment.required).to.equal(putRequest.settings.fields.comment.required)
+            expect(res.body.settings.status.canAccept).to.equal(putRequest.settings.status.canAccept)
+            expect(res.body.settings.status.minAcceptGrant).to.equal(putRequest.settings.status.minAcceptGrant)
+            expect(res.body.settings.status.resetCriteria).to.equal(putRequest.settings.status.resetCriteria)
+            expect(res.body.metadata.testkey).to.equal(reference.testCollection.metadataValue)
 
-        //     // grants projection
-        //     expect(res.body.grants).to.have.lengthOf(5)
-        //     for(const grant of res.body.grants){
-        //       expect(grant.iteration.userId).to.be.oneOf(putRequest.grants.map(g => g.userId))
-        //     }
+            // grants projection
+            expect(res.body.grants).to.have.lengthOf(5)
+            for(const grant of res.body.grants){
+              expect(grant.user.userId).to.be.oneOf(putRequest.grants.map(g => g.userId))
+            }
         
-        //     // assets projection
-        //     expect(res.body.assets).to.have.lengthOf(4)
+            // assets projection
+            expect(res.body.assets).to.have.lengthOf(4)
 
-        //     // owners projection
-        //     expect(res.body.owners).to.have.lengthOf(3)
+            // owners projection
+            expect(res.body.owners).to.have.lengthOf(3)
 
-        //     // statistics projection
-        //     expect(res.body.statistics.assetCount).to.equal(4)
-        //     expect(res.body.statistics.checklistCount).to.equal(6)
-        //     expect(res.body.statistics.grantCount).to.equal(5)
-        
-        //     // stigs projection
-        //     expect(res.body.stigs).to.have.lengthOf(2)
+            // statistics projection
+            expect(res.body.statistics.assetCount).to.equal(4)
+            expect(res.body.statistics.checklistCount).to.equal(6)
+            //expect(res.body.statistics.grantCount).to.equal(5)
 
-        // })
+            // stigs projection
+            expect(res.body.stigs).to.have.lengthOf(2)
 
+        })
       })
 
       // note: this is deprecated
@@ -297,7 +293,8 @@ describe('PUT - Collection', function () {
           .put(`/collections/${reference.testCollection.collectionId}/grants/user/${iteration.userId}/access`)
           .set('Authorization', `Bearer ${iterations[0].token}`)
           .send([{"labelId":reference.testCollection.fullLabel,"access":"r"},{"benchmarkId":reference.testCollection.benchmark,"access":"r"}])
-          if(iteration.name === "collectioncreator"){
+
+          if(iteration.name === "collectioncreator" || iteration.name === "lvl1" ){
             expect(res).to.have.status(422)
             return
           }
@@ -324,7 +321,8 @@ describe('PUT - Collection', function () {
           .put(`/collections/${reference.testCollection.collectionId}/grants/user/${iteration.userId}/access`)
           .set('Authorization', `Bearer ${iterations[0].token}`)
           .send([{"labelId":reference.testCollection.fullLabel,"access":"r"}])
-          if(iteration.name === "collectioncreator"){
+          // these users do not have direct grant to the collection
+          if(iteration.name === "collectioncreator" || iteration.name === "lvl1" ){
             expect(res).to.have.status(422)
             return
           }
@@ -345,7 +343,7 @@ describe('PUT - Collection', function () {
 
       describe('setGrantByCollectionUser - /collections/{collectionId}/grants/user/{userId}', function () {
 
-        it('set stig-asset grants for a lvl1 user in this collection.',async function () {
+        it('set stig-asset grants for a lvl1 user in this collection. user does not have a direct grant to the colleciton',async function () {
           const res = await chai.request(config.baseUrl)
               .put(`/collections/${reference.testCollection.collectionId}/grants/user/${reference.lvl1User.userId}`)
               .set('Authorization', `Bearer ${iteration.token}`)
@@ -357,7 +355,7 @@ describe('PUT - Collection', function () {
               expect(res).to.have.status(403)
               return
             }
-            expect(res).to.have.status(200) 
+            expect(res).to.have.status(201) 
             expect(res.body.accessLevel).to.equal(1)
             expect(res.body.userId).to.equal(reference.lvl1User.userId)
             for(const grant of res.body.grantees){
@@ -365,7 +363,7 @@ describe('PUT - Collection', function () {
               expect(grant.username).to.equal(reference.lvl1User.username)
             }
         })
-        it('set stig-asset grants for a lvl1 user in this collection but only use admin token to test lvl1, lvl2 and collection creator.',async function () {
+        it('set grant for a lvl1 user in this collection but only use admin token to test lvl1, lvl2 and collection creator.',async function () {
           const res = await chai.request(config.baseUrl)
               .put(`/collections/${reference.testCollection.collectionId}/grants/user/${reference.lvl1User.userId}`)
               .set('Authorization', `Bearer ${iterations[0].token}`)

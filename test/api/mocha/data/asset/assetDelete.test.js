@@ -17,12 +17,14 @@ const createTempAsset = async () => {
 
 describe('DELETE - Asset', function () {
 
-  let localTestAsset = null
-  let localScrapAsset = null
+  before(async function () {
+    await utils.loadAppData()
+  })
 
   beforeEach(async function () {
     await utils.resetTestAsset()
   })
+  
   for(const iteration of iterations){
     if (expectations[iteration.name] === undefined){
       it(`No expectations for this iteration scenario: ${iteration.name}`, async function () {})
@@ -83,13 +85,41 @@ describe('DELETE - Asset', function () {
       })
       describe(`deleteAsset - /assets/{assetId}`, function () {
 
-        before(async function () {
-          if(distinct.canModifyCollection){
-            localTestAsset = await createTempAsset()
+        let localTestAsset = null
+        
+        it('Create an Asset', async function () {
+          const res = await chai
+            .request(config.baseUrl)
+            .post('/assets')
+            .set('Authorization', 'Bearer ' + iteration.token)
+            .send({
+              name: 'TestAsset' + Date.now(),
+              collectionId: reference.testCollection.collectionId,
+              description: 'test',
+              ip: '1.1.1.1',
+              noncomputing: true,
+              labelIds: [reference.testCollection.fullLabel],
+              metadata: {
+                pocName: 'pocName',
+                pocEmail: 'pocEmail@example.com',
+                pocPhone: '12345',
+                reqRar: 'true'
+              },
+              stigs: reference.testCollection.validStigs
+            })
+          
+          if(!distinct.canModifyCollection){
+            expect(res).to.have.status(403)
+            return
           }
+          expect(res).to.have.status(201)     
+          localTestAsset = res.body    
         })
        
         it('Delete scrap Asset', async function () {
+          if(!distinct.canModifyCollection){
+            return
+          }
           const res = await chai
             .request(config.baseUrl)
             .delete(`/assets/${localTestAsset.assetId}?projection=statusStats&projection=stigs`)

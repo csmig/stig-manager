@@ -29,39 +29,52 @@ const distinct = {
     historyResponseStatus: 200,
     checklistCnt: 6,
     grantCnt: 7,
-    assetIds:["29","62","42","154"],
-    validStigs: ["VPN_SRG_TEST","Windows_10_STIG_TEST"],
+    assetIds: ["29", "62", "42", "154"],
+    validStigs: ["VPN_SRG_TEST", "Windows_10_STIG_TEST"],
     testBenchmarkAssignedCount: 3,
     findings: {
-      findingsCnt: 8,  
-      findingsByGroupCnt: 4,  
-      findingsByRuleCnt: 3,  
-      findingsByRuleForAssetCnt: 4,  
-      findingsByRuleForBenchmarkCnt: 3,  
-      findingsByCciCnt: 8,  
+      findingsCnt: 8,
+      findingsByGroupCnt: 4,
+      findingsByRuleCnt: 3,
+      findingsByRuleForAssetCnt: 4,
+      findingsByRuleForBenchmarkCnt: 3,
+      findingsByCciCnt: 8,
     },
     canDeleteCollection: true,
-    canModifyCollection: true
+    canModifyCollection: true,
+    windowsStigAssetCount: 2,
+    vpnStigAssetCount: 2,
   },
-  lvl1:{
+  lvl1: {
     iteration: "lvl1",
-    acl: [
-    {
-      access: "rw",
-      asset: {
-        assetId: "154",
-        name: "Collection_X_lvl1_asset-2"
-      },
-      benchmarkId: reference.benchmark
-    },
-    {
-      access: "rw",
-      asset: {
-        assetId: reference.testAsset.assetId,
-        name: reference.testAsset.name
-      },
-      benchmarkId: reference.benchmark
-    }],
+    acl: 
+    [
+        {
+          label: {
+            name: "test-label-lvl1",
+            color: "99CCFF",
+            labelId: "5130dc84-9a68-11ec-b1bc-0242ac110002",
+          },
+          access: "rw",
+          benchmarkId: "VPN_SRG_TEST",
+        },
+        {
+          asset: {
+            name: "Collection_X_lvl1_asset-2",
+            assetId: "154",
+          },
+          access: "r",
+          benchmarkId: "VPN_SRG_TEST",
+        },
+        {
+          asset: {
+            name: "Collection_X_asset",
+            assetId: "62",
+          },
+          access: "r",
+        },
+      ],
+    
     defaultAccess: "none",
     userId: "85",
     accessLevel: 1,
@@ -74,29 +87,31 @@ const distinct = {
       collectionContainsMatchCnt: 1,
       collectionStartMatchCnt: 1,
       collectionEndMatchCnt: 1,
-      collectionMetadataMatchCnt: 1,    
+      collectionMetadataMatchCnt: 1,
       collectionDeleteMatchCnt: 0,
     },
     //relative to testCollection
     grant: "restricted",
-    fullLabelUses: 1,
+    fullLabelUses: 2,
     lvl1LabelUses: 1,
     historyResponseStatus: 403,
     checklistCnt: 3,
     grantCnt: 1,
-    assetIds:["42","154"],
-    validStigs: ["VPN_SRG_TEST"],
-    testBenchmarkAssignedCount: 2,
+    assetIds: ["42", "154", "62"],
+    validStigs: ["VPN_SRG_TEST", "Windows_10_STIG_TEST"],
+    testBenchmarkAssignedCount: 3,
     findings: {
-      findingsCnt: 7,  
-      findingsByGroupCnt: 3,  
-      findingsByRuleCnt: 3,  
-      findingsByRuleForAssetCnt: 3,  
-      findingsByRuleForBenchmarkCnt: 3,  
-      findingsByCciCnt: 7,  
+      findingsCnt: 7,
+      findingsByGroupCnt: 3,
+      findingsByRuleCnt: 3,
+      findingsByRuleForAssetCnt: 3,
+      findingsByRuleForBenchmarkCnt: 3,
+      findingsByCciCnt: 7,
     },
     canDeleteCollection: false,
-    canModifyCollection: false
+    canModifyCollection: false,
+    windowsStigAssetCount: 1,
+    vpnStigAssetCount: 2,
   },
   lvl2: {
     iteration: "lvl2",
@@ -113,8 +128,8 @@ const distinct = {
       collectionContainsMatchCnt: 1,
       collectionStartMatchCnt: 2,
       collectionEndMatchCnt: 1,
-      collectionMetadataMatchCnt: 1,   
-      collectionDeleteMatchCnt: 0, 
+      collectionMetadataMatchCnt: 1,
+      collectionDeleteMatchCnt: 0,
     },
     //relative to testCollection
     grant: "full",
@@ -123,19 +138,21 @@ const distinct = {
     historyResponseStatus: 200,
     checklistCnt: 6,
     grantCnt: 7,
-    assetIds:["29","62","42","154"],
-    validStigs: ["VPN_SRG_TEST","Windows_10_STIG_TEST"],
+    assetIds: ["29", "62", "42", "154"],
+    validStigs: ["VPN_SRG_TEST", "Windows_10_STIG_TEST"],
     testBenchmarkAssignedCount: 3,
     findings: {
-      findingsCnt: 8,  
-      findingsByGroupCnt: 4,  
-      findingsByRuleCnt: 3,  
-      findingsByRuleForAssetCnt: 4,  
-      findingsByRuleForBenchmarkCnt: 3,  
-      findingsByCciCnt: 8,  
-    },    
+      findingsCnt: 8,
+      findingsByGroupCnt: 4,
+      findingsByRuleCnt: 3,
+      findingsByRuleForAssetCnt: 4,
+      findingsByRuleForBenchmarkCnt: 3,
+      findingsByCciCnt: 8,
+    },
     canDeleteCollection: false,
-    canModifyCollection: false
+    canModifyCollection: false,
+    windowsStigAssetCount: 2,
+    vpnStigAssetCount: 2,
   },
   lvl3: {
     iteration: "lvl3",
@@ -152,7 +169,7 @@ const distinct = {
       collectionContainsMatchCnt: 1,
       collectionStartMatchCnt: 2,
       collectionEndMatchCnt: 1,
-      collectionMetadataMatchCnt: 1,    
+      collectionMetadataMatchCnt: 1,
       collectionDeleteMatchCnt: 0,
     },
     //relative to testCollection
@@ -162,19 +179,21 @@ const distinct = {
     historyResponseStatus: 200,
     checklistCnt: 6,
     grantCnt: 7,
-    assetIds:["29","62","42","154"],
-    validStigs: ["VPN_SRG_TEST","Windows_10_STIG_TEST"],
+    assetIds: ["29", "62", "42", "154"],
+    validStigs: ["VPN_SRG_TEST", "Windows_10_STIG_TEST"],
     testBenchmarkAssignedCount: 3,
     findings: {
-      findingsCnt: 8,  
-      findingsByGroupCnt: 4,  
-      findingsByRuleCnt: 3,  
-      findingsByRuleForAssetCnt: 4,  
-      findingsByRuleForBenchmarkCnt: 3,  
-      findingsByCciCnt: 8,  
-    },    
+      findingsCnt: 8,
+      findingsByGroupCnt: 4,
+      findingsByRuleCnt: 3,
+      findingsByRuleForAssetCnt: 4,
+      findingsByRuleForBenchmarkCnt: 3,
+      findingsByCciCnt: 8,
+    },
     canDeleteCollection: false,
-    canModifyCollection: true
+    canModifyCollection: true,
+    windowsStigAssetCount: 2,
+    vpnStigAssetCount: 2,
   },
   lvl4: {
     iteration: "lvl4",
@@ -197,25 +216,27 @@ const distinct = {
     //relative to testCollection
     grant: "owner",
     fullLabelUses: 2,
-    lvl1LabelUses: 1, 
+    lvl1LabelUses: 1,
     historyResponseStatus: 200,
     checklistCnt: 6,
     grantCnt: 7,
-    assetIds:["29","62","42","154"],
-    validStigs: ["VPN_SRG_TEST","Windows_10_STIG_TEST"],
+    assetIds: ["29", "62", "42", "154"],
+    validStigs: ["VPN_SRG_TEST", "Windows_10_STIG_TEST"],
     testBenchmarkAssignedCount: 3,
     findings: {
-      findingsCnt: 8,  
-      findingsByGroupCnt: 4,  
-      findingsByRuleCnt: 3,  
-      findingsByRuleForAssetCnt: 4,  
-      findingsByRuleForBenchmarkCnt: 3,  
-      findingsByCciCnt: 8,  
-    },    
+      findingsCnt: 8,
+      findingsByGroupCnt: 4,
+      findingsByRuleCnt: 3,
+      findingsByRuleForAssetCnt: 4,
+      findingsByRuleForBenchmarkCnt: 3,
+      findingsByCciCnt: 8,
+    },
     canDeleteCollection: true,
-    canModifyCollection: true
+    canModifyCollection: true,
+    windowsStigAssetCount: 2,
+    vpnStigAssetCount: 2,
   },
-  collectioncreator:{
+  collectioncreator: {
     iteration: "collectioncreator",
     userId: "82",
     canElevate: false,
@@ -227,8 +248,8 @@ const distinct = {
       collectionContainsMatchCnt: 0,
       collectionStartMatchCnt: 0,
       collectionEndMatchCnt: 0,
-      collectionMetadataMatchCnt: 0,     
-      collectionDeleteMatchCnt: 0, 
+      collectionMetadataMatchCnt: 0,
+      collectionDeleteMatchCnt: 0,
     },
     //relative to testCollection
     grant: "none",
@@ -237,7 +258,7 @@ const distinct = {
     historyResponseStatus: 403,
     checklistCnt: 0,
     grantCnt: 0,
-    assetIds:[],
+    assetIds: [],
     validStigs: [],
     testBenchmarkAssignedCount: 0,
     findings: {
@@ -247,10 +268,10 @@ const distinct = {
       findingsByRuleForAssetCnt: 0,
       findingsByRuleForBenchmarkCnt: 0,
       findingsByCciCnt: 0,
-    },      
+    },
     canDeleteCollection: false,
-    canModifyCollection: false
-
-  },    
-}
+    canModifyCollection: false,
+  
+  },
+};
 module.exports = distinct;

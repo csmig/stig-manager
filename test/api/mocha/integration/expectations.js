@@ -16,7 +16,7 @@ const distinct = {
     user: 'lvl1',
     userId: '85',
     grant: 'restricted',
-    validStigs: ['VPN_SRG_TEST'],
+    validStigs: ['VPN_SRG_TEST','Windows_10_STIG_TEST'],
     pinnedRevStr: 'V1R1',
     canElevate: false,
     pinnedState: false,

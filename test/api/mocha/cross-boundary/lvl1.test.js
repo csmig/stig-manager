@@ -67,9 +67,16 @@ describe("lvl1 cross-boundary tests", () => {
             expect(res.body).to.be.an('array').of.length(reference.lvl1ValidStigs.length)
             for(const stig of res.body){
               expect(reference.lvl1ValidStigs).to.include(stig.benchmarkId)
-              expect(stig.ruleCount).to.equal(81)
-              expect(stig.assetCount).to.equal(2)
-              expect(stig.revisionStr).to.equal("V1R1")
+              if(stig.benchmarkId === 'Windows_10_STIG_TEST'){
+                expect(stig.ruleCount).to.equal(287)
+                expect(stig.assetCount).to.equal(1)
+              }
+              else {
+                expect(stig.ruleCount).to.equal(81)
+                expect(stig.assetCount).to.equal(3)
+                expect(stig.revisionStr).to.equal("V1R1")
+              }
+             
             }
         })
     })

@@ -20,7 +20,7 @@ const distinct = {
         reviewsForResultPass: 4,
         reviewsForTestGroup: 3,
         reviewsForRulesAll: 17,
-        reviewsDefaultMapped: 11
+        reviewsDefaultMapped: 0
       },
       postReviews:{
         targetAssetsWholeStig:{
@@ -158,16 +158,16 @@ const distinct = {
         reviewsForStatusSubmitted: 5
       },
       testCollection: {
-        reviewsForTestBenchmark: 11,
+        reviewsForTestBenchmark: 14,
         reviewsForResultFail: 6,
-        reviewsForTestRuleId: 2,
-        reviewsForResultFailAllAssets: 6,
-        reviewsForStatusSaved: 4,
-        reviewsForStigmanadmin: 9,
+        reviewsForTestRuleId: 3,
+        reviewsForResultFailAllAssets: 7,
+        reviewsForStatusSaved: 5,
+        reviewsForStigmanadmin: 11,
         reviewsForResultPass: 2,
-        reviewsForTestGroup: 2,
-        reviewsForRulesAll: 11,
-        reviewsDefaultMapped: 9
+        reviewsForTestGroup: 3,
+        reviewsForRulesAll: 14,
+        reviewsDefaultMapped: 0
       },
     },
     lvl2: {
@@ -256,7 +256,7 @@ const distinct = {
         reviewsForResultPass: 4,
         reviewsForTestGroup: 3,
         reviewsForRulesAll: 17,
-        reviewsDefaultMapped: 11
+        reviewsDefaultMapped: 0
       },
     },
     lvl3: {
@@ -285,7 +285,7 @@ const distinct = {
         reviewsForResultPass: 4,
         reviewsForTestGroup: 3,
         reviewsForRulesAll: 17,
-        reviewsDefaultMapped: 11
+        reviewsDefaultMapped: 0
       },
       postReviews:{
         targetAssetsWholeStig:{
@@ -372,7 +372,7 @@ const distinct = {
         reviewsForStigmanadmin: 14,
         reviewsForTestGroup: 3,
         reviewsForRulesAll: 17,
-        reviewsDefaultMapped: 11
+        reviewsDefaultMapped: 0
       
       },
       postReviews:{

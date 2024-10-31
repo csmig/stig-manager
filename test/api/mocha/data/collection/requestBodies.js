@@ -190,7 +190,7 @@ const requestBodies = {
         accessLevel: 2
       },
       {
-        userId: "85",
+        userGroupId: "1",
         accessLevel: 1
       },
       {

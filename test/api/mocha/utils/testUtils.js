@@ -17,7 +17,7 @@ const metricsOutputToJSON = (testCaseName, username, responseData, outputJsonFil
   fs.writeFileSync(metricsFilePath, JSON.stringify(metricsData, null, 2), 'utf8')
 }
 
-const loadAppData = (appdataFileName = 'appdata.jsonl') => {
+const loadAppData = (appdataFileName = 'appdataWIP.jsonl') => {
   console.log(`Loading ${appdataFileName}`)
   return axios({
     method: 'post',
@@ -597,14 +597,40 @@ const resetTestAsset = async () => {
     {
       assetId: "42",
       benchmarkId: "Windows_10_STIG_TEST",
+      access: "rw"
     },
   ])
-  const res3 = await setRestrictedUsers("21", "85", [
+  const res3 = await setGroupAccess("21", "1", 
+    [
+      {
+        benchmarkId: 'VPN_SRG_TEST',
+        labelId: '5130dc84-9a68-11ec-b1bc-0242ac110002',
+        access: 'rw'
+      },
+      {
+        assetId: '62',
+        access: 'r'
+      },
+      {
+        benchmarkId: 'VPN_SRG_TEST',
+        assetId: '154',
+        access: 'r'
+      }
+    ])
+}
+
+const setGroupAccess = async (collectionId, userGroupId, body) => {
+
+  const res = await axios.put(
+    `${config.baseUrl}/collections/${collectionId}/grants/user-group/${userGroupId}/access`,
+    body,
     {
-      assetId: "42",
-      benchmarkId: "VPN_SRG_TEST",
-    },
-  ])
+      headers: {
+        Authorization: `Bearer ${adminToken}`,
+        'Content-Type': 'application/json'
+      }
+    }
+  )
 }
 
 const resetScrapAsset = async () => {
@@ -626,7 +652,7 @@ const setRestrictedUsers = async (collectionId, userId, body) => {
 
   try{
     const res = await axios.put(
-      `${config.baseUrl}/collections/${collectionId}/grants/${userId}/access`,
+      `${config.baseUrl}/collections/${collectionId}/grants/user/${userId}/access`,
       body,
       {
         headers: {
@@ -721,6 +747,7 @@ const createCollectionLabel = async (collectionId, label) => {
 module.exports = {
   createCollectionLabel,
   putCollection,
+  metricsOutputToJSON,
   putReviewByAssetRule,
   createUser,
   deleteReviewsByAssetRule,

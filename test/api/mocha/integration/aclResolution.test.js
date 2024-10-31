@@ -1,7 +1,4 @@
 
-// will use the lvl1 user and the lvl3 manage user to test r rw and none 
-// will first set the access level to an acl rule then attempt to write to that item and write outside to throw errors 
-
 const chai = require("chai")
 const chaiHttp = require("chai-http")
 const deepEqualInAnyOrder = require('deep-equal-in-any-order')
@@ -10,7 +7,7 @@ chai.use(chaiHttp)
 chai.use(deepEqualInAnyOrder)
 const expect = chai.expect
 const config = require("../testConfig.json")
-const utils = require("../utils/testUtils")
+const utils = require("../utils/testUtils.js")
 const reference = require("../referenceData.js")
 
 const admin = {
@@ -194,14 +191,11 @@ const lvl3TestAcl = {
     ]
 }
 
-describe(`Test Restricted user access controls`, () => {
+describe(`Test a restricted users access (r,rw,none)`, () => {
 
     before(async function () {
-        // this.timeout(4000)
-        // await utils.uploadTestStigs()
         await utils.loadAppData()
     })
-
 
     it(`should set users ACL in test collection `, async () => {
         const res = await chai.request(config.baseUrl)
@@ -311,9 +305,11 @@ describe(`Test Restricted user access controls`, () => {
     })
 })
 
-describe(`Test manage user access control`, () => {`  `
+describe(`Test manage user access (r,rw,none)`, () => {`  `
 
     before(async function () {
+        // this.timeout(4000)
+        // await utils.uploadTestStigs()
         await utils.loadAppData()
     })
     it(`should set users ACL in test collection `, async () => {
@@ -443,7 +439,7 @@ describe(`Test manage user access control`, () => {`  `
     })
 })
 
-describe("Testing user grant for a user that has a 'grantee' from a userGroup grant", function () {
+describe("Test grantee resolution is resolved from assigning a user to a group", function () {
 
   before(async function () {
     await utils.loadAppData()
@@ -522,7 +518,7 @@ describe("Testing user grant for a user that has a 'grantee' from a userGroup gr
   })
 })
 
-describe("Test restricted user group access controls", ()  => {
+describe("Test restricted user group access (r,rw,none)", ()  => {
 
   before(async function () {
     await utils.loadAppData()
@@ -571,6 +567,7 @@ describe("Test restricted user group access controls", ()  => {
     expect(res).to.have.status(201)
     expect(res.body.accessLevel).to.equal(1)
   })
+  
   // give it read only to something use lvl1TEstAcl object
   it("should set userGroups ACL in test collection", async () => {
 
@@ -693,4 +690,684 @@ describe("Test restricted user group access controls", ()  => {
     expect(res).to.have.status(403)
   })
 
+})
+
+describe(`Multiple Group Role Collsions`, () => {
+
+  before(async function () {
+      await utils.loadAppData()
+  })
+  
+  let userGroup1
+  let userGroup2
+
+  it('should create a test user group with lvl1 user in it.', async () => {
+    const res = await chai
+        .request(config.baseUrl)
+        .post(`/user-groups?elevate=true&projection=collections`)
+        .set('Authorization', 'Bearer ' + config.adminToken)
+        .send({
+          "name": "CollisionGroup1",
+          "description": "test group",
+          "userIds": [
+            lvl1.userId   
+          ]
+      })
+      userGroup1 = res.body
+      expect(res).to.have.status(201)
+      expect(res.body.collections).to.be.empty
+     
+  })
+
+  it('should another test user group with lvl1 user in it.', async () => {
+
+      const res = await chai
+          .request(config.baseUrl)
+          .post(`/user-groups?elevate=true&projection=collections`)
+          .set('Authorization', 'Bearer ' + config.adminToken)
+          .send({
+            "name": "CollisionGroup2",
+            "description": "test group",
+            "userIds": [
+              lvl1.userId   
+            ]
+        })
+        userGroup2 = res.body
+        expect(res).to.have.status(201)
+        expect(res.body.collections).to.be.empty
+       
+  })
+  
+  it("should delete lvl1 users direct grant to test collection", async () => {
+
+    const res = await chai.request(config.baseUrl)
+      .delete(`/collections/${reference.testCollection.collectionId}/grants/user/${lvl1.userId}`)
+      .set('Authorization', `Bearer ${config.adminToken}`)
+    expect(res).to.have.status(200)
+
+  })
+
+  it("should assign both groups created to the test collection with restricted grant", async function () {
+
+    const res = await chai.request(config.baseUrl)
+      .put(`/collections/${reference.testCollection.collectionId}/grants/user-group/${userGroup1.userGroupId}`)
+      .set('Authorization', `Bearer ${config.adminToken}`)
+      .send({
+          accessLevel: 1
+      })
+      expect(res).to.have.status(201)
+    expect(res.body.accessLevel).to.equal(1)
+
+      const res2 = await chai.request(config.baseUrl)
+          .put(`/collections/${reference.testCollection.collectionId}/grants/user-group/${userGroup2.userGroupId}`)
+          .set('Authorization', `Bearer ${config.adminToken}`)
+          .send({
+          accessLevel: 1
+          })
+      expect(res2).to.have.status(201)
+      expect(res2.body.accessLevel).to.equal(1)
+  })
+
+  it("get users assigned to the test collection and check that lvl1 user obtained accessLevel = 1 due to membership in two groups with accessLevel = 1", async () => {
+
+      const res = await chai.request(config.baseUrl)
+          .get(`/collections/${reference.testCollection.collectionId}?projection=users`)
+          .set('Authorization', `Bearer ${config.adminToken}`)
+      expect(res).to.have.status(200)
+      
+      const testUser = res.body.users.find(user => user.user.userId === lvl1.userId)
+      expect(testUser.accessLevel).to.equal(1)
+      const groupNames = [userGroup1.name, userGroup2.name]
+      for(const grantee of testUser.grantees){
+          expect(grantee.name).to.be.oneOf(groupNames)
+      }
+  })
+
+  it("should change userGroup1 accessLevel to 2", async () => {
+      const res = await chai.request(config.baseUrl)
+          .put(`/collections/${reference.testCollection.collectionId}/grants/user-group/${userGroup1.userGroupId}`)
+          .set('Authorization', `Bearer ${config.adminToken}`)
+          .send({
+              accessLevel: 2
+          })
+      expect(res).to.have.status(200)
+      expect(res.body.accessLevel).to.equal(2)
+  })
+
+  it("get users assigned to the test collection and check that lvl1 user obtained accessLevel = 2 due to membership in two groups with highest being accessLevel = 2", async () => {
+
+      const res = await chai.request(config.baseUrl)
+          .get(`/collections/${reference.testCollection.collectionId}?projection=users`)
+          .set('Authorization', `Bearer ${config.adminToken}`)
+      expect(res).to.have.status(200)
+      
+      const testUser = res.body.users.find(user => user.user.userId === lvl1.userId)
+      expect(testUser.accessLevel).to.equal(2)
+      expect(testUser.grantees.length).to.equal(1)
+      for(const grantee of testUser.grantees){
+          expect(grantee.name).to.equal(userGroup1.name)
+      }
+  })
+
+  it("should change userGroup2 accessLevel to 3", async () => {
+      const res = await chai.request(config.baseUrl)
+          .put(`/collections/${reference.testCollection.collectionId}/grants/user-group/${userGroup2.userGroupId}`)
+          .set('Authorization', `Bearer ${config.adminToken}`)
+          .send({
+              accessLevel: 3
+          })
+      expect(res).to.have.status(200)
+      expect(res.body.accessLevel).to.equal(3)
+  })
+
+  it("get users assigned to the test collection and check that lvl1 user obtained accessLevel = 3 due to membership in two groups with highest being accessLevel = 3", async () => {
+
+      const res = await chai.request(config.baseUrl)
+          .get(`/collections/${reference.testCollection.collectionId}?projection=users`)
+          .set('Authorization', `Bearer ${config.adminToken}`)
+      expect(res).to.have.status(200)
+      
+      const testUser = res.body.users.find(user => user.user.userId === lvl1.userId)
+      expect(testUser.accessLevel).to.equal(3)
+      expect(testUser.grantees.length).to.equal(1)
+      for(const grantee of testUser.grantees){
+          expect(grantee.name).to.equal(userGroup2.name)
+      }
+  })
+
+  it("should change userGroup1 accessLevel to 4", async () => {
+      const res = await chai.request(config.baseUrl)
+          .put(`/collections/${reference.testCollection.collectionId}/grants/user-group/${userGroup1.userGroupId}`)
+          .set('Authorization', `Bearer ${config.adminToken}`)
+          .send({
+              accessLevel: 4
+          })
+      expect(res).to.have.status(200)
+      expect(res.body.accessLevel).to.equal(4)
+  })
+  
+  it("get users assigned to the test collection and check that lvl1 user obtained accessLevel = 4 due to membership in two groups with highest being accessLevel = 4", async () => {
+
+      const res = await chai.request(config.baseUrl)
+          .get(`/collections/${reference.testCollection.collectionId}?projection=users`)
+          .set('Authorization', `Bearer ${config.adminToken}`)
+      expect(res).to.have.status(200)
+      
+      const testUser = res.body.users.find(user => user.user.userId === lvl1.userId)
+      expect(testUser.accessLevel).to.equal(4)
+      expect(testUser.grantees.length).to.equal(1)
+      for(const grantee of testUser.grantees){
+          expect(grantee.name).to.equal(userGroup1.name)
+      }
+  })
+})
+
+describe("Multiple Group ACL Collisions", () => {
+
+  // will create following sinceros where we have two restricted groups 
+  // 1.) group 1 will get rw on test asset and group 2 will get r on test asset should take r 
+  // 2.) group 1 will get rw on test asset and group 2 will get none on test asset should take none
+  // 3.) group 1 will get rw on test asset and group 2 will get rw on test asset should take rw but idk how? 
+  // 4.) on each of these tests try to write to the asset and check outcome. 
+
+  // 1.) do same with a label
+
+  // 1.) do same with an advanced ACL. 
+
+  before(async function () {
+      await utils.loadAppData()
+  })
+
+  let userGroup1
+  let userGroup2
+
+  it('should create a test user group with lvl1 user in it.', async () => {
+      const res = await chai
+          .request(config.baseUrl)
+          .post(`/user-groups?elevate=true&projection=collections`)
+          .set('Authorization', 'Bearer ' + config.adminToken)
+          .send({
+              "name": "ACLCollisionGroup1",
+              "description": "test group",
+              "userIds": [
+              lvl1.userId   
+              ]
+          })
+          userGroup1 = res.body
+          expect(res).to.have.status(201)
+          expect(res.body.collections).to.be.empty
+  })
+
+  it('should another test user group with lvl1 user in it.', async () => {
+
+      const res = await chai
+          .request(config.baseUrl)
+          .post(`/user-groups?elevate=true&projection=collections`)
+          .set('Authorization', 'Bearer ' + config.adminToken)
+          .send({
+          "name": "ACLCollisionGroup2",
+          "description": "test group",
+          "userIds": [
+              lvl1.userId   
+          ]
+      })
+      userGroup2 = res.body
+      expect(res).to.have.status(201)
+      expect(res.body.collections).to.be.empty
+      
+  })
+
+  it("should delete lvl1 users direct grant to test collection", async () => {
+          
+      const res = await chai.request(config.baseUrl)
+      .delete(`/collections/${reference.testCollection.collectionId}/grants/user/${lvl1.userId}`)
+      .set('Authorization', `Bearer ${config.adminToken}`)
+      expect(res).to.have.status(200)
+  
+  })
+
+  it("should assign both groups created to the test collection with restricted grant", async function () {
+
+      const res = await chai.request(config.baseUrl)
+      .put(`/collections/${reference.testCollection.collectionId}/grants/user-group/${userGroup1.userGroupId}`)
+      .set('Authorization', `Bearer ${config.adminToken}`)
+      .send({
+          accessLevel: 1
+      })
+      expect(res).to.have.status(201)
+      expect(res.body.accessLevel).to.equal(1)
+
+      const res2 = await chai.request(config.baseUrl)
+          .put(`/collections/${reference.testCollection.collectionId}/grants/user-group/${userGroup2.userGroupId}`)
+          .set('Authorization', `Bearer ${config.adminToken}`)
+          .send({
+          accessLevel: 1
+          })
+      expect(res2).to.have.status(201)
+      expect(res2.body.accessLevel).to.equal(1)
+  })
+
+  /*
+  Do not run at this level, run at describe above
+  */
+  describe("Group 1: r, Group 2: rw on Asset", () => {
+
+      it(`should set group1 acl to r on test asset`, async () => {
+          const res = await chai.request(config.baseUrl)
+          .put(`/collections/${reference.testCollection.collectionId}/grants/user-group/${userGroup1.userGroupId}/access`)
+          .set('Authorization', `Bearer ${config.adminToken}`)
+          .send([{"assetId":reference.testAsset.assetId,"access":"r"}])
+
+          expect(res).to.have.status(200)
+          expect(res.body.defaultAccess).to.equal("none")
+          expect(res.body.acl.length).to.equal(1)
+          expect(res.body.acl[0].access).to.equal("r")
+          expect(res.body.acl[0].asset.assetId).to.equal(reference.testAsset.assetId)
+
+      })
+
+      it(`should set group2 acl to rw on test asset`, async () => {
+          const res = await chai.request(config.baseUrl)
+          .put(`/collections/${reference.testCollection.collectionId}/grants/user-group/${userGroup2.userGroupId}/access`)
+          .set('Authorization', `Bearer ${config.adminToken}`)
+          .send([{"assetId":reference.testAsset.assetId,"access":"rw"}])
+
+          expect(res).to.have.status(200)
+          expect(res.body.defaultAccess).to.equal("none")
+          expect(res.body.acl.length).to.equal(1)
+          expect(res.body.acl[0].access).to.equal("rw")
+          expect(res.body.acl[0].asset.assetId).to.equal(reference.testAsset.assetId)
+      })
+      
+
+      it("should confirm group1 acl was set", async () => {
+          const res = await chai.request(config.baseUrl)
+              .get(`/collections/${reference.testCollection.collectionId}/grants/user-group/${userGroup1.userGroupId}/access`)
+              .set('Authorization', `Bearer ${config.adminToken}`)
+          expect(res).to.have.status(200)
+          expect(res.body.defaultAccess).to.equal("none")
+          expect(res.body.acl.length).to.equal(1)
+          expect(res.body.acl[0].access).to.equal("r")
+      })
+
+      it("should confirm group2 acl was set", async () => {
+          const res = await chai.request(config.baseUrl)
+              .get(`/collections/${reference.testCollection.collectionId}/grants/user-group/${userGroup2.userGroupId}/access`)
+              .set('Authorization', `Bearer ${config.adminToken}`)
+          expect(res).to.have.status(200)
+          expect(res.body.defaultAccess).to.equal("none")
+          expect(res.body.acl.length).to.equal(1)
+          expect(res.body.acl[0].access).to.equal("rw")
+      })
+
+      it('should return all resources with access of "r" from ACLCollisionGroup1', async () => {
+          const res = await chai.request(config.baseUrl)
+              .get(`/collections/${reference.testCollection.collectionId}/grants/user/${lvl1.userId}/access/effective`)
+              .set('Authorization', `Bearer ${config.adminToken}`)
+          expect(res).to.have.status(200)
+
+          for(const acl of res.body){
+              expect(acl.access).to.be.equal("r")
+              expect(acl.asset.assetId).to.be.equal(reference.testAsset.assetId)
+              expect(acl.aclSources.length).to.be.equal(1)
+              expect(acl.aclSources[0].aclRule.access).to.be.equal("r")
+              expect(acl.aclSources[0].grantee.name).to.be.equal("ACLCollisionGroup1")
+              expect(acl.aclSources[0].grantee.accessLevel).to.be.equal(1)
+          }
+      })
+  })
+
+  describe("Group 1: r, Group 2: none on Asset", () => {
+
+      it(`should set group1 acl to r on test asset`, async () => {
+          const res = await chai.request(config.baseUrl)
+          .put(`/collections/${reference.testCollection.collectionId}/grants/user-group/${userGroup1.userGroupId}/access`)
+          .set('Authorization', `Bearer ${config.adminToken}`)
+          .send([{"assetId":reference.testAsset.assetId,"access":"r"}])
+
+          expect(res).to.have.status(200)
+          expect(res.body.defaultAccess).to.equal("none")
+          expect(res.body.acl.length).to.equal(1)
+          expect(res.body.acl[0].access).to.equal("r")
+          expect(res.body.acl[0].asset.assetId).to.equal(reference.testAsset.assetId)
+
+      })
+
+      it(`should set group2 acl to none on test asset`, async () => {
+          const res = await chai.request(config.baseUrl)
+          .put(`/collections/${reference.testCollection.collectionId}/grants/user-group/${userGroup2.userGroupId}/access`)
+          .set('Authorization', `Bearer ${config.adminToken}`)
+          .send([{"assetId":reference.testAsset.assetId,"access":"none"}])
+
+          expect(res).to.have.status(200)
+          expect(res.body.defaultAccess).to.equal("none")
+          expect(res.body.acl.length).to.equal(1)
+          expect(res.body.acl[0].access).to.equal("none")
+          expect(res.body.acl[0].asset.assetId).to.equal(reference.testAsset.assetId)
+      })
+
+      it("should confirm group1 acl was set", async () => {
+          const res = await chai.request(config.baseUrl)
+              .get(`/collections/${reference.testCollection.collectionId}/grants/user-group/${userGroup1.userGroupId}/access`)
+              .set('Authorization', `Bearer ${config.adminToken}`)
+          expect(res).to.have.status(200)
+          expect(res.body.defaultAccess).to.equal("none")
+          expect(res.body.acl.length).to.equal(1)
+          expect(res.body.acl[0].access).to.equal("r")
+      })
+
+      it("should confirm group2 acl was set", async () => {
+          const res = await chai.request(config.baseUrl)
+              .get(`/collections/${reference.testCollection.collectionId}/grants/user-group/${userGroup2.userGroupId}/access`)
+              .set('Authorization', `Bearer ${config.adminToken}`)
+          expect(res).to.have.status(200)
+          expect(res.body.defaultAccess).to.equal("none")
+          expect(res.body.acl.length).to.equal(1)
+          expect(res.body.acl[0].access).to.equal("none")
+      })
+
+      it('should return empty array because user as "none"', async () => {
+          const res = await chai.request(config.baseUrl)
+              .get(`/collections/${reference.testCollection.collectionId}/grants/user/${lvl1.userId}/access/effective`)
+              .set('Authorization', `Bearer ${config.adminToken}`)
+          expect(res).to.have.status(200)
+
+          expect(res.body).to.be.empty
+      })
+  })
+
+  describe("Group 1: rw, Group 2: r on Test Label", () => {
+
+      it(`should set group1 acl to rw on test label`, async () => {
+          const res = await chai.request(config.baseUrl)
+          .put(`/collections/${reference.testCollection.collectionId}/grants/user-group/${userGroup1.userGroupId}/access`)
+          .set('Authorization', `Bearer ${config.adminToken}`)
+          .send([{"labelId":reference.testCollection.fullLabel,"access":"rw"}])
+
+          expect(res).to.have.status(200)
+          expect(res.body.defaultAccess).to.equal("none")
+          expect(res.body.acl.length).to.equal(1)
+          expect(res.body.acl[0].access).to.equal("rw")
+          expect(res.body.acl[0].label.labelId).to.equal(reference.testCollection.fullLabel)
+
+      })
+
+      it(`should set group2 acl to r on test label`, async () => {
+          const res = await chai.request(config.baseUrl)
+          .put(`/collections/${reference.testCollection.collectionId}/grants/user-group/${userGroup2.userGroupId}/access`)
+          .set('Authorization', `Bearer ${config.adminToken}`)
+          .send([{"labelId":reference.testCollection.fullLabel,"access":"r"}])
+
+          expect(res).to.have.status(200)
+          expect(res.body.defaultAccess).to.equal("none")
+          expect(res.body.acl.length).to.equal(1)
+          expect(res.body.acl[0].access).to.equal("r")
+          expect(res.body.acl[0].label.labelId).to.equal(reference.testCollection.fullLabel)
+      })
+
+      it("should confirm group1 acl was set", async () => {
+          const res = await chai.request(config.baseUrl)
+              .get(`/collections/${reference.testCollection.collectionId}/grants/user-group/${userGroup1.userGroupId}/access`)
+              .set('Authorization', `Bearer ${config.adminToken}`)
+          expect(res).to.have.status(200)
+          expect(res.body.defaultAccess).to.equal("none")
+          expect(res.body.acl.length).to.equal(1)
+          expect(res.body.acl[0].access).to.equal("rw")
+      })
+
+      it("should confirm group2 acl was set", async () => {
+          const res = await chai.request(config.baseUrl)
+              .get(`/collections/${reference.testCollection.collectionId}/grants/user-group/${userGroup2.userGroupId}/access`)
+              .set('Authorization', `Bearer ${config.adminToken}`)
+          expect(res).to.have.status(200)
+          expect(res.body.defaultAccess).to.equal("none")
+          expect(res.body.acl.length).to.equal(1)
+          expect(res.body.acl[0].access).to.equal("r")
+      })
+
+      it('should return read only assets from group 2s read ACL', async () => {
+          const res = await chai.request(config.baseUrl)
+              .get(`/collections/${reference.testCollection.collectionId}/grants/user/${lvl1.userId}/access/effective`)
+              .set('Authorization', `Bearer ${config.adminToken}`)
+          expect(res).to.have.status(200)
+          for(const acl of res.body){
+              expect(acl.access).to.be.equal("r")
+              expect(acl.asset.assetId).to.be.oneOf(["42","62"])
+              expect(acl.aclSources.length).to.be.equal(1)
+              expect(acl.aclSources[0].aclRule.access).to.be.equal("r")
+              expect(acl.aclSources[0].grantee.name).to.be.equal("ACLCollisionGroup2")
+              expect(acl.aclSources[0].grantee.accessLevel).to.be.equal(1)
+          }
+      })
+  })
+
+  describe("Advanced ACL collision", () => {
+
+      it(`should set group1 acl to rw on test label`, async () => {
+          const res = await chai.request(config.baseUrl)
+          .put(`/collections/${reference.testCollection.collectionId}/grants/user-group/${userGroup1.userGroupId}/access`)
+          .set('Authorization', `Bearer ${config.adminToken}`)
+          .send([{"labelId":reference.testCollection.fullLabel, "benchmarkId":reference.testCollection.benchmark, "access":"rw"}, {"assetId":"154","access":"r"}])
+
+          expect(res).to.have.status(200)
+          expect(res.body.defaultAccess).to.equal("none")
+          expect(res.body.acl.length).to.equal(2)
+          for(const acl of res.body.acl){
+              if(acl.label){
+                  expect(acl.access).to.equal("rw")
+              }
+              else {
+                  expect(acl.access).to.equal("r")
+              }
+          }
+      })
+
+      it(`should set group2 acl to r on test label`, async () => {
+          const res = await chai.request(config.baseUrl)
+          .put(`/collections/${reference.testCollection.collectionId}/grants/user-group/${userGroup2.userGroupId}/access`)
+          .set('Authorization', `Bearer ${config.adminToken}`)
+          .send([{"labelId":reference.testCollection.fullLabel,"access":"r"}])
+
+          expect(res).to.have.status(200)
+          expect(res.body.defaultAccess).to.equal("none")
+          expect(res.body.acl.length).to.equal(1)
+          expect(res.body.acl[0].access).to.equal("r")
+          expect(res.body.acl[0].label.labelId).to.equal(reference.testCollection.fullLabel)
+      })
+
+      it("should confirm group1 acl was set", async () => {
+          const res = await chai.request(config.baseUrl)
+              .get(`/collections/${reference.testCollection.collectionId}/grants/user-group/${userGroup1.userGroupId}/access`)
+              .set('Authorization', `Bearer ${config.adminToken}`)
+          expect(res).to.have.status(200)
+          expect(res.body.defaultAccess).to.equal("none")
+          expect(res.body.acl.length).to.equal(2)
+          for(const acl of res.body.acl){
+              if(acl.label){
+                  expect(acl.access).to.equal("rw")
+              }
+              else {
+                  expect(acl.access).to.equal("r")
+              }
+          }
+      })
+
+      it("should confirm group2 acl was set", async () => {
+          const res = await chai.request(config.baseUrl)
+              .get(`/collections/${reference.testCollection.collectionId}/grants/user-group/${userGroup2.userGroupId}/access`)
+              .set('Authorization', `Bearer ${config.adminToken}`)
+          expect(res).to.have.status(200)
+          expect(res.body.defaultAccess).to.equal("none")
+          expect(res.body.acl.length).to.equal(1)
+          expect(res.body.acl[0].access).to.equal("r")
+      })
+
+      it('should return effective ACLs belonging from a combination of both groups', async () => {
+          const res = await chai.request(config.baseUrl)
+              .get(`/collections/${reference.testCollection.collectionId}/grants/user/${lvl1.userId}/access/effective`)
+              .set('Authorization', `Bearer ${config.adminToken}`)
+          expect(res).to.have.status(200)
+          for(const acl of res.body){
+              if(acl.asset.assetId === "154"){
+                  expect(acl.access).to.be.equal("r")
+                  expect(acl.aclSources[0].grantee.name).to.be.equal("ACLCollisionGroup1")
+              }
+              else if(acl.asset.assetId === "42" || acl.asset.assetId === "62"){
+                 if(acl.benchmarkId === reference.testCollection.benchmark){
+                      expect(acl.access).to.be.equal("rw")
+                      expect(acl.aclSources[0].grantee.name).to.be.equal("ACLCollisionGroup1")
+                 }
+                 else {
+                      expect(acl.access).to.be.equal("r")
+                      expect(acl.aclSources[0].grantee.name).to.be.equal("ACLCollisionGroup2")
+                 }
+              }
+          }
+      })
+  })
+})   
+
+describe(`Testing grantee resolution between a direct grant and group grant`, () => {
+  describe(`GET- getEffectiveAclByCollectionUser`, () => {
+      before(async function () {
+          await utils.loadAppData()
+      })
+
+      let userGroup = null
+
+      // User has only a direct grant
+      it("check that user is not in a group", async () => {
+          const res = await chai
+              .request(config.baseUrl)
+              .get(`/users/${lvl1.userId}?elevate=true&projection=userGroups`)
+              .set('Authorization', 'Bearer ' + admin.token)
+      
+          expect(res).to.have.status(200)
+          expect(res.body.userGroups).to.be.an('array').that.is.empty
+      })
+
+      // user has direct grant to collection
+      it("make sure grantee has a userID property which means it has a direct grant ", async () => {
+
+          const res = await chai
+              .request(config.baseUrl)
+              .get(`/collections/${reference.testCollection.collectionId}/grants/user/${lvl1.userId}/access/effective`)
+              .set('Authorization', 'Bearer ' + admin.token)
+      
+          expect(res).to.have.status(200)
+          for(const grant of res.body){
+              for(const acl of grant.aclSources){
+                  expect(acl.grantee.userId).to.exist
+              }
+          }
+      })
+
+      // make group
+      it("should create a userGroup with lvl1 in it", async () => {
+          const res = await chai
+              .request(config.baseUrl)
+              .post(`/user-groups?elevate=true&projection=users`)
+              .set('Authorization', 'Bearer ' + admin.token)
+              .send({
+                  "name": "group" +  uuidv4(),
+                  "description": "test group",
+                  "userIds": [
+                  lvl1.userId   
+                  ]
+              })
+          
+          userGroup = res.body
+          expect(res).to.have.status(201)
+          for(let user of res.body.users) {
+              expect(user.userId, "expect userId to be equal to the userId returned from API").to.equal(lvl1.userId)
+          }
+      })
+
+      // add group to collection
+      it("should give created group restricted access to test collection", async () => {
+
+          const res = await chai
+              .request(config.baseUrl)
+              .put(`/collections/${reference.testCollection.collectionId}/grants/user-group/${userGroup.userGroupId}`)
+              .set('Authorization', 'Bearer ' + admin.token)
+              .send({
+                  accessLevel: 1
+              })
+          expect(res).to.have.status(201)
+      })
+
+      it("should set userGroups ACL in test collection", async () => {
+
+          const res = await chai
+              .request(config.baseUrl)
+              .put(`/collections/${reference.testCollection.collectionId}/grants/user-group/${userGroup.userGroupId}/access`)
+              .set('Authorization', 'Bearer ' + admin.token)
+              .send(lvl1TestAcl.put)
+          expect(res).to.have.status(200)
+      })
+
+      it("should confirm users effective acl was set. User has group and direct grant expect to get effective from the direct", async () => {
+
+          const res = await chai
+              .request(config.baseUrl)
+              .get(`/collections/${reference.testCollection.collectionId}/grants/user/${lvl1.userId}/access/effective`)
+              .set('Authorization', 'Bearer ' + admin.token)
+      
+          expect(res).to.have.status(200)
+          for(const grant of res.body){
+              for(const acl of grant.aclSources){
+                  expect(acl.grantee.userId).to.exist
+              }
+          }
+      })
+
+      it("should delete users direct grant to test collection", async () => {
+
+          const res = await chai.request(config.baseUrl)  
+              .delete(`/collections/${reference.testCollection.collectionId}/grants/user/${lvl1.userId}`)
+              .set('Authorization', `Bearer ${admin.token}`)
+          expect(res).to.have.status(200)
+      })
+      
+      it("User now only has a group grant, check that grantee was resolved from a group", async () => {
+
+          const res = await chai
+              .request(config.baseUrl)
+              .get(`/collections/${reference.testCollection.collectionId}/grants/user/${lvl1.userId}/access/effective`)
+              .set('Authorization', 'Bearer ' + admin.token)
+               
+          expect(res).to.have.status(200)
+          for(const grant of res.body){
+              for(const acl of grant.aclSources){
+                  expect(acl.grantee.userGroupId).to.exist
+              }
+          }
+      })
+
+      it("should delete the userGroup", async () => {
+          const res = await chai
+              .request(config.baseUrl)
+              .delete(`/user-groups/${userGroup.userGroupId}?elevate=true`)
+              .set('Authorization', 'Bearer ' + admin.token)
+          expect(res).to.have.status(200)
+      })
+
+      it("should confirm that the userGroup was deleted", async () => {
+          const res = await chai
+              .request(config.baseUrl)
+              .get(`/user-groups/${userGroup.userGroupId}?elevate=true`)
+              .set('Authorization', 'Bearer ' + admin.token)
+          expect(res).to.have.status(404)
+      })
+      
+      it("User now has no grant to the collection should get 422 error", async () => {
+
+          const res = await chai
+              .request(config.baseUrl)
+              .get(`/collections/${reference.testCollection.collectionId}/grants/user/${lvl1.userId}/access/effective`)
+              .set('Authorization', 'Bearer ' + admin.token)
+          expect(res).to.have.status(422)
+          expect(res.body.detail).to.equal("user has no direct or group grant in collection")
+      })
+  })
 })

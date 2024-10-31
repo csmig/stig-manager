@@ -206,10 +206,22 @@ describe('GET - Collection', function () {
           expect(res.body.collectionId).to.equal(reference.testCollection.collectionId)
           const regex  = new RegExp(reference.testCollection.name)
           expect(res.body.name).to.match(regex)
-      
+          
           for(const grant of res.body.grants){
-            const userIds = reference.testCollection.grantsProjected.map(grant => grant.user.userId)
-            expect(userIds).to.include(grant.user.userId)
+            const userIds = reference.testCollection.grantsProjected
+            .filter(grant => grant.user)
+            .map(grant => grant.user.userId);
+          
+            if (grant.user) {
+              expect(userIds).to.include(grant.user.userId);
+            }
+            else if (grant.userGroup) {
+              const groupIds = reference.testCollection.grantsProjected
+                .filter(grant => grant.userGroup)
+                .map(grant => grant.userGroup.userGroupId);
+          
+              expect(groupIds).to.include(grant.userGroup.userGroupId);
+            }
           }
 
           // assets projection
@@ -376,31 +388,40 @@ describe('GET - Collection', function () {
       })
 
       // note: this is deprecated 
-      describe('getStigAssetsByCollectionUser - /collections/{collectionId}/grants/{userId}/access', function () {
+      // describe('getStigAssetsByCollectionUser - /collections/{collectionId}/grants/{userId}/access', function () {
 
-        it('Return stig-asset grants for a lvl1 iteration in this collection.',async function () {
-          const res = await chai.request(config.baseUrl)
-            .get(`/collections/${reference.testCollection.collectionId}/grants/${reference.testCollection.grantCheckUserId}/access`)
-            .set('Authorization', `Bearer ${iteration.token}`)
-            if (distinct.grant === "none"){
-              expect(res).to.have.status(403)
-              return
-            }
-            if(distinct.canModifyCollection === false){
-              expect(res).to.have.status(403)
-              return
-          }
+      //   it('Return stig-asset grants for a lvl1 iteration in this collection.',async function () {
+      //     const res = await chai.request(config.baseUrl)
+      //       .get(`/collections/${reference.testCollection.collectionId}/grants/${reference.testCollection.grantCheckUserId}/access`)
+      //       .set('Authorization', `Bearer ${iteration.token}`)
+      //       if (distinct.grant === "none"){
+      //         expect(res).to.have.status(403)
+      //         return
+      //       }
+      //       if(distinct.canModifyCollection === false){
+      //         expect(res).to.have.status(403)
+      //         return
+      //     }
 
-            expect(res).to.have.status(200)
-            expect(res.body).to.be.an('array').of.length(2)
-            const regex = new RegExp("asset")
-            for (const stigAssetGrant of res.body) {
-              expect(stigAssetGrant.asset.name).to.match(regex)
-              expect(stigAssetGrant.benchmarkId).to.be.oneOf(reference.testCollection.validStigs)
-              expect(stigAssetGrant.asset.assetId).to.be.oneOf(distinct.assetIds)
-            }
-        })
-      })
+      //       expect(res).to.have.status(200)
+      //       expect(res.body).to.be.an('array').of.length(3)
+      //       const regex = new RegExp("asset")
+      //       for (const stigAssetGrant of res.body) {
+           
+      //         if(stigAssetGrant.label){
+      //           expect(stigAssetGrant.label.name).to.equal(reference.testCollection.lvl1LabelName)
+      //           expect(stigAssetGrant.label.labelId).to.equal(reference.testCollection.lvl1Label)
+      //           expect(stigAssetGrant.access).to.equal("rw")
+      //           expect(stigAssetGrant.benchmarkId).to.be.oneOf(reference.testCollection.validStigs)
+      //         }
+      //         else {
+      //           expect(stigAssetGrant.asset.name).to.match(regex)
+      //           expect(stigAssetGrant.benchmarkId).to.be.oneOf(reference.testCollection.validStigs)
+      //           expect(stigAssetGrant.asset.assetId).to.be.oneOf(distinct.assetIds)
+      //         }
+      //       }
+      //   })
+      // })
 
       describe('getGrantByCollectionUser - /collections/{collectionId}/grants/user/{userId}', function () {
 
@@ -435,8 +456,14 @@ describe('GET - Collection', function () {
             expect(res.body.accessLevel).to.equal(distinct.accessLevel)
             expect(res.body.userId).to.equal(iteration.userId)
             for(const grant of res.body.grantees){
-              expect(grant.userId).to.equal(iteration.userId)
-              expect(grant.username).to.equal(iteration.name)
+              if(grant.userId){
+                expect(grant.userId).to.equal(iteration.userId)
+                expect(grant.username).to.equal(iteration.name)
+              }
+              else if(grant.userGroup){
+                expect(grant.userGroup.userGroupId).to.equal(reference.testCollection.testGroup.userGroupId)
+                expect(grant.userGroup.name).to.be.oneOf(reference.testCollection.testGroup.users)
+              }
             }
         })
 
@@ -494,7 +521,7 @@ describe('GET - Collection', function () {
             .get(`/collections/${reference.testCollection.collectionId}/grants/user/${iteration.userId}/access`)
             .set('Authorization', `Bearer ${stigmanadminToken}`)
 
-          if (distinct.grant === "none"){
+          if (distinct.grant === "none" || iteration.name === "lvl1"){
             expect(res).to.have.status(422)
             return
           }
@@ -547,7 +574,7 @@ describe('GET - Collection', function () {
               expect(reference.testCollection.labels).to.include(label.labelId)
               if (label.name == reference.testCollection.fullLabelName){
                   expect(label.uses).to.equal(distinct.fullLabelUses)
-                }
+              }
               if (label.name == reference.testCollection.lvl1LabelName){
                   expect(label.uses).to.equal(distinct.lvl1LabelUses)
               }
@@ -1147,11 +1174,14 @@ describe('GET - Collection', function () {
 
             for(const stig of res.body){
               expect(distinct.validStigs).to.include(stig.benchmarkId)
-              //expect just 1 asset with this label
-              expect(stig.assetCount).to.equal(distinct.fullLabelUses)
               if(stig.benchmarkId === reference.benchmark){
+                expect(stig.assetCount).to.equal(distinct.vpnStigAssetCount)
                 expect(stig.revisionStr).to.equal(reference.revisionStr)
                 expect(stig.ruleCount).to.equal(reference.checklistLength)
+              }
+              else{
+                expect(stig.assetCount).to.equal(distinct.windowsStigAssetCount)
+                expect(stig.ruleCount).to.equal(287)
               }
             }
         })
@@ -1194,10 +1224,14 @@ describe('GET - Collection', function () {
             for(const stig of res.body){
               expect(distinct.validStigs).to.include(stig.benchmarkId)
               //expect just 1 asset with this label
-              expect(stig.assetCount).to.equal(distinct.fullLabelUses)
               if(stig.benchmarkId === reference.benchmark){
+                expect(stig.assetCount).to.equal(distinct.vpnStigAssetCount)
                 expect(stig.revisionStr).to.equal(reference.revisionStr)
                 expect(stig.ruleCount).to.equal(reference.checklistLength)
+              }
+              else{
+                expect(stig.assetCount).to.equal(distinct.windowsStigAssetCount)
+                expect(stig.ruleCount).to.equal(287)
               }
             }
           })

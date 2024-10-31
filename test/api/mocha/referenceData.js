@@ -17,13 +17,13 @@ const reference = {
 
   // in appdata.jsonl
   deletedCollection: {
-    collectionId: "93"
+    collectionId: "93",
   },
   // in appdata.jsonl
-  deletedAsset:{
-    assetId: "247"
+  deletedAsset: {
+    assetId: "247",
   },
-  
+
   testCollection: {
     name: "Collection X",
     collectionId: "21",
@@ -46,13 +46,17 @@ const reference = {
     lvl1LabelAssetIds: ["42"],
     fullLabelName: "test-label-full",
     fullLabel: "755b8a28-9a68-11ec-b1bc-0242ac110002",
+    testGroup: {
+      userGroupId: 1,
+      users: ["lvl1"]
+    },
     labels: [
       "755b8a28-9a68-11ec-b1bc-0242ac110002",
       "5130dc84-9a68-11ec-b1bc-0242ac110002",
     ],
     labelsMap: {
       "test-label-full": "755b8a28-9a68-11ec-b1bc-0242ac110002",
-      "test-label-lvl1": "5130dc84-9a68-11ec-b1bc-0242ac110002"
+      "test-label-lvl1": "5130dc84-9a68-11ec-b1bc-0242ac110002",
     },
 
     allMetadata: [
@@ -120,14 +124,6 @@ const reference = {
       },
       {
         user: {
-          userId: "85",
-          username: "lvl1",
-          displayName: "lvl1",
-        },
-        accessLevel: 1,
-      },
-      {
-        user: {
           userId: "21",
           username: "lvl2",
           displayName: "lvl2",
@@ -165,6 +161,14 @@ const reference = {
           displayName: "lvl4",
         },
         accessLevel: 4,
+      },
+      {
+        userGroup: {
+          name: "TestGroup",
+          description: "TestGroup",
+          userGroupId: "1",
+        },
+        accessLevel: 1,
       },
     ],
     ownersProjected: [
@@ -209,11 +213,11 @@ const reference = {
       checklistCount: 6,
     },
     appinfo: {
-      state: 'enabled',
+      state: "enabled",
       assets: 4,
       assetsDisabled: 1,
       reviews: 17,
-      reviewsDisabled: 1
+      reviewsDisabled: 1,
     },
     labelsProjected: [
       {
@@ -244,7 +248,7 @@ const reference = {
 
   // Reference Asset data
 
-  testAssetLvl1NoAccess: "62",
+  testAssetLvl1NoAccess: "29",
   testAsset: {
     name: "Collection_X_lvl1_asset-1",
     assetId: "42",
@@ -293,8 +297,7 @@ const reference = {
     metadataValue: "testvalue",
     ruleCount: 612,
     validStigs: ["VPN_SRG_TEST", "Windows_10_STIG_TEST", "RHEL_7_STIG_TEST"],
-    name: "test asset stigmanadmin"
-
+    name: "test asset stigmanadmin",
   },
   testAssetNoStigs: {
     name: "ACHERNAR_Collection_X_asset",
@@ -358,7 +361,7 @@ const reference = {
   revisionStr: "V1R1",
   checklistLength: 81,
   testBenchmarkAllRevisions: ["V1R1", "V1R0"],
-  lvl1ValidStigs: ["VPN_SRG_TEST"],
+  lvl1ValidStigs: ["VPN_SRG_TEST", "Windows_10_STIG_TEST"],
   scrapBenchmark: "RHEL_7_STIG_TEST",
   testStigfile: "U_VPN_SRG_V1R1_Manual-xccdf.xml",
   windowsBenchmark: "Windows_10_STIG_TEST",
@@ -399,8 +402,6 @@ const reference = {
   // },
   // reviewMetadataKey: 'testkey',
   // reviewMetadataValue: 'testvalue',
-
-
 };
 
 module.exports = reference;
