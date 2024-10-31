@@ -250,9 +250,17 @@ module.exports.replaceCollection = async function replaceCollection (req, res, n
     if (!hasUniqueGrants(body.grants)) {
       throw new SmError.UnprocessableError('Duplicate user in grant array')
     }
-    const existingGrants = (await CollectionService.getCollection(collectionId, ['grants'], false, req.userObject ))
-      ?.grants
-      .map(g => ({userId: g.user.userId, accessLevel: g.accessLevel}))
+    const existingGrants = (await CollectionService.getCollection(collectionId, ['grants'], false, req.userObject))
+    ?.grants
+    .map(g => {
+      if (g.user) {
+        return { userId: g.user.userId, accessLevel: g.accessLevel }
+      } else if (g.userGroup) {
+        return { userGroupId: g.userGroup.userGroupId, accessLevel: g.accessLevel }
+      }
+      return null
+    })
+    .filter(grant => grant !== null)
 
       if (!elevate && (grant.accessLevel !== Security.ACCESS_LEVEL.Owner && !requestedOwnerGrantsMatchExisting(body.grants, existingGrants))) {
         throw new SmError.PrivilegeError('Cannot create or modify owner grants.')
