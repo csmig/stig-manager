@@ -47,7 +47,7 @@ const scripts = [
   'js/LockingGridView.js',
   'js/SM/ColumnFilters.js',
   'js/SM/FindingsPanel.js',
-  'js/SM/Assignments.js',
+  'js/SM/Acl.js',
   'js/SM/Attachments.js',
   'js/SM/Exports.js',
   'js/SM/Review.js',

@@ -138,7 +138,7 @@ uglifyjs \
 'LockingGridView.js' \
 'SM/ColumnFilters.js' \
 'SM/FindingsPanel.js' \
-'SM/Assignments.js' \
+'SM/Acl.js' \
 'SM/Attachments.js' \
 'SM/Exports.js' \
 'SM/Review.js' \

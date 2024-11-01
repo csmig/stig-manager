@@ -2,9 +2,8 @@ Ext.ns('SM.Acl')
 
 SM.Acl.ResourceTreePanel = Ext.extend(Ext.tree.TreePanel, {
     initComponent: function() {
-      let me = this
-      let collectionId = this.collectionId
-      let config = {
+      const collectionId = this.collectionId
+      const config = {
           autoScroll: true,
           bodyStyle: 'padding:5px;',
           minSize: 220,
@@ -15,7 +14,7 @@ SM.Acl.ResourceTreePanel = Ext.extend(Ext.tree.TreePanel, {
           },
           rootVisible: false,
           loader: new Ext.tree.TreeLoader({
-            directFn: me.loadTree
+            directFn: this.loadTree
           }),
           loadMask: {msg: ''},
           listeners: {
@@ -234,7 +233,7 @@ SM.Acl.ResourceTreePanel = Ext.extend(Ext.tree.TreePanel, {
   
 SM.Acl.ResourceAddBtn = Ext.extend(Ext.Button, {
   initComponent: function () {
-    let config = {
+    const config = {
       disabled: true,
       height: 30,
       width: 150,
@@ -244,14 +243,14 @@ SM.Acl.ResourceAddBtn = Ext.extend(Ext.Button, {
       cls: 'x-btn-text-icon'
     }
     Ext.apply(this, Ext.apply(this.initialConfig, config))
-    SM.Acl.ResourceAddBtn.superclass.initComponent.call(this)
+    this.superclass().initComponent.call(this)
   }
 })
   
 SM.Acl.ResourceRemoveBtn = Ext.extend(Ext.Button, {
   initComponent: function () {
-    let grid = this.grid
-    let config = {
+    const grid = this.grid
+    const config = {
       disabled: true,
       height: 30,
       width: 150,
@@ -267,15 +266,15 @@ SM.Acl.ResourceRemoveBtn = Ext.extend(Ext.Button, {
       }
 }
     Ext.apply(this, Ext.apply(this.initialConfig, config))
-    SM.Acl.ResourceRemoveBtn.superclass.initComponent.call(this)
+    this.superclass().initComponent.call(this)
   }
 })
 
 SM.Acl.AssignedRulesGrid = Ext.extend(Ext.grid.EditorGridPanel, {
   // config: { panel}
   initComponent: function() {
-    let me = this
-    let assignmentStore = new Ext.data.JsonStore({
+    const _this = this
+    const assignmentStore = new Ext.data.JsonStore({
       fields: [
         'benchmarkId',
         'assetId',
@@ -293,22 +292,22 @@ SM.Acl.AssignedRulesGrid = Ext.extend(Ext.grid.EditorGridPanel, {
       idProperty: v => `${v.benchmarkId}-${v.assetName}-${v.labelName}`,
       listeners: {
         add: function(){
-          // me.setTitle('Asset-STIG Assignments (' + assignmentStore.getCount() + ')');
+          // _this.setTitle('Asset-STIG Assignments (' + assignmentStore.getCount() + ')');
         }, 
         remove: function(){
-          // me.setTitle('Asset-STIG Assignments (' + assignmentStore.getCount() + ')');
+          // _this.setTitle('Asset-STIG Assignments (' + assignmentStore.getCount() + ')');
           //==========================================================
           //DISABLE THE REMOVAL BUTTON AFTER EACH REMOVAL OF ASSIGMENTS
           //==========================================================
-          me.panel.removeButton.disable();
+          _this.panel.removeButton.disable();
         } 
       }  
     })
-    let selectionModel = new Ext.grid.RowSelectionModel({
+    const selectionModel = new Ext.grid.RowSelectionModel({
       singleSelect: false,
       listeners: {
         rowselect: function(theSelModel, theRowIndex, therecord){
-          me.panel.removeButton.enable();
+          _this.panel.removeButton.enable();
         },
         rowdeselect: function(theSelModel, theRowIndex, therecord){
           if (theSelModel.getCount()<1){
@@ -316,7 +315,7 @@ SM.Acl.AssignedRulesGrid = Ext.extend(Ext.grid.EditorGridPanel, {
             //WHEN THERE ARE NO MORE SELECTIONS, DISABLE THE 
             //"REMOVE ASSIGNMENTS" BUTTON
             //==============================================
-            me.panel.removeButton.disable();
+            _this.panel.removeButton.disable();
           }
         }
       }
@@ -415,7 +414,7 @@ SM.Acl.AssignedRulesGrid = Ext.extend(Ext.grid.EditorGridPanel, {
       disabled: false,
       getName: function() {return this.name},
       validate: function() { return true},
-      // width: me.width || 400,
+      // width: _this.width || 400,
       store: assignmentStore,
       view: new SM.ColumnFilters.GridView({
         emptyText: this.emptyText || 'No records to display',
@@ -432,7 +431,7 @@ SM.Acl.AssignedRulesGrid = Ext.extend(Ext.grid.EditorGridPanel, {
     }
     
     Ext.apply(this, Ext.apply(this.initialConfig, config))
-    SM.Acl.AssignedRulesGrid.superclass.initComponent.call(this)
+    this.superclass().initComponent.call(this)
   }
 })
 
@@ -549,7 +548,7 @@ SM.Acl.Panel = Ext.extend(Ext.Panel, {
     }
 
     Ext.apply(this, Ext.apply(this.initialConfig, config))
-    SM.Acl.Panel.superclass.initComponent.call(this)
+    this.superclass().initComponent.call(this)
   }
 })
 
