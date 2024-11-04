@@ -253,14 +253,15 @@ module.exports.replaceCollection = async function replaceCollection (req, res, n
     const existingGrants = (await CollectionService.getCollection(collectionId, ['grants'], false, req.userObject))
     ?.grants
     .map(g => {
+      const flattenedGrant = {accessLevel: g.accessLevel}
       if (g.user) {
-        return { userId: g.user.userId, accessLevel: g.accessLevel }
-      } else if (g.userGroup) {
-        return { userGroupId: g.userGroup.userGroupId, accessLevel: g.accessLevel }
+        flattenedGrant.userId = g.user.userId
       }
-      return null
+      else {
+        flattenedGrant.userGroupId = g.userGroup.userGroupId
+      }
+      return flattenedGrant
     })
-    .filter(grant => grant !== null)
 
       if (!elevate && (grant.accessLevel !== Security.ACCESS_LEVEL.Owner && !requestedOwnerGrantsMatchExisting(body.grants, existingGrants))) {
         throw new SmError.PrivilegeError('Cannot create or modify owner grants.')
