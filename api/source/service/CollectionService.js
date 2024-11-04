@@ -2464,11 +2464,11 @@ exports.getGrantByCollectionUserGroup = async function ({collectionId, userGroup
   return response
 }
 
-exports.deleteGrantByCollectionUserGroup = function ({collectionId, userGroupId}) {
+exports.deleteGrantByCollectionUserGroup = async function ({collectionId, userGroupId}) {
 
   const deleteGrantByCollectionUserGroup = 
-  `DELETE FROM collection_grant_group WHERE collectionId = ? AND userGroupId = ?`
-  return connection.query(deleteGrantByCollectionUserGroup, [collectionId, userGroupId])
+  `DELETE FROM collection_grant WHERE collectionId = ? AND userGroupId = ?`
+  return await dbUtils.pool.query(deleteGrantByCollectionUserGroup, [collectionId, userGroupId])
 }
 
 exports.getEffectiveAclByCollectionUser = async function ({collectionId, userId}) {
