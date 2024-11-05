@@ -17,7 +17,7 @@ const metricsOutputToJSON = (testCaseName, username, responseData, outputJsonFil
   fs.writeFileSync(metricsFilePath, JSON.stringify(metricsData, null, 2), 'utf8')
 }
 
-const loadAppData = (appdataFileName = 'appdataWIP.jsonl') => {
+const loadAppData = (appdataFileName = 'appdata.jsonl') => {
   console.log(`Loading ${appdataFileName}`)
   return axios({
     method: 'post',
@@ -206,7 +206,7 @@ const importReview = async (collectionId, assetId, ruleId = "SV-106179r1_rule") 
 const setStigGrants = async (collectionId, userId, assetId) => {
   try {
     const res = await axios.put(
-      `${config.baseUrl}/collections/${collectionId}/grants/${userId}/access`,
+      `${config.baseUrl}/collections/${collectionId}/grants/user/${userId}/access`,
       [
         {
             "benchmarkId": "VPN_SRG_TEST",
@@ -236,7 +236,7 @@ const setStigGrants = async (collectionId, userId, assetId) => {
 
 const setStigGrantsMeta = async (collectionId, userId, assetId) => {
   const res = await axios.put(
-    `${config.baseUrl}/collections/${collectionId}/grants/${userId}/access`,
+    `${config.baseUrl}/collections/${collectionId}/grants/user/${userId}/access`,
     [
       {
           "benchmarkId": "VPN_SRG_TEST",

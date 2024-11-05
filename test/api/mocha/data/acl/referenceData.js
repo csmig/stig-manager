@@ -31,6 +31,10 @@ const reference = {
     lvl1Label: "5130dc84-9a68-11ec-b1bc-0242ac110002",
     fullLabel: "755b8a28-9a68-11ec-b1bc-0242ac110002",
     fullLabelName: "test-label-full",
+    testGroup: {
+      userGroupId: 1,
+      users: ["lvl1"]
+    },
     labels: [
       "755b8a28-9a68-11ec-b1bc-0242ac110002",
       "5130dc84-9a68-11ec-b1bc-0242ac110002"

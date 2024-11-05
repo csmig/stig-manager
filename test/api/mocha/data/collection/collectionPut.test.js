@@ -343,6 +343,10 @@ describe('PUT - Collection', function () {
 
       describe('setGrantByCollectionUser - /collections/{collectionId}/grants/user/{userId}', function () {
 
+        before(async function () {
+          await utils.loadAppData()
+        })
+
         it('set stig-asset grants for a lvl1 user in this collection. user does not have a direct grant to the colleciton',async function () {
           const res = await chai.request(config.baseUrl)
               .put(`/collections/${reference.testCollection.collectionId}/grants/user/${reference.lvl1User.userId}`)
@@ -370,13 +374,18 @@ describe('PUT - Collection', function () {
               .send({
                 "accessLevel": 1
               })
+          if (distinct.grant === "none" || distinct.canModifyCollection === false){
+            expect(res).to.have.status(201)
+          }
+          else {
             expect(res).to.have.status(200)
-            expect(res.body.accessLevel).to.equal(1)
-            expect(res.body.userId).to.equal(reference.lvl1User.userId)
-            for(const grant of res.body.grantees){
-              expect(grant.userId).to.equal(reference.lvl1User.userId)
-              expect(grant.username).to.equal(reference.lvl1User.username)
-            }
+          }
+          expect(res.body.accessLevel).to.equal(1)
+          expect(res.body.userId).to.equal(reference.lvl1User.userId)
+          for(const grant of res.body.grantees){
+            expect(grant.userId).to.equal(reference.lvl1User.userId)
+            expect(grant.username).to.equal(reference.lvl1User.username)
+          }
         })
         it("should throw SmError.Unprocessable Entity when attempting to set asset stig for a user that does not exist with access level 1",async function () {
           const randomUserId = Math.floor(Math.random() * 1002230)

@@ -24,54 +24,13 @@ describe('GET- getEffectiveAclByCollectionUser - /collection/{collectionId}/gran
     await utils.loadAppData()
   })
 
-  let userGroup
-
-  it('should create a test user group with lvl1 user in it.', async () => {
-    const res = await chai
-        .request(config.baseUrl)
-        .post(`/user-groups?elevate=true&projection=collections`)
-        .set('Authorization', 'Bearer ' + config.adminToken)
-        .send({
-          "name": "IterationTestgroup",
-          "description": "test group",
-          "userIds": [
-            user.userId   
-          ]
-      })
-      userGroup = res.body
-      expect(res).to.have.status(201)
-      expect(res.body.collections).to.be.empty
-     
-  })
-
-  it("should delete lvl1 users direct grant to test collection", async () => {
-
-    const res = await chai.request(config.baseUrl)
-      .delete(`/collections/${reference.testCollection.collectionId}/grants/user/${user.userId}`)
-      .set('Authorization', `Bearer ${config.adminToken}`)
-    expect(res).to.have.status(200)
-
-  })
-
-  it("should assign group created to the test collection with restricted grant", async function () {
-
-    const res = await chai.request(config.baseUrl)
-    .put(`/collections/${reference.testCollection.collectionId}/grants/user-group/${userGroup.userGroupId}`)
-    .set('Authorization', `Bearer ${config.adminToken}`)
-    .send({
-      accessLevel: 1
-    })
-    expect(res).to.have.status(201)
-    expect(res.body.accessLevel).to.equal(1)
-  })
-
   for(const iteration of iterations){
  
     describe(`iteration:${iteration.name}`, () => {
       
       it(`should set test groups ACL: ${iteration.name}`, async () => {
         const res = await chai.request(config.baseUrl)
-        .put(`/collections/${reference.testCollection.collectionId}/grants/user-group/${userGroup.userGroupId}/access`)
+        .put(`/collections/${reference.testCollection.collectionId}/grants/user-group/${reference.testCollection.testGroup.userGroupId}/access`)
         .set('Authorization', `Bearer ${config.adminToken}`)
         .send(iteration.put)
 
@@ -81,7 +40,7 @@ describe('GET- getEffectiveAclByCollectionUser - /collection/{collectionId}/gran
 
       it("should confirm group acl was set", async () => {
         const res = await chai.request(config.baseUrl)
-          .get(`/collections/${reference.testCollection.collectionId}/grants/user-group/${userGroup.userGroupId}/access`)
+          .get(`/collections/${reference.testCollection.collectionId}/grants/user-group/${reference.testCollection.testGroup.userGroupId}/access`)
           .set('Authorization', `Bearer ${config.adminToken}`)
         expect(res).to.have.status(200)
         expect(res.body.defaultAccess).to.equal("none")

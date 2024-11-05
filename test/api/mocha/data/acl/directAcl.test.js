@@ -24,13 +24,32 @@ describe('GET - Test Effective ACL', () => {
     await utils.loadAppData()
     // await utils.uploadTestStigs()
   })
+  describe(`getEffectiveAclByCollectionUser - /collection/{collectionId}/grants/user/{userId}/access/effective`, () => {
 
-  for(const iteration of iterations){
-    
-    describe(`iteration:${iteration.name}`, () => {
 
-      describe(`getEffectiveAclByCollectionUser - /collection/{collectionId}/grants/user/{userId}/access/effective`, () => {
-        
+    it("should give lvl1 user restricted access to test collection", async () => {
+      const res = await chai.request(config.baseUrl)
+          .put(`/collections/${reference.testCollection.collectionId}/grants/user/${user.userId}`)
+          .set('Authorization', `Bearer ${config.adminToken}`)
+          .send({
+            "accessLevel": 1
+          })
+      expect(res).to.have.status(201)
+    })
+
+    it("Remove Base appdata userGroup from test Colleciton", async () => {
+
+      const res = await chai.request(config.baseUrl)  
+        .delete(`/collections/${reference.testCollection.collectionId}/grants/user-group/${reference.testCollection.testGroup.userGroupId}`)
+        .set('Authorization', `Bearer ${config.adminToken}`)
+
+      expect(res).to.have.status(200)
+    })
+
+    for(const iteration of iterations){
+      
+      describe(`iteration:${iteration.name}`, () => {
+
         it(`should set lvl1 users ACL: ${iteration.name}`, async () => {
           const res = await chai.request(config.baseUrl)
           .put(`/collections/${reference.testCollection.collectionId}/grants/user/${user.userId}/access`)
@@ -87,6 +106,6 @@ describe('GET - Test Effective ACL', () => {
       
         })
       })
-    })
-  }
+    }
+  })
 })

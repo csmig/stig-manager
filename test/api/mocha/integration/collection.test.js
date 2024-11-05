@@ -1615,7 +1615,7 @@ describe('GET - putAssetsByCollectionLabelId - /collections/{collectionId}/label
         })
     })
 })
-describe('PUT - setStigAssetsByCollectionUser - /collections/{collectionId}/grants/{userId}/access', () => {
+describe('PUT - setStigAssetsByCollectionUser - /collections/{collectionId}/grants/user/{userId}/access', () => {
 
     describe('restricted grant assignments outside of Collection boundary', () => {
 
@@ -1654,6 +1654,23 @@ describe('PUT - setStigAssetsByCollectionUser - /collections/{collectionId}/gran
                     expect(grant.accessLevel).to.eql(1)
                 }
             }
+        })
+        it("should give lvl1 user restricted access to test collection", async () => {
+            const res = await chai.request(config.baseUrl)
+                .put(`/collections/${reference.testCollection.collectionId}/grants/user/${reference.lvl1User.userId}`)
+                .set('Authorization', `Bearer ${user.token}`)
+                .send({
+                  "accessLevel": 1
+                })
+            expect(res).to.have.status(201)
+        })
+        it("Remove Base appdata userGroup from test Colleciton", async () => {
+      
+            const res = await chai.request(config.baseUrl)  
+              .delete(`/collections/${reference.testCollection.collectionId}/grants/user-group/${reference.testCollection.testGroup.userGroupId}`)
+              .set('Authorization', `Bearer ${user.token}`)
+      
+            expect(res).to.have.status(200)
         })
         it('set stig-asset grants for a lvl1 user in test collection, with asset from another collection', async () => {
 

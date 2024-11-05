@@ -202,7 +202,23 @@ describe(`Test Restricted user access controls`, () => {
         await utils.loadAppData()
     })
 
+    it("should give lvl1 user restricted access to test collection", async () => {
+      const res = await chai.request(config.baseUrl)
+          .put(`/collections/${reference.testCollection.collectionId}/grants/user/${lvl1.userId}`)
+          .set('Authorization', `Bearer ${admin.token}`)
+          .send({
+            "accessLevel": 1
+          })
+      expect(res).to.have.status(201)
+    })
+    it("Remove Base appdata userGroup from test Colleciton", async () => {
 
+      const res = await chai.request(config.baseUrl)  
+        .delete(`/collections/${reference.testCollection.collectionId}/grants/user-group/${reference.testCollection.testGroup.userGroupId}`)
+        .set('Authorization', `Bearer ${admin.token}`)
+
+      expect(res).to.have.status(200)
+    })
     it(`should set users ACL in test collection `, async () => {
         const res = await chai.request(config.baseUrl)
             .put(`/collections/${reference.testCollection.collectionId}/grants/user/${lvl1.userId}/access`)
@@ -528,6 +544,16 @@ describe("Test restricted user group access controls", ()  => {
     await utils.loadAppData()
   })
   let userGroup = null
+
+  it("Remove Base appdata userGroup from test Colleciton", async () => {
+
+    const res = await chai.request(config.baseUrl)  
+      .delete(`/collections/${reference.testCollection.collectionId}/grants/user-group/${reference.testCollection.testGroup.userGroupId}`)
+      .set('Authorization', `Bearer ${admin.token}`)
+
+    expect(res).to.have.status(200)
+  })
+
   // make a group with lvl1 in it
   it('should create a userGroup', async () => {
     const res = await chai
