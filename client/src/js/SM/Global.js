@@ -626,13 +626,13 @@ SM.RoleComboBox = Ext.extend(Ext.form.ComboBox, {
             triggerAction: 'all',
             mode: 'local',
             editable: false,
-            validator: (v) => {
-                // Don't keep the form from validating when I'm not active
-                if (_this.grid.editor.editing == false) {
-                    return true
-                }
-                if (v === "") { return "Blank values not allowed" }
-            }
+            // validator: (v) => {
+            //     // Don't keep the form from validating when I'm not active
+            //     // if (_this.grid.editor.editing == false) {
+            //     //     return true
+            //     // }
+            //     if (v === "") { return "Blank values not allowed" }
+            // }
         }
 
         const data = [

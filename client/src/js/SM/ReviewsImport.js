@@ -2604,10 +2604,11 @@ async function showImportResultFile(params) {
                     throw (new Error(`The file does not include reviews for STIG: <b>${params.benchmarkId}</b><br>The file includes reviews for: ${r.checklists[0].benchmarkId}</p>`))
                 }
                 const apiResult = await Ext.Ajax.requestPromise({
+                    responseType: 'json',
                     url: `${STIGMAN.Env.apiBase}/assets/${params.assetId}/checklists/${params.benchmarkId}/${params.revisionStr}`,
                     method: 'GET'
                 })
-                const checklistFromApi = JSON.parse(apiResult.response.responseText)
+                const checklistFromApi = apiResult.checklist
                 task.cancel()
                 showReviews(checklistFromFile, checklistFromApi, params.benchmarkId, params.revisionStr)
             }

@@ -178,7 +178,6 @@ SM.User.DirectGrantsGrid = Ext.extend(Ext.grid.GridPanel, {
         },
         remove: function (store, record, index) {
           totalTextCmp.setText(store.getCount() + ' records');
-          store.grid.fireEvent('grantschanged', store.grid)
         }
       }
     })
@@ -210,7 +209,7 @@ SM.User.DirectGrantsGrid = Ext.extend(Ext.grid.GridPanel, {
         editor: collectionSelectionField
       },
       {
-        header: "Grant Level",
+        header: "Role",
         width: 100,
         dataIndex: 'accessLevel',
         sortable: true,
@@ -259,9 +258,7 @@ SM.User.DirectGrantsGrid = Ext.extend(Ext.grid.GridPanel, {
               mc.keys[x] = record.id
             }
           }
-          editor.grid.fireEvent('grantschanged', editor.grid)
         }
-
       }
     })
 
@@ -390,7 +387,7 @@ SM.User.EffectiveGrantsGrid = Ext.extend(Ext.grid.GridPanel, {
         }
       },
       {
-        header: "Grant Level",
+        header: "Role",
         width: 100,
         dataIndex: 'accessLevel',
         sortable: true,

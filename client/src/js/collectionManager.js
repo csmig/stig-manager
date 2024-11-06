@@ -13,7 +13,7 @@ async function addCollectionManager( params ) {
 			responseType: 'json',
 			url: `${STIGMAN.Env.apiBase}/collections/${collectionId}`,
 			params: {
-				projection: ['grants', 'users', 'labels']
+				projection: ['grants', 'labels']
 			},
 			method: 'GET'
 		})

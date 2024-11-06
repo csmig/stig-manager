@@ -504,7 +504,7 @@ SM.Acl.Panel = Ext.extend(Ext.Panel, {
     if (this.accessLevel === 1) addBtnMenuItems.push({text: 'with No access', access: 'none', handler: handleAddBtnItem})
     const addBtn = new SM.Acl.ResourceAddBtn({
       tree: navTree,
-      text: 'Assign Resource',
+      text: 'Add Resource',
       grid: assignedRulesGrid,
       menu: new Ext.menu.Menu({
         items: addBtnMenuItems
@@ -514,7 +514,7 @@ SM.Acl.Panel = Ext.extend(Ext.Panel, {
 
     const removeBtn = new SM.Acl.ResourceRemoveBtn({
       tree: navTree,
-      text: 'Remove Assignment ',
+      text: 'Remove Resource ',
       grid: assignedRulesGrid
     })
     this.removeButton = removeBtn
@@ -590,7 +590,7 @@ SM.Acl.showAccess = async function(collectionId, grantRecord) {
               try {
                 let values = assignmentPanel.assignmentGrid.getValue()
                 let url, method
-                url = `${STIGMAN.Env.apiBase}/collections/${collectionId}/grants/${grantRecord.grantTarget}/${grantRecord.grantTargetId}/access`
+                url = `${STIGMAN.Env.apiBase}/collections/${collectionId}/grants/${grantRecord.granteeType}/${grantRecord.granteeId}/access`
                 method = 'PUT'
                 await Ext.Ajax.requestPromise({
                   url: url,
@@ -613,7 +613,7 @@ SM.Acl.showAccess = async function(collectionId, grantRecord) {
       appwindow.render(Ext.getBody())
       let apiAccess = await Ext.Ajax.requestPromise({
         responseType: 'json',
-          url: `${STIGMAN.Env.apiBase}/collections/${collectionId}/grants/${grantRecord.grantTarget}/${grantRecord.grantTargetId}/access`,
+          url: `${STIGMAN.Env.apiBase}/collections/${collectionId}/grants/${grantRecord.granteeType}/${grantRecord.granteeId}/access`,
           method: 'GET'
       })
       assignmentPanel.assignmentGrid.setValue(apiAccess.acl)

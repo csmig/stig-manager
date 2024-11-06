@@ -84,20 +84,22 @@ exports.queryCollection = async function ({collectionId, projections = [], eleva
       coalesce(
         (select json_arrayagg(grantJson) from
           (select
-             json_object(
-                'user', json_object(
-                'userId', CAST(user_data.userId as char),
-                'username', user_data.username,
-                'displayName', COALESCE(
-                  JSON_UNQUOTE(JSON_EXTRACT(user_data.lastClaims, "$.${config.oauth.claims.name}")),
-                  user_data.username)),
-                'accessLevel', accessLevel)
-              as grantJson
+            json_object(
+              'grantId', cast(cgId as char),
+              'user', json_object(
+              'userId', CAST(user_data.userId as char),
+              'username', user_data.username,
+              'displayName', COALESCE(
+                JSON_UNQUOTE(JSON_EXTRACT(user_data.lastClaims, "$.${config.oauth.claims.name}")),
+                user_data.username)),
+              'accessLevel', accessLevel)
+            as grantJson
           from
             collection_grant inner join user_data using (userId) where collectionId = c.collectionId
           UNION
           select
             json_object(
+              'grantId', cast(cgId as char),
               'userGroup', json_object(
                 'userGroupId', CAST(user_group.userGroupId as char),
                 'name', user_group.name,

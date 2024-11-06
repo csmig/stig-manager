@@ -142,7 +142,7 @@ function addCollectionAdmin( params ) {
 
     ],
     view: new SM.ColumnFilters.GridView({
-      forceFit: false,
+      forceFit: true,
       // These listeners keep the grid in the same scroll position after the store is reloaded
       listeners: {
         filterschanged: function (view, item, value) {
@@ -352,7 +352,7 @@ async function showCollectionProps(collectionId) {
     appwindow.show(document.body)
 
   }
-  catch (err) {
+  catch (e) {
     SM.Error.handleError(e)
   }
 }

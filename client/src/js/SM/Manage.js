@@ -679,8 +679,8 @@ SM.Manage.Collection.UserSelectionComboBox = Ext.extend(Ext.form.ComboBox, {
     const _this = this
     const userStore = new Ext.data.JsonStore({
       fields: [
-        'grantTarget',
-        'grantTargetId',
+        'grantee',
+        'granteeId',
         'title',
         'subtitle',
         'groupUsernames',
@@ -703,10 +703,10 @@ SM.Manage.Collection.UserSelectionComboBox = Ext.extend(Ext.form.ComboBox, {
     })
     const tpl = new Ext.XTemplate(
       '<tpl for=".">',
-      `<tpl if="values.grantTarget==='user'">`,
+      `<tpl if="values.grantee==='user'">`,
       '<div class="x-combo-list-item sm-user-icon sm-combo-list-icon">',
       '</tpl>',
-      `<tpl if="values.grantTarget==='user-group'">`,
+      `<tpl if="values.grantee==='user-group'">`,
       '<div class="x-combo-list-item sm-users-icon sm-combo-list-icon" ext:qtip="{[this.formatUsernames(values.groupUsernames)]}">',
       '</tpl>',
       '<span style="font-weight:600;">{[this.highlightQuery(values.title)]}</span><br>{[this.highlightQuery(values.subtitle)]}</div>',
@@ -730,7 +730,7 @@ SM.Manage.Collection.UserSelectionComboBox = Ext.extend(Ext.form.ComboBox, {
       tpl,
       filteringStore: this.filteringStore || null,
       displayField: 'title',
-      // valueField: 'grantTargetId',
+      // valueField: 'granteeId',
       mode: 'local',
       forceSelection: true,
       typeAhead: true,
@@ -781,7 +781,7 @@ SM.Manage.Collection.UserSelectionComboBox = Ext.extend(Ext.form.ComboBox, {
       }
     }
     Ext.apply(this, Ext.apply(this.initialConfig, config))
-    SM.Manage.Collection.UserSelectionComboBox.superclass.initComponent.call(this)
+    this.superclass().initComponent.call(this)
     this.fetchData()
   },
   fetchData: async function () {
@@ -799,15 +799,15 @@ SM.Manage.Collection.UserSelectionComboBox = Ext.extend(Ext.form.ComboBox, {
     ]
     const [users, userGroups] = await Promise.all(requests)
     const usersData = users.map(u => ({
-      grantTarget: 'user',
-      grantTargetId: u.userId,
+      grantee: 'user',
+      granteeId: u.userId,
       title: u.displayName,
       subtitle: u.username,
       recordId: `U${u.userId}`
     }))
     const userGroupsData = userGroups.map(ug => ({
-      grantTarget: 'user-group',
-      grantTargetId: ug.userGroupId,
+      grantee: 'user-group',
+      granteeId: ug.userGroupId,
       title: ug.name,
       subtitle: ug.description,
       groupUsernames: ug.users.map(u => u.username),
@@ -822,27 +822,27 @@ SM.Manage.Collection.GrantsGrid = Ext.extend(Ext.grid.GridPanel, {
   initComponent: function () {
     const _this = this
     this.canModifyOwners = !!this.canModifyOwners
-    const newFields = [
-      'grantTarget',
-      'grantTargetId',
+    const fields = [
+      'grantId',
+      'granteeType',
+      'granteeId',
       'title',
       'subtitle',
       'accessLevel',
       'recordId'
     ]
-    this.newRecordConstructor = Ext.data.Record.create(newFields)
 
     this.proxy = new Ext.data.HttpProxy({
       restful: true,
       url: this.url,
       headers: { 'Content-Type': 'application/json;charset=utf-8' }
     })
-    const grantStore = new Ext.data.JsonStore({
+    const store = new Ext.data.JsonStore({
       grid: this,
       proxy: this.proxy,
       baseParams: this.baseParams,
       root: '',
-      fields: newFields,
+      fields,
       idProperty: 'recordId',
       sortInfo: {
         field: 'title',
@@ -859,116 +859,161 @@ SM.Manage.Collection.GrantsGrid = Ext.extend(Ext.grid.GridPanel, {
       }
     })
     const totalTextCmp = new SM.RowCountTextItem({
-      store: grantStore,
+      store,
       noun: 'grant',
       iconCls: 'sm-lock-icon'
     })
-    const userSelectionField = new SM.Manage.Collection.UserSelectionComboBox({
-      submitValue: false,
-      grid: this,
-      getListParent: function () {
-        return this.grid.editor.el;
-      },
-      filteringStore: grantStore
-    })
-    const accessLevelField = new SM.RoleComboBox({
-      submitValue: false,
-      grid: this,
-      getListParent: function () {
-        return this.grid.editor.el;
-      },
-      includeOwnerGrant: this.canModifyOwners
-    })
-    const columns = [
-      {
-        header: "User or User Group",
-        width: 150,
-        dataIndex: 'title',
-        sortable: true,
-        renderer: function (v, m, r) {
-          const icon = r.data.grantTarget === 'user' ? 'sm-user-icon' : 'sm-users-icon'
-          return `<div class="x-combo-list-item ${icon} sm-combo-list-icon" exportValue="${r.data.title ?? ''}:${r.data.subtitle ?? ''}"><span style="font-weight:600;">${r.data.title ?? ''}</span><br>${r.data.subtitle ?? ''}</div>`
+    // const roleComboBox = new SM.RoleComboBox({
+    //   submitValue: false,
+    //   grid: this,
+    //   includeOwnerGrant: this.canModifyOwners,
+    //   listeners: {
+    //     select: function (combo,record,index) {
+    //       if (combo.startValue !== combo.value ) {
+    //         combo.fireEvent("blur");
+    //       } 
+    //     }
+    //   }
+    // })
+    const colModel = new Ext.grid.ColumnModel({
+      columns: [
+        {
+          header: '<span exportvalue="Role">Role<i class= "fa fa-question-circle sm-question-circle"></i></span>',
+          width: 50,
+          dataIndex: 'accessLevel',
+          sortable: true,
+          renderer: (v) => `<div class="sm-grid-cell-with-menu">${SM.RoleStrings[v]}</div>`,
         },
-        editor: userSelectionField
-      },
-      {
-        header: '<span exportvalue="Grant Level">Grant Level<i class= "fa fa-question-circle sm-question-circle"></i></span>',
-        width: 50,
-        dataIndex: 'accessLevel',
-        sortable: true,
-        renderer: (v) => SM.RoleStrings[v],
-        editor: accessLevelField
-      }
-    ]
-    this.editor = new Ext.ux.grid.RowEditor({
-      saveText: 'Save',
-      grid: this,
-      userSelectionField: userSelectionField,
-      accessLevelField: accessLevelField,
-      clicksToEdit: 2,
-      errorSummary: false, // don't display errors during validation monitoring
-      listeners: {
-        validateedit: function (editor, changes, record, index) {
-          // RowEditor unhelpfully sets changes.username to the userId value. 
-          if (changes.hasOwnProperty('title')) {
-            let userEditor = editor.userSelectionField
-            let userRecord = userEditor.store.getAt(userEditor.selectedIndex)
-            changes.title = userRecord.data.title
-            changes.subtitle = userRecord.data.subtitle
-            changes.grantTarget = userRecord.data.grantTarget
-            changes.grantTargetId = userRecord.data.grantTargetId
-            changes.recordId = userRecord.data.recordId
+        {
+          header: "User or User Group",
+          width: 150,
+          dataIndex: 'title',
+          sortable: true,
+          renderer: function (v, m, r) {
+            const icon = r.data.granteeType === 'user' ? 'sm-user-icon' : 'sm-users-icon'
+            return `
+            <div class="sm-grid-cell-with-toolbar-2">
+              <div class="sm-dynamic-width">
+                <div class="sm-info">
+                  <div class="x-combo-list-item ${icon} sm-combo-list-icon" exportValue="${r.data.title ?? ''}:${r.data.subtitle ?? ''}"><span style="font-weight:600;">${r.data.title ?? ''}</span><br>${r.data.subtitle ?? ''}</div>
+                </div>
+              </div>
+              <div class="sm-static-width" style="top: 25%">
+              <span class="sm-grid-cell-tool" style="padding-right:4px"><img data-action="changeGrantee" ext:qtip="Change grantee" src="img/edit.svg" width="14" height="14"></span>
+              <span class="sm-grid-cell-tool" style="padding-right:4px"><img data-action="editAcl" ext:qtip="Edit ACL" src="img/target.svg" width="14" height="14"></span>
+              <span class="sm-grid-cell-tool"><img data-action="removeGrant" ext:qtip="Remove grant" src="img/trash.svg" width="14" height="14"></span>
+            </div>`   
+            // return `<div class="x-combo-list-item ${icon} sm-combo-list-icon" exportValue="${r.data.title ?? ''}:${r.data.subtitle ?? ''}"><span style="font-weight:600;">${r.data.title ?? ''}</span><br>${r.data.subtitle ?? ''}</div>`
           }
-        },
-        canceledit: function (editor, forced) {
-          // The 'editing' property is set by RowEditorToolbar.js
-          if (editor.record.editing === true) { // was the edit on a new record?
-            this.grid.store.suspendEvents(false);
-            this.grid.store.remove(editor.record);
-            this.grid.store.resumeEvents();
-            this.grid.getView().refresh();
-          }
-        },
-        afteredit: function (editor, changes, record, index) {
-          // "Save" the record by reconfiguring the store's data collection
-          // Corrects the bug where new records don't deselect when clicking away
+        }
+      ]
+    })
 
-          const userComboBoxRecord = editor.userSelectionField.store.getById(record.data.recordId)
-          const mc = record.store.data
-          const generatedId = record.id
-          record.id = record.data.recordId
-          record.recordId = record.data.recordId
-          record.data.subtitle = userComboBoxRecord.data.subtitle
-          record.data.title = userComboBoxRecord.data.title
-          record.phantom = false
-          record.dirty = false
-          delete mc.map[generatedId]
-          mc.map[record.id] = record
-          for (let x = 0, l = mc.keys.length; x < l; x++) {
-            if (mc.keys[x] === generatedId) {
-              mc.keys[x] = record.id
+    function showChangeRole (record, e) {
+      const menu = new Ext.menu.Menu({
+        items: [
+          {
+            text: 'Owner',
+            accessLevel: 4,
+            checked: record.data.accessLevel === 4,
+            group: 'rb'
+          },
+          {
+            text: 'Manage',
+            accessLevel: 3,
+            checked: record.data.accessLevel === 3,
+            group: 'rb'
+          },
+          {
+            text: 'Full',
+            accessLevel: 2,
+            checked: record.data.accessLevel === 2,
+            group: 'rb'
+          },
+          {
+            text: 'Restricted',
+            accessLevel: 1,
+            checked: record.data.accessLevel === 1,
+            group: 'rb'
+          }
+        ],
+        listeners:  {
+          itemclick: function (item) {
+            if (item.accessLevel !== record.data.accessLevel) {
+              _this.fireEvent('grantchanged', {
+                granteeType: record.data.granteeType,
+                granteeId: record.data.granteeId,
+                accessLevel: item.accessLevel
+              }, record)
+              // record.data.accessLevel = item.accessLevel
+              // record.commit()
             }
           }
-          editor.grid.fireEvent('grantschanged', editor.grid)
-        },
-        beforeedit: function (editor, rowIndex) {
-          if (editor.grid.store.getAt(rowIndex).data.accessLevel === 4 && !_this.canModifyOwners) {
-            return false
-          }
-          editor.userSelectionField.store.clearFilter()
-          editor.userSelectionField.setDisabled(!!editor.grid.store.getAt(rowIndex).data.recordId)
         }
+      })
+      menu.showAt(e.xy)
+    }
+    function changeGrantee (data) {
+      console.log(`changeGrantee ${JSON.stringify(data)}`)
+    }
+    function editAcl (data) {
+      console.log(`editAcl ${JSON.stringify(data)}`)
+      Ext.getBody().mask('Getting access list for ' + data.title + '...');
+      SM.Acl.showAccess(_this.collectionId, data);
+
+    }
+    function removeGrant (data, record) {
+      console.log(`removeGrant ${JSON.stringify(data)}`)
+      Ext.Msg.show({
+        title: `Delete?`,
+        msg: `You are about to delete the grant for "${SM.he(data.title)}". Do you wish to continue?`,
+        buttons: Ext.Msg.YESNO,
+        fn: function (buttonId, text, options) {
+          if (buttonId === 'ok' || buttonId === 'yes') {
+            _this.fireEvent('grantremoved', data)
+            store.remove(record)
+          }
+        },
+        icon: Ext.MessageBox.QUESTION
+     })
+    }
+
+    const toolHandlers = {
+      showChangeRole,
+      changeGrantee,
+      editAcl,
+      removeGrant
+    }
+
+    function cellclick(grid, rowIndex, columnIndex, e) {
+      const record = grid.getStore().getAt(rowIndex)
+      const fieldName = grid.getColumnModel().getDataIndex(columnIndex)
+      if (fieldName === 'accessLevel') {
+        toolHandlers.showChangeRole(record, e)
+      }
+      if (e.target.tagName === "IMG") {
+        toolHandlers[e.target.dataset.action](record.data, record)
+      }
+    }
+
+    const newGrantButton = new Ext.Button( {
+      text: 'Add Grants...',
+      iconCls: 'icon-add',
+      handler: function () {
+        SM.Grant.showNewGrantWindow({
+          collectionId: _this.collectionId,
+          existingGrants: _this.getValue(),
+          canModifyOwners: _this.canModifyOwners
+        })
       }
     })
-    const tbar = new SM.RowEditorToolbar({
-      itemString: 'Grant',
-      editor: this.editor,
-      gridId: this.id,
-      deleteProperty: 'userId',
-      newRecord: this.newRecordConstructor
+    const delGrantButton = new Ext.Button({
+      text: 'Remove Grant',
+      iconCls: 'icon-del',
+      handler: function () {
+      }
     })
-    tbar.addSeparator()
-    this.accessBtn = tbar.addButton({
+    const aclButton = new Ext.Button({
       iconCls: 'sm-asset-icon',
       disabled: true,
       text: 'Edit Access List...',
@@ -978,84 +1023,46 @@ SM.Manage.Collection.GrantsGrid = Ext.extend(Ext.grid.GridPanel, {
         SM.Acl.showAccess(_this.collectionId, r.data);
       }
     })
-    const config = {
-      isFormField: true,
-      name: 'grants',
-      allowBlank: false,
-      layout: 'fit',
-      height: 150,
-      plugins: [this.editor],
-      store: grantStore,
-      cm: new Ext.grid.ColumnModel({
-        columns: columns
-      }),
-      sm: new Ext.grid.RowSelectionModel({
-        singleSelect: true,
-        listeners: {
-          selectionchange: function (sm) {
-            if (sm.hasSelection()) {
-              _this.accessBtn?.setDisabled(false)
-              let record = sm.getSelected()
-              if (record.data.accessLevel === 4 && !_this.canModifyOwners) {
-                tbar.delButton.setDisabled(true)
-              }
-              else {
-                tbar.delButton.setDisabled(false)
-              }
-            }
-            else {
-              tbar.delButton.setDisabled(true)
-              _this.accessBtn?.setDisabled(true)
-            }
-          }
-        }
-      }),
-      view: new SM.ColumnFilters.GridView({
-        emptyText: this.emptyText || 'No records to display',
-        deferEmptyText: false,
-        forceFit: true,
-        markDirty: false,
-        listeners: {
-          refresh: function (view) {
-            // Setup the tooltip for column 'accessLevel'
-            const index = view.grid.getColumnModel().findColumnIndex('accessLevel')
-            const tipEl = view.getHeaderCell(index).getElementsByClassName('fa')[0]
-            if (tipEl) {
-              new Ext.ToolTip({
-                target: tipEl,
-                showDelay: 0,
-                dismissDelay: 0,
-                maxWidth: 600,
-                html: SM.TipContent.AccessLevels
-              })
-            }
-          },
-        },
-      }),
-      tbar: tbar,
-      bbar: new Ext.Toolbar({
-        items: [
-          {
-            xtype: 'exportbutton',
-            hasMenu: false,
-            gridBasename: 'CollectionGrants',
-            exportType: 'grid',
-            iconCls: 'sm-export-icon',
-            text: 'CSV'
-          }, {
-            xtype: 'tbfill'
-          }, {
-            xtype: 'tbseparator'
-          },
-          totalTextCmp
-        ]
-      }),
+    const tbarItems = [
+      newGrantButton,
+      // '-',
+      // delGrantButton,
+      // '-',
+      // aclButton
+    ]
+    const tbar = new Ext.Toolbar({
+      items: tbarItems
+    })
+    // const selModel = new Ext.grid.RowSelectionModel({
+    //   singleSelect: true,
+    //   listeners: {
+    //     selectionchange: function (sm) {
+    //       if (sm.hasSelection()) {
+    //         const canModify = sm.getSelected().data.accessLevel === 4 && !_this.canModifyOwners
+    //         aclButton.setDisabled(canModify)
+    //         delGrantButton.setDisabled(canModify)
+    //       }
+    //       else {
+    //         delGrantButton.setDisabled(true)
+    //         aclButton.setDisabled(true)
+    //       }
+    //     }
+    //   }
+    // })
 
+    // const selModel = new Ext.grid.RowSelectionModel()
+
+    const view = new SM.ColumnFilters.GridView({
+      emptyText: this.emptyText || 'No records to display',
+      cellSelectorDepth: 0,
+      deferEmptyText: false,
+      forceFit: true,
+      markDirty: false,
       listeners: {
-        viewready: function (grid) {
+        refresh: function (view) {
           // Setup the tooltip for column 'accessLevel'
-          const index = grid.getColumnModel().findColumnIndex('accessLevel')
-          const tipEl = grid.view.getHeaderCell(index).getElementsByClassName('fa')[0]
+          const index = view.grid.getColumnModel().findColumnIndex('accessLevel')
+          const tipEl = view.getHeaderCell(index).getElementsByClassName('fa')[0]
           if (tipEl) {
             new Ext.ToolTip({
               target: tipEl,
@@ -1065,65 +1072,102 @@ SM.Manage.Collection.GrantsGrid = Ext.extend(Ext.grid.GridPanel, {
               html: SM.TipContent.AccessLevels
             })
           }
-        }
+        },
       },
-
-      getValue: function () {
-        let grants = []
-        grantStore.data.items.forEach(i => {
-          if (i.data.grantTarget === 'user')
-            grants.push({
-              userId: i.data.grantTargetId,
-              accessLevel: i.data.accessLevel
-            })
-          else
-            grants.push({
-              userGroupId: i.data.grantTargetId,
-              accessLevel: i.data.accessLevel
-            })
+    })
+    const bbar = new Ext.Toolbar({
+      items: [
+        {
+          xtype: 'exportbutton',
+          hasMenu: false,
+          gridBasename: 'CollectionGrants',
+          exportType: 'grid',
+          iconCls: 'sm-export-icon',
+          text: 'CSV'
+        }, {
+          xtype: 'tbfill'
+        }, {
+          xtype: 'tbseparator'
+        },
+        totalTextCmp
+      ]
+    })
+    function viewready (grid) {
+      // Setup the tooltip for column 'accessLevel'
+      const index = grid.getColumnModel().findColumnIndex('accessLevel')
+      const tipEl = grid.view.getHeaderCell(index).getElementsByClassName('fa')[0]
+      if (tipEl) {
+        new Ext.ToolTip({
+          target: tipEl,
+          showDelay: 0,
+          dismissDelay: 0,
+          maxWidth: 600,
+          html: SM.TipContent.AccessLevels
         })
-        return grants
-      },
-      setValue: function (v) {
-        const data = v.map(g => {
-          if (g.user) return {
-            grantTarget: 'user',
-            grantTargetId: g.user.userId,
-            subtitle: g.user.username,
-            title: g.user.displayName,
-            accessLevel: g.accessLevel,
-            recordId: `U${g.user.userId}`
-
-          }
-          return {
-            grantTarget: 'user-group',
-            grantTargetId: g.userGroup.userGroupId,
-            title: g.userGroup.name,
-            subtitle: g.userGroup.description,
-            accessLevel: g.accessLevel,
-            recordId: `UG${g.userGroup.userGroupId}`
-          }
-        })
-        grantStore.loadData(data)
-      },
-      validator: function (v) {
-        let one = 1
-      },
-      markInvalid: function () {
-        let one = 1
-      },
-      clearInvalid: function () {
-        let one = 1
-      },
-      isValid: function () {
-        const value = _this.getValue()
-        const owners = value.filter(g => g.accessLevel === 4)
-        return owners.length > 0
-      },
-      getName: () => this.name,
-      validate: function () {
-        let one = 1
       }
+    }
+
+    function getValue () {
+      const grants = []
+      store.data.items.forEach(i => {
+        if (i.data.granteeType === 'user')
+          grants.push({
+            userId: i.data.granteeId,
+            accessLevel: i.data.accessLevel
+          })
+        else
+          grants.push({
+            userGroupId: i.data.granteeId,
+            accessLevel: i.data.accessLevel
+          })
+      })
+      return grants
+    }
+
+    function setValue (v) {
+      const data = v.map(g => {
+        if (g.user) return {
+          grantId: g.grantId,
+          granteeType: 'user',
+          granteeId: g.user.userId,
+          subtitle: g.user.username,
+          title: g.user.displayName,
+          accessLevel: g.accessLevel,
+          recordId: `U${g.user.userId}`
+
+        }
+        return {
+          grantId: g.grantId,
+          granteeType: 'user-group',
+          granteeId: g.userGroup.userGroupId,
+          title: g.userGroup.name,
+          subtitle: g.userGroup.description,
+          accessLevel: g.accessLevel,
+          recordId: `UG${g.userGroup.userGroupId}`
+        }
+      })
+      store.loadData(data)
+    }
+
+    const config = {
+      // trackMouseOver: true,
+      name: 'grants',
+      allowBlank: false,
+      disableSelection: true,
+      layout: 'fit',
+      height: 150,
+      store,
+      colModel,
+      // selModel,
+      view,
+      tbar,
+      bbar,
+      listeners: {
+        viewready,
+        cellclick
+      },
+      getValue,
+      setValue
     }
 
     Ext.apply(this, Ext.apply(this.initialConfig, config))
@@ -1134,39 +1178,6 @@ SM.Manage.Collection.GrantsGrid = Ext.extend(Ext.grid.GridPanel, {
 SM.Manage.Collection.UsersGrid = Ext.extend(Ext.grid.GridPanel, {
   initComponent: function () {
     const _this = this
-    async function fetchData() {
-      const requests = [
-        Ext.Ajax.requestPromise({
-          responseType: 'json',
-          url: `${STIGMAN.Env.apiBase}/users`,
-          method: 'GET'
-        }),
-        Ext.Ajax.requestPromise({
-          responseType: 'json',
-          url: `${STIGMAN.Env.apiBase}/user-groups`,
-          method: 'GET'
-        })
-      ]
-      const [users, userGroups] = await Promise.all(requests)
-      const usersData = users.map(u => ({
-        grantTarget: 'user',
-        grantTargetId: u.userId,
-        title: u.displayName,
-        subtitle: u.username,
-        recordId: `U${u.userId}`
-      }))
-      const userGroupsData = userGroups.map(ug => ({
-        grantTarget: 'user-group',
-        grantTargetId: ug.userGroupId,
-        title: ug.name,
-        subtitle: ug.description,
-        groupUsernames: ug.users.map(u => u.username),
-        recordId: `UG${ug.userGroupId}`
-
-      }))
-      this.store.loadData([...usersData, ...userGroupsData])
-    }
-
     const fields = [
       'grantees',
       {
@@ -1193,7 +1204,7 @@ SM.Manage.Collection.UsersGrid = Ext.extend(Ext.grid.GridPanel, {
       grid: this,
       proxy: this.proxy,
       baseParams: this.baseParams,
-      root: '',
+      root: 'users',
       fields,
       idProperty: 'userId',
       sortInfo: {
@@ -1239,7 +1250,7 @@ SM.Manage.Collection.UsersGrid = Ext.extend(Ext.grid.GridPanel, {
         }
       },
       {
-        header: '<span exportvalue="Grant Level">Grant Level<i class= "fa fa-question-circle sm-question-circle"></i></span>',
+        header: '<span exportvalue="Role">Role<i class= "fa fa-question-circle sm-question-circle"></i></span>',
         width: 100,
         dataIndex: 'accessLevel',
         sortable: true,
@@ -1455,6 +1466,23 @@ SM.Manage.Collection.FormPanel = Ext.extend(Ext.form.FormPanel, {
       labelGrid
     ]
 
+    const tp = new Ext.TabPanel({
+      style: {
+        paddingTop: "10px"
+      },
+      region: 'center',
+      activeTab: 0,
+      border: false,
+      items: tabPanelItems,
+      listeners: {
+        render: function (tp, tab) {
+          if (tab.title === 'Users') {
+            usersGrid.store.load()
+          }
+        }
+      }
+    })
+
     const config = {
       baseCls: 'x-plain',
       cls: 'sm-collection-manage-layout sm-round-panel',
@@ -1549,16 +1577,7 @@ SM.Manage.Collection.FormPanel = Ext.extend(Ext.form.FormPanel, {
               title: 'Information',
               items: [nameField, descriptionField]
             },
-            {
-              xtype: 'tabpanel',
-              style: {
-                paddingTop: "10px"
-              },
-              region: 'center',
-              activeTab: 0,
-              border: false,
-              items: tabPanelItems
-            }
+            tp
           ]
         }
       ],
@@ -1764,22 +1783,36 @@ SM.Manage.Collection.Panel = Ext.extend(Ext.Panel, {
       }
     })
 
-    const grantHandler = async grid => {
+    const grantChangedHandler = async (data, record) => {
       try {
-        let data = grid.getValue()
-        let result = await Ext.Ajax.requestPromise({
-          url: `${STIGMAN.Env.apiBase}/collections/${_this.apiCollection.collectionId}?projection=grants`,
-          method: 'PATCH',
+        await Ext.Ajax.requestPromise({
+          url: `${STIGMAN.Env.apiBase}/collections/${_this.apiCollection.collectionId}/grants/${data.granteeType}/${data.granteeId}`,
+          headers: { 'Content-Type': 'application/json;charset=utf-8' },
+          method: 'PUT',
           jsonData: {
-            grants: data
+            accessLevel: data.accessLevel
           }
         })
-        let collection = JSON.parse(result.response.responseText)
-        grid.setValue(collection.grants)
+        record.data.accessLevel = data.accessLevel
+        record.commit()
       }
       catch (e) {
         SM.Error.handleError(e)
       }
+    }
+
+    const grantRemovedHandler = async (data) => {
+      try {
+        await Ext.Ajax.requestPromise({
+          url: `${STIGMAN.Env.apiBase}/collections/${_this.apiCollection.collectionId}/grants/${data.granteeType}/${data.granteeId}`,
+          headers: { 'Content-Type': 'application/json;charset=utf-8' },
+          method: 'DELETE'
+        })
+      }
+      catch (e) {
+        SM.Error.handleError(e)
+      }
+
     }
 
     const grantGrid = new SM.Manage.Collection.GrantsGrid({
@@ -1793,8 +1826,8 @@ SM.Manage.Collection.Panel = Ext.extend(Ext.Panel, {
       title: 'Grants',
       border: false,
       listeners: {
-        grantschanged: grantHandler,
-        grantsremoved: grantHandler
+        grantchanged: grantChangedHandler,
+        grantremoved: grantRemovedHandler
       }
     })
     grantGrid.setValue(_this.apiCollection.grants)
@@ -1803,9 +1836,13 @@ SM.Manage.Collection.Panel = Ext.extend(Ext.Panel, {
       iconCls: 'sm-user-icon',
       title: 'Users',
       border: false,
-      collectionId: _this.apiCollection.collectionId
+      collectionId: _this.apiCollection.collectionId,
+      url: `${STIGMAN.Env.apiBase}/collections/${_this.apiCollection.collectionId}`,
+      baseParams: {
+        projection: 'users'
+      }
     })
-    usersGrid.setValue(_this.apiCollection.users)
+    // usersGrid.setValue(_this.apiCollection.users)
 
 
     this.labelGrid = new SM.Manage.Collection.LabelsGrid({
@@ -1919,6 +1956,43 @@ SM.Manage.Collection.Panel = Ext.extend(Ext.Panel, {
       })
     }
 
+    const tp = new Ext.TabPanel({
+      region: 'center',
+      activeTab: 0,
+      border: false,
+      items: [
+        grantGrid,
+        usersGrid,
+        {
+          xtype: 'panel',
+          bodyStyle: {
+            overflowY: 'auto',
+            overflowX: 'hidden'
+          },
+          title: 'Settings',
+          layout: 'form',
+          iconCls: 'sm-setting-icon',
+          border: false,
+          padding: 10,
+          items: [
+            settingsReviewFields,
+            settingsStatusFields,
+            settingsHistoryFields,
+            settingsImportOptions
+          ]
+        },
+        metadataGrid,
+        this.labelGrid
+      ],
+      listeners: {
+        tabchange: function (tp, tab) {
+          if (tab.title === 'Users') {
+            usersGrid.store.load()
+          }
+        }
+      }
+    })
+
     let config = {
       title: this.title || 'Collection properties',
       collapseFirst: false,
@@ -1956,42 +2030,11 @@ SM.Manage.Collection.Panel = Ext.extend(Ext.Panel, {
           margins: '15 15 15 15',
           items: [nameField, descriptionField]
         },
-        {
-          xtype: 'tabpanel',
-          region: 'center',
-          activeTab: 0,
-          border: false,
-          items: [
-            grantGrid,
-            usersGrid,
-            {
-              xtype: 'panel',
-              bodyStyle: {
-                overflowY: 'auto',
-                overflowX: 'hidden'
-              },
-              title: 'Settings',
-              layout: 'form',
-              iconCls: 'sm-setting-icon',
-              border: false,
-              padding: 10,
-              items: [
-                settingsReviewFields,
-                settingsStatusFields,
-                settingsHistoryFields,
-                settingsImportOptions
-              ]
-            },
-            metadataGrid,
-            this.labelGrid
-          ]
-
-        }
-
+        tp
       ]
     }
     Ext.apply(this, Ext.apply(this.initialConfig, config))
-    SM.Manage.Collection.Panel.superclass.initComponent.call(this);
+    this.superclass().initComponent.call(this);
   }
 })
 
@@ -2060,7 +2103,7 @@ SM.Manage.Collection.ColorMenu = Ext.extend(Ext.menu.Menu, {
       }, this.initialConfig))
     })
     this.palette.purgeListeners()
-    Ext.menu.ColorMenu.superclass.initComponent.call(this)
+    this.superclass().initComponent.call(this)
     this.relayEvents(this.palette, ['select'])
     this.on('select', this.menuHide, this);
     if (this.handler) {
@@ -2711,6 +2754,94 @@ SM.Manage.Collection.showLabelAssetsWindow = async function (collectionId, label
     Ext.getBody().unmask()
     SM.Error.handleError(e)
   }
+}
+
+SM.Manage.Collection.CreateFormPanel = Ext.extend(Ext.form.FormPanel, {
+  initComponent: function () {
+    const nameField = new Ext.form.TextField({
+      fieldLabel: 'Name',
+      labelStyle: 'font-weight: 600;',
+      name: 'name',
+      allowBlank: false,
+      anchor: '100%'
+    })
+    const descriptionField = new Ext.form.TextArea({
+      fieldLabel: 'Description',
+      labelStyle: 'font-weight: 600;',
+      name: 'description',
+      anchor: '100% -30',
+    })
+    const config = {
+      baseCls: 'x-plain',
+      cls: 'sm-collection-manage-layout sm-round-panel',
+      bodyStyle: 'padding: 9px;',
+      border: false,
+      labelWidth: 100,
+      monitorValid: true,
+      items: [
+        {
+          xtype: 'fieldset',
+          region: 'north',
+          height: 180,
+          split: false,
+          title: 'Information',
+          items: [nameField, descriptionField]
+        }
+      ],
+      buttons: [{
+        text: this.btnText || 'Save',
+        formBind: true,
+        handler: this.btnHandler || function () { }
+      }]
+    }
+    Ext.apply(this, Ext.apply(this.initialConfig, config))
+    this.superclass().initComponent.call(this);
+  }
+})
+
+SM.Manage.Collection.showCreateWindow = function () {
+  const fp = new SM.Manage.Collection.CreateFormPanel({
+    btnHandler: async () => {
+      try {
+        let values = fp.getForm().getFieldValues()
+        values.grants = [{userId: curUser.userId, accessLevel: 4}]
+        values.metadata = {}
+        await SM.Manage.Collection.ApiAddOrUpdate(0, values, {
+          showManager: true
+        })
+      }
+      catch (e) {
+        if (e.responseText) {
+          const response = SM.safeJSONParse(e.responseText)
+          if (response?.detail === 'Duplicate name exists.') {
+            Ext.Msg.alert('Name unavailable', 'The Collection name is unavailable. Please try a different name.')
+          }
+          else {
+            appwindow.close()
+            await SM.Error.handleError(e)
+          }
+        }
+      }
+      finally {
+        panelWindow.close()
+      }
+    }
+  })
+
+  const panelWindow = new Ext.Window({
+    id: 'window-project-info',
+    cls: 'sm-dialog-window sm-round-panel',
+    title: 'Create Collection',
+    modal: true,
+    width: 460,
+    height:260,
+    layout: 'fit',
+    plain: false,
+    // bodyStyle:'padding:5px;',
+    buttonAlign:'right',
+    items: fp
+  })
+  panelWindow.show(Ext.getBody())
 }
 
 Ext.ns('SM.Manage.Asset')

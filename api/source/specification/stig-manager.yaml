@@ -6334,6 +6334,8 @@ components:
       type: array
       items:
         $ref: '#/components/schemas/Grantee'
+    GrantId:
+      $ref: '#/components/schemas/StringIntId'
     GroupId:
       $ref: '#/components/schemas/String255'
     GroupProjected:
@@ -8081,6 +8083,8 @@ components:
       additionalProperties: false
       type: object
       properties:
+        grantId:
+          $ref: '#/components/schemas/GrantId'
         accessLevel:
           $ref: '#/components/schemas/AccessLevel'
         user:
@@ -8147,6 +8151,8 @@ components:
         - accessLevel
       additionalProperties: false
       properties:
+        grantId:
+          $ref: '#/components/schemas/GrantId'
         userGroup:
           $ref: '#/components/schemas/UserGroup'
         accessLevel:

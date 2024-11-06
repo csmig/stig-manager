@@ -414,57 +414,8 @@ SM.NavTree.TreePanel = Ext.extend(Ext.tree.TreePanel, {
           })
         }
         if (n.attributes.action == 'collection-create') {
-          let fp = new SM.Manage.Collection.FormPanel({
-            btnText: 'Create',
-            btnHandler: async () => {
-              try {
-                let values = fp.getForm().getFieldValues()
-                await SM.Manage.Collection.ApiAddOrUpdate(0, values, {
-                  showManager: true
-                })
-                appwindow.close()
-              }
-              catch (e) {
-                if (e.responseText) {
-                  const response = SM.safeJSONParse(e.responseText)
-                  if (response?.detail === 'Duplicate name exists.') {
-                    Ext.Msg.alert('Name unavailable', 'The Collection name is unavailable. Please try a different name.')
-                  }
-                  else {
-                    appwindow.close()
-                    await SM.Error.handleError(e)
-                  }
-                }
-              }
-            }
-          })
-
-          fp.getForm().setValues({
-            grants: [{
-              user: {
-                userId: curUser.userId,
-                username: curUser.username,
-                displayName: curUser.displayName
-              },
-              accessLevel: 4
-            }],
-          })
-
-          let appwindow = new Ext.Window({
-            id: 'window-project-info',
-            cls: 'sm-dialog-window sm-round-panel',
-            title: 'Create Collection',
-            modal: true,
-            width: 460,
-            height:630,
-            layout: 'fit',
-            plain: false,
-            // bodyStyle:'padding:5px;',
-            buttonAlign:'right',
-            items: fp
-          })
-
-          appwindow.show(Ext.getBody())
+          SM.Manage.Collection.showCreateWindow()
+          return
         }
         if (n.attributes.action == 'collection-management') {
           addCollectionManager({
