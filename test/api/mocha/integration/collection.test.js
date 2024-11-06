@@ -32,10 +32,7 @@ describe('PATCH - updateCollection - /collections/{collectionId}', () => {
     describe('Verify manager grant restrictions (ensure a manager cannot modify an "owner" grant)', () => {
 
         before(async function () {
-            // this.timeout(4000)
-            // await utils.uploadTestStigs()
             await utils.loadAppData()
-            // await utils.createDisabledCollectionsandAssets()
         })
         it('should make admin user a manager', async () => {
             const patchRequest = {
@@ -261,10 +258,7 @@ describe('PUT - setStigAssetsByCollectionUser - /collections/{collectionId}/gran
     describe('gh-761 - statusStats (statusStats projection for /assets returns inaccurate rules count when more than one user has the same restricted grant)', () =>{
 
         before(async function () {
-            // this.timeout(4000)
             await utils.loadAppData()
-            // // await utils.uploadTestStigs()
-            // await utils.createDisabledCollectionsandAssets()
         })
         it('set stig-asset grant to create conditions leading to issue gh-761', async () => {
 
@@ -310,8 +304,6 @@ describe('POST - cloneCollection - /collections/{collectionId}/clone - test vari
     describe('Collection Cloning', () =>{
 
         before(async function () {
-            // this.timeout(4000)
-            // // await utils.uploadTestStigs()
             await utils.loadAppData()
         })
         describe('clone data prep - set cloned collection default rev for test benchmark to non-"latest"', () => {
@@ -956,8 +948,6 @@ describe('POST - exportToCollection - /collections/{collectionId}/export-to/{dst
     describe('export-to', () => {
 
         before(async function () {
-            // this.timeout(4000)
-            // // await utils.uploadTestStigs()
             await utils.loadAppData()
         })
         let exportedAsset = null
@@ -1273,8 +1263,6 @@ describe('POST - postReviewsByAsset - /collections/{collectionId}/reviews/{asset
     describe('Duplicate RuleIds/Rule Fingerprint', () => {
 
         before(async function () {
-            // this.timeout(4000)
-            // await utils.uploadTestStigs()
             await utils.loadAppData()
         })
         it('Import a new STIG - VPN  (as admin) Copy', async () => {
@@ -1498,8 +1486,6 @@ describe('GET - putAssetsByCollectionLabelId - /collections/{collectionId}/label
     describe(`valid label checks - ensure asset labels are valid for that asset's collection.`, () => {
 
         before(async function () {
-            // this.timeout(4000)
-            // await utils.uploadTestStigs()
             await utils.loadAppData()
         })
 

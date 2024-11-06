@@ -15,11 +15,7 @@ describe('PUT - Review', () => {
     let deletedCollection = reference.deletedCollection.collectionId
     let deletedAsset = reference.deletedAsset.assetId    
     before(async function () {
-        // this.timeout(4000)
-        // await utils.uploadTestStigs()
         await utils.loadAppData()
-       // const deletedItems = await utils.createDisabledCollectionsandAssets()
-       
     })
 
     for(const iteration of iterations){
@@ -335,7 +331,6 @@ describe('PUT - Review', () => {
             describe('PUT - putReviewMetadata - /collections/{collectionId}/reviews/{assetId}/{ruleId}/metadata', () => {
 
                 before(async function () {
-                    // this.timeout(4000)
                     await utils.putReviewByAssetRule(reference.testCollection.collectionId, reference.testAsset.assetId, reference.testCollection.ruleId, requestBodies.resetRule)
                 })
                 
@@ -365,7 +360,6 @@ describe('PUT - Review', () => {
             describe('PUT - putReviewMetadataValue - /collections/{collectionId}/reviews/{assetId}/{ruleId}/metadata/keys/{key}', () => {
 
                 before(async function () {
-                    // this.timeout(4000)
                     await utils.putReviewByAssetRule(reference.testCollection.collectionId, reference.testAsset.assetId, reference.testCollection.ruleId, requestBodies.resetRule)
                 })
                 it('Set one metadata key/value of a Review', async () => {

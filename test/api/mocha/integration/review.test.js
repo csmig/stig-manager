@@ -20,10 +20,7 @@ const user =
 describe('PUT - putReviewByAssetRule - /collections/{collectionId}/reviews/{assetId}/{ruleId}', () => {
  
     before(async function () {
-            // this.timeout(4000)
-            // await utils.uploadTestStigs()
             await utils.loadAppData()
-            // await utils.createDisabledCollectionsandAssets()
         })
 
     describe('Check that "informational" results are represented as NotReviewed with Finding Details data in .ckls', () => {
@@ -101,10 +98,7 @@ describe('PATCH - patchReviewByAssetRule - /collections/{collectionId}/reviews/{
     describe('review status reset check', () => {
 
         before(async function () {
-            // this.timeout(4000)
-            // // await utils.uploadTestStigs()
             await utils.loadAppData()
-            // await utils.createDisabledCollectionsandAssets()
         })
 
         it('PATCH Review with new details, expect status to remain', async () => {
@@ -151,9 +145,7 @@ describe('POST - postReviewsByAsset - /collections/{collectionId}/reviews/{asset
             describe('test history prune', () => {
 
                 before(async function () {
-                    // this.timeout(4000)
                     await utils.loadAppData()
-                    // await utils.uploadTestStigs()
                 })
 
                 it('Set collection history max reviews to 2', async () => {

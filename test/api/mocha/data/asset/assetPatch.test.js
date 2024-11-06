@@ -31,7 +31,6 @@ describe('PATCH - Asset', function () {
       let scrapAsset = null
       beforeEach(async function () {
 
-        // this.timeout(4000)
         testAsset = await utils.resetTestAsset()
         scrapAsset = await utils.resetScrapAsset()
       })

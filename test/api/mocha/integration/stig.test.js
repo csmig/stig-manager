@@ -21,17 +21,12 @@ describe(`POST - importBenchmark - /stigs`, () => {
   describe('Review Key Change', () => {
 
     before(async function () {
-      // this.timeout(4000)
-      // await utils.uploadTestStigs()
       await utils.loadAppData()
       await utils.uploadTestStig('U_VPN_SRG_V2R3_Manual-xccdf-reviewKeyChange.xml')
-      // await utils.createDisabledCollectionsandAssets()
     })
 
     after(async function () {
-      // this.timeout(4000)
       await utils.deleteStigByRevision("VPN_SRG_OTHER", "V2R3")
-
     })
     it('Import a new STIG - with new RuleID matching old content', async function () {
       
@@ -187,14 +182,11 @@ describe(`POST - importBenchmark - /stigs`, () => {
   describe('Checks for other revs, content matches', () => {
 
     before(async function () {
-      // this.timeout(4000)
-      // await utils.uploadTestStigs()
       await utils.loadAppData()
       await utils.deleteStigByRevision("VPN_SRG_OTHER", "V2R2")
     })
 
     after(async function () { 
-      // this.timeout(4000)
       await utils.deleteStig("VPN_SRG_OTHER")
     })
 
@@ -292,8 +284,6 @@ describe(`POST - importBenchmark - /stigs`, () => {
   describe('Replacement Tests', () => {
 
     before(async function () {
-      // this.timeout(4000)
-      // await utils.uploadTestStigs()
       try{
         await utils.deleteStigByRevision("VPN_SRG_TEST", "V1R0")
       }

@@ -326,8 +326,6 @@ describe(`Test a restricted users access (r,rw,none)`, () => {
 describe(`Test manage user access (r,rw,none)`, () => {`  `
 
     before(async function () {
-        // this.timeout(4000)
-        // await utils.uploadTestStigs()
         await utils.loadAppData()
     })
     it(`should set users ACL in test collection `, async () => {

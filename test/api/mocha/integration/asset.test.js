@@ -18,10 +18,7 @@ describe(`PUT - attachAssetsToStig - /collections/{collectionId}/stigs/{benchmar
   describe('gh-756 - stig-assignments issue', () => {
 
     before(async function () {
-      // this.timeout(4000)
-      // await utils.uploadTestStigs()
       await utils.loadAppData()
-      // await utils.createDisabledCollectionsandAssets()
     })
     it('gh-756 issue (assigning a benchmark in one collection removes all assignements for that benchmark from all other collections) . assign a benchmark used in test Collection in scrap Collection', async function () {
       const res = await chai.request(config.baseUrl)
@@ -54,8 +51,6 @@ describe(`GET - getChecklistByAssetStig - /assets/{assetId}/checklists/{benchmar
   describe('Testing that a valid filename can be produced from an asset that contains os reserved chars', () => {
 
     before(async function () {
-      // this.timeout(4000)
-      // await utils.uploadTestStigs()
       await utils.loadAppData()
     })
     

@@ -13,8 +13,6 @@ describe('PATCH - patchReviewByAssetRule - /collections/{collectionId}/reviews/{
         describe(`user:${user.name}`, () => {
             describe('resultEngine tests', () => {
                 before(async function () {
-                    // this.timeout(4000)
-                    // await utils.uploadTestStigs()
                     await utils.loadAppData()
                 })
                 it('Delete a Review - freshRuleId - review may or may not exist', async () => {

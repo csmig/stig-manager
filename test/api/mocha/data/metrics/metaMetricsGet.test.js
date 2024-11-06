@@ -12,8 +12,6 @@ const metrics = require('./metaMetricsGet.js')
 
 describe('GET - MetaMetrics', function () { 
   before(async function () {
-    // // this.timeout(4000)
-    // await utils.uploadTestStigs()
     const response = await utils.loadAppData("appdata-meta-metrics-with-pin.jsonl")
     try{
         await utils.uploadTestStig("U_VPN_SRG_V1R0_Manual-xccdf.xml")
@@ -21,7 +19,6 @@ describe('GET - MetaMetrics', function () {
     catch(err){
         console.log("no stig to upload")
     }
-//    await utils.createDisabledCollectionsandAssets({context: 'meta'})
   })
 
   for(let iteration of iterations) {
