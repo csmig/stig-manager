@@ -885,14 +885,17 @@ exports.deleteReviewByAssetRule = async function({assetId, ruleId, projections, 
     }
 
     let rows = await _this.getReviews({projections, filter: binds, grant})
+
+    binds = [assetId, ruleId]
     
     connection = await dbUtils.pool.getConnection()
     async function transaction () {
       await connection.query('START TRANSACTION')
       let sqlDelete = `DELETE review 
-  FROM review LEFT JOIN rule_version_check_digest rvcd
-  ON (rvcd.version = review.version and rvcd.checkDigest = review.checkDigest)
-  WHERE review.assetId = :assetId AND rvcd.ruleId = :ruleId`
+        FROM review
+        LEFT JOIN rule_version_check_digest rvcd
+        ON (rvcd.version = review.version and rvcd.checkDigest = review.checkDigest)
+        WHERE review.assetId = ? AND rvcd.ruleId = ?`
       await connection.query(sqlDelete, binds)
       await dbUtils.updateStatsAssetStig( connection, {ruleId, assetId})
       await connection.commit()
