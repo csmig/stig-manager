@@ -1490,9 +1490,10 @@ async function queryUnreviewedByCollection ({
   labelIds,
   labelNames,
   projections,
-  grant
+  grant,
+  userObject
 }) {
-  let columns, groupBy
+  let columns, groupBy, orderBy
   switch (grouping) {
     case 'asset':
       columns = [

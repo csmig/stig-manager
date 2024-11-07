@@ -755,7 +755,8 @@ module.exports.getUnreviewedAssetsByCollection = async function (req, res, next)
       labelNames,
       severities,
       projections,
-      grant
+      grant,
+      userObject: req.userObject
     })
     res.json(response)
   }
@@ -781,7 +782,8 @@ module.exports.getUnreviewedRulesByCollection = async function (req, res, next) 
       labelIds,
       labelNames,
       projections,
-      grant
+      grant,
+      userObject: req.userObject
     })
     res.json(response)
   }
