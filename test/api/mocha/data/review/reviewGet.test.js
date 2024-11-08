@@ -32,6 +32,17 @@ describe('GET - Review', () => {
           expect(res.body).to.be.an('array')
 
           for(let review of res.body){
+            if(iteration.name === 'lvl1'){
+              if(review.assetId === "62"){
+                expect(review.access).to.be.equal('r')
+              }
+              if(review.assetId === "154" && review.ruleId === reference.testCollection.benchmark){
+                expect(review.access).to.be.equal('r')
+              }
+            }
+            else {
+              expect(review.access).to.be.equal('rw')
+            }
             expect(review.assetId).to.be.oneOf(reference.testCollection.assetIds)
             for(let assetLabelId of review.assetLabelIds){
               expect(assetLabelId).to.be.oneOf(reference.testAsset.labels)
@@ -55,6 +66,7 @@ describe('GET - Review', () => {
           expect(res.body).to.be.lengthOf(distinct.testAsset.reviewsAvailableToUser)
 
           for(let review of res.body){
+            expect(review.access).to.be.equal('rw')
             expect(review.assetId).to.be.equal(reference.testAsset.assetId)
             for(let assetLabelId of review.assetLabelIds){
               expect(assetLabelId).to.be.oneOf(reference.testAsset.labels)
@@ -77,6 +89,17 @@ describe('GET - Review', () => {
           expect(res).to.have.status(200)
           expect(res.body).to.be.lengthOf(distinct.testCollection.reviewsForTestBenchmark)
           for(let review of res.body){
+            if(iteration.name === 'lvl1'){
+              if(review.assetId === "62"){
+                expect(review.access).to.be.equal('r')
+              }
+              if(review.assetId === "154" && review.ruleId === reference.testCollection.benchmark){
+                expect(review.access).to.be.equal('r')
+              }
+            }
+            else {
+              expect(review.access).to.be.equal('rw')
+            }
             for(let stig of review.stigs){
               expect(stig).to.have.property('benchmarkId')
               expect(stig.benchmarkId).to.be.equal(reference.testCollection.benchmark)
@@ -281,6 +304,7 @@ describe('GET - Review', () => {
         })
       })
       describe('GET - getReviewsByAsset - /collections/{collectionId}/reviews/{assetId}', () => {
+
         it('Return a list of Reviews for an Asset', async () => {
           const res = await chai.request(config.baseUrl)
             .get(`/collections/${reference.testCollection.collectionId}/reviews/${reference.testAsset.assetId}?projection=rule&projection=stigs&projection=metadata`)
@@ -312,6 +336,24 @@ describe('GET - Review', () => {
             }
           }
         })
+        it("should return all reviews for asset ID 62, which is r only for lvl1 user", async () => {
+
+          const res = await chai.request(config.baseUrl)
+            .get(`/collections/${reference.testCollection.collectionId}/reviews/62`)
+            .set('Authorization', `Bearer ${iteration.token}`)
+          expect(res).to.have.status(200)
+          //expect(res.body).to.be.an('array').of.length(2)
+          for(let review of res.body){
+            expect(review.assetId).to.be.equal("62")
+            if(iteration.name === 'lvl1'){
+              expect(review.access).to.be.equal('r')
+            }
+            else {
+              expect(review.access).to.be.equal('rw')
+            }
+          }
+
+        })
         it('Return a list of Reviews for an Asset, benchmarkId Projection.', async () => {
           const res = await chai.request(config.baseUrl)
             .get(`/collections/${reference.testCollection.collectionId}/reviews/${reference.testAsset.assetId}?benchmarkId=${reference.benchmark}&projection=rule&projection=stigs&projection=metadata`)
@@ -338,6 +380,23 @@ describe('GET - Review', () => {
               }
             }
           }
+        })
+        it("should return all review for assetID 154 which for lvl1 is r only on benchmark VPN_SRG_TEST", async () => {
+
+          const res = await chai.request(config.baseUrl)
+            .get(`/collections/${reference.testCollection.collectionId}/reviews/154?benchmarkId=VPN_SRG_TEST`)
+            .set('Authorization', `Bearer ${iteration.token}`)
+          expect(res).to.have.status(200)
+          for(let review of res.body){
+            expect(review.assetId).to.be.equal("154")
+            if(iteration.name === 'lvl1'){
+              expect(review.access).to.be.equal('r')
+            }
+            else {
+              expect(review.access).to.be.equal('rw')
+            }
+          }
+
         })
         it('Return a list of Reviews for an Asset , metadata Projection.', async () => {
           const res = await chai.request(config.baseUrl)

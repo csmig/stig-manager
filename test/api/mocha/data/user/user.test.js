@@ -1,12 +1,14 @@
 const chai = require('chai')
 const chaiHttp = require('chai-http')
 chai.use(chaiHttp)
+const { v4: uuidv4 } = require('uuid');
 const expect = chai.expect
 const config = require('../../testConfig.json')
 const utils = require('../../utils/testUtils.js')
 const iterations = require('../../iterations.js')
 const reference = require('../../referenceData.js')
 const requestBodies = require('./requestBodies.js')
+const expectations = require('./expectations.js')
 
 let testUser = null
 const randomValue = Math.floor(Math.random() * 10000)
@@ -18,6 +20,7 @@ describe('user', () => {
   })
 
   for(const iteration of iterations) {
+    const distinct = expectations[iteration.name]
 
     describe(`iteration:${iteration.name}`, () => {
 
@@ -32,7 +35,7 @@ describe('user', () => {
 
       describe('GET - user', () => {
 
-        describe(`getUserObject - /user`, () => {
+        describe(`getUser - /user`, () => {
 
           it('Return the requesters user information - check user', async () => {
             const res = await chai
@@ -42,9 +45,10 @@ describe('user', () => {
 
             expect(res).to.have.status(200)
             expect(res.body.username, "expect username to be current user").to.equal(iteration.name)
+            const userGroupIds = res.body.userGroups.map(group => group.userGroupId)
+            expect(userGroupIds).to.eql(distinct.userGroupIds)
             for(grant of res.body.collectionGrants) {
-              expect(grant).to.exist
-              expect(grant).to.have.property('collection')
+              expect(grant.collection.collectionId).to.be.oneOf(distinct.collectionGrants)
             }
           })
         })
@@ -194,6 +198,24 @@ describe('user', () => {
               expect(user.userId, "expect userId to be one of the users the system").to.be.oneOf(newIds)
             }
           })
+          it("return lvl1 user and verify its group membership", async () => {
+
+            const res = await chai
+                .request(config.baseUrl)
+                .get(`/users?elevate=true&username=lvl1&projection=userGroups`)
+                .set('Authorization', 'Bearer ' + iteration.token)
+            if(iteration.name != "stigmanadmin"){
+              expect(res).to.have.status(403)
+              return
+            }
+            expect(res).to.have.status(200)
+            expect(res.body).to.be.an('array')
+            expect(res.body[0].username, "expect username to be lvl1").to.equal('lvl1')
+            expect(res.body[0].userId, "expect userId to be lvl1 userId").to.equal(reference.lvl1User.userId)
+            expect(res.body[0].userGroups).to.be.an('array')
+            expect(res.body[0].userGroups, "expect user to be in TestGroup").to.eql([{ userGroupId: reference.testCollection.testGroup.userGroupId, name: reference.testCollection.testGroup.name }])
+
+          })
           it("should throw SmError.PrivilegeError no elevate with projections.", async () => {
 
             const res = await chai
@@ -221,6 +243,22 @@ describe('user', () => {
             expect(res.body).to.have.property('statistics')
             expect(res.body.username, "expect username to be wf-Test").to.equal(reference.wfTest.username)
             expect(res.body.userId, "expect userId to be wf-Test userId (22)").to.equal(reference.wfTest.userId)
+          })
+          it("return lvl1 user and verify its group membership", async () => {
+            const res =  await chai
+                .request(config.baseUrl)
+                .get(`/users/${reference.lvl1User.userId}?elevate=true&projection=userGroups`)
+                .set('Authorization', 'Bearer ' + iteration.token)
+            if(iteration.name != "stigmanadmin"){
+              expect(res).to.have.status(403)
+              return
+            }
+            expect(res).to.have.status(200)
+            expect(res.body.username, "expect username to be lvl1").to.equal('lvl1')
+            expect(res.body.userId, "expect userId to be lvl1 userId").to.equal(reference.lvl1User.userId)
+            expect(res.body.userGroups).to.be.an('array')
+            expect(res.body.userGroups, "expect user to be in TestGroup").to.eql([{ userGroupId: reference.testCollection.testGroup.userGroupId, name: reference.testCollection.testGroup.name }])
+
           })
         })
       })
@@ -261,6 +299,34 @@ describe('user', () => {
               expect(createdUser.userId, ).to.equal(res.body.userId)
               expect(createdUser.collectionGrants).to.be.an('array')
               expect(createdUser.collectionGrants, "expect created user to have a single grant to scrap collection").to.have.lengthOf(1)
+          })
+          it("Create a user in test userGroup", async () => {
+            const uuid10Chars = uuidv4().substring(0, 10)
+            const res = await chai
+                .request(config.baseUrl)
+                .post(`/users?elevate=true&projection=userGroups&projection=collectionGrants`)
+                .set('Authorization', 'Bearer ' + iteration.token)
+                .send({
+                  "username": "TEMP_USER" + uuid10Chars,
+                  "userGroups": [reference.testCollection.testGroup.userGroupId],
+                  "collectionGrants": []
+              })
+              if(iteration.name != "stigmanadmin"){
+                expect(res).to.have.status(403)
+                return
+              }
+              expect(res).to.have.status(201)
+              expect(res.body.username, "expect username to be TEMP_USER").to.equal("TEMP_USER" + uuid10Chars)
+              expect(res.body.userGroups).to.be.an('array')
+              expect(res.body.userGroups, "expect user to be in TestGroup").to.eql([{ userGroupId: reference.testCollection.testGroup.userGroupId, name: reference.testCollection.testGroup.name }])
+              expect(res.body.collectionGrants).to.be.an('array').of.length(1)              
+              for(let grant of res.body.collectionGrants) {
+                expect(grant.collection.collectionId).to.be.eql(reference.testCollection.collectionId)
+                expect(grant.accessLevel, "expect grant to be restricted").to.equal(reference.testCollection.testGroup.accessLevel)
+                for(const grantee of grant.grantees) {
+                  expect(grantee.userGroupId, "expect grantee to be in TestGroup").to.equal(reference.testCollection.testGroup.userGroupId)
+                }
+              }
           })
           if(iteration.name == "stigmanadmin"){
           
@@ -354,6 +420,45 @@ describe('user', () => {
                 expect(userEffected.username, "expectthe effected user to be the one returned by the api").to.equal(res.body.username)
                 expect(userEffected.userId,"expectthe effected user to be the one returned by the api").to.equal(res.body.userId)
           })
+          it("edit lvl1 users group membership to no groups. ", async () => {
+            const res = await chai
+                .request(config.baseUrl)
+                .patch(`/users/${reference.lvl1User.userId}?elevate=true&projection=userGroups&projection=collectionGrants`)
+                .set('Authorization', 'Bearer ' + iteration.token)
+                .send({
+                  "userGroups": []
+                })
+              if(iteration.name != "stigmanadmin"){
+                expect(res).to.have.status(403)
+                return
+              }
+              expect(res).to.have.status(200)
+              expect(res.body.username, "expect username to be lvl1").to.equal('lvl1')
+              expect(res.body.userId, "expect userId to be lvl1 userId").to.equal(reference.lvl1User.userId)
+              expect(res.body.userGroups).to.be.an('array').of.length(0)
+              expect(res.body.collectionGrants).to.be.an('array').of.length()
+          })
+          it("add lvl1 user back to test group", async () => {
+
+            const res = await chai
+                .request(config.baseUrl)
+                .patch(`/users/${reference.lvl1User.userId}?elevate=true&projection=userGroups&projection=collectionGrants`)
+                .set('Authorization', 'Bearer ' + iteration.token)
+                .send({
+                  "userGroups": [reference.testCollection.testGroup.userGroupId]
+                })
+              if(iteration.name != "stigmanadmin"){
+                expect(res).to.have.status(403)
+                return
+              }
+              expect(res).to.have.status(200)
+              expect(res.body.username, "expect username to be lvl1").to.equal('lvl1')
+              expect(res.body.userId, "expect userId to be lvl1 userId").to.equal(reference.lvl1User.userId)
+              expect(res.body.userGroups).to.be.an('array').of.length(1)
+              expect(res.body.userGroups, "expect user to be in TestGroup").to.eql([{ userGroupId: reference.testCollection.testGroup.userGroupId, name: reference.testCollection.testGroup.name }])
+              expect(res.body.collectionGrants).to.be.an('array').of.length(1)
+
+          })
           it("should throw SmError.UnprocessableError collectionIds are invalid.", async () => {
             const res = await chai
                 .request(config.baseUrl)
@@ -439,6 +544,63 @@ describe('user', () => {
                   return
                 }
                 expect(res).to.have.status(422)
+          })
+
+          it("edit lvl1 users group membership to no groups and add direct level 1 role to test collecton ", async () => {
+
+            const res = await chai
+              .request(config.baseUrl)
+              .put(
+                `/users/${reference.lvl1User.userId}?elevate=true&projection=userGroups&projection=collectionGrants`
+              )
+              .set("Authorization", "Bearer " + iteration.token)
+              .send({
+                username: "lvl1",
+                collectionGrants: [
+                  {
+                    accessLevel: 1,
+                    collectionId: reference.testCollection.collectionId,
+                  },
+                ],
+                userGroups: [],
+              })
+              if(iteration.name != "stigmanadmin"){
+                expect(res).to.have.status(403)
+                return
+              }
+              expect(res).to.have.status(200)
+              expect(res.body.username, "expect username to be lvl1").to.equal('lvl1')
+              expect(res.body.userId, "expect userId to be lvl1 userId").to.equal(reference.lvl1User.userId)
+              expect(res.body.userGroups).to.be.an('array').of.length(0)
+              expect(res.body.collectionGrants).to.be.an('array').of.length(1)
+              expect(res.body.collectionGrants[0].collection.collectionId, "expect collectionId to be testCollection").to.equal(reference.testCollection.collectionId)
+              expect(res.body.collectionGrants[0].accessLevel, "expect accessLevel to be 1").to.equal(1)
+              expect(res.body.collectionGrants[0].grantees).to.be.an('array').of.length(1)
+              expect(res.body.collectionGrants[0].grantees[0].userId, "expect grantee to be the user").to.equal(reference.lvl1User.userId)
+          })
+
+          it("add lvl1 user back to test group", async () => {
+
+            const res = await chai
+                .request(config.baseUrl)
+                .put(`/users/${reference.lvl1User.userId}?elevate=true&projection=userGroups&projection=collectionGrants`)
+                .set('Authorization', 'Bearer ' + iteration.token)
+                .send({
+                    username: "lvl1",
+                    collectionGrants: [],
+                    userGroups: [reference.testCollection.testGroup.userGroupId]
+                })
+              if(iteration.name != "stigmanadmin"){
+                expect(res).to.have.status(403)
+                return
+              }
+              expect(res).to.have.status(200)
+              expect(res.body.username, "expect username to be lvl1").to.equal('lvl1')
+              expect(res.body.userId, "expect userId to be lvl1 userId").to.equal(reference.lvl1User.userId)
+              expect(res.body.userGroups).to.be.an('array').of.length(1)
+              expect(res.body.userGroups, "expect user to be in TestGroup").to.eql([{ userGroupId: reference.testCollection.testGroup.userGroupId, name: reference.testCollection.testGroup.name }])
+              expect(res.body.collectionGrants).to.be.an('array').of.length(1)
+
           })
         })
       })

@@ -39,18 +39,25 @@ describe('PATCH - Collection', function () {
                   .set('Authorization', `Bearer ${iteration.token}`)
                   .send(patchRequest)
             
-                if(distinct.canModifyCollection === false){
-                    expect(res).to.have.status(403)
-                    return
-                }
+            if(distinct.canModifyCollection === false){
+                expect(res).to.have.status(403)
+                return
+            }
             expect(res).to.have.status(200)
-
             expect(res.body.metadata.pocName).to.equal(patchRequest.metadata.pocName)
             expect(res.body.metadata.pocEmail).to.equal(patchRequest.metadata.pocEmail)
             expect(res.body.metadata.pocPhone).to.equal(patchRequest.metadata.pocPhone)
             expect(res.body.metadata.reqRar).to.equal(patchRequest.metadata.reqRar)
 
             expect(res.body.grants).to.have.lengthOf(patchRequest.grants.length)
+            for(let grant of res.body.grants) {
+                if(grant.userId){
+                    expect(grant.userId).to.be.oneOf(patchRequest.grants.map(grant => grant.userId))
+                }
+                if(grant.userGroupId){
+                    expect(grant.userGroupId).to.be.oneOf(patchRequest.grants.map(grant => grant.userGroupId))
+                }
+            }
             for(let stig of res.body.stigs) {
                 expect(stig.benchmarkId).to.be.oneOf(reference.testCollection.validStigs)
                 if(stig.benchmarkId === reference.benchmark){

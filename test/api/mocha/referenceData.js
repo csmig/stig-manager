@@ -44,13 +44,16 @@ const reference = {
     lvl1LabelName: "test-label-lvl1",
     lvl1Label: "5130dc84-9a68-11ec-b1bc-0242ac110002",
     lvl1LabelAssetIds: ["42"],
+    lvl1ReadOnlyAssetId: "62",
+    lvl1ReadOnlyAssetIds: ["62", "154"],
     fullLabelName: "test-label-full",
     fullLabel: "755b8a28-9a68-11ec-b1bc-0242ac110002",
     testGroup: {
       userGroupId: "1",
       name: "TestGroup",
       description: "TestGroup",
-      users: ["lvl1"]
+      users: ["lvl1"],
+      accessLevel: 1,
     },
     labels: [
       "755b8a28-9a68-11ec-b1bc-0242ac110002",

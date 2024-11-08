@@ -863,7 +863,7 @@ describe(`GET - Asset`, function () {
       describe(`getAssetsByStig - /collections/{collectionId}/stigs/{benchmarkId}/assets`, function () {
 
         it(`Assets in a Collection attached to a STIG`, async function () {
-
+          
           const res = await chai
             .request(config.baseUrl)
             .get(`/collections/${reference.testCollection.collectionId}/stigs/${reference.benchmark}/assets?projection=restrictedUserAccess`)

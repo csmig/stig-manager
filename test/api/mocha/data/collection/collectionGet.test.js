@@ -485,7 +485,6 @@ describe('GET - Collection', function () {
       
       })
 
-
       describe('getReviewAclByCollectionUser - /collections/{collectionId}/grants/user/{userId}/access', function () {
 
         it("should return the review ACL for the user in the test collection reject for users who dont have access",async function () {
@@ -532,12 +531,25 @@ describe('GET - Collection', function () {
 
       describe('getEffectiveAclByCollectionUser - /collections/{collectionId}/grants/user/{userId}/access/effective', function () {
 
-        it("should return the effective ACL for the user in the collection",async function () {
+        it("should return the effective ACL for the user in the collection users < manage will get rejected",async function () {
           const res = await chai.request(config.baseUrl)
             .get(`/collections/${reference.testCollection.collectionId}/grants/user/${iteration.userId}/access/effective`)
             .set('Authorization', `Bearer ${iteration.token}`)
             if (distinct.grant === "none" || distinct.canModifyCollection === false){
               expect(res).to.have.status(403)
+              return
+            }
+            expect(res).to.have.status(200)
+            expect(res.body).to.deep.equalInAnyOrder(distinct.acl)
+        })
+
+        it("should return the effective ACL for the user in the collection users uses only admin token",async function () {
+          const res = await chai.request(config.baseUrl)
+            .get(`/collections/${reference.testCollection.collectionId}/grants/user/${iteration.userId}/access/effective`)
+            .set('Authorization', `Bearer ${iterations[0].token}`)
+            
+            if(iteration.name === 'collectioncreator'){
+              expect(res).to.have.status(422)
               return
             }
             expect(res).to.have.status(200)
@@ -1294,6 +1306,34 @@ describe('GET - Collection', function () {
                   expect(asset.name).to.match(regex)
                 }
             })
+      })
+
+      // experimental 
+      describe('getUnreviewedAssetsByCollection - /collections/{collectionId}/unreviewed/assets', function () {
+
+        it("should return 200 ",async function () {
+          const res = await chai.request(config.baseUrl)
+            .get(`/collections/${reference.testCollection.collectionId}/unreviewed/assets`)
+            .set('Authorization', `Bearer ${iteration.token}`)
+          if (distinct.grant === "none"){
+            expect(res).to.have.status(403)
+            return
+          }
+          expect(res).to.have.status(200)
+        })
+      })
+      describe('getUnreviewedRulesByCollection - /collections/{collectionId}/unreviewed/rules', function () {
+
+        it("should return200",async function () {
+          const res = await chai.request(config.baseUrl)
+            .get(`/collections/${reference.testCollection.collectionId}/unreviewed/rules`)
+            .set('Authorization', `Bearer ${iteration.token}`)
+          if (distinct.grant === "none"){
+            expect(res).to.have.status(403)
+            return
+          }
+          expect(res).to.have.status(200)
+        })
       })
     })
   }

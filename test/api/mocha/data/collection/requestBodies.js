@@ -26,9 +26,13 @@ const requestBodies = {
         accessLevel: 4
       },
       {
+        userGroupId: '1',
+        accessLevel: 1
+      },
+      {
         userId: '87',
         accessLevel: 4
-      }
+      },
     ]
   },
   patchCollectionLabelById: {
@@ -89,6 +93,10 @@ const requestBodies = {
       {
         userId: '87',
         accessLevel: 4
+      },
+      {
+        userGroupId: '1',
+        accessLevel: 1
       }
     ]
   },
@@ -125,6 +133,49 @@ const requestBodies = {
       {
         userId: '1',
         accessLevel: 4
+      }
+    ],
+    labels: [
+      {
+        name: 'TEST',
+        description: 'Collection label description',
+        color: 'ffffff'
+      }
+    ]
+  },
+  createCollectionWithTestGroup: {
+    name: 'TEST',
+    description: 'Collection TEST description',
+    settings: {
+      fields: {
+        detail: {
+          enabled: 'always',
+          required: 'findings'
+        },
+        comment: {
+          enabled: 'always',
+          required: 'findings'
+        }
+      },
+      status: {
+        canAccept: true,
+        minAcceptGrant: 2,
+        resetCriteria: 'result'
+      },
+      history: {
+        maxReviews: 11
+      }
+    },
+    metadata: {
+      pocName: 'poc2Put',
+      pocEmail: 'pocEmailPut@email.com',
+      pocPhone: '12342',
+      reqRar: 'true'
+    },
+    grants: [
+      {
+        userGroupId: '1',
+        accessLevel: 2
       }
     ],
     labels: [

@@ -26,6 +26,7 @@ describe('DELETE - Review', () => {
         let review = null
         beforeEach(async function () {
           review = await utils.importReview(reference.testCollection.collectionId, reference.testAsset.assetId, reference.testAsset.testRuleId)
+          await utils.importReview(reference.testCollection.collectionId, reference.testCollection.lvl1ReadOnlyAssetId, reference.testAsset.testRuleId)
         })
         
         it('Delete a Review', async () => {
@@ -34,7 +35,6 @@ describe('DELETE - Review', () => {
             .set('Authorization', `Bearer ${iteration.token}`)
 
           expect(res).to.have.status(200)
-
           expect(res.body.assetId).to.equal(reference.testAsset.assetId)
           expect(res.body.rule.ruleId).to.equal(reference.testAsset.testRuleId)
           expect(res.body.stigs).to.be.an('array').of.length(reference.testAsset.testRuleIdStigCount)
@@ -47,6 +47,20 @@ describe('DELETE - Review', () => {
             expect(reference.testAsset.validStigs).to.include(stig.benchmarkId)
           }
        
+        })
+
+        it("Delete review that is read only for lvl1 user, expect 403 for lvl1 iteration", async () => {
+
+          const res = await chai.request(config.baseUrl)
+            .delete(`/collections/${reference.testCollection.collectionId}/reviews/${reference.testCollection.lvl1ReadOnlyAssetId}/${reference.testAsset.testRuleId}`)
+            .set('Authorization', `Bearer ${iteration.token}`)
+
+            if(iteration.name === "lvl1") {
+            expect(res).to.have.status(403)
+          }
+          else {
+            expect(res).to.have.status(200)
+          }
         })
       })
 

@@ -10,6 +10,7 @@ const iterations = require("../../iterations.js")
 const expectations = require('./expectations.js')
 const reference = require('../../referenceData.js')
 const requestBodies = require('./requestBodies.js')
+const { v4: uuidv4 } = require('uuid')
 
 describe('POST - Collection - not all tests run for all iterations', function () {
 
@@ -102,6 +103,25 @@ describe('POST - Collection - not all tests run for all iterations', function ()
           // just an extra check to make sure the collection was created
           const createdCollection = await utils.getCollection(res.body.collectionId)
             expect(createdCollection).to.exist
+        })
+        it("Create A colleciton with grant to a user group",async function () {
+
+          const post = requestBodies.createCollectionWithTestGroup
+          let uuid = uuidv4().slice(0, 10)
+          post.name = "testCollection" + uuid
+          const res = await chai
+            .request(config.baseUrl)
+            .post(`/collections?elevate=${distinct.canElevate}&projection=grants`)
+            .set("Authorization", `Bearer ${iteration.token}`)
+            .send(post)
+          if(distinct.canCreateCollection === false){
+            expect(res).to.have.status(403)
+            return
+          }
+          expect(res).to.have.status(201)
+          expect(res.body.grants).to.have.lengthOf(1)
+          expect(res.body.grants[0].userGroup.userGroupId).to.equal("1")
+          expect(res.body.grants[0].accessLevel).to.equal(2)
         })
         it("should throw SmError.UnprocessableError due to duplicate user in grant array.",async function () {
 

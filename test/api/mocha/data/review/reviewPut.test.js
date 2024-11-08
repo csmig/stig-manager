@@ -326,6 +326,33 @@ describe('PUT - Review', () => {
                     expect(res.body.resultEngine).to.be.eql(putBody.resultEngine)
 
                 })
+                it("set all properties of a Review, lvl1 has read only on asset, expect rejection for lvl1 iteration", async () => {
+                    const putBody = {
+                        result: 'pass',
+                        detail: 'test\nvisible to lvl1',
+                        comment: 'sure',
+                        autoResult: false,
+                        status: 'submitted'
+                    }
+                    const res = await chai.request(config.baseUrl)
+                        .put(`/collections/${reference.testCollection.collectionId}/reviews/${reference.testCollection.lvl1ReadOnlyAssetId}/${reference.testCollection.ruleId}`)
+                        .set('Authorization', `Bearer ${iteration.token}`)
+                        .send(putBody)
+                    if(iteration.name == 'lvl1'){
+                        expect(res).to.have.status(403)
+                        return
+                    }
+                    expect(res).to.have.status(200)
+                    expect(res.body).to.be.an('object')
+                    expect(res.body).to.have.property("result")
+                    expect(res.body).to.have.property("detail")
+                    expect(res.body).to.have.property("comment")
+                    expect(res.body).to.have.property("status")
+                    expect(res.body.result).to.equal(putBody.result)
+                    expect(res.body.detail).to.equal(putBody.detail)
+                    expect(res.body.comment).to.equal(putBody.comment)
+                    expect(res.body.status.label).to.equal(putBody.status)
+                })
             })
 
             describe('PUT - putReviewMetadata - /collections/{collectionId}/reviews/{assetId}/{ruleId}/metadata', () => {
@@ -343,6 +370,19 @@ describe('PUT - Review', () => {
                     expect(res).to.have.status(200)
                     expect(res.body).to.eql({[reference.reviewMetadataKey]: reference.reviewMetadataValue})
 
+                })
+                it('Set all metadata of a Review, lvl1 has r on asset, expect rejection for lvl1 iteration. ', async () => {
+                    const res = await chai.request(config.baseUrl)
+                    .put(`/collections/${reference.testCollection.collectionId}/reviews/${reference.testCollection.lvl1ReadOnlyAssetId}/${reference.testCollection.ruleId}/metadata`)
+                    .set('Authorization', `Bearer ${iteration.token}`)
+                    .send({[reference.reviewMetadataKey]: reference.reviewMetadataValue})
+                    
+                    if(iteration.name == 'lvl1'){
+                        expect(res).to.have.status(403)
+                        return
+                    }
+                    expect(res).to.have.status(200)
+                    expect(res.body).to.eql({[reference.reviewMetadataKey]: reference.reviewMetadataValue})
                 })
                 it("should return SmError.PrivilegeError if user cannot put review", async () => {
                     const res = await chai.request(config.baseUrl)
@@ -369,6 +409,19 @@ describe('PUT - Review', () => {
                         .set('Content-Type', 'application/json') 
                         .send(`${JSON.stringify(reference.reviewMetadataValue)}`)
                     
+                    expect(res).to.have.status(204)
+                })
+                it('Set one metadata key/value of a Review, lvl1 has read only on asset, expect rejection for lvl1 iteration', async () => {
+                    const res = await chai.request(config.baseUrl)
+                        .put(`/collections/${reference.testCollection.collectionId}/reviews/${reference.testCollection.lvl1ReadOnlyAssetId}/${reference.testCollection.ruleId}/metadata/keys/${reference.reviewMetadataKey}`)
+                        .set('Authorization', `Bearer ${iteration.token}`)
+                        .set('Content-Type', 'application/json') 
+                        .send(`${JSON.stringify(reference.reviewMetadataValue)}`)
+
+                    if(iteration.name == 'lvl1'){
+                        expect(res).to.have.status(403)
+                        return
+                    }
                     expect(res).to.have.status(204)
                 })
             })

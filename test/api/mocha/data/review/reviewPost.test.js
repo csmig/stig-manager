@@ -56,7 +56,6 @@ const checkReviews = (reviews, postreview, iteration) => {
 
 describe('POST - Review', () => {
 
-
   for(const iteration of iterations){
     if (expectations[iteration.name] === undefined){
       it(`No expectations for this iteration scenario: ${iteration.name}`, async () => {})
@@ -1101,6 +1100,37 @@ describe('POST - Review', () => {
               .send(postreview)
             expect(res).to.have.status(403)
           })
+          it("should throw SmError.PriviledgeError, lvl1 user only has read only. ", async () => {
+
+            const res = await chai.request(config.baseUrl)
+              .post(`/collections/${reference.testCollection.collectionId}/reviews`)
+              .set('Authorization', `Bearer ${iteration.token}`)
+              .send({
+                source: {
+                  review: {
+                    result: 'fail',
+                    detail: 'tesetsetset'
+                  }
+                },
+                assets: {
+                  assetIds: [reference.testCollection.lvl1ReadOnlyAssetId]
+                },
+                rules: {
+                  ruleIds: ['SV-106179r1_rule']
+                }
+              })
+
+            expect(res).to.have.status(200)
+            if(iteration.name === "lvl1"){
+              expect(res.body.failedValidation).to.eql(1)
+              expect(res.body.validationErrors[0].error).to.eql("no grant for this asset/ruleId")
+              expect(res.body.validationErrors[0].assetId).to.eql(reference.testCollection.lvl1ReadOnlyAssetId)
+            }
+            else 
+            {
+              expect(res.body.failedValidation).to.eql(0)
+            }
+          })
         })
       })
       describe('POST - postReviewsByAsset - /collections/{collectionId}/reviews/{assetId}', () => {
@@ -1109,7 +1139,6 @@ describe('POST - Review', () => {
         let deletedAsset = reference.deletedAsset.assetId
         before(async function () {
           await utils.deleteReviewsByAssetRule(reference.testCollection.collectionId, reference.testAsset.assetId, reference.testCollection.ruleId)
-         
         })
 
         it('Import one or more Reviews from a JSON body new ruleId', async () => {
@@ -1136,6 +1165,36 @@ describe('POST - Review', () => {
           expect(res).to.have.status(200)
           expect(res.body).to.be.an('object')
           expect(res.body).to.deep.equal(expectedResponse)
+        })
+        it("Import review for an asset, asset is read only for lvl1 user, expect rejection.", async () => {
+
+          const res = await chai.request(config.baseUrl)
+            .post(`/collections/${reference.testCollection.collectionId}/reviews/${reference.testCollection.lvl1ReadOnlyAssetId}`)
+            .set('Authorization', `Bearer ${iteration.token}`)
+            .send([
+              {
+              "ruleId": reference.testCollection.ruleId,
+              "result": "pass",
+              "detail": "test\nvisible to lvl1",
+              "comment": "sure",
+              "autoResult": false,
+              "status": "submitted"
+              }
+          ])
+          
+          expect(res).to.have.status(200)
+          if(iteration.name == "lvl1"){
+            expect(res.body.rejected).to.have.length(1)
+            expect(res.body.rejected[0].reason).to.eql("no grant for this asset/ruleId")
+            expect(res.body.affected.inserted).to.eql(0)
+            expect(res.body.affected.updated).to.eql(0)
+          }
+          else {
+            expect(res.body.rejected).to.have.length(0)
+            expect(res.body.affected.inserted).to.eql(0)
+            expect(res.body.affected.updated).to.eql(1)
+          }
+
         })
         it('Import one or more Reviews from a JSON body already used ruleId should be an update', async () => {
           const res = await chai.request(config.baseUrl)

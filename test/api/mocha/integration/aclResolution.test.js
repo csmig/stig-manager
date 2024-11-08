@@ -726,6 +726,7 @@ describe(`Multiple Group Role Collsions`, () => {
   
   let userGroup1
   let userGroup2
+  let userGroup3
 
   it("Remove Base appdata userGroup from test Colleciton", async () => {
 
@@ -735,7 +736,6 @@ describe(`Multiple Group Role Collsions`, () => {
 
     expect(res).to.have.status(200)
   })
-  
 
   it('should create a test user group with lvl1 user in it.', async () => {
     const res = await chai
@@ -896,6 +896,49 @@ describe(`Multiple Group Role Collsions`, () => {
           expect(grantee.name).to.equal(userGroup1.name)
       }
   })
+
+  it("create a new userGroup with lvl1 user in it", async () => {
+      const res = await chai
+          .request(config.baseUrl)
+          .post(`/user-groups?elevate=true&projection=collections`)
+          .set('Authorization', 'Bearer ' + config.adminToken)
+          .send({
+              "name": "CollisionGroup3",
+              "description": "test group",
+              "userIds": [
+                  lvl1.userId   
+              ]
+          })
+      userGroup3 = res.body
+      expect(res).to.have.status(201)
+      expect(res.body.collections).to.be.empty
+    })
+
+    it("assign userGroup3 to the test collection with accessLevel = 4", async () => {
+      const res = await chai.request(config.baseUrl)
+          .put(`/collections/${reference.testCollection.collectionId}/grants/user-group/${userGroup3.userGroupId}`)
+          .set('Authorization', `Bearer ${config.adminToken}`)
+          .send({
+              accessLevel: 4
+          })
+      expect(res).to.have.status(201)
+      expect(res.body.accessLevel).to.equal(4)
+    })
+
+    it("get users assigned to the test collection and check that lvl1 user obtained accessLevel = 4 due to membership in three groups with two groups being accessLevel = 4", async () => {
+
+      const res = await chai.request(config.baseUrl)
+          .get(`/collections/${reference.testCollection.collectionId}?projection=users`)
+          .set('Authorization', `Bearer ${config.adminToken}`)
+      expect(res).to.have.status(200)
+
+      const testUser = res.body.users.find(user => user.user.userId === lvl1.userId)
+      expect(testUser.accessLevel).to.equal(4)
+      expect(testUser.grantees.length).to.equal(2)
+      for(const grantee of testUser.grantees){
+          expect(grantee.name).to.be.oneOf([userGroup1.name, userGroup3.name])
+      }
+    })
 })
 
 describe("Multiple Group ACL Collisions", () => {

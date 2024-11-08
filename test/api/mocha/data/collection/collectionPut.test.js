@@ -62,8 +62,13 @@ describe('PUT - Collection', function () {
               
             // grants projection
             expect(res.body.grants).to.have.lengthOf(putRequest.grants.length)
-            for(const grant of res.body.grants){
-              expect(grant.user.userId).to.be.oneOf(putRequest.grants.map(g => g.userId))
+            for(let grant of res.body.grants) {
+              if(grant.userId){
+                  expect(grant.userId).to.be.oneOf(putRequest.grants.map(grant => grant.userId))
+              }
+              if(grant.userGroupId){
+                  expect(grant.userGroupId).to.be.oneOf(putRequest.grants.map(grant => grant.userGroupId))
+              }
             }
         
             // assets projection
@@ -190,7 +195,6 @@ describe('PUT - Collection', function () {
 
         })
       })
-
       // note: this is deprecated
       describe('setStigAssetsByCollectionUser - /collections/{collectionId}/grants/{userId}/access', function () {
 
