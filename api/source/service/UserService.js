@@ -499,7 +499,7 @@ exports.getUserObject = async function (username) {
         cg.collectionId,
         c.name,
         cg.accessLevel,
-        json_array(cg.cgId) as grantIds
+        json_array(cg.grantId) as grantIds
       from
         collection_grant cg
         inner join collection c on (cg.collectionId = c.collectionId and c.state = 'enabled')
@@ -518,7 +518,7 @@ exports.getUserObject = async function (username) {
           cg.collectionId,
           c.name, 
           cg.accessLevel,
-          json_arrayagg(cg.cgId) OVER (PARTITION BY ugu.userId, cg.collectionId, cg.accessLevel) as grantIds
+          json_arrayagg(cg.grantId) OVER (PARTITION BY ugu.userId, cg.collectionId, cg.accessLevel) as grantIds
         from 
           collection_grant cg
           inner join collection c on (cg.collectionId = c.collectionId and c.state = 'enabled')

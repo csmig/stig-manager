@@ -585,7 +585,7 @@ module.exports.sqlGrantees = function ({collectionId, collectionIds, userId, use
   cast(cg.userId as char) as userId,
   cg.accessLevel,
   json_array(json_object('userId', cast(ud.userId as char),'username', ud.username)) as grantees,
-  json_array(cg.cgId) as grantIds
+  json_array(cg.grantId) as grantIds
 from
   collection_grant cg
   inner join collection c on (cg.collectionId = c.collectionId and c.state = 'enabled')
@@ -608,7 +608,7 @@ from
     cast(ugu.userId as char) as userId, 
     cg.accessLevel,
     json_arrayagg(json_object('userGroupId', cast(cg.userGroupId as char),'name', ug.name)) OVER (PARTITION BY ugu.userId, cg.collectionId, cg.accessLevel) as grantees,
-    json_arrayagg(cg.cgId) OVER (PARTITION BY ugu.userId, cg.collectionId, cg.accessLevel) as grantIds
+    json_arrayagg(cg.grantId) OVER (PARTITION BY ugu.userId, cg.collectionId, cg.accessLevel) as grantIds
 from 
     collection_grant cg
     inner join collection c on (cg.collectionId = c.collectionId and c.state = 'enabled')
@@ -640,7 +640,7 @@ module.exports.cteAclEffective = function ({cgIds = [], includeColumnCollectionI
 	  case when cga.clId is not null then 1 else 0 end as specificity
 from
 	collection_grant_acl cga
-  left join collection_grant cg on cga.cgId = cg.cgId
+  left join collection_grant cg on cga.grantId = cg.grantId
 	left join collection_label_asset_map cla on cga.clId = cla.clId
   left join collection_label cl on cla.clId = cl.clId
 	inner join stig_asset_map sa on (
@@ -658,7 +658,7 @@ from
 	  end)
 	inner join asset a on sa.assetId = a.assetId and a.state = 'enabled' and cg.collectionId = a.collectionId
 where
-	cga.cgId in (${inClause})
+	cga.grantId in (${inClause})
 ),
 cteAclRulesRanked as (
     select${includeColumnCollectionId ? ' collectionId,' : ''}

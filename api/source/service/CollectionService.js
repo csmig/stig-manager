@@ -85,7 +85,7 @@ exports.queryCollection = async function ({collectionId, projections = [], eleva
         (select json_arrayagg(grantJson) from
           (select
             json_object(
-              'grantId', cast(cgId as char),
+              'grantId', cast(grantId as char),
               'user', json_object(
               'userId', CAST(user_data.userId as char),
               'username', user_data.username,
@@ -99,7 +99,7 @@ exports.queryCollection = async function ({collectionId, projections = [], eleva
           UNION
           select
             json_object(
-              'grantId', cast(cgId as char),
+              'grantId', cast(grantId as char),
               'userGroup', json_object(
                 'userGroupId', CAST(user_group.userGroupId as char),
                 'name', user_group.name,
@@ -1616,7 +1616,7 @@ async function queryUnreviewedByCollection ({
     joins.push('inner join cteAclEffective cae on sa.saId = cae.saId')
   }
 
-  const sql = dbUtils.makeQueryString({ctes, columns, joins, predicates, groupBy, format: true})
+  const sql = dbUtils.makeQueryString({ctes, columns, joins, predicates, groupBy, orderBy, format: true})
   let [rows] = await dbUtils.pool.query(sql)
   return (rows)
 }
@@ -1741,7 +1741,7 @@ exports.cloneCollection = async function ({collectionId, userObject, name, descr
         finishText: 'Creating Grants'
       },
       createGrantMap: {
-        query: `CREATE TEMPORARY TABLE t_grantid_map SELECT cg1.cgId as srcGrantId, cg2.cgId as destGrantId FROM collection_grant cg1 left join collection_grant cg2 on (cg1.collectionId = @srcCollectionId and cg1.userId = cg2.userId and cg1.userGroupId = cg2.userGroupId and cg1.accessLevel = cg2.accessLevel) WHERE cg2.collectionId = @destCollectionId`,
+        query: `CREATE TEMPORARY TABLE t_grantid_map SELECT cg1.grantId as srcGrantId, cg2.grantId as destGrantId FROM collection_grant cg1 left join collection_grant cg2 on (cg1.collectionId = @srcCollectionId and cg1.userId = cg2.userId and cg1.userGroupId = cg2.userGroupId and cg1.accessLevel = cg2.accessLevel) WHERE cg2.collectionId = @destCollectionId`,
         startText: 'Creating Grants',
         finishText: 'Creating Grants'
       },
@@ -1796,7 +1796,7 @@ exports.cloneCollection = async function ({collectionId, userObject, name, descr
         finishText: 'Created Asset/STIG mappings'
       },
       cloneGrantAcls: {
-        query: `INSERT INTO collection_grant_acl (cgId, benchmarkId, assetId, clId, access)
+        query: `INSERT INTO collection_grant_acl (grantId, benchmarkId, assetId, clId, access)
         SELECT
           gm.destGrantId,
           cg1.benchmarkId,
@@ -1805,7 +1805,7 @@ exports.cloneCollection = async function ({collectionId, userObject, name, descr
           cg1.access
         FROM
           collection_grant_acl cg1
-          inner join t_grantid_map gm on cg1.cgId = gm.srcGrantId
+          inner join t_grantid_map gm on cg1.grantId = gm.srcGrantId
           left join t_assetid_map am on cg1.assetId = am.srcAssetId 
           left join t_clid_map cm on cg1.clId = cm.srcClId`,
           startText: 'Creating Collection Grant ACLs',
@@ -2478,7 +2478,7 @@ exports.getEffectiveAclByCollectionUser = async function ({collectionId, userId}
   const sqlSelectEffectiveGrants = `
 with cteGrantees as (
 select 
-	  json_array(cg.cgId) as grantIds
+	  json_array(cg.grantId) as grantIds
   from
     collection_grant cg
     inner join collection c on (cg.collectionId = c.collectionId and c.state = 'enabled')
@@ -2494,7 +2494,7 @@ union
     (
     select
       ROW_NUMBER() OVER(PARTITION BY ugu.userId, cg.collectionId ORDER BY cg.accessLevel desc) as rn,
-      json_arrayagg(cg.cgId) OVER (PARTITION BY ugu.userId, cg.collectionId, cg.accessLevel) as grantIds
+      json_arrayagg(cg.grantId) OVER (PARTITION BY ugu.userId, cg.collectionId, cg.accessLevel) as grantIds
     from 
       collection_grant cg
       left join user_group_user_map ugu on cg.userGroupId = ugu.userGroupId
@@ -2514,7 +2514,7 @@ cteAclRules as (select
 	sa.saId,
 	sa.assetId,
 	sa.benchmarkId,
-    cga.cgId,
+    cga.grantId,
 	cga.access,
     json_object('assetId', cast(a.assetId as char), 'name', a.name) as asset,
     json_object(
@@ -2540,7 +2540,7 @@ cteAclRules as (select
 	  case when cga.clId is not null then 1 else 0 end as specificity
 from
 	collection_grant_acl cga
-    left join collection_grant cg on cga.cgId = cg.cgId
+    left join collection_grant cg on cga.grantId = cg.grantId
     left join user_data ud on cg.userId = ud.userId
     left join user_group ug on cg.userGroupId = ug.userGroupId
 	left join collection_label_asset_map cla on cga.clId = cla.clId
@@ -2560,7 +2560,7 @@ from
 	  end)
 	inner join asset a on sa.assetId = a.assetId and a.state = 'enabled' and cg.collectionId = a.collectionId
 where
-	cga.cgId in (
+	cga.grantId in (
 		select jt.grantId from cteGrantees left join json_table (cteGrantees.grantIds, '$[*]' COLUMNS (grantId INT PATH '$')) jt on true
 	)
 ),
@@ -2582,12 +2582,12 @@ select access, asset, benchmarkId, aclSources from cteAclRulesRanked where rn = 
 
 exports.setValidatedAcl = async function({validatedAcl, attributionUserId, svcStatus = {}}) {
 
-  const values = validatedAcl.map(i => [i.cgId, i.assetId, i.benchmarkId, i.clId, i.access, attributionUserId])
+  const values = validatedAcl.map(i => [i.grantId, i.assetId, i.benchmarkId, i.clId, i.access, attributionUserId])
 
   async function transactionFn (connection) {  
-    const sqlDelete = `DELETE from collection_grant_acl WHERE cgId = ?`
-    const sqlInsert = `INSERT into collection_grant_acl (cgId, assetId, benchmarkId, clId, access, modifiedUserId) VALUES ?`
-    await connection.query(sqlDelete, [validatedAcl[0].cgId])
+    const sqlDelete = `DELETE from collection_grant_acl WHERE grantId = ?`
+    const sqlInsert = `INSERT into collection_grant_acl (grantId, assetId, benchmarkId, clId, access, modifiedUserId) VALUES ?`
+    await connection.query(sqlDelete, [validatedAcl[0].grantId])
     await connection.query(sqlInsert, [values])
   }
   
@@ -2641,10 +2641,10 @@ exports.setReviewAclByCollectionUserGroup = async function(collectionId, userGro
   }
 }
 
-exports._reviewAclValidate = async function ({cgId, acl}) {
+exports._reviewAclValidate = async function ({grantId, acl}) {
   const sql = `
   select
-    any_value(cg.cgId) as cgId,
+    any_value(cg.grantId) as grantId,
     group_concat(jt.itemNum) as itemNum,
     case when count(jt.item) > 1 then json_arrayagg(jt.item) else any_value(jt.item) end as item,
     jt.assetId,
@@ -2676,7 +2676,7 @@ exports._reviewAclValidate = async function ({cgId, acl}) {
         labelId VARCHAR(255) PATH '$.labelId',
         access VARCHAR(255) PATH '$.access'
     )) jt
-    left join collection_grant cg on (cg.cgId = ?)
+    left join collection_grant cg on (cg.grantId = ?)
     left join collection_label cl on cl.uuid = UUID_TO_BIN(jt.labelId,1) and cg.collectionId = cl.collectionId
     left join asset a on jt.assetId = a.assetId and a.state = 'enabled' and cg.collectionId = a.collectionId
     left join stig s on jt.benchmarkId collate utf8mb4_0900_as_cs = s.benchmarkId
@@ -2685,12 +2685,12 @@ exports._reviewAclValidate = async function ({cgId, acl}) {
   order by
     itemNum`
     
-  const [rows] = await dbUtils.pool.query(sql, [JSON.stringify(acl), cgId])
+  const [rows] = await dbUtils.pool.query(sql, [JSON.stringify(acl), grantId])
 
   const response = rows.reduce((a,v) => {
     const disposition = v.validity === 'pass' ? 'pass' : 'fail'
     if (disposition === 'fail') {
-      delete v.cgId
+      delete v.grantId
       delete v.assetId
       delete v.benchmarkId
       delete v.clId
@@ -2704,15 +2704,49 @@ exports._reviewAclValidate = async function ({cgId, acl}) {
   return response
 }
 
-exports._getCollectionGrant = async function ({collectionId, userId, userGroupId}) {
-  const sql = `SELECT * FROM collection_grant where collectionId = ? and ${userId ? 'userId' : 'userGroupId'} = ?`
-  const [response] = await dbUtils.pool.query(sql, [collectionId, userId || userGroupId])
-  return response?.[0]
+exports._getCollectionGrant = async function ({collectionId, grantId, userId, userGroupId}) {
+  const sql = `select
+	case when user_data.userId
+  then json_object(
+    'grantId', cast(grantId as char),
+    'user', json_object(
+      'userId', CAST(user_data.userId as char),
+      'username', user_data.username,
+      'displayName', COALESCE(
+      JSON_UNQUOTE(JSON_EXTRACT(user_data.lastClaims, "$.name")),
+      user_data.username)),
+    'accessLevel', accessLevel)
+  else json_object(
+    'grantId', cast(grantId as char),
+    'userGroup', json_object(
+      'userGroupId', CAST(user_group.userGroupId as char),
+      'name', user_group.name,
+      'description', user_group.description
+      ),
+    'accessLevel', accessLevel) end as grantJson
+  from
+    collection_grant
+    left join user_data using (userId)
+    left join user_group using (userGroupId)
+    where collectionId = ?
+    and ${grantId ? 'grantId' : userId ? 'userId' : 'userGroupId'} = ?`
+  const [response] = await dbUtils.pool.query(sql, [collectionId, grantId || userId || userGroupId])
+  return response?.[0]?.grantJson
 }
+
+exports._putCollectionGrant = function ({collectionId, grantId, grant}) {
+  const sql = `UPDATE collection_grant SET 
+  userId = ?,
+  userGroupId = ?,
+  accessLevel = ?
+  where collectionId = ? and grantId = ?`
+  return dbUtils.pool.query(sql, [grant.userId, grant.userGroupId, grant.accessLevel, collectionId, grantId])
+}
+
 
 exports._hasCollectionGrant = async function ({collectionId, userId}) {
 
-    const sql = `SELECT cg.cgId
+    const sql = `SELECT cg.grantId
       FROM collection_grant cg 
       LEFT JOIN user_group ug ON cg.userGroupId = ug.userGroupId
       LEFT JOIN user_data ud on cg.userID = ud.userId
@@ -2723,7 +2757,7 @@ exports._hasCollectionGrant = async function ({collectionId, userId}) {
   return !!response[0]
 }
 
-exports.queryReviewAcl = async function ({cgId, collectionId, userId, userGroupId}) {
+exports.queryReviewAcl = async function ({grantId, collectionId, userId, userGroupId}) {
   const columns = [
     `case when cg.accessLevel = 1 then 'none' else 'rw' end as defaultAccess`,
     `case when count(cga.cgAclId) = 0
@@ -2742,7 +2776,7 @@ exports.queryReviewAcl = async function ({cgId, collectionId, userId, userGroupI
   const joins = [
     'collection_grant cg',
     'inner join collection c on cg.collectionId = c.collectionId and c.state = "enabled"',
-    'left join collection_grant_acl cga on cg.cgId = cga.cgId',
+    'left join collection_grant_acl cga on cg.grantId = cga.grantId',
     'left join asset a on cga.assetId = a.assetId',
     'left join collection_label cl on cga.clId = cl.clId'
     ]
@@ -2752,9 +2786,9 @@ exports.queryReviewAcl = async function ({cgId, collectionId, userId, userGroupI
     binds: []
   }
 
-  if (cgId) {
-    predicates.statements.push('cg.cgId = ?')
-    predicates.binds.push(cgId)
+  if (grantId) {
+    predicates.statements.push('cg.grantId = ?')
+    predicates.binds.push(grantId)
   }
   else if (userId && collectionId) {
     predicates.statements.push('cg.userId = ?', 'cg.collectionId = ?')

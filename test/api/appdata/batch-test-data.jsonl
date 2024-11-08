@@ -639,7 +639,7 @@
 [85,"2024-10-23 10:59:15",null,null,"{}","delete Collection lvl4","{\"fields\": {\"detail\": {\"enabled\": \"always\", \"required\": \"always\"}, \"comment\": {\"enabled\": \"findings\", \"required\": \"findings\"}}, \"status\": {\"canAccept\": true, \"resetCriteria\": \"result\", \"minAcceptGrant\": 3}, \"history\": {\"maxReviews\": 15}}","enabled",null,null]
 [86,"2024-10-23 10:59:15",null,null,"{}","delete Collection NONE","{\"fields\": {\"detail\": {\"enabled\": \"always\", \"required\": \"always\"}, \"comment\": {\"enabled\": \"findings\", \"required\": \"findings\"}}, \"status\": {\"canAccept\": true, \"resetCriteria\": \"result\", \"minAcceptGrant\": 3}, \"history\": {\"maxReviews\": 15}}","enabled",null,null]
 [92,"2024-10-23 10:59:15",null,null,"{}","test Collection","{\"fields\": {\"detail\": {\"enabled\": \"always\", \"required\": \"always\"}, \"comment\": {\"enabled\": \"findings\", \"required\": \"findings\"}}, \"status\": {\"canAccept\": true, \"resetCriteria\": \"result\", \"minAcceptGrant\": 3}, \"history\": {\"maxReviews\": 15}}","enabled",null,null]
-{"table":"collection_grant","columns":"`accessLevel`,`cgId`,`collectionId`,`userGroupId`,`userId`","rowCount":22}
+{"table":"collection_grant","columns":"`accessLevel`,`grantId`,`collectionId`,`userGroupId`,`userId`","rowCount":22}
 [1,5895,21,null,86]
 [1,5896,21,null,85]
 [2,5897,21,null,21]
@@ -662,7 +662,7 @@
 [4,5914,85,null,45]
 [4,5915,92,null,87]
 [4,5916,92,null,1]
-{"table":"collection_grant_acl","columns":"`access`,`assetId`,`benchmarkId`,`cgAclId`,`cgId`,`clId`,`modifiedDate`,`modifiedUserId`","rowCount":3}
+{"table":"collection_grant_acl","columns":"`access`,`assetId`,`benchmarkId`,`cgAclId`,`grantId`,`clId`,`modifiedDate`,`modifiedUserId`","rowCount":3}
 ["rw",42,"VPN_SRG_TEST",1,5896,null,null,null]
 ["rw",42,"Windows_10_STIG_TEST",2,5895,null,null,null]
 ["rw",154,"VPN_SRG_TEST",3,5896,null,null,null]

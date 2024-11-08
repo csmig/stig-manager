@@ -1135,7 +1135,7 @@ module.exports.getReviewAclByCollectionUser = async function getReviewAclByColle
     const { collectionId } = getCollectionInfoAndCheckPermission(req)
     const grant = await CollectionService._getCollectionGrant({collectionId, userId})
     if (!grant) throw new SmError.UnprocessableError('user has no direct grant in collection')
-    const response = await CollectionService.queryReviewAcl({cgId: grant.cgId})
+    const response = await CollectionService.queryReviewAcl({grantId: grant.grantId})
     res.json(response)
   }
   catch (err) {
@@ -1149,7 +1149,7 @@ module.exports.getReviewAclByCollectionUserGroup = async function (req, res, nex
     const { collectionId } = getCollectionInfoAndCheckPermission(req)
     const grant = await CollectionService._getCollectionGrant({collectionId, userGroupId})
     if (!grant) throw new SmError.UnprocessableError('group has no grant in collection')
-    const response = await CollectionService.queryReviewAcl({cgId: grant.cgId})
+    const response = await CollectionService.queryReviewAcl({grantId: grant.grantId})
     res.json(response)
   }
   catch (err) {
@@ -1179,7 +1179,7 @@ module.exports.setReviewAclByCollectionUser = async function setReviewAclByColle
     const grant = await CollectionService._getCollectionGrant({collectionId, userId})
     if (!grant) throw new SmError.UnprocessableError('user has no direct grant in collection')
 
-    const validated = await CollectionService._reviewAclValidate({cgId: grant.cgId, acl})
+    const validated = await CollectionService._reviewAclValidate({grantId: grant.grantId, acl})
     if (validated.fail.length > 0) {
       throw new SmError.UnprocessableError(validated.fail)
     }
@@ -1190,7 +1190,7 @@ module.exports.setReviewAclByCollectionUser = async function setReviewAclByColle
         svcStatus: res.svcStatus
       })
     }
-    const response = await CollectionService.queryReviewAcl({cgId: grant.cgId})
+    const response = await CollectionService.queryReviewAcl({grantId: grant.grantId})
     res.json(response)
   }
   catch (err) {
@@ -1207,7 +1207,7 @@ module.exports.setReviewAclByCollectionUserGroup = async function (req, res, nex
     const grant = await CollectionService._getCollectionGrant({collectionId, userGroupId})
     if (!grant) throw new SmError.UnprocessableError('group has no grant in collection')
 
-    const validated = await CollectionService._reviewAclValidate({cgId: grant.cgId, acl})
+    const validated = await CollectionService._reviewAclValidate({grantId: grant.grantId, acl})
     if (validated.fail.length > 0) {
       throw new SmError.UnprocessableError(validated.fail)
     }
@@ -1218,7 +1218,7 @@ module.exports.setReviewAclByCollectionUserGroup = async function (req, res, nex
         svcStatus: res.svcStatus
       })
     }
-    const response = await CollectionService.queryReviewAcl({cgId: grant.cgId})
+    const response = await CollectionService.queryReviewAcl({grantId: grant.grantId})
     res.json(response)
   }
   catch (err) {
@@ -1226,42 +1226,34 @@ module.exports.setReviewAclByCollectionUserGroup = async function (req, res, nex
   }
 }
 
-module.exports.setStigAssetsByCollectionUser = async function (req, res, next) {
+module.exports.putGrantByCollection = async function (req, res, next) {
   try {
-    const userId = req.params.userId
-    const acl = req.body
+    const grantId = req.params.grantId
+    const grant = req.body
     const {collectionId} = getCollectionInfoAndCheckPermission(req)
-    
-    const grant = await CollectionService._getCollectionGrant({collectionId, userId})
-    if (!grant) throw new SmError.UnprocessableError('user has no direct grant in collection')
-
-    const validated = await CollectionService._reviewAclValidate({cgId: grant.cgId, acl})
-    if (validated.fail.length > 0) {
-      throw new SmError.UnprocessableError(validated.fail)
-    }
-    if (validated.pass.length > 0) {
-      await CollectionService.setValidatedAcl({
-        validatedAcl: validated.pass,
-        attributionUserId: req.userObject.userId,
-        svcStatus: res.svcStatus
-      })
-    }
-    const response = await CollectionService.queryReviewAcl({cgId: grant.cgId})
-    res.json(response.acl)
+    const [result] = await CollectionService._putCollectionGrant({collectionId, grantId, grant})
+    if (!result.affectedRows) throw new SmError.NotFoundError('no such grant in collection')
+    const updatedGrant = await CollectionService._getCollectionGrant({collectionId, grantId})
+    res.json(updatedGrant)
   }
   catch (err) {
+    if (err.code === 'ER_NO_REFERENCED_ROW_2') {
+      err = new SmError.UnprocessableError('no such grantee')
+    }
+    else if (err.code === 'ER_DUP_ENTRY') {
+      err = new SmError.UnprocessableError('grantee has a conflicting grant')
+    }
     next(err)
   }
 }
 
-module.exports.getStigAssetsByCollectionUser = async function (req, res, next) {
+module.exports.getGrantByCollection = async function (req, res, next) {
   try {
-    const userId = req.params.userId
+    const grantId = req.params.grantId
     const { collectionId } = getCollectionInfoAndCheckPermission(req)
-    const grant = await CollectionService._getCollectionGrant({collectionId, userId})
-    if (!grant) throw new SmError.UnprocessableError('user has no direct grant in collection')
-    const response = await CollectionService.queryReviewAcl({cgId: grant.cgId})
-    res.json(response.acl)
+    const grant = await CollectionService._getCollectionGrant({collectionId, grantId})
+    if (!grant) throw new SmError.NotFoundError('no such grant in collection')
+    res.json(grant)
   }
   catch (err) {
     next(err)

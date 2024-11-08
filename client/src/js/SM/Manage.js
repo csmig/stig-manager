@@ -940,27 +940,28 @@ SM.Manage.Collection.GrantsGrid = Ext.extend(Ext.grid.GridPanel, {
         listeners:  {
           itemclick: function (item) {
             if (item.accessLevel !== record.data.accessLevel) {
-              _this.fireEvent('grantchanged', {
+              const param = {
                 granteeType: record.data.granteeType,
                 granteeId: record.data.granteeId,
                 accessLevel: item.accessLevel
-              }, record)
-              // record.data.accessLevel = item.accessLevel
-              // record.commit()
+              }
+              // expect this event to be handled in SM.Manage.Collection.Panel
+              // passing the record so it can be updated/committed after the API request succeeds
+              _this.fireEvent('grantchanged', param, record)
             }
           }
         }
       })
-      menu.showAt(e.xy)
+      menu.show(e)
     }
     function changeGrantee (data) {
       console.log(`changeGrantee ${JSON.stringify(data)}`)
+      SM.Grant.showGranteeWindow ({existingGrants: _this.getValue()})
     }
     function editAcl (data) {
       console.log(`editAcl ${JSON.stringify(data)}`)
-      Ext.getBody().mask('Getting access list for ' + data.title + '...');
-      SM.Acl.showAccess(_this.collectionId, data);
-
+      Ext.getBody().mask('Getting access list for ' + data.title + '...')
+      SM.Acl.showAccess(_this.collectionId, data)
     }
     function removeGrant (data, record) {
       console.log(`removeGrant ${JSON.stringify(data)}`)
@@ -989,7 +990,7 @@ SM.Manage.Collection.GrantsGrid = Ext.extend(Ext.grid.GridPanel, {
       const record = grid.getStore().getAt(rowIndex)
       const fieldName = grid.getColumnModel().getDataIndex(columnIndex)
       if (fieldName === 'accessLevel') {
-        toolHandlers.showChangeRole(record, e)
+        toolHandlers.showChangeRole(record, e.target)
       }
       if (e.target.tagName === "IMG") {
         toolHandlers[e.target.dataset.action](record.data, record)
@@ -1005,22 +1006,6 @@ SM.Manage.Collection.GrantsGrid = Ext.extend(Ext.grid.GridPanel, {
           existingGrants: _this.getValue(),
           canModifyOwners: _this.canModifyOwners
         })
-      }
-    })
-    const delGrantButton = new Ext.Button({
-      text: 'Remove Grant',
-      iconCls: 'icon-del',
-      handler: function () {
-      }
-    })
-    const aclButton = new Ext.Button({
-      iconCls: 'sm-asset-icon',
-      disabled: true,
-      text: 'Edit Access List...',
-      handler: function () {
-        const r = _this.getSelectionModel().getSelected();
-        Ext.getBody().mask('Getting access list for ' + r.get('title') + '...');
-        SM.Acl.showAccess(_this.collectionId, r.data);
       }
     })
     const tbarItems = [

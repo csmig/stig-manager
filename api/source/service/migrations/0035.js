@@ -55,6 +55,7 @@ const upMigration = [
 
   // table collection_grant
   `ALTER TABLE collection_grant DROP FOREIGN KEY fk_collection_grant_1`,
+  `ALTER TABLE collection_grant RENAME COLUMN cgId TO grantId`,
   `ALTER TABLE collection_grant ADD COLUMN userGroupId INT NULL AFTER userId, CHANGE COLUMN userId userId INT NULL`,
   `ALTER TABLE collection_grant ADD UNIQUE INDEX INDEX_USER_GROUP (userGroupId ASC, collectionId ASC) VISIBLE`,
   `ALTER TABLE collection_grant ADD CONSTRAINT fk_collection_grant_1 FOREIGN KEY (userId) REFERENCES user_data (userId) ON DELETE CASCADE ON UPDATE CASCADE`,
@@ -63,7 +64,7 @@ const upMigration = [
   // table collection_grant_acl
   `CREATE TABLE collection_grant_acl (
     cgAclId INT NOT NULL AUTO_INCREMENT,
-    cgId INT NOT NULL,
+    grantId INT NOT NULL,
     benchmarkId VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_as_cs NULL,
     assetId INT NULL,
     clId INT NULL,
@@ -71,11 +72,11 @@ const upMigration = [
     modifiedUserId int NULL,
     modifiedDate datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     PRIMARY KEY (cgAclId),
-    KEY fk_collection_grant_acl_1 (cgId),
+    KEY fk_collection_grant_acl_1 (grantId),
     KEY fk_collection_grant_acl_2 (assetId, benchmarkId),
     KEY fk_collection_grant_acl_3 (benchmarkId, assetId),
     KEY fk_collection_grant_acl_4 (clId, benchmarkId),
-    CONSTRAINT fk_collection_grant_acl_1 FOREIGN KEY (cgId) REFERENCES collection_grant (cgId) ON DELETE CASCADE ON UPDATE CASCADE,
+    CONSTRAINT fk_collection_grant_acl_1 FOREIGN KEY (grantId) REFERENCES collection_grant (grantId) ON DELETE CASCADE ON UPDATE CASCADE,
     CONSTRAINT fk_collection_grant_acl_2 FOREIGN KEY (assetId) REFERENCES asset (assetId) ON DELETE CASCADE ON UPDATE CASCADE,
     CONSTRAINT fk_collection_grant_acl_3 FOREIGN KEY (benchmarkId) REFERENCES stig (benchmarkId) ON DELETE CASCADE ON UPDATE CASCADE,
     CONSTRAINT fk_collection_grant_acl_4 FOREIGN KEY (clId) REFERENCES collection_label (clId) ON DELETE CASCADE ON UPDATE CASCADE,
@@ -83,8 +84,8 @@ const upMigration = [
   )`,
 
   // initialize collection_grant_acl
-  `INSERT INTO collection_grant_acl (cgId, assetId, benchmarkId, access, modifiedUserId, modifiedDate) SELECT
-  cg.cgId,
+  `INSERT INTO collection_grant_acl (grantId, assetId, benchmarkId, access, modifiedUserId, modifiedDate) SELECT
+  cg.grantId,
   sa.assetId,
   sa.benchmarkId,
   'rw',
@@ -96,7 +97,7 @@ FROM
   left join asset a on sa.assetId = a.assetId
   left join collection_grant cg on (a.collectionId = cg.collectionId and usa.userId = cg.userId )
 WHERE
-  cg.cgId is not null`,
+  cg.grantId is not null`,
 
   // `DROP TABLE user_stig_asset_map`
 ]

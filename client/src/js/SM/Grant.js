@@ -502,7 +502,6 @@ SM.Grant.NewGrantPanel = Ext.extend(Ext.Panel, {
 
 SM.Grant.showNewGrantWindow = function ({collectionId, existingGrants, canModifyOwners}) {
   try {
-
     async function saveHandler () {
       try {
         const grants = panel.grantGrid.getValue()
@@ -582,4 +581,55 @@ SM.Grant.showNewGrantWindow = function ({collectionId, existingGrants, canModify
     SM.Error.handleError(e)
     Ext.getBody().unmask()
   }
+}
+
+SM.Grant.showGranteeWindow = function ({existingGrants}) {
+  const granteeTp = new SM.Grant.GranteeTreePanel({
+    title: 'Available Grantees',
+    width: 240,
+    existingGrants,
+    listeners: {
+      beforeclick: function (node, e) {
+        console.log(node, e)
+      }
+    }
+  })
+
+  granteeTp.getSelectionModel().on('beforeselect', function (sm, newNode, oldNode) {
+    granteeTp.root.cascade(function (n) {
+      n.ui.toggleCheck(false)
+    })
+    newNode.ui.toggleCheck(true)
+    return false
+  })
+  const panelWindow = new Ext.Window({
+    title: `Change Grantee`,
+    cls: 'sm-dialog-window sm-round-panel',
+    modal: true,
+    hidden: true,
+    width: 300,
+    height: 600,
+    layout: 'fit',
+    plain: true,
+    bodyStyle: 'padding:20px;',
+    buttonAlign: 'right',
+    items: granteeTp,
+    buttons: [
+      {
+        text: 'Cancel',
+        handler: function () {
+          panelWindow.close();
+        }
+      },
+      {
+        text: 'Save',
+        formBind: true,
+        id: 'submit-button',
+        // handler: saveHandler
+      }
+    ]
+  })
+  // panelWindow.render(Ext.getBody())
+  // Ext.getBody().unmask()
+  panelWindow.show()
 }

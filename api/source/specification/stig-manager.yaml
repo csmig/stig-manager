@@ -1046,24 +1046,24 @@ paths:
         - oauth:
             - 'stig-manager:collection:read'
 
-  '/collections/{collectionId}/grants/{userId}/access':
+  '/collections/{collectionId}/grants/{grantId}':
     parameters:
       - $ref: '#/components/parameters/CollectionIdPath'
-      - $ref: '#/components/parameters/UserIdPath'
+      - $ref: '#/components/parameters/GrantIdPath'
     get:
       tags:
         - Collection
-      summary: DEPRECATED. Use GET /collections/{collectionId}/grants/user/{userId}/access.
-      operationId: getStigAssetsByCollectionUser
+      summary: Return a collection grant by grantId
+      operationId: getGrantByCollection
       responses:
         '200':
           description: Collection StigAssetBasic array response
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/StigAssetBasic'
+                oneOf:
+                  - $ref: '#/components/schemas/UserGrantProjected'     
+                  - $ref: '#/components/schemas/UserGroupGrantProjected'     
         '403':
           $ref: '#/components/responses/Forbidden'
         default:
@@ -1078,16 +1078,16 @@ paths:
     put:
       tags:
         - Collection
-      summary: DEPRECATED. Use PUT /collections/{collectionId}/grants/user/{userId}/access.
-      operationId: setStigAssetsByCollectionUser
+      summary: Update the properties of a Collection Grant by grantId.
+      operationId: putGrantByCollection
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              type: array
-              items:
-                $ref: '#/components/schemas/StigAssetPut'
+              oneOf:
+                - $ref: '#/components/schemas/UserGrant'
+                - $ref: '#/components/schemas/UserGroupGrant'
       responses:
         '200':
           description: StigAssetBasic array response
@@ -8019,12 +8019,12 @@ components:
           $ref: '#/components/schemas/UserId'
         username:
           $ref: '#/components/schemas/Username'
-        cgId:
+        grantId:
           type: integer
       required:
         - userId
         - username
-        - cgId
+        - grantId
     UserBasicWithDisplayName:
       additionalProperties: false
       type: object
@@ -8074,6 +8074,9 @@ components:
         - grantees
     UserGrant:
       type: object
+      required:
+        - userId
+        - accessLevel
       properties:
         userId:
           $ref: '#/components/schemas/UserId'
@@ -8121,11 +8124,11 @@ components:
       type: object
       additionalProperties: false
       required:
-        - cgId
+        - grantId
         - userGroupId
         - name
       properties:
-        cgId:
+        grantId:
           type: integer
         userGroupId:
           $ref: '#/components/schemas/UserGroupId'
@@ -8543,6 +8546,13 @@ components:
       schema:
         type: boolean
         default: false
+    GrantIdPath:
+      name: grantId
+      in: path
+      description: A path parameter that identifies a Grant
+      required: true
+      schema:
+        $ref: '#/components/schemas/GrantId'
     GroupIdPath:
       name: groupId
       in: path

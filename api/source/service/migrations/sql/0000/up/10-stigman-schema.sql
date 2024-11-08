@@ -107,11 +107,11 @@ CREATE TABLE `collection` (
 
 DROP TABLE IF EXISTS `collection_grant`;
 CREATE TABLE `collection_grant` (
-  `cgId` int NOT NULL AUTO_INCREMENT,
+  `grantId` int NOT NULL AUTO_INCREMENT,
   `collectionId` int NOT NULL,
   `userId` int NOT NULL,
   `accessLevel` int NOT NULL,
-  PRIMARY KEY (`cgId`),
+  PRIMARY KEY (`grantId`),
   UNIQUE KEY `INDEX_USER` (`userId`,`collectionId`),
   KEY `INDEX_COLLECTION` (`collectionId`,`accessLevel`),
   CONSTRAINT `fk_collection_grant_1` FOREIGN KEY (`userId`) REFERENCES `user_data` (`userId`) ON DELETE CASCADE ON UPDATE CASCADE,
