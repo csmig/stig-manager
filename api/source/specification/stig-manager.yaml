@@ -1046,6 +1046,66 @@ paths:
         - oauth:
             - 'stig-manager:collection:read'
 
+  '/collections/{collectionId}/grants':
+    parameters:
+      - $ref: '#/components/parameters/CollectionIdPath'
+    get:
+      tags:
+        - Collection
+      summary: Return all collection grants
+      operationId: getGrantsByCollection
+      responses:
+        '200':
+          description: Collection Grant array response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Grant'     
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      security:
+        - oauth:
+            - 'stig-manager:collection:read'
+    post:
+      tags:
+        - Collection
+      summary: Add Grants to a Collection
+      operationId: postGrantsByCollection
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '#/components/schemas/GrantPost'     
+      responses:
+        '200':
+          description: StigAssetBasic array response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/StigAssetBasic'
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      security:
+        - oauth:
+            - 'stig-manager:collection'
+  
   '/collections/{collectionId}/grants/{grantId}':
     parameters:
       - $ref: '#/components/parameters/CollectionIdPath'
@@ -1054,16 +1114,14 @@ paths:
       tags:
         - Collection
       summary: Return a collection grant by grantId
-      operationId: getGrantByCollection
+      operationId: getGrantByCollectionGrant
       responses:
         '200':
           description: Collection StigAssetBasic array response
           content:
             application/json:
               schema:
-                oneOf:
-                  - $ref: '#/components/schemas/UserGrantProjected'     
-                  - $ref: '#/components/schemas/UserGroupGrantProjected'     
+                $ref: '#/components/schemas/Grant'     
         '403':
           $ref: '#/components/responses/Forbidden'
         default:
@@ -1078,8 +1136,8 @@ paths:
     put:
       tags:
         - Collection
-      summary: Update the properties of a Collection Grant by grantId.
-      operationId: putGrantByCollection
+      summary: Replace the properties of a Collection Grant by grantId.
+      operationId: putGrantByCollectionGrant
       requestBody:
         required: true
         content:
@@ -1106,7 +1164,76 @@ paths:
       security:
         - oauth:
             - 'stig-manager:collection'
-
+    delete:
+      tags:
+        - Collection
+      operationId: deleteGrantByCollectionGrant
+      responses:
+        '200':
+          description: UserGrantEffective response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Grant'
+      security:
+        - oauth:
+            - 'stig-manager:collection'
+  '/collections/{collectionId}/grants/{grantId}/acl':
+    parameters:
+      - $ref: '#/components/parameters/CollectionIdPath'
+      - $ref: '#/components/parameters/GrantIdPath'
+    get:
+      tags:
+        - Collection
+      summary: Return the Access Control List for the specified Collection Grant.
+      operationId: getAclRulesByCollectionGrant
+      responses:
+        '200':
+          description: Collection AclRuleAssetBasic array response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AclForGrant'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      security:
+        - oauth:
+            - 'stig-manager:collection:read'
+    put:
+      tags:
+        - Collection
+      summary: Set the Access Control List for the specified Collection Grant.
+      operationId: putAclRulesByCollectionGrant
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '#/components/schemas/AclRulePut'
+      responses:
+        '200':
+          description: AclRuleAssetBasic array response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AclForGrant'
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      security:
+        - oauth:
+            - 'stig-manager:collection'      
 
 
   '/collections/{collectionId}/grants/user/{userId}':
@@ -6298,6 +6425,15 @@ components:
           type: string
         text:
           type: string
+    Grant:
+      oneOf:
+        - $ref: '#/components/schemas/UserGrantProjected'     
+        - $ref: '#/components/schemas/UserGroupGrantProjected'
+    GrantPost:
+      oneOf:
+        - $ref: '#/components/schemas/UserGrant'     
+        - $ref: '#/components/schemas/UserGroupGrant'
+      
     GrantContextUser:
       type: object
       properties:

@@ -2431,7 +2431,7 @@ exports.exportToCollection = async function ({srcCollectionId, dstCollectionId, 
 exports.getGrantByCollectionUser = async function ({collectionId, userId}) {
   const sqlGrantByCollectionUser = dbUtils.sqlGrantees({collectionId, userId, includeColumnCollectionId: false})
   const [response] = await dbUtils.pool.query(sqlGrantByCollectionUser, [collectionId, userId, collectionId, userId])
-  return response
+  return response[0]
 }
 
 exports.setGrantByCollection = async function ({collectionId, userId, userGroupId, accessLevel}) {
@@ -2467,11 +2467,11 @@ exports.getGrantByCollectionUserGroup = async function ({collectionId, userGroup
   return response
 }
 
-exports.deleteGrantByCollectionUserGroup = async function ({collectionId, userGroupId}) {
+exports.deleteGrantByCollectionUserGroup = function ({collectionId, userGroupId}) {
 
   const deleteGrantByCollectionUserGroup = 
   `DELETE FROM collection_grant WHERE collectionId = ? AND userGroupId = ?`
-  return await dbUtils.pool.query(deleteGrantByCollectionUserGroup, [collectionId, userGroupId])
+  return dbUtils.pool.query(deleteGrantByCollectionUserGroup, [collectionId, userGroupId])
 }
 
 exports.getEffectiveAclByCollectionUser = async function ({collectionId, userId}) {
@@ -2704,8 +2704,8 @@ exports._reviewAclValidate = async function ({grantId, acl}) {
   return response
 }
 
-exports._getCollectionGrant = async function ({collectionId, grantId, userId, userGroupId}) {
-  const sql = `select
+exports._getCollectionGrant = async function ({collectionId, grantId, grantIds, userId, userGroupId}) {
+  let sql = `select
 	case when user_data.userId
   then json_object(
     'grantId', cast(grantId as char),
@@ -2728,21 +2728,48 @@ exports._getCollectionGrant = async function ({collectionId, grantId, userId, us
     collection_grant
     left join user_data using (userId)
     left join user_group using (userGroupId)
-    where collectionId = ?
-    and ${grantId ? 'grantId' : userId ? 'userId' : 'userGroupId'} = ?`
-  const [response] = await dbUtils.pool.query(sql, [collectionId, grantId || userId || userGroupId])
-  return response?.[0]?.grantJson
+    where collectionId = ?`
+  if (grantId) {
+    sql += ' and grantId = ?'
+  }
+  else if (grantIds) {
+    sql += ' and grantId IN (?)'
+  }
+  else if (userId) {
+    sql += ' and userId = ?'
+  }
+  else if (userGroupId) {
+    sql += ' and userGroupId = ?'
+  }
+  const [response] = await dbUtils.pool.query(sql, [collectionId, grantId || grantIds || userId || userGroupId])
+  const grants = response.map(row => row.grantJson)
+  return grantIds ? grants : grants[0]
 }
 
-exports._putCollectionGrant = function ({collectionId, grantId, grant}) {
+exports.putGrantById = function (grantId, grant) {
   const sql = `UPDATE collection_grant SET 
   userId = ?,
   userGroupId = ?,
   accessLevel = ?
-  where collectionId = ? and grantId = ?`
-  return dbUtils.pool.query(sql, [grant.userId, grant.userGroupId, grant.accessLevel, collectionId, grantId])
+  where grantId = ?`
+  return dbUtils.pool.query(sql, [grant.userId, grant.userGroupId, grant.accessLevel, grantId])
 }
 
+exports.deleteGrantById = async function (grantId) {
+  const sql = `DELETE from collection_grant WHERE grantId = ?`
+  return dbUtils.pool.query(sql, [grantId])
+}
+
+exports.postGrantsByCollection = async function (collectionId, grants) {
+  const binds = grants.map( g => [collectionId, g.userId, g.userGroupId, g.accessLevel])
+  const sql = `INSERT into collection_grant (collectionId, userId, userGroupId, accessLevel) VALUES ?`
+  const [result] = await dbUtils.pool.query(sql, [binds])
+  const grantIds = []
+  for (let x = 0; x < result.affectedRows; x++) {
+    grantIds.push(result.insertId + x)
+  }
+  return grantIds
+}
 
 exports._hasCollectionGrant = async function ({collectionId, userId}) {
 

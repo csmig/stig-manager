@@ -194,7 +194,7 @@ SM.User.DirectGrantsGrid = Ext.extend(Ext.grid.GridPanel, {
     const accessLevelField = new SM.RoleComboBox({
       submitValue: false,
       canModifyOwners: true,
-      includeOwnerGrant: true,
+      includeOwnerRole: true,
       grid: this,
       getListParent: function () {
         return this.grid.editor.el;

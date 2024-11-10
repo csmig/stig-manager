@@ -16,24 +16,20 @@ SM.Grant.GranteeTreePanel = Ext.extend(Ext.tree.TreePanel, {
         directFn: this.loadTree
       }),
       loadMask: { msg: '' },
-      listeners: {
-        beforeexpandnode: function (n) {
-          n.loaded = false; // always reload from the server
-        }
-      }
     }
 
     Ext.apply(this, Ext.apply(this.initialConfig, config))
     this.superclass().initComponent.call(this)
   },
-  loadTree: async function (node, cb) {
+  loadTree: async function (nodeId, cb) {
     try {
       const existingGrants = this.ownerTree.existingGrants ?? []
-      const existingUserIds = existingGrants.filter( g => g.userId).map(u=>u.userId)
-      const existingGroupIds = existingGrants.filter( g => g.userGroupId).map(g=>g.userGroupId)
+      const selectedGrant = this.ownerTree.selectedGrant ?? {}
+      const excludedUserIds = existingGrants.filter( g => g.userId && g.userId !== selectedGrant.userId).map(u=>u.userId)
+      const excludedGroupIds = existingGrants.filter( g => g.userGroupId && g.userGroupId !== selectedGrant.userGroupId).map(g=>g.userGroupId)
       let match
-      // Root node
-      if (node === 'grantee-root') {
+      // Root nodeId
+      if (nodeId === 'grantee-root') {
         const content = [
           {
             id: `grantee-user-groups-node`,
@@ -53,14 +49,14 @@ SM.Grant.GranteeTreePanel = Ext.extend(Ext.tree.TreePanel, {
         cb(content, { status: true })
         return
       }
-      // UserGroups node
-      if (node === 'grantee-user-groups-node') {
+      // UserGroups nodeId
+      if (nodeId === 'grantee-user-groups-node') {
         const apiUserGroups = await Ext.Ajax.requestPromise({
           responseType: 'json',
           url: `${STIGMAN.Env.apiBase}/user-groups`,
           method: 'GET'
         })
-        const availUserGroups = apiUserGroups.filter( userGroup => !existingGroupIds.includes(userGroup.userGroupId))
+        const availUserGroups = apiUserGroups.filter( userGroup => !excludedGroupIds.includes(userGroup.userGroupId))
 
         const content = availUserGroups.map(userGroup => ({
           id: `${userGroup.userGroupId}-user-groups-group-node`,
@@ -68,14 +64,15 @@ SM.Grant.GranteeTreePanel = Ext.extend(Ext.tree.TreePanel, {
           userGroup,
           node: 'user-group',
           iconCls: 'sm-users-icon',
-          checked: false,
+          checked: userGroup.userGroupId === selectedGrant.userGroupId,
+          uiProvider: this.ownerTree.radio ? SM.TreeNodeRadioUI : Ext.tree.TreeNodeUI,
           qtip: SM.he(userGroup.description)
         }))
         cb(content, { status: true })
         return
       }
-      // UserGroups-User node
-      match = node.match(/^(\d+)-user-groups-group-node$/)
+      // UserGroups-User nodeId
+      match = nodeId.match(/^(\d+)-user-groups-group-node$/)
       if (match) {
         const userGroupId = match[1]
         const apiUsers = await Ext.Ajax.requestPromise({
@@ -99,14 +96,14 @@ SM.Grant.GranteeTreePanel = Ext.extend(Ext.tree.TreePanel, {
         return
       }
 
-      // Users node
-      if (node === 'grantee-users-node') {
+      // Users nodeId
+      if (nodeId === 'grantee-users-node') {
         const apiUsers = await Ext.Ajax.requestPromise({
           responseType: 'json',
           url: `${STIGMAN.Env.apiBase}/users`,
           method: 'GET'
         })
-        const availUsers = apiUsers.filter( user => !existingUserIds.includes(user.userId))
+        const availUsers = apiUsers.filter( user => !excludedUserIds.includes(user.userId))
 
         const content = availUsers.map(user => ({
           id: `users-${user.userId}-user-leaf`,
@@ -114,7 +111,8 @@ SM.Grant.GranteeTreePanel = Ext.extend(Ext.tree.TreePanel, {
           user,
           node: 'user',
           leaf: true,
-          checked: false,
+          checked: user.userId === selectedGrant.userId,
+          uiProvider: this.ownerTree.radio ? SM.TreeNodeRadioUI : Ext.tree.TreeNodeUI,
           iconCls: 'sm-user-icon',
           qtip: SM.he(user.username)
         }))
@@ -198,7 +196,7 @@ SM.Grant.GrantGrid = Ext.extend(Ext.grid.EditorGridPanel, {
     const accessLevelField = new SM.RoleComboBox({
       submitValue: false,
       grid: this,
-      includeOwnerGrant: this.canModifyOwners,
+      includeOwnerRole: this.canModifyOwners,
       listeners: {
         select: function (combo) {
           if (combo.startValue !== combo.value ) {
@@ -346,6 +344,15 @@ SM.Grant.GrantGrid = Ext.extend(Ext.grid.EditorGridPanel, {
   }
 })
 
+SM.Grant.RoleMenuPanel = Ext.extend(Ext.Panel, {
+  initComponent: function () {
+    const config = {}
+
+    Ext.apply(this, Ext.apply(this.initialConfig, config))
+    this.superclass().initComponent.call(this)
+  }
+})
+
 SM.Grant.NewGrantPanel = Ext.extend(Ext.Panel, {
   initComponent: function () {
     function handleTreeCheck(node) {
@@ -359,11 +366,15 @@ SM.Grant.NewGrantPanel = Ext.extend(Ext.Panel, {
       title: 'Available Grantees',
       width: 240,
       existingGrants: this.existingGrants,
-      // selModel: new Ext.tree.MultiSelectionModel(),
       listeners: {
         checkchange: handleTreeCheck
       }
     })
+    granteeTp.getSelectionModel().on('beforeselect', function (sm, newNode, oldNode) {
+      newNode.ui.toggleCheck()
+      return false
+    })
+  
     new Ext.tree.TreeSorter(granteeTp, {
       dir: "asc"
     })
@@ -461,7 +472,8 @@ SM.Grant.NewGrantPanel = Ext.extend(Ext.Panel, {
 
     const roleComboBox = new SM.RoleComboBox({
       width: 80,
-      includeOwnerGrant: this.canModifyOwners
+      includeOwnerRole: this.canModifyOwners,
+      value: 1
     })
 
     const buttonPanel = new Ext.Panel({
@@ -505,27 +517,7 @@ SM.Grant.showNewGrantWindow = function ({collectionId, existingGrants, canModify
     async function saveHandler () {
       try {
         const grants = panel.grantGrid.getValue()
-        const requests = []
-        for (const grant of grants) {
-          let url
-          if (grant.userId) {
-            url = `${STIGMAN.Env.apiBase}/collections/${collectionId}/grants/user/${grant.userId}`
-          }
-          else {
-            url = `${STIGMAN.Env.apiBase}/collections/${collectionId}/grants/user-group/${grant.userGroupId}`
-          }
-          requests.push(
-            Ext.Ajax.requestPromise({
-              url,
-              method: 'put',
-              headers: { 'Content-Type': 'application/json;charset=utf-8' },
-              jsonData: {
-                accessLevel: grant.accessLevel
-              }
-            })
-          )  
-        }
-        await Promise.all(requests)
+        await SM.Grant.Api.postGrantsByCollection({collectionId, grants})
       }
       catch (e) {
         SM.Error.handleError(e)
@@ -583,32 +575,68 @@ SM.Grant.showNewGrantWindow = function ({collectionId, existingGrants, canModify
   }
 }
 
-SM.Grant.showGranteeWindow = function ({existingGrants}) {
+SM.Grant.showEditGrantWindow = function ({existingGrants, selectedGrant, includeOwnerRole,  cb = Ext.emptyFn}) {
+  const roleComboBox = new SM.RoleComboBox({value: selectedGrant.accessLevel, includeOwnerRole})
   const granteeTp = new SM.Grant.GranteeTreePanel({
     title: 'Available Grantees',
+    radio: true,
     width: 240,
     existingGrants,
+    selectedGrant,
     listeners: {
       beforeclick: function (node, e) {
         console.log(node, e)
       }
-    }
+    },
+    bbar: [
+      {
+					xtype: 'tbtext',
+					text: 'Role:'
+			},' ',' ',' ',
+      roleComboBox]
   })
 
-  granteeTp.getSelectionModel().on('beforeselect', function (sm, newNode, oldNode) {
-    granteeTp.root.cascade(function (n) {
-      n.ui.toggleCheck(false)
-    })
+  // Change the Ext method to handle radio buttons correctly
+  Object.getPrototypeOf(granteeTp.eventModel).delegateClick = function(e, t){
+    if (this.beforeEvent(e)) {
+        // the original method looked for type=checkbox
+        if (e.getTarget('input[type=radio]', 1)) {
+          this.onCheckboxClick(e, this.getNode(e))
+        }
+        else if (e.getTarget('.x-tree-ec-icon', 1)) {
+          this.onIconClick(e, this.getNode(e));
+        } else if (this.getNodeTarget(e)) {
+          this.onNodeClick(e, this.getNode(e));
+        }
+    }
+    else{
+      this.checkContainerEvent(e, 'click');
+    }
+  }
+
+  granteeTp.getSelectionModel().on('beforeselect', function (unused, newNode) {
     newNode.ui.toggleCheck(true)
     return false
   })
+
+  function saveHandler () {
+    const checkedAttributes = granteeTp.getNodeById(document.querySelector('input[name="rg"]:checked').parentElement.getAttribute("ext:tree-node-id")).attributes
+    const role = roleComboBox.getValue()
+    const modifiedGrant = {
+      accessLevel: role
+    }
+    modifiedGrant[checkedAttributes.user ? 'userId' : 'userGroupId'] = checkedAttributes.user?.userId|| checkedAttributes.userGroup?.userGroupId
+    cb(modifiedGrant)
+    panelWindow.close()
+  }
+
   const panelWindow = new Ext.Window({
-    title: `Change Grantee`,
+    title: `Edit Grant`,
     cls: 'sm-dialog-window sm-round-panel',
     modal: true,
     hidden: true,
     width: 300,
-    height: 600,
+    height: 450,
     layout: 'fit',
     plain: true,
     bodyStyle: 'padding:20px;',
@@ -617,19 +645,50 @@ SM.Grant.showGranteeWindow = function ({existingGrants}) {
     buttons: [
       {
         text: 'Cancel',
-        handler: function () {
-          panelWindow.close();
-        }
+        handler: () => panelWindow.close()
       },
       {
         text: 'Save',
-        formBind: true,
         id: 'submit-button',
-        // handler: saveHandler
+        handler: saveHandler
       }
     ]
   })
   // panelWindow.render(Ext.getBody())
   // Ext.getBody().unmask()
   panelWindow.show()
+}
+
+Ext.ns('SM.Grant.Api')
+
+SM.Grant.Api.putGrantByCollectionGrant = async function ({collectionId, grantId, body}) {
+  const api = await Ext.Ajax.requestPromise({
+    responseType: 'json',
+    url: `${STIGMAN.Env.apiBase}/collections/${collectionId}/grants/${grantId}`,
+    method: 'PUT',
+    jsonData: body
+  })
+  SM.Dispatcher.fireEvent('grant.updated', {collectionId, grantId, api})
+  return api
+}
+
+SM.Grant.Api.deleteGrantByCollectionGrant = async function ({collectionId, grantId}) {
+  const api = await Ext.Ajax.requestPromise({
+    responseType: 'json',
+    url: `${STIGMAN.Env.apiBase}/collections/${collectionId}/grants/${grantId}`,
+    method: 'DELETE'
+  })
+  SM.Dispatcher.fireEvent('grant.deleted', {collectionId, grantId, api})
+  return api
+}
+
+SM.Grant.Api.postGrantsByCollection = async function({collectionId, grants}) {
+  const api = await Ext.Ajax.requestPromise({
+    responseType: 'json',
+    url: `${STIGMAN.Env.apiBase}/collections/${collectionId}/grants`,
+    method: 'POST',
+    jsonData: grants
+  })
+  SM.Dispatcher.fireEvent('grant.created', {collectionId, api})
+  return api
 }

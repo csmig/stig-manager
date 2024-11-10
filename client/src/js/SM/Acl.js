@@ -564,7 +564,7 @@ SM.Acl.showAccess = async function(collectionId, grantRecord) {
       // Form window
       /******************************************************/
       appwindow = new Ext.Window({
-        title: `Access Control List for ${grantRecord.title}`,
+        title: `Access Control List for ${grantRecord.name}`,
         cls: 'sm-dialog-window sm-round-panel',
         modal: true,
         hidden: true,
@@ -611,9 +611,12 @@ SM.Acl.showAccess = async function(collectionId, grantRecord) {
       })
       assignmentPanel.appwindow = appwindow
       appwindow.render(Ext.getBody())
-      let apiAccess = await Ext.Ajax.requestPromise({
+
+      const granteeType = grantRecord.user ? 'user' : 'user-group'
+      const granteeId = grantRecord.user ? grantRecord.user.userId : grantRecord.userGroup.userGroupId
+      const apiAccess = await Ext.Ajax.requestPromise({
         responseType: 'json',
-          url: `${STIGMAN.Env.apiBase}/collections/${collectionId}/grants/${grantRecord.granteeType}/${grantRecord.granteeId}/access`,
+          url: `${STIGMAN.Env.apiBase}/collections/${collectionId}/grants/${granteeType}/${granteeId}/access`,
           method: 'GET'
       })
       assignmentPanel.assignmentGrid.setValue(apiAccess.acl)
