@@ -866,7 +866,7 @@ describe(`GET - Asset`, function () {
           
           const res = await chai
             .request(config.baseUrl)
-            .get(`/collections/${reference.testCollection.collectionId}/stigs/${reference.benchmark}/assets?projection=restrictedUserAccess`)
+            .get(`/collections/${reference.testCollection.collectionId}/stigs/${reference.benchmark}/assets`)
             .set(`Authorization`, `Bearer ` + iteration.token)
             
           if(!distinct.hasAccessToTestAsset){
@@ -880,12 +880,6 @@ describe(`GET - Asset`, function () {
             expect(asset.collectionId, "expect collectionId to be equal to reference.testCollection.collectionId").to.be.eql(reference.testCollection.collectionId)
             for(const label of asset.assetLabelIds){
               expect(label).to.be.oneOf(reference.testCollection.labels, `Label should be one of the valid labels`)
-            }
-            expect(asset.restrictedUserAccess).to.exist
-            if(asset.restrictedUserAccess){
-              for(let iteration of asset.restrictedUserAccess){
-                expect(iteration.username).to.be.eql("lvl1")
-              }
             }
           }   
         })

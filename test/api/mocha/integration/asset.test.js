@@ -22,7 +22,7 @@ describe(`PUT - attachAssetsToStig - /collections/{collectionId}/stigs/{benchmar
     })
     it('gh-756 issue (assigning a benchmark in one collection removes all assignements for that benchmark from all other collections) . assign a benchmark used in test Collection in scrap Collection', async function () {
       const res = await chai.request(config.baseUrl)
-      .put(`/collections/${reference.scrapCollection.collectionId}/stigs/${reference.testCollection.benchmark}/assets?projection=restrictedUserAccess`)
+      .put(`/collections/${reference.scrapCollection.collectionId}/stigs/${reference.testCollection.benchmark}/assets`)
       .set('Authorization', 'Bearer ' + user.token)
       .send([reference.scrapAsset.assetId])
       
@@ -30,7 +30,6 @@ describe(`PUT - attachAssetsToStig - /collections/{collectionId}/stigs/{benchmar
       expect(res.body).to.be.an('array')
       expect(res.body).to.be.an('array').of.length(1)
       expect(res.body[0].assetId).to.equal(reference.scrapAsset.assetId)
-      expect(res.body[0]).to.have.property('restrictedUserAccess')
     })
     it('Verify that test collection still has expected benchmark assignments', async function () {
         const res = await chai.request(config.baseUrl)

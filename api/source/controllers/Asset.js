@@ -254,7 +254,6 @@ module.exports.getAssetsByStig = async function getAssetsByStig (req, res, next)
     const labelIds = req.query.labelId
     const labelNames = req.query.labelName
     const labelMatch = req.query.labelMatch
-    // the only OAS defined projection, 'restrictedUserAccess', is no longer implemented and should be removed
     const projections = req.query.projection
 
     const {collectionId, grant} = Collection.getCollectionInfoAndCheckPermission(req, Security.ACCESS_LEVEL.Restricted)

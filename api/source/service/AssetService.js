@@ -1374,10 +1374,6 @@ exports.getAssetsByStig = async function({collectionId, benchmarkId, projections
     joins.push('inner join cteAclEffective cae on sa.saId = cae.saId')
   }
 
-  if (projections.includes('restrictedUserAccess')) {
-    columns.push('json_array() as restrictedUserAccess')
-  }
-
   // PREDICATES
   const predicates = {
     statements: [

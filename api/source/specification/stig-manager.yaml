@@ -3064,7 +3064,6 @@ paths:
     parameters:
       - $ref: '#/components/parameters/CollectionIdPath'
       - $ref: '#/components/parameters/BenchmarkIdPath'
-      - $ref: '#/components/parameters/ReviewAclProjectionQuery'
     get:
       tags:
         - Asset
@@ -4824,10 +4823,6 @@ components:
           $ref: '#/components/schemas/CollectionId'
         name:
           $ref: '#/components/schemas/AssetName'
-        restrictedUserAccess:
-          items:
-            $ref: '#/components/schemas/UserBasic'
-          type: array
       required:
         - assetId
         - name
@@ -8831,18 +8826,6 @@ components:
       required: true
       schema:
         $ref: '#/components/schemas/StringDate'
-    ReviewAclProjectionQuery:
-      name: projection
-      in: query
-      description: Additional properties to include in the response.
-      style: form
-      explode: true
-      schema:
-        type: array
-        items:
-          type: string
-          enum:
-            - restrictedUserAccess
     ReviewProjectionQuery:
       name: projection
       in: query

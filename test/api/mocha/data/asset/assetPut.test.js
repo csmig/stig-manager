@@ -316,7 +316,7 @@ describe('PUT - Asset', function () {
       describe(`attachAssetsToStig - /collections/{collectionId}/stigs/{benchmarkId}/assets`, function () {
         it('Set the Assets mapped to a STIG', async function () {
           const res = await chai.request(config.baseUrl)
-          .put(`/collections/${reference.scrapCollection.collectionId}/stigs/${reference.scrapAsset.scrapBenchmark}/assets?projection=restrictedUserAccess`)
+          .put(`/collections/${reference.scrapCollection.collectionId}/stigs/${reference.scrapAsset.scrapBenchmark}/assets`)
           .set('Authorization', 'Bearer ' + iteration.token)
           .send([reference.scrapAsset.assetId])
 
@@ -329,11 +329,10 @@ describe('PUT - Asset', function () {
           expect(res.body).to.be.an('array').of.length(1)
           expect(res.body[0].assetId).to.equal(reference.scrapAsset.assetId)
           expect(res.body[0].collectionId).to.equal(reference.scrapCollection.collectionId)
-          expect(res.body[0]).to.have.property('restrictedUserAccess')
         })
         it('should throw SM privilege error due to assetId not being apart of collection.', async function () {
           const res = await chai.request(config.baseUrl)
-          .put(`/collections/${reference.scrapCollection.collectionId}/stigs/${reference.scrapAsset.scrapBenchmark}/assets?projection=restrictedUserAccess`)
+          .put(`/collections/${reference.scrapCollection.collectionId}/stigs/${reference.scrapAsset.scrapBenchmark}/assets`)
           .set('Authorization', 'Bearer ' + iteration.token)
           .send([`${Math.floor(Math.random() * 123456)}`])
           expect(res).to.have.status(403)
