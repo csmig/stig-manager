@@ -15,6 +15,7 @@ exports.queryUsers = async function (inProjection, inPredicates, elevate, userOb
     const columns = [
       'CAST(ud.userId as char) as userId',
       'ud.username',
+      'ud.lastAccess',
       `json_extract(
         ud.lastClaims, :email
       ) as email`,
@@ -54,7 +55,6 @@ exports.queryUsers = async function (inProjection, inPredicates, elevate, userOb
       columns.push(`json_object(
           'created', date_format(ud.created, '%Y-%m-%dT%TZ'),
           'collectionGrantCount', count(distinct cgs.collectionId),
-          'lastAccess', ud.lastAccess,
           'lastClaims', ud.lastClaims
         ) as statistics`)
       groupBy.push(

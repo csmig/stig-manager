@@ -4629,8 +4629,7 @@ components:
           type: string
           format: date-time
         lastAccess:
-          type: number
-          nullable: true
+          $ref: '#/components/schemas/UserLastAccess'
         privileges:
           type: array
           items:
@@ -8122,6 +8121,8 @@ components:
         email:
           nullable: true
           type: string
+        lastAccess:
+          $ref: '#/components/schemas/UserLastAccess'
         userId:
           $ref: '#/components/schemas/UserId'
         username:
@@ -8131,6 +8132,7 @@ components:
         - username
         - displayName
         - email
+        - lastAccess
     UserBasic:
       additionalProperties: false
       type: object
@@ -8166,9 +8168,13 @@ components:
           $ref: '#/components/schemas/Username'
         displayName:
           $ref: '#/components/schemas/DisplayName'
+        lastAccess:
+          $ref: '#/components/schemas/UserLastAccess'
       required:
         - userId
         - username
+        - displayName
+        - lastAccess
     UserCreateOrReplace:
       additionalProperties: false
       type: object
@@ -8348,6 +8354,9 @@ components:
             $ref: '#/components/schemas/UserId'
     UserId:
       $ref: '#/components/schemas/StringIntId'
+    UserLastAccess:
+      nullable: true
+      type: integer
     UserPrivileges:
       type: object
       additionalProperties: false
@@ -8369,6 +8378,8 @@ components:
         email:
           nullable: true
           type: string
+        lastAccess:
+          $ref: '#/components/schemas/UserLastAccess'
         privileges:
           $ref: '#/components/schemas/UserPrivileges'
         statistics:
@@ -8386,6 +8397,7 @@ components:
         - username
         - displayName
         - email
+        - lastAccess
     UserStatistics:
       additionalProperties: false
       type: object
@@ -8394,15 +8406,11 @@ components:
           type: integer
         created:
           $ref: '#/components/schemas/Created'
-        lastAccess:
-          nullable: true
-          type: integer
         lastClaims:
           type: object
       required:
         - created
         - collectionGrantCount
-        - lastAccess
         - lastClaims
     UserUpdate:
       additionalProperties: false
