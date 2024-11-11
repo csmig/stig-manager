@@ -575,25 +575,39 @@ SM.Grant.showNewGrantWindow = function ({collectionId, existingGrants, canModify
   }
 }
 
-SM.Grant.showEditGrantWindow = function ({existingGrants, selectedGrant, includeOwnerRole,  cb = Ext.emptyFn}) {
-  const roleComboBox = new SM.RoleComboBox({value: selectedGrant.accessLevel, includeOwnerRole})
+SM.Grant.showEditGrantWindow = function ({existingGrants, selectedGrant, includeOwnerRole, cb = Ext.emptyFn}) {
+  const roleComboBox = new SM.RoleComboBox({
+    fieldLabel: 'Role',
+    width: 80,
+    padding: '5 0 0 0',
+    value: selectedGrant.accessLevel, 
+    includeOwnerRole
+  })
+  
+  function handleTreeCheck(node) {
+    granteeDisplayField.setValue(renderGranteeNode(node.attributes))
+  }
+
+  function onInitialExpandNode(node) {
+    if (node.attributes.id === 'grantee-users-node') {
+      const checkedNode = granteeTp.getNodeById(document.querySelector('input[name="rg"]:checked').parentElement.getAttribute("ext:tree-node-id"))
+      handleTreeCheck(checkedNode)
+      granteeTp.removeListener('expandnode', onInitialExpandNode)
+    }
+  }
+
   const granteeTp = new SM.Grant.GranteeTreePanel({
     title: 'Available Grantees',
+    flex: 1,
+    margins: '0 0 10 0',
     radio: true,
     width: 240,
     existingGrants,
     selectedGrant,
     listeners: {
-      beforeclick: function (node, e) {
-        console.log(node, e)
-      }
-    },
-    bbar: [
-      {
-					xtype: 'tbtext',
-					text: 'Role:'
-			},' ',' ',' ',
-      roleComboBox]
+      checkchange: handleTreeCheck,
+      expandnode: onInitialExpandNode
+    }
   })
 
   // Change the Ext method to handle radio buttons correctly
@@ -630,18 +644,51 @@ SM.Grant.showEditGrantWindow = function ({existingGrants, selectedGrant, include
     panelWindow.close()
   }
 
+  const renderGranteeNode = function (attr) {
+    const icon = attr.user ? 'sm-user-icon' : 'sm-users-icon'
+    const title = attr.user ? attr.user.displayName : attr.userGroup.name
+    const subtitle = attr.user ? attr.user.username : attr.userGroup.description
+    return `<div class="${icon}" style="border: #3d4245 1px solid; border-radius: 6px;    background-position:left; background-position-x: 5px; padding: 5px 5px 5px 25px; text-overflow: ellipsis; white-space: nowrap; overflow: hidden;"><span style="font-weight:600;">${title}</span><br>${subtitle}</div>`
+  }
+
+  const granteeDisplayField = new Ext.form.DisplayField({
+    fieldLabel: 'Grantee',
+    style: 'padding-bottom: 5px;',
+    html: renderGranteeNode({user: {username: '--', displayName: '--'}})
+  })
+
+  const grantPanel = new Ext.Panel({
+    title: 'Modified Grant',
+    layout: 'form',
+    layoutConfig: {
+      labelWidth: 50
+    },
+    bodyStyle: 'padding: 9px;',
+    height: 120,
+    items: [
+      granteeDisplayField,
+      roleComboBox
+    ]
+  })
+
   const panelWindow = new Ext.Window({
     title: `Edit Grant`,
     cls: 'sm-dialog-window sm-round-panel',
     modal: true,
     hidden: true,
-    width: 300,
-    height: 450,
-    layout: 'fit',
+    width: 350,
+    height: 550,
+    layout: 'vbox',
+    layoutConfig: {
+      align: 'stretch',
+    },
     plain: true,
     bodyStyle: 'padding:20px;',
     buttonAlign: 'right',
-    items: granteeTp,
+    items: [
+      granteeTp,
+      grantPanel
+    ],
     buttons: [
       {
         text: 'Cancel',
