@@ -1,271 +1,289 @@
 //This data contains expected response data that varies by iteration "scenario" or "iteration" for each test case. These expectations are relative to the "referenceData.js" data used to construct the API requests.
 
+const reference = require("../../referenceData")
+
 const requestBodies = {
   updateCollection: {
     metadata: {
-      pocName: 'poc2Patched',
-      pocEmail: 'pocEmail@email.com',
-      pocPhone: '12342',
-      reqRar: 'true'
+      pocName: "poc2Patched",
+      pocEmail: "pocEmail@email.com",
+      pocPhone: "12342",
+      reqRar: "true",
     },
     grants: [
       {
-        userId: '1',
-        accessLevel: 4
+        userId: "1",
+        accessLevel: 4,
       },
       {
-        userId: '21',
-        accessLevel: 1
+        userId: "21",
+        accessLevel: 1,
       },
       {
-        userId: '44',
-        accessLevel: 3
+        userId: "44",
+        accessLevel: 3,
       },
       {
-        userId: '45',
-        accessLevel: 4
+        userId: "45",
+        accessLevel: 4,
       },
       {
-        userGroupId: '1',
-        accessLevel: 1
+        userGroupId: "1",
+        accessLevel: 1,
       },
       {
-        userId: '87',
-        accessLevel: 4
+        userId: "87",
+        accessLevel: 4,
       },
-    ]
+    ],
   },
   patchCollectionLabelById: {
-    name: 'test-label-full',
-    description: 'test label patched',
-    color: 'aa34cc'
+    name: "test-label-full",
+    description: "test label patched",
+    color: "aa34cc",
   },
   replaceCollection: {
-    name: 'SetAllProperties',
-    description: 'test',
+    name: "SetAllProperties",
+    description: "test",
     settings: {
       fields: {
         detail: {
-          enabled: 'always',
-          required: 'findings'
+          enabled: "always",
+          required: "findings",
         },
         comment: {
-          enabled: 'always',
-          required: 'findings'
-        }
+          enabled: "always",
+          required: "findings",
+        },
       },
       status: {
         canAccept: true,
         minAcceptGrant: 2,
-        resetCriteria: 'result'
-      }
+        resetCriteria: "result",
+      },
     },
     metadata: {
-      pocName: 'poc2Patched',
-      pocEmail: 'pocEmail@email.com',
-      pocPhone: '12342',
-      reqRar: 'true'
+      pocName: "poc2Patched",
+      pocEmail: "pocEmail@email.com",
+      pocPhone: "12342",
+      reqRar: "true",
     },
     labels: [
       {
-        name: 'TEST',
-        description: 'Collection label description',
-        color: 'ffffff'
-      }
+        name: "TEST",
+        description: "Collection label description",
+        color: "ffffff",
+      },
     ],
     grants: [
       {
-        userId: '1',
-        accessLevel: 4
+        userId: "1",
+        accessLevel: 4,
       },
       {
-        userId: '21',
-        accessLevel: 2
+        userId: "21",
+        accessLevel: 2,
       },
       {
-        userId: '44',
-        accessLevel: 3
+        userId: "44",
+        accessLevel: 3,
       },
       {
-        userId: '45',
-        accessLevel: 4
+        userId: "45",
+        accessLevel: 4,
       },
       {
-        userId: '87',
-        accessLevel: 4
+        userId: "87",
+        accessLevel: 4,
       },
       {
-        userGroupId: '1',
-        accessLevel: 1
-      }
-    ]
+        userGroupId: "1",
+        accessLevel: 1,
+      },
+    ],
   },
   createCollection: {
-    name: 'TEST',
-    description: 'Collection TEST description',
+    name: "TEST",
+    description: "Collection TEST description",
     settings: {
       fields: {
         detail: {
-          enabled: 'always',
-          required: 'findings'
+          enabled: "always",
+          required: "findings",
         },
         comment: {
-          enabled: 'always',
-          required: 'findings'
-        }
+          enabled: "always",
+          required: "findings",
+        },
       },
       status: {
         canAccept: true,
         minAcceptGrant: 2,
-        resetCriteria: 'result'
+        resetCriteria: "result",
       },
       history: {
-        maxReviews: 11
-      }
+        maxReviews: 11,
+      },
     },
     metadata: {
-      pocName: 'poc2Put',
-      pocEmail: 'pocEmailPut@email.com',
-      pocPhone: '12342',
-      reqRar: 'true'
+      pocName: "poc2Put",
+      pocEmail: "pocEmailPut@email.com",
+      pocPhone: "12342",
+      reqRar: "true",
     },
     grants: [
       {
-        userId: '1',
-        accessLevel: 4
-      }
+        userId: "1",
+        accessLevel: 4,
+      },
     ],
     labels: [
       {
-        name: 'TEST',
-        description: 'Collection label description',
-        color: 'ffffff'
-      }
-    ]
+        name: "TEST",
+        description: "Collection label description",
+        color: "ffffff",
+      },
+    ],
   },
   createCollectionWithTestGroup: {
-    name: 'TEST',
-    description: 'Collection TEST description',
+    name: "TEST",
+    description: "Collection TEST description",
     settings: {
       fields: {
         detail: {
-          enabled: 'always',
-          required: 'findings'
+          enabled: "always",
+          required: "findings",
         },
         comment: {
-          enabled: 'always',
-          required: 'findings'
-        }
+          enabled: "always",
+          required: "findings",
+        },
       },
       status: {
         canAccept: true,
         minAcceptGrant: 2,
-        resetCriteria: 'result'
+        resetCriteria: "result",
       },
       history: {
-        maxReviews: 11
-      }
+        maxReviews: 11,
+      },
     },
     metadata: {
-      pocName: 'poc2Put',
-      pocEmail: 'pocEmailPut@email.com',
-      pocPhone: '12342',
-      reqRar: 'true'
+      pocName: "poc2Put",
+      pocEmail: "pocEmailPut@email.com",
+      pocPhone: "12342",
+      reqRar: "true",
     },
     grants: [
       {
-        userGroupId: '1',
-        accessLevel: 2
-      }
+        userGroupId: "1",
+        accessLevel: 2,
+      },
     ],
     labels: [
       {
-        name: 'TEST',
-        description: 'Collection label description',
-        color: 'ffffff'
-      }
-    ]
+        name: "TEST",
+        description: "Collection label description",
+        color: "ffffff",
+      },
+    ],
   },
   writeStigPropsByCollectionStig: {
-    defaultRevisionStr: 'V1R1',
-    assetIds: ['62', '42', '154']
+    defaultRevisionStr: "V1R1",
+    assetIds: ["62", "42", "154"],
   },
-  resetTestCollection:{
-    name: 'Collection X',
+  resetTestCollection: {
+    name: "Collection X",
     description: null,
     settings: {
       fields: {
         detail: {
-          enabled: 'always',
-          required: 'always'
+          enabled: "always",
+          required: "always",
         },
         comment: {
-          enabled: 'always',
-          required: 'findings'
-        }
+          enabled: "always",
+          required: "findings",
+        },
       },
       status: {
         canAccept: true,
         minAcceptGrant: 3,
-        resetCriteria: 'result'
+        resetCriteria: "result",
       },
       history: {
-        maxReviews: 5
-      }
+        maxReviews: 5,
+      },
     },
     metadata: {
-      pocName: 'true',
-      pocEmail: 'pocEmailPut@email.com',
-      pocPhone: '12342',
-      reqRar: 'true'
+      pocName: "true",
+      pocEmail: "pocEmailPut@email.com",
+      pocPhone: "12342",
+      reqRar: "true",
     },
     grants: [
       {
-        userId: '1',
-        accessLevel: 4
+        userId: "1",
+        accessLevel: 4,
       },
       {
-        userId: '45',
-        accessLevel: 4
+        userId: "45",
+        accessLevel: 4,
       },
       {
-        userId: '87',
-        accessLevel: 4
+        userId: "87",
+        accessLevel: 4,
       },
       {
-        userId: '44',
-        accessLevel: 3
+        userId: "44",
+        accessLevel: 3,
       },
       {
         userId: "21",
-        accessLevel: 2
+        accessLevel: 2,
       },
       {
         userGroupId: "1",
-        accessLevel: 1
+        accessLevel: 1,
       },
       {
         userId: "86",
-        accessLevel: 1
-      }
+        accessLevel: 1,
+      },
     ],
     labels: [
       {
-        name: 'test-label-full',
-        description: '',
-        color: 'FF99CC'
+        name: "test-label-full",
+        description: "",
+        color: "FF99CC",
       },
       {
-        name: 'test-label-lvl1',
-        description: '',
-        color: '99CCFF'
-      }
-    ]
+        name: "test-label-lvl1",
+        description: "",
+        color: "99CCFF",
+      },
+    ],
   },
-  recreateCollectionLabel:{
-    name: 'testLabel',
-    description: 'test label',
-    color: 'FF99CC'
+  recreateCollectionLabel: {
+    name: "testLabel",
+    description: "test label",
+    color: "FF99CC",
   },
+  postGrantsByCollection: [
+    {
+      userId: reference.lvl1User.userId,
+      accessLevel: 2,
+    },
+    {
+      userGroupId: reference.testCollection.testGroup.userGroupId,
+      accessLevel: 2,
+    },
+  ],
+  postOwners: [
+    {
+      userId: reference.wfTest.userId,
+      accessLevel: 4,
+    },
+  ],
 }
 module.exports = requestBodies

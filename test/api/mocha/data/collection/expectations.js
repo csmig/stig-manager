@@ -5,6 +5,7 @@ const distinct = {
   stigmanadmin: {
     iteration: "admin",
     acl: [],
+    usersLength: 7,
     defaultAccess: "rw",
     accessLevel: 4,
     userId: "87",
@@ -148,6 +149,7 @@ const distinct = {
         ],
       },
     ],
+    usersLength: 3,
     defaultAccess: "none",
     userId: "85",
     accessLevel: 1,
@@ -191,6 +193,7 @@ const distinct = {
     iteration: "lvl2",
     userId: "87",
     acl: [],
+    usersLength:7,
     defaultAccess: "rw",
     accessLevel: 2,
     canElevate: false,
@@ -232,6 +235,7 @@ const distinct = {
   lvl3: {
     iteration: "lvl3",
     acl: [],
+    usersLength: 7,
     defaultAccess: "rw",
     userId: "87",
     accessLevel: 3,
@@ -274,6 +278,7 @@ const distinct = {
   lvl4: {
     iteration: "lvl4",
     acl: [],
+    usersLength: 7,
     defaultAccess: "rw",
     userId: "87",
     accessLevel: 4,
@@ -316,6 +321,7 @@ const distinct = {
   collectioncreator: {
     iteration: "collectioncreator",
     userId: "82",
+    accessLevel: -1,
     canElevate: false,
     canCreateCollection: true,
     canModifyOwnerGrants: false,
@@ -351,5 +357,5 @@ const distinct = {
     canModifyCollection: false,
   
   },
-};
+}
 module.exports = distinct;

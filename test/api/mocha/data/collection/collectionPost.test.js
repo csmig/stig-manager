@@ -33,7 +33,7 @@ describe('POST - Collection - not all tests run for all iterations', function ()
       })
 
       after(async function () {
-        await utils.deleteStigByRevision("VPN_SRG_TEST", "V1R0")
+     //   await utils.deleteStigByRevision("VPN_SRG_TEST", "V1R0")
       })
   
       describe("createCollection - /collections", function () {
@@ -206,8 +206,19 @@ describe('POST - Collection - not all tests run for all iterations', function ()
                         for(const asset of messageObj.collection.assets){
                           expect(asset.name).to.be.oneOf(reference.testCollection.assetsProjected.map(a => a.name))
                         }
-                        // grants
-                        expect(messageObj.collection.grants).to.have.same.deep.members(reference.testCollection.grantsProjected)
+                        // remove grantId from grants response and grantsProjected expected response ( this cannot be tested well q)
+                        let grantsProjectedResponse = []
+                        for (const grant of messageObj.collection.grants){
+                            let {grantId, ...grantCheckProps} = grant
+                            grantsProjectedResponse.push(grantCheckProps)
+                        }
+
+                        let expectedGrantsResponse = []
+                        for (grant of reference.testCollection.grantsProjected){
+                            let {grantId, ...grantCheckProps} = grant
+                            expectedGrantsResponse.push(grantCheckProps)
+                        }
+                        expect(grantsProjectedResponse, "check cloned collection grants").to.eql(expectedGrantsResponse)
 
                         // owners
                         expect(messageObj.collection.owners).to.have.same.deep.members(reference.testCollection.ownersProjected)
@@ -521,6 +532,61 @@ describe('POST - Collection - not all tests run for all iterations', function ()
             expect(res).to.have.status(204)
             expect(res.body).to.eql({})
             
+        })
+      })
+
+      describe("postGrantsByCollection - /collections/{collectionId}/grants", function () {
+
+        before(async function () {
+          await utils.loadAppData()
+        })
+
+        it("Add grants to a collection",async function () {
+
+          const res = await chai
+            .request(config.baseUrl)
+            .post(`/collections/${reference.scrapCollection.collectionId}/grants`)
+            .set("Authorization", `Bearer ${iteration.token}`)
+            .send(requestBodies.postGrantsByCollection)
+
+            if(distinct.canModifyCollection === false){
+              expect(res).to.have.status(403)
+              return
+            }
+
+            expect(res).to.have.status(200)
+
+            expect(res.body).to.have.lengthOf(requestBodies.postGrantsByCollection.length)
+            for(const grant of res.body){
+              if(grant.user){
+                expect(grant.user.userId).to.eql(reference.lvl1User.userId)
+                expect(grant.user.username).to.eql(reference.lvl1User.username)
+                expect(grant.grantId).to.exist
+                expect(grant.accessLevel).to.equal(2)
+              }
+              if(grant.userGroup){
+                expect(grant.userGroup.userGroupId).to.eql(reference.testCollection.testGroup.userGroupId)
+                expect(grant.userGroup.name).to.eql(reference.testCollection.testGroup.name)
+                expect(grant.grantId).to.exist
+                expect(grant.accessLevel).to.equal(2)
+              }
+            }
+        })
+
+        it("attempt to create owner grant, should only work for users access >= 4",async function () {
+
+          const res = await chai
+            .request(config.baseUrl)
+            .post(`/collections/${reference.scrapCollection.collectionId}/grants`)
+            .set("Authorization", `Bearer ${iteration.token}`)
+            .send(requestBodies.postOwners)
+
+            if(distinct.accessLevel < 4){
+              expect(res).to.have.status(403)
+              return
+            }
+
+            expect(res).to.have.status(200)
         })
       })
     })

@@ -194,10 +194,10 @@ describe('GET - Collection', function () {
       })
 
       describe('getCollection - /collections/{collectionId}', function () {
-        it('Return a Collection',async function () {
-        const res = await chai.request(config.baseUrl)
-          .get(`/collections/${reference.testCollection.collectionId}?projection=assets&projection=grants&projection=owners&projection=statistics&projection=stigs&projection=labels`)
-          .set('Authorization', `Bearer ${iteration.token}`)
+        it('Return a Collection',async function () { 
+          const res = await chai.request(config.baseUrl)
+            .get(`/collections/${reference.testCollection.collectionId}?projection=assets&projection=grants&projection=owners&projection=users&projection=statistics&projection=stigs&projection=labels`)
+            .set('Authorization', `Bearer ${iteration.token}`)
           if (distinct.grant === "none"){
             expect(res).to.have.status(403)
             return
@@ -207,6 +207,7 @@ describe('GET - Collection', function () {
           const regex  = new RegExp(reference.testCollection.name)
           expect(res.body.name).to.match(regex)
           
+          expect(res.body.grants).to.have.lengthOf(reference.testCollection.grantsProjected.length)
           for(const grant of res.body.grants){
             const userIds = reference.testCollection.grantsProjected
             .filter(grant => grant.user)
@@ -224,11 +225,14 @@ describe('GET - Collection', function () {
             }
           }
 
+
           // assets projection
           expect(res.body.assets).to.have.lengthOf(distinct.assetIds.length)
           for(const asset of res.body.assets){
             expect(reference.testCollection.assetIds).to.include(asset.assetId)
-          }          
+            expect(reference.testCollection.assetsProjected).to.deep.include(asset)
+          }       
+          //stats
           expect(res.body.statistics.assetCount).to.eql(distinct.assetIds.length)
 
           //owner
@@ -1322,6 +1326,7 @@ describe('GET - Collection', function () {
           expect(res).to.have.status(200)
         })
       })
+
       describe('getUnreviewedRulesByCollection - /collections/{collectionId}/unreviewed/rules', function () {
 
         it("should return200",async function () {
@@ -1333,6 +1338,68 @@ describe('GET - Collection', function () {
             return
           }
           expect(res).to.have.status(200)
+        })
+      })
+
+      // describe('getGrantsByCollection - /collections/{collectionId}/grants', function () {
+
+      //   it("should return all grants for the collection",async function () {  
+          
+      //     const res = await chai.request(config.baseUrl)
+      //       .get(`/collections/${reference.testCollection.collectionId}/grants`)
+      //       .set('Authorization', `Bearer ${iteration.token}`)
+      //       if (distinct.grant === "none"){
+      //         expect(res).to.have.status(403)
+      //         return
+      //       }
+      //       expect(res).to.have.status(200)
+      //       expect(res.body).to.be.an('array').of.length(reference.testCollection.grants.length)
+      //       for(const grant of res.body){
+      //         expect(reference.testCollection.grants).to.deep.include(grant)
+      //       }
+      //   })
+      // })
+
+      describe('getGrantByCollectionGrant - /collections/{collectionId}/grants/{grantId}', function () {
+
+        it("should return grant for the test group",async function () {
+          const res =  await chai.request(config.baseUrl)
+            .get(`/collections/${reference.testCollection.collectionId}/grants/${reference.testCollection.testGroup.testCollectionGrantId}`)
+            .set('Authorization', `Bearer ${iteration.token}`)
+            if (distinct.canModifyCollection === false){
+              expect(res).to.have.status(403)
+              return
+            }
+            expect(res).to.have.status(200)
+            expect(res.body.accessLevel).to.equal(reference.testCollection.testGroup.accessLevel)
+            expect(res.body.grantId).to.equal(reference.testCollection.testGroup.testCollectionGrantId)
+            expect(res.body.userGroup.userGroupId).to.equal(reference.testCollection.testGroup.userGroupId)
+            expect(res.body.userGroup.name).to.equal(reference.testCollection.testGroup.name)
+        })
+        it("should return grant for the test collection admin user (admin burke userId 87)",async function () {
+          const res =  await chai.request(config.baseUrl)
+            .get(`/collections/${reference.testCollection.collectionId}/grants/${reference.adminBurke.testCollectionGrantId}`)
+            .set('Authorization', `Bearer ${iteration.token}`)
+            if (distinct.canModifyCollection === false){
+              expect(res).to.have.status(403)
+              return
+            }
+            expect(res).to.have.status(200)
+            expect(res.body.accessLevel).to.equal(reference.adminBurke.testCollectionAccessLevel)
+            expect(res.body.grantId).to.equal(reference.adminBurke.testCollectionGrantId)
+            expect(res.body.user.userId).to.equal(reference.adminBurke.userId)
+            expect(res.body.user.username).to.equal(reference.adminBurke.username)
+        })
+        it("should return an error, there is no such grantId",async function () {
+          
+          const res =  await chai.request(config.baseUrl)
+            .get(`/collections/${reference.testCollection.collectionId}/grants/${"12345678"}`)
+            .set('Authorization', `Bearer ${iteration.token}`)
+          if (distinct.canModifyCollection === false){
+            expect(res).to.have.status(403)
+            return
+          }
+          expect(res).to.have.status(404)
         })
       })
     })

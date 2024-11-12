@@ -17,9 +17,10 @@ const metricsOutputToJSON = (testCaseName, username, responseData, outputJsonFil
   fs.writeFileSync(metricsFilePath, JSON.stringify(metricsData, null, 2), 'utf8')
 }
 
-const loadAppData = (appdataFileName = 'appdata.jsonl') => {
-  console.log(`Loading ${appdataFileName}`)
-  return axios({
+const loadAppData = async (appdataFileName = 'appdata.jsonl') => {
+  try{
+    console.log(`Loading ${appdataFileName}`)
+  const hi = await axios({
     method: 'post',
     url: `${config.baseUrl}/op/appdata?elevate=true`,
     headers: {
@@ -28,6 +29,12 @@ const loadAppData = (appdataFileName = 'appdata.jsonl') => {
     },
     data: fs.readFileSync(path.join(__dirname, `../../appdata/${appdataFileName}`))
   })
+  return hi
+  }
+  catch (e) {
+    throw e
+  }
+  
 }
 
 const createTempCollection = async (collectionPost) => {

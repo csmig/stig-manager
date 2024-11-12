@@ -54,6 +54,7 @@ const reference = {
       description: "TestGroup",
       users: ["lvl1"],
       accessLevel: 1,
+      testCollectionGrantId: "32",
     },
     labels: [
       "755b8a28-9a68-11ec-b1bc-0242ac110002",
@@ -125,6 +126,7 @@ const reference = {
           username: "bizarroLvl1",
           displayName: "bizarroLvl1",
         },
+        grantId: "1",
         accessLevel: 1,
       },
       {
@@ -133,6 +135,7 @@ const reference = {
           username: "lvl2",
           displayName: "lvl2",
         },
+        grantId: "3",
         accessLevel: 2,
       },
       {
@@ -141,6 +144,7 @@ const reference = {
           username: "lvl3",
           displayName: "lvl3",
         },
+        grantId: "4",
         accessLevel: 3,
       },
       {
@@ -149,6 +153,7 @@ const reference = {
           username: "admin",
           displayName: "Admin Burke",
         },
+        grantId: "5",
         accessLevel: 4,
       },
       {
@@ -157,6 +162,7 @@ const reference = {
           username: "stigmanadmin",
           displayName: "STIGMAN Admin",
         },
+        grantId: "6",
         accessLevel: 4,
       },
       {
@@ -165,6 +171,7 @@ const reference = {
           username: "lvl4",
           displayName: "lvl4",
         },
+        grantId: "7",
         accessLevel: 4,
       },
       {
@@ -173,6 +180,7 @@ const reference = {
           description: "TestGroup",
           userGroupId: "1",
         },
+        grantId: "32",
         accessLevel: 1,
       },
     ],
@@ -238,6 +246,105 @@ const reference = {
         uses: 1,
       },
     ],
+    usersProjected: [
+      {
+        user: {
+          userId: "86",
+          username: "bizarroLvl1",
+          displayName: "bizarroLvl1",
+        },
+        grantees: [
+          {
+            userId: "86",
+            username: "bizarroLvl1",
+          },
+        ],
+        accessLevel: 1,
+      },
+      {
+        user: {
+          userId: "21",
+          username: "lvl2",
+          displayName: "lvl2",
+        },
+        grantees: [
+          {
+            userId: "21",
+            username: "lvl2",
+          },
+        ],
+        accessLevel: 2,
+      },
+      {
+        user: {
+          userId: "44",
+          username: "lvl3",
+          displayName: "lvl3",
+        },
+        grantees: [
+          {
+            userId: "44",
+            username: "lvl3",
+          },
+        ],
+        accessLevel: 3,
+      },
+      {
+        user: {
+          userId: "87",
+          username: "admin",
+          displayName: "Admin Burke",
+        },
+        grantees: [
+          {
+            userId: "87",
+            username: "admin",
+          },
+        ],
+        accessLevel: 4,
+      },
+      {
+        user: {
+          userId: "1",
+          username: "stigmanadmin",
+        },
+        grantees: [
+          {
+            userId: "1",
+            username: "stigmanadmin",
+          },
+        ],
+        accessLevel: 4,
+      },
+      {
+        user: {
+          userId: "45",
+          username: "lvl4",
+          displayName: "lvl4",
+        },
+        grantees: [
+          {
+            userId: "45",
+            username: "lvl4",
+          },
+        ],
+        accessLevel: 4,
+      },
+      {
+        user: {
+          userId: "85",
+          username: "lvl1",
+          displayName: "lvl1",
+        },
+        grantees: [
+          {
+            name: "TestGroup",
+            userGroupId: "1",
+          },
+        ],
+        accessLevel: 1,
+      },
+    ]
   },
   deleteCollection: {
     collectionId_adminOnly: "84",
@@ -329,6 +436,7 @@ const reference = {
   lvl1User: {
     username: "lvl1",
     userId: "85",
+    testCollectionGrantId: "34"
   },
   stigmanadmin: {
     username: "stigmanadmin",
@@ -342,7 +450,12 @@ const reference = {
     username: "workforce-60",
     userId: "43",
   },
-
+  adminBurke: {
+    username: "admin",
+    userId: "87",
+    testCollectionGrantId: "5",
+    testCollectionAccessLevel: 4,
+  },
   scrapLvl1User: {
     userId: "86",
     username: "bizarroLvl1",
@@ -401,10 +514,10 @@ const reference = {
     id: "000015",
     status: "draft",
   },
-  // stigmanadmin: {
-  //   username: 'stigmanadmin',
-  //   userId: '1'
-  // },
+  stigmanadmin: {
+    username: 'stigmanadmin',
+    userId: '1'
+  },
   // reviewMetadataKey: 'testkey',
   // reviewMetadataValue: 'testvalue',
 };

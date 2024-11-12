@@ -436,7 +436,7 @@ describe('user', () => {
               expect(res.body.username, "expect username to be lvl1").to.equal('lvl1')
               expect(res.body.userId, "expect userId to be lvl1 userId").to.equal(reference.lvl1User.userId)
               expect(res.body.userGroups).to.be.an('array').of.length(0)
-              expect(res.body.collectionGrants).to.be.an('array').of.length()
+              expect(res.body.collectionGrants).to.be.an('array').of.length(0)
           })
           it("add lvl1 user back to test group", async () => {
 

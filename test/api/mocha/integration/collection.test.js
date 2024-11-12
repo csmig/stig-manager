@@ -366,7 +366,19 @@ describe('POST - cloneCollection - /collections/{collectionId}/clone - test vari
                         let messageObject = JSON.parse(message)
                         if(messageObject.stage === "result"){
                             expect(messageObject.collection).to.have.property('grants');
-                            expect(messageObject.collection.grants, "check cloned collection grants").to.eql(reference.testCollection.grantsProjected)
+                              // remove grantId from grants response and grantsProjected expected response ( this cannot be tested well q)
+                              let grantsProjectedResponse = []
+                              for (grant of messageObject.collection.grants){
+                                  let {grantId, ...grantCheckProps} = grant
+                                  grantsProjectedResponse.push(grantCheckProps)
+                              }
+  
+                              let expectedGrantsResponse = []
+                              for (grant of reference.testCollection.grantsProjected){
+                                  let {grantId, ...grantCheckProps} = grant
+                                  expectedGrantsResponse.push(grantCheckProps)
+                              }
+                              expect(grantsProjectedResponse, "check cloned collection grants").to.eql(expectedGrantsResponse)
 
                             //stats
                             expect(messageObject.collection, "testing stats projection").to.have.property('statistics')
@@ -436,6 +448,7 @@ describe('POST - cloneCollection - /collections/{collectionId}/clone - test vari
                             username: "stigmanadmin",
                             displayName: "STIGMAN Admin"
                         },
+                        grantId: "41",
                         accessLevel: 4
                     }
                 ]
@@ -522,9 +535,22 @@ describe('POST - cloneCollection - /collections/{collectionId}/clone - test vari
                     if(message.length > 0){
                         let messageObject = JSON.parse(message)
                         if(messageObject.stage === "result"){
-                            expect(messageObject.collection).to.have.property('grants');
-                            expect(messageObject.collection.grants, "check cloned collection grants").to.eql(reference.testCollection.grantsProjected)
+                            expect(messageObject.collection).to.have.property('grants')
 
+                            // remove grantId from grants response and grantsProjected expected response ( this cannot be tested well q)
+                            let grantsProjectedResponse = []
+                            for (grant of messageObject.collection.grants){
+                                let {grantId, ...grantCheckProps} = grant
+                                grantsProjectedResponse.push(grantCheckProps)
+                            }
+
+                            let expectedGrantsResponse = []
+                            for (grant of reference.testCollection.grantsProjected){
+                                let {grantId, ...grantCheckProps} = grant
+                                expectedGrantsResponse.push(grantCheckProps)
+                            }
+                            expect(grantsProjectedResponse, "check cloned collection grants").to.eql(expectedGrantsResponse)
+                            
                             //stats
                             expect(messageObject.collection, "testing stats projection").to.have.property('statistics')
                             expect(messageObject.collection.statistics.assetCount, "assetCount").to.eql(reference.testCollection.statisticsProjected.assetCount)
@@ -609,7 +635,19 @@ describe('POST - cloneCollection - /collections/{collectionId}/clone - test vari
                         let messageObject = JSON.parse(message)
                         if(messageObject.stage === "result"){
                             expect(messageObject.collection).to.have.property('grants');
-                            expect(messageObject.collection.grants, "check cloned collection grants").to.eql(reference.testCollection.grantsProjected)
+                              // remove grantId from grants response and grantsProjected expected response ( this cannot be tested well q)
+                              let grantsProjectedResponse = []
+                              for (grant of messageObject.collection.grants){
+                                  let {grantId, ...grantCheckProps} = grant
+                                  grantsProjectedResponse.push(grantCheckProps)
+                              }
+  
+                              let expectedGrantsResponse = []
+                              for (grant of reference.testCollection.grantsProjected){
+                                  let {grantId, ...grantCheckProps} = grant
+                                  expectedGrantsResponse.push(grantCheckProps)
+                              }
+                              expect(grantsProjectedResponse, "check cloned collection grants").to.eql(expectedGrantsResponse)
 
                             //stats
                             expect(messageObject.collection, "testing stats projection").to.have.property('statistics')
@@ -677,7 +715,19 @@ describe('POST - cloneCollection - /collections/{collectionId}/clone - test vari
                         let messageObject = JSON.parse(message)
                         if(messageObject.stage === "result"){
                             expect(messageObject.collection).to.have.property('grants');
-                            expect(messageObject.collection.grants, "check cloned collection grants").to.eql(reference.testCollection.grantsProjected)
+                            // remove grantId from grants response and grantsProjected expected response ( this cannot be tested well q)
+                            let grantsProjectedResponse = []
+                            for (grant of messageObject.collection.grants){
+                                let {grantId, ...grantCheckProps} = grant
+                                grantsProjectedResponse.push(grantCheckProps)
+                            }
+
+                            let expectedGrantsResponse = []
+                            for (grant of reference.testCollection.grantsProjected){
+                                let {grantId, ...grantCheckProps} = grant
+                                expectedGrantsResponse.push(grantCheckProps)
+                            }
+                            expect(grantsProjectedResponse, "check cloned collection grants").to.eql(expectedGrantsResponse)
 
                             //stats
                             expect(messageObject.collection, "testing stats projection").to.have.property('statistics')
@@ -744,7 +794,19 @@ describe('POST - cloneCollection - /collections/{collectionId}/clone - test vari
                         let messageObject = JSON.parse(message)
                         if(messageObject.stage === "result"){
                             expect(messageObject.collection).to.have.property('grants');
-                            expect(messageObject.collection.grants, "check cloned collection grants").to.eql(reference.testCollection.grantsProjected)
+                            // remove grantId from grants response and grantsProjected expected response ( this cannot be tested well q)
+                            let grantsProjectedResponse = []
+                            for (grant of messageObject.collection.grants){
+                                let {grantId, ...grantCheckProps} = grant
+                                grantsProjectedResponse.push(grantCheckProps)
+                            }
+
+                            let expectedGrantsResponse = []
+                            for (grant of reference.testCollection.grantsProjected){
+                                let {grantId, ...grantCheckProps} = grant
+                                expectedGrantsResponse.push(grantCheckProps)
+                            }
+                            expect(grantsProjectedResponse, "check cloned collection grants").to.eql(expectedGrantsResponse)
 
                             //stats
                             expect(messageObject.collection, "testing stats projection").to.have.property('statistics')
@@ -815,7 +877,19 @@ describe('POST - cloneCollection - /collections/{collectionId}/clone - test vari
                         let messageObject = JSON.parse(message)
                         if(messageObject.stage === "result"){
                             expect(messageObject.collection).to.have.property('grants');
-                            expect(messageObject.collection.grants, "check cloned collection grants").to.eql(reference.testCollection.grantsProjected)
+                            // remove grantId from grants response and grantsProjected expected response ( this cannot be tested well q)
+                            let grantsProjectedResponse = []
+                            for (grant of messageObject.collection.grants){
+                                let {grantId, ...grantCheckProps} = grant
+                                grantsProjectedResponse.push(grantCheckProps)
+                            }
+
+                            let expectedGrantsResponse = []
+                            for (grant of reference.testCollection.grantsProjected){
+                                let {grantId, ...grantCheckProps} = grant
+                                expectedGrantsResponse.push(grantCheckProps)
+                            }
+                            expect(grantsProjectedResponse, "check cloned collection grants").to.eql(expectedGrantsResponse)
 
                             //stats
                             expect(messageObject.collection, "testing stats projection").to.have.property('statistics')
@@ -1680,10 +1754,10 @@ describe('PUT - setStigAssetsByCollectionUser - /collections/{collectionId}/gran
         it('Return stig-asset grants for a lvl1 user in this collection. Copy', async () => {
 
             const res = await chai.request(config.baseUrl)
-                .get(`/collections/${83}/grants/${reference.lvl1User.userId}/access`)
+                .get(`/collections/${83}/grants/user/${reference.lvl1User.userId}/access`)
                 .set('Authorization', `Bearer ${user.token}`)
             expect(res).to.have.status(200)
-            expect(res.body).to.be.an('array').of.length(0)
+            expect(res.body.acl).to.be.an('array').of.length(0)
         })
     })
 })
