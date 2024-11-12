@@ -792,8 +792,7 @@ SM.User.UserGrid = Ext.extend(Ext.grid.GridPanel, {
       },
       {
         name: 'lastAccess',
-        type: 'integer',
-        mapping: 'statistics.lastAccess'
+        type: 'integer'
       },
       {
         name: 'collectionGrantCount',

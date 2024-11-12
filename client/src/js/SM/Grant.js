@@ -2,8 +2,92 @@ Ext.ns('SM.Grant')
 
 SM.Grant.GranteeTreePanel = Ext.extend(Ext.tree.TreePanel, {
   initComponent: function () {
+    const _this = this
+    const timestampRef = Math.floor(new Date().getTime() / 1000)
+
+    const activeFilterComboBox = new Ext.form.ComboBox({
+      mode: 'local',
+      triggerAction: 'all',
+      width: 120,
+      store: new Ext.data.ArrayStore({
+          fields: [
+              'earliestTimestamp',
+              'displayText'
+          ],
+          data: [
+            [timestampRef - (86400 * 30), 'Active last 30 days'],
+            [timestampRef - (86400 * 60), 'Active last 60 days'],
+            [timestampRef - (86400 * 90), 'Active last 90 days'],
+            [0, 'All']
+          ]
+      }),
+      valueField: 'earliestTimestamp',
+      value: timestampRef - (86400 * 30),
+      displayField: 'displayText',
+      listeners: {
+        select: function (unused, record) {
+          filters.earliestTimestamp = record.data.earliestTimestamp
+          _this.root.cascade(filterNodes)
+        }
+      }
+    })
+
+    const nameFilterTextField = new Ext.form.TextField({
+      emptyText: 'Filter names',
+      enableKeyEvents:true,
+      listeners: {
+        keyup: function (field,e) {
+          _this.filters.nameFilter = field.getValue().toLowerCase()
+          _this.root.cascade(filterNodes)
+          return false
+        }
+      }
+    })
+
+    function shouldHideNode ({text, lastAccess}) {
+      let passLastAccess = true
+      if (lastAccess !== undefined) {
+        passLastAccess = lastAccess >= filters.earliestTimestamp
+      }
+      const passName = text?.toLowerCase().includes(filters.nameFilter)
+      return !(passLastAccess && passName)
+    }
+
+    function filterNodes (node) {
+      const attr = node.attributes
+      if (attr.type !== 'user' && attr.type !== 'user-group') {
+        return true
+      }
+      if (shouldHideNode({text: attr.text, lastAccess: attr.user?.lastAccess})) {
+        node.ui.hide()
+        if (attr.checked && !_this.radio) {
+          node.ui.toggleCheck(false)
+        }
+      }
+      else {
+        node.ui.show()
+      }
+      return true
+    }
+
+    const filters = {
+      nameFilter: '',
+      earliestTimestamp: activeFilterComboBox.getValue()
+    }
+
+    const tbar = new Ext.Toolbar({
+      items: [
+        'Users:&nbsp;&nbsp;',
+        activeFilterComboBox,
+        '-',
+        nameFilterTextField
+      ]
+    })
+
     const config = {
       autoScroll: true,
+      filters,
+      shouldHideNode,
       bodyStyle: 'padding:5px;',
       minSize: 220,
       root: {
@@ -16,31 +100,61 @@ SM.Grant.GranteeTreePanel = Ext.extend(Ext.tree.TreePanel, {
         directFn: this.loadTree
       }),
       loadMask: { msg: '' },
+      listeners: {
+        beforeexpandnode: function (n) {
+          // n.loaded = false; // always reload from the server
+        },
+        expandnode: function (n) {
+          console.log(`enpandnode ${n.id}`)
+        }
+      },
+      tbar
     }
 
     Ext.apply(this, Ext.apply(this.initialConfig, config))
     this.superclass().initComponent.call(this)
+
+    if (this.radio) {
+      // Override the Ext delegateClick() method to handle radio buttons correctly
+      this.eventModel.delegateClick = function(e, t){
+        if (this.beforeEvent(e)) {
+            // the original method looks for type=checkbox
+            if (e.getTarget('input[type=radio]', 1)) {
+              this.onCheckboxClick(e, this.getNode(e))
+            }
+            else if (e.getTarget('.x-tree-ec-icon', 1)) {
+              this.onIconClick(e, this.getNode(e));
+            } else if (this.getNodeTarget(e)) {
+              this.onNodeClick(e, this.getNode(e));
+            }
+        }
+        else{
+          this.checkContainerEvent(e, 'click');
+        }
+      }
+    }
   },
   loadTree: async function (nodeId, cb) {
     try {
-      const existingGrants = this.ownerTree.existingGrants ?? []
-      const selectedGrant = this.ownerTree.selectedGrant ?? {}
+      const tp = this.ownerTree
+      const existingGrants = tp.existingGrants ?? []
+      const selectedGrant = tp.selectedGrant ?? {}
       const excludedUserIds = existingGrants.filter( g => g.userId && g.userId !== selectedGrant.userId).map(u=>u.userId)
       const excludedGroupIds = existingGrants.filter( g => g.userGroupId && g.userGroupId !== selectedGrant.userGroupId).map(g=>g.userGroupId)
       let match
-      // Root nodeId
+      // Root
       if (nodeId === 'grantee-root') {
         const content = [
           {
             id: `grantee-user-groups-node`,
-            node: 'user-groups',
+            type: 'user-groups-root',
             text: 'User Groups',
             iconCls: 'sm-users-icon',
             expanded: true
           },
           {
             id: `grantee-users-node`,
-            node: 'users',
+            type: 'users-root',
             text: 'Users',
             iconCls: 'sm-user-icon',
             expanded: true
@@ -49,7 +163,7 @@ SM.Grant.GranteeTreePanel = Ext.extend(Ext.tree.TreePanel, {
         cb(content, { status: true })
         return
       }
-      // UserGroups nodeId
+      // UserGroups
       if (nodeId === 'grantee-user-groups-node') {
         const apiUserGroups = await Ext.Ajax.requestPromise({
           responseType: 'json',
@@ -61,17 +175,18 @@ SM.Grant.GranteeTreePanel = Ext.extend(Ext.tree.TreePanel, {
         const content = availUserGroups.map(userGroup => ({
           id: `${userGroup.userGroupId}-user-groups-group-node`,
           text: SM.he(userGroup.name),
+          // hidden: !(SM.he(userGroup.name).includes(tp.filter.nameFilter)),
+          hidden: tp.shouldHideNode({text: SM.he(userGroup.name)}),
           userGroup,
-          node: 'user-group',
+          type: 'user-group',
           iconCls: 'sm-users-icon',
           checked: userGroup.userGroupId === selectedGrant.userGroupId,
-          uiProvider: this.ownerTree.radio ? SM.TreeNodeRadioUI : Ext.tree.TreeNodeUI,
           qtip: SM.he(userGroup.description)
         }))
         cb(content, { status: true })
         return
       }
-      // UserGroups-User nodeId
+      // UserGroups-User
       match = nodeId.match(/^(\d+)-user-groups-group-node$/)
       if (match) {
         const userGroupId = match[1]
@@ -84,10 +199,10 @@ SM.Grant.GranteeTreePanel = Ext.extend(Ext.tree.TreePanel, {
           }
         })
         const content = apiUsers.users.map(user => ({
-          id: `${userGroupId}-${user.userId}-user-groups-user-leaf`,
+          id: `${userGroupId}-${user.userId}-user-group-user-leaf`,
           text: SM.he(user.displayName),
           leaf: true,
-          node: 'user',
+          type: 'user-group-user',
           iconCls: 'sm-user-icon',
           user,
           qtip: `Rules: ${SM.he(user.username)}`
@@ -96,7 +211,7 @@ SM.Grant.GranteeTreePanel = Ext.extend(Ext.tree.TreePanel, {
         return
       }
 
-      // Users nodeId
+      // Users
       if (nodeId === 'grantee-users-node') {
         const apiUsers = await Ext.Ajax.requestPromise({
           responseType: 'json',
@@ -108,11 +223,11 @@ SM.Grant.GranteeTreePanel = Ext.extend(Ext.tree.TreePanel, {
         const content = availUsers.map(user => ({
           id: `users-${user.userId}-user-leaf`,
           text: SM.he(user.displayName),
+          hidden: tp.shouldHideNode({text: SM.he(user.displayName), lastAccess: user.lastAccess || 0}),
           user,
-          node: 'user',
+          type: 'user',
           leaf: true,
           checked: user.userId === selectedGrant.userId,
-          uiProvider: this.ownerTree.radio ? SM.TreeNodeRadioUI : Ext.tree.TreeNodeUI,
           iconCls: 'sm-user-icon',
           qtip: SM.he(user.username)
         }))
@@ -144,7 +259,6 @@ SM.Grant.GranteeAddBtn = Ext.extend(Ext.Button, {
 
 SM.Grant.GranteeRemoveBtn = Ext.extend(Ext.Button, {
   initComponent: function () {
-    const grid = this.grid
     const config = {
       disabled: true,
       height: 30,
@@ -152,13 +266,7 @@ SM.Grant.GranteeRemoveBtn = Ext.extend(Ext.Button, {
       margins: "10 10 10 10",
       icon: 'img/left-arrow-16.png',
       iconAlign: 'left',
-      cls: 'x-btn-text-icon',
-      listeners: {
-        click: function () {
-          const assigmentsToPurge = grid.getSelectionModel().getSelections()
-          grid.getStore().remove(assigmentsToPurge)
-        }
-      }
+      cls: 'x-btn-text-icon'
     }
     Ext.apply(this, Ext.apply(this.initialConfig, config))
     this.superclass().initComponent.call(this)
@@ -364,7 +472,7 @@ SM.Grant.NewGrantPanel = Ext.extend(Ext.Panel, {
       panel: this,
       role: 'available',
       title: 'Available Grantees',
-      width: 240,
+      width: 320,
       existingGrants: this.existingGrants,
       listeners: {
         checkchange: handleTreeCheck
@@ -381,6 +489,7 @@ SM.Grant.NewGrantPanel = Ext.extend(Ext.Panel, {
 
     const grantGrid = new SM.Grant.GrantGrid({
       title: 'New Grants',
+      width: 320,
       iconCls: 'sm-lock-icon',
       headerCssClass: 'sm-selections-panel-header',
       role: 'selections',
@@ -437,11 +546,13 @@ SM.Grant.NewGrantPanel = Ext.extend(Ext.Panel, {
         for (const record of selectedRecords) {
           const data = record.data
           if (data.grantTarget === 'user-group') {
-            const node = new Ext.tree.TreeNode({
+            const node = new Ext.tree.AsyncTreeNode({
               id: `${data.grantTargetId}-user-groups-group-node`,
               text: SM.he(data.title),
               userGroup: data.grantee,
-              node: 'user-group',
+              // hidden: !SM.he(data.title).toLowerCase().includes(granteeTp.filter.nameFilter),
+              hidden: granteeTp.shouldHideNode({text: SM.he(data.title), lastAccess:data.lastAccess}),
+              type: 'user-group',
               iconCls: 'sm-users-icon',
               checked: false,
               qtip: SM.he(data.subtitle)
@@ -454,15 +565,16 @@ SM.Grant.NewGrantPanel = Ext.extend(Ext.Panel, {
             const node = new Ext.tree.TreeNode({
               id: `users-${data.grantTargetId}-user-leaf`,
               text: SM.he(data.title),
+              hidden: granteeTp.shouldHideNode({text: SM.he(data.title), lastAccess:data.grantee.lastAccess}),
               user: data.grantee,
-              node: 'user',
+              type: 'user',
               iconCls: 'sm-user-icon',
               checked: false,
               qtip: SM.he(data.subtitle)
             })
             const parentNode = granteeTp.getNodeById('grantee-users-node')
             parentNode.appendChild(node)
-            if (!parentNode.isExpanded()) parentNode.expand({anim: false})
+            // if (!parentNode.isExpanded()) parentNode.expand({anim: false})
           }
         }
         grantGrid.store.remove(selectedRecords)
@@ -534,7 +646,7 @@ SM.Grant.showNewGrantWindow = function ({collectionId, existingGrants, canModify
       cls: 'sm-dialog-window sm-round-panel',
       modal: true,
       hidden: true,
-      width: 660,
+      width: 800,
       height: 600,
       layout: 'fit',
       plain: true,
@@ -583,9 +695,14 @@ SM.Grant.showEditGrantWindow = function ({existingGrants, selectedGrant, include
     value: selectedGrant.accessLevel, 
     includeOwnerRole
   })
+
+  let selectedNode
   
   function handleTreeCheck(node) {
-    granteeDisplayField.setValue(renderGranteeNode(node.attributes))
+    if (node.attributes.checked) {
+      granteeDisplayField.setValue(renderGranteeNode(node.attributes))
+      selectedNode = node
+    }
   }
 
   function onInitialExpandNode(node) {
@@ -601,7 +718,7 @@ SM.Grant.showEditGrantWindow = function ({existingGrants, selectedGrant, include
     flex: 1,
     margins: '0 0 10 0',
     radio: true,
-    width: 240,
+    // width: 240,
     existingGrants,
     selectedGrant,
     listeners: {
@@ -610,31 +727,13 @@ SM.Grant.showEditGrantWindow = function ({existingGrants, selectedGrant, include
     }
   })
 
-  // Change the Ext method to handle radio buttons correctly
-  Object.getPrototypeOf(granteeTp.eventModel).delegateClick = function(e, t){
-    if (this.beforeEvent(e)) {
-        // the original method looked for type=checkbox
-        if (e.getTarget('input[type=radio]', 1)) {
-          this.onCheckboxClick(e, this.getNode(e))
-        }
-        else if (e.getTarget('.x-tree-ec-icon', 1)) {
-          this.onIconClick(e, this.getNode(e));
-        } else if (this.getNodeTarget(e)) {
-          this.onNodeClick(e, this.getNode(e));
-        }
-    }
-    else{
-      this.checkContainerEvent(e, 'click');
-    }
-  }
-
   granteeTp.getSelectionModel().on('beforeselect', function (unused, newNode) {
     newNode.ui.toggleCheck(true)
     return false
   })
 
   function saveHandler () {
-    const checkedAttributes = granteeTp.getNodeById(document.querySelector('input[name="rg"]:checked').parentElement.getAttribute("ext:tree-node-id")).attributes
+    const checkedAttributes = selectedNode.attributes
     const role = roleComboBox.getValue()
     const modifiedGrant = {
       accessLevel: role
@@ -659,6 +758,7 @@ SM.Grant.showEditGrantWindow = function ({existingGrants, selectedGrant, include
 
   const grantPanel = new Ext.Panel({
     title: 'Modified Grant',
+    headerCssClass: 'sm-selections-panel-header',
     layout: 'form',
     layoutConfig: {
       labelWidth: 50

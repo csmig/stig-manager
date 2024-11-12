@@ -298,7 +298,10 @@ fieldset.x-panel-collapsed {
 }
 
 .x-toolbar .xtb-sep {
-    border-color: initial
+    background-image: none;
+    background-color: #808080;
+    width: 1px;
+    margin: 0 2px 0 2px;
 }
 
 .x-toolbar-more em.x-btn-arrow {
@@ -3170,7 +3173,7 @@ embed[type="application/pdf"] {
     background-color: hsl(0deg 71% 25%)
 }
 .sm-round-panel .x-panel-header.sm-selections-panel-header {
-	background-color: #425722;
+	background-color: #303d29;
 }
 .sm-grabbing *, .sm-grabbing .sm-grid3-draggable .x-grid3-row-selected *, .sm-grabbing .sm-grid3-draggable .x-grid3-row-selected {
     cursor: url("../img/drag-drop-dark.svg"), grabbing;
