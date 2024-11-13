@@ -1365,7 +1365,7 @@ module.exports.putAclRulesByCollectionGrant = async function (req, res, next) {
         svcStatus: res.svcStatus
       })
     }
-    const response = await CollectionService.queryReviewAcl({grantId: grant.grantId})
+    const response = await CollectionService.queryReviewAcl({grantId})
     res.json(response)
   }
   catch (err) {
