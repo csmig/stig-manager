@@ -74,7 +74,7 @@ const verifyRequest = async function (req, requiredScopes, securityDefinition) {
         refreshFields.lastClaims = JSON.stringify(decoded)
     }
     if (refreshFields.lastAccess || refreshFields.lastClaims) {
-        const userId = await UserService.setUserData(username, refreshFields)
+        const userId = await UserService.setUserData(userObject, refreshFields)
         if (userId != userObject.userId) {
             userObject.userId = userId.toString()
         }
