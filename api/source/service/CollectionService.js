@@ -2743,7 +2743,7 @@ exports._getCollectionGrant = async function ({collectionId, grantId, grantIds, 
   }
   const [response] = await dbUtils.pool.query(sql, [collectionId, grantId || grantIds || userId || userGroupId])
   const grants = response.map(row => row.grantJson)
-  return grantIds ? grants : grants[0]
+  return grants.length ? grants : grants[0]
 }
 
 exports.putGrantById = function (grantId, grant) {
