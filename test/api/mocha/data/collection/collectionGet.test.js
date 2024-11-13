@@ -429,7 +429,7 @@ describe('GET - Collection', function () {
 
       describe('getGrantByCollectionUser - /collections/{collectionId}/grants/user/{userId}', function () {
 
-        it("should return the grant for the user in the collection",async function () {
+        it("should return the grant for the current user in the test collection",async function () {
           
           const res = await chai.request(config.baseUrl)
             .get(`/collections/${reference.testCollection.collectionId}/grants/user/${iteration.userId}`)
@@ -573,6 +573,55 @@ describe('GET - Collection', function () {
             expect(res.body.error).to.equal("Unprocessable Entity.")
         })
       })
+
+      describe('getGrantByCollectionUserGroup - /collections/{collectionId}/grants/user-group/{userGroupId}', function () {
+
+        it("should return the grant for the test userGroup in the test collection",async function () {
+
+          const res = await chai.request(config.baseUrl)
+            .get(`/collections/${reference.testCollection.collectionId}/grants/user-group/${reference.testCollection.testGroup.userGroupId}`)
+            .set('Authorization', `Bearer ${iteration.token}`)
+            if (distinct.grant === "none" || distinct.canModifyCollection === false){
+              expect(res).to.have.status(403)
+              return
+            }
+            expect(res).to.have.status(200)
+            expect(res.body.accessLevel).to.equal(reference.testCollection.testGroup.accessLevel)
+            expect(res.body.userGroupId).to.equal(reference.testCollection.testGroup.userGroupId)
+        })
+      })
+
+      describe('getReviewAclByCollectionUserGroup - /collections/{collectionId}/grants/user-group/{userGroupId}/access', function () {
+
+        it("should return ACL for the test userGroup in the test collection",async function () {
+
+          const res = await chai.request(config.baseUrl)
+            .get(`/collections/${reference.testCollection.collectionId}/grants/user-group/${reference.testCollection.testGroup.userGroupId}/access`)
+            .set('Authorization', `Bearer ${iteration.token}`)
+            if (distinct.grant === "none" || distinct.canModifyCollection === false){
+              expect(res).to.have.status(403)
+              return
+            }
+            expect(res).to.have.status(200)
+            expect(res.body.acl).to.deep.equalInAnyOrder(reference.testCollection.testGroup.acl)
+          })
+
+          it("should throw, collection doesnt exist",async function () {
+
+            const res = await chai.request(config.baseUrl)
+              .get(`/collections/${"1234321"}/grants/user-group/${reference.testCollection.testGroup.userGroupId}/access`)
+              .set('Authorization', `Bearer ${iterations[0].token}`)
+            expect(res).to.have.status(403)
+          })
+
+          it("should throw, userGroup doesnt exist or have grant in collection",async function () {
+
+            const res = await chai.request(config.baseUrl)
+              .get(`/collections/${reference.testCollection.collectionId}/grants/user-group/${"1234321"}/access`)
+              .set('Authorization', `Bearer ${iterations[0].token}`)
+            expect(res).to.have.status(422)
+          })
+        })
     
       describe('getCollectionLabels - /collections/{collectionId}/labels', function () {
 
@@ -1341,6 +1390,7 @@ describe('GET - Collection', function () {
         })
       })
 
+      // not implementneedd d d d
       // describe('getGrantsByCollection - /collections/{collectionId}/grants', function () {
 
       //   it("should return all grants for the collection",async function () {  
@@ -1362,7 +1412,7 @@ describe('GET - Collection', function () {
 
       describe('getGrantByCollectionGrant - /collections/{collectionId}/grants/{grantId}', function () {
 
-        it("should return grant for the test group",async function () {
+        it("should return grant info for the test group",async function () {
           const res =  await chai.request(config.baseUrl)
             .get(`/collections/${reference.testCollection.collectionId}/grants/${reference.testCollection.testGroup.testCollectionGrantId}`)
             .set('Authorization', `Bearer ${iteration.token}`)

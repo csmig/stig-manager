@@ -285,5 +285,15 @@ const requestBodies = {
       accessLevel: 4,
     },
   ],
-}
+  putGroupAcl: [
+    {
+      assetId: "62",
+      access: "rw",
+    },
+    {
+      benchmarkId: "VPN_SRG_TEST",
+      access: "rw",
+    },
+  ],
+};
 module.exports = requestBodies

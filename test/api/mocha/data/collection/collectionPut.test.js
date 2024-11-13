@@ -196,7 +196,6 @@ describe('PUT - Collection', function () {
         })
       })
 
-      
       describe('putCollectionMetadata - /collections/{collectionId}/metadata', function () {
 
         it('Set all metadata of a Collection',async function () {
@@ -305,6 +304,132 @@ describe('PUT - Collection', function () {
         })
       })
 
+      describe('setGrantByCollectionUserGroup - /collections/{collectionId}/grants/user-group/{userGroupId}', function () {
+
+        before(async function () {
+          await utils.loadAppData()
+        })
+        
+
+        it("should update test group's access level to 3c (updating exisiting group)", async function () {
+
+          const res = await chai.request(config.baseUrl)
+            .put(`/collections/${reference.testCollection.collectionId}/grants/user-group/${reference.testCollection.testGroup.userGroupId}`)
+              .set('Authorization', `Bearer ${iteration.token}`)
+              .send({
+                "accessLevel": 3
+              })
+          if(distinct.canModifyCollection === false){
+            expect(res).to.have.status(403)
+            return
+          }
+          expect(res).to.have.status(200)
+          expect(res.body.accessLevel).to.equal(3)
+          expect(res.body.userGroupId).to.equal(reference.testCollection.testGroup.userGroupId)
+        })
+
+        it("should create a temp group so we can test a new access level assignment for a 201", async function () {
+
+          const create = await chai.request(config.baseUrl)
+            .post(`/user-groups?elevate=true`)
+              .set('Authorization', `Bearer ${iteration.token}`)
+              .send({
+                  "name": "temp" + Date.now(),
+                  "description": "test",
+                  "userIds": [
+                    reference.lvl1User.userId
+                  ]
+              })
+            if(iteration.name !== "stigmanadmin"){
+              expect(create).to.have.status(403)
+              return
+            }
+            expect(create).to.have.status(201)
+
+            const editresponse = await chai.request(config.baseUrl)
+              .put(`/collections/${reference.testCollection.collectionId}/grants/user-group/${create.body.userGroupId}`)
+                .set('Authorization', `Bearer ${iteration.token}`)
+                .send({
+                  "accessLevel": 3
+                })
+            if(distinct.canModifyCollection === false){
+              expect(editresponse).to.have.status(403)
+              return
+            }
+            expect(editresponse).to.have.status(201)
+            expect(editresponse.body.accessLevel).to.equal(3)
+            expect(editresponse.body.userGroupId).to.equal(create.body.userGroupId)
+        })
+
+        it("should throw 422 error, because groupId does not exist. ", async function () {
+
+          const res = await chai.request(config.baseUrl)
+            .put(`/collections/${reference.testCollection.collectionId}/grants/user-group/${"1234321"}`)
+              .set('Authorization', `Bearer ${iteration.token}`)
+              .send({
+                "accessLevel": 3
+              })
+          if(distinct.canModifyCollection === false){
+            expect(res).to.have.status(403)
+            return
+          }
+          expect(res).to.have.status(422)
+        })
+      })
+
+      describe('setReviewAclByCollectionUserGroup - /collections/{collectionId}/grants/user-group/{userGroupId}/access', function () {
+
+        before(async function () {
+          await utils.loadAppData()
+        })
+
+        it(`should set all user groups acls to all []`, async () => {
+          const res = await chai.request(config.baseUrl)
+          .put(`/collections/${reference.testCollection.collectionId}/grants/user-group/${reference.testCollection.testGroup.userGroupId}/access`)
+          .set('Authorization', `Bearer ${iteration.token}`)
+          .send(requestBodies.putGroupAcl)
+          if(distinct.canModifyCollection === false){
+            expect(res).to.have.status(403)
+            return
+          }
+          expect(res).to.have.status(200)
+          expect(res.body.defaultAccess).to.equal(reference.testCollection.testGroup.defaultAccess)
+          expect(res.body.acl).to.be.lengthOf(2)
+          for(const item of res.body.acl){
+            if(item.assetId){
+              expect(item.assetId).to.be.equal("62")
+              expect(item.access).to.be.equal("rw") 
+            }
+            else if(item.benchmarkId){
+              expect(item.benchmarkId).to.be.equal("VPN_SRG_TEST")
+              expect(item.access).to.be.equal("rw") 
+            }
+          }
+        })
+
+        it("should throw 422 error, because groupId does not exist. ", async function () {
+
+          const res = await chai.request(config.baseUrl)
+            .put(`/collections/${reference.testCollection.collectionId}/grants/user-group/${"1234321"}/access`)
+              .set('Authorization', `Bearer ${iteration.token}`)
+              .send(requestBodies.putGroupAcl)
+          if(distinct.canModifyCollection === false){
+            expect(res).to.have.status(403)
+            return
+          }
+          expect(res).to.have.status(422)
+        })
+
+        it("Should throw 403 because collectionId does not exist", async function () {
+
+          const res = await chai.request(config.baseUrl)
+            .put(`/collections/${"1234321"}/grants/user-group/${reference.testCollection.testGroup.userGroupId}/access`)
+            .set('Authorization', `Bearer ${iteration.token}`)
+            .send(requestBodies.putGroupAcl)
+          expect(res).to.have.status(403)
+        })
+      })
+
       describe('setGrantByCollectionUser - /collections/{collectionId}/grants/user/{userId}', function () {
 
         before(async function () {
@@ -312,6 +437,23 @@ describe('PUT - Collection', function () {
         })
 
         it('set stig-asset grants for a lvl1 user in this collection. user does not have a direct grant to the colleciton',async function () {
+
+          it("should throw SmError.Unprocessable Entity when attempting to set asset stig for a user that does not exist with access level 1",async function () {
+            const res = await chai.request(config.baseUrl)
+            .put(`/collections/${reference.testCollection.collectionId}/grants/user/${"1234321"}`)
+                .set('Authorization', `Bearer ${iteration.token}`)
+                .send({
+                  "accessLevel": 1
+                })
+              if(distinct.grant === "none"){
+                expect(res).to.have.status(403)
+                return
+              }
+              expect(res).to.have.status(404)
+              expect(res.body.error).to.equal("Resource not found.")
+              expect(res.body.detail).to.equal("User not found")
+          })
+
           const res = await chai.request(config.baseUrl)
               .put(`/collections/${reference.testCollection.collectionId}/grants/user/${reference.lvl1User.userId}`)
               .set('Authorization', `Bearer ${iteration.token}`)
@@ -351,22 +493,6 @@ describe('PUT - Collection', function () {
             expect(grant.username).to.equal(reference.lvl1User.username)
           }
         })
-        it("should throw SmError.Unprocessable Entity when attempting to set asset stig for a user that does not exist with access level 1",async function () {
-          const randomUserId = Math.floor(Math.random() * 1002230)
-          const res = await chai.request(config.baseUrl)
-          .put(`/collections/${reference.testCollection.collectionId}/grants/user/${randomUserId}`)
-              .set('Authorization', `Bearer ${iteration.token}`)
-              .send({
-                "accessLevel": 1
-              })
-            if(distinct.canModifyCollection === false){
-              expect(res).to.have.status(403)
-              return
-            }
-            expect(res).to.have.status(404)
-            expect(res.body.error).to.equal("Resource not found.")
-            expect(res.body.detail).to.equal("User not found")
-        })
       })
 
       describe("putGrantByCollectionGrant - /collections/{collectionId}/grants/{grantId}", function () {
@@ -375,7 +501,7 @@ describe('PUT - Collection', function () {
           await utils.loadAppData()
         })
 
-        it("should replace access level and  keep the same user of the test group in the test colleciton", async function () {
+        it("should replace access level and keep the same user of the test group in the test colleciton", async function () {
           
           const res = await chai.request(config.baseUrl)
           .put(`/collections/${reference.testCollection.collectionId}/grants/${reference.testCollection.testGroup.testCollectionGrantId}`)
@@ -394,7 +520,6 @@ describe('PUT - Collection', function () {
           expect(res.body.grantId).to.equal(reference.testCollection.testGroup.testCollectionGrantId)
         })
 
-        // dont understand this endpoint 
         it("should replace access level and user of the test group in the test colleciton", async function () {
 
           const res = await chai.request(config.baseUrl)
@@ -409,8 +534,8 @@ describe('PUT - Collection', function () {
             return
           }
           expect(res).to.have.status(200)
-          expect(res.body.user.userId).to.equal(reference.scrapLvl1User.userId)
-          expect(res.body.accessLevel).to.equal(1)
+          expect(res.body.userGroup.userGroupId).to.equal(reference.testCollection.testGroup.userGroupId)
+          expect(res.body.accessLevel).to.equal(2)
           expect(res.body.grantId).to.equal(reference.testCollection.testGroup.testCollectionGrantId)
         })
 
@@ -418,4 +543,3 @@ describe('PUT - Collection', function () {
     })
   }
 })
-

@@ -85,7 +85,7 @@ describe('user-group', () => {
 
         describe(`getUserGroups - /user-groups`, () => {
 
-          it('should return all userGroups (as of now we should have the one created eariler in tests elevated ', async () => {
+          it('should return all userGroups  ', async () => {
 
             const res = await chai
               .request(config.baseUrl)
@@ -116,7 +116,7 @@ describe('user-group', () => {
             }
             
           })
-          it('should return all userGroups (as of now we should have the one created eariler in tests not elevated ', async () => {
+          it('should return all userGroups no projections for all users sucess ', async () => {
 
             const res = await chai
               .request(config.baseUrl)

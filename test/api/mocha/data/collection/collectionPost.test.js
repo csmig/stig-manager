@@ -79,6 +79,7 @@ describe('POST - Collection - not all tests run for all iterations', function ()
           expect(res.body.grants).to.have.lengthOf(1)
           expect(res.body.grants[0].user.userId).to.equal("1")
           expect(res.body.grants[0].accessLevel).to.equal(4)
+          expect(res.body.grants[0].grantId).to.exist
 
           // labels projection
           expect(res.body.labels).to.have.lengthOf(1)
@@ -572,7 +573,6 @@ describe('POST - Collection - not all tests run for all iterations', function ()
               }
             }
         })
-
         it("attempt to create owner grant, should only work for users access >= 4",async function () {
 
           const res = await chai

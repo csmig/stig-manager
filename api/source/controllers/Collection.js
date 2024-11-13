@@ -1116,6 +1116,9 @@ module.exports.setGrantByCollectionUserGroup = async function (req, res, next) {
     res.status(httpStatus).json(response[0])
   }
   catch (err) {
+    if(err.code === 'ER_NO_REFERENCED_ROW_2') {
+      err = new SmError.UnprocessableError('this user group Id does not not exist')
+    }
     next(err)
   }
 }

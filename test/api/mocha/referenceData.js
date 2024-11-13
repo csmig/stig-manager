@@ -55,6 +55,33 @@ const reference = {
       users: ["lvl1"],
       accessLevel: 1,
       testCollectionGrantId: "32",
+      defaultAccess: "none",
+      acl: [
+        {
+          label: {
+            name: "test-label-lvl1",
+            color: "99CCFF",
+            labelId: "5130dc84-9a68-11ec-b1bc-0242ac110002",
+          },
+          access: "rw",
+          benchmarkId: "VPN_SRG_TEST",
+        },
+        {
+          asset: {
+            name: "Collection_X_asset",
+            assetId: "62",
+          },
+          access: "r",
+        },
+        {
+          asset: {
+            name: "Collection_X_lvl1_asset-2",
+            assetId: "154",
+          },
+          access: "r",
+          benchmarkId: "VPN_SRG_TEST",
+        },
+      ]
     },
     labels: [
       "755b8a28-9a68-11ec-b1bc-0242ac110002",

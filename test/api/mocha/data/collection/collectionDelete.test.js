@@ -16,10 +16,6 @@ describe('DELETE - Collection ', function () {
 
   let tempCollection = null
 
-  // before(async function () { 
-  //   await utils.loadAppData()
-  // })
-
   for(const iteration of iterations){
     
     if (expectations[iteration.name] === undefined){
@@ -56,6 +52,52 @@ describe('DELETE - Collection ', function () {
           expect(deletedCollection.status, "expect 403 response (delete worked)").to.equal(403)
         })
 
+      })
+
+      describe('deleteGrantByCollectionUserGroup - /collections/{collectionId}/grants/user-group/{userGroupId}', function () {  
+
+        before(async function () {
+          await utils.loadAppData()
+        })
+
+        it("it should delete the collection grant for the test user group",async function () {
+
+          const res = await chai.request(config.baseUrl)
+              .delete(`/collections/${reference.testCollection.collectionId}/grants/user-group/${reference.testCollection.testGroup.userGroupId}`)
+              .set('Authorization', `Bearer ${iteration.token}`)
+          if(distinct.canModifyCollection === false){
+            expect(res).to.have.status(403)
+            return
+          }
+          expect(res).to.have.status(200)
+          expect(res.body.accessLevel).to.equal(1)
+          expect(res.body.userGroupId).to.equal(reference.testCollection.testGroup.userGroupId)
+        })
+
+        it("should return empty response when deleting a non-existent grant.",async function () {
+
+          const res = await chai.request(config.baseUrl)
+              .delete(`/collections/${reference.testCollection.collectionId}/grants/user-group/${"1234321"}`)
+              .set('Authorization', `Bearer ${iteration.token}`)
+          if(distinct.canModifyCollection === false){
+            expect(res).to.have.status(403)
+            return
+          }
+          expect(res).to.have.status(200)
+          expect(res.body).to.eql('')
+        })
+
+        it("should throw when collectionId is invalid", async function () {
+
+          const res = await chai.request(config.baseUrl)
+              .delete(`/collections/${"1234321"}/grants/user-group/${reference.testCollection.testGroup.userGroupId}`)
+              .set('Authorization', `Bearer ${iteration.token}`)
+          if(distinct.canModifyCollection === false){
+            expect(res).to.have.status(403)
+            return
+          }
+          expect(res).to.have.status(403)
+        })
       })
 
       describe('deleteCollectionLabelById - /collections/{collectionId}/labels/{labelId}', function () {
