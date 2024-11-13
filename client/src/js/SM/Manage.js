@@ -720,18 +720,13 @@ SM.Manage.Collection.GrantsGrid = Ext.extend(Ext.grid.GridPanel, {
       noun: 'grant',
       iconCls: 'sm-lock-icon'
     })
-    // const roleComboBox = new SM.RoleComboBox({
-    //   submitValue: false,
-    //   grid: this,
-    //   includeOwnerRole: this.canModifyOwners,
-    //   listeners: {
-    //     select: function (combo,record,index) {
-    //       if (combo.startValue !== combo.value ) {
-    //         combo.fireEvent("blur");
-    //       } 
-    //     }
-    //   }
-    // })
+
+    let toolsMarkup = '<span class="sm-grid-cell-tool" style="padding-right:4px"><img data-action="showEditGrant" ext:qtip="Edit grant" src="img/edit.svg" width="14" height="14"></span>'
+    if (this.context !== 'admin') {
+      toolsMarkup += '<span class="sm-grid-cell-tool" style="padding-right:4px"><img data-action="editAcl" ext:qtip="Edit ACL" src="img/target.svg" width="14" height="14"></span>'
+    }
+    toolsMarkup += '<span class="sm-grid-cell-tool"><img data-action="removeGrant" ext:qtip="Remove grant" src="img/trash.svg" width="14" height="14"></span>`'
+    
     const colModel = new Ext.grid.ColumnModel({
       columns: [
         {
@@ -758,9 +753,7 @@ SM.Manage.Collection.GrantsGrid = Ext.extend(Ext.grid.GridPanel, {
                 </div>
               </div>
               <div class="sm-static-width" style="top: 25%">
-              ${_this.canModifyOwners || r.data.accessLevel !== 4 ? `<span class="sm-grid-cell-tool" style="padding-right:4px"><img data-action="showEditGrant" ext:qtip="Edit grant" src="img/edit.svg" width="14" height="14"></span>
-              <span class="sm-grid-cell-tool" style="padding-right:4px"><img data-action="editAcl" ext:qtip="Edit ACL" src="img/target.svg" width="14" height="14"></span>
-              <span class="sm-grid-cell-tool"><img data-action="removeGrant" ext:qtip="Remove grant" src="img/trash.svg" width="14" height="14"></span>` : ''}
+              ${r.data.accessLevel !== 4 || _this.canModifyOwners || _this.context === 'admin' ? toolsMarkup : ''}
             </div>`   
           }
         }
@@ -796,7 +789,6 @@ SM.Manage.Collection.GrantsGrid = Ext.extend(Ext.grid.GridPanel, {
         fn: (buttonId) => {
           if (buttonId === 'ok' || buttonId === 'yes') {
             _this.fireEvent('grantremove', grantData)
-            // store.remove(record)
           }
         },
         icon: Ext.MessageBox.QUESTION
@@ -829,32 +821,10 @@ SM.Manage.Collection.GrantsGrid = Ext.extend(Ext.grid.GridPanel, {
     })
     const tbarItems = [
       newGrantButton,
-      // '-',
-      // delGrantButton,
-      // '-',
-      // aclButton
     ]
     const tbar = new Ext.Toolbar({
       items: tbarItems
     })
-    // const selModel = new Ext.grid.RowSelectionModel({
-    //   singleSelect: true,
-    //   listeners: {
-    //     selectionchange: function (sm) {
-    //       if (sm.hasSelection()) {
-    //         const canModify = sm.getSelected().data.accessLevel === 4 && !_this.canModifyOwners
-    //         aclButton.setDisabled(canModify)
-    //         delGrantButton.setDisabled(canModify)
-    //       }
-    //       else {
-    //         delGrantButton.setDisabled(true)
-    //         aclButton.setDisabled(true)
-    //       }
-    //     }
-    //   }
-    // })
-
-    // const selModel = new Ext.grid.RowSelectionModel()
 
     const view = new SM.ColumnFilters.GridView({
       emptyText: this.emptyText || 'No records to display',

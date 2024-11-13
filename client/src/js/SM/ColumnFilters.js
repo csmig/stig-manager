@@ -322,7 +322,7 @@ SM.ColumnFilters.GridViewLocking = SM.ColumnFilters.extend(Ext.ux.grid.LockingGr
 SM.ColumnFilters.StringMatchTextField = Ext.extend(Ext.form.TextField, {
   initComponent: function () {
     const config = {
-      autoCreate: {tag: 'input', type: 'search', size: '20', autocomplete: 'off'},
+      autoCreate: {tag: 'input', type: 'search', size: '20', autocomplete: 'off', spellcheck: 'false'},
       enableKeyEvents: true
     }
     Ext.apply(this, Ext.apply(this.initialConfig, config))

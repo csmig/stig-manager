@@ -8,6 +8,7 @@ SM.Grant.GranteeTreePanel = Ext.extend(Ext.tree.TreePanel, {
     const activeFilterComboBox = new Ext.form.ComboBox({
       mode: 'local',
       triggerAction: 'all',
+      editable: false,
       width: 120,
       store: new Ext.data.ArrayStore({
           fields: [
@@ -15,14 +16,14 @@ SM.Grant.GranteeTreePanel = Ext.extend(Ext.tree.TreePanel, {
               'displayText'
           ],
           data: [
+            [0, 'All'],
             [timestampRef - (86400 * 30), 'Active last 30 days'],
             [timestampRef - (86400 * 60), 'Active last 60 days'],
             [timestampRef - (86400 * 90), 'Active last 90 days'],
-            [0, 'All']
           ]
       }),
       valueField: 'earliestTimestamp',
-      value: timestampRef - (86400 * 30),
+      value: 0,
       displayField: 'displayText',
       listeners: {
         select: function (unused, record) {
@@ -32,11 +33,12 @@ SM.Grant.GranteeTreePanel = Ext.extend(Ext.tree.TreePanel, {
       }
     })
 
-    const nameFilterTextField = new Ext.form.TextField({
+    const nameFilterTextField = new SM.ColumnFilters.StringMatchTextField({
       emptyText: 'Filter names',
+      height: 20,
       enableKeyEvents:true,
       listeners: {
-        keyup: function (field,e) {
+        input: function (field,e) {
           _this.filters.nameFilter = field.getValue().toLowerCase()
           _this.root.cascade(filterNodes)
           return false
@@ -641,6 +643,21 @@ SM.Grant.showNewGrantWindow = function ({collectionId, existingGrants, canModify
       
     const panel = new SM.Grant.NewGrantPanel({existingGrants, canModifyOwners})
 
+    const saveBtn = new Ext.Button({
+      text: 'Save',
+      disabled: true,
+      id: 'submit-button',
+      handler: saveHandler
+    })
+
+    panel.grantGrid.store.on('add', grantGridStoreHandler)
+    panel.grantGrid.store.on('remove', grantGridStoreHandler)
+
+    function grantGridStoreHandler () {
+      const action = panel.grantGrid.store.data.items.length ? saveBtn.enable : saveBtn.disable
+      action.call(saveBtn)
+    }
+
     const panelWindow = new Ext.Window({
       title: `New Grants for ${collectionId}`,
       cls: 'sm-dialog-window sm-round-panel',
@@ -660,12 +677,7 @@ SM.Grant.showNewGrantWindow = function ({collectionId, existingGrants, canModify
             panelWindow.close();
           }
         },
-        {
-          text: 'Save',
-          formBind: true,
-          id: 'submit-button',
-          handler: saveHandler
-        }
+        saveBtn
       ]
     })
     panel.panelWindow = panelWindow
