@@ -546,11 +546,11 @@ describe('POST - Collection - not all tests run for all iterations', function ()
 
           const res = await chai
             .request(config.baseUrl)
-            .post(`/collections/${reference.scrapCollection.collectionId}/grants`)
+            .post(`/collections/${reference.scrapCollection.collectionId}/grants?elevate=true`)
             .set("Authorization", `Bearer ${iteration.token}`)
             .send(requestBodies.postGrantsByCollection)
 
-            if(distinct.canModifyCollection === false){
+            if(iteration.name !== "stigmanadmin"){
               expect(res).to.have.status(403)
               return
             }
@@ -577,11 +577,11 @@ describe('POST - Collection - not all tests run for all iterations', function ()
 
           const res = await chai
             .request(config.baseUrl)
-            .post(`/collections/${reference.scrapCollection.collectionId}/grants`)
+            .post(`/collections/${reference.scrapCollection.collectionId}/grants?elevate=true`)
             .set("Authorization", `Bearer ${iteration.token}`)
             .send(requestBodies.postOwners)
 
-            if(distinct.accessLevel < 4){
+            if(iteration.name !== "stigmanadmin"){
               expect(res).to.have.status(403)
               return
             }

@@ -5,6 +5,7 @@ const distinct = {
   stigmanadmin: {
     iteration: "admin",
     acl: [],
+    aclByGrantId: [],
     usersLength: 7,
     defaultAccess: "rw",
     accessLevel: 4,
@@ -49,6 +50,32 @@ const distinct = {
   },
   lvl1: {
     iteration: "lvl1",
+    aclByGrantId:[
+      {
+        label: {
+          name: "test-label-lvl1",
+          color: "99CCFF",
+          labelId: "5130dc84-9a68-11ec-b1bc-0242ac110002",
+        },
+        access: "rw",
+        benchmarkId: "VPN_SRG_TEST",
+      },
+      {
+        asset: {
+          name: "Collection_X_asset",
+          assetId: "62",
+        },
+        access: "r",
+      },
+      {
+        asset: {
+          name: "Collection_X_lvl1_asset-2",
+          assetId: "154",
+        },
+        access: "r",
+        benchmarkId: "VPN_SRG_TEST",
+      },
+    ],
     acl: [
       {
         access: "r",
@@ -193,7 +220,8 @@ const distinct = {
     iteration: "lvl2",
     userId: "87",
     acl: [],
-    usersLength:7,
+    aclByGrantId: [],
+    usersLength: 7,
     defaultAccess: "rw",
     accessLevel: 2,
     canElevate: false,
@@ -235,6 +263,7 @@ const distinct = {
   lvl3: {
     iteration: "lvl3",
     acl: [],
+    aclByGrantId: [],
     usersLength: 7,
     defaultAccess: "rw",
     userId: "87",
@@ -278,6 +307,7 @@ const distinct = {
   lvl4: {
     iteration: "lvl4",
     acl: [],
+    aclByGrantId: [],
     usersLength: 7,
     defaultAccess: "rw",
     userId: "87",
@@ -355,7 +385,6 @@ const distinct = {
     },
     canDeleteCollection: false,
     canModifyCollection: false,
-  
   },
-}
+};
 module.exports = distinct;

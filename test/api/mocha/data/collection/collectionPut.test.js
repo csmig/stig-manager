@@ -383,7 +383,7 @@ describe('PUT - Collection', function () {
           await utils.loadAppData()
         })
 
-        it(`should set all user groups acls to all []`, async () => {
+        it(`should set all user groups acl`, async () => {
           const res = await chai.request(config.baseUrl)
           .put(`/collections/${reference.testCollection.collectionId}/grants/user-group/${reference.testCollection.testGroup.userGroupId}/access`)
           .set('Authorization', `Bearer ${iteration.token}`)
@@ -504,13 +504,13 @@ describe('PUT - Collection', function () {
         it("should replace access level and keep the same user of the test group in the test colleciton", async function () {
           
           const res = await chai.request(config.baseUrl)
-          .put(`/collections/${reference.testCollection.collectionId}/grants/${reference.testCollection.testGroup.testCollectionGrantId}`)
+          .put(`/collections/${reference.testCollection.collectionId}/grants/${reference.testCollection.testGroup.testCollectionGrantId}?elevate=true`)
           .set('Authorization', `Bearer ${iteration.token}`)
           .send({
             "userId": reference.lvl1User.userId,
             "accessLevel": 1
           })
-          if(distinct.canModifyCollection === false){
+          if(iteration.name !== "stigmanadmin"){
             expect(res).to.have.status(403)
             return
           }
@@ -523,13 +523,13 @@ describe('PUT - Collection', function () {
         it("should replace access level and user of the test group in the test colleciton", async function () {
 
           const res = await chai.request(config.baseUrl)
-          .put(`/collections/${reference.testCollection.collectionId}/grants/${reference.testCollection.testGroup.testCollectionGrantId}`)
+          .put(`/collections/${reference.testCollection.collectionId}/grants/${reference.testCollection.testGroup.testCollectionGrantId}?elevate=true`)
           .set('Authorization', `Bearer ${iteration.token}`)
           .send({
             "userGroupId": "1",
             "accessLevel": 2
           })
-          if(distinct.canModifyCollection === false){
+          if(iteration.name !== "stigmanadmin"){
             expect(res).to.have.status(403)
             return
           }
@@ -539,6 +539,61 @@ describe('PUT - Collection', function () {
           expect(res.body.grantId).to.equal(reference.testCollection.testGroup.testCollectionGrantId)
         })
 
+      })
+
+      describe('putAclRulesByCollectionGrant - /collections/{collectionId}/grants/{grantId}/acl', function () {
+
+        before(async function () {
+          await utils.loadAppData()
+        })
+
+        it('Set all ACL rules of a Collection',async function () {
+
+            const res = await chai.request(config.baseUrl)
+                .put(`/collections/${reference.testCollection.collectionId}/grants/${reference.testCollection.testGroup.testCollectionGrantId}/acl`)
+                .set('Authorization', `Bearer ${iteration.token}`)
+                .send(requestBodies.putGroupAcl)
+
+            if(distinct.canModifyCollection === false){
+              expect(res).to.have.status(403)
+              return
+            }
+            expect(res).to.have.status(200)
+            expect(res.body.defaultAccess).to.equal(reference.testCollection.testGroup.defaultAccess)
+            expect(res.body.acl).to.be.lengthOf(2)
+            for(const item of res.body.acl){
+              if(item.assetId){
+                expect(item.assetId).to.be.equal("62")
+                expect(item.access).to.be.equal("rw") 
+              }
+              else if(item.benchmarkId){
+                expect(item.benchmarkId).to.be.equal("VPN_SRG_TEST")
+                expect(item.access).to.be.equal("rw") 
+              }
+            }
+        })
+
+        it("should throw 422 error, because groupId does not exist. ", async function () {
+
+          const res = await chai.request(config.baseUrl)
+          .put(`/collections/${reference.testCollection.collectionId}/grants/${"1234321"}/acl`)
+              .set('Authorization', `Bearer ${iteration.token}`)
+              .send(requestBodies.putGroupAcl)
+          if(distinct.canModifyCollection === false){
+            expect(res).to.have.status(403)
+            return
+          }
+          expect(res).to.have.status(404)
+        })
+
+        it("Should throw 403 because collectionId does not exist", async function () {
+
+          const res = await chai.request(config.baseUrl)
+          .put(`/collections/${1234321}/grants/${reference.testCollection.testGroup.testCollectionGrantId}/acl`)
+            .set('Authorization', `Bearer ${iteration.token}`)
+            .send(requestBodies.putGroupAcl)
+          expect(res).to.have.status(403)
+        })
       })
     })
   }
