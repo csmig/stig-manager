@@ -725,7 +725,7 @@ SM.Manage.Collection.GrantsGrid = Ext.extend(Ext.grid.GridPanel, {
     if (this.context !== 'admin') {
       toolsMarkup += '<span class="sm-grid-cell-tool" style="padding-right:4px"><img data-action="editAcl" ext:qtip="Edit ACL" src="img/target.svg" width="14" height="14"></span>'
     }
-    toolsMarkup += '<span class="sm-grid-cell-tool"><img data-action="removeGrant" ext:qtip="Remove grant" src="img/trash.svg" width="14" height="14"></span>`'
+    toolsMarkup += '<span class="sm-grid-cell-tool"><img data-action="removeGrant" ext:qtip="Remove grant" src="img/trash.svg" width="14" height="14"></span>'
     
     const colModel = new Ext.grid.ColumnModel({
       columns: [
@@ -754,6 +754,7 @@ SM.Manage.Collection.GrantsGrid = Ext.extend(Ext.grid.GridPanel, {
               </div>
               <div class="sm-static-width" style="top: 25%">
               ${r.data.accessLevel !== 4 || _this.canModifyOwners || _this.context === 'admin' ? toolsMarkup : ''}
+              </div>
             </div>`   
           }
         }
@@ -802,8 +803,8 @@ SM.Manage.Collection.GrantsGrid = Ext.extend(Ext.grid.GridPanel, {
     }
 
     function cellclick(grid, rowIndex, columnIndex, e) {
-      const record = grid.getStore().getAt(rowIndex)
       if (e.target.tagName === "IMG") {
+        const record = grid.getStore().getAt(rowIndex)
         toolHandlers[e.target.dataset.action](record.data, record)
       }
     }
@@ -899,7 +900,6 @@ SM.Manage.Collection.GrantsGrid = Ext.extend(Ext.grid.GridPanel, {
 
     const config = {
       name: 'grants',
-      allowBlank: false,
       disableSelection: true,
       layout: 'fit',
       height: 150,
@@ -976,7 +976,17 @@ SM.Manage.Collection.UsersGrid = Ext.extend(Ext.grid.GridPanel, {
         sortable: true,
         renderer: function (v, m, r) {
           const icon = 'sm-user-icon'
-          return `<div class="x-combo-list-item ${icon} sm-combo-list-icon" exportValue="${r.data.displayName ?? ''}:${r.data.username ?? ''}"><span style="font-weight:600;">${r.data.displayName ?? ''}</span><br>${r.data.username ?? ''}</div>`
+          return `
+            <div class="sm-grid-cell-with-toolbar-2">
+              <div class="sm-dynamic-width">
+                <div class="sm-info">         
+                  <div class="x-combo-list-item ${icon} sm-combo-list-icon" exportValue="${r.data.displayName ?? ''}:${r.data.username ?? ''}"><span style="font-weight:600;">${r.data.displayName ?? ''}</span><br>${r.data.username ?? ''}</div>
+                </div>
+              </div>
+              <div class="sm-static-width" style="top: 25%">
+                <span class="sm-grid-cell-tool" style="padding-right:4px"><img data-action="showEffectiveAcl" ext:qtip="Show access" src="img/target.svg" width="14" height="14"></span>                
+              </div>
+            </div>`
         }
       },
       {
@@ -1003,19 +1013,16 @@ SM.Manage.Collection.UsersGrid = Ext.extend(Ext.grid.GridPanel, {
         renderer: (v) => SM.RoleStrings[v],
       }
     ]
-    const sm = new Ext.grid.RowSelectionModel({
-      singleSelect: true,
-      listeners: {
-        selectionchange: function (sm) {
-          if (sm.hasSelection()) {
-            viewAclBtn.setDisabled(false)
-          }
-          else {
-            viewAclBtn.setDisabled(true)
-          }
-        }
+
+    // function showEffectiveAcl  () {}
+
+    function cellclick(grid, rowIndex, columnIndex, e) {
+      if (e.target.tagName === "IMG") {
+        const r = grid.getStore().getAt(rowIndex)
+        const defaultAccess = r.data.accessLevel === 1 ? 'none' : 'rw'
+        SM.User.showCollectionAcl({ collectionId: _this.collectionId, userId: r.data.userId, defaultAccess })
       }
-    })
+    }
 
     const viewAclBtn = new Ext.Button({
       iconCls: 'sm-asset-icon',
@@ -1028,7 +1035,6 @@ SM.Manage.Collection.UsersGrid = Ext.extend(Ext.grid.GridPanel, {
       }
     })
 
-    const tbar = [viewAclBtn]
     const bbar = new Ext.Toolbar({
       items: [
         {
@@ -1048,17 +1054,17 @@ SM.Manage.Collection.UsersGrid = Ext.extend(Ext.grid.GridPanel, {
     })
 
     const config = {
-      isFormField: true,
       name: 'users',
       allowBlank: false,
+      disableSelection: true,
       stripeRows: true,
       layout: 'fit',
       height: 150,
       store,
       columns,
-      sm,
       view: new SM.ColumnFilters.GridView({
         emptyText: this.emptyText || 'No records to display',
+        cellSelectorDepth: 0,
         deferEmptyText: false,
         forceFit: true,
         markDirty: false,
@@ -1080,7 +1086,6 @@ SM.Manage.Collection.UsersGrid = Ext.extend(Ext.grid.GridPanel, {
         },
       }),
       bbar,
-      tbar,
       listeners: {
         viewready: function (grid) {
           // Setup the tooltip for column 'accessLevel'
@@ -1095,18 +1100,13 @@ SM.Manage.Collection.UsersGrid = Ext.extend(Ext.grid.GridPanel, {
               html: SM.TipContent.AccessLevels
             })
           }
-        }
+        },
+        cellclick
       },
 
       setValue: function (v) {
         store.loadData(v)
-      },
-      validator: function (v) { },
-      markInvalid: function () { },
-      clearInvalid: function () { },
-      isValid: function () { },
-      getName: () => this.name,
-      validate: function () { }
+      }
     }
 
     Ext.apply(this, Ext.apply(this.initialConfig, config))
