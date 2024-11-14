@@ -30,7 +30,7 @@ describe('DELETE - Collection ', function () {
 
         before(async function () {
           const testCollectionClone  = JSON.parse(JSON.stringify(requestBodies.resetTestCollection))
-          testCollectionClone.name = `Collection ` + Math.floor(Math.random() * 1000000)
+          testCollectionClone.name = `Collection ` + utils.getUUIDSubString()
           tempCollection = await utils.createTempCollection(testCollectionClone)
         })
 
@@ -105,7 +105,7 @@ describe('DELETE - Collection ', function () {
         let tempLabel = null
         beforeEach(async function () {
           const labelPost = JSON.parse(JSON.stringify(requestBodies.recreateCollectionLabel))
-          labelPost.name = `Label ` + Math.floor(Math.random() * 1000000)
+          labelPost.name = `Label ` + utils.getUUIDSubString(5)
           tempLabel = await utils.createCollectionLabel(reference.testCollection.collectionId, labelPost)
         })
         it('Delete a scrap collection scrap Label',async function () {
@@ -211,9 +211,8 @@ describe('DELETE - Collection ', function () {
 
           it("should return 200 when deleting a non-existent grant.",async function () {
 
-            const randomUserId = Math.floor(Math.random() * 1002230)
             const res = await chai.request(config.baseUrl)
-                .delete(`/collections/${reference.testCollection.collectionId}/grants/user/${randomUserId}`)
+                .delete(`/collections/${reference.testCollection.collectionId}/grants/user/${"1234321"}`)
                 .set('Authorization', `Bearer ${iteration.token}`)
             if(distinct.canModifyCollection === false){
               expect(res).to.have.status(403)

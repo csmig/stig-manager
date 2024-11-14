@@ -89,7 +89,7 @@ describe('PUT - Collection', function () {
 
           const putRequest = JSON.parse(JSON.stringify(requestBodies.replaceCollection))
           putRequest.grants.push(putRequest.grants[0])
-          putRequest.name = "TEST" + Math.floor(Math.random() * 100) + "-" + Math.floor(Math.random() * 100)
+          putRequest.name = "TEST" + utils.getUUIDSubString()
           const res = await chai.request(config.baseUrl)
               .put(`/collections/${reference.testCollection.collectionId}`)
               .set('Authorization', `Bearer ${iteration.token}`)
@@ -334,7 +334,7 @@ describe('PUT - Collection', function () {
             .post(`/user-groups?elevate=true`)
               .set('Authorization', `Bearer ${iteration.token}`)
               .send({
-                  "name": "temp" + Date.now(),
+                  "name": "temp" + utils.getUUIDSubString(20),
                   "description": "test",
                   "userIds": [
                     reference.lvl1User.userId

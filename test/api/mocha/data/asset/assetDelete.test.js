@@ -93,7 +93,7 @@ describe('DELETE - Asset', function () {
             .post('/assets')
             .set('Authorization', 'Bearer ' + iteration.token)
             .send({
-              name: 'TestAsset' + Date.now(),
+              name: 'TestAsset' + utils.getUUIDSubString(10),
               collectionId: reference.testCollection.collectionId,
               description: 'test',
               ip: '1.1.1.1',

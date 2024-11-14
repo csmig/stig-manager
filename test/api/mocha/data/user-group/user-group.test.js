@@ -201,7 +201,7 @@ describe('user-group', () => {
             
             it("should return empty 200, usergroupId doesnt exist", async () => {
 
-                randomUserGroupId = Math.floor(Math.random() * 1022)
+                randomUserGroupId = "1234321"
                 const res = await chai
                     .request(config.baseUrl)
                     .patch(`/user-groups/${randomUserGroupId}?elevate=true`)

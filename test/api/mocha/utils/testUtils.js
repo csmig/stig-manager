@@ -3,7 +3,7 @@ const config = require('../testConfig.json')
 const FormData = require('form-data')
 const fs = require('fs')
 const path = require('path')
-
+const { v4: uuidv4 } = require('uuid')
 const adminToken = config.adminToken
 
 // canidate for a function? (used to store responses for a test (metrics))
@@ -15,6 +15,10 @@ const metricsOutputToJSON = (testCaseName, username, responseData, outputJsonFil
   }
   metricsData[testCaseName][username] = responseData
   fs.writeFileSync(metricsFilePath, JSON.stringify(metricsData, null, 2), 'utf8')
+}
+
+const getUUIDSubString = (length = 20) => {
+  return uuidv4().substring(0, length)
 }
 
 const loadAppData = async (appdataFileName = 'appdata.jsonl') => {
@@ -43,7 +47,7 @@ const createTempCollection = async (collectionPost) => {
     if (!collectionPost) {
       collectionPost = 
         {
-          name: 'temoCollection' + Math.floor(Math.random() * 1000) + Date.now(),
+          name: 'temoCollection' + getUUIDSubString(),
           description: 'Collection TEST description',
           settings: {
             fields: {
@@ -127,7 +131,7 @@ const deleteCollection = async (collectionId) => {
 const createTempAsset = async asset => {
   if (!asset) {
     asset = {
-      name: 'tempAsset' + Date.now(),
+      name: 'tempAsset' + getUUIDSubString(),
       collectionId: "21",
       description: 'temp',
       ip: '1.1.1.1',
@@ -781,5 +785,6 @@ module.exports = {
   getStigByBenchmarkId,
   getCollection,
   uploadTestStig,
-  deleteStigByRevision
+  deleteStigByRevision,
+  getUUIDSubString
 }

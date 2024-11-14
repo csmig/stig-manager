@@ -80,7 +80,7 @@ describe('GET - Collection', function () {
         it('Return a list of Collections accessible to the requester METADATA param but with a colon character (see issue 1357)',async function () {
           const tempCollectionWithMetadata = await utils.createTempCollection(
             {
-              name: 'tempCollection' + Math.floor(Math.random() * 1000),
+              name: 'tempCollection' +  utils.getUUIDSubString(),
               description: 'Collection TEST description',
               settings: {
                 fields: {
@@ -472,9 +472,8 @@ describe('GET - Collection', function () {
         })
 
         it("should return Error, userID doesnt exist ",async function () {
-          const randomUserId = Math.floor(Math.random() * 1002230)
           const res = await chai.request(config.baseUrl)
-          .get(`/collections/${reference.testCollection.collectionId}/grants/user/${randomUserId}`)
+          .get(`/collections/${reference.testCollection.collectionId}/grants/user/${"1234321"}`)
               .set('Authorization', `Bearer ${iteration.token}`)
               .send({
                 "accessLevel": 1
@@ -561,9 +560,8 @@ describe('GET - Collection', function () {
         })
         it("should return SmError.UnprocessableError because the user has no direct grant in the collection",async function () {
 
-          const random = Math.floor(Math.random() * 1002230)
           const res = await chai.request(config.baseUrl)
-            .get(`/collections/${reference.testCollection.collectionId}/grants/user/${random}/access/effective`)
+            .get(`/collections/${reference.testCollection.collectionId}/grants/user/${"1234321"}/access/effective`)
             .set('Authorization', `Bearer ${iteration.token}`)
             if (distinct.grant === "none" || distinct.canModifyCollection === false){
               expect(res).to.have.status(403)
@@ -723,7 +721,7 @@ describe('GET - Collection', function () {
         it('should return empty 200 reponse, collection does not have metadata',async function () {
           
           const collectionNoMetadata = await utils.createTempCollection( {
-            name: 'temoCollection' + Math.floor(Math.random() * 1000),
+            name: 'temoCollection' + utils.getUUIDSubString(),
             description: 'Collection TEST description',
             settings: {
               fields: {

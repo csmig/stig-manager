@@ -198,7 +198,7 @@ describe('POST - createCollection - /collections', () => {
         it('Invalid fields.detail.required value', async () => {
 
             const postRequest = {
-                "name": "TEST_" + Math.random().toString(36).substring(7),
+                "name": "TEST_" + utils.getUUIDSubString(10),
                 "description": "Collection TEST description",
                 "settings": {
                     "fields": {
@@ -348,7 +348,7 @@ describe('POST - cloneCollection - /collections/{collectionId}/clone - test vari
                     .post(`/collections/${reference.testCollection.collectionId}/clone?projection=assets&projection=grants&projection=owners&projection=statistics&projection=stigs&projection=labels`)
                     .set('Authorization', `Bearer ${user.token}`)
                     .send({
-                        "name": "Clone_X" + Math.random().toString(36).substring(7),
+                        "name": "Clone_X" + utils.getUUIDSubString(10),
                         "description": "clone of test collection x",
                         "options": {
                           "grants": true,
@@ -427,7 +427,7 @@ describe('POST - cloneCollection - /collections/{collectionId}/clone - test vari
                 .post(`/collections/${reference.testCollection.collectionId}/clone?projection=assets&projection=grants&projection=owners&projection=statistics&projection=stigs&projection=labels`)
                 .set('Authorization', `Bearer ${user.token}`)
                 .send({
-                    "name": "Clone_X" + Math.random().toString(36).substring(7),
+                    "name": "Clone_X" + utils.getUUIDSubString(10),
                     "description": "clone of test collection x",
                     "options": {
                       "grants": false,
@@ -515,7 +515,7 @@ describe('POST - cloneCollection - /collections/{collectionId}/clone - test vari
                     .post(`/collections/${reference.testCollection.collectionId}/clone?projection=assets&projection=grants&projection=owners&projection=statistics&projection=stigs&projection=labels`)
                     .set('Authorization', `Bearer ${user.token}`)
                     .send({
-                        "name": "Clone_X" + Math.random().toString(36).substring(7),
+                        "name": "Clone_X" + utils.getUUIDSubString(10),
                         "description": "clone of test collection x",
                         "options": {
                           "grants": true,
@@ -597,7 +597,7 @@ describe('POST - cloneCollection - /collections/{collectionId}/clone - test vari
                     .post(`/collections/${reference.testCollection.collectionId}/clone?projection=assets&projection=grants&projection=owners&projection=statistics&projection=stigs&projection=labels`)
                     .set('Authorization', `Bearer ${user.token}`)
                     .send({
-                        "name": "Clone_X" + Math.random().toString(36).substring(7),
+                        "name": "Clone_X" + utils.getUUIDSubString(10),
                         "description": "clone of test collection x",
                         "options": {
                           "grants": true,
@@ -693,7 +693,7 @@ describe('POST - cloneCollection - /collections/{collectionId}/clone - test vari
                     .post(`/collections/${reference.testCollection.collectionId}/clone?projection=assets&projection=grants&projection=owners&projection=statistics&projection=stigs&projection=labels`)
                     .set('Authorization', `Bearer ${user.token}`)
                     .send({
-                        "name": "Clone_X" + Math.random().toString(36).substring(7),
+                        "name": "Clone_X" + utils.getUUIDSubString(10),
                         "description": "clone of test collection x",
                         "options": {
                           "grants": true,
@@ -775,7 +775,7 @@ describe('POST - cloneCollection - /collections/{collectionId}/clone - test vari
                     .post(`/collections/${reference.testCollection.collectionId}/clone?projection=assets&projection=grants&projection=owners&projection=statistics&projection=stigs&projection=labels`)
                     .set('Authorization', `Bearer ${user.token}`)
                     .send({
-                        "name": "Clone_X" + Math.random().toString(36).substring(7),
+                        "name": "Clone_X" + utils.getUUIDSubString(10),
                         "description": "clone of test collection x",
                         "options": {
                           "grants": true,
@@ -854,7 +854,7 @@ describe('POST - cloneCollection - /collections/{collectionId}/clone - test vari
                     .post(`/collections/${reference.testCollection.collectionId}/clone?projection=assets&projection=grants&projection=owners&projection=statistics&projection=stigs&projection=labels`)
                     .set('Authorization', `Bearer ${user.token}`)
                     .send({
-                        "name": "Clone_X" + Math.random().toString(36).substring(7),
+                        "name": "Clone_X" + utils.getUUIDSubString(10),
                         "description": "clone of test collection x",
                         "options": {
                           "grants": true,
@@ -941,7 +941,7 @@ describe('POST - cloneCollection - /collections/{collectionId}/clone - test vari
                     .post(`/collections/${reference.testCollection.collectionId}/clone?projection=assets&projection=grants&projection=owners&projection=statistics&projection=stigs&projection=labels`)
                     .set('Authorization', `Bearer ${user.token}`)
                     .send({
-                        "name": "Clone_X" + Math.random().toString(36).substring(7),
+                        "name": "Clone_X" + utils.getUUIDSubString(10),
                         "description": "clone of test collection x",
                         "options": {
                           "grants": true,
@@ -984,7 +984,7 @@ describe('POST - cloneCollection - /collections/{collectionId}/clone - test vari
                     .post(`/collections/${reference.testCollection.collectionId}/clone?projection=assets&projection=grants&projection=owners&projection=statistics&projection=stigs&projection=labels`)
                     .set('Authorization', `Bearer ${lvl4.token}`)
                     .send({
-                        "name": "Clone_X" + Math.random().toString(36).substring(7),
+                        "name": "Clone_X" + utils.getUUIDSubString(10),
                         "description": "clone of test collection x",
                         "options": {
                           "grants": true,
@@ -1002,7 +1002,7 @@ describe('POST - cloneCollection - /collections/{collectionId}/clone - test vari
                     .post(`/collections/${reference.testCollection.collectionId}/clone?projection=assets&projection=grants&projection=owners&projection=statistics&projection=stigs&projection=labels`)
                     .set('Authorization', `Bearer ${collectioncreator.token}`)
                     .send({
-                        "name": "Clone_X" + Math.random().toString(36).substring(7),
+                        "name": "Clone_X" + utils.getUUIDSubString(10),
                         "description": "clone of test collection x",
                         "options": {
                           "grants": true,
@@ -1606,7 +1606,7 @@ describe('GET - putAssetsByCollectionLabelId - /collections/{collectionId}/label
                 .post(`/assets?projection=stigs`)
                 .set('Authorization', `Bearer ${user.token}`)
                 .send({
-                    "name": 'TestAsset' + Math.floor(Math.random() * 1000),
+                    "name": "testAsset" + utils.getUUIDSubString(10),
                     "collectionId": reference.scrapCollection.collectionId,
                     "description": "test desc",
                     "ip": "1.1.1.1",
@@ -1638,7 +1638,7 @@ describe('GET - putAssetsByCollectionLabelId - /collections/{collectionId}/label
                 .put(`/assets/${reference.scrapAsset.assetId}`)
                 .set('Authorization', `Bearer ${user.token}`)
                 .send({
-                    "name": 'TestAsset' + Math.floor(Math.random() * 1000),
+                    "name": utils.getUUIDSubString(10),
                     "collectionId": reference.scrapCollection.collectionId,
                     "description": "test desc",
                     "ip": "1.1.1.1",

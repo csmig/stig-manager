@@ -29,7 +29,7 @@ describe('DELETE - deleteAsset - /assets/{assetId} - DELETE - deleteCollection -
                 .post("/collections?elevate=true&projection=grants&projection=labels")
                 .set("Authorization", `Bearer ${user.token}`)
                 .send({
-                    "name": "TEST_" + Math.floor(Math.random() * 1000),
+                    "name": "TEST_"+ utils.getUUIDSubString(),
                     "description": "Collection TEST description",
                     "settings": {
                         "fields": {
@@ -85,7 +85,7 @@ describe('DELETE - deleteAsset - /assets/{assetId} - DELETE - deleteCollection -
                 .post(`/assets?projection=stigs`)
                 .set("Authorization", `Bearer ${user.token}`)
                 .send({
-                    "name": "TEST_" + Math.floor(Math.random() * 1000),
+                    "name": "TEST_"+ utils.getUUIDSubString(10),
                     "collectionId": collectionToDelete,
                     "description": "test desc",
                     "ip": "1.1.1.1",
@@ -223,7 +223,7 @@ describe('DELETE - deleteAsset - /assets/{assetId} - DELETE - deleteCollection -
                 .post(`/assets?projection=stigs`)
                 .set("Authorization", `Bearer ${user.token}`)
                 .send({
-                    "name": "TEST_" + Math.floor(Math.random() * 1000),
+                    "name": "TEST_"+ utils.getUUIDSubString(10),
                     "collectionId": deletedCollection,
                     "description": "test desc",
                     "ip": "1.1.1.1",
