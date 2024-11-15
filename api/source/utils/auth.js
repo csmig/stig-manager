@@ -60,7 +60,7 @@ const verifyRequest = async function (req, requiredScopes, securityDefinition) {
         throw(new SmError.PrivilegeError("User has insufficient privilege to complete this request."))
     }
 
-    const userObject = await UserService.getUserObject(username) ?? {} 
+    const userObject = await UserService.getUserObject(username) ?? {username} 
     
     const refreshFields = {}
     let now = new Date().toUTCString()

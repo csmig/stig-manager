@@ -1251,7 +1251,7 @@ module.exports.putGrantByCollectionGrant = async function (req, res, next) {
       throw new SmError.PrivilegeError('cannot create owner grants')
     }
     
-    await CollectionService.putGrantById(grantId, grant)
+    await CollectionService.putGrantById({grantId, grant, isRoleChange: currentGrant.accessLevel !== grant.accessLevel, svcStatus: res.svcStatus})
     const updatedGrant = await CollectionService._getCollectionGrant({collectionId, grantId})
     res.json(updatedGrant)
   }

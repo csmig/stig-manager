@@ -2746,13 +2746,28 @@ exports._getCollectionGrant = async function ({collectionId, grantId, grantIds, 
   return grants.length > 1 ? grants : grants[0]
 }
 
-exports.putGrantById = function (grantId, grant) {
-  const sql = `UPDATE collection_grant SET 
-  userId = ?,
-  userGroupId = ?,
-  accessLevel = ?
-  where grantId = ?`
-  return dbUtils.pool.query(sql, [grant.userId, grant.userGroupId, grant.accessLevel, grantId])
+exports.putGrantById = function ({grantId, grant, isRoleChange = false, svcStatus = {}}) {
+
+  const sqlUpdate = `UPDATE collection_grant SET userId = ?,userGroupId = ?,accessLevel = ? where grantId = ?`
+  const bindsUpdate = [grant.userId, grant.userGroupId, grant.accessLevel, grantId]
+
+  if (isRoleChange) {
+    // do transaction
+    async function transactionFn (connection) {  
+      const sqlDelete = `DELETE from collection_grant_acl WHERE grantId = ?`
+      await connection.query(sqlDelete, [grantId])
+      await connection.query(sqlUpdate, bindsUpdate)
+    }
+    
+    return dbUtils.retryOnDeadlock2({
+      transactionFn, 
+      statusObj: svcStatus
+    })
+  
+  }
+  else {
+    return dbUtils.pool.query(sqlUpdate, bindsUpdate)
+  }
 }
 
 exports.deleteGrantById = async function (grantId) {
