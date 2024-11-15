@@ -171,11 +171,13 @@ describe('POST - Collection - not all tests run for all iterations', function ()
         before(async function () {
           await utils.setDefaultRevision(reference.testCollection.collectionId, reference.benchmark, reference.testCollection.pinRevision)
         })
+
+        let clonedCollection = null
         it("Clone test collection and check that cloned collection matches source ",async function () {
 
           const res = await chai
             .request(config.baseUrl)
-            .post(`/collections/${reference.testCollection.collectionId}/clone?projection=assets&projection=grants&projection=owners&projection=statistics&projection=stigs&projection=labels`)
+            .post(`/collections/${reference.testCollection.collectionId}/clone?projection=assets&projection=grants&projection=owners&projection=statistics&projection=stigs&projection=labels&projection=users`)
             .set("Authorization", `Bearer ${iteration.token}`)
             .send({
               name:"Clone_" + utils.getUUIDSubString() + "_X",
@@ -201,8 +203,10 @@ describe('POST - Collection - not all tests run for all iterations', function ()
                     let messageObj = JSON.parse(message)
                     if(messageObj.stage == "result"){
                         clonedCollectionId = messageObj.collection.collectionId
+                        clonedCollection = messageObj.collection.collectionId
                         // assets 
                         expect(messageObj.collection.assets).to.have.lengthOf(reference.testCollection.assetsProjected.length)
+                        expect(message.grants).to.equal(message.users)
 
                         for(const asset of messageObj.collection.assets){
                           expect(asset.name).to.be.oneOf(reference.testCollection.assetsProjected.map(a => a.name))
@@ -233,6 +237,16 @@ describe('POST - Collection - not all tests run for all iterations', function ()
                         for(const label of messageObj.collection.labels){
                             expect(label.name).to.be.oneOf(reference.testCollection.labelsProjected.map(l => l.name))
                         }
+
+                        // confirm that ACLs have been transfered. will check with the testGroup acl in new collection 
+                        const testGroupGrantId = messageObj.collection.grants.find(g => g.userGroup?.userGroupId === reference.testCollection.testGroup.userGroupId).grantId
+
+                        const acl = await chai.request(config.baseUrl)
+                          .get(`/collections/${clonedCollection}/grants/${testGroupGrantId}/acl`)
+                          .set("Authorization", `Bearer ${iteration.token}`)
+                        expect(acl).to.have.status(200)
+                        expect(acl.body.acl).to.have.lengthOf(3)
+                     
                     }
                 }
             }
