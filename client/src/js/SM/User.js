@@ -1322,7 +1322,7 @@ SM.User.CollectionAclGrid = Ext.extend(Ext.grid.GridPanel, {
       const store = new Ext.data.JsonStore({
         autoLoad: true,
         proxy: new Ext.data.HttpProxy({
-          url: `${STIGMAN.Env.apiBase}/collections/${this.collectionId}/grants/user/${this.userId}/access/effective`,
+          url: `${STIGMAN.Env.apiBase}/collections/${this.collectionId}/users/${this.userId}/access`,
           method: 'GET'
         }),
         root: '',

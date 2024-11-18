@@ -590,7 +590,7 @@ SM.Acl.showAccess = async function(collectionId, grantRecord) {
               try {
                 let values = assignmentPanel.assignmentGrid.getValue()
                 let url, method
-                url = `${STIGMAN.Env.apiBase}/collections/${collectionId}/grants/${grantRecord.granteeType}/${grantRecord.granteeId}/access`
+                url = `${STIGMAN.Env.apiBase}/collections/${collectionId}/grants/${grantRecord.grantId}/acl`
                 method = 'PUT'
                 await Ext.Ajax.requestPromise({
                   url: url,
@@ -612,11 +612,9 @@ SM.Acl.showAccess = async function(collectionId, grantRecord) {
       assignmentPanel.appwindow = appwindow
       appwindow.render(Ext.getBody())
 
-      const granteeType = grantRecord.user ? 'user' : 'user-group'
-      const granteeId = grantRecord.user ? grantRecord.user.userId : grantRecord.userGroup.userGroupId
       const apiAccess = await Ext.Ajax.requestPromise({
         responseType: 'json',
-          url: `${STIGMAN.Env.apiBase}/collections/${collectionId}/grants/${granteeType}/${granteeId}/access`,
+          url: `${STIGMAN.Env.apiBase}/collections/${collectionId}/grants/${grantRecord.grantId}/acl`,
           method: 'GET'
       })
       assignmentPanel.assignmentGrid.setValue(apiAccess.acl)

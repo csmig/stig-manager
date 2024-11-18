@@ -491,7 +491,7 @@ SM.Grant.NewGrantPanel = Ext.extend(Ext.Panel, {
 
     const grantGrid = new SM.Grant.GrantGrid({
       title: 'New Grants',
-      width: 320,
+      // emptyText: 'An Owner grant is required',
       iconCls: 'sm-lock-icon',
       headerCssClass: 'sm-selections-panel-header',
       role: 'selections',
@@ -611,7 +611,6 @@ SM.Grant.NewGrantPanel = Ext.extend(Ext.Panel, {
       layoutConfig: {
         align: 'stretch'
       },
-      name: 'users',
       border: false,
       items: [
         granteeTp,
@@ -619,7 +618,9 @@ SM.Grant.NewGrantPanel = Ext.extend(Ext.Panel, {
         grantGrid
       ],
       granteeTp,
-      grantGrid
+      grantGrid,
+      buttonPanel,
+      roleComboBox
     }
     Ext.apply(this, Ext.apply(this.initialConfig, config))
     this.superclass().initComponent.call(this)

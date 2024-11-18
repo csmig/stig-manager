@@ -6,263 +6,66 @@ function addCollectionAdmin( params ) {
 		return
 	}
 
-  const fields = Ext.data.Record.create([
-    {
-      name: 'collectionId',
-      type: 'string'
-    },
-    {
-      name: 'name',
-      type: 'string'
-    },
-    {
-      name: 'description',
-      type: 'string'
-    },
-    {
-      name: 'metadata'
-    },
-    {
-      name: 'owners'
-    },
-    {
-      name: 'assets',
-      type: 'integer',
-      mapping: 'statistics.assetCount'
-    },
-    {
-      name: 'users',
-      type: 'integer',
-      mapping: 'statistics.userCount'
-    },
-    {
-      name: 'checklists',
-      type: 'integer',
-      mapping: 'statistics.checklistCount'
-    },
-    {
-      name: 'created',
-      type: 'date',
-      mapping: 'statistics.created'
-    }
-  ])
-  const store = new Ext.data.JsonStore({
-    proxy: new Ext.data.HttpProxy({
-      url: `${STIGMAN.Env.apiBase}/collections`,
-      method: 'GET'
-    }),
-    baseParams: {
-      elevate: curUser.privileges.canAdmin,
-      projection: ['owners', 'statistics']
-    },
-    root: '',
-    fields: fields,
-    isLoaded: false, // custom property
-    idProperty: 'collectionId',
-    sortInfo: {
-      field: 'name',
-      direction: 'ASC' // or 'DESC' (case sensitive for local sorting)
-    },
-    listeners: {
-      load: function (store, records) {
-        store.isLoaded = true;
-        // collectionGrid.getSelectionModel().selectFirstRow();
-      }
-    }
-  })
-
-  const totalTextCmp = new SM.RowCountTextItem({store:store})
-
-  const collectionGrid = new Ext.grid.GridPanel({
+  const collectionGrid = new SM.Manage.Collection.AdminGrid({
     cls: 'sm-round-panel',
-    // margins: { top: SM.Margin.top, right: SM.Margin.edge, bottom: SM.Margin.bottom, left: SM.Margin.edge },
+		margins: { top: SM.Margin.top, right: SM.Margin.edge, bottom: SM.Margin.bottom, left: SM.Margin.edge },
     region: 'center',
-    id: 'collectionGrid',
-    store: store,
-    border: true,
+    border: false,
     stripeRows: true,
-    sm: new Ext.grid.RowSelectionModel({ singleSelect: true }),
-    columns: [
-      {
-        header: "Name",
-        width: 150,
-        dataIndex: 'name',
-        sortable: true,
-        filter: {type: 'string'}
-      },
-      {
-        header: "Description",
-        width: 300,
-        dataIndex: 'description',
-        sortable: true,
-        filter: {type: 'string'}
-      },
-      {
-        header: "Owners",
-        width: 150,
-        dataIndex: 'owners',
-        sortable: true,
-        renderer: function (v) {
-          v = v.map(v => v.username).join('\n')
-          return columnWrap.apply(this, arguments)
-        }
-      },
-      {
-        header: "Users",
-        width: 150,
-        dataIndex: 'users',
-        sortable: true
-      },
-      {
-        header: "Assets",
-        width: 150,
-        dataIndex: 'assets',
-        sortable: true
-      },
-      {
-        header: "Checklists",
-        width: 150,
-        dataIndex: 'checklists',
-        sortable: true
-      },
-      {
-        header: "Created",
-        xtype: 'datecolumn',
-        format: 'Y-m-d H:i T',
-        width: 150,
-        dataIndex: 'created',
-        sortable: true
-      },
-      {
-        header: "ID",
-        width: 150,
-        dataIndex: 'collectionId',
-        sortable: true
-      }
-
-    ],
-    view: new SM.ColumnFilters.GridView({
-      forceFit: true,
-      // These listeners keep the grid in the same scroll position after the store is reloaded
-      listeners: {
-        filterschanged: function (view, item, value) {
-          store.filter(view.getFilterFns())  
-        },
-        beforerefresh: function (v) {
-          v.scrollTop = v.scroller.dom.scrollTop;
-          v.scrollHeight = v.scroller.dom.scrollHeight;
-        },
-        refresh: function (v) {
-          setTimeout(function () {
-            v.scroller.dom.scrollTop = v.scrollTop + (v.scrollTop == 0 ? 0 : v.scroller.dom.scrollHeight - v.scrollHeight);
-          }, 100);
-        }
-      },
-      deferEmptyText: false
-    }),
     listeners: {
-      rowdblclick: {
-        fn: function (grid, rowIndex, e) {
-          var r = grid.getStore().getAt(rowIndex);
-          showCollectionProps(r.get('collectionId'));
-        }
+      rowclick: function (grid, rowIndex) {
+        const r = grid.getStore().getAt(rowIndex)
+        loadAdminPropertiesPanel(r.data.collectionId)
       }
-    },
-    tbar: [{
-      iconCls: 'icon-add',
-      text: 'New Collection',
-      disabled: !(curUser.privileges.canAdmin),
-      handler: function () {
-        showCollectionProps(0);
-      }
-    }, '-', {
-      ref: '../removeBtn',
-      iconCls: 'icon-del',
-      text: 'Delete Collection',
-      disabled: !(curUser.privileges.canAdmin),
-      handler: function () {
-        let record = collectionGrid.getSelectionModel().getSelected();
-        let confirmStr = "Delete collection, " + record.data.name + "?";
-
-        Ext.Msg.confirm("Confirm", confirmStr, async function (btn, text) {
-          try {
-            if (btn == 'yes') {
-              Ext.getBody().mask('Deleting collection')
-              await Ext.Ajax.requestPromise({
-                url: `${STIGMAN.Env.apiBase}/collections/${record.data.collectionId}?elevate=true`,
-                method: 'DELETE'
-              })
-              SM.Dispatcher.fireEvent( 'collectiondeleted', record.data.collectionId )
-            }
-          }
-          catch (e) {
-            SM.Error.handleError(e)
-          }
-          finally {
-            Ext.getBody().unmask()
-          }
-        });
-      }
-    }, '-', {
-      iconCls: 'icon-edit',
-      text: 'Collection Properties',
-      handler: function () {
-        var r = collectionGrid.getSelectionModel().getSelected();
-        showCollectionProps(r.get('collectionId'));
-      }
-    }],
-    bbar: new Ext.Toolbar({
-      items: [
-        {
-          xtype: 'tbbutton',
-          iconCls: 'icon-refresh',
-          tooltip: 'Reload this grid',
-          width: 20,
-          handler: function (btn) {
-            collectionGrid.getStore().reload();
-          }
-        },
-        {
-          xtype: 'tbseparator'
-        }, 
-        {
-          xtype: 'exportbutton',
-          hasMenu: false,
-          gridBasename: 'Collection-Info',
-          exportType: 'grid',
-          iconCls: 'sm-export-icon',
-          text: 'CSV'
-        },
-        {
-          xtype: 'tbfill'
-        },
-        {
-          xtype: 'tbseparator'
-        },
-        totalTextCmp
-      ]
-    }),
-    width: '50%',
-    loadMask: {msg: ''}
+    }
   })
 
-  // These handlers reload the entire store and should be revisited
+  async function loadAdminPropertiesPanel(collectionId) {
+    const el = adminPropsPanel.getEl()
+    try {
+      el.mask('')
+      const apiCollection = await Ext.Ajax.requestPromise({
+        responseType: 'json',
+        url: `${STIGMAN.Env.apiBase}/collections/${collectionId}`,
+        params: {
+          elevate: true,
+          projection: 'grants'
+        },
+        method: 'GET'
+      })
+      adminPropsPanel.setFieldValues(apiCollection)
+    }
+    finally {
+      el.unmask()
+      el.removeClass('sm-vbox-disabled')
+    }
+  }
+
+  const adminPropsPanel = new SM.Manage.Collection.AdminPropertiesPanel({
+    title: 'Properties',
+    cls: 'sm-round-panel sm-vbox-disabled',
+    region: 'east',
+		margins: { top: SM.Margin.top, right: SM.Margin.edge, bottom: SM.Margin.bottom, left: SM.Margin.edge },
+    width: 300,
+    split: true
+  })
+
   function onCollectionChanged (apiCollection) {
-    store.reload()
+    collectionGrid.store.reload()
     // store.loadData(apiCollection, true)
     // const sortState = store.getSortState()
     // store.sort(sortState.field, sortState.direction)
     // collectionGrid.getSelectionModel().selectRow(store.findExact('collectionId',apiCollection.collectionId))
   }
   function onCollectionCreated (apiCollection) {
-    store.reload()
+    collectionGrid.store.reload()
     // store.loadData(apiCollection, true)
     // const sortState = store.getSortState()
     // store.sort(sortState.field, sortState.direction)
     // collectionGrid.getSelectionModel().selectRow(store.findExact('collectionId',apiCollection.collectionId))
   }
   function onCollectionDeleted (collectionId) {
-    store.reload()
+    collectionGrid.store.reload()
     // store.removeAt(store.indexOfId(collectionId))
   }
   
@@ -276,9 +79,9 @@ function addCollectionAdmin( params ) {
     iconCls: 'sm-collection-icon',
     title: 'Collections',
     closable: true,
-    layout: 'fit',
+    layout: 'border',
     border: false,
-    items: [collectionGrid],
+    items: [collectionGrid, adminPropsPanel],
     listeners: {
       beforedestroy: function () {
         SM.Dispatcher.removeListener('collectionchanged', onCollectionChanged)
@@ -292,17 +95,15 @@ function addCollectionAdmin( params ) {
   collectionGrid.getStore().load()
 }
 
-async function showCollectionProps(collectionId) {
+async function showAdminCreatePanel() {
   try {
-    let fp = new SM.Manage.Collection.FormPanel({
-      showGrantsOnly: true,
-      btnText: collectionId ? 'Update' : 'Create',
+    const adminCreatePanel = new SM.Manage.Collection.AdminCreatePanel({
       btnHandler: async () => {
         try {
-          let values = fp.getForm().getFieldValues()
+          let values = adminCreatePanel.getFieldValues()
           await SM.Manage.Collection.ApiAddOrUpdate(collectionId, values, {
             elevate: true,
-            showManager: true
+            showManager: false
           })
           appwindow.close()
         }
@@ -314,39 +115,25 @@ async function showCollectionProps(collectionId) {
             }
             else {
               appwindow.close()
-              await SM.Error.handleError(e)
+              SM.Error.handleError(e)
             }
           }
         }
       }
     })
 
-    if (collectionId) {
-      const apiCollection = await Ext.Ajax.requestPromise({
-        responseType: 'json',
-        url: `${STIGMAN.Env.apiBase}/collections/${collectionId}`,
-        params: {
-          elevate: curUser.privileges.canAdmin,
-          projection: ['grants', 'labels']
-        },
-        method: 'GET'
-      })
-      SM.Cache.updateCollection(apiCollection)
-
-      fp.setFieldValues(apiCollection)
-    }
-    let appwindow = new Ext.Window({
+    const appwindow = new Ext.Window({
       id: 'window-project-info',
       cls: 'sm-dialog-window sm-round-panel',
-      title: collectionId ? 'Modify Collection' : 'Create Collection',
+      title: 'Create Collection',
       modal: true,
-      width: 460,
+      width: 800,
       height: 560,
       layout: 'fit',
       plain: false,
       // bodyStyle: 'padding:5px;',
       buttonAlign: 'right',
-      items: fp
+      items: adminCreatePanel
     })
 
     appwindow.show(document.body)

@@ -2466,3 +2466,7 @@ td.x-grid3-hd-over .x-grid3-hd-inner {
   background-position: right 23px center;
 
 }
+
+.sm-vbox-disabled .x-box-inner {
+	filter: opacity(0.25)
+}

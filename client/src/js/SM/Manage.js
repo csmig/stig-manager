@@ -902,7 +902,6 @@ SM.Manage.Collection.GrantsGrid = Ext.extend(Ext.grid.GridPanel, {
       name: 'grants',
       disableSelection: true,
       layout: 'fit',
-      height: 150,
       store,
       colModel,
       view,
@@ -1114,36 +1113,267 @@ SM.Manage.Collection.UsersGrid = Ext.extend(Ext.grid.GridPanel, {
   }
 })
 
-SM.Manage.Collection.FormPanel = Ext.extend(Ext.form.FormPanel, {
+SM.Manage.Collection.AdminGrid = Ext.extend(Ext.grid.GridPanel, {
   initComponent: function () {
-    this.showGrantsOnly = this.showGrantsOnly ?? false
+    const fields = [
+      'collectionId',
+      'name',
+      'description',
+      'metadata',
+      'owners',
+      {
+        name: 'assets',
+        type: 'integer',
+        mapping: 'statistics.assetCount'
+      },
+      {
+        name: 'users',
+        type: 'integer',
+        mapping: 'statistics.userCount'
+      },
+      {
+        name: 'checklists',
+        type: 'integer',
+        mapping: 'statistics.checklistCount'
+      },
+      {
+        name: 'created',
+        type: 'date',
+        mapping: 'statistics.created'
+      }
+    ]
+    const store = new Ext.data.JsonStore({
+      proxy: new Ext.data.HttpProxy({
+        url: `${STIGMAN.Env.apiBase}/collections`,
+        method: 'GET'
+      }),
+      baseParams: {
+        elevate: curUser.privileges.canAdmin,
+        projection: ['owners', 'statistics']
+      },
+      root: '',
+      fields,
+      isLoaded: false, // custom property
+      idProperty: 'collectionId',
+      sortInfo: {
+        field: 'name',
+        direction: 'ASC' // or 'DESC' (case sensitive for local sorting)
+      },
+      listeners: {
+        load: function (store, records) {
+          store.isLoaded = true
+        }
+      }
+    })
+
+    const colModel = new Ext.grid.ColumnModel([
+      {
+        header: "Name",
+        width: 150,
+        dataIndex: 'name',
+        sortable: true,
+        filter: {type: 'string'}
+      },
+      {
+        header: "Description",
+        hidden: true,
+        width: 300,
+        dataIndex: 'description',
+        sortable: true,
+        filter: {type: 'string'}
+      },
+      {
+        header: "Owners",
+        width: 150,
+        dataIndex: 'owners',
+        sortable: true,
+        renderer: function (v) {
+          // assigning to v, used elsewhere, does not work here? v = v.map(i => i.username).join('\n')
+          arguments[0] = v.map(u => u.username).join('\n')
+          return columnWrap.apply(this, arguments)
+        }
+      },
+      {
+        header: "Users",
+        width: 150,
+        dataIndex: 'users',
+        sortable: true
+      },
+      {
+        header: "Assets",
+        width: 150,
+        dataIndex: 'assets',
+        sortable: true
+      },
+      {
+        header: "Checklists",
+        width: 150,
+        dataIndex: 'checklists',
+        sortable: true
+      },
+      {
+        header: "Created",
+        xtype: 'datecolumn',
+        format: 'Y-m-d H:i T',
+        width: 150,
+        dataIndex: 'created',
+        sortable: true
+      },
+      {
+        header: "ID",
+        width: 150,
+        dataIndex: 'collectionId',
+        sortable: true
+      }
+    ])
+
+    const view = new SM.ColumnFilters.GridView({
+      forceFit: true,
+      // These listeners keep the grid in the same scroll position after the store is reloaded
+      listeners: {
+        filterschanged: function (view, item, value) {
+          store.filter(view.getFilterFns())  
+        },
+        beforerefresh: function (v) {
+          v.scrollTop = v.scroller.dom.scrollTop;
+          v.scrollHeight = v.scroller.dom.scrollHeight;
+        },
+        refresh: function (v) {
+          setTimeout(function () {
+            v.scroller.dom.scrollTop = v.scrollTop + (v.scrollTop == 0 ? 0 : v.scroller.dom.scrollHeight - v.scrollHeight);
+          }, 100);
+        }
+      },
+      deferEmptyText: false
+    })
+
+    const selModel = new Ext.grid.RowSelectionModel({ singleSelect: true })
+    const totalTextCmp = new SM.RowCountTextItem({store})
+
+    const tbar = new Ext.Toolbar({
+      items: [
+        {
+          iconCls: 'icon-add',
+          text: 'New Collection',
+          disabled: !(curUser.privileges.canAdmin),
+          handler: function () {
+            showAdminCreatePanel(0);
+          }
+        },
+        '-',
+        {
+          ref: '../removeBtn',
+          iconCls: 'icon-del',
+          text: 'Delete Collection',
+          disabled: !(curUser.privileges.canAdmin),
+          handler: function () {
+            let record = collectionGrid.getSelectionModel().getSelected();
+            let confirmStr = "Delete collection, " + record.data.name + "?";
+
+            Ext.Msg.confirm("Confirm", confirmStr, async function (btn, text) {
+              try {
+                if (btn == 'yes') {
+                  Ext.getBody().mask('Deleting collection')
+                  await Ext.Ajax.requestPromise({
+                    url: `${STIGMAN.Env.apiBase}/collections/${record.data.collectionId}?elevate=true`,
+                    method: 'DELETE'
+                  })
+                  SM.Dispatcher.fireEvent( 'collectiondeleted', record.data.collectionId )
+                }
+              }
+              catch (e) {
+                SM.Error.handleError(e)
+              }
+              finally {
+                Ext.getBody().unmask()
+              }
+            });
+          }
+        }
+      ]
+    })
+
+    const bbar = new Ext.Toolbar({
+      items: [
+        {
+          xtype: 'tbbutton',
+          iconCls: 'icon-refresh',
+          tooltip: 'Reload this grid',
+          width: 20,
+          handler: function (btn) {
+            store.reload()
+          }
+        },
+        {
+          xtype: 'tbseparator'
+        }, 
+        {
+          xtype: 'exportbutton',
+          hasMenu: false,
+          gridBasename: 'Collection-Info',
+          exportType: 'grid',
+          iconCls: 'sm-export-icon',
+          text: 'CSV'
+        },
+        {
+          xtype: 'tbfill'
+        },
+        {
+          xtype: 'tbseparator'
+        },
+        totalTextCmp
+      ]
+    })
+
+    const config = {
+      selModel,
+      colModel,
+      view,
+      store,
+      tbar,
+      bbar
+  }
+    Ext.apply(this, Ext.apply(this.initialConfig, config))
+    this.superclass().initComponent.call(this)
+  }
+})
+
+SM.Manage.Collection.AdminPropertiesPanel = Ext.extend(Ext.Panel, {
+  initComponent: function () {
+    const _this = this
     const nameField = new Ext.form.TextField({
       fieldLabel: 'Name',
       labelStyle: 'font-weight: 600;',
       name: 'name',
-      allowBlank: false,
+      // allowBlank: false,
       anchor: '100%',
       enableKeyEvents: true,
-      keys: [
-        {
-          key: Ext.EventObject.ENTER,
-          fn: (a, b, c) => {
-            let one = a
-            nameField.getEl().blur()
-          }
-        }
-      ],
       listeners: {
-        specialkey: (field, e) => {
-          if (e.getKey() == e.ENTER) {
-            field.getEl().blur()
-          }
-        },
         change: async (field, newValue, oldValue) => {
           if (!newValue?.trim()) { // only spaces
             field.setValue(oldValue)
             return
           }
+          try {
+            const apiCollection = await Ext.Ajax.requestPromise({
+              responseType: 'json',
+              url: `${STIGMAN.Env.apiBase}/collections/${_this.collectionId}`,
+              method: 'PATCH',
+              params: {
+                elevate: true,
+                projection: 'labels'
+              },
+              jsonData: {
+                name: newValue.trim()
+              }
+            })
+            SM.Dispatcher.fireEvent('collectionchanged', apiCollection)
+          }
+          catch (e) {
+            field.setValue(oldValue)
+            SM.Error.handleError(e)
+          }
+
         }
       }
     })
@@ -1151,87 +1381,151 @@ SM.Manage.Collection.FormPanel = Ext.extend(Ext.form.FormPanel, {
       fieldLabel: 'Description',
       labelStyle: 'font-weight: 600;',
       name: 'description',
-      anchor: '100% 0',
-    })
-    const metadataGrid = new SM.Manage.Collection.MetadataGrid({
-      title: 'Metadata',
-      iconCls: 'sm-database-save-icon',
-      name: 'metadata',
-      anchor: '100% 0',
-      border: true,
-      hidden: true
-    })
-    const settingsReviewFields = new SM.Manage.FieldSettings.ReviewFieldSet({
-      iconCls: 'sm-stig-icon',
-      border: true,
-      autoHeight: true
-    })
-    const settingsStatusFields = new SM.Manage.StatusSettings.StatusFieldSet({
-      iconCls: 'sm-star-icon-16',
-      border: true,
-      autoHeight: true
-    })
-    const settingsHistoryFields = new SM.Manage.HistorySettings.HistoryFieldSet({
-      iconCls: 'sm-history-icon',
-      border: true,
-      autoHeight: true
-    })
-    const grantGrid = new SM.Manage.Collection.GrantsGrid({
-      iconCls: 'sm-lock-icon',
-      canModifyOwners: true,
-      title: 'Grants',
-      border: true,
+      anchor: '100% -30',
       listeners: {
-        grantschanged: grid => {
-          grid.getView().refresh()
-        }
-      }
-    })
-    const labelGrid = new SM.Manage.Collection.LabelsGrid({
-      collectionId: 0,
-      iconCls: 'sm-label-icon',
-      title: 'Labels',
-      border: true
-    })
-    const tabPanelItems = this.showGrantsOnly ? [grantGrid] : [
-      grantGrid,
-      {
-        xtype: 'panel',
-        title: 'Settings',
-        layout: 'form',
-        iconCls: 'sm-setting-icon',
-        border: true,
-        padding: 10,
-        items: [
-          settingsReviewFields,
-          settingsStatusFields,
-          settingsHistoryFields
-        ]
-      },
-      metadataGrid,
-      labelGrid
-    ]
-
-    const tp = new Ext.TabPanel({
-      style: {
-        paddingTop: "10px"
-      },
-      region: 'center',
-      activeTab: 0,
-      border: false,
-      items: tabPanelItems,
-      listeners: {
-        render: function (tp, tab) {
-          if (tab.title === 'Users') {
-            usersGrid.store.load()
+        change: async (field, newValue, oldValue) => {
+          try {
+            const apiCollection = await Ext.Ajax.requestPromise({
+              url: `${STIGMAN.Env.apiBase}/collections/${_this.collectionId}`,
+              method: 'PATCH',
+              params: {
+                elevate: true,
+                projection: 'labels'
+              },
+              jsonData: {
+                description: newValue.trim()
+              }
+            })
+            SM.Dispatcher.fireEvent('collectionchanged', apiCollection)
+          }
+          catch (e) {
+            field.setValue(oldValue)
+            SM.Error.handleError(e)
           }
         }
       }
     })
+    function grantChangeHandler (grantId, data) {
+      return SM.Grant.Api.putGrantByCollectionGrant({
+        collectionId: _this.collectionId,
+        grantId,
+        body: data
+      })
+    }
+    function grantRemoveHandler (data) {
+      return SM.Grant.Api.deleteGrantByCollectionGrant({
+        collectionId: _this.collectionId,
+        grantId: data.grantId
+      })
+    }
+    function onGrantDeleted ({collectionId, grantId}) {
+      if (collectionId === _this.collectionId) {
+        const index = grantStore.findExact('grantId', grantId)
+        if (index !== -1) grantStore.removeAt(index)
+      }
+    }
+    function onGrantUpdated({collectionId, api}) {
+      if (collectionId === _this.collectionId) {
+        grantStore.loadData(api, true)
+        const sortState = grantStore.getSortState()
+        grantStore.sort(sortState.field, sortState.direction)
+        const index = grantStore.findExact('grantId', api.grantId ?? api[0].grantId)
+        grantGrid.getView().ensureVisible(index)
+      }
+    }
+
+    function setFieldValues (apiCollection) {
+      nameField.setValue(apiCollection.name)
+      descriptionField.setValue(apiCollection.description)
+      grantGrid.setValue(apiCollection.grants)
+      _this.collectionId = apiCollection.collectionId
+      grantGrid.collectionId = _this.collectionId
+      _this.collectionName = apiCollection.name
+    }
+
+    const grantGrid = new SM.Manage.Collection.GrantsGrid({
+      iconCls: 'sm-lock-icon',
+      margins: '10 0 0 0',
+      canModifyOwners: true,
+      context: 'admin',
+      title: 'Grants',
+      border: true,
+      region: 'center',
+      flex: 1,
+      listeners: {
+        grantchange: grantChangeHandler,
+        grantremove: grantRemoveHandler
+      }
+    })
+    const grantStore = grantGrid.store
+    SM.Dispatcher.addListener('grant.deleted', onGrantDeleted)
+    SM.Dispatcher.addListener('grant.updated', onGrantUpdated)
+    SM.Dispatcher.addListener('grant.created', onGrantUpdated)
+
 
     const config = {
-      baseCls: 'x-plain',
-      cls: 'sm-collection-manage-layout sm-round-panel',
+      layout: 'vbox',
+      layoutConfig: {
+        align: 'stretch'
+      },
+      bodyStyle: 'padding: 9px;',
+      border: false,
+      setFieldValues,
+      items: [
+        {
+          xtype: 'fieldset',
+          labelWidth: 100,
+          height: 120,
+          title: 'Information',
+          items: [nameField, descriptionField]
+        },
+        grantGrid
+      ],
+      listeners: {
+        beforedestroy: () => {
+          SM.Dispatcher.removeListener('grant.deleted', onGrantDeleted)
+          SM.Dispatcher.removeListener('grant.updated', onGrantUpdated)
+          SM.Dispatcher.removeListener('grant.created', onGrantUpdated)
+        }
+      }
+    }
+    Ext.apply(this, Ext.apply(this.initialConfig, config))
+    this.superclass().initComponent.call(this);
+  }
+})
+
+SM.Manage.Collection.AdminCreatePanel = Ext.extend(Ext.form.FormPanel, {
+  initComponent: function () {
+    const _this = this
+    const nameField = new Ext.form.TextField({
+      fieldLabel: 'Name',
+      labelStyle: 'font-weight: 600;',
+      name: 'name',
+      allowBlank: false,
+      anchor: '100%',
+    })
+    const descriptionField = new Ext.form.TextArea({
+      fieldLabel: 'Description',
+      labelStyle: 'font-weight: 600;',
+      name: 'description',
+      anchor: '100% -30'
+    })
+    const newGrantPanel = new SM.Grant.NewGrantPanel({
+      iconCls: 'sm-lock-icon',
+      margins: '10 0 0 0',
+      canModifyOwners: true,
+      context: 'admin',
+      // title: 'Grants',
+      border: true,
+      region: 'center'
+    })
+
+    // show Owner role by default
+    newGrantPanel.roleComboBox.setValue(4)
+    
+    const config = {
+      // baseCls: 'x-plain',
+      cls: 'sm-round-panel',
       bodyStyle: 'padding: 9px;',
       border: false,
       labelWidth: 100,
@@ -1239,12 +1533,9 @@ SM.Manage.Collection.FormPanel = Ext.extend(Ext.form.FormPanel, {
       setFieldValues: function (apiCollection) {
         nameField.setValue(apiCollection.name)
         descriptionField.setValue(apiCollection.description)
-        metadataGrid.setValue(apiCollection.metadata)
-        settingsReviewFields.setValues(apiCollection.settings.fields)
-        settingsStatusFields.setValues(apiCollection.settings.status)
-        settingsHistoryFields.setValues(apiCollection.settings.history)
         grantGrid.setValue(apiCollection.grants)
-        labelGrid.setValue(apiCollection.labels)
+        _this.collectionId = apiCollection.collectionId
+        _this.collectionName = apiCollection.name
       },
       getFieldValues: function (dirtyOnly) {
         // Override Ext.form.FormPanel implementation to check submitValue
@@ -1292,43 +1583,22 @@ SM.Manage.Collection.FormPanel = Ext.extend(Ext.form.FormPanel, {
           anchor: '100% 0',
           hideLabels: true,
           border: false,
-          baseCls: 'x-plain',
+          // baseCls: 'x-plain',
           items: [
             {
-              layoutConfig: {
-                getLayoutTargetSize: function () {
-                  var target = this.container.getLayoutTarget(), ret = {};
-                  if (target) {
-                    ret = target.getViewSize();
-
-                    // IE in strict mode will return a width of 0 on the 1st pass of getViewSize.
-                    // Use getStyleSize to verify the 0 width, the adjustment pass will then work properly
-                    // with getViewSize
-                    if (Ext.isIE9m && Ext.isStrict && ret.width == 0) {
-                      ret = target.getStyleSize();
-                    }
-                    ret.width -= target.getPadding('lr');
-                    ret.height -= target.getPadding('tb');
-                    // change in this override to account for space used by 
-                    // the Result combo box and the 4px bottom-margin of each textarea
-                    ret.height -= 30
-                  }
-                  return ret;
-                }
-              },
               xtype: 'fieldset',
               region: 'north',
-              height: 180,
+              height: 120,
               split: false,
               title: 'Information',
               items: [nameField, descriptionField]
             },
-            tp
+            newGrantPanel
           ]
         }
       ],
       buttons: [{
-        text: this.btnText || 'Save',
+        text: this.btnText || 'Create Collection',
         formBind: true,
         handler: this.btnHandler || function () { }
       }]
@@ -1381,8 +1651,7 @@ SM.Manage.Collection.Panel = Ext.extend(Ext.Panel, {
       keys: [
         {
           key: Ext.EventObject.ENTER,
-          fn: (a, b, c) => {
-            let one = a
+          fn: () => {
             nameField.getEl().blur()
           }
         }
@@ -1560,20 +1829,20 @@ SM.Manage.Collection.Panel = Ext.extend(Ext.Panel, {
       }
     })
     grantGrid.setValue(_this.apiCollection.grants)
+    const grantStore = grantGrid.store
 
     function onGrantDeleted ({collectionId, grantId}) {
       if (collectionId === _this.apiCollection.collectionId) {
-        const index = grantGrid.store.findExact('grantId', grantId)
-        if (index !== -1) grantGrid.store.removeAt(index)
+        const index = grantStore.findExact('grantId', grantId)
+        if (index !== -1) grantStore.removeAt(index)
       }
     }
     function onGrantUpdated({collectionId, api}) {
       if (collectionId === _this.apiCollection.collectionId) {
-        const ggs = grantGrid.store
-        ggs.loadData(api, true)
-        const sortState = grantGrid.store.getSortState()
-        grantGrid.store.sort(sortState.field, sortState.direction)
-        const index = ggs.findExact('grantId', api.grantId ?? api[0].grantId)
+        grantStore.loadData(api, true)
+        const sortState = grantStore.getSortState()
+        grantStore.sort(sortState.field, sortState.direction)
+        const index = grantStore.findExact('grantId', api.grantId ?? api[0].grantId)
         grantGrid.getView().ensureVisible(index)
       }
     }
@@ -1784,6 +2053,8 @@ SM.Manage.Collection.Panel = Ext.extend(Ext.Panel, {
       listeners: {
         beforedestroy: () => {
           SM.Dispatcher.removeListener('grant.deleted', onGrantDeleted)
+          SM.Dispatcher.removeListener('grant.updated', onGrantUpdated)
+          SM.Dispatcher.removeListener('grant.created', onGrantUpdated)
         }
       }
     }
