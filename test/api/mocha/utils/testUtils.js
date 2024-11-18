@@ -22,9 +22,7 @@ const getUUIDSubString = (length = 20) => {
 }
 
 const loadAppData = async (appdataFileName = 'appdata.jsonl') => {
-  try{
-    console.log(`Loading ${appdataFileName}`)
-  const hi = await axios({
+  return await axios({
     method: 'post',
     url: `${config.baseUrl}/op/appdata?elevate=true`,
     headers: {
@@ -33,12 +31,6 @@ const loadAppData = async (appdataFileName = 'appdata.jsonl') => {
     },
     data: fs.readFileSync(path.join(__dirname, `../../appdata/${appdataFileName}`))
   })
-  return hi
-  }
-  catch (e) {
-    throw e
-  }
-  
 }
 
 const createTempCollection = async (collectionPost) => {
