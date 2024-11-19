@@ -255,9 +255,9 @@ const reference = {
     appinfo: {
       state: "enabled",
       assets: 4,
-      assetsDisabled: 1,
+      assetsDisabled: 0,
       reviews: 17,
-      reviewsDisabled: 1,
+      reviewsDisabled: 0,
     },
     labelsProjected: [
       {

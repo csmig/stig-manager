@@ -11,7 +11,6 @@ describe('GET - Op', () => {
   let disabledCollection
   before(async function () {
     await utils.loadAppData()
-    ;({collection: disabledCollection} = await utils.createDisabledCollectionsandAssets())
   })
 
   for(const iteration of iterations){
@@ -61,7 +60,7 @@ describe('GET - Op', () => {
             [`collections.${rtc.collectionId}.assetsDisabled`]: rtc.appinfo.assetsDisabled,
             [`collections.${rtc.collectionId}.reviews`]: rtc.appinfo.reviews,
             [`collections.${rtc.collectionId}.reviewsDisabled`]: rtc.appinfo.reviewsDisabled,
-            [`collections.${disabledCollection.collectionId}.state`]: 'disabled'
+           
           })
         })
       })

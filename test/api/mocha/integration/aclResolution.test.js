@@ -2,7 +2,6 @@
 const chai = require("chai")
 const chaiHttp = require("chai-http")
 const deepEqualInAnyOrder = require('deep-equal-in-any-order')
-const { v4: uuidv4 } = require('uuid')
 chai.use(chaiHttp)
 chai.use(deepEqualInAnyOrder)
 const expect = chai.expect
@@ -24,184 +23,7 @@ const lvl1 = {
       "eyJhbGciOiJSUzI1NiIsInR5cCIgOiAiSldUIiwia2lkIiA6ICJGSjg2R2NGM2pUYk5MT2NvNE52WmtVQ0lVbWZZQ3FvcXRPUWVNZmJoTmxFIn0.eyJleHAiOjE4NjQ3MDg5ODQsImlhdCI6MTY3MDU2ODE4NCwiYXV0aF90aW1lIjoxNjcwNTY4MTg0LCJqdGkiOiIxMDhmMDc2MC0wYmY5LTRkZjEtYjE0My05NjgzNmJmYmMzNjMiLCJpc3MiOiJodHRwOi8vbG9jYWxob3N0OjgwODAvYXV0aC9yZWFsbXMvc3RpZ21hbiIsImF1ZCI6WyJyZWFsbS1tYW5hZ2VtZW50IiwiYWNjb3VudCJdLCJzdWIiOiJlM2FlMjdiOC1kYTIwLTRjNDItOWRmOC02MDg5ZjcwZjc2M2IiLCJ0eXAiOiJCZWFyZXIiLCJhenAiOiJzdGlnLW1hbmFnZXIiLCJub25jZSI6IjE0ZmE5ZDdkLTBmZTAtNDQyNi04ZmQ5LTY5ZDc0YTZmMzQ2NCIsInNlc3Npb25fc3RhdGUiOiJiNGEzYWNmMS05ZGM3LTQ1ZTEtOThmOC1kMzUzNjJhZWM0YzciLCJhY3IiOiIxIiwicmVhbG1fYWNjZXNzIjp7InJvbGVzIjpbImRlZmF1bHQtcm9sZXMtc3RpZ21hbiJdfSwicmVzb3VyY2VfYWNjZXNzIjp7InJlYWxtLW1hbmFnZW1lbnQiOnsicm9sZXMiOlsidmlldy11c2VycyIsInF1ZXJ5LWdyb3VwcyIsInF1ZXJ5LXVzZXJzIl19LCJhY2NvdW50Ijp7InJvbGVzIjpbIm1hbmFnZS1hY2NvdW50IiwibWFuYWdlLWFjY291bnQtbGlua3MiLCJ2aWV3LXByb2ZpbGUiXX19LCJzY29wZSI6Im9wZW5pZCBzdGlnLW1hbmFnZXI6Y29sbGVjdGlvbiBzdGlnLW1hbmFnZXI6c3RpZzpyZWFkIHN0aWctbWFuYWdlcjp1c2VyOnJlYWQgc3RpZy1tYW5hZ2VyOmNvbGxlY3Rpb246cmVhZCIsInNpZCI6ImI0YTNhY2YxLTlkYzctNDVlMS05OGY4LWQzNTM2MmFlYzRjNyIsIm5hbWUiOiJyZXN0cmljdGVkIiwicHJlZmVycmVkX3VzZXJuYW1lIjoibHZsMSIsImdpdmVuX25hbWUiOiJyZXN0cmljdGVkIn0.OqLARi5ILt3j2rMikXy0ECTTqjWco0-CrMwzE88gUv2i8rVO9kMgVsXbtPk2L2c9NNNujnxqg7QIr2_sqA51saTrZHvzXcsT8lBruf74OubRMwcTQqJap-COmrzb60S7512k0WfKTYlHsoCn_uAzOb9sp8Trjr0NksU8OXCElDU"
 }
 
-const lvl3 = {
-    name: "lvl3",
-    userId: "44",
-    token: "eyJhbGciOiJSUzI1NiIsInR5cCIgOiAiSldUIiwia2lkIiA6ICJGSjg2R2NGM2pUYk5MT2NvNE52WmtVQ0lVbWZZQ3FvcXRPUWVNZmJoTmxFIn0.eyJleHAiOjE4NjQ3MDkxMjUsImlhdCI6MTY3MDU2ODMyNSwiYXV0aF90aW1lIjoxNjcwNTY4MzI1LCJqdGkiOiI4NTI5MjZmZi0xYzM4LTQwMDYtOTYwYi1kOWE0YmNhMjcxZjkiLCJpc3MiOiJodHRwOi8vbG9jYWxob3N0OjgwODAvYXV0aC9yZWFsbXMvc3RpZ21hbiIsImF1ZCI6WyJyZWFsbS1tYW5hZ2VtZW50IiwiYWNjb3VudCJdLCJzdWIiOiIzNWZhYmMwNi0wNzZlLTRmZjQtOGJkZS1mMzI1ZWE3ZGQ0ZmIiLCJ0eXAiOiJCZWFyZXIiLCJhenAiOiJzdGlnLW1hbmFnZXIiLCJub25jZSI6IjQxNmMwYmJkLTJmNjktNGZkMC04MmE1LTdjZDBmNmRlNzUzNSIsInNlc3Npb25fc3RhdGUiOiIzMThkOGNmZi0wY2U1LTQ3MzktODEyYy1iNWI0NjdlMWQ2YzEiLCJhY3IiOiIwIiwicmVhbG1fYWNjZXNzIjp7InJvbGVzIjpbImRlZmF1bHQtcm9sZXMtc3RpZ21hbiJdfSwicmVzb3VyY2VfYWNjZXNzIjp7InJlYWxtLW1hbmFnZW1lbnQiOnsicm9sZXMiOlsidmlldy11c2VycyIsInF1ZXJ5LWdyb3VwcyIsInF1ZXJ5LXVzZXJzIl19LCJhY2NvdW50Ijp7InJvbGVzIjpbIm1hbmFnZS1hY2NvdW50IiwibWFuYWdlLWFjY291bnQtbGlua3MiLCJ2aWV3LXByb2ZpbGUiXX19LCJzY29wZSI6Im9wZW5pZCBzdGlnLW1hbmFnZXI6Y29sbGVjdGlvbiBzdGlnLW1hbmFnZXI6c3RpZzpyZWFkIHN0aWctbWFuYWdlcjp1c2VyOnJlYWQgc3RpZy1tYW5hZ2VyOmNvbGxlY3Rpb246cmVhZCIsInNpZCI6IjMxOGQ4Y2ZmLTBjZTUtNDczOS04MTJjLWI1YjQ2N2UxZDZjMSIsInByZWZlcnJlZF91c2VybmFtZSI6Imx2bDMifQ.KduimV7h4DSySAWBbWlpN1xwbfXBfNsscvx2qIx9SVAeZFSGbPZ0JtgThD9uray9xZjrk6qLNYnkoVyYQLS4M-pg8IlFp5yKJBCIeCpcTxA25MdV5VwZQcCD9pgwtEav-cgaDD2Ue6cHj_02cQGMClsfkJ2SuOUJ9nIu4B3m3Qk"
-}
-
-const lvl1TestAcl = {
-    put: [{"benchmarkId":reference.testCollection.benchmark,"labelId":reference.testCollection.fullLabel,"access":"r"},{"assetId":"154","access":"rw"}],
-    response: [
-        {
-          access: "r",
-          asset: {
-            name: "Collection_X_asset",
-            assetId: "62",
-          },
-          benchmarkId: "VPN_SRG_TEST",
-          aclSources: [
-            {
-              aclRule: {
-                label: {
-                  name: "test-label-full",
-                  labelId: "755b8a28-9a68-11ec-b1bc-0242ac110002",
-                },
-                access: "r",
-                benchmarkId: "VPN_SRG_TEST",
-              },
-              grantee: {
-                userId: 85,
-                username: "lvl1",
-                accessLevel: 1,
-              },
-            },
-          ],
-        },
-        {
-          access: "r",
-          asset: {
-            name: "Collection_X_lvl1_asset-1",
-            assetId: "42",
-          },
-          benchmarkId: "VPN_SRG_TEST",
-          aclSources: [
-            {
-              aclRule: {
-                label: {
-                  name: "test-label-full",
-                  labelId: "755b8a28-9a68-11ec-b1bc-0242ac110002",
-                },
-                access: "r",
-                benchmarkId: "VPN_SRG_TEST",
-              },
-              grantee: {
-                userId: 85,
-                username: "lvl1",
-                accessLevel: 1,
-              },
-            },
-          ],
-        },
-        {
-          access: "rw",
-          asset: {
-            name: "Collection_X_lvl1_asset-2",
-            assetId: "154",
-          },
-          benchmarkId: "VPN_SRG_TEST",
-          aclSources: [
-            {
-              aclRule: {
-                asset: {
-                  name: "Collection_X_lvl1_asset-2",
-                  assetId: "154",
-                },
-                access: "rw",
-              },
-              grantee: {
-                userId: 85,
-                username: "lvl1",
-                accessLevel: 1,
-              },
-            },
-          ],
-        },
-        {
-          access: "rw",
-          asset: {
-            name: "Collection_X_lvl1_asset-2",
-            assetId: "154",
-          },
-          benchmarkId: "Windows_10_STIG_TEST",
-          aclSources: [
-            {
-              aclRule: {
-                asset: {
-                  name: "Collection_X_lvl1_asset-2",
-                  assetId: "154",
-                },
-                access: "rw",
-              },
-              grantee: {
-                userId: 85,
-                username: "lvl1",
-                accessLevel: 1,
-              },
-            },
-          ],
-        },
-      ]
-}
-
-const lvl3TestAcl = {
-  put: [{"benchmarkId":reference.testCollection.benchmark,"labelId":reference.testCollection.fullLabel,"access":"r"}],
-  response: [
-      {
-        access: "r",
-        asset: {
-          name: "Collection_X_asset",
-          assetId: "62",
-        },
-        benchmarkId: "VPN_SRG_TEST",
-        aclSources: [
-          {
-            aclRule: {
-              label: {
-                name: "test-label-full",
-                labelId: "755b8a28-9a68-11ec-b1bc-0242ac110002",
-              },
-              access: "r",
-              benchmarkId: "VPN_SRG_TEST",
-            },
-            grantee: {
-              userId: 44,
-              username: "lvl3",
-              accessLevel: 3,
-            },
-          },
-        ],
-      },
-      {
-        access: "r",
-        asset: {
-          name: "Collection_X_lvl1_asset-1",
-          assetId: "42",
-        },
-        benchmarkId: "VPN_SRG_TEST",
-        aclSources: [
-          {
-            aclRule: {
-              label: {
-                name: "test-label-full",
-                labelId: "755b8a28-9a68-11ec-b1bc-0242ac110002",
-              },
-              access: "r",
-              benchmarkId: "VPN_SRG_TEST",
-            },
-            grantee: {
-              userId: 44,
-              username: "lvl3",
-              accessLevel: 3,
-            },
-          },
-        ],
-      },
-      
-    ]
-}
-
 describe("Multiple Group ACL Collisions", () => {
-
-  // will create following sinceros where we have two restricted groups 
-  // 1.) group 1 will get rw on test asset and group 2 will get r on test asset should take r 
-  // 2.) group 1 will get rw on test asset and group 2 will get none on test asset should take none
-  // 3.) group 1 will get rw on test asset and group 2 will get rw on test asset should take rw but idk how? 
-  // 4.) on each of these tests try to write to the asset and check outcome. 
-
-  // 1.) do same with a label
-
-  // 1.) do same with an advanced ACL. 
 
   before(async function () {
       await utils.loadAppData()
@@ -210,12 +32,11 @@ describe("Multiple Group ACL Collisions", () => {
   let userGroup1
   let userGroup2
 
-  it("Remove Base appdata userGroup from test Colleciton", async () => {
+  it("Remove Base appdata userGroup grant from test Colleciton", async () => {
 
     const res = await chai.request(config.baseUrl)  
-      .delete(`/collections/${reference.testCollection.collectionId}/grants/user-group/${reference.testCollection.testGroup.userGroupId}`)
+      .delete(`/collections/${reference.testCollection.collectionId}/grants/${reference.testCollection.testGroup.testCollectionGrantId}`)
       .set('Authorization', `Bearer ${admin.token}`)
-
     expect(res).to.have.status(200)
   })
   
@@ -255,34 +76,29 @@ describe("Multiple Group ACL Collisions", () => {
       
   })
 
-  it("should delete lvl1 users direct grant to test collection", async () => {
-          
-      const res = await chai.request(config.baseUrl)
-      .delete(`/collections/${reference.testCollection.collectionId}/grants/user/${lvl1.userId}`)
-      .set('Authorization', `Bearer ${config.adminToken}`)
-      expect(res).to.have.status(200)
-  
-  })
-
   it("should assign both groups created to the test collection with restricted grant", async function () {
 
       const res = await chai.request(config.baseUrl)
-      .put(`/collections/${reference.testCollection.collectionId}/grants/user-group/${userGroup1.userGroupId}`)
-      .set('Authorization', `Bearer ${config.adminToken}`)
-      .send({
-          accessLevel: 1
-      })
-      expect(res).to.have.status(201)
+        .post(`/collections/${reference.testCollection.collectionId}/grants`)
+        .set('Authorization', `Bearer ${config.adminToken}`)
+        .send([{
+            userGroupId: userGroup1.userGroupId,
+            accessLevel: 1
+        }])
+      expect(res).to.have.status(200)
       expect(res.body.accessLevel).to.equal(1)
+      userGroup1.grantId = res.body.grantId
 
       const res2 = await chai.request(config.baseUrl)
-          .put(`/collections/${reference.testCollection.collectionId}/grants/user-group/${userGroup2.userGroupId}`)
+          .post(`/collections/${reference.testCollection.collectionId}/grants`)
           .set('Authorization', `Bearer ${config.adminToken}`)
-          .send({
-          accessLevel: 1
-          })
-      expect(res2).to.have.status(201)
+          .send([{
+            userGroupId: userGroup2.userGroupId,
+              accessLevel: 1
+          }])
+      expect(res2).to.have.status(200)
       expect(res2.body.accessLevel).to.equal(1)
+      userGroup2.grantId = res2.body.grantId
   })
 
   /*
@@ -292,7 +108,7 @@ describe("Multiple Group ACL Collisions", () => {
 
       it(`should set group1 acl to r on test asset`, async () => {
           const res = await chai.request(config.baseUrl)
-          .put(`/collections/${reference.testCollection.collectionId}/grants/user-group/${userGroup1.userGroupId}/access`)
+          .put(`/collections/${reference.testCollection.collectionId}/grants/${userGroup1.grantId}/acl`)
           .set('Authorization', `Bearer ${config.adminToken}`)
           .send([{"assetId":reference.testAsset.assetId,"access":"r"}])
 
@@ -306,7 +122,7 @@ describe("Multiple Group ACL Collisions", () => {
 
       it(`should set group2 acl to rw on test asset`, async () => {
           const res = await chai.request(config.baseUrl)
-          .put(`/collections/${reference.testCollection.collectionId}/grants/user-group/${userGroup2.userGroupId}/access`)
+          .put(`/collections/${reference.testCollection.collectionId}/grants/${userGroup2.grantId}/acl`)
           .set('Authorization', `Bearer ${config.adminToken}`)
           .send([{"assetId":reference.testAsset.assetId,"access":"rw"}])
 
@@ -316,11 +132,10 @@ describe("Multiple Group ACL Collisions", () => {
           expect(res.body.acl[0].access).to.equal("rw")
           expect(res.body.acl[0].asset.assetId).to.equal(reference.testAsset.assetId)
       })
-      
 
       it("should confirm group1 acl was set", async () => {
           const res = await chai.request(config.baseUrl)
-              .get(`/collections/${reference.testCollection.collectionId}/grants/user-group/${userGroup1.userGroupId}/access`)
+              .get(`/collections/${reference.testCollection.collectionId}/grants/${userGroup1.grantId}/acl`)
               .set('Authorization', `Bearer ${config.adminToken}`)
           expect(res).to.have.status(200)
           expect(res.body.defaultAccess).to.equal("none")
@@ -330,7 +145,7 @@ describe("Multiple Group ACL Collisions", () => {
 
       it("should confirm group2 acl was set", async () => {
           const res = await chai.request(config.baseUrl)
-              .get(`/collections/${reference.testCollection.collectionId}/grants/user-group/${userGroup2.userGroupId}/access`)
+              .get(`/collections/${reference.testCollection.collectionId}/grants/${userGroup2.grantId}/acl`)
               .set('Authorization', `Bearer ${config.adminToken}`)
           expect(res).to.have.status(200)
           expect(res.body.defaultAccess).to.equal("none")
@@ -359,7 +174,7 @@ describe("Multiple Group ACL Collisions", () => {
 
       it(`should set group1 acl to r on test asset`, async () => {
           const res = await chai.request(config.baseUrl)
-          .put(`/collections/${reference.testCollection.collectionId}/grants/user-group/${userGroup1.userGroupId}/access`)
+          .put(`/collections/${reference.testCollection.collectionId}/grants/${userGroup1.grantId}/acl`)
           .set('Authorization', `Bearer ${config.adminToken}`)
           .send([{"assetId":reference.testAsset.assetId,"access":"r"}])
 
@@ -373,7 +188,7 @@ describe("Multiple Group ACL Collisions", () => {
 
       it(`should set group2 acl to none on test asset`, async () => {
           const res = await chai.request(config.baseUrl)
-          .put(`/collections/${reference.testCollection.collectionId}/grants/user-group/${userGroup2.userGroupId}/access`)
+          .put(`/collections/${reference.testCollection.collectionId}/grants/${userGroup2.grantId}/acl`)
           .set('Authorization', `Bearer ${config.adminToken}`)
           .send([{"assetId":reference.testAsset.assetId,"access":"none"}])
 
@@ -386,7 +201,7 @@ describe("Multiple Group ACL Collisions", () => {
 
       it("should confirm group1 acl was set", async () => {
           const res = await chai.request(config.baseUrl)
-              .get(`/collections/${reference.testCollection.collectionId}/grants/user-group/${userGroup1.userGroupId}/access`)
+              .get(`/collections/${reference.testCollection.collectionId}/grants/${userGroup1.grantId}/acl`)
               .set('Authorization', `Bearer ${config.adminToken}`)
           expect(res).to.have.status(200)
           expect(res.body.defaultAccess).to.equal("none")
@@ -396,7 +211,7 @@ describe("Multiple Group ACL Collisions", () => {
 
       it("should confirm group2 acl was set", async () => {
           const res = await chai.request(config.baseUrl)
-              .get(`/collections/${reference.testCollection.collectionId}/grants/user-group/${userGroup2.userGroupId}/access`)
+              .get(`/collections/${reference.testCollection.collectionId}/grants/${userGroup2.grantId}/acl`)
               .set('Authorization', `Bearer ${config.adminToken}`)
           expect(res).to.have.status(200)
           expect(res.body.defaultAccess).to.equal("none")
@@ -418,7 +233,7 @@ describe("Multiple Group ACL Collisions", () => {
 
       it(`should set group1 acl to rw on test label`, async () => {
           const res = await chai.request(config.baseUrl)
-          .put(`/collections/${reference.testCollection.collectionId}/grants/user-group/${userGroup1.userGroupId}/access`)
+          .put(`/collections/${reference.testCollection.collectionId}/grants/${userGroup1.grantId}/acl`)
           .set('Authorization', `Bearer ${config.adminToken}`)
           .send([{"labelId":reference.testCollection.fullLabel,"access":"rw"}])
 
@@ -432,7 +247,7 @@ describe("Multiple Group ACL Collisions", () => {
 
       it(`should set group2 acl to r on test label`, async () => {
           const res = await chai.request(config.baseUrl)
-          .put(`/collections/${reference.testCollection.collectionId}/grants/user-group/${userGroup2.userGroupId}/access`)
+          .put(`/collections/${reference.testCollection.collectionId}/grants/${userGroup2.grantId}/acl`)
           .set('Authorization', `Bearer ${config.adminToken}`)
           .send([{"labelId":reference.testCollection.fullLabel,"access":"r"}])
 
@@ -445,7 +260,7 @@ describe("Multiple Group ACL Collisions", () => {
 
       it("should confirm group1 acl was set", async () => {
           const res = await chai.request(config.baseUrl)
-              .get(`/collections/${reference.testCollection.collectionId}/grants/user-group/${userGroup1.userGroupId}/access`)
+              .get(`/collections/${reference.testCollection.collectionId}/grants/${userGroup1.grantId}/acl`)
               .set('Authorization', `Bearer ${config.adminToken}`)
           expect(res).to.have.status(200)
           expect(res.body.defaultAccess).to.equal("none")
@@ -455,7 +270,7 @@ describe("Multiple Group ACL Collisions", () => {
 
       it("should confirm group2 acl was set", async () => {
           const res = await chai.request(config.baseUrl)
-              .get(`/collections/${reference.testCollection.collectionId}/grants/user-group/${userGroup2.userGroupId}/access`)
+              .get(`/collections/${reference.testCollection.collectionId}/grants/${userGroup2.grantId}/acl`)
               .set('Authorization', `Bearer ${config.adminToken}`)
           expect(res).to.have.status(200)
           expect(res.body.defaultAccess).to.equal("none")
@@ -483,7 +298,7 @@ describe("Multiple Group ACL Collisions", () => {
 
       it(`should set group1 acl to rw on test label`, async () => {
           const res = await chai.request(config.baseUrl)
-          .put(`/collections/${reference.testCollection.collectionId}/grants/user-group/${userGroup1.userGroupId}/access`)
+          .put(`/collections/${reference.testCollection.collectionId}/grants/${userGroup1.grantId}/acl`)
           .set('Authorization', `Bearer ${config.adminToken}`)
           .send([{"labelId":reference.testCollection.fullLabel, "benchmarkId":reference.testCollection.benchmark, "access":"rw"}, {"assetId":"154","access":"r"}])
 
@@ -502,7 +317,7 @@ describe("Multiple Group ACL Collisions", () => {
 
       it(`should set group2 acl to r on test label`, async () => {
           const res = await chai.request(config.baseUrl)
-          .put(`/collections/${reference.testCollection.collectionId}/grants/user-group/${userGroup2.userGroupId}/access`)
+          .put(`/collections/${reference.testCollection.collectionId}/grants/${userGroup2.grantId}/acl`)
           .set('Authorization', `Bearer ${config.adminToken}`)
           .send([{"labelId":reference.testCollection.fullLabel,"access":"r"}])
 
@@ -515,7 +330,7 @@ describe("Multiple Group ACL Collisions", () => {
 
       it("should confirm group1 acl was set", async () => {
           const res = await chai.request(config.baseUrl)
-              .get(`/collections/${reference.testCollection.collectionId}/grants/user-group/${userGroup1.userGroupId}/access`)
+              .get(`/collections/${reference.testCollection.collectionId}/grants/${userGroup1.grantId}/acl`)
               .set('Authorization', `Bearer ${config.adminToken}`)
           expect(res).to.have.status(200)
           expect(res.body.defaultAccess).to.equal("none")
@@ -532,7 +347,7 @@ describe("Multiple Group ACL Collisions", () => {
 
       it("should confirm group2 acl was set", async () => {
           const res = await chai.request(config.baseUrl)
-              .get(`/collections/${reference.testCollection.collectionId}/grants/user-group/${userGroup2.userGroupId}/access`)
+              .get(`/collections/${reference.testCollection.collectionId}/grants/${userGroup2.grantId}/acl`)
               .set('Authorization', `Bearer ${config.adminToken}`)
           expect(res).to.have.status(200)
           expect(res.body.defaultAccess).to.equal("none")

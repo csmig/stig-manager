@@ -17,7 +17,6 @@ describe('POST - Collection - not all tests run for all iterations', function ()
   before(async function () {
     await utils.loadAppData()
     await utils.uploadTestStig("U_VPN_SRG_V1R0_Manual-xccdf.xml")
-   // await utils.createDisabledCollectionsandAssets()
   })
 
   for(const iteration of iterations) {
@@ -599,7 +598,6 @@ describe('POST - Collection - not all tests run for all iterations', function ()
               expect(res).to.have.status(403)
               return
             }
-
             expect(res).to.have.status(200)
         })
       })

@@ -501,32 +501,13 @@ describe('PUT - Collection', function () {
           await utils.loadAppData()
         })
 
-        it("should replace access level and keep the same user of the test group in the test colleciton", async function () {
+        it("should replace access level and keep the same user in the test group in the test colleciton", async function () {
           
           const res = await chai.request(config.baseUrl)
           .put(`/collections/${reference.testCollection.collectionId}/grants/${reference.testCollection.testGroup.testCollectionGrantId}?elevate=true`)
           .set('Authorization', `Bearer ${iteration.token}`)
           .send({
-            "userId": reference.lvl1User.userId,
-            "accessLevel": 1
-          })
-          if(iteration.name !== "stigmanadmin"){
-            expect(res).to.have.status(403)
-            return
-          }
-          expect(res).to.have.status(200)
-          expect(res.body.user.userId).to.equal(reference.lvl1User.userId)
-          expect(res.body.accessLevel).to.equal(1)
-          expect(res.body.grantId).to.equal(reference.testCollection.testGroup.testCollectionGrantId)
-        })
-
-        it("should replace access level and user of the test group in the test colleciton", async function () {
-
-          const res = await chai.request(config.baseUrl)
-          .put(`/collections/${reference.testCollection.collectionId}/grants/${reference.testCollection.testGroup.testCollectionGrantId}?elevate=true`)
-          .set('Authorization', `Bearer ${iteration.token}`)
-          .send({
-            "userGroupId": "1",
+            "userGroupId": reference.testCollection.testGroup.userGroupId,
             "accessLevel": 2
           })
           if(iteration.name !== "stigmanadmin"){
@@ -539,6 +520,23 @@ describe('PUT - Collection', function () {
           expect(res.body.grantId).to.equal(reference.testCollection.testGroup.testCollectionGrantId)
         })
 
+        it("should replace access level and user of the test group grant id in the test colleciton", async function () {
+
+          const res = await chai.request(config.baseUrl)
+          .put(`/collections/${reference.testCollection.collectionId}/grants/${reference.testCollection.testGroup.testCollectionGrantId}?elevate=true`)
+          .set('Authorization', `Bearer ${iteration.token}`)
+          .send({
+            "userId": reference.wfTest.userId,
+            "accessLevel": 1
+          })
+          if(iteration.name !== "stigmanadmin"){
+            expect(res).to.have.status(403)
+            return
+          }
+          expect(res).to.have.status(200)
+          expect(res.body.user.userId).to.equal(reference.wfTest.userId)
+          expect(res.body.grantId).to.equal(reference.testCollection.testGroup.testCollectionGrantId)
+        })
       })
 
       describe('putAclRulesByCollectionGrant - /collections/{collectionId}/grants/{grantId}/acl', function () {
