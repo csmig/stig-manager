@@ -816,7 +816,8 @@ SM.Manage.Collection.GrantsGrid = Ext.extend(Ext.grid.GridPanel, {
         SM.Grant.showNewGrantWindow({
           collectionId: _this.collectionId,
           existingGrants: _this.getValue(),
-          canModifyOwners: _this.canModifyOwners
+          canModifyOwners: _this.canModifyOwners,
+          elevate: _this.context === 'admin'
         })
       }
     })
@@ -1189,7 +1190,7 @@ SM.Manage.Collection.AdminGrid = Ext.extend(Ext.grid.GridPanel, {
         sortable: true,
         renderer: function (v) {
           // assigning to v, used elsewhere, does not work here? v = v.map(i => i.username).join('\n')
-          arguments[0] = v.map(u => u.username).join('\n')
+          arguments[0] = v.map(u => u.username || u.name).join('\n')
           return columnWrap.apply(this, arguments)
         }
       },
@@ -1409,13 +1410,15 @@ SM.Manage.Collection.AdminPropertiesPanel = Ext.extend(Ext.Panel, {
       return SM.Grant.Api.putGrantByCollectionGrant({
         collectionId: _this.collectionId,
         grantId,
-        body: data
+        body: data,
+        elevate: true
       })
     }
     function grantRemoveHandler (data) {
       return SM.Grant.Api.deleteGrantByCollectionGrant({
         collectionId: _this.collectionId,
-        grantId: data.grantId
+        grantId: data.grantId,
+        elevate: true
       })
     }
     function onGrantDeleted ({collectionId, grantId}) {
@@ -1519,9 +1522,16 @@ SM.Manage.Collection.AdminCreatePanel = Ext.extend(Ext.form.FormPanel, {
       border: true,
       region: 'center'
     })
-
     // show Owner role by default
     newGrantPanel.roleComboBox.setValue(4)
+
+    function getFieldValues () {
+      return {
+        name: nameField.getValue(),
+        description: descriptionField.getValue(),
+        grants: newGrantPanel.grantGrid.getValue()
+      }
+    }
     
     const config = {
       // baseCls: 'x-plain',
@@ -1537,46 +1547,7 @@ SM.Manage.Collection.AdminCreatePanel = Ext.extend(Ext.form.FormPanel, {
         _this.collectionId = apiCollection.collectionId
         _this.collectionName = apiCollection.name
       },
-      getFieldValues: function (dirtyOnly) {
-        // Override Ext.form.FormPanel implementation to check submitValue
-        // and to create metadata from the review fields configuration
-        let o = {}, n, key, val;
-        this.items.each(function (f) {
-          if (f.submitValue !== false && !f.disabled && (dirtyOnly !== true || f.isDirty())) {
-            n = f.getName()
-            key = o[n]
-            val = f.getValue()
-            if (Ext.isDefined(key)) {
-              if (Ext.isArray(key)) {
-                o[n].push(val);
-              } else {
-                o[n] = [key, val]
-              }
-            } else {
-              o[n] = val
-            }
-          }
-        })
-        o.settings = {
-          fields: settingsReviewFields.serialize(),
-          status: settingsStatusFields.serialize(),
-          history: settingsHistoryFields.serialize()
-        }
-        delete o.commentEnabled
-        delete o.commentRequired
-        delete o.detailEnabled
-        delete o.detailRequired
-        delete o.canAccept
-        delete o.minAcceptGrant
-        delete o.resetCriteria
-        delete o.maxReviews
-        delete o['undefined']
-
-        o.metadata = o.metadata ?? metadataGrid.getValue()
-        o.labels = o.labels ?? labelGrid.getValue()
-
-        return o
-      },
+      getFieldValues,
       items: [
         {
           layout: 'border',

@@ -1236,7 +1236,7 @@ module.exports.setReviewAclByCollectionUserGroup = async function (req, res, nex
 module.exports.putGrantByCollectionGrant = async function (req, res, next) {
   try {
     const grantId = req.params.grantId
-    const elevate = req.params.elevate
+    const elevate = req.query.elevate
     const grant = req.body
 
     const {collectionId, grant: requesterGrant} = getCollectionInfoAndCheckPermission(req, Security.ACCESS_LEVEL.Manage, true)
@@ -1294,7 +1294,7 @@ module.exports.postGrantsByCollection = async function (req, res, next) {
   try {
     const { collectionId, grant: requesterGrant } = getCollectionInfoAndCheckPermission(req, Security.ACCESS_LEVEL.Manage, true)
     const grants = req.body
-    const elevate = req.params.elevate
+    const elevate = req.query.elevate
     const accessLevels = grants.map( g => g.accessLevel)
     if (!elevate && accessLevels.includes(4) && requesterGrant.accessLevel !== 4) {
       throw new SmError.PrivilegeError('cannot create owner grants')
@@ -1317,12 +1317,13 @@ module.exports.postGrantsByCollection = async function (req, res, next) {
 module.exports.deleteGrantByCollectionGrant = async function (req, res, next) {
   try {
     const grantId = req.params.grantId
-    const { collectionId, grant: requesterGrant } = getCollectionInfoAndCheckPermission(req)
+    const elevate = req.query.elevate
+    const { collectionId, grant: requesterGrant } = getCollectionInfoAndCheckPermission(req, Security.ACCESS_LEVEL.Manage, true)
     const currentGrant = await CollectionService._getCollectionGrant({collectionId, grantId})
     if (!currentGrant) {
       throw new SmError.NotFoundError('no such grant in collection')
     }
-    if (currentGrant.accessLevel === 4 && requesterGrant.accessLevel !== 4) {
+    if (!elevate && currentGrant.accessLevel === 4 && requesterGrant.accessLevel !== 4) {
       throw new SmError.PrivilegeError('cannot remove owner grants')
     }
     await CollectionService.deleteGrantById(grantId)

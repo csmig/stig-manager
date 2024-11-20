@@ -437,9 +437,7 @@ exports.addOrUpdateCollection = async function(writeAction, collectionId, body, 
   try {
     const {grants, labels, ...collectionFields} = body
     // Stringify JSON values
-    if ('metadata' in collectionFields) {
-      collectionFields.metadata = JSON.stringify(collectionFields.metadata)
-    }
+    collectionFields.metadata = JSON.stringify(collectionFields.metadata ?? {})
     // Merge default settings with any provided settings
     collectionFields.settings = JSON.stringify({...MyController.defaultSettings, ...collectionFields.settings})
   

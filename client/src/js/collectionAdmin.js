@@ -22,8 +22,8 @@ function addCollectionAdmin( params ) {
 
   async function loadAdminPropertiesPanel(collectionId) {
     const el = adminPropsPanel.getEl()
+    const smTask = setTimeout(el.mask.bind(el), 250)
     try {
-      el.mask('')
       const apiCollection = await Ext.Ajax.requestPromise({
         responseType: 'json',
         url: `${STIGMAN.Env.apiBase}/collections/${collectionId}`,
@@ -36,6 +36,9 @@ function addCollectionAdmin( params ) {
       adminPropsPanel.setFieldValues(apiCollection)
     }
     finally {
+      if (smTask) {
+        clearTimeout(smTask)
+      }
       el.unmask()
       el.removeClass('sm-vbox-disabled')
     }
@@ -50,6 +53,9 @@ function addCollectionAdmin( params ) {
     split: true
   })
 
+  function reloadGrid() {
+    collectionGrid.store.reload()
+  }
   function onCollectionChanged (apiCollection) {
     collectionGrid.store.reload()
     // store.loadData(apiCollection, true)
@@ -59,19 +65,18 @@ function addCollectionAdmin( params ) {
   }
   function onCollectionCreated (apiCollection) {
     collectionGrid.store.reload()
-    // store.loadData(apiCollection, true)
-    // const sortState = store.getSortState()
-    // store.sort(sortState.field, sortState.direction)
-    // collectionGrid.getSelectionModel().selectRow(store.findExact('collectionId',apiCollection.collectionId))
   }
   function onCollectionDeleted (collectionId) {
     collectionGrid.store.reload()
     // store.removeAt(store.indexOfId(collectionId))
   }
   
-  SM.Dispatcher.addListener('collectionchanged', onCollectionChanged)
-  SM.Dispatcher.addListener('collectioncreated', onCollectionCreated)
-  SM.Dispatcher.addListener('collectiondeleted', onCollectionDeleted)
+  SM.Dispatcher.addListener('collectionchanged', reloadGrid)
+  SM.Dispatcher.addListener('collectioncreated', reloadGrid)
+  SM.Dispatcher.addListener('collectiondeleted', reloadGrid)
+  SM.Dispatcher.addListener('grant.updated', reloadGrid)
+  SM.Dispatcher.addListener('grant.created', reloadGrid)
+  SM.Dispatcher.addListener('grant.deleted', reloadGrid)
 
   const thisTab = Ext.getCmp('main-tab-panel').add({
     id: 'collection-admin-tab',
@@ -84,9 +89,14 @@ function addCollectionAdmin( params ) {
     items: [collectionGrid, adminPropsPanel],
     listeners: {
       beforedestroy: function () {
-        SM.Dispatcher.removeListener('collectionchanged', onCollectionChanged)
-        SM.Dispatcher.removeListener('collectioncreated', onCollectionCreated)
-        SM.Dispatcher.removeListener('collectiondeleted', onCollectionDeleted)
+        SM.Dispatcher.removeListener('collectionchanged', reloadGrid)
+        SM.Dispatcher.removeListener('collectioncreated', reloadGrid)
+        SM.Dispatcher.removeListener('collectiondeleted', reloadGrid)
+        SM.Dispatcher.removeListener('grant.updated', reloadGrid)
+        SM.Dispatcher.removeListener('grant.created', reloadGrid)
+        SM.Dispatcher.removeListener('grant.deleted', reloadGrid)
+      
+      
       }
     }
   })
@@ -101,7 +111,7 @@ async function showAdminCreatePanel() {
       btnHandler: async () => {
         try {
           let values = adminCreatePanel.getFieldValues()
-          await SM.Manage.Collection.ApiAddOrUpdate(collectionId, values, {
+          await SM.Manage.Collection.ApiAddOrUpdate(0, values, {
             elevate: true,
             showManager: false
           })

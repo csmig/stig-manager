@@ -627,12 +627,12 @@ SM.Grant.NewGrantPanel = Ext.extend(Ext.Panel, {
   }
 })
 
-SM.Grant.showNewGrantWindow = function ({collectionId, existingGrants, canModifyOwners}) {
+SM.Grant.showNewGrantWindow = function ({collectionId, existingGrants, canModifyOwners, elevate = false}) {
   try {
     async function saveHandler () {
       try {
         const grants = panel.grantGrid.getValue()
-        await SM.Grant.Api.postGrantsByCollection({collectionId, grants})
+        await SM.Grant.Api.postGrantsByCollection({collectionId, grants, elevate})
       }
       catch (e) {
         SM.Error.handleError(e)
@@ -821,10 +821,12 @@ SM.Grant.showEditGrantWindow = function ({existingGrants, selectedGrant, include
 
 Ext.ns('SM.Grant.Api')
 
-SM.Grant.Api.putGrantByCollectionGrant = async function ({collectionId, grantId, body}) {
+SM.Grant.Api.putGrantByCollectionGrant = async function ({collectionId, grantId, body, elevate}) {
+  const params = elevate ? { elevate } : {}
   const api = await Ext.Ajax.requestPromise({
     responseType: 'json',
     url: `${STIGMAN.Env.apiBase}/collections/${collectionId}/grants/${grantId}`,
+    params,
     method: 'PUT',
     jsonData: body
   })
@@ -832,20 +834,23 @@ SM.Grant.Api.putGrantByCollectionGrant = async function ({collectionId, grantId,
   return api
 }
 
-SM.Grant.Api.deleteGrantByCollectionGrant = async function ({collectionId, grantId}) {
+SM.Grant.Api.deleteGrantByCollectionGrant = async function ({collectionId, grantId, elevate}) {
+  const elevateParam = elevate ? '?elevate=true' : ''
   const api = await Ext.Ajax.requestPromise({
     responseType: 'json',
-    url: `${STIGMAN.Env.apiBase}/collections/${collectionId}/grants/${grantId}`,
+    url: `${STIGMAN.Env.apiBase}/collections/${collectionId}/grants/${grantId}${elevateParam}`,
     method: 'DELETE'
   })
   SM.Dispatcher.fireEvent('grant.deleted', {collectionId, grantId, api})
   return api
 }
 
-SM.Grant.Api.postGrantsByCollection = async function({collectionId, grants}) {
+SM.Grant.Api.postGrantsByCollection = async function({collectionId, grants, elevate}) {
+  const params = elevate ? { elevate } : {}
   const api = await Ext.Ajax.requestPromise({
     responseType: 'json',
     url: `${STIGMAN.Env.apiBase}/collections/${collectionId}/grants`,
+    params,
     method: 'POST',
     jsonData: grants
   })

@@ -5800,7 +5800,6 @@ components:
           $ref: '#/components/schemas/CollectionSettings'
       required:
         - name
-        - metadata
         - grants
     CollectionDescription:
       $ref: '#/components/schemas/String255Nullable'

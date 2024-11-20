@@ -217,3 +217,7 @@ SM.Error.getOriginalSource = function (stackTrace) {
   })
   return output
 }
+
+window.addEventListener('unhandledrejection', (event) => {
+  SM.Error.handleError(event.reason)
+})
