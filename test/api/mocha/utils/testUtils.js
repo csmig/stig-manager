@@ -1,9 +1,9 @@
-const axios = require('axios')
 const config = require('../testConfig.json')
-const FormData = require('form-data')
+const { Blob } = require('buffer')
 const fs = require('fs')
 const path = require('path')
 const { v4: uuidv4 } = require('uuid')
+const reference = require('../referenceData')
 const adminToken = config.adminToken
 
 // canidate for a function? (used to store responses for a test (metrics))
@@ -22,102 +22,108 @@ const getUUIDSubString = (length = 20) => {
 }
 
 const loadAppData = async (appdataFileName = 'appdata.jsonl') => {
-  return await axios({
-    method: 'post',
-    url: `${config.baseUrl}/op/appdata?elevate=true`,
+
+  const filePath = path.join(__dirname, `../../appdata/${appdataFileName}`)
+  const fileContent = fs.readFileSync(filePath, 'utf-8')
+  
+  const res = await fetch(`${config.baseUrl}/op/appdata?elevate=true`, {
+    method: 'POST',
     headers: {
-      'Content-Type': 'application/jsonl',
-      Authorization: `Bearer ${adminToken}`
+      Authorization: `Bearer ${adminToken}`,
+      'Content-Type': 'application/jsonl', 
     },
-    data: fs.readFileSync(path.join(__dirname, `../../appdata/${appdataFileName}`))
+    body: fileContent,
   })
+  
+  if (!res.ok) {
+    const errorText = await res.text()
+    throw new Error(`HTTP error, Status: ${res.status}, Message: ${errorText}`)
+  }
+  const data = await res.text()
+  return data
+
 }
 
 const createTempCollection = async (collectionPost) => {
-  try {
-    // if no collecitonPost is passed in, use the default
-    if (!collectionPost) {
-      collectionPost = 
-        {
-          name: 'temoCollection' + getUUIDSubString(),
-          description: 'Collection TEST description',
-          settings: {
-            fields: {
-              detail: {
-                enabled: 'always',
-                required: 'findings'
-              },
-              comment: {
-                enabled: 'always',
-                required: 'findings'
-              }
-            },
-            status: {
-              canAccept: true,
-              minAcceptGrant: 2,
-              resetCriteria: 'result'
-            },
-            history: {
-              maxReviews: 11
-            }
-          },
-          metadata: {
-            pocName: 'poc2Put',
-            pocEmail: 'pocEmailPut@email.com',
-            pocPhone: '12342',
-            reqRar: 'true'
-          },
-          grants: [
-            {
-              userId: '1',
-              accessLevel: 4
-            },
-            {
-              userId: '85',
-              accessLevel: 1
-            }
-          ],
-          labels: [
-            {
-              name: 'TEST',
-              description: 'Collection label description',
-              color: 'ffffff'
-            }
-          ]
-        }
-    }
-    const res = await axios.post(
-      `${config.baseUrl}/collections?elevate=true&projection=grants&projection=labels`,
-      collectionPost,
+  // if no collecitonPost is passed in, use the default
+  if (!collectionPost) {
+    collectionPost = 
       {
-        headers: {
-          Authorization: `Bearer ${adminToken}`,
-          'Content-Type': 'application/json'
-        }
+        name: 'temoCollection' + getUUIDSubString(),
+        description: 'Collection TEST description',
+        settings: {
+          fields: {
+            detail: {
+              enabled: 'always',
+              required: 'findings'
+            },
+            comment: {
+              enabled: 'always',
+              required: 'findings'
+            }
+          },
+          status: {
+            canAccept: true,
+            minAcceptGrant: 2,
+            resetCriteria: 'result'
+          },
+          history: {
+            maxReviews: 11
+          }
+        },
+        metadata: {
+          pocName: 'poc2Put',
+          pocEmail: 'pocEmailPut@email.com',
+          pocPhone: '12342',
+          reqRar: 'true'
+        },
+        grants: [
+          {
+            userId: '1',
+            accessLevel: 4
+          },
+          {
+            userId: '85',
+            accessLevel: 1
+          }
+        ],
+        labels: [
+          {
+            name: 'TEST',
+            description: 'Collection label description',
+            color: 'ffffff'
+          }
+        ]
       }
-    )
-    return res
   }
-  catch (e) {
-    throw e;
+  
+  const res = await fetch(`${config.baseUrl}/collections?elevate=true&projection=grants&projection=labels`, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${adminToken}`,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify(collectionPost)
+  })
+  if (!res.ok) { 
+    throw new Error(`HTTP error, Status: ${res.status}`)
   }
+  return res.json()
 }
 
 const deleteCollection = async (collectionId) => {
-  try {
-    await axios.delete(
-      `${config.baseUrl}/collections/${collectionId}?elevate=true&projection=assets&projection=grants&projection=owners&projection=statistics&projection=stigs`,
-      {
-        headers: {
-          Authorization: `Bearer ${adminToken}`,
-          'Content-Type': 'application/json'
-        },
-        timeout: 10000
-      }
-    )
-  } catch (e) {
-    throw e;
+
+  const res = await fetch(`${config.baseUrl}/collections/${collectionId}?elevate=true&projection=assets&projection=grants&projection=owners&projection=statistics&projection=stigs`, {
+    method: 'DELETE',
+    headers: {
+      Authorization: `Bearer ${adminToken}`,
+      'Content-Type': 'application/json'
+    },
+  })
+  if (!res.ok) { 
+    throw new Error(`HTTP error, Status: ${res.status}`)
   }
+  return res.json()
 }
 
 const createTempAsset = async asset => {
@@ -138,29 +144,34 @@ const createTempAsset = async asset => {
       stigs: ['VPN_SRG_TEST', 'Windows_10_STIG_TEST']
     }
   }
-  try {
-    const res = await axios.post(`${config.baseUrl}/assets`, asset, {
-      headers: {
-        Authorization: `Bearer ${adminToken}`,
-        'Content-Type': 'application/json'
-      }
-    })
-    return res
-  } catch (e) {
-    throw e;
+
+  const res = await fetch(`${config.baseUrl}/assets`, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${adminToken}`,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify(asset)
+  })
+  if (!res.ok) { 
+    throw new Error(`HTTP error, Status: ${res.status}`)
   }
+  return res.json()
 }
 
 const deleteAsset = async assetId => {
-  await axios.delete(
-    `${config.baseUrl}/assets/${assetId}`,
-    {
-      headers: {
-        Authorization: `Bearer ${adminToken}`,
-        'Content-Type': 'application/json'
-      }
-    }
-  )
+
+  const res = await fetch(`${config.baseUrl}/assets/${assetId}`, {
+    method: 'DELETE',
+    headers: {
+      Authorization: `Bearer ${adminToken}`,
+      'Content-Type': 'application/json'
+    },
+  })
+  if (!res.ok) { 
+    throw new Error(`HTTP error, Status: ${res.status}`)
+  }
+  return res.json()
 }
 
 const createDisabledCollectionsandAssets = async ({context = 'full'} = {}) => {
@@ -168,79 +179,51 @@ const createDisabledCollectionsandAssets = async ({context = 'full'} = {}) => {
   const collection = await createTempCollection()
   const asset = await createTempAsset()
   if (context === 'meta') {
-    await setStigGrantsMeta(21, 85, asset.data.assetId)
+    await setStigGrantsMeta(21, 85, asset.assetId)
   }
   else {
-    await setStigGrants(21, 85, asset.data.assetId)
+    await setStigGrants(21, 85, asset.assetId)
   }
-  await importReview(21, asset.data.assetId)
-  await deleteAsset(asset.data.assetId)
-  await deleteCollection(collection.data.collectionId)
+  await importReview(21, asset.assetId)
+  await deleteAsset(asset.assetId)
+  await deleteCollection(collection.collectionId)
   return {collection: collection.data , asset: asset.data}
 }
 
 const importReview = async (collectionId, assetId, ruleId = "SV-106179r1_rule") => {
-  try {
-    const res = await axios.post(
-      `${config.baseUrl}/collections/${collectionId}/reviews/${assetId}`,
-      [
-        {
+
+  const res = await fetch(`${config.baseUrl}/collections/${collectionId}/reviews/${assetId}`, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${adminToken}`,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify([
+      {
         "ruleId": ruleId,
         "result": "pass",
         "detail": "test\nvisible to lvl1",
         "comment": "sure",
         "autoResult": false,
         "status": "submitted"
-        }
-    ],
-      {
-        headers: {
-          Authorization: `Bearer ${adminToken}`,
-          'Content-Type': 'application/json'
-        }
       }
-    )
-    return res
-  } catch (e) {
-    throw e;
+    ])
+  })
+  if (!res.ok) { 
+    throw new Error(`HTTP error, Status: ${res.status}`)
   }
+  return res.json()
 }
 
 const setStigGrants = async (collectionId, userId, assetId) => {
-  try {
-    const res = await axios.put(
-      `${config.baseUrl}/collections/${collectionId}/grants/user/${userId}/access`,
-      [
-        {
-            "benchmarkId": "VPN_SRG_TEST",
-            "assetId": `${assetId}`
-        },
-        {
-            "benchmarkId": "VPN_SRG_TEST",
-            "assetId": "42"
-        },
-        {
-            "benchmarkId": "VPN_SRG_TEST",
-            "assetId": "154"
-        }        
-    ],
-    {
-      headers: {
-        Authorization: `Bearer ${adminToken}`,
-        'Content-Type': 'application/json'
-      }
-    }
-    )
-    return res
-  } catch (e) {
-    throw e;
-  }
-}
 
-const setStigGrantsMeta = async (collectionId, userId, assetId) => {
-  const res = await axios.put(
-    `${config.baseUrl}/collections/${collectionId}/grants/user/${userId}/access`,
-    [
+  const res = await fetch(`${config.baseUrl}/collections/${collectionId}/grants/user/${userId}/access`, {
+    method: 'PUT',
+    headers: {
+      Authorization: `Bearer ${adminToken}`,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify([
       {
           "benchmarkId": "VPN_SRG_TEST",
           "assetId": `${assetId}`
@@ -248,154 +231,139 @@ const setStigGrantsMeta = async (collectionId, userId, assetId) => {
       {
           "benchmarkId": "VPN_SRG_TEST",
           "assetId": "42"
-      }      
-  ],
-  {
+      },
+      {
+          "benchmarkId": "VPN_SRG_TEST",
+          "assetId": "154"
+      }        
+    ])
+  })
+  if (!res.ok) { 
+    throw new Error(`HTTP error, Status: ${res.status}`)
+  }
+  return res.json()
+}
+
+const setStigGrantsMeta = async (collectionId, userId, assetId) => {
+
+  const res = await fetch(`${config.baseUrl}/collections/${collectionId}/grants/user/${userId}/access`, {
+    method: 'PUT',
     headers: {
       Authorization: `Bearer ${adminToken}`,
       'Content-Type': 'application/json'
-    }
+    },
+    body: JSON.stringify([
+      {
+          "benchmarkId": "VPN_SRG_TEST",
+          "assetId": `${assetId}`
+      },
+      {
+          "benchmarkId": "VPN_SRG_TEST",
+          "assetId": "42"
+      }
+    ])
+  })
+  if (!res.ok) { 
+    throw new Error(`HTTP error, Status: ${res.status}`)
   }
-  )
-  return res
+  return res.json()
 }
-
 
 const uploadTestStig = async (filename) => {
-  console.log(`Uploading STIG ${filename}`)
-  const directoryPath = path.join(__dirname, '../../form-data-files/')
-  const filePath = path.join(directoryPath, filename)
+
+  const filePath = path.join(__dirname, '../../form-data-files/', filename)
+  const fileContents = fs.readFileSync(filePath)
+  
+  // Create a Blob for the file content
+  const blob = new Blob([fileContents], { type: 'text/xml' })
+
   const formData = new FormData()
-  formData.append('importFile', fs.createReadStream(filePath), {
-    filename,
-    contentType: 'text/xml'
+  formData.append('importFile', blob, filename)
+
+
+  const response = await fetch(`${config.baseUrl}/stigs?elevate=true&clobber=true`, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${adminToken}`,
+    },
+    body: formData,
   })
 
-  const axiosConfig = {
-    method: 'post', 
-    url: `${config.baseUrl}/stigs?elevate=true&clobber=true`,
-    headers: {
-      ...formData.getHeaders(),
-      Authorization: `Bearer ${adminToken}`
-    },
-    data: formData
+  if (!response.ok) {
+    const errorText = await response.text()
+    throw new Error(`HTTP error! Status: ${response.status}, Message: ${errorText}`)
   }
 
-  try {
-    const response = await axios(axiosConfig)
-  } catch (error) {
-    throw error
-  }
+  const data = await response.json()
+  return data
 }
 
-// const uploadTestStigs = async () => {
-//   const testFilenames = [
-//     'U_MS_Windows_10_STIG_V1R23_Manual-xccdf.xml',
-//     'U_RHEL_7_STIG_V3R0-3_Manual-xccdf.xml',
-//     'U_VPN_SRG_V1R1_Manual-xccdf-replace.xml',
-//     'U_VPN_SRG_V1R1_Manual-xccdf.xml',
-//    // 'U_VPN_SRG_V2R3_Manual-xccdf-reviewKeyChange.xml',
-//     'U_VPN_SRG-OTHER_V1R1_Manual-xccdf.xml',
-//    // 'U_VPN_SRG_V1R0_Manual-xccdf.xml',
-//     'U_VPN_SRG-OTHER_V1R1_twoRules-matchingFingerprints.xml'
-//   ]
-//   const directoryPath = path.join(__dirname, '../../form-data-files/')
-
-//   for (const filename of testFilenames) {
-//     const formData = new FormData()
-//     const filePath = path.join(directoryPath, filename)
-//     formData.append('importFile', fs.createReadStream(filePath), {
-//       filename,
-//       contentType: 'text/xml'
-//     })
-
-//     const axiosConfig = {
-//       method: 'post',
-//       url: `${config.baseUrl}/stigs?elevate=true&clobber=true`,
-//       headers: {
-//         ...formData.getHeaders(),
-//         Authorization: `Bearer ${adminToken}`
-//       },
-//       data: formData
-//     }
-
-//     try {
-//       const response = await axios(axiosConfig)
-//     } catch (error) {
-//       throw error
-//     }
-//   }
-// }
-
 const deleteStigByRevision = async (benchmarkId, revisionStr) => {
-  try {
-    console.log(`Removing ${benchmarkId} ${revisionStr}`)
-    const res = await axios.delete(
-      `${config.baseUrl}/stigs/${benchmarkId}/revisions/${revisionStr}?elevate=true&force=true`,
-      {
-        headers: {
-          Authorization: `Bearer ${adminToken}`,
-          'Content-Type': 'application/json'
-        }
-      }
-    )
-    return res
-  } catch (e) {
-    throw e
+
+  const res = await fetch(`${config.baseUrl}/stigs/${benchmarkId}/revisions/${revisionStr}?elevate=true&force=true`, {
+    method: 'DELETE',
+    headers: {
+      Authorization: `Bearer ${adminToken}`,
+      'Content-Type': 'application/json'
+    },
+  })
+  if (!res.ok) { 
+    throw new Error(`HTTP error, Status: ${res.status}`)
   }
+  return res.json()
 }
 
 const deleteStig = async (benchmarkId) => {
-  try {
 
-    const axiosConfig = {
-      method: 'delete',
-      url: `${config.baseUrl}/stigs/${benchmarkId}?elevate=true&force=true`,
-        headers: {
-          Authorization: `Bearer ${adminToken}`,
-          "Content-Type": "application/json",
-        }
-      }
-    const res = await axios(axiosConfig)
-    return res
-  } catch (e) {
-    throw e
+  const res = await fetch(`${config.baseUrl}/stigs/${benchmarkId}?elevate=true&force=true`, {
+    method: 'DELETE',
+    headers: {
+      Authorization: `Bearer ${adminToken}`,
+      'Content-Type': 'application/json'
+    },
+  })
+  if (!res.ok) { 
+    throw new Error(`HTTP error, Status: ${res.status}`)
   }
+  return res.json()
 }
 
 const getAsset = async assetId => {
-  try {
-    const res = await axios.get(
-      `${config.baseUrl}/assets/${assetId}?projection=statusStats&projection=stigs`,
-      {
-        headers: {
-          Authorization: `Bearer ${adminToken}`,
-          'Content-Type': 'application/json'
-        }
-      }
-    )
-    return res.data
-  }
-  catch (e) {
-    if (e.response && e.response.status === 403) {
-      return { status: 403 } // return an object with the 403 status
+  const res = await fetch(`${config.baseUrl}/assets/${assetId}?projection=statusStats&projection=stigs`, {
+    method: 'GET',
+    headers: {
+      Authorization: `Bearer ${adminToken}`,
+      'Content-Type': 'application/json',
+    },
+  })
+
+  if (!res.ok) { 
+    if (res.status === 403) {
+      return { status: 403 }
     }
-    throw e 
+    throw new Error(`HTTP error, Status: ${res.status}`)
   }
+
+  return await res.json()
 }
 
 const getStigByBenchmarkId = async benchmarkId => {
   try {
-    const res = await axios.get(
-      `${config.baseUrl}/stigs/${benchmarkId}?elevate=true`,
-      {
-        headers: {
-          Authorization: `Bearer ${adminToken}`,
-          'Content-Type': 'application/json' 
-        }
+
+    const res = await fetch(`${config.baseUrl}/stigs/${benchmarkId}?elevate=true`, {
+      method: 'GET',
+      headers: {
+        Authorization: `Bearer ${adminToken}`,
+        'Content-Type': 'application/json'
+      },
+    })
+    if (!res.ok) { 
+      if(res.status === 404) {
+        return { status: 404 }
       }
-    )
-    return res.data
+      throw new Error(`HTTP error, Status: ${res.status}`)
+    }
+    return res.json()
   }
   catch (e) {
     if (e.response && e.response.status === 404) {
@@ -407,16 +375,21 @@ const getStigByBenchmarkId = async benchmarkId => {
 
 const getUser = async userId => {
   try {
-    const res = await axios.get(
-      `${config.baseUrl}/users/${userId}?elevate=true&projection=collectionGrants&projection=statistics`,
-      {
-        headers: {
-          Authorization: `Bearer ${adminToken}`,
-          'Content-Type': 'application/json'
-        }
+
+    const res = await fetch(`${config.baseUrl}/users/${userId}?elevate=true&projection=collectionGrants&projection=statistics`, {
+      method: 'GET',
+      headers: {
+        Authorization: `Bearer ${adminToken}`,
+        'Content-Type': 'application/json'
+      },
+    })
+    if (!res.ok) { 
+      if(res.status === 404) {
+        return { status: 404 }
       }
-    )
-    return res.data
+      throw new Error(`HTTP error, Status: ${res.status}`)
+    }
+    return res.json()
   }
   catch (e) {
     if (e.response && e.response.status === 404) {
@@ -427,155 +400,129 @@ const getUser = async userId => {
 }
 
 const getAssetsByLabel = async (collectionId, labelId) => {
-  try {
-    const res = await axios.get(
-      `${config.baseUrl}/collections/${collectionId}/labels/${labelId}/assets`,
-      {
-        headers: {
-          Authorization: `Bearer ${adminToken}`,
-          'Content-Type': 'application/json'
-        }
-      }
-    )
-    return res.data
+
+  const res = await fetch(`${config.baseUrl}/collections/${collectionId}/labels/${labelId}/assets`, {
+    method: 'GET',
+    headers: {
+      Authorization: `Bearer ${adminToken}`,
+      'Content-Type': 'application/json'
+    },
+  })
+  if (!res.ok) { 
+    throw new Error(`HTTP error, Status: ${res.status}`)
   }
-  catch (e) {
-   throw e
-  }
+  return res.json()
 }
 
 const getCollectionMetricsDetails = async (collectionId) => {
-  try {
-    const res = await axios.get(
-      `${config.baseUrl}/collections/${collectionId}/metrics/detail`,
-      {
-        headers: {
-          Authorization: `Bearer ${adminToken}`,
-          'Content-Type': 'application/json'
-        }
-      }
-    )
-    return res.data
+
+  const res = await fetch(`${config.baseUrl}/collections/${collectionId}/metrics/detail`, {
+    method: 'GET',
+    headers: {
+      Authorization: `Bearer ${adminToken}`,
+      'Content-Type': 'application/json'
+    },
+  })
+  if (!res.ok) { 
+    throw new Error(`HTTP error, Status: ${res.status}`)
   }
-  catch (e) {
-   throw e
-  }
+  return res.json()
 }
 
 const getReviews = async (collectionId) => {
-  try {
-    const res = await axios.get(
-      `${config.baseUrl}/collections/${collectionId}/reviews/`,
-      {
-        headers: {
-          Authorization: `Bearer ${adminToken}`,
-          'Content-Type': 'application/json'
-        }
-      }
-    )
-    return res.data
+
+  const res = await fetch(`${config.baseUrl}/collections/${collectionId}/reviews/`, {
+    method: 'GET',
+    headers: {
+      Authorization: `Bearer ${adminToken}`,
+      'Content-Type': 'application/json'
+    },
+  })
+  if (!res.ok) { 
+    throw new Error(`HTTP error, Status: ${res.status}`)
   }
-  catch (e) {
-   throw e
-  }
+  return res.json()
 }
 
 const getChecklist = async (assetId, benchmarkId, revisionStr) => {
-  try {
-    const res = await axios.get(
-      `${config.baseUrl}/assets/${assetId}/checklists/${benchmarkId}/${revisionStr}?format=ckl`,
-      {
-        headers: {
-          Authorization: `Bearer ${adminToken}`,
-          'Content-Type': 'application/json'
-        }
-      }
-    )
-    return res.data
+
+  const res = await fetch(`${config.baseUrl}/assets/${assetId}/checklists/${benchmarkId}/${revisionStr}?format=ckl`, {
+    method: 'GET',
+    headers: {
+      Authorization: `Bearer ${adminToken}`,
+      'Content-Type': 'application/json'
+    },
+  })
+  if (!res.ok) { 
+    throw new Error(`HTTP error, Status: ${res.status}`)
   }
-  catch (e) {
-  throw e
-  }
+  return res.text()
 }
 
 const getCollection = async (collectionId) => {
-  try {
-    const res = await axios.get(
-      `${config.baseUrl}/collections/${collectionId}?projection=grants&projection=assets&projection=labels&projection=owners&projection=statistics&projection=stigs`,
-      {
-        headers: {
-          Authorization: `Bearer ${adminToken}`,
-          'Content-Type': 'application/json'
-        }
-      }
-    )
-    return res.data
-  }
-  catch (e) {
-    if (e.response && e.response.status === 403) {
-      return { status: 403 } 
+
+  const res = await fetch(`${config.baseUrl}/collections/${collectionId}?projection=grants&projection=assets&projection=labels&projection=owners&projection=statistics&projection=stigs`, {
+    method: 'GET',
+    headers: {
+      Authorization: `Bearer ${adminToken}`,
+      'Content-Type': 'application/json'
+    },
+  })
+  if (!res.ok) { 
+    if (res.status === 403) {
+      return { status: 403 }
     }
-    throw e
+    throw new Error(`HTTP error, Status: ${res.status}`)
   }
+  return res.json()
 }
 
 const setDefaultRevision = async (collectionId, benchmarkId, revisionStr) => {
 
-  try {
-    const res = await axios.post(
-      `${config.baseUrl}/collections/${collectionId}/stigs/${benchmarkId}`,
-      {"defaultRevisionStr": revisionStr},
-      {
-        headers: {
-          Authorization: `Bearer ${adminToken}`,
-          'Content-Type': 'application/json'
-        }
-      }
-    )
-    return res
+  const res = await fetch(`${config.baseUrl}/collections/${collectionId}/stigs/${benchmarkId}`, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${adminToken}`,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({"defaultRevisionStr": revisionStr})
+  })
+  if (!res.ok) {
+    throw new Error(`HTTP error, Status: ${res.status}`)
   }
-  catch (e) {
-   return e
-  }
-
+  return res.json()
 }
 
 const putReviewByAssetRule = async (collectionId, assetId, ruleId, body) => {
 
-  try {
-    const res = await axios.put(
-      `${config.baseUrl}/collections/${collectionId}/reviews/${assetId}/${ruleId}`,
-      body,
-      {
-        headers: {
-          Authorization: `Bearer ${adminToken}`,
-          'Content-Type': 'application/json'
-        }
-      }
-    )
-    return res
+  const res = await fetch(`${config.baseUrl}/collections/${collectionId}/reviews/${assetId}/${ruleId}`, {
+    method: 'PUT',
+    headers: {
+      Authorization: `Bearer ${adminToken}`,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify(body)
+  })
+
+  if (!res.ok) {
+    throw new Error(`HTTP error, Status: ${res.status}`)
   }
-  catch (e) {
-    throw e
-  }
+  return res.json()
 }
 
 const deleteReviewsByAssetRule = async (collectionId, assetId, ruleId) => {
 
-  try{
-    const res = await axios.delete(
-      `${config.baseUrl}/collections/${collectionId}/reviews/${assetId}/${ruleId}`,
-      {
-        headers: {
-          Authorization: `Bearer ${adminToken}`,
-          'Content-Type': 'application/json'
-        }
-      }
-    )
+  const res = await fetch(`${config.baseUrl}/collections/${collectionId}/reviews/${assetId}/${ruleId}`, {
+    method: 'DELETE',
+    headers: {
+      Authorization: `Bearer ${adminToken}`,
+      'Content-Type': 'application/json'
+    },
+  })
+  if (!res.ok) { 
+    throw new Error(`HTTP error, Status: ${res.status}`)
   }
-  catch (e) {
-    throw e
-  }
+  return res.json()
 }
 
 const resetTestAsset = async () => {
@@ -624,16 +571,18 @@ const resetTestAsset = async () => {
 
 const setGroupAccess = async (collectionId, userGroupId, body) => {
 
-  const res = await axios.put(
-    `${config.baseUrl}/collections/${collectionId}/grants/user-group/${userGroupId}/access`,
-    body,
-    {
-      headers: {
-        Authorization: `Bearer ${adminToken}`,
-        'Content-Type': 'application/json'
-      }
-    }
-  )
+  const res = await fetch(`${config.baseUrl}/collections/${collectionId}/grants/user-group/${userGroupId}/access`, {
+    method: 'PUT',
+    headers: {
+      Authorization: `Bearer ${adminToken}`,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify(body)
+  })
+  if (!res.ok) { 
+    throw new Error(`HTTP error, Status: ${res.status}`)
+  }
+  return res.json()
 }
 
 const resetScrapAsset = async () => {
@@ -653,98 +602,82 @@ const resetScrapAsset = async () => {
 
 const setRestrictedUsers = async (collectionId, userId, body) => {
 
-  try{
-    const res = await axios.put(
-      `${config.baseUrl}/collections/${collectionId}/grants/user/${userId}/access`,
-      body,
-      {
-        headers: {
-          Authorization: `Bearer ${adminToken}`,
-          'Content-Type': 'application/json'
-        }
-      }
-    )
-    return res
+  const res = await fetch(`${config.baseUrl}/collections/${collectionId}/grants/user/${userId}/access`, {
+    method: 'PUT',
+    headers: {
+      Authorization: `Bearer ${adminToken}`,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify(body)
+  })
+  if (!res.ok) { 
+    throw new Error(`HTTP error, Status: ${res.status}`)
   }
-  catch (e) {
-    throw e
-  }
+  return res.json()
 }
 
 const createUser = async (user) => {
-  try {
-    const res = await axios.post(
-      `${config.baseUrl}/users?elevate=true`,
-      user,
-      {
-        headers: {
-          Authorization: `Bearer ${adminToken}`,
-          'Content-Type': 'application/json'
-        }
-      }
-    )
-    return res.data
+
+  const res = await fetch(`${config.baseUrl}/users?elevate=true`, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${adminToken}`,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify(user)
+  })
+  if (!res.ok) { 
+    throw new Error(`HTTP error, Status: ${res.status}`)
   }
-  catch (e) {
-    throw e
-  }
+  return res.json()
 }
 
 const putAsset = async (assetId, asset) => {
-  try {
-    const res = await axios.put(
-      `${config.baseUrl}/assets/${assetId}`,
-      asset,
-      {
-        headers: {
-          Authorization: `Bearer ${adminToken}`,
-          'Content-Type': 'application/json'
-        }
-      }
-    )
-    return res.data
+
+  const res = await fetch(`${config.baseUrl}/assets/${assetId}`, {
+    method: 'PUT',
+    headers: {
+      Authorization: `Bearer ${adminToken}`,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify(asset)
+  })
+  if (!res.ok) { 
+    throw new Error(`HTTP error, Status: ${res.status}`)
   }
-  catch (e) {
-    throw e
-  }
+  return res.json()
 }
 
 const putCollection = async (collectionId, collection) => {
-  try {
-    const res = await axios.put(
-      `${config.baseUrl}/collections/${collectionId}`,
-      collection,
-      {
-        headers: {
-          Authorization: `Bearer ${adminToken}`,
-          'Content-Type': 'application/json'
-        }
-      }
-    )
-    return res.data
+
+  const res = await fetch(`${config.baseUrl}/collections/${collectionId}`, {
+    method: 'PUT',
+    headers: {
+      Authorization: `Bearer ${adminToken}`,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify(collection)
+  })
+  if (!res.ok) { 
+    throw new Error(`HTTP error, Status: ${res.status}`)
   }
-  catch (e) {
-    throw e
-  }
+  return res.json()
 }
 
 const createCollectionLabel = async (collectionId, label) => {
-  try {
-    const res = await axios.post(
-      `${config.baseUrl}/collections/${collectionId}/labels`,
-      label,
-      {
-        headers: {
-          Authorization: `Bearer ${adminToken}`,
-          'Content-Type': 'application/json'
-        }
-      }
-    )
-    return res.data
+
+  const res = await fetch(`${config.baseUrl}/collections/${collectionId}/labels`, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${adminToken}`,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify(label)
+  })
+  if (!res.ok) { 
+    throw new Error(`HTTP error, Status: ${res.status}`)
   }
-  catch (e) {
-    throw e
-  }
+  return res.json()
 }
 
 module.exports = {

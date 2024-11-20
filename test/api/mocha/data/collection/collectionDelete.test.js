@@ -36,7 +36,7 @@ describe('DELETE - Collection ', function () {
 
         it('Delete tempCollection collection (stigmanadmin only)',async function () {
           const res = await chai.request(config.baseUrl)
-              .delete(`/collections/${tempCollection.data.collectionId}`)
+              .delete(`/collections/${tempCollection.collectionId}`)
               .set('Authorization', `Bearer ${iteration.token}`)
 
           if(distinct.canDeleteCollection === false){ 
@@ -45,10 +45,10 @@ describe('DELETE - Collection ', function () {
           }
           expect(res).to.have.status(200)
 
-          expect(res.body.collectionId).to.equal(tempCollection.data.collectionId)
+          expect(res.body.collectionId).to.equal(tempCollection.collectionId)
 
           //confirm that it is deleted
-          const deletedCollection = await utils.getCollection(tempCollection.data.collectionId)
+          const deletedCollection = await utils.getCollection(tempCollection.collectionId)
           expect(deletedCollection.status, "expect 403 response (delete worked)").to.equal(403)
         })
 

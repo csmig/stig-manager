@@ -335,13 +335,13 @@ describe(`GET - Asset`, function () {
           
           if(iteration.name === 'lvl1' || iteration.name === 'collectioncreator'){
             expect(res).to.have.status(403)
-            await utils.deleteAsset(assetWithMetadata.data.assetId)
+            await utils.deleteAsset(assetWithMetadata.assetId)
             return
           }
           expect(res).to.have.status(200)
           expect(res.body).to.be.an(`array`).of.length(1)
-          expect(res.body[0].assetId).to.eql(assetWithMetadata.data.assetId)
-          await utils.deleteAsset(assetWithMetadata.data.assetId)
+          expect(res.body[0].assetId).to.eql(assetWithMetadata.assetId)
+          await utils.deleteAsset(assetWithMetadata.assetId)
         })
 
         it(`Assets accessible to the requester`, async function () {

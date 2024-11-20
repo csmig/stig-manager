@@ -1054,7 +1054,7 @@ describe('POST - Review', () => {
           })
 
           after(async function () {
-            await utils.deleteCollection(tempCollectionCanAcceptFalse.data.collectionId)
+            await utils.deleteCollection(tempCollectionCanAcceptFalse.collectionId)
           })
 
           it(`should throw SmError.PriviledgeError`, async () => {
@@ -1073,7 +1073,7 @@ describe('POST - Review', () => {
               }
             }
             const res = await chai.request(config.baseUrl)
-              .post(`/collections/${tempCollectionCanAcceptFalse.data.collectionId}/reviews`)
+              .post(`/collections/${tempCollectionCanAcceptFalse.collectionId}/reviews`)
               .set('Authorization', `Bearer ${iteration.token}`)
               .send(postreview)
             
@@ -1095,7 +1095,7 @@ describe('POST - Review', () => {
               }
             }
             const res = await chai.request(config.baseUrl)
-              .post(`/collections/${tempCollectionCanAcceptFalse.data.collectionId}/reviews`)
+              .post(`/collections/${tempCollectionCanAcceptFalse.collectionId}/reviews`)
               .set('Authorization', `Bearer ${iteration.token}`)
               .send(postreview)
             expect(res).to.have.status(403)

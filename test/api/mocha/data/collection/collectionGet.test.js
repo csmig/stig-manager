@@ -123,7 +123,7 @@ describe('GET - Collection', function () {
             return
           }
           expect(res.body).to.have.lengthOf(1)
-          expect(res.body[0].collectionId).to.equal(tempCollectionWithMetadata.data.collectionId)
+          expect(res.body[0].collectionId).to.equal(tempCollectionWithMetadata.collectionId)
         })
         it('Return a list of Collections accessible to the requester NAME exact',async function () {
         const res = await chai.request(config.baseUrl)
@@ -769,21 +769,21 @@ describe('GET - Collection', function () {
             ]
           })
           const res = await chai.request(config.baseUrl)
-            .get(`/collections/${collectionNoMetadata.data.collectionId}/metadata/keys`)
+            .get(`/collections/${collectionNoMetadata.collectionId}/metadata/keys`)
             .set('Authorization', `Bearer ${iteration.token}`)
             if (distinct.grant === "none"){
               expect(res).to.have.status(403)
-              utils.deleteCollection(collectionNoMetadata.data.collectionId)
+              utils.deleteCollection(collectionNoMetadata.collectionId)
               return
             }
             if(distinct.canModifyCollection === false){
               expect(res).to.have.status(403)
-              utils.deleteCollection(collectionNoMetadata.data.collectionId)
+              utils.deleteCollection(collectionNoMetadata.collectionId)
               return
             }
             expect(res).to.have.status(200)
             expect(res.body).to.be.an('array').of.length(0)
-            utils.deleteCollection(collectionNoMetadata.data.collectionId)
+            utils.deleteCollection(collectionNoMetadata.collectionId)
          })
       })
 

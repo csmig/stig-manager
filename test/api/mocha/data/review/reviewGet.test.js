@@ -163,7 +163,7 @@ describe('GET - Review', () => {
               ]
             })
           const res = await chai.request(config.baseUrl)
-            .get(`/collections/${tempCollectionWithMetadata.data.collectionId}/reviews?projection=rule&projection=stigs&metadata=testKey%3Atest%3Avalue&projection=metadata`)
+            .get(`/collections/${tempCollectionWithMetadata.collectionId}/reviews?projection=rule&projection=stigs&metadata=testKey%3Atest%3Avalue&projection=metadata`)
             .set('Authorization', `Bearer ${iteration.token}`)
           if(iteration.name === 'lvl2' || iteration.name === 'lvl3' || iteration.name === 'lvl4') {
             expect(res).to.have.status(403)

@@ -230,7 +230,7 @@ describe('PATCH - Asset', function () {
     
         it('Delete Assets - expect success for valid iterations', async function () {
 
-            const assetIds = [asset1.data.assetId, asset2.data.assetId]
+            const assetIds = [asset1.assetId, asset2.assetId]
 
             const res = await chai
             .request(config.baseUrl)
