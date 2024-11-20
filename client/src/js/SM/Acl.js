@@ -339,6 +339,39 @@ SM.Acl.AssignedRulesGrid = Ext.extend(Ext.grid.EditorGridPanel, {
       return html
     }
 
+    const accessData = [
+      ['rw'],
+      ['r']
+    ]
+    if (this.accessLevel === 1) {
+      accessData.push(['none'])
+    }
+
+    const accessComboBox = new Ext.form.ComboBox({
+      mode: 'local',
+      forceSelection: true,
+      autoSelect: true,
+      editable: false,
+      store: new Ext.data.SimpleStore({
+        fields: ['access'],
+        data: accessData
+      }),
+      valueField:'access',
+      displayField:'access',
+      monitorValid: false,
+      listeners: {
+        select: function (combo,record,index) {
+          if (combo.startValue !== combo.value ) {
+            combo.fireEvent("blur");
+          } 
+          else {
+            console.log('No Change')
+          }
+        }
+      },
+      triggerAction: 'all'
+    })
+
     const columns = [
       {
         header: `Resource`, 
@@ -351,35 +384,7 @@ SM.Acl.AssignedRulesGrid = Ext.extend(Ext.grid.EditorGridPanel, {
         dataIndex: 'access',
         sortable: true,
         width: 100,
-        editor: new Ext.form.ComboBox({
-          mode: 'local',
-          forceSelection: true,
-          autoSelect: true,
-          editable: false,
-          store: new Ext.data.SimpleStore({
-            fields: ['access'],
-            data: [
-              ['rw'],
-              ['r'],
-              ['none']
-            ]
-          }),
-          valueField:'access',
-          displayField:'access',
-          monitorValid: false,
-          listeners: {
-            select: function (combo,record,index) {
-              if (combo.startValue !== combo.value ) {
-                combo.fireEvent("blur");
-              } 
-              else {
-                console.log('No Change')
-              }
-            }
-          },
-          triggerAction: 'all'
-        }),
-
+        editor: accessComboBox
       }
     ]
     const config = {
@@ -485,6 +490,7 @@ SM.Acl.Panel = Ext.extend(Ext.Panel, {
 
     const assignedRulesGrid = new SM.Acl.AssignedRulesGrid({
       panel: this,
+      accessLevel: this.accessLevel,
       title: `Assigned ACL`,
       flex: 1
     })
