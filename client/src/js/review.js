@@ -109,6 +109,8 @@ async function addReview( params ) {
     listeners: {
       load: function (store, records) {
         reviewForm.defaultAccess = store.reader.jsonData.access
+        groupChecklistMenu.importItem.setVisible(store.reader.jsonData.access === 'rw')
+        groupGrid.accessStr = store.reader.jsonData.access === 'rw' ? '' : 'read only'
         // Were we passed a specific rule to select?
         if ('undefined' !== typeof selectedRule) {
           var index = store.find('ruleId', selectedRule);
@@ -330,6 +332,7 @@ async function addReview( params ) {
       },
       {
         text: 'Import Results...',
+        ref: 'importItem',
         iconCls: 'sm-import-icon',
         handler: function () {
           showImportResultFile( {...leaf, revisionStr: groupGrid.sm_revisionStr, store: groupStore, fieldSettings: apiFieldSettings} );            
@@ -693,7 +696,7 @@ async function addReview( params ) {
       if (groupChecklistMenu.revisionMenuItem === undefined) {
         groupChecklistMenu.addItem(revisionObject.menu);
       }
-      groupGrid.setTitle(SM.he(revisionObject.activeRevisionLabel));
+      groupGrid.setTitle(`${SM.he(revisionObject.activeRevisionLabel)} (${groupGrid.accessStr})`);
     }
     catch (e) {
       SM.Error.handleError(e)
