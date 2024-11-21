@@ -605,7 +605,7 @@ module.exports.putAssetsByCollectionLabelId = async function (req, res, next) {
 
 module.exports.postCklArchiveByCollection = async function (req, res, next) {
   try {
-    const { collectionId, grant } = getCollectionInfoAndCheckPermission(req)
+    const { collectionId, grant } = getCollectionInfoAndCheckPermission(req, Security.ACCESS_LEVEL.Restricted)
     const mode = req.query.mode || 'mono'
     const parsedRequest = await processAssetStigRequests (req.body, collectionId, mode, grant)
     await postArchiveByCollection({
@@ -622,7 +622,7 @@ module.exports.postCklArchiveByCollection = async function (req, res, next) {
 
 module.exports.postCklbArchiveByCollection = async function (req, res, next) {
   try {
-    const { collectionId, grant } = getCollectionInfoAndCheckPermission(req)
+    const { collectionId, grant } = getCollectionInfoAndCheckPermission(req, Security.ACCESS_LEVEL.Restricted)
     const mode = req.query.mode || 'mono'
     const parsedRequest = await processAssetStigRequests (req.body, collectionId, mode, grant)
     await postArchiveByCollection({
@@ -639,7 +639,7 @@ module.exports.postCklbArchiveByCollection = async function (req, res, next) {
 
 module.exports.postXccdfArchiveByCollection = async function (req, res, next) {
   try {
-    const { collectionId, grant } = getCollectionInfoAndCheckPermission(req)
+    const { collectionId, grant } = getCollectionInfoAndCheckPermission(req, Security.ACCESS_LEVEL.Restricted)
     const parsedRequest = await processAssetStigRequests (req.body, collectionId, 'mono', grant)
     await postArchiveByCollection({
       format: 'xccdf',
