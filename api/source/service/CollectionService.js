@@ -1739,7 +1739,7 @@ exports.cloneCollection = async function ({collectionId, userObject, name, descr
         finishText: 'Creating Grants'
       },
       createGrantMap: {
-        query: `CREATE TEMPORARY TABLE t_grantid_map SELECT cg1.grantId as srcGrantId, cg2.grantId as destGrantId FROM collection_grant cg1 left join collection_grant cg2 on (cg1.collectionId = @srcCollectionId and cg1.userId = cg2.userId and cg1.userGroupId = cg2.userGroupId and cg1.accessLevel = cg2.accessLevel) WHERE cg2.collectionId = @destCollectionId`,
+        query: `CREATE TEMPORARY TABLE t_grantid_map SELECT cg1.grantId as srcGrantId, cg2.grantId as destGrantId FROM collection_grant cg1 left join collection_grant cg2 on (cg1.collectionId = @srcCollectionId and (cg1.userId = cg2.userId or cg1.userGroupId = cg2.userGroupId) and cg1.accessLevel = cg2.accessLevel) WHERE cg2.collectionId = @destCollectionId`,
         startText: 'Creating Grants',
         finishText: 'Creating Grants'
       },
