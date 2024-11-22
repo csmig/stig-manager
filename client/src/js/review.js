@@ -95,7 +95,7 @@ async function addReview( params ) {
 
   var groupStore = new Ext.data.JsonStore({
     proxy: new Ext.data.HttpProxy({
-      url: `${STIGMAN.Env.apiBase}/assets/${leaf.assetId}/checklists/${leaf.benchmarkId}/${leaf.revisionStr}`,
+      url: `${STIGMAN.Env.apiBase}/assets/${leaf.assetId}/checklists/${leaf.benchmarkId}/${leaf.revisionStr}?format=json-access`,
       method: 'GET'
     }),
     root: 'checklist',
@@ -679,7 +679,7 @@ async function addReview( params ) {
 
   var handleRevisionMenu = function (item, eventObject) {
     let store = groupGrid.getStore()
-    store.proxy.setUrl(`${STIGMAN.Env.apiBase}/assets/${leaf.assetId}/checklists/${leaf.benchmarkId}/${item.revisionStr}`, true)
+    store.proxy.setUrl(`${STIGMAN.Env.apiBase}/assets/${leaf.assetId}/checklists/${leaf.benchmarkId}/${item.revisionStr}?format=json-access`, true)
     store.load();
     loadRevisionMenu(leaf.benchmarkId, item.revisionStr, idAppend)
     groupGrid.sm_revisionStr = item.revisionStr

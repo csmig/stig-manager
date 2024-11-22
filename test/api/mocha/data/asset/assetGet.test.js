@@ -817,7 +817,7 @@ describe(`GET - Asset`, function () {
             return
           }
           expect(res).to.have.status(200)
-          expect(res.body.checklist).to.be.an(`array`).of.length(reference.checklistLength)
+          expect(res.body).to.be.an(`array`).of.length(reference.checklistLength)
         })
       })
       describe(`getStigsByAsset - /assets/{assetId}/stigs`, function () {

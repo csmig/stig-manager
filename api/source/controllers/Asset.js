@@ -150,8 +150,8 @@ module.exports.getChecklistByAssetStig = async function getChecklistByAssetStig 
     if (access === 'none') throw new SmError.PrivilegeError()
 
     const checklist = await AssetService.getChecklistByAssetStig(assetId, benchmarkId, revisionStr, format, req.userObject )
-    if (format === 'json') {
-      res.json({access, checklist})
+    if (format.startsWith('json')) {
+      res.json(format === 'json-access' ? {access, checklist} : checklist)
       return
     }
     

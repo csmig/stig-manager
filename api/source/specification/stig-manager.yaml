@@ -270,6 +270,7 @@ paths:
             default: json
             enum:
               - json
+              - json-access
               - ckl
               - cklb
               - xccdf
@@ -280,7 +281,8 @@ paths:
             application/json:
               schema:
                 oneOf:
-                  - $ref: '#/components/schemas/ChecklistJson'
+                  - $ref: '#/components/schemas/ChecklistAssetStig'
+                  - $ref: '#/components/schemas/ChecklistJsonAccess'
                   - $ref: '#/components/schemas/ChecklistCklb'
             application/xml:
               schema:
@@ -5320,7 +5322,7 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/StigCklb'
-    ChecklistJson:
+    ChecklistJsonAccess:
       type: object
       properties:
         access:

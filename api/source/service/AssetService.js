@@ -1324,7 +1324,8 @@ exports.getStigsByAsset = async function ({assetId, grant}) {
 
 exports.getChecklistByAssetStig = async function(assetId, benchmarkId, revisionStr, format) {
   switch (format) {
-    case 'json': {
+    case 'json':
+    case 'json-access': {
       return _this.queryChecklist({
         assetId,
         benchmarkId,
