@@ -586,7 +586,7 @@ describe('POST - Collection - not all tests run for all iterations', function ()
               }
             }
         })
-        it("attempt to create owner grant, should only work for users access >= 4",async function () {
+        it("attempt to create owner grant, elevates should only work for admin user",async function () {
 
           const res = await chai
             .request(config.baseUrl)
@@ -599,6 +599,29 @@ describe('POST - Collection - not all tests run for all iterations', function ()
               return
             }
             expect(res).to.have.status(200)
+        })
+        it("Post Owner grant to collection no elevate",async function () {
+
+          const postGrantsByCollectionOwner = [
+            {
+              userId: "43",  
+              accessLevel: 4,
+            },
+          ]
+
+          const res = await chai
+            .request(config.baseUrl)
+            .post(`/collections/${reference.scrapCollection.collectionId}/grants`)
+            .set("Authorization", `Bearer ${iteration.token}`)
+            .send(postGrantsByCollectionOwner)
+
+            if(iteration.name !== 'stigmanadmin' && iteration.name !== 'lvl4'){
+              expect(res).to.have.status(403)
+              return
+            }
+            expect(res).to.have.status(200)
+            expect(res.body.user.userId).to.eql("43")
+            expect(res.body.accessLevel).to.equal(4)
         })
       })
     })

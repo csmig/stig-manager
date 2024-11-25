@@ -380,4 +380,79 @@ describe("Multiple Group ACL Collisions", () => {
   })
 })   
 
+describe("Test sending acl for rw access to entire collection", () => {
 
+    before(async function () {
+        await utils.loadAppData()
+    })
+
+    it("change test group to role 2 (full)", async () => {
+
+        const res = await chai.request(config.baseUrl)
+            .put(`/collections/${reference.testCollection.collectionId}/grants/${reference.testCollection.testGroup.testCollectionGrantId}`)
+            .set('Authorization', `Bearer ${admin.token}`)
+            .send({
+                "userGroupId": reference.testCollection.testGroup.userGroupId,
+                "accessLevel":2
+                })
+        expect(res).to.have.status(200)
+        expect(res.body.accessLevel).to.equal(2)
+        expect(res.body.userGroup.userGroupId).to.equal(reference.testCollection.testGroup.userGroupId)
+    })
+
+    it("give testgroup r only on test asset", async () => {
+
+        const res = await chai.request(config.baseUrl)
+            .put(`/collections/${reference.testCollection.collectionId}/grants/${reference.testCollection.testGroup.testCollectionGrantId}/acl`)
+            .set('Authorization', `Bearer ${admin.token}`)
+            .send([{"assetId":reference.testAsset.assetId,"access":"r"}])
+
+        expect(res).to.have.status(200)
+        expect(res.body.defaultAccess).to.equal("rw")
+        expect(res.body.acl.length).to.equal(1)
+        expect(res.body.acl[0].access).to.equal("r")
+        expect(res.body.acl[0].asset.assetId).to.equal(reference.testAsset.assetId)
+    })
+
+    it("confirm r access by attempting writing review to asset it should fail. request sent as lvl1", async () => {
+
+        const res = await chai.request(config.baseUrl)
+            .put(`/collections/${reference.testCollection.collectionId}/reviews/${reference.testAsset.assetId}/${reference.testCollection.ruleId}`)
+            .set('Authorization', `Bearer ${lvl1.token}`)
+            .send({
+                result: 'pass',
+                detail: '',
+                comment: 'sure',
+                status: 'submitted',
+                autoResult: false
+            })
+        expect(res).to.have.status(403)
+    })
+
+    it("alter acl to [] (entire collection)", async () => {
+            
+        const res = await chai.request(config.baseUrl)
+            .put(`/collections/${reference.testCollection.collectionId}/grants/${reference.testCollection.testGroup.testCollectionGrantId}/acl`)
+            .set('Authorization', `Bearer ${admin.token}`)
+            .send([])
+
+        expect(res).to.have.status(200)
+        expect(res.body.defaultAccess).to.equal("rw")
+        expect(res.body.acl).to.be.empty
+    })
+
+    it("confirm rw access to test asset", async () => {
+
+        const res = await chai.request(config.baseUrl)
+        .put(`/collections/${reference.testCollection.collectionId}/reviews/${reference.testAsset.assetId}/${reference.testCollection.ruleId}`)
+        .set('Authorization', `Bearer ${lvl1.token}`)
+        .send({
+            result: 'pass',
+            detail: '',
+            comment: 'sure',
+            status: 'submitted',
+            autoResult: false
+        })
+        expect(res).to.have.status(200)
+    })
+})

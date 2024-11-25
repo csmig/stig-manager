@@ -486,6 +486,8 @@ const reference = {
   scrapLvl1User: {
     userId: "86",
     username: "bizarroLvl1",
+    testCollectionGrantId
+    : "1",
   },
 
   //review data

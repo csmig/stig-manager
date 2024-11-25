@@ -1401,6 +1401,19 @@ describe('GET - Collection', function () {
             expect(res.body).to.be.an('array').of.length(reference.testCollection.grantsProjected.length)
             expect(res.body).to.deep.equalInAnyOrder(reference.testCollection.grantsProjected)
         })
+        it("should return all grants for the collection elevated, stigman admin should only pass. ",async function () {  
+          
+          const res = await chai.request(config.baseUrl)
+            .get(`/collections/${reference.testCollection.collectionId}/grants?elevate=true`)
+            .set('Authorization', `Bearer ${iteration.token}`)
+            if (iteration.name !== "stigmanadmin"){
+              expect(res).to.have.status(403)
+              return
+            }
+            expect(res).to.have.status(200)
+            expect(res.body).to.be.an('array').of.length(reference.testCollection.grantsProjected.length)
+            expect(res.body).to.deep.equalInAnyOrder(reference.testCollection.grantsProjected)
+        })
       })
 
       describe('getGrantByCollectionGrant - /collections/{collectionId}/grants/{grantId}', function () {
@@ -1433,6 +1446,24 @@ describe('GET - Collection', function () {
           expect(res.body.user.userId).to.equal(reference.adminBurke.userId)
           expect(res.body.user.username).to.equal(reference.adminBurke.username)
         })
+
+        it("should return grant for the test collection admin user (admin burke userId 87) elevated only stigmanadmin success",async function () {
+          const res =  await chai.request(config.baseUrl)
+            .get(`/collections/${reference.testCollection.collectionId}/grants/${reference.adminBurke.testCollectionGrantId}?elevate=true`)
+            .set('Authorization', `Bearer ${iteration.token}`)
+          if (iteration.name !== "stigmanadmin"){
+            expect(res).to.have.status(403)
+            return
+          }
+          expect(res).to.have.status(200)
+          expect(res.body.accessLevel).to.equal(reference.adminBurke.testCollectionAccessLevel)
+          expect(res.body.grantId).to.equal(reference.adminBurke.testCollectionGrantId)
+          expect(res.body.user.userId).to.equal(reference.adminBurke.userId)
+          expect(res.body.user.username).to.equal(reference.adminBurke.username)
+        })
+
+
+        
         it("should return an error, there is no such grantId",async function () {
           
           const res =  await chai.request(config.baseUrl)

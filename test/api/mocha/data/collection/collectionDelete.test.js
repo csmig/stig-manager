@@ -224,35 +224,13 @@ describe('DELETE - Collection ', function () {
 
       describe('deleteGrantByCollectionGrant - /collections/{collectionId}/grants/{grantId}', function () {
 
-        let tempGrant = 1
-
         before(async function () {
           await utils.loadAppData()
         })  
+        it('Delete scrap lvl1 bizzaro users grant.  ',async function () {
 
-        it("create a grant for scrap user in the test collection",async function () {
-
-          const res = await chai.request(config.baseUrl)
-              .put(`/collections/${reference.testCollection.collectionId}/grants/user/${reference.scrapLvl1User.userId}`)
-              .set('Authorization', `Bearer ${iteration.token}`)
-              .send({
-                accessLevel: 1
-              })
-          if(distinct.canModifyCollection === false){
-            expect(res).to.have.status(403)
-            return
-          }
-          expect(res).to.have.status(200)
-          tempGrant = res.body
-        })
-        
-        it('Delete the grant created by grantId in the test colleciton ',async function () {
-
-            if(tempGrant === 1){
-              return
-            }
             const res = await chai.request(config.baseUrl)
-                .delete(`/collections/${reference.testCollection.collectionId}/grants/${tempGrant.grantIds[0]}`)
+                .delete(`/collections/${reference.testCollection.collectionId}/grants/${reference.scrapLvl1User.testCollectionGrantId}`)
                 .set('Authorization', `Bearer ${iteration.token}`)
                 
             if(distinct.canModifyCollection === false){
@@ -261,23 +239,34 @@ describe('DELETE - Collection ', function () {
             }
             expect(res).to.have.status(200)
             expect(res.body.accessLevel).to.eql(1)
-            expect(res.body.grantId).to.eql(`${tempGrant.grantIds[0]}`)
+            expect(res.body.grantId).to.eql(reference.scrapLvl1User.testCollectionGrantId)
             expect(res.body.user.userId).to.eql(reference.scrapLvl1User.userId)
 
         })
-
-        it("attempt to delete owner grant expect error",async function () {
+        it("Delete an owner grant, is succeeding for all users role owner without elevate.",async function () {
 
           const res = await chai.request(config.baseUrl)
-              .delete(`/collections/${reference.testCollection.collectionId}/grants/${reference.adminBurke.userId}`)
+              .delete(`/collections/${reference.testCollection.collectionId}/grants/${reference.adminBurke.testCollectionGrantId}`)
               .set('Authorization', `Bearer ${iteration.token}`)
-          if(distinct.canModifyCollection === false){
+
+          if (distinct.accessLevel < 4){
             expect(res).to.have.status(403)
             return
           }
-          expect(res).to.have.status(404)
+          expect(res).to.have.status(200)
         })
+        it("Delete an owner grant, using elevate should only succeed with stigmanadmin",async function () {
 
+          const res = await chai.request(config.baseUrl)
+              .delete(`/collections/${reference.testCollection.collectionId}/grants/${"7"}?elevate=true`)
+              .set('Authorization', `Bearer ${iteration.token}`)
+
+          if(iteration.name !== "stigmanadmin"){
+            expect(res).to.have.status(403)
+            return
+          }
+          expect(res).to.have.status(200)
+        })
         it("attempt to delete grant that does not exist expect error",async function () {
 
           const res = await chai.request(config.baseUrl)
