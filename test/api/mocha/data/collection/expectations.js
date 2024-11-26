@@ -16,6 +16,7 @@ const distinct = {
     collectionCount: 6,
     collectionIdsAccess: ["21", "83", "1", "84", "85", "92"],
     collectionCountElevated: 7,
+    testAssetChecklists: 2,
     collectionMatch: {
       collectionExactMatchCnt: 1,
       collectionContainsMatchCnt: 3,
@@ -185,6 +186,7 @@ const distinct = {
     canModifyOwnerGrants: false,
     collectionCount: 1,
     collectionIdsAccess: ["21"],
+    testAssetChecklists: 1,
     collectionMatch: {
       collectionExactMatchCnt: 1,
       collectionContainsMatchCnt: 1,
@@ -229,6 +231,7 @@ const distinct = {
     collectionCount: 2,
     canModifyOwnerGrants: false,
     collectionIdsAccess: ["21", "1"],
+    testAssetChecklists: 2,
     collectionMatch: {
       collectionExactMatchCnt: 1,
       collectionContainsMatchCnt: 1,
@@ -273,6 +276,7 @@ const distinct = {
     collectionIdsAccess: ["21", "1"],
     canCreateCollection: false,
     canModifyOwnerGrants: false,
+    testAssetChecklists: 2,
     collectionMatch: {
       collectionExactMatchCnt: 1,
       collectionContainsMatchCnt: 1,
@@ -317,6 +321,7 @@ const distinct = {
     canElevate: false,
     collectionCount: 3,
     collectionIdsAccess: ["21", "1", "85"],
+    testAssetChecklists: 2,
     collectionMatch: {
       collectionExactMatchCnt: 1,
       collectionContainsMatchCnt: 1,
@@ -357,6 +362,7 @@ const distinct = {
     canModifyOwnerGrants: false,
     collectionCount: 0,
     collectionIdsAccess: [],
+    testAssetChecklists: 0,
     collectionMatch: {
       collectionExactMatchCnt: 0,
       collectionContainsMatchCnt: 0,

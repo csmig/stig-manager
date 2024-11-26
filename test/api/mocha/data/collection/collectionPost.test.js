@@ -11,6 +11,8 @@ const expectations = require('./expectations.js')
 const reference = require('../../referenceData.js')
 const requestBodies = require('./requestBodies.js')
 const { v4: uuidv4 } = require('uuid')
+const JSZip = require("jszip")
+const {reviewsFromCkl, reviewsFromScc, reviewsFromCklb } = require("@nuwcdivnpt/stig-manager-client-modules")
 
 describe('POST - Collection - not all tests run for all iterations', function () {
 
@@ -163,6 +165,433 @@ describe('POST - Collection - not all tests run for all iterations', function ()
           expect(res.body.detail).to.equal("Duplicate name exists.")
         })
       })
+
+      describe("postCklArchiveByCollection - /collections/{collectionId}/archive/ckl", function () {
+
+        it("should download a CKL and get the test asset with test benchmark ",async function () {
+
+          const res = await chai
+            .request(config.baseUrl)
+            .post(`/collections/${reference.testCollection.collectionId}/archive/ckl`)
+            .set("Authorization", `Bearer ${iteration.token}`)
+            .send(requestBodies.postArchiveBenchmarkRevision)
+
+            if(iteration.name === "collectioncreator"){
+              expect(res).to.have.status(403)
+              return
+            }
+
+            expect(res).to.have.status(200)
+            const zip = await JSZip.loadAsync(res.body)
+            const fileNames = Object.keys(zip.files)
+            expect(fileNames).to.have.lengthOf(2)
+            const data = await zip.files["Collection_X_lvl1_asset-1-VPN_SRG_TEST-V1R1.ckl"].async("string")
+            const assetData = reviewsFromCkl({
+              data,                    
+              fieldSettings: config.fieldSettings,  
+              allowAccept: true,       
+              importOptions: config.importOptions, 
+              sourceRef: "Collection_X_lvl1_asset-1-VPN_SRG_TEST-V1R1.ckl"
+            })
+            expect(assetData.target.name).to.equal(reference.testAsset.name)
+            expect(assetData.target.metadata.cklRole).to.exist
+            expect(assetData.target.metadata.cklRole).to.equal("None")
+            expect(assetData.checklists).to.have.lengthOf(1)
+            expect(assetData.checklists[0].benchmarkId).to.equal(reference.benchmark)
+            expect(assetData.checklists[0].revisionStr).to.equal("V1R1")
+            expect(assetData.checklists[0].reviews).to.have.lengthOf(reference.testAsset.VPN_SRG_TEST_reviewCnt)
+        })
+
+        it("should download a CKL for an asset that does not have stigs attached, should throw. Lvl1 and collection creator do not  have access to asset",async function () {
+
+          const res = await chai
+            .request(config.baseUrl)
+            .post(`/collections/${reference.testCollection.collectionId}/archive/ckl`)
+            .set("Authorization", `Bearer ${iteration.token}`)
+            .send(requestBodies.postArchiveBenchmarkRevisionLvl1NoAccess)
+
+          if(iteration.name ==  "lvl1" || iteration.name == "collectioncreator"){
+            expect(res).to.have.status(403)
+            return
+          }
+          expect(res).to.have.status(422)
+        })
+
+        it("should download a CKL and get the test asset with test benchmark and no revision specified. should return latest",async function () {
+
+          const res = await chai
+            .request(config.baseUrl)
+            .post(`/collections/${reference.testCollection.collectionId}/archive/ckl`)
+            .set("Authorization", `Bearer ${iteration.token}`)
+            .send(requestBodies.postArchiveBenchmark)
+
+            if(iteration.name === "collectioncreator"){
+              expect(res).to.have.status(403)
+              return
+            }
+
+            expect(res).to.have.status(200)
+            const zip = await JSZip.loadAsync(res.body)
+            const fileNames = Object.keys(zip.files)
+            expect(fileNames).to.have.lengthOf(2)
+            const data = await zip.files["Collection_X_lvl1_asset-1-VPN_SRG_TEST-V1R1.ckl"].async("string")
+            const assetData = reviewsFromCkl({
+              data,                    
+              fieldSettings: config.fieldSettings,  
+              allowAccept: true,       
+              importOptions: config.importOptions, 
+              sourceRef: "Collection_X_lvl1_asset-1-VPN_SRG_TEST-V1R1.ckl"
+            })
+            expect(assetData.target.name).to.equal(reference.testAsset.name)
+            expect(assetData.target.metadata.cklRole).to.exist
+            expect(assetData.target.metadata.cklRole).to.equal("None")
+            expect(assetData.checklists).to.have.lengthOf(1)
+            expect(assetData.checklists[0].benchmarkId).to.equal(reference.benchmark)
+            expect(assetData.checklists[0].revisionStr).to.equal("V1R1")
+            expect(assetData.checklists[0].reviews).to.have.lengthOf(reference.testAsset.VPN_SRG_TEST_reviewCnt)
+        })
+        it("should download a CKL and get the test asset with all benchmarks in a multi stig CKL file ",async function () {
+
+          const res = await chai
+            .request(config.baseUrl)
+            .post(`/collections/${reference.testCollection.collectionId}/archive/ckl?mode=multi`)
+            .set("Authorization", `Bearer ${iteration.token}`)
+            .send(requestBodies.postArchiveDefault)
+
+            if(iteration.name === "collectioncreator"){
+              expect(res).to.have.status(403)
+              return
+            }
+
+            expect(res).to.have.status(200)
+            const zip = await JSZip.loadAsync(res.body)
+            const fileNames = Object.keys(zip.files)
+            expect(fileNames).to.have.lengthOf(2)
+            const data = await zip.files["Collection_X_lvl1_asset-1.ckl"].async("string")
+            const assetData = reviewsFromCkl({
+              data,                    
+              fieldSettings: config.fieldSettings,  
+              allowAccept: true,       
+              importOptions: config.importOptions, 
+              sourceRef: "Collection_X_lvl1_asset-1-VPN_SRG_TEST-V1R1.ckl"
+            })
+            expect(assetData.target.name).to.equal(reference.testAsset.name)
+            expect(assetData.target.metadata.cklRole).to.exist
+            expect(assetData.target.metadata.cklRole).to.equal("None")
+            expect(assetData.checklists).to.have.lengthOf(distinct.testAssetChecklists)
+            for(const checklist of assetData.checklists){
+              if(checklist.benchmarkId === reference.benchmark){
+                expect(checklist.revisionStr).to.equal("V1R1")
+                expect(checklist.reviews).to.have.lengthOf(reference.testAsset.VPN_SRG_TEST_reviewCnt)
+              }
+              else {
+                expect(checklist.benchmarkId).to.equal(reference.windowsBenchmark)
+                expect(checklist.revisionStr).to.equal("V1R23")
+                expect(checklist.reviews).to.have.lengthOf(3)
+              }
+            }
+        })
+      })
+
+      describe("postCklbArchiveByCollection - /collections/{collectionId}/archive/cklb", function () {
+
+        it("should download a CKLB and get the test asset with test benchmark ",async function () {
+
+          const res = await chai
+            .request(config.baseUrl)
+            .post(`/collections/${reference.testCollection.collectionId}/archive/cklb`)
+            .set("Authorization", `Bearer ${iteration.token}`)
+            .send(requestBodies.postArchiveBenchmarkRevision)
+
+            if(iteration.name === "collectioncreator"){
+              expect(res).to.have.status(403)
+              return
+            }
+
+            expect(res).to.have.status(200)
+            const zip = await JSZip.loadAsync(res.body)
+            const fileNames = Object.keys(zip.files)
+            expect(fileNames).to.have.lengthOf(2)
+            const data = await zip.files["Collection_X_lvl1_asset-1-VPN_SRG_TEST-V1R1.cklb"].async("string")
+            const assetData = reviewsFromCklb({
+              data,                    
+              fieldSettings: config.fieldSettings,  
+              allowAccept: true,       
+              importOptions: config.importOptions, 
+              sourceRef: "Collection_X_lvl1_asset-1-VPN_SRG_TEST-V1R1.cklb"
+            })
+            expect(assetData.target.name).to.equal(reference.testAsset.name)
+            expect(assetData.target.metadata.cklRole).to.exist
+            expect(assetData.target.metadata.cklRole).to.equal("None")
+            expect(assetData.checklists).to.have.lengthOf(1)
+            expect(assetData.checklists[0].benchmarkId).to.equal(reference.benchmark)
+         //   expect(assetData.checklists[0].revisionStr).to.equal("V1R1")
+            expect(assetData.checklists[0].reviews).to.have.lengthOf(reference.testAsset.VPN_SRG_TEST_reviewCnt)
+        })
+
+        it("should download a CKLB for an asset that does not have stigs attached, should throw. Lvl1 and collection creator do not  have access to asset",async function () {
+
+          const res = await chai
+            .request(config.baseUrl)
+            .post(`/collections/${reference.testCollection.collectionId}/archive/cklb`)
+            .set("Authorization", `Bearer ${iteration.token}`)
+            .send(requestBodies.postArchiveBenchmarkRevisionLvl1NoAccess)
+
+          if(iteration.name ==  "lvl1" || iteration.name == "collectioncreator"){
+            expect(res).to.have.status(403)
+            return
+          }
+          expect(res).to.have.status(422)
+        })
+
+        it("should download a CKLB and get the test asset with test benchmark and no revision specified. should return latest",async function () {
+
+          const res = await chai
+            .request(config.baseUrl)
+            .post(`/collections/${reference.testCollection.collectionId}/archive/cklB`)
+            .set("Authorization", `Bearer ${iteration.token}`)
+            .send(requestBodies.postArchiveBenchmark)
+
+            if(iteration.name === "collectioncreator"){
+              expect(res).to.have.status(403)
+              return
+            }
+
+            expect(res).to.have.status(200)
+            const zip = await JSZip.loadAsync(res.body)
+            const fileNames = Object.keys(zip.files)
+            expect(fileNames).to.have.lengthOf(2)
+            const data = await zip.files["Collection_X_lvl1_asset-1-VPN_SRG_TEST-V1R1.cklb"].async("string")
+            const assetData = reviewsFromCklb({
+              data,                    
+              fieldSettings: config.fieldSettings,  
+              allowAccept: true,       
+              importOptions: config.importOptions, 
+              sourceRef: "Collection_X_lvl1_asset-1-VPN_SRG_TEST-V1R1.cklb"
+            })
+            expect(assetData.target.name).to.equal(reference.testAsset.name)
+            expect(assetData.target.metadata.cklRole).to.exist
+            expect(assetData.target.metadata.cklRole).to.equal("None")
+            expect(assetData.checklists).to.have.lengthOf(1)
+            expect(assetData.checklists[0].benchmarkId).to.equal(reference.benchmark)
+        //    expect(assetData.checklists[0].revisionStr).to.equal("V1R1")
+            expect(assetData.checklists[0].reviews).to.have.lengthOf(reference.testAsset.VPN_SRG_TEST_reviewCnt)
+        })
+
+        it("should download a CKLB and get the test asset with all benchmarks in a multi stig CKLB file ",async function () {
+
+          const res = await chai
+            .request(config.baseUrl)
+            .post(`/collections/${reference.testCollection.collectionId}/archive/cklb?mode=multi`)
+            .set("Authorization", `Bearer ${iteration.token}`)
+            .send(requestBodies.postArchiveDefault)
+
+            if(iteration.name === "collectioncreator"){
+              expect(res).to.have.status(403)
+              return
+            }
+
+            expect(res).to.have.status(200)
+            const zip = await JSZip.loadAsync(res.body)
+            const fileNames = Object.keys(zip.files)
+            expect(fileNames).to.have.lengthOf(2)
+            const data = await zip.files["Collection_X_lvl1_asset-1.cklb"].async("string")
+            const assetData = reviewsFromCklb({
+              data,                    
+              fieldSettings: config.fieldSettings,  
+              allowAccept: true,       
+              importOptions: config.importOptions, 
+              sourceRef: "Collection_X_lvl1_asset-1-VPN_SRG_TEST-V1R1.cklb"
+            })
+            expect(assetData.target.name).to.equal(reference.testAsset.name)
+            expect(assetData.target.metadata.cklRole).to.exist
+            expect(assetData.target.metadata.cklRole).to.equal("None")
+            expect(assetData.checklists).to.have.lengthOf(distinct.testAssetChecklists)
+            for(const checklist of assetData.checklists){
+              if(checklist.benchmarkId === reference.benchmark){
+             //   expect(checklist.revisionStr).to.equal("V1R1")
+                expect(checklist.reviews).to.have.lengthOf(reference.testAsset.VPN_SRG_TEST_reviewCnt)
+              }
+              else {
+                expect(checklist.benchmarkId).to.equal(reference.windowsBenchmark)
+           //     expect(checklist.revisionStr).to.equal("V1R23")
+                expect(checklist.reviews).to.have.lengthOf(3)
+              }
+            }
+        })
+      })
+
+      describe("postXccdfArchiveByCollection - /collections/{collectionId}/archive/xccdf", function () {
+
+        const dataArray = [
+          {
+            scapBenchmarkId: 'CAN_Ubuntu_18-04_STIG',
+            benchmarkId: 'U_CAN_Ubuntu_18-04_STIG'
+          },
+          { scapBenchmarkId: 'Mozilla_Firefox_RHEL', benchmarkId: 'Mozilla_Firefox' },
+          {
+            scapBenchmarkId: 'Mozilla_Firefox_Windows',
+            benchmarkId: 'Mozilla_Firefox'
+          },
+          { scapBenchmarkId: 'MOZ_Firefox_Linux', benchmarkId: 'MOZ_Firefox_STIG' },
+          { scapBenchmarkId: 'MOZ_Firefox_Windows', benchmarkId: 'MOZ_Firefox_STIG' },
+          { scapBenchmarkId: 'Solaris_10_X86_STIG', benchmarkId: 'Solaris_10_X86' }
+        ]
+        
+        const scapBenchmarkMap = new Map(
+          dataArray.map(item => [item.scapBenchmarkId, item])
+        )
+
+        it("should download a xccdf and get the test asset with test benchmark ",async function () {
+
+          const res = await chai
+            .request(config.baseUrl)
+            .post(`/collections/${reference.testCollection.collectionId}/archive/xccdf`)
+            .set("Authorization", `Bearer ${iteration.token}`)
+            .send(requestBodies.postArchiveBenchmarkRevision)
+
+            if(iteration.name === "collectioncreator"){
+              expect(res).to.have.status(403)
+              return
+            }
+
+            expect(res).to.have.status(200)
+            const zip = await JSZip.loadAsync(res.body)
+            const fileNames = Object.keys(zip.files)
+            expect(fileNames).to.have.lengthOf(2)
+            const data = await zip.files["Collection_X_lvl1_asset-1-VPN_SRG_TEST-V1R1-xccdf.xml"].async("string")
+            const assetData = reviewsFromScc({
+              data,                    
+              fieldSettings: config.fieldSettings,  
+              allowAccept: true,       
+              importOptions: config.importOptions, 
+              sourceRef: "Collection_X_lvl1_asset-1-VPN_SRG_TEST-V1R1-xccdf.xml"
+            })
+            expect(assetData.target.name).to.equal(reference.testAsset.name)
+            expect(assetData.target.metadata.testkey).to.exist
+            expect(assetData.target.metadata.testkey).to.equal("testvalue")
+            expect(assetData.checklists).to.have.lengthOf(1)
+            expect(assetData.checklists[0].benchmarkId).to.equal(reference.benchmark)
+         //   expect(assetData.checklists[0].revisionStr).to.equal("V1R1")
+            expect(assetData.checklists[0].reviews).to.have.lengthOf(reference.testAsset.VPN_SRG_TEST_reviewCnt)
+        })
+
+        it("should download a xccdf for an asset that does not have stigs attached, should throw. Lvl1 and collection creator do not  have access to asset",async function () {
+
+          const res = await chai
+            .request(config.baseUrl)
+            .post(`/collections/${reference.testCollection.collectionId}/archive/xccdf`)
+            .set("Authorization", `Bearer ${iteration.token}`)
+            .send(requestBodies.postArchiveBenchmarkRevisionLvl1NoAccess)
+
+          if(iteration.name ==  "lvl1" || iteration.name == "collectioncreator"){
+            expect(res).to.have.status(403)
+            return
+          }
+          expect(res).to.have.status(422)
+        })
+
+        it("should download a xccdf and get the test asset with test benchmark and no revision specified. should return latest",async function () {
+
+          const res = await chai
+            .request(config.baseUrl)
+            .post(`/collections/${reference.testCollection.collectionId}/archive/xccdf`)
+            .set("Authorization", `Bearer ${iteration.token}`)
+            .send(requestBodies.postArchiveBenchmark)
+
+            if(iteration.name === "collectioncreator"){
+              expect(res).to.have.status(403)
+              return
+            }
+
+            expect(res).to.have.status(200)
+            const zip = await JSZip.loadAsync(res.body)
+            const fileNames = Object.keys(zip.files)
+            expect(fileNames).to.have.lengthOf(2)
+            const data = await zip.files["Collection_X_lvl1_asset-1-VPN_SRG_TEST-V1R1-xccdf.xml"].async("string")
+            const assetData = reviewsFromScc({
+              data,                    
+              fieldSettings: config.fieldSettings,  
+              allowAccept: true,       
+              importOptions: config.importOptions, 
+              sourceRef: "Collection_X_lvl1_asset-1-VPN_SRG_TEST-V1R1-xccdf.xml"
+            })
+            expect(assetData.target.name).to.equal(reference.testAsset.name)
+            expect(assetData.target.metadata.testkey).to.exist
+            expect(assetData.target.metadata.testkey).to.equal("testvalue")
+            expect(assetData.checklists).to.have.lengthOf(1)
+            expect(assetData.checklists[0].benchmarkId).to.equal(reference.benchmark)
+        //    expect(assetData.checklists[0].revisionStr).to.equal("V1R1")
+            expect(assetData.checklists[0].reviews).to.have.lengthOf(reference.testAsset.VPN_SRG_TEST_reviewCnt)
+        })
+
+        it("should download a xccdf and get the test asset with all benchmarks in a multi stig xccdf file ",async function () {
+
+          const res = await chai
+            .request(config.baseUrl)
+            .post(`/collections/${reference.testCollection.collectionId}/archive/xccdf`)
+            .set("Authorization", `Bearer ${iteration.token}`)
+            .send(requestBodies.postArchiveDefault)
+
+            if(iteration.name === "collectioncreator"){
+              expect(res).to.have.status(403)
+              return
+            }
+
+            expect(res).to.have.status(200)
+            const zip = await JSZip.loadAsync(res.body)
+            const fileNames = Object.keys(zip.files)
+            if(iteration.name === "lvl1"){
+              expect(fileNames).to.have.lengthOf(2)
+            }
+            else {
+              expect(fileNames).to.have.lengthOf(3)
+            }
+            
+            const dataVPN = await zip.files["Collection_X_lvl1_asset-1-VPN_SRG_TEST-V1R1-xccdf.xml"].async("string")
+          
+             
+            const assetDataVPN = reviewsFromScc({
+              data: dataVPN,                    
+              fieldSettings: config.fieldSettings,  
+              allowAccept: true,       
+              importOptions: config.importOptions, 
+              sourceRef: "Collection_X_lvl1_asset-1-VPN_SRG_TEST-V1R1-xccdf.xml",
+              scapBenchmarkMap
+            })
+            expect(assetDataVPN.target.name).to.equal(reference.testAsset.name)
+            expect(assetDataVPN.target.metadata.testkey).to.exist
+            expect(assetDataVPN.target.metadata.testkey).to.equal("testvalue")
+            expect(assetDataVPN.checklists).to.have.lengthOf(1)
+            for(const checklist of assetDataVPN.checklists){
+             //expect(checklist.revisionStr).to.equal("V1R1")
+              expect(checklist.reviews).to.have.lengthOf(reference.testAsset.VPN_SRG_TEST_reviewCnt)
+            }
+
+            if(iteration.name === "lvl1"){
+              return
+            }
+            const dataWindows = await zip.files["Collection_X_lvl1_asset-1-Windows_10_STIG_TEST-V1R23-xccdf.xml"].async("string")
+            const assetDataWindows = reviewsFromScc({
+              data: dataWindows,
+              fieldSettings: config.fieldSettings,
+              allowAccept: true,
+              importOptions: config.importOptions,
+              sourceRef: "Collection_X_lvl1_asset-1-Windows_10_STIG_TEST-V1R23-xccdf.xml",
+              scapBenchmarkMap
+            })
+            expect(assetDataWindows.target.name).to.equal(reference.testAsset.name)
+            expect(assetDataWindows.target.metadata.testkey).to.exist
+            expect(assetDataWindows.target.metadata.testkey).to.equal("testvalue")
+            expect(assetDataWindows.checklists).to.have.lengthOf(1)
+            for(const checklist of assetDataWindows.checklists){
+                expect(checklist.benchmarkId).to.equal(reference.windowsBenchmark)
+                //expect(checklist.revisionStr).to.equal("V1R23")
+                expect(checklist.reviews).to.have.lengthOf(3)
+              }
+        })
+      })
+
 
       describe("cloneCollection - /collections/{collectionId}/clone - test basic clone permissions (ie. must have owner grant + createCollection priv", function () {
 

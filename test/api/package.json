@@ -10,9 +10,11 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@nuwcdivnpt/stig-manager-client-modules": "^1.4.3",
     "chai": "^4.4.1",
     "chai-http": "^4.4.0",
     "deep-equal-in-any-order": "^2.0.6",
+    "jszip": "^3.10.1",
     "mocha": "^10.4.0",
     "uuid": "^10.0.0",
     "xml2js": "^0.6.2"

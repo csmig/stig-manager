@@ -396,6 +396,7 @@ const reference = {
     // benchmark: "VPN_SRG_TEST",
     validStigs: ["VPN_SRG_TEST", "Windows_10_STIG_TEST"],
     reviewCnt: 9,
+    VPN_SRG_TEST_reviewCnt: 6,
     metadataKey: "testkey",
     metadataValue: "testvalue",
     ipaddress: "1.1.1.1",
@@ -549,6 +550,6 @@ const reference = {
   },
   // reviewMetadataKey: 'testkey',
   // reviewMetadataValue: 'testvalue',
-};
+}
 
 module.exports = reference;
