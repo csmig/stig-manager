@@ -2578,21 +2578,24 @@ select access, asset, benchmarkId, aclSources from cteAclRulesRanked where rn = 
   return response
 }
 
-exports.setValidatedAcl = async function({validatedAcl, attributionUserId, svcStatus = {}}) {
-
+exports.setValidatedAcl = async function({validatedAcl, grantId, attributionUserId, svcStatus = {}}) {
+  const sqlDelete = `DELETE from collection_grant_acl WHERE grantId = ?`
   const values = validatedAcl.map(i => [i.grantId, i.assetId, i.benchmarkId, i.clId, i.access, attributionUserId])
+  if (values.length) {
+    return dbUtils.retryOnDeadlock2({
+      transactionFn, 
+      statusObj: svcStatus
+    })
+  }
+  else {
+    return dbUtils.pool.query(sqlDelete, [grantId])
+  }
 
   async function transactionFn (connection) {  
-    const sqlDelete = `DELETE from collection_grant_acl WHERE grantId = ?`
     const sqlInsert = `INSERT into collection_grant_acl (grantId, assetId, benchmarkId, clId, access, modifiedUserId) VALUES ?`
-    await connection.query(sqlDelete, [validatedAcl[0].grantId])
+    await connection.query(sqlDelete, [grantId])
     await connection.query(sqlInsert, [values])
   }
-  
-  return dbUtils.retryOnDeadlock2({
-    transactionFn, 
-    statusObj: svcStatus
-  })
 }
 
 exports.setReviewAclByCollectionUserGroup = async function(collectionId, userGroupId, stigAssets, svcStatus = {}) {

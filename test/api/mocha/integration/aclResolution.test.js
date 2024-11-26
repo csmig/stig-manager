@@ -448,7 +448,7 @@ describe("Test sending acl for rw access to entire collection", () => {
         .set('Authorization', `Bearer ${lvl1.token}`)
         .send({
             result: 'pass',
-            detail: '',
+            detail: 'required by collection settings',
             comment: 'sure',
             status: 'submitted',
             autoResult: false

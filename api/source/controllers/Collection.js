@@ -1190,13 +1190,12 @@ module.exports.setReviewAclByCollectionUser = async function setReviewAclByColle
     if (validated.fail.length > 0) {
       throw new SmError.UnprocessableError(validated.fail)
     }
-    if (validated.pass.length > 0) {
-      await CollectionService.setValidatedAcl({
-        validatedAcl: validated.pass,
-        attributionUserId: req.userObject.userId,
-        svcStatus: res.svcStatus
-      })
-    }
+    await CollectionService.setValidatedAcl({
+      validatedAcl: validated.pass,
+      grantId: grant.grantId,
+      attributionUserId: req.userObject.userId,
+      svcStatus: res.svcStatus
+    })
     const response = await CollectionService.queryReviewAcl({grantId: grant.grantId})
     res.json(response)
   }
@@ -1218,13 +1217,12 @@ module.exports.setReviewAclByCollectionUserGroup = async function (req, res, nex
     if (validated.fail.length > 0) {
       throw new SmError.UnprocessableError(validated.fail)
     }
-    if (validated.pass.length > 0) {
-      await CollectionService.setValidatedAcl({
-        validatedAcl: validated.pass,
-        attributionUserId: req.userObject.userId,
-        svcStatus: res.svcStatus
-      })
-    }
+    await CollectionService.setValidatedAcl({
+      validatedAcl: validated.pass,
+      grantId: grant.grantId,
+      attributionUserId: req.userObject.userId,
+      svcStatus: res.svcStatus
+    })
     const response = await CollectionService.queryReviewAcl({grantId: grant.grantId})
     res.json(response)
   }
@@ -1359,13 +1357,12 @@ module.exports.putAclRulesByCollectionGrant = async function (req, res, next) {
     if (validated.fail.length > 0) {
       throw new SmError.UnprocessableError(validated.fail)
     }
-    if (validated.pass.length > 0) {
-      await CollectionService.setValidatedAcl({
-        validatedAcl: validated.pass,
-        attributionUserId: req.userObject.userId,
-        svcStatus: res.svcStatus
-      })
-    }
+    await CollectionService.setValidatedAcl({
+      validatedAcl: validated.pass,
+      grantId,
+      attributionUserId: req.userObject.userId,
+      svcStatus: res.svcStatus
+    })
     const response = await CollectionService.queryReviewAcl({grantId})
     res.json(response)
   }
