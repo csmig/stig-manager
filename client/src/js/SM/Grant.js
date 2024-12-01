@@ -501,47 +501,59 @@ SM.Grant.NewGrantPanel = Ext.extend(Ext.Panel, {
       removeBtn.setDisabled(sm.getSelected()?.length)
     })
 
+    function handleAddBtnItem (menuItem) {
+      const checkedNodes = granteeTp.getChecked()
+      const data = checkedNodes.map( node => {
+        if (node.attributes.user) {
+          return {
+            grantTarget: 'user',
+            grantTargetId: node.attributes.user.userId,
+            subtitle: node.attributes.user.username,
+            title: node.attributes.user.displayName,
+            accessLevel: menuItem.accessLevel,
+            recordId: `U${node.attributes.user.userId}`,
+            grantee: node.attributes.user
+          } 
+        }
+        else {
+          return {
+            grantTarget: 'user-group',
+            grantTargetId: node.attributes.userGroup.userGroupId,
+            title: node.attributes.userGroup.name,
+            subtitle: node.attributes.userGroup.description,
+            accessLevel: menuItem.accessLevel,
+            recordId: `UG${node.attributes.userGroup.userGroupId}`,
+            grantee: node.attributes.userGroup
+          }
+        }
+      })
+      for (const node of checkedNodes) {
+        node.remove()
+      }
+      grantGrid.store.loadData(data, true)
+      addBtn.disable()
+    }
+
+    const addBtnMenuItems = [
+      {text: 'Role: Restricted', accessLevel: 1, handler: handleAddBtnItem},
+      {text: 'Role: Full', accessLevel: 2, handler: handleAddBtnItem},
+      {text: 'Role: Manage', accessLevel: 3, handler: handleAddBtnItem},
+      {text: 'Role: Owner', accessLevel: 4, handler: handleAddBtnItem},
+    ]
+
     const addBtn = new Ext.Button({
       iconCls: 'sm-add-assignment-icon',
+      text: 'Add',
       margins: "10 0 10 0",
       disabled: true,
-      handler: function (btn) {
-        const checkedNodes = granteeTp.getChecked()
-        const data = checkedNodes.map( node => {
-          const accessLevel = roleComboBox.getValue()
-          if (node.attributes.user) {
-            return {
-              grantTarget: 'user',
-              grantTargetId: node.attributes.user.userId,
-              subtitle: node.attributes.user.username,
-              title: node.attributes.user.displayName,
-              accessLevel,
-              recordId: `U${node.attributes.user.userId}`,
-              grantee: node.attributes.user
-            } 
-          }
-          else {
-            return {
-              grantTarget: 'user-group',
-              grantTargetId: node.attributes.userGroup.userGroupId,
-              title: node.attributes.userGroup.name,
-              subtitle: node.attributes.userGroup.description,
-              accessLevel,
-              recordId: `UG${node.attributes.userGroup.userGroupId}`,
-              grantee: node.attributes.userGroup
-            }
-          }
-        })
-        for (const node of checkedNodes) {
-          node.remove()
-        }
-        grantGrid.store.loadData(data, true)
-        btn.disable()
-      }
+      menu: new Ext.menu.Menu({
+        items: addBtnMenuItems
+      })
     })
+
     const removeBtn = new Ext.Button({
       iconCls: 'sm-remove-assignment-icon',
-      // margins: "0 10 10 10",
+      text: 'Remove',
       disabled: true,
       handler: function (btn) {
         const selectedRecords = grantGrid.getSelectionModel().getSelections()
@@ -552,7 +564,6 @@ SM.Grant.NewGrantPanel = Ext.extend(Ext.Panel, {
               id: `${data.grantTargetId}-user-groups-group-node`,
               text: SM.he(data.title),
               userGroup: data.grantee,
-              // hidden: !SM.he(data.title).toLowerCase().includes(granteeTp.filter.nameFilter),
               hidden: granteeTp.shouldHideNode({text: SM.he(data.title), lastAccess:data.lastAccess}),
               type: 'user-group',
               iconCls: 'sm-users-icon',
@@ -584,12 +595,6 @@ SM.Grant.NewGrantPanel = Ext.extend(Ext.Panel, {
       }
     })
 
-    const roleComboBox = new SM.RoleComboBox({
-      width: 80,
-      includeOwnerRole: this.canModifyOwners,
-      value: 1
-    })
-
     const buttonPanel = new Ext.Panel({
       bodyStyle: 'background-color:transparent;border:none',
       width: 120,
@@ -599,8 +604,6 @@ SM.Grant.NewGrantPanel = Ext.extend(Ext.Panel, {
         align: 'center',
       },
       items: [
-        { xtype: 'panel', border: false, html: 'Role:', margins: '0 0 5 0' },
-        roleComboBox,
         addBtn,
         removeBtn
       ]
@@ -619,8 +622,7 @@ SM.Grant.NewGrantPanel = Ext.extend(Ext.Panel, {
       ],
       granteeTp,
       grantGrid,
-      buttonPanel,
-      roleComboBox
+      buttonPanel
     }
     Ext.apply(this, Ext.apply(this.initialConfig, config))
     this.superclass().initComponent.call(this)
