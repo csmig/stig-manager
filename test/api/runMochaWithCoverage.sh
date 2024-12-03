@@ -28,14 +28,12 @@ c8 --reporter=html --reporter=text --reporter=lcov node -e "
   const { spawn } = require('child_process');
   
   console.log('Starting the API...');
-  const server = spawn('node', ['./../../api/source/index.js'], { stdio: 'inherit' });
+  const server = spawn('node', ['./api/source/index.js'], { stdio: 'inherit' });
 
   // Wait for the API to start
   setTimeout(() => {
     console.log('Running Mocha tests...');
-  //  const tests = spawn('node', ['./runMocha.sj'], { stdio: 'inherit' });
-
-    const tests = spawn('mocha', ['.**/*.test.js', '--no-timeouts', '--ignore', '*/**/node_modules/**/*', '--recursive', '--ignore', './node_modules/**'], { stdio: 'inherit' });
+    const tests = spawn('mocha', ['*/**/*.test.js', '--no-timeouts', '--ignore', '*/**/node_modules/**/*', '--recursive', '--ignore', './node_modules/**'], { stdio: 'inherit' });
 
     tests.on('close', (code) => {
       console.log('Tests finished. Stopping server...');
@@ -45,6 +43,10 @@ c8 --reporter=html --reporter=text --reporter=lcov node -e "
   }, 10000); // Adjust startup time as needed
 "
 
-c8 report -r lcov -r text -r html --report-dir ./coverage
+c8 report -r lcov -r text -r html --report-dir ./test/api/coverage
 
-echo "Coverage report is available at ./coverage"
+echo "Coverage report is available at ./test/api/coverage"
+
+
+
+
