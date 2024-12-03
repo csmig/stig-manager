@@ -778,8 +778,6 @@ SM.Manage.Collection.GrantsGrid = Ext.extend(Ext.grid.GridPanel, {
     }
 
     function editAcl (grantData) {
-      console.log(`editAcl ${JSON.stringify(grantData)}`)
-      Ext.getBody().mask('Getting access list for ' + grantData.sortField + '...')
       SM.Acl.showAccess(_this.collectionId, grantData)
     }
     function removeGrant (grantData, record) {

@@ -2274,15 +2274,12 @@ td.x-grid3-hd-over .x-grid3-hd-inner {
 }
 .sm-add-assignment-icon {
   background-image: url(../img/add-assignment.svg);
-  background-size: 32px 32px;
+  background-size: 18px;
   background-repeat: no-repeat;
-}
-.x-item-disabled .sm-add-assignment-icon, .x-item-disabled .sm-remove-assignment-icon {
-  filter: grayscale(1);
 }
 .sm-remove-assignment-icon {
   background-image: url(../img/remove-assignment.svg);
-  background-size: 32px 32px;
+  background-size: 18px;
   background-repeat: no-repeat;
 }
 .x-dd-drop-nodrop .x-dd-drop-icon {
@@ -2337,7 +2334,7 @@ td.x-grid3-hd-over .x-grid3-hd-inner {
   cursor: url("../img/drag-drop-light.svg"), grabbing;
 }
 .x-item-disabled {
-	filter: saturate(0)
+	filter: saturate(0.25)
 }
 .sm-column-with-icon {
 	padding-left: 20px;

@@ -33,8 +33,8 @@ SM.Acl.ResourceTreePanel = Ext.extend(Ext.tree.TreePanel, {
           // Root node
           match = node.match(/^(\d+)-resource-root$/)
           if (match) {
-            let collectionId = match[1]
-            let content = []
+            const collectionId = match[1]
+            const content = []
             content.push(
               {
                 id: `${collectionId}-resource-collection-node`,
@@ -70,8 +70,8 @@ SM.Acl.ResourceTreePanel = Ext.extend(Ext.tree.TreePanel, {
           // Collection-Assets node
           match = node.match(/^(\d+)-resource-assets-node$/)
           if (match) {
-            let collectionId = match[1]
-            let apiAssets = await Ext.Ajax.requestPromise({
+            const collectionId = match[1]
+            const apiAssets = await Ext.Ajax.requestPromise({
               responseType: 'json',
               url: `${STIGMAN.Env.apiBase}/assets`,
               method: 'GET',
@@ -79,7 +79,7 @@ SM.Acl.ResourceTreePanel = Ext.extend(Ext.tree.TreePanel, {
                 collectionId: collectionId
               }
             })
-            let content = apiAssets.map(asset => ({
+            const content = apiAssets.map(asset => ({
               id: `${collectionId}-${asset.assetId}-resource-assets-asset-node`,
               text: SM.he(asset.name),
               assetName: asset.name,
@@ -95,9 +95,9 @@ SM.Acl.ResourceTreePanel = Ext.extend(Ext.tree.TreePanel, {
           // Collection-Assets-STIG node
           match = node.match(/^(\d+)-(\d+)-resource-assets-asset-node$/)
           if (match) {
-            let collectionId = match[1]
-            let assetId = match[2]
-            let apiAsset = await Ext.Ajax.requestPromise({
+            const collectionId = match[1]
+            const assetId = match[2]
+            const apiAsset = await Ext.Ajax.requestPromise({
               responseType: 'json',
               url: `${STIGMAN.Env.apiBase}/assets/${assetId}`,
               method: 'GET',
@@ -105,7 +105,7 @@ SM.Acl.ResourceTreePanel = Ext.extend(Ext.tree.TreePanel, {
                 projection: 'stigs'
               }
             })
-            let content = apiAsset.stigs.map(stig => ({
+            const content = apiAsset.stigs.map(stig => ({
               id: `${collectionId}-${assetId}-${stig.benchmarkId}-resource-leaf`,
               text: SM.he(stig.benchmarkId),
               leaf: true,
@@ -125,8 +125,8 @@ SM.Acl.ResourceTreePanel = Ext.extend(Ext.tree.TreePanel, {
           // Collection-STIGs node
           match = node.match(/^(\d+)-resource-stigs-node$/)
           if (match) {
-            let collectionId = match[1]
-            let apiStigs = await Ext.Ajax.requestPromise({
+            const collectionId = match[1]
+            const apiStigs = await Ext.Ajax.requestPromise({
               responseType: 'json',
               url: `${STIGMAN.Env.apiBase}/collections/${collectionId}/stigs`,
               method: 'GET',
@@ -134,7 +134,7 @@ SM.Acl.ResourceTreePanel = Ext.extend(Ext.tree.TreePanel, {
               //   projection: 'stigs'
               // }
             })
-            let content = apiStigs.map( stig => ({
+            const content = apiStigs.map( stig => ({
               collectionId: collectionId,
               text: SM.he(stig.benchmarkId),
               node: 'stig',
@@ -149,14 +149,14 @@ SM.Acl.ResourceTreePanel = Ext.extend(Ext.tree.TreePanel, {
           // Collection-STIGs-Asset node
           match = node.match(/^(\d+)-(.*)-resource-stigs-stig-node$/)
           if (match) {
-            let collectionId = match[1]
-            let benchmarkId = match[2]
-              let apiAssets = await Ext.Ajax.requestPromise({
+            const collectionId = match[1]
+            const benchmarkId = match[2]
+            const apiAssets = await Ext.Ajax.requestPromise({
                 responseType: 'json',
                 url: `${STIGMAN.Env.apiBase}/collections/${collectionId}/stigs/${benchmarkId}/assets`,
               method: 'GET'
             })
-            let content = apiAssets.map(asset => ({
+            const content = apiAssets.map(asset => ({
               id: `${collectionId}-${benchmarkId}-${asset.assetId}-resource-leaf`,
               text: SM.he(asset.name),
               leaf: true,
@@ -222,8 +222,6 @@ SM.Acl.ResourceTreePanel = Ext.extend(Ext.tree.TreePanel, {
             cb(content, { status: true })
             return
           }
-          
-          
         }
         catch (e) {
           SM.Error.handleError(e)
@@ -235,12 +233,13 @@ SM.Acl.ResourceAddBtn = Ext.extend(Ext.Button, {
   initComponent: function () {
     const config = {
       disabled: true,
-      height: 30,
-      width: 150,
-      margins: "10 10 10 10",
-      icon: 'img/right-arrow-16.png',
-      iconAlign: 'right',
-      cls: 'x-btn-text-icon'
+      // height: 30,
+      // width: 150,
+      // margins: "0 10 10 10",
+      // icon: 'img/right-arrow-16.png',
+      iconCls: 'sm-add-assignment-icon',
+      // iconAlign: 'right',
+      // cls: 'x-btn-text-icon'
     }
     Ext.apply(this, Ext.apply(this.initialConfig, config))
     this.superclass().initComponent.call(this)
@@ -252,12 +251,13 @@ SM.Acl.ResourceRemoveBtn = Ext.extend(Ext.Button, {
     const grid = this.grid
     const config = {
       disabled: true,
-      height: 30,
-      width: 150,
-      margins: "10 10 10 10",
-      icon: 'img/left-arrow-16.png',
-      iconAlign: 'left',
-      cls: 'x-btn-text-icon',
+      // height: 30,
+      // width: 150,
+      // margins: "0 10 10 10",
+      iconCls: 'sm-remove-assignment-icon',
+      // icon: 'img/left-arrow-16.png',
+      // iconAlign: 'left',
+      // cls: 'x-btn-text-icon',
       listeners:{
       click: function(){
           const assigmentsToPurge = grid.getSelectionModel().getSelections()
@@ -423,7 +423,6 @@ SM.Acl.AssignedRulesGrid = Ext.extend(Ext.grid.EditorGridPanel, {
       store: assignmentStore,
       view: new SM.ColumnFilters.GridView({
         emptyText: this.emptyText || 'No records to display',
-        deferEmptyText: false,
         forceFit: true,
         markDirty: false
       }),
@@ -510,7 +509,8 @@ SM.Acl.Panel = Ext.extend(Ext.Panel, {
     if (this.accessLevel === 1) addBtnMenuItems.push({text: 'with No access', access: 'none', handler: handleAddBtnItem})
     const addBtn = new SM.Acl.ResourceAddBtn({
       tree: navTree,
-      text: 'Add Resource',
+      margins: "10 0 10 0",
+      text: 'Add',
       grid: assignedRulesGrid,
       menu: new Ext.menu.Menu({
         items: addBtnMenuItems
@@ -520,17 +520,19 @@ SM.Acl.Panel = Ext.extend(Ext.Panel, {
 
     const removeBtn = new SM.Acl.ResourceRemoveBtn({
       tree: navTree,
-      text: 'Remove Resource ',
+      text: 'Remove',
       grid: assignedRulesGrid
     })
     this.removeButton = removeBtn
 
     const buttonPanel = new Ext.Panel({
       bodyStyle: 'background-color:transparent;border:none',
+      width: 100,
       layout: {
         type: 'vbox',
-        pack: 'center'//,
-        //padding: "10 10 10 10"
+        pack: 'center',
+        align: 'center',
+        padding: "10 10 10 10"
       },
       items: [
         addBtn,
@@ -560,85 +562,69 @@ SM.Acl.Panel = Ext.extend(Ext.Panel, {
 
 SM.Acl.showAccess = async function(collectionId, grantRecord) {
   try {
-    let appwindow 
-    let assignmentPanel = new SM.Acl.Panel({
+    async function onSave () {
+      try {
+        await Ext.Ajax.requestPromise({
+          url: `${STIGMAN.Env.apiBase}/collections/${collectionId}/grants/${grantRecord.grantId}/acl`,
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json;charset=utf-8' },
+          jsonData: assignmentPanel.assignmentGrid.getValue()
+        })      
+      }
+      catch (e) {
+        SM.Error.handleError(e)
+      }
+      finally {
+        appwindow.close()
+      }
+    }
+
+    const assignmentPanel = new SM.Acl.Panel({
         collectionId,
         accessLevel: grantRecord.accessLevel
     })
 
-      /******************************************************/
-      // Form window
-      /******************************************************/
-      appwindow = new Ext.Window({
-        title: `Access Control List for ${grantRecord.name}`,
-        cls: 'sm-dialog-window sm-round-panel',
-        modal: true,
-        hidden: true,
-        width: 900,
-        height:600,
-        layout: 'fit',
-        plain:true,
-        bodyStyle:'padding:20px;',
-        buttonAlign:'right',
-        items: assignmentPanel,
-        buttons: [
-          {
-            text: 'Cancel',
-            handler: function(){
-              appwindow.close();
-            }
-          },
-          {
-            text: 'Save',
-            formBind: true,
-            id: 'submit-button',
-            handler: async function() {
-              try {
-                let values = assignmentPanel.assignmentGrid.getValue()
-                let url, method
-                url = `${STIGMAN.Env.apiBase}/collections/${collectionId}/grants/${grantRecord.grantId}/acl`
-                method = 'PUT'
-                await Ext.Ajax.requestPromise({
-                  url: url,
-                  method: method,
-                  headers: { 'Content-Type': 'application/json;charset=utf-8' },
-                  jsonData: values
-                })      
-              }
-              catch (e) {
-                SM.Error.handleError(e)
-              }
-              finally {
-                appwindow.close()
-              }
-            }
-          }
-        ]
-      })
-      assignmentPanel.appwindow = appwindow
-      appwindow.render(Ext.getBody())
+    const appwindow = new Ext.Window({
+      title: `Access Control List for ${grantRecord.name}`,
+      cls: 'sm-dialog-window sm-round-panel',
+      modal: true,
+      hidden: true,
+      width: 900,
+      height:600,
+      layout: 'fit',
+      plain:true,
+      bodyStyle:'padding:20px;',
+      buttonAlign:'right',
+      items: assignmentPanel,
+      buttons: [
+        {
+          text: 'Cancel',
+          handler: () => appwindow.close()
+        },
+        {
+          text: 'Save',
+          handler: onSave
+        }
+      ]
+    })
 
-      const apiAccess = await Ext.Ajax.requestPromise({
-        responseType: 'json',
-          url: `${STIGMAN.Env.apiBase}/collections/${collectionId}/grants/${grantRecord.grantId}/acl`,
-          method: 'GET'
-      })
-      assignmentPanel.assignmentGrid.setValue(apiAccess.acl)
-      assignmentPanel.assignmentGrid.setTitle(`Assigned access, default = ${apiAccess.defaultAccess}`)
-              
-      Ext.getBody().unmask();
-      appwindow.show()
+    appwindow.show()
+
+    const timeoutId = setTimeout(() => {
+      assignmentPanel.assignmentGrid.view.scroller.mask('Getting ACL...')
+    }, 250)
+    const apiAccess = await Ext.Ajax.requestPromise({
+      responseType: 'json',
+        url: `${STIGMAN.Env.apiBase}/collections/${collectionId}/grants/${grantRecord.grantId}/acl`,
+        method: 'GET'
+    })
+    assignmentPanel.assignmentGrid.setValue(apiAccess.acl)
+    assignmentPanel.assignmentGrid.setTitle(`ACL Rules, default access = ${apiAccess.defaultAccess}`)   
+    clearTimeout(timeoutId)
+    assignmentPanel.assignmentGrid.view.scroller.unmask()
   }
   catch (e) {
-      if(typeof e === 'object') {
-          if (e instanceof Error) {
-            e = JSON.stringify(e, Object.getOwnPropertyNames(e), 2);
-          }
-          else {
-            e = JSON.stringify(e);
-          }
-        }        
-        SM.Error.handleError(e)
-        Ext.getBody().unmask()
-  }	
+    SM.Error.handleError(e)
+    assignmentPanel.assignmentGrid.view.scroller.unmask()
+  }
 }
