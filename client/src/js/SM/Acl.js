@@ -282,11 +282,24 @@ SM.Acl.AssignedRulesGrid = Ext.extend(Ext.grid.EditorGridPanel, {
         'labelId',
         'labelName',
         'label',
-        'access'  
+        'access',
+        {
+          name: 'sorter',
+          convert: (v, r) => {
+            let value
+            if (!r.assetName && !r.labelName && !r.benchmarkId) {
+              value = '!!!Sorttop'
+            }
+            else {
+              value = `${r.assetName ?? ''}${r.labelName ?? ''}${r.benchmarkId ?? ''}`.toLowerCase()
+            }
+            return value
+          }
+        }  
       ],
       root: this.root || '',
       sortInfo: {
-          field: 'assetName',
+          field: 'sorter',
           direction: 'ASC' // or 'DESC' (case sensitive for local sorting)
       },
       idProperty: v => `${v.benchmarkId}-${v.assetName}-${v.labelName}`,
@@ -374,7 +387,8 @@ SM.Acl.AssignedRulesGrid = Ext.extend(Ext.grid.EditorGridPanel, {
 
     const columns = [
       {
-        header: `Resource`, 
+        header: `Resource`,
+        dataIndex: 'sorter',
         sortable: true,
         width: 350,
         renderer: renderResource
@@ -484,7 +498,9 @@ SM.Acl.Panel = Ext.extend(Ext.Panel, {
         label: selectedNode.attributes.label,
         access
       }
-      assignedRulesGrid.getStore().loadData(assignment, true);
+      const store = assignedRulesGrid.getStore()
+      store.loadData(assignment, true)
+      store.sort(store.sortInfo.field, store.sortInfo.direction)
     }
 
     const assignedRulesGrid = new SM.Acl.AssignedRulesGrid({
