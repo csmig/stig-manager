@@ -1131,6 +1131,31 @@ describe('POST - Review', () => {
               expect(res.body.failedValidation).to.eql(0)
             }
           })
+          it("should throw error, user cannot accept/reject reviews in colleciton ", async () => {
+
+            const res = await chai.request(config.baseUrl)
+              .post(`/collections/${reference.testCollection.collectionId}/reviews`)
+              .set('Authorization', `Bearer ${iteration.token}`)
+              .send({
+                source: {
+                  review: {
+                    status: 'accepted'
+                  }
+                },
+                assets: {
+                  assetIds: ['62', '42', '154']
+                },
+                rules: {
+                  ruleIds: ['SV-106179r1_rule']
+                }
+              })
+
+            if(distinct.accessLevel < 3){
+              expect(res).to.have.status(403)
+              return
+            }
+            expect(res).to.have.status(200)
+          })
         })
       })
       describe('POST - postReviewsByAsset - /collections/{collectionId}/reviews/{assetId}', () => {

@@ -81,6 +81,7 @@ const distinct = {
         },
         
       },
+      accessLevel:4
     },
     lvl1: {
       canPatchReview: false,
@@ -169,6 +170,7 @@ const distinct = {
         reviewsForRulesAll: 14,
         reviewsDefaultMapped: 0
       },
+      accessLevel:1
     },
     lvl2: {
       canPatchReview: true,
@@ -258,6 +260,7 @@ const distinct = {
         reviewsForRulesAll: 17,
         reviewsDefaultMapped: 0
       },
+      accessLevel:2
     },
     lvl3: {
       canPatchReview: true,
@@ -345,6 +348,7 @@ const distinct = {
           reviewsLength: 2
         },
       },
+      accessLevel:3
     },
     lvl4: {
       canPatchReview: true,
@@ -440,6 +444,7 @@ const distinct = {
           reviewsLength: 2
         },
       },
+      accessLevel:4
     }
 }
   module.exports = distinct

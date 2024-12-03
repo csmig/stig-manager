@@ -82,6 +82,26 @@ describe('PATCH - Collection', function () {
               expect(res.body.error).to.equal("Unprocessable Entity.")
               expect(res.body.detail).to.equal("Duplicate user in grant array")
           })
+
+          it("should throw error because grants array has a repeated userGroupId",async function () {
+
+            const patchRequest = JSON.parse(JSON.stringify(requestBodies.updateCollection))
+           // patchRequest.grants.push(patchRequest.grants[0])
+            patchRequest.grants.push({userGroupId: reference.testCollection.testGroup.userGroupId, accessLevel: 1})
+            patchRequest.name = "TEST" + utils.getUUIDSubString()
+            const res = await chai.request(config.baseUrl)
+                .patch(`/collections/${reference.testCollection.collectionId}`)
+                .set('Authorization', `Bearer ${iteration.token}`)
+                .send(patchRequest)
+              if(distinct.canModifyCollection === false){
+                  expect(res).to.have.status(403)
+                  return
+              }
+              expect(res).to.have.status(422)
+              expect(res.body.error).to.equal("Unprocessable Entity.")
+              expect(res.body.detail).to.equal("Duplicate user in grant array")
+
+          })
         })
         describe('patchCollectionLabelById - /collections/{collectionId}/labels/{labelId}', function () {
 

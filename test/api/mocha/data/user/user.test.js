@@ -602,6 +602,24 @@ describe('user', () => {
               expect(res.body.collectionGrants).to.be.an('array').of.length(1)
 
           })
+
+          it("should throw error, no elevate", async () => {  
+
+            const res = await chai
+                .request(config.baseUrl)
+                .put(`/users/${testUser.userId}`)
+                .set('Authorization', 'Bearer ' + iteration.token)
+                .send({
+                  "username": "putTesting",
+                  "collectionGrants": [
+                      {
+                          "collectionId": `${reference.scrapCollection.collectionId}`,
+                          "accessLevel": 1
+                      }
+                  ]
+                })
+                expect(res).to.have.status(403)
+          })
         })
       })
 

@@ -435,7 +435,6 @@ describe('PUT - Collection', function () {
         before(async function () {
           await utils.loadAppData()
         })
-
         it('set stig-asset grants for a lvl1 user in this collection. user does not have a direct grant to the colleciton',async function () {
 
           it("should throw SmError.Unprocessable Entity when attempting to set asset stig for a user that does not exist with access level 1",async function () {
@@ -538,6 +537,37 @@ describe('PUT - Collection', function () {
           expect(res.body.grantId).to.equal(reference.testCollection.testGroup.testCollectionGrantId)
         })
 
+        it("should throw error, the user does not have grant to the collection ", async function () {
+
+          const res = await chai.request(config.baseUrl)
+          .put(`/collections/${reference.scrapCollection.collectionId}/grants/${reference.testCollection.testGroup.testCollectionGrantId}`)
+          .set('Authorization', `Bearer ${iteration.token}`)
+          .send({
+            "userId": reference.lvl1User.userId,
+            "accessLevel": 1
+          })
+          if(distinct.canModifyCollection === false){
+            expect(res).to.have.status(403)
+            return
+          }
+          expect(res).to.have.status(404)
+        })
+      })
+
+      it("should throw error, the user has < 4 access level and is attempting to modified an existing owners grant. ", async function () {
+
+        const res = await chai.request(config.baseUrl)
+        .put(`/collections/${reference.testCollection.collectionId}/grants/${reference.adminBurke.testCollectionGrantId}`)
+        .set('Authorization', `Bearer ${iterations[1].token}`)
+        .send({
+          "userId": reference.adminBurke.userId,
+          "accessLevel": 2
+        })
+        if(distinct.accessLevel !== 4){
+          expect(res).to.have.status(403)
+          return
+        }
+        expect(res).to.have.status(403)
       })
 
       describe('putAclRulesByCollectionGrant - /collections/{collectionId}/grants/{grantId}/acl', function () {

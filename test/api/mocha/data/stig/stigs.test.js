@@ -185,11 +185,36 @@ describe('GET - Stig', () => {
                     expect(res.body).to.be.an('array')
                     expect(res.body, "expected 85 ccis").to.be.lengthOf(85)
                 })
+                it("Return a list of CCIs from a STIG revision latest", async () => {
+                    const res = await chai.request(config.baseUrl)
+                    .get(`/stigs/${reference.benchmark}/revisions/${'latest'}/ccis`)
+                    .set('Authorization', `Bearer ${iteration.token}`)
+                    expect(res).to.have.status(200)
+                    expect(res.body).to.be.an('array')
+                    expect(res.body, "expected 85 ccis").to.be.lengthOf(85)
+                })
             })
             describe('GET - getGroupsByRevision - /stigs/{benchmarkId}/revisions{revisionStr}/groups', () => {
                 it('Return the list of groups for the specified revision of a STIG.', async () => {
                     const res = await chai.request(config.baseUrl)
                     .get(`/stigs/${reference.benchmark}/revisions/${reference.revisionStr}/groups?projection=rules`)
+                    .set('Authorization', `Bearer ${iteration.token}`)
+                    expect(res).to.have.status(200)
+                    expect(res.body).to.be.an('array')
+                    expect(res.body).to.be.lengthOf(reference.checklistLength)
+                    for(let group of res.body){
+                        if(group.groupId === reference.testRule.groupId){
+                            for(const rule of group.rules){
+                                expect(rule.ruleId, `expect test ruleID  ${reference.testRule.ruleId}`).to.be.equal(reference.testRule.ruleId)
+                                expect(rule.version, `expect rule version to be the test version. ${reference.testRule.version}`).to.be.equal(reference.testRule.version)
+                            }
+                        }
+                    }
+                })
+                it("Return the list of groups for the specified revision of a STIG latest", async () => {
+
+                    const res = await chai.request(config.baseUrl)
+                    .get(`/stigs/${reference.benchmark}/revisions/${'latest'}/groups?projection=rules`)
                     .set('Authorization', `Bearer ${iteration.token}`)
                     expect(res).to.have.status(200)
                     expect(res.body).to.be.an('array')
