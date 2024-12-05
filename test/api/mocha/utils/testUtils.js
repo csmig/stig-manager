@@ -431,7 +431,7 @@ const getCollectionMetricsDetails = async (collectionId) => {
 
 const getReviews = async (collectionId) => {
 
-  const res = await fetch(`${config.baseUrl}/collections/${collectionId}/reviews/`, {
+  const res = await fetch(`${config.baseUrl}/collections/${collectionId}/reviews`, {
     method: 'GET',
     headers: {
       Authorization: `Bearer ${adminToken}`,
@@ -510,20 +510,7 @@ const putReviewByAssetRule = async (collectionId, assetId, ruleId, body) => {
   return res.json()
 }
 
-const deleteReviewsByAssetRule = async (collectionId, assetId, ruleId) => {
 
-  const res = await fetch(`${config.baseUrl}/collections/${collectionId}/reviews/${assetId}/${ruleId}`, {
-    method: 'DELETE',
-    headers: {
-      Authorization: `Bearer ${adminToken}`,
-      'Content-Type': 'application/json'
-    },
-  })
-  if (!res.ok) { 
-    throw new Error(`HTTP error, Status: ${res.status}`)
-  }
-  return res.json()
-}
 
 const resetTestAsset = async () => {
   const res = await putAsset("42", {
@@ -680,13 +667,32 @@ const createCollectionLabel = async (collectionId, label) => {
   return res.json()
 }
 
+const deleteReview = async (collectionId, assetId, ruleId) => {
+
+  const res = await fetch(`${config.baseUrl}/collections/${collectionId}/reviews/${assetId}/${ruleId}`, {
+    method: 'DELETE',
+    headers: {
+      Authorization: `Bearer ${adminToken}`,
+      'Content-Type': 'application/json'
+    },
+  })
+  if (!res.ok) { 
+    throw new Error(`HTTP error, Status: ${res.status}`)
+  }
+  if(res.status === 204) {
+    return { status: 204 }
+  }
+  return res.json()
+}
+
+
 module.exports = {
+  deleteReview,
   createCollectionLabel,
   putCollection,
   metricsOutputToJSON,
   putReviewByAssetRule,
   createUser,
-  deleteReviewsByAssetRule,
   resetTestAsset,
   resetScrapAsset,
   setRestrictedUsers,

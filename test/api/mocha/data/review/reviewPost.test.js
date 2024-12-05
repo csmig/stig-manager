@@ -7,52 +7,8 @@ const utils = require('../../utils/testUtils')
 const iterations = require('../../iterations.js')
 const expectations = require('./expectations.js')
 const reference = require('../../referenceData.js')
-const requestBodies = require('./requestBodies.js')
-const checkReviews = (reviews, postreview, iteration) => {
-  for(let review of reviews){
-    if(review.ruleId == reference.testCollection.ruleId && review.assetId == reference.testAsset.assetId){
-      if (postreview.action == "insert") {
-         expect(review.resultEngine).to.not.eql(null);
-         expect(review.status.user.username).to.eql("admin");
-      }else{
-        expect(review.resultEngine).to.eql(null)
-        expect(review.status.label).to.eql("saved")
-        expect(review.status.user.username).to.eql(iteration.name)
-        expect(review.username).to.eql(iteration.name)
-        expect(review.result).to.eql(postreview.source.review.result)
-        expect(review.detail).to.eql(postreview.source.review.detail)
-      }
-    }
-    else if (review.ruleId == reference.testCollection.ruleId && review.assetId == 154) {
-      if (postreview.action == "insert") {
-        expect(review.status.user.username).to.eql("admin");
-        expect(review.username).to.eql("admin");              
-        expect(review.detail).to.eql("test");
-      }
-      else {
-        expect(review.resultEngine).to.eql(null)
-        expect(review.status.label).to.eql("submitted")
-        expect(review.status.user.username).to.eql("admin")
-        expect(review.username).to.eql(iteration.name)
-        expect(review.result).to.eql(postreview.source.review.result)
-        expect(review.detail).to.eql(postreview.source.review.detail)
-      }
-   }
-   else if (review.ruleId == reference.testCollection.ruleId && review.assetId == 62) {
-      if (postreview.action == "insert") {
-        expect(review.resultEngine).to.eql(null);
-      }
-      else {
-        expect(review.resultEngine).to.eql(null)
-      }
-      expect(review.status.label).to.eql("saved")
-      expect(review.status.user.username).to.eql(iteration.name)
-      expect(review.username).to.eql(iteration.name)
-      expect(review.result).to.eql(postreview.source.review.result)
-      expect(review.detail).to.eql(postreview.source.review.detail)
-    }
-  }
-}
+
+const otherTestRuleId = "SV-106181r1_rule"
 
 describe('POST - Review', () => {
 
@@ -64,11 +20,31 @@ describe('POST - Review', () => {
     describe(`iteration:${iteration.name}`, () => {
       const distinct = expectations[iteration.name]
       describe('POST - postReviewBatch - /collections/{collectionId}/reviews', () => {
-        describe(`Batch Review Editing`, () => {
 
-            beforeEach(async function () {
+        describe(`Batch Review Editing basic (no actions or update filters)`, () => {
+
+            before(async function () {
                 await utils.loadAppData("batch-test-data.jsonl")
+                await utils.deleteReview(21, 62, "SV-106181r1_rule")
+                await utils.deleteReview(21, 62, "SV-106181r1_rule")
+                await utils.deleteReview(21, 29, "SV-106181r1_rule")
+                await utils.deleteReview(21, 29, "SV-106181r1_rule")
+                await utils.deleteReview(21, 62, "SV-106179r1_rule")
+                await utils.deleteReview(21, 62, "SV-106179r1_rule")
+                await utils.deleteReview(21, 29, "SV-106179r1_rule")
+                await utils.deleteReview(21, 29, "SV-106179r1_rule")
             })
+            afterEach(async function () {
+              await utils.deleteReview(21, 62, "SV-106181r1_rule")
+              await utils.deleteReview(21, 62, "SV-106181r1_rule")
+              await utils.deleteReview(21, 29, "SV-106181r1_rule")
+              await utils.deleteReview(21, 29, "SV-106181r1_rule")
+              await utils.deleteReview(21, 62, "SV-106179r1_rule")
+              await utils.deleteReview(21, 62, "SV-106179r1_rule")
+              await utils.deleteReview(21, 29, "SV-106179r1_rule")
+              await utils.deleteReview(21, 29, "SV-106179r1_rule")
+            })
+
             it(`POST batch review: target assets, whole stig`, async () => {
 
               const postreview = {
@@ -79,10 +55,10 @@ describe('POST - Review', () => {
                   }
                 },
                 assets: {
-                  assetIds: ['62', '42', '154']
+                  assetIds: ['62', '29']
                 },
                 rules: {
-                  benchmarkIds: ['VPN_SRG_TEST']
+                  benchmarkIds: ['VPN_SRG_TEST_Batch']
                 }
               }
 
@@ -96,53 +72,19 @@ describe('POST - Review', () => {
               const reviews = await utils.getReviews(reference.testCollection.collectionId)
             
               expect(res.body.inserted).to.eql(distinct.postReviews.targetAssetsWholeStig.inserted)
-              expect(res.body.failedValidation).to.eql(distinct.postReviews.targetAssetsWholeStig.failedValidation)
               expect(res.body.updated).to.eql(distinct.postReviews.targetAssetsWholeStig.updated)
+              expect(res.body.failedValidation).to.eql(distinct.postReviews.targetAssetsWholeStig.failedValidation)
               expect(res.body.validationErrors).to.have.length(distinct.postReviews.targetAssetsWholeStig.validationErrors)
               expect(reviews).to.have.lengthOf(distinct.postReviews.targetAssetsWholeStig.reviewsLength)
 
               for(let review of reviews){
-                if(review.ruleId == reference.testCollection.ruleId && review.assetId == reference.testAsset.assetId){
-                  if (postreview.action == "insert") {
-                      expect(review.resultEngine).to.not.eql(null);
-                      expect(review.status.user.username).to.eql("admin");
-                  }else{
-                    expect(review.resultEngine).to.eql(null)
-                    expect(review.status.label).to.eql("saved")
-                    expect(review.status.user.username).to.eql(iteration.name)
-                    expect(review.username).to.eql(iteration.name)
-                    expect(review.result).to.eql(postreview.source.review.result)
-                    expect(review.detail).to.eql(postreview.source.review.detail)
-                  }
-                }
-                else if (review.ruleId == reference.testCollection.ruleId && review.assetId == 154) {
-                  if (postreview.action == "insert") {
-                    expect(review.status.user.username).to.eql("admin");
-                    expect(review.username).to.eql("admin");              
-                    expect(review.detail).to.eql("test");
-                  }
-                  else {
-                    expect(review.resultEngine).to.eql(null)
-                    expect(review.status.label).to.eql("submitted")
-                    expect(review.status.user.username).to.eql("admin")
-                    expect(review.username).to.eql(iteration.name)
-                    expect(review.result).to.eql(postreview.source.review.result)
-                    expect(review.detail).to.eql(postreview.source.review.detail)
-                  }
-                }
-                else if (review.ruleId == reference.testCollection.ruleId && review.assetId == 62) {
-                  if (postreview.action == "insert") {
-                    expect(review.resultEngine).to.eql(null);
-                  }
-                  else {
-                    expect(review.resultEngine).to.eql(null)
-                  }
-                  expect(review.status.label).to.eql("saved")
-                  expect(review.status.user.username).to.eql(iteration.name)
-                  expect(review.username).to.eql(iteration.name)
-                  expect(review.result).to.eql(postreview.source.review.result)
-                  expect(review.detail).to.eql(postreview.source.review.detail)
-                }
+                expect(review.assetId).to.be.oneOf(["62", "29"])
+                expect(review.ruleId).to.be.oneOf([reference.testCollection.ruleId, otherTestRuleId])
+                expect(review.result).to.equal(postreview.source.review.result)
+                expect(review.detail).to.equal(postreview.source.review.detail)
+                expect(review.status.label).to.equal("saved")
+                expect(review.status.user.username).to.equal(iteration.name)
+                expect(review.username).to.equal(iteration.name)
               }
             })
             it(`POST batch Review: target by assets, and one rule`, async () => {
@@ -155,12 +97,11 @@ describe('POST - Review', () => {
                   }
                 },
                 assets: {
-                  assetIds: ['62', '42', '154']
+                  assetIds: ['62', '29']
                 },
                 rules: {
                     ruleIds: ['SV-106179r1_rule']
                   }
-                
               }
 
               const res = await chai.request(config.baseUrl)
@@ -179,47 +120,13 @@ describe('POST - Review', () => {
               expect(reviews).to.have.lengthOf(distinct.postReviews.targetAssetsOneRule.reviewsLength)
 
               for(let review of reviews){
-                if(review.ruleId == reference.testCollection.ruleId && review.assetId == reference.testAsset.assetId){
-                  if (postreview.action == "insert") {
-                      expect(review.resultEngine).to.not.eql(null);
-                      expect(review.status.user.username).to.eql("admin");
-                  }else{
-                    expect(review.resultEngine).to.eql(null)
-                    expect(review.status.label).to.eql("saved")
-                    expect(review.status.user.username).to.eql(iteration.name)
-                    expect(review.username).to.eql(iteration.name)
-                    expect(review.result).to.eql(postreview.source.review.result)
-                    expect(review.detail).to.eql(postreview.source.review.detail)
-                  }
-                }
-                else if (review.ruleId == reference.testCollection.ruleId && review.assetId == 154) {
-                  if (postreview.action == "insert") {
-                    expect(review.status.user.username).to.eql("admin");
-                    expect(review.username).to.eql("admin");              
-                    expect(review.detail).to.eql("test");
-                  }
-                  else {
-                    expect(review.resultEngine).to.eql(null)
-                    expect(review.status.label).to.eql("submitted")
-                    expect(review.status.user.username).to.eql("admin")
-                    expect(review.username).to.eql(iteration.name)
-                    expect(review.result).to.eql(postreview.source.review.result)
-                    expect(review.detail).to.eql(postreview.source.review.detail)
-                  }
-                }
-                else if (review.ruleId == reference.testCollection.ruleId && review.assetId == 62) {
-                  if (postreview.action == "insert") {
-                    expect(review.resultEngine).to.eql(null);
-                  }
-                  else {
-                    expect(review.resultEngine).to.eql(null)
-                  }
-                  expect(review.status.label).to.eql("saved")
-                  expect(review.status.user.username).to.eql(iteration.name)
-                  expect(review.username).to.eql(iteration.name)
-                  expect(review.result).to.eql(postreview.source.review.result)
-                  expect(review.detail).to.eql(postreview.source.review.detail)
-                }
+                expect(review.assetId).to.be.oneOf(["62", "29"])
+                expect(review.ruleId).to.be.equal(reference.testCollection.ruleId)
+                expect(review.result).to.equal(postreview.source.review.result)
+                expect(review.detail).to.equal(postreview.source.review.detail)
+                expect(review.status.label).to.equal("saved")
+                expect(review.status.user.username).to.equal(iteration.name)
+                expect(review.username).to.equal(iteration.name)
               }
             })
             it(`POST batch Review: target by assets, and rule`, async () => {
@@ -232,7 +139,7 @@ describe('POST - Review', () => {
                   }
                 },
                 assets: {
-                  benchmarkIds: ['VPN_SRG_TEST']
+                  benchmarkIds: ['VPN_SRG_TEST_Batch']
                 },
                 rules: {
                     ruleIds: ['SV-106179r1_rule']
@@ -245,19 +152,22 @@ describe('POST - Review', () => {
                 .send(postreview)
           
               expect(res).to.have.status(200)
-              expect(res.body).to.be.an('object')
-              expect(res.body).to.have.property('failedValidation')
-              expect(res.body).to.have.property('updated')
-              expect(res.body).to.have.property('inserted')
               const reviews = await utils.getReviews(reference.testCollection.collectionId)
-
               expect(res.body.inserted).to.eql(distinct.postReviews.targetAssetsAndRule.inserted)
               expect(res.body.updated).to.eql( distinct.postReviews.targetAssetsAndRule.updated)
               expect(res.body.failedValidation).to.eql(distinct.postReviews.targetAssetsAndRule.failedValidation)
               expect(res.body.validationErrors).to.have.length(distinct.postReviews.targetAssetsAndRule.validationErrors)
               expect(reviews).to.have.lengthOf(distinct.postReviews.targetAssetsAndRule.reviewsLength)
 
-              checkReviews(reviews, postreview, iteration)
+              for(let review of reviews){
+                expect(review.assetId).to.be.oneOf(["62", "29"])
+                expect(review.ruleId).to.be.equal(reference.testCollection.ruleId)
+                expect(review.result).to.equal(postreview.source.review.result)
+                expect(review.detail).to.equal(postreview.source.review.detail)
+                expect(review.status.label).to.equal("saved")
+                expect(review.status.user.username).to.equal(iteration.name)
+                expect(review.username).to.equal(iteration.name)
+              }
             })
             it(`POST batch review: target stig, whole stig`, async () => {
 
@@ -269,10 +179,10 @@ describe('POST - Review', () => {
                   }
                 },
                 assets: {
-                  benchmarkIds: ['VPN_SRG_TEST']
+                  benchmarkIds: ['VPN_SRG_TEST_Batch']
                 },
                 rules: {
-                    benchmarkIds: ['VPN_SRG_TEST']
+                    benchmarkIds: ['VPN_SRG_TEST_Batch']
                   }
                 }
 
@@ -294,122 +204,660 @@ describe('POST - Review', () => {
               expect(res.body.validationErrors).to.have.length(distinct.postReviews.targetStigWholeStig.validationErrors)
               expect(reviews).to.have.lengthOf(distinct.postReviews.targetStigWholeStig.reviewsLength)
             
-              checkReviews(reviews, postreview, iteration)
-            })
-            it(`POST batch review: target stig, whole stig - ACTION: insert`, async () => {
-
-              const postreview = {
-                source: {
-                  review: {
-                    result: 'fail',
-                    detail: 'tesetsetset'
-                  }
-                },
-                assets: {
-                  assetIds: ['62', '42', '154']
-                },
-                rules: {
-                    ruleIds: ['SV-106179r1_rule']
-                  },
-                  action: "insert"
-                }
-
-              const res = await chai.request(config.baseUrl)
-                .post(`/collections/${reference.testCollection.collectionId}/reviews`)
-                .set('Authorization', `Bearer ${iteration.token}`)
-                .send(postreview)
-            
-              expect(res).to.have.status(200)
-              expect(res.body).to.be.an('object')
-              expect(res.body).to.have.property('failedValidation')
-              expect(res.body).to.have.property('updated')
-              expect(res.body).to.have.property('inserted')
-
-              const reviews = await utils.getReviews(reference.testCollection.collectionId)
-
-              expect(res.body.inserted).to.eql(distinct.postReviews.targetStigWholeStigInsert.inserted)
-              expect(res.body.updated).to.eql(distinct.postReviews.targetStigWholeStigInsert.updated)
-              expect(res.body.failedValidation).to.eql(distinct.postReviews.targetStigWholeStigInsert.failedValidation)
-              expect(res.body.validationErrors).to.have.length(distinct.postReviews.targetStigWholeStigInsert.validationErrors)
-              expect(reviews).to.have.lengthOf(distinct.postReviews.targetStigWholeStigInsert.reviewsLength)
-              
-              checkReviews(reviews, postreview, iteration)
-            })
-            it(`POST batch review: target stig, whole stig - ACTION: merge`, async () => {
-
-              const postreview = {
-                source: {
-                  review: {
-                    result: 'fail',
-                    detail: 'tesetsetset'
-                  }
-                },
-                assets: {
-                  assetIds: ['62', '42', '154']
-                },
-                rules: {
-                    ruleIds: ['SV-106179r1_rule']
-                  },
-                  action: "update"
-                }
-
-              const res = await chai.request(config.baseUrl)
-                .post(`/collections/${reference.testCollection.collectionId}/reviews`)
-                .set('Authorization', `Bearer ${iteration.token}`)
-                .send(postreview)
-             
-              expect(res).to.have.status(200)
-              expect(res.body).to.be.an('object')
-              expect(res.body).to.have.property('failedValidation')
-              expect(res.body).to.have.property('updated')
-              expect(res.body).to.have.property('inserted')
-
-              const reviews = await utils.getReviews(reference.testCollection.collectionId)
-              
-              expect(res.body.inserted).to.eql(distinct.postReviews.targetStigWholeStigMerge.inserted)
-              expect(res.body.updated).to.eql(distinct.postReviews.targetStigWholeStigMerge.updated)
-              expect(res.body.failedValidation).to.eql(distinct.postReviews.targetStigWholeStigMerge.failedValidation)
-              expect(res.body.validationErrors).to.have.length(distinct.postReviews.targetStigWholeStigMerge.validationErrors)
-              expect(reviews).to.have.lengthOf(distinct.postReviews.targetStigWholeStigMerge.reviewsLength)
-              
-
               for(let review of reviews){
-                if(review.ruleId == reference.testCollection.ruleId && review.assetId == reference.testAsset.assetId){
-                  expect(review.resultEngine).to.eql(null)
-                  expect(review.status.label).to.eql("saved")
-                  expect(review.status.user.username).to.eql(iteration.name)
-                  expect(review.username).to.eql(iteration.name)
-                  expect(review.result).to.eql(postreview.source.review.result)
-                  expect(review.detail).to.eql(postreview.source.review.detail)
-                }
-                else if (review.ruleId == reference.testCollection.ruleId && review.assetId == 154) {
-                  expect(review.resultEngine).to.eql(null)
-                  expect(review.status.label).to.eql("submitted")
-                
-                  expect(review.status.user.username).to.eql("admin")
-                  expect(review.username).to.eql(iteration.name)
-                  expect(review.result).to.eql(postreview.source.review.result)
-                  expect(review.detail).to.eql(postreview.source.review.detail)
-              }
-              else if (review.ruleId == reference.testCollection.ruleId && review.assetId == 62) {
-                  expect(review.status.label).to.eql("saved")
-                  expect(review.status.user.username).to.eql(iteration.name)
-                  expect(review.username).to.eql(iteration.name)
-                  expect(review.result).to.eql(postreview.source.review.result)
-                  expect(review.detail).to.eql(postreview.source.review.detail)
-                }
+                expect(review.assetId).to.be.oneOf(["62", "29"])
+                expect(review.ruleId).to.be.oneOf([reference.testCollection.ruleId, otherTestRuleId])
+                expect(review.result).to.equal(postreview.source.review.result)
+                expect(review.detail).to.equal(postreview.source.review.detail)
+                expect(review.status.label).to.equal("saved")
+                expect(review.status.user.username).to.equal(iteration.name)
+                expect(review.username).to.equal(iteration.name)
               }
             })
-            it(`POST batch review: update but with exclusionary updateFilters (request should do nothing)`, async () => {
+        })
+        describe(`Batch Review Editing update asset 69, insert on asset 29`, () => {
+
+          before(async function () {
+            await utils.loadAppData("batch-test-data.jsonl")
+          })
+
+          it("create a review for asset 62, rule SV-106179r1_rule", async () => {
+            const postreview = {
+              source: {
+                review: {
+                  result: 'pass',
+                  detail: 'testbatch'
+                }
+              },
+              assets: {
+                assetIds: ['62']
+              },
+              rules: {
+                ruleIds: ['SV-106179r1_rule']
+              }
+            }
+
+            const res = await chai.request(config.baseUrl)
+              .post(`/collections/${reference.testCollection.collectionId}/reviews`)
+              .set('Authorization', `Bearer ${iteration.token}`)
+              .send(postreview)
+
+            expect(res).to.have.status(200)
+
+            expect(res.body.inserted).to.eql(1)
+            expect(res.body.updated).to.eql(0)
+            expect(res.body.failedValidation).to.eql(0)
+            expect(res.body.validationErrors).to.have.length(0)  
+          })
+
+          it(`should update asset 62 and insert new review for asset 29`, async () => {
+
+            const postreview = {
+              source: {
+                review: {
+                  result: 'fail',
+                  detail: 'tesetsetset'
+                }
+              },
+              assets: {
+                assetIds: ['62', '29']
+              },
+              rules: {
+                  ruleIds: ['SV-106179r1_rule']
+                }
+              }
+
+            const res = await chai.request(config.baseUrl)
+              .post(`/collections/${reference.testCollection.collectionId}/reviews`)
+              .set('Authorization', `Bearer ${iteration.token}`)
+              .send(postreview)
+          
+            expect(res).to.have.status(200)
+            expect(res.body).to.be.an('object')
+            expect(res.body).to.have.property('failedValidation')
+            expect(res.body).to.have.property('updated')
+            expect(res.body).to.have.property('inserted')
+
+            const reviews = await utils.getReviews(reference.testCollection.collectionId)
+            
+            expect(res.body.inserted).to.eql(distinct.postReviews.update62Insert29.inserted)
+            expect(res.body.updated).to.eql(distinct.postReviews.update62Insert29.updated)
+            expect(res.body.failedValidation).to.eql(distinct.postReviews.update62Insert29.failedValidation)
+            expect(res.body.validationErrors).to.have.length(distinct.postReviews.update62Insert29.validationErrors)
+            expect(reviews).to.have.lengthOf(distinct.postReviews.update62Insert29.reviewsLength)
+
+          })
+        })
+        describe(`Batch Review Editing - actions`, () => {
+
+          before(async function () {
+            await utils.loadAppData("batch-test-data.jsonl")
+          })
+
+          it("create a review for asset 62, rule SV-106179r1_rule", async () => {
+            const postreview = {
+              source: {
+                review: {
+                  result: 'pass',
+                  detail: 'testbatch'
+                }
+              },
+              assets: {
+                assetIds: ['62']
+              },
+              rules: {
+                ruleIds: ['SV-106179r1_rule']
+              }
+            }
+
+            const res = await chai.request(config.baseUrl)
+              .post(`/collections/${reference.testCollection.collectionId}/reviews`)
+              .set('Authorization', `Bearer ${iteration.token}`)
+              .send(postreview)
+
+            expect(res).to.have.status(200)
+
+            expect(res.body.inserted).to.eql(1)
+            expect(res.body.updated).to.eql(0)
+            expect(res.body.failedValidation).to.eql(0)
+            expect(res.body.validationErrors).to.have.length(0)  
+          })
+
+          it(`POST batch review: target stig, whole stig - ACTION: insert. 62 already has review this should not be done`, async () => {
+
+            const postreview = {
+              source: {
+                review: {
+                  result: 'fail',
+                  detail: 'tesetsetset'
+                }
+              },
+              assets: {
+                assetIds: ['62', '29']
+              },
+              rules: {
+                  ruleIds: ['SV-106179r1_rule']
+                },
+                action: "insert"
+              }
+
+            const res = await chai.request(config.baseUrl)
+              .post(`/collections/${reference.testCollection.collectionId}/reviews`)
+              .set('Authorization', `Bearer ${iteration.token}`)
+              .send(postreview)
+          
+            expect(res).to.have.status(200)
+    
+            const reviews = await utils.getReviews(reference.testCollection.collectionId)
+
+            expect(res.body.inserted).to.eql(distinct.postReviews.targetStigWholeStigInsert.inserted)
+            // key here is updated is 0
+            expect(res.body.updated).to.eql(distinct.postReviews.targetStigWholeStigInsert.updated)
+            expect(res.body.failedValidation).to.eql(distinct.postReviews.targetStigWholeStigInsert.failedValidation)
+            expect(res.body.validationErrors).to.have.length(distinct.postReviews.targetStigWholeStigInsert.validationErrors)
+            expect(reviews).to.have.lengthOf(distinct.postReviews.targetStigWholeStigInsert.reviewsLength)
+            
+            for(let review of reviews){
+              expect(review.assetId).to.be.oneOf(["62", "29"])
+              expect(review.ruleId).to.be.equal(reference.testCollection.ruleId)
+              if(review.assetId == 62){
+                expect(review.result).to.equal("pass")
+                expect(review.detail).to.equal("testbatch")
+              }
+              else {
+                expect(review.result).to.equal(postreview.source.review.result)
+                expect(review.detail).to.equal(postreview.source.review.detail)
+              }
+              expect(review.status.label).to.equal("saved")
+              expect(review.status.user.username).to.equal(iteration.name)
+              expect(review.username).to.equal(iteration.name)
+            }
+          })
+
+          it("delete the review for asset 62, rule SV-106179r1_rule", async () => {
+            const res = await utils.deleteReview(21, 62, "SV-106179r1_rule")
+            expect(res).to.have.property("assetId")
+          })
+           
+          it(`POST batch review: target stig, whole stig - ACTION: merge, should update on asset 29 and insert on asset 62`, async () => {
+
+            const postreview = {
+              source: {
+                review: {
+                  result: 'pass',
+                  detail: 'testbatch'
+                }
+              },
+              assets: {
+                assetIds: ['62', '29']
+              },
+              rules: {
+                  ruleIds: ['SV-106179r1_rule']
+                },
+                action: "merge"
+            }
+
+            const res = await chai.request(config.baseUrl)
+              .post(`/collections/${reference.testCollection.collectionId}/reviews`)
+              .set('Authorization', `Bearer ${iteration.token}`)
+              .send(postreview)
+           
+            expect(res).to.have.status(200)
+            expect(res.body).to.be.an('object')
+            expect(res.body).to.have.property('failedValidation')
+            expect(res.body).to.have.property('updated')
+            expect(res.body).to.have.property('inserted')
+
+            const reviews = await utils.getReviews(reference.testCollection.collectionId)
+            
+            expect(res.body.inserted).to.eql(distinct.postReviews.targetStigWholeStigMerge.inserted)
+            expect(res.body.updated).to.eql(distinct.postReviews.targetStigWholeStigMerge.updated)
+            expect(res.body.failedValidation).to.eql(distinct.postReviews.targetStigWholeStigMerge.failedValidation)
+            expect(res.body.validationErrors).to.have.length(distinct.postReviews.targetStigWholeStigMerge.validationErrors)
+            expect(reviews).to.have.lengthOf(distinct.postReviews.targetStigWholeStigMerge.reviewsLength)
+
+            for(let review of reviews){
+              expect(review.assetId).to.be.oneOf(["62", "29"])
+              expect(review.ruleId).to.be.equal(reference.testCollection.ruleId)
+              expect(review.result).to.equal(postreview.source.review.result)
+              expect(review.detail).to.equal(postreview.source.review.detail)
+              expect(review.status.label).to.equal("saved")
+              expect(review.status.user.username).to.equal(iteration.name)
+              expect(review.username).to.equal(iteration.name)
+            }
+          })
+        })
+        describe(`Batch Review Editing - update action with update filters`, () => {
+          
+          before(async function () {
+            await utils.loadAppData("batch-test-data.jsonl")
+          })
+
+          it("create a review for asset 62, rule SV-106179r1_rule (uses stigmanadmin token)", async () => {
+            const postreview = {
+              source: {
+                review: {
+                  result: 'pass',
+                  detail: 'testbatch'
+                }
+              },
+              assets: {
+                assetIds: ['62']
+              },
+              rules: {
+                ruleIds: ['SV-106179r1_rule']
+              }
+            }
+
+            const res = await chai.request(config.baseUrl)
+              .post(`/collections/${reference.testCollection.collectionId}/reviews`)
+              .set('Authorization', `Bearer ${iterations[0].token}`)
+              .send(postreview)
+
+            expect(res).to.have.status(200)
+
+            expect(res.body.inserted).to.eql(1)
+            expect(res.body.updated).to.eql(0)
+            expect(res.body.failedValidation).to.eql(0)
+            expect(res.body.validationErrors).to.have.length(0)  
+          })
+          it(`POST batch review: update but with exclusionary updateFilters`, async () => {
+            const postreview = {
+              source: {
+                review: {
+                  result: 'fail',
+                  detail: 'testUpdateFilter'
+                }
+              },
+              assets: {
+                assetIds: ['62', '29']
+              },
+              rules: {
+                ruleIds: ['SV-106179r1_rule']
+              },
+              updateFilters: [
+                {
+                  field: 'result',
+                  value: 'pass'
+                }
+              ],
+              action: 'update'
+            }
+
+            const res = await chai.request(config.baseUrl)
+              .post(`/collections/${reference.testCollection.collectionId}/reviews`)
+              .set('Authorization', `Bearer ${iteration.token}`)
+              .send(postreview)
+           
+            expect(res).to.have.status(200)
+            expect(res.body).to.be.an('object')
+            expect(res.body).to.have.property('failedValidation')
+            expect(res.body).to.have.property('updated')
+            expect(res.body).to.have.property('inserted')
+
+            expect(res.body.inserted).to.eql(0)
+            expect(res.body.updated).to.eql(1)
+            expect(res.body.failedValidation).to.eql(0)
+            expect(res.body.validationErrors).to.have.length(0)
+
+            const reviews = await utils.getReviews(reference.testCollection.collectionId)
+            expect(reviews).to.have.lengthOf(1)
+            
+            for(let review of reviews){
+              if(review.ruleId == reference.testCollection.ruleId){
+                expect(review.resultEngine).to.eql(null)
+                expect(review.status.label).to.eql("saved")
+                expect(review.status.user.username).to.eql("stigmanadmin")
+                expect(review.username).to.eql(iteration.name)
+                expect(review.result).to.eql("fail")
+                expect(review.detail).to.eql("testUpdateFilter")
+              }
+            }
+          })
+          it("create a review for asset 62, rule SV-106179r1_rule (uses stigmanadmin token)", async () => {
+            const postreview = {
+              source: {
+                review: {
+                  result: 'pass',
+                  detail: 'testbatch'
+                }
+              },
+              assets: {
+                assetIds: ['62']
+              },
+              rules: {
+                ruleIds: ['SV-106179r1_rule']
+              }
+            }
+
+            const res = await chai.request(config.baseUrl)
+              .post(`/collections/${reference.testCollection.collectionId}/reviews`)
+              .set('Authorization', `Bearer ${iterations[0].token}`)
+              .send(postreview)
+
+            expect(res).to.have.status(200)
+
+            expect(res.body.inserted).to.eql(0)
+            expect(res.body.updated).to.eql(1)
+            expect(res.body.failedValidation).to.eql(0)
+            expect(res.body.validationErrors).to.have.length(0)  
+          })
+          it(`POST batch review: update -  updateFilters update reviews where stigmanadmin (userid 1) reviews the asset. should only update 62 asset`, async () => {
+
+            const postreview = {
+              source: {
+                review: {
+                  result: 'fail',
+                  detail: 'testUserFilter'
+                }
+              },
+              assets: {
+                assetIds: ['62', '29']
+              },
+              rules: {
+                ruleIds: ['SV-106179r1_rule']
+              },
+              updateFilters: [
+                {
+                  field: 'userId',
+                  value: '1'
+                }
+              ],
+              action: 'update'
+              }
+
+            const res = await chai.request(config.baseUrl)
+              .post(`/collections/${reference.testCollection.collectionId}/reviews`)
+              .set('Authorization', `Bearer ${iteration.token}`)
+              .send(postreview)
+          
+            expect(res).to.have.status(200)
+            expect(res.body).to.be.an('object')
+            expect(res.body).to.have.property('failedValidation')
+            expect(res.body).to.have.property('updated')
+            expect(res.body).to.have.property('inserted')
+
+            expect(res.body.inserted).to.eql(0)
+            expect(res.body.updated).to.eql(1)
+            expect(res.body.failedValidation).to.eql(0)
+            expect(res.body.validationErrors).to.have.length(0)
+
+            const reviews = await utils.getReviews(reference.testCollection.collectionId)
+            
+            expect(reviews).to.have.lengthOf(1)
+
+            for(let review of reviews){
+              expect(review.assetId).to.eql("62")
+              expect(review.ruleId).to.eql(reference.testCollection.ruleId)
+              expect(review.status.label).to.eql("saved")
+              expect(review.status.user.username).to.eql("stigmanadmin")
+              expect(review.username).to.eql(iteration.name)
+              expect(review.result).to.eql(postreview.source.review.result)
+              expect(review.detail).to.eql(postreview.source.review.detail)
+            } 
+            
+          })
+          it(`POST batch review: update - updateFilters- before date`, async () => {
+
+            const currentTime = new Date().toISOString()
+
+            const postreview = {
+              source: {
+                review: {
+                  result: 'pass',
+                  detail: 'testDate'
+                }
+              },
+              assets: {
+                assetIds: ['62', '29']
+              },
+              rules: {
+                ruleIds: ['SV-106179r1_rule']
+              },
+              updateFilters: [
+                {
+                field: "ts",
+                condition : "lessThan",
+                value: currentTime
+                }
+              ],
+              action: 'update'
+              }
+
+            const res = await chai.request(config.baseUrl)
+              .post(`/collections/${reference.testCollection.collectionId}/reviews`)
+              .set('Authorization', `Bearer ${iteration.token}`)
+              .send(postreview)
+            
+            expect(res).to.have.status(200)
+            expect(res.body).to.be.an('object')
+            expect(res.body).to.have.property('failedValidation')
+            expect(res.body).to.have.property('updated')
+            expect(res.body).to.have.property('inserted')
+
+            expect(res.body.inserted).to.eql(0)
+            expect(res.body.updated).to.eql(1)
+            expect(res.body.failedValidation).to.eql(0)
+            expect(res.body.validationErrors).to.have.length(0)
+
+            const reviews = await utils.getReviews(reference.testCollection.collectionId)
+            expect(reviews).to.have.lengthOf(1)
+
+            for(let review of reviews){
+              expect(review.assetId).to.eql("62")
+              expect(review.ruleId).to.eql(reference.testCollection.ruleId)
+              expect(review.status.label).to.eql("saved")
+              expect(review.status.user.username).to.eql("stigmanadmin")
+              expect(review.username).to.eql(iteration.name)
+              expect(review.result).to.eql(postreview.source.review.result)
+              expect(review.detail).to.eql(postreview.source.review.detail)
+              
+            }
+          })
+          it("create a review for asset 62, rule SV-106179r1_rule with detail ends with batch (uses stigmanadmin token)", async () => {
+            const postreview = {
+              source: {
+                review: {
+                  result: 'fail',
+                  detail: 'testbatch'
+                }
+              },
+              assets: {
+                assetIds: ['62']
+              },
+              rules: {
+                ruleIds: ['SV-106179r1_rule']
+              }
+            }
+
+            const res = await chai.request(config.baseUrl)
+              .post(`/collections/${reference.testCollection.collectionId}/reviews`)
+              .set('Authorization', `Bearer ${iterations[0].token}`)
+              .send(postreview)
+
+            expect(res).to.have.status(200)
+
+            expect(res.body.inserted).to.eql(0)
+            expect(res.body.updated).to.eql(1)
+            expect(res.body.failedValidation).to.eql(0)
+            expect(res.body.validationErrors).to.have.length(0)  
+          })
+          it(`POST batch review: update with updateFilters - detail string ends with "batch"`, async () => {
+
+          const postreview = {
+              source: {
+                review: {
+                  result: 'fail',
+                  detail: 'testEndsWith'
+                }
+              },
+              assets: {
+                assetIds: ['62', '29']
+              },
+              rules: {
+                ruleIds: ['SV-106179r1_rule']
+              },
+              updateFilters: [
+                {
+                  field: 'detail',
+                  condition: 'endsWith',
+                  value: 'batch'
+                }
+              ],
+              action: 'update'
+            }
+
+            const res = await chai.request(config.baseUrl)
+              .post(`/collections/${reference.testCollection.collectionId}/reviews`)
+              .set('Authorization', `Bearer ${iteration.token}`)
+              .send(postreview)
+          
+            expect(res).to.have.status(200)
+            expect(res.body).to.be.an('object')
+            expect(res.body).to.have.property('failedValidation')
+            expect(res.body).to.have.property('updated')
+            expect(res.body).to.have.property('inserted')
+
+            expect(res.body.inserted).to.eql(0)
+            expect(res.body.updated).to.eql(1)
+            expect(res.body.failedValidation).to.eql(0)
+            expect(res.body.validationErrors).to.have.length(0)
+
+            const reviews = await utils.getReviews(reference.testCollection.collectionId)
+            expect(reviews).to.have.lengthOf(1)
+
+            for(let review of reviews){
+              expect(review.assetId).to.eql("62")
+              expect(review.ruleId).to.eql(reference.testCollection.ruleId)
+              expect(review.status.label).to.eql("saved")
+              expect(review.status.user.username).to.eql("stigmanadmin")
+              expect(review.username).to.eql(iteration.name)
+              expect(review.result).to.eql(postreview.source.review.result)
+              expect(review.detail).to.eql(postreview.source.review.detail)
+            }
+          })
+          it("create a review for asset 62, rule SV-106179r1_rule that submitts the review (uses stigmanadmin token)", async () => {
+            const postreview = {
+              source: {
+                review: {
+                  result: 'pass',
+                  detail: 'testNotSubmitted',
+                  status: 'submitted'
+                }
+              },
+              assets: {
+                assetIds: ['62']
+              },
+              rules: {
+                ruleIds: ['SV-106179r1_rule']
+              }
+            }
+
+            const res = await chai.request(config.baseUrl)
+              .post(`/collections/${reference.testCollection.collectionId}/reviews`)
+              .set('Authorization', `Bearer ${iterations[0].token}`)
+              .send(postreview)
+
+            expect(res).to.have.status(200)
+
+            expect(res.body.inserted).to.eql(0)
+            expect(res.body.updated).to.eql(1)
+            expect(res.body.failedValidation).to.eql(0)
+            expect(res.body.validationErrors).to.have.length(0)  
+          })
+          it(`POST batch review: update - updateFilters- only non-saved status`, async () => {
+
+          const postreview = {
+              source: {
+                review: {
+                //  result: 'fail',
+                 // detail: 'testNotSubmitted',
+                  status: 'saved'
+                }
+              },
+              assets: {
+                assetIds: ['62', '29']
+              },
+              rules: {
+                ruleIds: ['SV-106179r1_rule']
+              },
+              updateFilters: [
+                {
+                  field: 'statusLabel',
+                  condition: 'notequal',
+                  value: 'saved'
+                }
+              ],
+              action: 'update'
+            }
+
+            const res = await chai.request(config.baseUrl)
+              .post(`/collections/${reference.testCollection.collectionId}/reviews`)
+              .set('Authorization', `Bearer ${iteration.token}`)
+              .send(postreview)
+          
+            expect(res).to.have.status(200)
+            expect(res.body).to.be.an('object')
+            expect(res.body).to.have.property('failedValidation')
+            expect(res.body).to.have.property('updated')
+            expect(res.body).to.have.property('inserted')
+
+            expect(res.body.inserted).to.eql(0)
+            expect(res.body.updated).to.eql(1)
+            expect(res.body.failedValidation).to.eql(0)
+            expect(res.body.validationErrors).to.have.length(0)
+
+            const reviews = await utils.getReviews(reference.testCollection.collectionId)
+            expect(reviews).to.have.lengthOf(1)
+
+            for(let review of reviews){
+              expect(review.assetId).to.eql("62")
+              expect(review.ruleId).to.eql(reference.testCollection.ruleId)
+              expect(review.status.label).to.eql("saved")
+              expect(review.status.user.username).to.eql(iteration.name)
+              expect(review.username).to.eql("stigmanadmin")
+              expect(review.result).to.eql("pass")
+            }
+          })
+          it("create a review for asset 62, rule SV-106179r1_rule that saved and passes the review (uses stigmanadmin token)", async () => {
+            const postreview = {
+              source: {
+                review: {
+                  result: 'pass',
+                  detail: 'testPassed',
+                  status: 'saved'
+                }
+              },
+              assets: {
+                assetIds: ['62']
+              },
+              rules: {
+                ruleIds: ['SV-106179r1_rule']
+              }
+            }
+
+            const res = await chai.request(config.baseUrl)
+              .post(`/collections/${reference.testCollection.collectionId}/reviews`)
+              .set('Authorization', `Bearer ${iterations[0].token}`)
+              .send(postreview)
+
+            expect(res).to.have.status(200)
+
+            expect(res.body.inserted).to.eql(0)
+            expect(res.body.updated).to.eql(1)
+            expect(res.body.failedValidation).to.eql(0)
+            expect(res.body.validationErrors).to.have.length(0)  
+          })
+          it(`POST batch review: update with updateFilters - pass only`, async () => {
               const postreview = {
                 source: {
                   review: {
                     result: 'fail',
-                    detail: 'tesetsetset'
+                    detail: 'testPassOnly'
                   }
                 },
                 assets: {
-                  assetIds: ['62', '42', '154']
+                  assetIds: ['62', '29']
                 },
                 rules: {
                   ruleIds: ['SV-106179r1_rule']
@@ -417,59 +865,11 @@ describe('POST - Review', () => {
                 updateFilters: [
                   {
                     field: 'result',
-                    value: 'informational'
+                    value: 'pass'
                   }
                 ],
                 action: 'update'
               }
-
-
-              const res = await chai.request(config.baseUrl)
-                .post(`/collections/${reference.testCollection.collectionId}/reviews`)
-                .set('Authorization', `Bearer ${iteration.token}`)
-                .send(postreview)
-             
-              expect(res).to.have.status(200)
-              expect(res.body).to.be.an('object')
-              expect(res.body).to.have.property('failedValidation')
-              expect(res.body).to.have.property('updated')
-              expect(res.body).to.have.property('inserted')
-
-              expect(res.body.inserted).to.eql(0)
-              expect(res.body.updated).to.eql(0)
-              expect(res.body.failedValidation).to.eql(0)
-              expect(res.body.validationErrors).to.have.length(0)
-
-              const reviews = await utils.getReviews(reference.testCollection.collectionId)
-              expect(reviews).to.have.lengthOf(2)
-              
-              for(let review of reviews){
-                expect(review.detail).to.not.eql(postreview.source.review.detail)
-              }
-            })
-            it(`POST batch review: update -  updateFilters - admins reviews only`, async () => {
-
-              const postreview = {
-                source: {
-                  review: {
-                    result: 'fail',
-                    detail: 'tesetsetset'
-                  }
-                },
-                assets: {
-                  assetIds: ['62', '42', '154']
-                },
-                rules: {
-                  ruleIds: ['SV-106179r1_rule']
-                },
-                updateFilters: [
-                  {
-                    field: 'userId',
-                    value: '87'
-                  }
-                ],
-                action: 'update'
-                }
 
               const res = await chai.request(config.baseUrl)
                 .post(`/collections/${reference.testCollection.collectionId}/reviews`)
@@ -481,312 +881,32 @@ describe('POST - Review', () => {
               expect(res.body).to.have.property('failedValidation')
               expect(res.body).to.have.property('updated')
               expect(res.body).to.have.property('inserted')
-
-              expect(res.body.inserted).to.eql(0)
-              expect(res.body.updated).to.eql(2)
-              expect(res.body.failedValidation).to.eql(0)
-              expect(res.body.validationErrors).to.have.length(0)
-
-              const reviews = await utils.getReviews(reference.testCollection.collectionId)
-              
-              expect(reviews).to.have.lengthOf(2)
-
-              for(let review of reviews){
-                if(review.ruleId == reference.testCollection.ruleId && review.assetId == reference.testAsset.assetId){
-                  expect(review.resultEngine).to.eql(null);
-                  expect(review.status.label).to.eql("saved");
-                  expect(review.status.user.username).to.eql(iteration.name)
-                  expect(review.username).to.eql(iteration.name);
-                  expect(review.result).to.eql(postreview.source.review.result);
-                  expect(review.detail).to.eql(postreview.source.review.detail);
-                
-                }
-                else if (review.ruleId == reference.testCollection.ruleId && review.assetId == 154) {
-                  expect(review.resultEngine).to.eql(null);
-                  expect(review.status.label).to.eql("submitted");
-                  expect(review.status.user.username).to.eql("admin");
-                  expect(review.username).to.eql(iteration.name);
-                  expect(review.result).to.eql(postreview.source.review.result);
-                  expect(review.detail).to.eql(postreview.source.review.detail);
-              }
-              else if (review.ruleId == reference.testCollection.ruleId && review.assetId == 62) {
-                expect(review.resultEngine).to.eql(null);
-                expect(review.status.label).to.eql("saved");
-                expect(review.status.user.username).to.eql(iteration.name);
-                expect(review.username).to.eql(iteration.name);
-                expect(review.result).to.eql(postreview.source.review.result);
-                expect(review.detail).to.eql(postreview.source.review.detail);
-                }
-              }
-            })
-            it(`POST batch review: update - updateFilters- before date`, async () => {
-
-              const postreview = {
-                source: {
-                  review: {
-                    result: 'fail',
-                    detail: 'tesetsetset'
-                  }
-                },
-                assets: {
-                  assetIds: ['62', '42', '154']
-                },
-                rules: {
-                  ruleIds: ['SV-106179r1_rule']
-                },
-                updateFilters: [
-                  {
-                  field: "ts",
-                  condition : "lessThan",
-                  value: "2022-10-26T22:37:46Z"
-                  }
-                ],
-                action: 'update'
-                }
-
-              const res = await chai.request(config.baseUrl)
-                .post(`/collections/${reference.testCollection.collectionId}/reviews`)
-                .set('Authorization', `Bearer ${iteration.token}`)
-                .send(postreview)
-              
-              expect(res).to.have.status(200)
-              expect(res.body).to.be.an('object')
-              expect(res.body).to.have.property('failedValidation')
-              expect(res.body).to.have.property('updated')
-              expect(res.body).to.have.property('inserted')
-
+      
               expect(res.body.inserted).to.eql(0)
               expect(res.body.updated).to.eql(1)
               expect(res.body.failedValidation).to.eql(0)
               expect(res.body.validationErrors).to.have.length(0)
-
+      
               const reviews = await utils.getReviews(reference.testCollection.collectionId)
-              expect(reviews).to.have.lengthOf(2)
-
+              expect(reviews).to.have.lengthOf(1)
+      
               for(let review of reviews){
-              
-                if(review.ruleId == reference.testCollection.ruleId && review.assetId == reference.testAsset.assetId){
-                  expect(review.resultEngine).to.eql(null)
-                  expect(review.status.label).to.eql("saved")
-                  expect(review.status.user.username).to.eql(iteration.name)
-                  expect(review.username).to.eql(iteration.name)
-                  expect(review.result).to.eql(postreview.source.review.result)
-                  expect(review.detail).to.eql(postreview.source.review.detail)
-                
-                }
-                else if (review.ruleId == reference.testCollection.ruleId && review.assetId == 154) {
-                  expect(review.resultEngine).to.eql(null)
-                  expect(review.status.label).to.eql("submitted")
-                  expect(review.status.user.username).to.eql("admin")
-                  expect(review.username).to.eql("admin")
+                expect(review.assetId).to.eql("62")
+                expect(review.ruleId).to.eql(reference.testCollection.ruleId)
+                expect(review.status.label).to.eql("saved")
+                expect(review.status.user.username).to.eql("stigmanadmin")
+                expect(review.username).to.eql(iteration.name)
+                expect(review.result).to.eql("fail")
+                expect(review.detail).to.eql("testPassOnly")
               }
-              else if (review.ruleId == reference.testCollection.ruleId && review.assetId == 62) {
-                expect(review.resultEngine).to.eql(null);
-                expect(review.status.label).to.eql("saved");
-                expect(review.status.user.username).to.eql(iteration.name);
-                expect(review.username).to.eql(iteration.name);
-                expect(review.result).to.eql(postreview.source.review.result);
-                expect(review.detail).to.eql(postreview.source.review.detail);
-                }
-              }
-            })
-            it(`POST batch review: update with updateFilters - detail string "batch"`, async () => {
-
-            const postreview = {
-                source: {
-                  review: {
-                    result: 'fail',
-                    detail: 'tesetsetset'
-                  }
-                },
-                assets: {
-                  assetIds: ['62', '42', '154']
-                },
-                rules: {
-                  ruleIds: ['SV-106179r1_rule']
-                },
-                updateFilters: [
-                  {
-                    field: 'detail',
-                    condition: 'endsWith',
-                    value: 'batch'
-                  }
-                ],
-                action: 'update'
-              }
-
-
-              const res = await chai.request(config.baseUrl)
-                .post(`/collections/${reference.testCollection.collectionId}/reviews`)
-                .set('Authorization', `Bearer ${iteration.token}`)
-                .send(postreview)
-            
-              expect(res).to.have.status(200)
-              expect(res.body).to.be.an('object')
-              expect(res.body).to.have.property('failedValidation')
-              expect(res.body).to.have.property('updated')
-              expect(res.body).to.have.property('inserted')
-
-              expect(res.body.inserted).to.eql(0)
-              expect(res.body.updated).to.eql(1)
-              expect(res.body.failedValidation).to.eql(0)
-              expect(res.body.validationErrors).to.have.length(0)
-
-              const reviews = await utils.getReviews(reference.testCollection.collectionId)
-              expect(reviews).to.have.lengthOf(2)
-
-              for(let review of reviews){
-              
-                if(review.ruleId == reference.testCollection.ruleId && review.assetId == reference.testAsset.assetId){
-                  expect(review.resultEngine).to.eql(null)
-                  expect(review.status.label).to.eql("saved")
-                  expect(review.status.user.username).to.eql(iteration.name)
-                  expect(review.username).to.eql(iteration.name)
-                  expect(review.result).to.eql(postreview.source.review.result)
-                  expect(review.detail).to.eql(postreview.source.review.detail)
-                
-                }
-                else if (review.ruleId == reference.testCollection.ruleId && review.assetId == 154) {
-                  expect(review.resultEngine).to.eql(null)
-                  expect(review.status.label).to.eql("submitted")
-                  expect(review.status.user.username).to.eql("admin")
-                  expect(review.username).to.eql("admin")
-                  expect(review.detail).to.eql("test")
-              }
-              else if (review.ruleId == reference.testCollection.ruleId && review.assetId == 62) {
-                expect(review.resultEngine).to.eql(null);
-                expect(review.status.label).to.eql("saved");
-                expect(review.status.user.username).to.eql(iteration.name);
-                expect(review.username).to.eql(iteration.name);
-                expect(review.result).to.eql(postreview.source.review.result);
-                expect(review.detail).to.eql(postreview.source.review.detail);
-                }
-              }
-            })
-            it(`POST batch review: update - updateFilters- only non-saved status`, async () => {
-
-            const postreview = {
-                source: {
-                  review: {
-                    status: 'saved'
-                  }
-                },
-                assets: {
-                  assetIds: ['62', '42', '154']
-                },
-                rules: {
-                  ruleIds: ['SV-106179r1_rule']
-                },
-                updateFilters: [
-                  {
-                    field: 'statusLabel',
-                    condition: 'notequal',
-                    value: 'saved'
-                  }
-                ],
-                action: 'update'
-              }
-
-              const res = await chai.request(config.baseUrl)
-                .post(`/collections/${reference.testCollection.collectionId}/reviews`)
-                .set('Authorization', `Bearer ${iteration.token}`)
-                .send(postreview)
-            
-              expect(res).to.have.status(200)
-              expect(res.body).to.be.an('object')
-              expect(res.body).to.have.property('failedValidation')
-              expect(res.body).to.have.property('updated')
-              expect(res.body).to.have.property('inserted')
-
-              expect(res.body.inserted).to.eql(0)
-              expect(res.body.updated).to.eql(2)
-              expect(res.body.failedValidation).to.eql(0)
-              expect(res.body.validationErrors).to.have.length(0)
-
-              const reviews = await utils.getReviews(reference.testCollection.collectionId)
-              expect(reviews).to.have.lengthOf(2)
-
-              for(let review of reviews){
-                  expect(review.status.label).to.eql("saved")
-                  expect(review.status.user.username).to.eql(iteration.name)
-              }
-            })
-            it(`POST batch review: update with updateFilters - pass only`, async () => {
-                const postreview = {
-                  source: {
-                    review: {
-                      result: 'fail',
-                      detail: 'tesetsetset'
-                    }
-                  },
-                  assets: {
-                    assetIds: ['62', '42', '154']
-                  },
-                  rules: {
-                    ruleIds: ['SV-106179r1_rule']
-                  },
-                  updateFilters: [
-                    {
-                      field: 'result',
-                      value: 'pass'
-                    }
-                  ],
-                  action: 'update'
-                }
-
-                const res = await chai.request(config.baseUrl)
-                  .post(`/collections/${reference.testCollection.collectionId}/reviews`)
-                  .set('Authorization', `Bearer ${iteration.token}`)
-                  .send(postreview)
-              
-                expect(res).to.have.status(200)
-                expect(res.body).to.be.an('object')
-                expect(res.body).to.have.property('failedValidation')
-                expect(res.body).to.have.property('updated')
-                expect(res.body).to.have.property('inserted')
-        
-                expect(res.body.inserted).to.eql(0)
-                expect(res.body.updated).to.eql(1)
-                expect(res.body.failedValidation).to.eql(0)
-                expect(res.body.validationErrors).to.have.length(0)
-        
-                const reviews = await utils.getReviews(reference.testCollection.collectionId)
-                expect(reviews).to.have.lengthOf(2)
-        
-                for(let review of reviews){
-              
-                  if(review.ruleId == reference.testCollection.ruleId && review.assetId == reference.testAsset.assetId){
-                    expect(review.resultEngine).to.eql(null)
-                    expect(review.status.label).to.eql("saved")
-                    expect(review.status.user.username).to.eql(iteration.name)
-                    expect(review.username).to.eql(iteration.name)
-                    expect(review.result).to.eql(postreview.source.review.result)
-                    expect(review.detail).to.eql(postreview.source.review.detail)
-                  
-                  }
-                  else if (review.ruleId == reference.testCollection.ruleId && review.assetId == 154) {
-                    expect(review.resultEngine).to.eql(null)
-                    expect(review.status.label).to.eql("submitted")
-                    expect(review.status.user.username).to.eql("admin")
-                    expect(review.username).to.eql("admin")
-                    expect(review.detail).to.eql("test")
-                }
-                else if (review.ruleId == reference.testCollection.ruleId && review.assetId == 62) {
-                  expect(review.resultEngine).to.eql(null);
-                  expect(review.status.label).to.eql("saved");
-                  expect(review.status.user.username).to.eql(iteration.name);
-                  expect(review.username).to.eql(iteration.name);
-                  expect(review.result).to.eql(postreview.source.review.result);
-                  expect(review.detail).to.eql(postreview.source.review.detail);
-                  }
-                }
-            })
+          })
         })
         describe(`Batch Review Editing - Validation Errors, expect failure. `, () => {
               
-          beforeEach(async function () {
+          before(async function () {
             await utils.loadAppData("batch-test-data.jsonl")
           })
+
           it(`POST batch Review: target by assets, and one rule, expect validation failure - invalid result for status`, async () => {
               const postreview = {
                 source: {
@@ -797,7 +917,7 @@ describe('POST - Review', () => {
                   }
                 },
                 assets: {
-                  assetIds: ['62', '42', '154']
+                  assetIds: ['62', '29']
                 },
                 rules: { ruleIds: ['SV-106179r1_rule'] }
               }
@@ -811,13 +931,13 @@ describe('POST - Review', () => {
 
             expect(res.body.inserted).to.eql(0)
             expect(res.body.updated).to.eql(0)
-            expect(res.body.failedValidation).to.eql(3)
-            expect(res.body.validationErrors).to.have.length(3)
+            expect(res.body.failedValidation).to.eql(2)
+            expect(res.body.validationErrors).to.have.length(2)
                   
             if (iteration.name == "lvl1"){
               for (review of res.body.validationErrors){
                   expect(review.error).to.be.oneOf(["status is not allowed for the result","no grant for this asset/ruleId"])
-                  if (review.assetId == 62) {
+                  if (review.assetId == 29) {
                       expect(review.error).to.eql("no grant for this asset/ruleId")                
                   }
               }
@@ -840,51 +960,25 @@ describe('POST - Review', () => {
                 }
               },
               assets: {
-                benchmarkIds: ['VPN_SRG_TEST']
+                benchmarkIds: ['VPN_SRG_TEST_Batch']
               },
               rules: { ruleIds: ['SV-106179r1_rule'] }
             }
 
-          const res = await chai.request(config.baseUrl)
-            .post(`/collections/${reference.testCollection.collectionId}/reviews`)
-            .set('Authorization', `Bearer ${iteration.token}`)
-            .send(postreview)
-      
-          expect(res).to.have.status(200)
-          const reviews = await utils.getReviews(reference.testCollection.collectionId)
-
-          expect(res.body.inserted).to.eql(distinct.postReviews.targetByStigOneRuleValidationFailure.inserted)
-          expect(res.body.updated).to.eql(distinct.postReviews.targetByStigOneRuleValidationFailure.updated)
-          expect(res.body.failedValidation).to.eql(distinct.postReviews.targetByStigOneRuleValidationFailure.failedValidation)
-          expect(res.body.validationErrors).to.have.length(distinct.postReviews.targetByStigOneRuleValidationFailure.validationErrors)
-          expect(reviews).to.have.lengthOf(distinct.postReviews.targetByStigOneRuleValidationFailure.reviewsLength)
+            const res = await chai.request(config.baseUrl)
+              .post(`/collections/${reference.testCollection.collectionId}/reviews`)
+              .set('Authorization', `Bearer ${iteration.token}`)
+              .send(postreview)
         
-          for (let review of reviews){
-            if (review.ruleId == reference.testCollection.ruleId && review.assetId == reference.testAsset.assetId){ 
-              // CASE: Existing review, test reset of resultengine and status - all users can update
-                expect(review.status.label).to.eql("submitted");
-                expect(review.status.user.username).to.eql("admin");
-                expect(review.username).to.eql("admin");
-                expect(review.result).to.eql("pass");
-            }
-            // CASE: Existing review, test reset of resultengine and status - all users can update
-            else if (review.ruleId == reference.testCollection.ruleId && review.assetId == 154) {
-                expect(review.resultEngine).to.eql(null);
-                expect(review.status.label).to.eql("submitted");
-                expect(review.status.user.username).to.eql("admin");
-                expect(review.username).to.eql("admin");
-                expect(review.result).to.eql("fail");
-            }
-          // CASE: new  review, test reset of resultengine and status - non-lvl1-can update
-          else if (review.ruleId == reference.testCollection.ruleId && review.assetId == 62) {
-              expect(review.resultEngine).to.eql(null);
-              expect(review.status.label).to.eql("saved");
-              expect(review.status.user.username).to.eql(iteration.name);
-              expect(review.username).to.eql(iteration.name);
-              expect(review.result).to.eql(postreview.source.review.result);
-              expect(review.detail).to.eql(postreview.source.review.detail);
-            }
-          }
+            expect(res).to.have.status(200)
+            const reviews = await utils.getReviews(reference.testCollection.collectionId)
+
+            expect(res.body.inserted).to.eql(distinct.postReviews.targetByStigOneRuleValidationFailure.inserted)
+            expect(res.body.updated).to.eql(distinct.postReviews.targetByStigOneRuleValidationFailure.updated)
+            expect(res.body.failedValidation).to.eql(distinct.postReviews.targetByStigOneRuleValidationFailure.failedValidation)
+            expect(res.body.validationErrors).to.have.length(distinct.postReviews.targetByStigOneRuleValidationFailure.validationErrors)
+            expect(reviews).to.have.lengthOf(distinct.postReviews.targetByStigOneRuleValidationFailure.reviewsLength)
+      
           })
           it(`POST batch Review: target by stig, and one rule, expect validation failure - invalid result for status`, async () => {
               const postreview = {
@@ -896,7 +990,7 @@ describe('POST - Review', () => {
                   }
                 },
                 assets: {
-                  benchmarkIds: ['VPN_SRG_TEST']
+                  benchmarkIds: ['VPN_SRG_TEST_Batch']
                 },
                 rules: { ruleIds: ['SV-106179r1_rule'] }
               }
@@ -916,32 +1010,6 @@ describe('POST - Review', () => {
           expect(res.body.validationErrors).to.have.length(distinct.postReviews.targetByStigOneRuleValidationFailure.validationErrors)
           expect(reviews).to.have.lengthOf(distinct.postReviews.targetByStigOneRuleValidationFailure.reviewsLength)
 
-          for (let review of reviews){
-            if (review.ruleId == reference.testCollection.ruleId && review.assetId == reference.testAsset.assetId){ 
-              // CASE: Existing review, test reset of resultengine and status - all iterations can update
-                expect(review.status.label).to.eql("submitted");
-                expect(review.status.user.username).to.eql("admin");
-                expect(review.username).to.eql("admin");
-                expect(review.result).to.eql("pass");
-            }
-            // CASE: Existing review, test reset of resultengine and status - all iterations can update
-            else if (review.ruleId == reference.testCollection.ruleId && review.assetId == 154) {
-                expect(review.resultEngine).to.eql(null);
-                expect(review.status.label).to.eql("submitted");
-                expect(review.status.user.username).to.eql("admin");
-                expect(review.username).to.eql("admin");
-                expect(review.result).to.eql("fail");
-            }
-          // CASE: new  review, test reset of resultengine and status - non-lvl1-can update
-          else if (review.ruleId == reference.testCollection.ruleId && review.assetId == 62) {
-              expect(review.resultEngine).to.eql(null);
-              expect(review.status.label).to.eql("saved");
-              expect(review.status.user.username).to.eql(iteration.name);
-              expect(review.username).to.eql(iteration.name);
-              expect(review.result).to.eql(postreview.source.review.result);
-              expect(review.detail).to.eql(postreview.source.review.detail);
-            }
-          }
           })
           it(`POST batch Review: target by stig, and one rule, expect validation failure - no detail`, async () => {
             const postreview = {
@@ -954,51 +1022,24 @@ describe('POST - Review', () => {
                 }
               },
               assets: {
-                benchmarkIds: ['VPN_SRG_TEST']
+                benchmarkIds: ['VPN_SRG_TEST_Batch']
               },
               rules: { ruleIds: ['SV-106179r1_rule'] }
             }
 
-        const res = await chai.request(config.baseUrl)
-          .post(`/collections/${reference.testCollection.collectionId}/reviews`)
-          .set('Authorization', `Bearer ${iteration.token}`)
-          .send(postreview)
+            const res = await chai.request(config.baseUrl)
+              .post(`/collections/${reference.testCollection.collectionId}/reviews`)
+              .set('Authorization', `Bearer ${iteration.token}`)
+              .send(postreview)
+            
+            expect(res).to.have.status(200)
+            const reviews = await utils.getReviews(reference.testCollection.collectionId)
         
-        expect(res).to.have.status(200)
-        const reviews = await utils.getReviews(reference.testCollection.collectionId)
-    
-        expect(res.body.inserted).to.eql(distinct.postReviews.targetByStigOneRuleValidationFailure.inserted)
-        expect(res.body.updated).to.eql(distinct.postReviews.targetByStigOneRuleValidationFailure.updated)
-        expect(res.body.failedValidation).to.eql(distinct.postReviews.targetByStigOneRuleValidationFailure.failedValidation)
-        expect(res.body.validationErrors).to.have.length(distinct.postReviews.targetByStigOneRuleValidationFailure.validationErrors)
-        expect(reviews).to.have.lengthOf(distinct.postReviews.targetByStigOneRuleValidationFailure.reviewsLength)
-      
-        for (let review of reviews){
-          if (review.ruleId == reference.testCollection.ruleId && review.assetId == reference.testAsset.assetId){ 
-            // CASE: Existing review, test reset of resultengine and status - all iterations can update
-              expect(review.status.label).to.eql("submitted");
-              expect(review.status.user.username).to.eql("admin");
-              expect(review.username).to.eql("admin");
-              expect(review.result).to.eql("pass");
-          }
-          // CASE: Existing review, test reset of resultengine and status - all iterations can update
-          else if (review.ruleId == reference.testCollection.ruleId && review.assetId == 154) {
-              expect(review.resultEngine).to.eql(null);
-              expect(review.status.label).to.eql("submitted");
-              expect(review.status.user.username).to.eql("admin");
-              expect(review.username).to.eql("admin");
-              expect(review.result).to.eql("fail");
-        }
-        // CASE: new  review, test reset of resultengine and status - non-lvl1-can update
-        else if (review.ruleId == reference.testCollection.ruleId && review.assetId == 62) {
-            expect(review.resultEngine).to.eql(null);
-            expect(review.status.label).to.eql("saved");
-            expect(review.status.user.username).to.eql(iteration.name);
-            expect(review.username).to.eql(iteration.name);
-            expect(review.result).to.eql(postreview.source.review.result);
-            expect(review.detail).to.eql(postreview.source.review.detail);
-          }
-        }
+            expect(res.body.inserted).to.eql(distinct.postReviews.targetByStigOneRuleValidationFailure.inserted)
+            expect(res.body.updated).to.eql(distinct.postReviews.targetByStigOneRuleValidationFailure.updated)
+            expect(res.body.failedValidation).to.eql(distinct.postReviews.targetByStigOneRuleValidationFailure.failedValidation)
+            expect(res.body.validationErrors).to.have.length(distinct.postReviews.targetByStigOneRuleValidationFailure.validationErrors)
+            expect(reviews).to.have.lengthOf(distinct.postReviews.targetByStigOneRuleValidationFailure.reviewsLength)
           })
         })
         describe('Batch Review Editing - In code errors', () => {
@@ -1069,7 +1110,7 @@ describe('POST - Review', () => {
                 assetIds: ['62', '42', '154']
               },
               rules: {
-                benchmarkIds: ['VPN_SRG_TEST']
+                benchmarkIds: ['VPN_SRG_TEST_Batch']
               }
             }
             const res = await chai.request(config.baseUrl)
@@ -1091,7 +1132,7 @@ describe('POST - Review', () => {
                 assetIds: ['62', '42', '154']
               },
               rules: {
-                benchmarkIds: ['VPN_SRG_TEST']
+                benchmarkIds: ['VPN_SRG_TEST_Batch']
               }
             }
             const res = await chai.request(config.baseUrl)
@@ -1100,7 +1141,7 @@ describe('POST - Review', () => {
               .send(postreview)
             expect(res).to.have.status(403)
           })
-          it("should throw SmError.PriviledgeError, lvl1 user only has read only. ", async () => {
+          it("should throw SmError.PriviledgeError, lvl1 user no acccess to asset ", async () => {
 
             const res = await chai.request(config.baseUrl)
               .post(`/collections/${reference.testCollection.collectionId}/reviews`)
@@ -1113,7 +1154,7 @@ describe('POST - Review', () => {
                   }
                 },
                 assets: {
-                  assetIds: [reference.testCollection.lvl1ReadOnlyAssetId]
+                  assetIds: ["29"]
                 },
                 rules: {
                   ruleIds: ['SV-106179r1_rule']
@@ -1124,7 +1165,7 @@ describe('POST - Review', () => {
             if(iteration.name === "lvl1"){
               expect(res.body.failedValidation).to.eql(1)
               expect(res.body.validationErrors[0].error).to.eql("no grant for this asset/ruleId")
-              expect(res.body.validationErrors[0].assetId).to.eql(reference.testCollection.lvl1ReadOnlyAssetId)
+              expect(res.body.validationErrors[0].assetId).to.eql("29")
             }
             else 
             {
@@ -1163,7 +1204,8 @@ describe('POST - Review', () => {
         let deletedCollection = reference.deletedCollection.collectionId
         let deletedAsset = reference.deletedAsset.assetId
         before(async function () {
-          await utils.deleteReviewsByAssetRule(reference.testCollection.collectionId, reference.testAsset.assetId, reference.testCollection.ruleId)
+          await utils.loadAppData()
+          await utils.deleteReview(reference.testCollection.collectionId, reference.testAsset.assetId, reference.testCollection.ruleId)
         })
 
         it('Import one or more Reviews from a JSON body new ruleId', async () => {
