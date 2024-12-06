@@ -4,7 +4,7 @@ chai.use(chaiHttp)
 const expect = chai.expect
 const config = require(`../../testConfig.json`)
 const utils = require(`../../utils/testUtils`)
-const xml2js = require(`xml2js`);
+const { XMLParser } = require(`fast-xml-parser`)
 const iterations = require(`../../iterations.js`)
 const expectations = require(`./expectations.js`)
 const reference = require(`../../referenceData.js`)
@@ -518,27 +518,25 @@ describe(`GET - Asset`, function () {
 
           let cklData
 
-          xml2js.parseString(res.body, function (err, result) {
-            cklData = result
-          })
-          let cklHostName = cklData.CHECKLIST.ASSET[0].HOST_NAME[0]
-          let cklIStigs = cklData.CHECKLIST.STIGS[0].iSTIG
+          const parser = new XMLParser()
+          cklData = parser.parse(res.body)
+
+          let cklHostName = cklData.CHECKLIST.ASSET.HOST_NAME
+          let cklIStigs = cklData.CHECKLIST.STIGS.iSTIG
       
           const regex = new RegExp(distinct.assetMatchString)
           expect(cklHostName).to.match(regex)
 
-          for (let stig of cklIStigs){
-            for(let stigData of stig.STIG_INFO[0].SI_DATA){
-              if (stigData.SID_NAME[0] == `stigid`){
-                currentStigId = stigData.SID_DATA[0]
-                expect(currentStigId).to.be.eql(reference.benchmark)
-            }
-            }
-            let cklVulns = stig.VULN;
-            expect(cklVulns).to.be.an(`array`);
-            if (currentStigId == reference.benchmark) {
-                expect(cklVulns).to.be.an(`array`).of.length(reference.checklistLength);
-            }
+          for(let stigData of cklIStigs.STIG_INFO.SI_DATA){
+            if (stigData.SID_NAME == `stigid`){
+              currentStigId = stigData.SID_DATA
+              expect(currentStigId).to.be.eql(reference.benchmark)
+          }
+          }
+          let cklVulns = cklIStigs.VULN;
+          expect(cklVulns).to.be.an(`array`);
+          if (currentStigId == reference.benchmark) {
+              expect(cklVulns).to.be.an(`array`).of.length(reference.checklistLength);
           }
         })
 
@@ -624,27 +622,34 @@ describe(`GET - Asset`, function () {
 
           let cklData
 
-          xml2js.parseString(res.body, function (err, result) {
-            cklData = result
-          })
+          const parser = new XMLParser()
+          cklData = parser.parse(res.body)
 
-          let cklHostName = cklData.CHECKLIST.ASSET[0].HOST_NAME[0]
-          let cklIStigs = cklData.CHECKLIST.STIGS[0].iSTIG
+          let cklHostName = cklData.CHECKLIST.ASSET.HOST_NAME
+          let cklIStigs = [cklData.CHECKLIST.STIGS.iSTIG]
 
           const regex = new RegExp(distinct.assetMatchString)
           expect(cklHostName).to.match(regex)
 
-          for (let stig of cklIStigs){
-            for(let stigData of stig.STIG_INFO[0].SI_DATA){
-              if (stigData.SID_NAME[0] == `stigid`){
-                currentStigId = stigData.SID_DATA[0]
+          if(iteration.name === 'lvl1'){
+            cklIStigs = [cklIStigs]
+          }
+
+          for (let stig of cklIStigs[0]){
+            let currentStigId
+            let referenceStig
+            for(let stigData of stig.STIG_INFO.SI_DATA){
+              if (stigData.SID_NAME == `stigid`){
+                currentStigId = stigData.SID_DATA
                 expect(currentStigId).to.be.oneOf(reference.testCollection.validStigs)
+                if(stigData.SID_DATA == reference.benchmark){
+                  referenceStig = stig
+                }
+              }
             }
-            }
-            let cklVulns = stig.VULN;
-            expect(cklVulns).to.be.an(`array`);
-            if (currentStigId == reference.benchmark) {
-                expect(cklVulns).to.be.an(`array`).of.length(reference.checklistLength);
+            if (referenceStig) {
+              let referenceStigVulns = referenceStig.VULN
+                expect(referenceStigVulns).to.be.an(`array`).of.length(reference.checklistLength)
             }
           }
         })
@@ -669,20 +674,19 @@ describe(`GET - Asset`, function () {
       
             let cklData
       
-            xml2js.parseString(res.body, function (err, result) {
-              cklData = result
-            })
+            const parser = new XMLParser()
+            cklData = parser.parse(res.body)
       
-            let cklHostName = cklData.CHECKLIST.ASSET[0].HOST_NAME[0]
-            let cklIStigs = cklData.CHECKLIST.STIGS[0].iSTIG
+            let cklHostName = cklData.CHECKLIST.ASSET.HOST_NAME
+            let cklIStigs = cklData.CHECKLIST.STIGS.iSTIG
       
             const regex = new RegExp(distinct.assetMatchString)
             expect(cklHostName).to.match(regex)
       
             for (let stig of cklIStigs){
-              for(let stigData of stig.STIG_INFO[0].SI_DATA){
-                if (stigData.SID_NAME[0] == `stigid`){
-                  currentStigId = stigData.SID_DATA[0]
+              for(let stigData of stig.STIG_INFO.SI_DATA){
+                if (stigData.SID_NAME == `stigid`){
+                  currentStigId = stigData.SID_DATA
                   expect(currentStigId).to.be.oneOf(reference.testCollection.validStigs)
               }
               }
@@ -748,27 +752,28 @@ describe(`GET - Asset`, function () {
 
           let cklData
 
-          xml2js.parseString(res.body, function (err, result) {
-            cklData = result
-          })
+          const parser = new XMLParser()
+          cklData = parser.parse(res.body)
 
-          let cklHostName = cklData.CHECKLIST.ASSET[0].HOST_NAME[0]
-          let cklIStigs = cklData.CHECKLIST.STIGS[0].iSTIG
+          let cklHostName = cklData.CHECKLIST.ASSET.HOST_NAME
+          let cklIStigs = cklData.CHECKLIST.STIGS.iSTIG
 
           const regex = new RegExp(distinct.assetMatchString)
           expect(cklHostName).to.match(regex)
 
+          cklIStigs = [cklIStigs]
+
           for (let stig of cklIStigs){
-            for(let stigData of stig.STIG_INFO[0].SI_DATA){
-              if (stigData.SID_NAME[0] == `stigid`){
-                currentStigId = stigData.SID_DATA[0]
+            for(let stigData of stig.STIG_INFO.SI_DATA){
+              if (stigData.SID_NAME == `stigid`){
+                currentStigId = stigData.SID_DATA
                 expect(currentStigId).to.be.eql(reference.benchmark)
             }
             }
-            let cklVulns = stig.VULN;
-            expect(cklVulns).to.be.an(`array`);
+            let cklVulns = stig.VULN
+            expect(cklVulns).to.be.an(`array`)
             if (currentStigId == reference.benchmark) {
-                expect(cklVulns).to.be.an(`array`).of.length(reference.checklistLength);
+                expect(cklVulns).to.be.an(`array`).of.length(reference.checklistLength)
             }
           }
         })

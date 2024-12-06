@@ -4,7 +4,7 @@ chai.use(chaiHttp)
 const expect = chai.expect
 const config = require('../testConfig.json')
 const utils = require('../utils/testUtils')
-const xml2js = require('xml2js')
+const { XMLParser } = require(`fast-xml-parser`)
 const reference = require('../referenceData.js')
 const iterations = require('../iterations.js')
 
@@ -47,18 +47,19 @@ describe('PUT - putReviewByAssetRule - /collections/{collectionId}/reviews/{asse
                 .set('Authorization', `Bearer ${user.token}`)
             expect(res).to.have.status(200)
             let cklData
-
-            xml2js.parseString(res.body, function (err, result) {
-                cklData = result
-            })
-            let cklHostName = cklData.CHECKLIST.ASSET[0].HOST_NAME[0]
-            let cklIStigs = cklData.CHECKLIST.STIGS[0].iSTIG
+         
+            const parser = new XMLParser()
+            cklData = parser.parse(res.body)
+  
+            let cklHostName = cklData.CHECKLIST.ASSET.HOST_NAME
+            let cklIStigs = cklData.CHECKLIST.STIGS.iSTIG
+            cklIStigs = [cklIStigs]
 
             for(const iStig of cklIStigs){
-                for (let cklSiDatum of iStig.STIG_INFO[0].SI_DATA){
-                    if (cklSiDatum.SID_NAME[0] == 'stigid'){
-                        currentStigId = cklSiDatum.SID_DATA[0]
-                        expect(currentStigId).to.be.oneOf(reference.testCollection.validStigs);
+                for (let cklSiDatum of iStig.STIG_INFO.SI_DATA){
+                    if (cklSiDatum.SID_NAME == 'stigid'){
+                        currentStigId = cklSiDatum.SID_DATA
+                        expect(currentStigId).to.be.oneOf(reference.testCollection.validStigs)
                     }
                 }
                 let cklVulns = iStig.VULN;
@@ -66,8 +67,8 @@ describe('PUT - putReviewByAssetRule - /collections/{collectionId}/reviews/{asse
                     expect(cklVulns).to.be.an('array').of.length(reference.checklistLength)
                     for (let thisVuln of cklVulns){
                         for (let stigData of thisVuln.STIG_DATA){
-                            if (stigData.ATTRIBUTE_DATA[0] == 'SV-106179r1_rule'){
-                                expect(thisVuln.STATUS[0]).to.eql("Not_Reviewed")
+                            if (stigData.ATTRIBUTE_DATA == 'SV-106179r1_rule'){
+                                expect(thisVuln.STATUS).to.eql("Not_Reviewed")
                             }
                         }
                     }

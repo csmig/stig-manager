@@ -4,7 +4,7 @@ chai.use(chaiHttp)
 const expect = chai.expect
 const config = require('../../testConfig.json')
 const utils = require('../../utils/testUtils')
-const xml2js = require('xml2js');
+const { XMLParser } = require(`fast-xml-parser`)
 const iterations = require('../../iterations.js')
 const expectations = require('./expectations.js')
 const reference = require('../../referenceData.js')
@@ -138,31 +138,34 @@ describe('PUT - Review', () => {
                     const review = await utils.getChecklist(reference.testAsset.assetId, reference.benchmark, reference.revisionStr)
 
                     let cklData
-                    xml2js.parseString(review, function (err, result) {
-                        cklData = result;
-                    })
-                    let cklIStigs = cklData.CHECKLIST.STIGS[0].iSTIG
+
+                    const parser = new XMLParser()
+                    cklData = parser.parse(review)
+          
+                    let cklIStigs = cklData.CHECKLIST.STIGS.iSTIG
                     let currentStigId
 
+                    cklIStigs = [cklIStigs]
+
                     for(let stig of cklIStigs){
-                        for(let cklData of stig.STIG_INFO[0].SI_DATA){
-                            if (cklData.SID_NAME[0] == 'stigid'){
-                                currentStigId = cklData.SID_DATA[0]
-                                expect(currentStigId).to.be.oneOf(reference.testCollection.validStigs);
+                        for(let cklData of stig.STIG_INFO.SI_DATA){
+                            if (cklData.SID_NAME == 'stigid'){
+                                currentStigId = cklData.SID_DATA
+                                expect(currentStigId).to.be.oneOf(reference.testCollection.validStigs)
                             }
                         }
                         let cklVulns = stig.VULN;
                         expect(cklVulns).to.be.an('array')
 
                         if (currentStigId == 'VPN_SRG_TEST') {
-                            expect(cklVulns).to.be.an('array').of.length(reference.checklistLength);
+                            expect(cklVulns).to.be.an('array').of.length(reference.checklistLength)
                             for (let thisVuln of cklVulns){
                                 for (let stigData of thisVuln.STIG_DATA){
-                                    if (stigData.ATTRIBUTE_DATA[0] == 'SV-106179r1_rule'){
-                                        var commentRegex = new RegExp("INFORMATIONAL");
-                                        var statusRegex = new RegExp("Not_Reviewed");
-                                        expect(thisVuln.FINDING_DETAILS[0]).to.match(commentRegex);
-                                        expect(thisVuln.STATUS[0]).to.match(statusRegex);
+                                    if (stigData.ATTRIBUTE_DATA == 'SV-106179r1_rule'){
+                                        var commentRegex = new RegExp("INFORMATIONAL")
+                                        var statusRegex = new RegExp("Not_Reviewed")
+                                        expect(thisVuln.FINDING_DETAILS).to.match(commentRegex)
+                                        expect(thisVuln.STATUS).to.match(statusRegex)
                                     }
                                 }
                             }
