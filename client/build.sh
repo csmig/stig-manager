@@ -151,7 +151,6 @@ uglifyjs \
 'SM/AppInfo.js' \
 'SM/AppData.js' \
 'library.js' \
-'userAdmin.js' \
 'collectionAdmin.js' \
 'collectionManager.js' \
 'stigAdmin.js' \

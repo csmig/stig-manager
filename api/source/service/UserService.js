@@ -8,120 +8,115 @@ const _this = this
 Generalized queries for users
 **/
 exports.queryUsers = async function (inProjection, inPredicates, elevate, userObject) {
-  let connection
-  try {
-    const ctes = []
-    let needsCollectionGrantees = false
-    const columns = [
-      'CAST(ud.userId as char) as userId',
-      'ud.username',
+  const ctes = []
+  let needsCollectionGrantees = false
+  const columns = [
+    'CAST(ud.userId as char) as userId',
+    'ud.username',
+    'ud.lastAccess',
+    `json_extract(
+      ud.lastClaims, ?
+    ) as email`,
+    `COALESCE(json_unquote(json_extract(
+      ud.lastClaims, ?
+    )), ud.username) as displayName`,
+    `json_object(
+      'create_collection', 'create_collection' member of(JSON_VALUE(ud.lastClaims, ? default '[]' on empty)),
+      'admin', 'admin' member of(JSON_VALUE(ud.lastClaims, ? default '[]' on empty))
+    ) as 'privileges'`
+  ]
+  const joins = new Set([
+    'user_data ud'
+  ])
+  const groupBy = ['ud.userId']
+
+  const orderBy = ['ud.username']
+
+  // PROJECTIONS
+  if (inProjection?.includes('collectionGrants')) {
+    needsCollectionGrantees = true
+    joins.add('left join cteGrantees cgs on ud.userId = cgs.userId')
+    joins.add('left join collection c on cgs.collectionId = c.collectionId')
+    columns.push(`case when count(cgs.collectionId) > 0
+    then 
+      ${dbUtils.jsonArrayAggDistinct(`json_object(
+        'collection', json_object(
+          'collectionId', CAST(cgs.collectionId as char),
+          'name', c.name
+        ),
+        'accessLevel', cgs.accessLevel,
+        'grantees', cgs.grantees
+      )`)}
+    else json_array() 
+    end as collectionGrants`)
+  }
+
+  if (inProjection?.includes('statistics')) {
+    needsCollectionGrantees = true
+    joins.add('left join cteGrantees cgs on ud.userId = cgs.userId')
+    columns.push(`json_object(
+        'created', date_format(ud.created, '%Y-%m-%dT%TZ'),
+        'collectionGrantCount', count(distinct cgs.collectionId),
+        'lastClaims', ud.lastClaims
+      ) as statistics`)
+    groupBy.push(
       'ud.lastAccess',
-      `json_extract(
-        ud.lastClaims, :email
-      ) as email`,
-      `COALESCE(json_unquote(json_extract(
-        ud.lastClaims, :name
-      )), ud.username) as displayName`
+      'ud.lastClaims'
+    )
+  }
+  if (inProjection?.includes('userGroups')) {
+    joins.add('left join user_group_user_map ugu on ud.userId = ugu.userId')
+    joins.add('left join user_group ug on ugu.userGroupId = ug.userGroupId')
+    columns.push(`CASE WHEN COUNT(ugu.userGroupId) > 0
+    THEN cast(concat('[', group_concat( distinct JSON_OBJECT(
+      'userGroupId', cast(ugu.userGroupId as char),
+      'name', ug.name
+    )), ']') as json)
+    ELSE json_array()
+    END as userGroups`)
+  }
+
+  // PREDICATES
+  let predicates = {
+    statements: [],
+    binds: [
+      `$.${config.oauth.claims.email}`,
+      `$.${config.oauth.claims.name}`,
+      `$.${config.oauth.claims.privilegesPath}`,
+      `$.${config.oauth.claims.privilegesPath}`
     ]
-    const joins = new Set([
-      'user_data ud'
-    ])
-    const groupBy = ['ud.userId']
-
-    const orderBy = ['ud.username']
-
-    // PROJECTIONS
-    if (inProjection?.includes('collectionGrants')) {
-      needsCollectionGrantees = true
-      joins.add('left join cteGrantees cgs on ud.userId = cgs.userId')
-      joins.add('left join collection c on cgs.collectionId = c.collectionId')
-      columns.push(`case when count(cgs.collectionId) > 0
-      then 
-        ${dbUtils.jsonArrayAggDistinct(`json_object(
-          'collection', json_object(
-            'collectionId', CAST(cgs.collectionId as char),
-            'name', c.name
-          ),
-          'accessLevel', cgs.accessLevel,
-          'grantees', cgs.grantees
-        )`)}
-      else json_array() 
-      end as collectionGrants`)
-    }
-
-    if (inProjection?.includes('statistics')) {
-      needsCollectionGrantees = true
-      joins.add('left join cteGrantees cgs on ud.userId = cgs.userId')
-      columns.push(`json_object(
-          'created', date_format(ud.created, '%Y-%m-%dT%TZ'),
-          'collectionGrantCount', count(distinct cgs.collectionId),
-          'lastClaims', ud.lastClaims
-        ) as statistics`)
-      groupBy.push(
-        'ud.lastAccess',
-        'ud.lastClaims'
-      )
-    }
-    if (inProjection?.includes('userGroups')) {
-      joins.add('left join user_group_user_map ugu on ud.userId = ugu.userId')
-      joins.add('left join user_group ug on ugu.userGroupId = ug.userGroupId')
-      columns.push(`CASE WHEN COUNT(ugu.userGroupId) > 0
-      THEN cast(concat('[', group_concat( distinct JSON_OBJECT(
-        'userGroupId', cast(ugu.userGroupId as char),
-        'name', ug.name
-      )), ']') as json)
-      ELSE json_array()
-      END as userGroups`)
-    }
-
-    // PREDICATES
-    let predicates = {
-      statements: [],
-      binds: {
-        name: `$.${config.oauth.claims.name}`,
-        email: `$.${config.oauth.claims.email}`
+  }
+  if (inPredicates.userId) {
+    predicates.statements.push('ud.userId = ?')
+    predicates.binds.push(inPredicates.userId)
+  }
+  if ( inPredicates.username ) {
+    let matchStr = '= ?'
+    if ( inPredicates.usernameMatch && inPredicates.usernameMatch !== 'exact') {
+      matchStr = 'LIKE ?'
+      switch (inPredicates.usernameMatch) {
+        case 'startsWith':
+          inPredicates.username = `${inPredicates.username}%`
+          break
+        case 'endsWith':
+          inPredicates.username = `%${inPredicates.username}`
+          break
+        case 'contains':
+          inPredicates.username = `%${inPredicates.username}%`
+          break
       }
     }
-    if (inPredicates.userId) {
-      predicates.statements.push('ud.userId = :userId')
-      predicates.binds.userId = inPredicates.userId
-    }
-    if ( inPredicates.username ) {
-      let matchStr = '= :username'
-      if ( inPredicates.usernameMatch && inPredicates.usernameMatch !== 'exact') {
-        matchStr = 'LIKE :username'
-        switch (inPredicates.usernameMatch) {
-          case 'startsWith':
-            inPredicates.username = `${inPredicates.username}%`
-            break
-          case 'endsWith':
-            inPredicates.username = `%${inPredicates.username}`
-            break
-          case 'contains':
-            inPredicates.username = `%${inPredicates.username}%`
-            break
-        }
-      }
-      predicates.statements.push(`ud.username ${matchStr}`)
-      predicates.binds.username = `${inPredicates.username}`
-    }
-    if (needsCollectionGrantees) {
-      ctes.push(dbUtils.sqlGrantees({userId: inPredicates.userId, username: inPredicates.username, returnCte: true}))
-    }
+    predicates.statements.push(`ud.username ${matchStr}`)
+    predicates.binds.push(inPredicates.username)
+  }
+  if (needsCollectionGrantees) {
+    ctes.push(dbUtils.sqlGrantees({userId: inPredicates.userId, username: inPredicates.username, returnCte: true}))
+  }
 
-    // CONSTRUCT MAIN QUERY
-    const sql = dbUtils.makeQueryString({ctes, columns, joins, predicates, groupBy, orderBy})
-  
-    connection = await dbUtils.pool.getConnection()
-    connection.config.namedPlaceholders = true
-    let [rows] = await connection.query(sql, predicates.binds)
-    return (rows)
-  }
-  finally {
-    if (typeof connection !== 'undefined') {
-      await connection.release()
-    }
-  }
+  // CONSTRUCT MAIN QUERY
+  const sql = dbUtils.makeQueryString({ctes, columns, joins, predicates, groupBy, orderBy, format: true})
+  let [rows] = await dbUtils.pool.query(sql)
+  return (rows)
 }
 
 exports.addOrUpdateUser = async function (writeAction, userId, body, projection, elevate, userObject, svcStatus = {}) {
@@ -176,18 +171,26 @@ exports.addOrUpdateUser = async function (writeAction, userId, body, projection,
       if (collectionGrants) {
         if ( writeAction !== dbUtils.WRITE_ACTION.CREATE ) {
           // DELETE from collection_grant
+          const binds = [userId]
           let sqlDeleteCollGrant = 'DELETE FROM collection_grant where userId = ?'
-          await connection.query(sqlDeleteCollGrant, [userId])
+          if (collectionGrants.length > 0) {
+            const collectionIds = collectionGrants.map(grant => grant.collectionId)
+            sqlDeleteCollGrant += ' and collectionId NOT IN (?)'
+            binds.push(collectionIds)
+          }
+          await connection.query(sqlDeleteCollGrant, binds)
         }
         if (collectionGrants.length > 0) {
           let sqlInsertCollGrant = `
             INSERT INTO 
               collection_grant (userId, collectionId, accessLevel)
             VALUES
-              ?`      
+              ? as new
+            ON DUPLICATE KEY UPDATE
+              accessLevel = new.accessLevel`      
           binds = collectionGrants.map( grant => [userId, grant.collectionId, grant.accessLevel])
           // INSERT into collection_grant
-          await connection.query(sqlInsertCollGrant, [ binds] )
+          await connection.query(sqlInsertCollGrant, [binds] )
         }
       }
       if (userGroups) {
@@ -290,17 +293,6 @@ exports.getUserByUsername = async function(username, projection, elevate, userOb
   }
 }
 
-
-/**
- * Return a list of Users accessible to the requester
- *
- * projection List Additional properties to include in the response.  (optional)
- * elevate Boolean Elevate the user context for this request if user is permitted (canAdmin) (optional)
- * role UserRole  (optional)
- * dept String Selects Users exactly matching a department string (optional)
- * canAdmin Boolean Selects Users matching the condition (optional)
- * returns List of UserProjected
- **/
 exports.getUsers = async function(username, usernameMatch, projection, elevate, userObject) {
   try {
     let rows = await _this.queryUsers( projection, {

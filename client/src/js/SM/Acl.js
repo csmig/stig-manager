@@ -377,9 +377,6 @@ SM.Acl.AssignedRulesGrid = Ext.extend(Ext.grid.EditorGridPanel, {
           if (combo.startValue !== combo.value ) {
             combo.fireEvent("blur");
           } 
-          else {
-            console.log('No Change')
-          }
         }
       },
       triggerAction: 'all'

@@ -8344,7 +8344,6 @@ components:
       additionalProperties: false
       required:
         - name
-        - description
       properties:
         name:
           $ref: '#/components/schemas/String255'
@@ -8364,9 +8363,9 @@ components:
       type: object
       additionalProperties: false
       properties:
-        canAdmin:
+        admin:
           type: boolean
-        canCreateCollection:
+        create_collection:
           type: boolean
     UserProjected:
       additionalProperties: false

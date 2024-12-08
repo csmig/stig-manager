@@ -226,7 +226,7 @@ ul.x-tab-strip li.x-tab-edge {
 
 .x-form-field-wrap .x-form-trigger {
     border-color: initial;
-    background-color: transparent
+    background-color: #1a1d1e;
 }
 
 .x-form-grow-sizer p {
@@ -2292,11 +2292,11 @@ a.x-menu-item {
     border-color: hsl(202deg 30% 25%)
 }
 
-/* .x-form-search:read-only, .x-form-text:read-only, textarea.x-form-field:read-only {
-    border: none;
-    background-color: transparent;
-} */
-
+.x-form-search:read-only, .x-form-text:read-only, textarea.x-form-field:read-only {
+    /* background-color: transparent; */
+    border-color: hsl(202 0% 25% / 1);
+    color: gray;
+}
 
 .sm-home-title {
     background-image: url("../img/shield-green-check.svg");

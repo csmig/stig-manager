@@ -390,10 +390,12 @@ SM.NavTree.TreePanel = Ext.extend(Ext.tree.TreePanel, {
         if (!n.leaf) {
           return
         }
+        const treePath = n.getPath()
+
         if (n.attributes.action === 'stig-diff') {
           SM.Library.showDiffPanel({
             multiRevisionStigs: n.attributes.multiRevisionStigs,
-            treePath: n.getPath()
+            treePath
           })
           return
         }
@@ -401,7 +403,7 @@ SM.NavTree.TreePanel = Ext.extend(Ext.tree.TreePanel, {
           SM.CollectionPanel.showCollectionTab({
             collectionId: n.attributes.collectionId,
             collectionName: n.attributes.collectionName,
-            treePath: n.getPath()
+            treePath
           })
           return
         }
@@ -410,7 +412,7 @@ SM.NavTree.TreePanel = Ext.extend(Ext.tree.TreePanel, {
             benchmarkId: n.attributes.benchmarkId,
             revisionStr: n.attributes.lastRevisionStr,
             stigTitle: n.attributes.stigTitle,
-            treePath: n.getPath()
+            treePath
           })
         }
         if (n.attributes.action == 'collection-create') {
@@ -421,31 +423,31 @@ SM.NavTree.TreePanel = Ext.extend(Ext.tree.TreePanel, {
           addCollectionManager({
             collectionId: n.attributes.collectionId,
             collectionName: n.attributes.collectionName,
-            treePath: n.getPath()
+            treePath
           })
         }
 
         switch (n.id) {
           case 'collection-admin':
-            addCollectionAdmin( { treePath: n.getPath() } )
+            addCollectionAdmin({ treePath })
             break
           case 'user-admin':
-            addUserAdmin( { treePath: n.getPath() })
+            SM.User.showUserAdmin({ treePath })
             break
           case 'user-group-admin':
-            SM.UserGroup.addUserGroupAdmin({treePath: n.getPath()})
+            SM.UserGroup.addUserGroupAdmin({ treePath })
             break
           case 'stig-admin':
-            addStigAdmin( { treePath: n.getPath() })
+            addStigAdmin({ treePath })
             break
           case 'appinfo-admin':
-            SM.AppInfo.showAppInfoTab({treePath: n.getPath()})
+            SM.AppInfo.showAppInfoTab({ treePath })
             break
           case 'appdata-admin':
-            SM.AppData.showAppDataTab({treePath: n.getPath()})
+            SM.AppData.showAppDataTab({ treePath })
             break
           case 'whats-new':
-            SM.WhatsNew.addTab( { treePath: n.getPath() })
+            SM.WhatsNew.addTab({ treePath })
             break
         }
 
