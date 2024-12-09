@@ -59,6 +59,11 @@ SM.UserGroup.UserGroupGrid = Ext.extend(Ext.grid.GridPanel, {
       sortInfo: {
         field: 'name',
         direction: 'ASC' // or 'DESC' (case sensitive for local sorting)
+      },
+      listeners: {
+        load: function () {
+          _this.selModel.selectRow(0)
+        }
       }
     })
     const columns = [
@@ -120,60 +125,73 @@ SM.UserGroup.UserGroupGrid = Ext.extend(Ext.grid.GridPanel, {
       },
       deferEmptyText:false
     })
-    const sm = new Ext.grid.RowSelectionModel({ singleSelect: true })
+    const sm = new Ext.grid.RowSelectionModel({ 
+      singleSelect: true,
+      listeners: {
+        selectionchange: function (sm) {
+          const hasSelection = sm.hasSelection()
+          removeBtn.setDisabled(!hasSelection)
+          modifyBtn.setDisabled(!hasSelection)
+        }
+      }
+    })
+
+    const removeBtn = new Ext.Button({
+      iconCls: 'icon-del',
+      disabled: true,
+      text: 'Delete Group',
+      handler: function() {
+        let selRec = _this.getSelectionModel().getSelected()
+        let buttons = {yes: 'Delete', no: 'Cancel'}
+        let confirmStr=`Delete group ${selRec.data.name}?<br><br>This action will delete all Collection Grants for the user group.`;
+        
+        Ext.Msg.show({
+          title: 'Confirm delete action',
+          icon: Ext.Msg.WARNING,
+          msg: confirmStr,
+          buttons: buttons,
+          fn: async function (btn,text) {
+            try {
+              if (btn == 'yes') {
+                const apiUserGroup = await Ext.Ajax.requestPromise({
+                  responseType: 'json',
+                  url: `${STIGMAN.Env.apiBase}/user-groups/${selRec.data.userGroupId}?elevate=${curUser.privileges.canAdmin}`,
+                  method: 'DELETE'
+                })
+                store.remove(selRec)
+                SM.Dispatcher.fireEvent('usergroupdeleted', apiUserGroup)
+              }
+            }
+            catch (e) {
+              SM.Error.handleError(e)
+            }
+          }
+        })
+      }
+    })
+
+    const modifyBtn = new Ext.Button({
+      iconCls: 'icon-edit',
+      disabled: true,
+      text: 'Modify Group',
+      handler: function() {
+        SM.UserGroup.showUserGroupProps(sm.getSelected().get('userGroupId'))
+      }
+    })
     const tbar = [
       {
         iconCls: 'icon-add',
         text: 'Add Group',
-        disabled: !(curUser.privileges.canAdmin),
         handler: function() {
           Ext.getBody().mask('');
           SM.UserGroup.showUserGroupProps(0);            
         }
       },
+      modifyBtn,
       '-',
-      {
-        ref: '../removeBtn',
-        iconCls: 'icon-del',
-        text: 'Delete Group',
-        disabled: !(curUser.privileges.canAdmin),
-        handler: function() {
-          let selRec = _this.getSelectionModel().getSelected()
-          let buttons = {yes: 'Delete', no: 'Cancel'}
-          let confirmStr=`Delete group ${selRec.data.name}?<br><br>This action will delete all Collection Grants for the user group.`;
-          
-          Ext.Msg.show({
-            title: 'Confirm delete action',
-            icon: Ext.Msg.WARNING,
-            msg: confirmStr,
-            buttons: buttons,
-            fn: async function (btn,text) {
-              try {
-                if (btn == 'yes') {
-                  const apiUserGroup = await Ext.Ajax.requestPromise({
-                    responseType: 'json',
-                    url: `${STIGMAN.Env.apiBase}/user-groups/${selRec.data.userGroupId}?elevate=${curUser.privileges.canAdmin}`,
-                    method: 'DELETE'
-                  })
-                  store.remove(selRec)
-                  SM.Dispatcher.fireEvent('usergroupdeleted', apiUserGroup)
-                }
-              }
-              catch (e) {
-                SM.Error.handleError(e)
-              }
-            }
-          })
-        }
-      },
+      removeBtn,
       '-',
-      {
-        iconCls: 'icon-edit',
-        text: 'Modify Group',
-        handler: function() {
-          SM.UserGroup.showUserGroupProps(sm.getSelected().get('userGroupId'))
-        }
-      }
+      
     ]
     const totalTextCmp = new SM.RowCountTextItem({store})
     const bbar = new Ext.Toolbar({
@@ -572,7 +590,7 @@ SM.UserGroup.UserGroupProperties = Ext.extend(Ext.form.FormPanel, {
       {
         xtype: 'textfield',
         fieldLabel: 'Description',
-        allowBlank: false,
+        allowBlank: true,
         anchor: '100%',
         name: 'description'
       }

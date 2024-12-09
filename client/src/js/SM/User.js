@@ -796,6 +796,11 @@ SM.User.UserGrid = Ext.extend(Ext.grid.GridPanel, {
       sortInfo: {
         field: 'username',
         direction: 'ASC' // or 'DESC' (case sensitive for local sorting)
+      },
+      listeners: {
+        load: function () {
+          _this.selModel.selectRow(0)
+        }
       }
     })
     const totalTextCmp = new SM.RowCountTextItem({ store })
@@ -906,7 +911,6 @@ SM.User.UserGrid = Ext.extend(Ext.grid.GridPanel, {
         {
           iconCls: 'icon-add',
           text: 'Pre-register User',
-          disabled: !(curUser.privileges.canAdmin),
           handler: function () {
             Ext.getBody().mask('');
             SM.User.showUserProps(0);
@@ -917,7 +921,6 @@ SM.User.UserGrid = Ext.extend(Ext.grid.GridPanel, {
           ref: '../removeBtn',
           iconCls: 'icon-del',
           text: 'Unregister User',
-          disabled: !(curUser.privileges.canAdmin),
           handler: function () {
             let user = _this.getSelectionModel().getSelected();
             let buttons = { yes: 'Unregister', no: 'Cancel' }
@@ -1406,41 +1409,6 @@ SM.User.showCollectionAcl = async function ({userId, collectionId, defaultAccess
   appwindow.show(Ext.getBody());
 }
 
-SM.User.Panel = Ext.extend(Ext.Panel, {
-  initComponent: function () {
-    const usersGrid = new SM.User.UserGrid({
-      cls: 'sm-round-panel',
-      region: 'center',
-      border: false,
-      margins: { top: SM.Margin.top, right: SM.Margin.adjacent, bottom: SM.Margin.bottom, left: SM.Margin.edge },
-      region: 'center',
-      stripeRows:true,
-      loadMask: {msg: ''}
-    })
-    const propertiesPanel = new Ext.Panel({
-      cls: 'sm-round-panel',
-      border: false,
-      margins: { top: SM.Margin.top, right: SM.Margin.edge, bottom: SM.Margin.bottom, left: SM.Margin.adjacent },
-      region: 'south',
-      split: true,
-      height: 300,
-      title: 'User Properties',
-      html: 'Properties panel'
-    })
-    const config = {
-      layout: 'border',
-      items: [
-        usersGrid,
-        propertiesPanel
-      ],
-      usersGrid,
-      propertiesPanel
-    }
-    Ext.apply(this, Ext.apply(this.initialConfig, config))
-    this.superclass().initComponent.call(this)
-  }
-})
-
 SM.User.showUserAdmin = function (params) {
 	let { treePath } = params
 	const tab = Ext.getCmp('main-tab-panel').getItem('user-admin-tab')
@@ -1457,10 +1425,6 @@ SM.User.showUserAdmin = function (params) {
 		stripeRows:true,
 		loadMask: {msg: ''}
 	})
-
-	// const userPanel = new SM.User.Panel({
-	// 	border: false
-	// })
 
 	const onUserChanged = function (apiUser) {
 		userGrid.store.loadData(apiUser, true)
