@@ -51,6 +51,21 @@ describe('user', () => {
               expect(grant.collection.collectionId).to.be.oneOf(distinct.collectionGrants)
             }
           })
+
+          it("Return the requesters user information verify last access and priviledges data", async () => {
+            const res = await chai
+                .request(config.baseUrl)
+                .get(`/user`)
+                .set('Authorization', 'Bearer ' + iteration.token)
+
+            expect(res).to.have.status(200)
+            expect(res.body.username, "expect username to be current user").to.equal(iteration.name)
+            expect(res.body.lastAccess).to.be.a('number')
+            const lastAccessDate = new Date(res.body.lastAccess * 1000)
+            expect(lastAccessDate).to.be.lessThan(new Date())
+            expect(res.body.privileges).to.eql(distinct.privileges)
+
+          })
         })
         
         describe(`getUsers - /user`, () => {

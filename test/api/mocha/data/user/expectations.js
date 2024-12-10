@@ -8,7 +8,10 @@ const distinct = {
     userId: "87",
     userGroupIds: [],
     collectionGrants: ["21", "83", "1", "84", "85", "92"],
-   
+    privileges: {
+      canAdmin: true,
+      canCreateCollection: true,
+    }
   },
   lvl1: {
     iteration: "lvl1",
@@ -117,6 +120,10 @@ const distinct = {
     accessLevel: 1,
     userGroupIds: ["1"],
     collectionGrants: ["21"],
+    privileges: {
+      canAdmin: false,
+      canCreateCollection: false,
+    }
    
   },
   lvl2: {
@@ -127,7 +134,10 @@ const distinct = {
     accessLevel: 2,
     userGroupIds: [],
     collectionGrants: ["21","1"],
-   
+    privileges: {
+      canAdmin: false,
+      canCreateCollection: false,
+    }
    
   },
   lvl3: {
@@ -138,7 +148,10 @@ const distinct = {
     accessLevel: 3,
     userGroupIds: [],
     collectionGrants: ["21", "1"],
-   
+    privileges: {
+      canAdmin: false,
+      canCreateCollection: false,
+    }
    
   },
   lvl4: {
@@ -149,7 +162,10 @@ const distinct = {
     accessLevel: 4,
     userGroupIds: [],
     collectionGrants: ["21", "1", "85"],
-   
+    privileges: {
+      canAdmin: false,
+      canCreateCollection: false,
+    }
    
   },
   collectioncreator: {
@@ -157,6 +173,10 @@ const distinct = {
     userId: "82",
     userGroupIds: [],
     collectionGrants: [],
+    privileges: {
+      canAdmin: false,
+      canCreateCollection: true,
+    }
   },
 };
 module.exports = distinct;
