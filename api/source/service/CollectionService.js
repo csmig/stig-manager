@@ -2753,9 +2753,9 @@ exports.putGrantById = function ({grantId, grant, isRoleChange = false, svcStatu
   const bindsUpdate = [grant.userId, grant.userGroupId, grant.accessLevel, grantId]
 
   if (isRoleChange) {
-    // do transaction
+    // need a transaction
     async function transactionFn (connection) {  
-      const sqlDelete = `DELETE from collection_grant_acl WHERE grantId = ?`
+      const sqlDelete = `DELETE from collection_grant_acl WHERE grantId = ? and access = 'none'`
       await connection.query(sqlDelete, [grantId])
       await connection.query(sqlUpdate, bindsUpdate)
     }
