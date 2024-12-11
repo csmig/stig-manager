@@ -272,7 +272,7 @@ Additional Suggested Configuration
 Customize Welcome Message and Logo
 -----------------------------------
 
-The Welcome Message and Logo can be customized with environment variables to present additional information or guidance to users upon login. These variables all begin with ``STIGMAN_CLIENT_WELCOME_``. See the :ref:`Environment Variables` reference for more information.
+The Welcome Message and Image can be customized with environment variables to present additional information or guidance to users upon login. These variables all begin with ``STIGMAN_CLIENT_WELCOME_``. See the :ref:`Environment Variables` reference for more information.
 
 .. thumbnail:: /assets/images/welcome-message-customizable-elements.png
   :width: 25%
