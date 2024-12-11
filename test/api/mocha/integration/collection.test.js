@@ -253,52 +253,6 @@ describe('POST - createCollection - /collections', () => {
     })
 
 })
-describe('PUT - setStigAssetsByCollectionUser - /collections/{collectionId}/grants/{userId}/access', () => {
-
-    describe('gh-761 - statusStats (statusStats projection for /assets returns inaccurate rules count when more than one user has the same restricted grant)', () =>{
-
-        before(async function () {
-            await utils.loadAppData()
-        })
-        it('set stig-asset grant to create conditions leading to issue gh-761', async () => {
-
-            const res = await chai.request(config.baseUrl)
-                .put(`/collections/${reference.testCollection.collectionId}/grants/user/${reference.scrapLvl1User.userId}/access`)
-                .set('Authorization', `Bearer ${user.token}`)
-                .send([
-                    {
-                        "benchmarkId": `${reference.testCollection.benchmark}`,
-                        "assetId": `${reference.testAsset.assetId}`,
-                        "access": "rw"
-                    }
-                ])
-            expect(res).to.have.status(200)
-            expect(res.body.acl).to.have.lengthOf(1)
-            for(const item of res.body.acl){
-                expect(item.benchmarkId).to.equal(reference.testCollection.benchmark)
-                expect(item.asset.assetId).to.equal(reference.testAsset.assetId)
-            }
-        })
-        it('Assets accessible to the requester -statusStats', async () => {
-
-            const res = await chai.request(config.baseUrl)
-                .get(`/assets?collectionId=${reference.testCollection.collectionId}&projection=statusStats`)
-                .set('Authorization', `Bearer ${user.token}`)
-               
-            expect(res).to.have.status(200)
-                    
-            const regex = /asset/
-            for (let asset of res.body){
-                expect(asset.name).to.match(regex)
-                expect(asset.statusStats).to.exist
-                if (asset.assetId == reference.testAsset.assetId){ 
-                    expect(asset.statusStats.ruleCount).to.eql(368)
-                    expect(asset.statusStats.stigCount).to.eql(2)
-                }
-            }
-        })
-    })
-})
 describe('POST - cloneCollection - /collections/{collectionId}/clone - test various clone params', () => {    
 
     describe('Collection Cloning', () =>{
@@ -1717,25 +1671,19 @@ describe('PUT - setStigAssetsByCollectionUser - /collections/{collectionId}/gran
         })
         it("should give lvl1 user restricted access to test collection", async () => {
             const res = await chai.request(config.baseUrl)
-                .put(`/collections/${reference.testCollection.collectionId}/grants/user/${reference.lvl1User.userId}`)
+                .post(`/collections/${reference.testCollection.collectionId}/grants`)
                 .set('Authorization', `Bearer ${user.token}`)
-                .send({
-                  "accessLevel": 1
-                })
+                .send([{
+                   userId: reference.lvl1User.userId,
+                   accessLevel: 1
+                }])
             expect(res).to.have.status(201)
-        })
-        it("Remove Base appdata userGroup from test Colleciton", async () => {
-      
-            const res = await chai.request(config.baseUrl)  
-              .delete(`/collections/${reference.testCollection.collectionId}/grants/user-group/${reference.testCollection.testGroup.userGroupId}`)
-              .set('Authorization', `Bearer ${user.token}`)
-      
-            expect(res).to.have.status(200)
+            reference.lvl1User.grantId = res.body[0].grantId
         })
         it('set stig-asset grants for a lvl1 user in test collection, with asset from another collection', async () => {
 
             const res = await chai.request(config.baseUrl)
-                .put(`/collections/${reference.testCollection.collectionId}/grants/user/${reference.lvl1User.userId}/access`)
+                .put(`/collections/${reference.testCollection.collectionId}/grants/${reference.lvl1User.grantId}/acl`)
                 .set('Authorization', `Bearer ${user.token}`)
                 .send([
                     {
@@ -1754,10 +1702,9 @@ describe('PUT - setStigAssetsByCollectionUser - /collections/{collectionId}/gran
         it('Return stig-asset grants for a lvl1 user in this collection. Copy', async () => {
 
             const res = await chai.request(config.baseUrl)
-                .get(`/collections/${83}/grants/user/${reference.lvl1User.userId}/access`)
+                .get(`/collections/${83}/grants/${reference.lvl1User.grantId}/acl`)
                 .set('Authorization', `Bearer ${user.token}`)
-            expect(res).to.have.status(200)
-            expect(res.body.acl).to.be.an('array').of.length(0)
+            expect(res).to.have.status(404)
         })
     })
 })

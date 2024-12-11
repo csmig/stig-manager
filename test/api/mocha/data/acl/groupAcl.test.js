@@ -30,7 +30,7 @@ describe('GET- getEffectiveAclByCollectionUser - /collection/{collectionId}/gran
       
       it(`should set test groups ACL: ${iteration.name}`, async () => {
         const res = await chai.request(config.baseUrl)
-        .put(`/collections/${reference.testCollection.collectionId}/grants/user-group/${reference.testCollection.testGroup.userGroupId}/access`)
+        .put(`/collections/${reference.testCollection.collectionId}/grants/${reference.testCollection.testGroup.grantId}/acl`)
         .set('Authorization', `Bearer ${config.adminToken}`)
         .send(iteration.put)
 
@@ -40,7 +40,7 @@ describe('GET- getEffectiveAclByCollectionUser - /collection/{collectionId}/gran
 
       it("should confirm group acl was set", async () => {
         const res = await chai.request(config.baseUrl)
-          .get(`/collections/${reference.testCollection.collectionId}/grants/user-group/${reference.testCollection.testGroup.userGroupId}/access`)
+          .get(`/collections/${reference.testCollection.collectionId}/grants/${reference.testCollection.testGroup.grantId}/acl`)
           .set('Authorization', `Bearer ${config.adminToken}`)
         expect(res).to.have.status(200)
         expect(res.body.defaultAccess).to.equal("none")
