@@ -103,16 +103,17 @@ Attach STIGs to Assets in your Collection
 
 * The Assets you create and the STIGs you attach to them are presented in the Collection Management tab (In the Asset and STIG panels on the right) as well as the Nav Tree entry for that collection on the left.
 
-Grant Users access to your Collection
+Grant Users Roles in your Collection
 ======================================
 
-#. Grant other Users access to your Collection by clicking the "New Grant" button in the Grants panel toolbar. Grants are composed of a Username and an Access Level.  Use the Row Pulldown to select Users and their Grants. 
+#. Grant other Users access to your Collection by clicking the "New Grant" button in the Grants panel toolbar. Grants are composed of a Grantee and a Role. See the :ref:`Roles and Access<roles-and-access>` section for more information.
+
 
    - When you grant Users access to your Collection, or when you are granted access to another Collection by someone else, that Collection will appear in the Nav Tree on the left upon refresh of the app.
 
-#. In order to be useful, Users with Restricted access to a Collection must be assigned specific STIGs on specific Assets using the "Restricted User access list..." button in the Grants panel toolbar.
+#. By default, Users with a Restricted Role cannot access any Assets in your Collection. Create an Access Control List for these users by clicking on the "target" hover icon in the Grants panel. 
 
-
+   * This will open a popup where you can select specific Assets, STIGs, or Labels that this User can access. Multiple Rules can be created with varying level of Access (Read, Read/Write, or None) to the Assets in the Collection.  Click "Save" when finished.
 
 
 .. thumbnail:: /assets/images/collection-manage-grants.png
@@ -129,23 +130,7 @@ Grant Users access to your Collection
 
 |
 
-You can control what level of access other Users can have to your Collection by assigning them specific Access Levels. 
 
-.. list-table:: The 4 Access Level grants provide differing levels of access to your Collection: 
-   :widths: 20 70
-   :header-rows: 1
-   :class: tight-table
-
-   * - Access Level
-     - Description
-   * - Restricted
-     - Can review specific STIGs on specific Assets only.    
-   * - Full
-     - Can review any Asset/STIG in the Collection.
-   * - Manage
-     - Everything in the "Full" level.  Can Add/Remove Assets, STIGs, and Users. Optionally responsible for "Accepting" and "Rejecting" reviews from evaluators.
-   * - Owner
-     - Everything in the "Manage" level.  Can Delete the Collection.  Responsible for "Accepting" and "Rejecting" reviews from evaluators.
 
 .. thumbnail:: /assets/images/CollectionConfig_Populated.png
       :width: 50% 

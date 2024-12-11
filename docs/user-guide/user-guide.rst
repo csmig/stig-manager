@@ -412,6 +412,7 @@ The table below describes the fields that are included in the exports available 
      - Array of JSON objects containing an entry for each User that set the current Status of a Review in the Collection, and the number of Reviews they have set the Status for.
      - 
      - **X**
+     
 |
 
 _______________________________________
@@ -889,7 +890,7 @@ Allows a Collection Manager or Owner to Manage their Collection.
 From this Workspace, the User can:
 
    * Alter the Name, Description, Settings, and Metadata associated with the Collection
-   * Add/Modify/Remove User Grants in the Collection
+   * Add/Modify/Remove Grants and Access Control Lists for Users and User Groups in the Collection
    * Batch import CKL or XCCDF files to automatically scaffold or add to their Collection
    * Batch export CKL or XCCDF files for external tools such as eMASS
    * Add/Modify/Remove Assets in the Collection 
@@ -981,11 +982,11 @@ Once the clone operation has started, a status bar will appear at the bottom of 
 Grants Tab
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-This Tab displays all the Users who have access to some portion of this Collection.
+This Tab displays all the Users and Groups have been given a Grant to some portion of this Collection.
 
-User Grants can be added or removed using toolbar buttons at the top of this Panel. Double-clicking a Grant will allow you to modify the Grant. When creating or modifying a Grant, typing into the Username field will display a filtered droplist of the available users. 
+User/Group Grants can be added or removed using toolbar buttons at the top of this Panel. When hovering over a Grant, click the "pen" icon to change the User or Role associated with the Grant. Click the "target" icon to change the Access Control List associated with the Grant.  Click the "trash" icon to remove the Grant.
 
-See :term:`User` for more info about these Access Levels.
+See the :ref:`Roles and Access<roles-and-access>` section for more information about Grants, Roles, and Access Control.
 
 .. thumbnail:: /assets/images/collection-manage-grants-user-pulldown.png
       :width: 50% 
@@ -996,7 +997,7 @@ See :term:`User` for more info about these Access Levels.
 
 -------------------------------
 
-When a User with a Restricted Grant is selected, the "User access..." button is enabled. Restricted Users must be given access to specific Asset-STIG pairs. 
+Any Grant can be associated with an Access Control List.  The Access Control List can be used to restrict or expand the User's access to certain Assets, STIGs, or Labels in the Collection.
 
 .. thumbnail:: /assets/images/restricted-access-list.png
       :width: 50% 
@@ -1005,6 +1006,21 @@ When a User with a Restricted Grant is selected, the "User access..." button is 
 
 |
 
+
+.. _users-panel:
+
+Users Tab
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+This tab displays all the Users that have been granted access to this Collection, with either a Direct Grant to the User or via a Grant to a User Group. Hover over a Grant and click the "target" icon to view an expanded list of every Asset and STIG that the User has access to in this Collection. This view is the "effective access" of the User to the Collection that has been calculated based on the User's Role and the Access Control Lists associated with their Grant.
+
+
+.. thumbnail:: /assets/images/restricted-access-list.png
+      :width: 50% 
+      :show_caption: True
+      :title: Users Effective Access
+
+|
 
 Collection Settings Tab
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
