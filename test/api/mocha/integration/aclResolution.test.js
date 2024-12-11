@@ -85,9 +85,9 @@ describe("Multiple Group ACL Collisions", () => {
             userGroupId: userGroup1.userGroupId,
             accessLevel: 1
         }])
-      expect(res).to.have.status(200)
-      expect(res.body.accessLevel).to.equal(1)
-      userGroup1.grantId = res.body.grantId
+      expect(res).to.have.status(201)
+      expect(res.body[0].accessLevel).to.equal(1)
+      userGroup1.grantId = res.body[0].grantId
 
       const res2 = await chai.request(config.baseUrl)
           .post(`/collections/${reference.testCollection.collectionId}/grants`)
@@ -96,9 +96,9 @@ describe("Multiple Group ACL Collisions", () => {
             userGroupId: userGroup2.userGroupId,
               accessLevel: 1
           }])
-      expect(res2).to.have.status(200)
-      expect(res2.body.accessLevel).to.equal(1)
-      userGroup2.grantId = res2.body.grantId
+      expect(res2).to.have.status(201)
+      expect(res2.body[0].accessLevel).to.equal(1)
+      userGroup2.grantId = res2.body[0].grantId
   })
 
   /*

@@ -188,8 +188,8 @@ describe("Test grantee resolution is resolved from assigning a user to a group",
       userGroupId: tempGroup.userGroupId,
       accessLevel: 1
     }])
-    expect(res).to.have.status(200)
-    tempGroup.grantId = res.body.grantId
+    expect(res).to.have.status(201)
+    tempGroup.grantId = res.body[0].grantId
   })
 
   // then get the grant and test grantee = userGroup.
@@ -237,8 +237,8 @@ describe(`Testing grantee resolution between a direct grant and group grant`, ()
               "userId": lvl1.userId,
               "accessLevel": 1
             }])
-        expect(res).to.have.status(200)
-        lvl1DirectGrantId = res.body.grantId
+        expect(res).to.have.status(201)
+        lvl1DirectGrantId = res.body[0].grantId
       })
       // user has direct grant to collection
       it("make sure grantee has a userID property which means it has a direct grant ", async () => {
@@ -288,8 +288,8 @@ describe(`Testing grantee resolution between a direct grant and group grant`, ()
                   "userGroupId": userGroup.userGroupId,
                   accessLevel: 1
               }])
-          expect(res).to.have.status(200)
-          userGroupGrantId = res.body.grantId
+          expect(res).to.have.status(201)
+          userGroupGrantId = res.body[0].grantId
       })
 
       it("should set userGroups ACL in test collection", async () => {
@@ -447,9 +447,9 @@ describe(`Multiple Group Role Collisions`, () => {
           userGroupId: userGroup1.userGroupId,
           accessLevel: 1
       }])
-    expect(res).to.have.status(200)
-    expect(res.body.accessLevel).to.equal(1)
-    userGroup1.grantId = res.body.grantId
+    expect(res).to.have.status(201)
+    expect(res.body[0].accessLevel).to.equal(1)
+    userGroup1.grantId = res.body[0].grantId
 
     const res2 = await chai.request(config.baseUrl)
         .post(`/collections/${reference.testCollection.collectionId}/grants`)
@@ -458,9 +458,9 @@ describe(`Multiple Group Role Collisions`, () => {
           userGroupId: userGroup2.userGroupId,
           accessLevel: 1
         }])
-      expect(res2).to.have.status(200)
-      expect(res2.body.accessLevel).to.equal(1)
-      userGroup2.grantId = res2.body.grantId
+      expect(res2).to.have.status(201)
+      expect(res2.body[0].accessLevel).to.equal(1)
+      userGroup2.grantId = res2.body[0].grantId
   })
 
   it("get lvl1 user check that lvl1 user obtained accessLevel = 1 due to membership in two groups with accessLevel = 1", async () => {
@@ -585,8 +585,8 @@ describe(`Multiple Group Role Collisions`, () => {
             userGroupId: userGroup3.userGroupId,
             accessLevel: 4
         }])
-    expect(res).to.have.status(200)
-    expect(res.body.accessLevel).to.equal(4)
+    expect(res).to.have.status(201)
+    expect(res.body[0].accessLevel).to.equal(4)
   })
 
   it("get users assigned to the test collection and check that lvl1 user obtained accessLevel = 4 due to membership in three groups with two groups being accessLevel = 4", async () => {
@@ -666,8 +666,8 @@ describe("Testing user grant for a user that has a 'grantee' from a userGroup gr
       userGroupId: tempGroupID,
       accessLevel: 1
     }])
-    expect(res).to.have.status(200)
-    tempGroupID.grantId = res.body.grantId
+    expect(res).to.have.status(201)
+    tempGroupID.grantId = res.body[0].grantId
 
   })
 

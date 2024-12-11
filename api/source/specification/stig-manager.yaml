@@ -1240,132 +1240,6 @@ paths:
             - 'stig-manager:collection'      
 
 
-  '/collections/{collectionId}/grants/user/{userId}':
-    parameters:
-      - $ref: '#/components/parameters/CollectionIdPath'
-      - $ref: '#/components/parameters/UserIdPath'
-    get:
-      tags:
-        - Collection
-      summary: Return a User's grant (if any) in the specified Collection.
-      operationId: getGrantByCollectionUser
-      responses:
-        '200':
-          description: UserGrantEffective response
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/UserGrantEffective'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        default:
-          description: unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-      security:
-        - oauth:
-            - 'stig-manager:collection:read'
-    put:
-      tags:
-        - Collection
-      summary: Set a User's direct (non-group) grant.
-      operationId: setGrantByCollectionUser
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/GrantContextUser'        
-      responses:
-        '201':
-          description: UserGrantEffective response
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/UserGrantEffective'
-        '200':
-          description: UserGrantEffective response
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/UserGrantEffective'
-      security:
-        - oauth:
-            - 'stig-manager:collection'
-    delete:
-      tags:
-        - Collection
-      summary: Delete a User's direct (non-group) grant.
-      operationId: deleteGrantByCollectionUser
-      responses:
-        '200':
-          description: UserGrantEffective response
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/UserGrantEffective'
-      security:
-        - oauth:
-            - 'stig-manager:collection'
-    
-  '/collections/{collectionId}/grants/user/{userId}/access':
-    parameters:
-      - $ref: '#/components/parameters/CollectionIdPath'
-      - $ref: '#/components/parameters/UserIdPath'
-    get:
-      tags:
-        - Collection
-      summary: Return a User's assigned access rules for the specified Collection.
-      operationId: getReviewAclByCollectionUser
-      responses:
-        '200':
-          description: Collection AclRuleAssetBasic array response
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/AclForGrant'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        default:
-          description: unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-      security:
-        - oauth:
-            - 'stig-manager:collection:read'
-    put:
-      tags:
-        - Collection
-      summary: Set a User's assigned access rules for the specified Collection.
-      operationId: setReviewAclByCollectionUser
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: array
-              items:
-                $ref: '#/components/schemas/AclRulePut'
-      responses:
-        '200':
-          description: AclRuleAssetBasic array response
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/AclForGrant'
-        default:
-          description: unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-      security:
-        - oauth:
-            - 'stig-manager:collection'
   '/collections/{collectionId}/grants/user/{userId}/access/effective':
     parameters:
       - $ref: '#/components/parameters/CollectionIdPath'
@@ -1395,131 +1269,6 @@ paths:
       security:
         - oauth:
             - 'stig-manager:collection:read'
-  '/collections/{collectionId}/grants/user-group/{userGroupId}':
-    parameters:
-      - $ref: '#/components/parameters/CollectionIdPath'
-      - $ref: '#/components/parameters/UserGroupIdPath'
-    get:
-      tags:
-        - Collection
-      summary: Return a User Group's grant for the specified Collection.
-      operationId: getGrantByCollectionUserGroup
-      responses:
-        '200':
-          description: UserGroupGrant response
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/UserGroupGrant'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        default:
-          description: unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-      security:
-        - oauth:
-            - 'stig-manager:collection:read'
-    put:
-      tags:
-        - Collection
-      summary: Set a User Group's grant to the specified Collection.
-      operationId: setGrantByCollectionUserGroup
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/GrantContextUserGroup'        
-      responses:
-        '200':
-          description: UserGroupGrant response
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/UserGroupGrant'
-        '201':
-          description: UserGroupGrant response
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/UserGroupGrant'
-      security:
-      - oauth:
-          - 'stig-manager:collection'
-    delete:
-      tags:
-        - Collection
-      summary: Delete a UserGroup's grant.
-      operationId: deleteGrantByCollectionUserGroup
-      responses:
-        '200':
-          description: UserGroupGrant response
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/UserGroupGrant'
-      security:
-        - oauth:
-            - 'stig-manager:collection'
-  '/collections/{collectionId}/grants/user-group/{userGroupId}/access':
-    parameters:
-      - $ref: '#/components/parameters/CollectionIdPath'
-      - $ref: '#/components/parameters/UserGroupIdPath'
-    get:
-      tags:
-        - Collection
-      summary: Return a User Group's assigned access rules for the specified Collection.
-      operationId: getReviewAclByCollectionUserGroup
-      responses:
-        '200':
-          description: AclForGrant response
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/AclForGrant'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        default:
-          description: unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-      security:
-        - oauth:
-            - 'stig-manager:collection:read'
-    put:
-      tags:
-        - Collection
-      summary: Set a User Group's assigned access rules for the specified Collection.
-      operationId: setReviewAclByCollectionUserGroup
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: array
-              items:
-                $ref: '#/components/schemas/AclRulePut'
-      responses:
-        '200':
-          description: AclRuleAssetBasic array response
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/AclForGrant'
-        default:
-          description: unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-      security:
-        - oauth:
-            - 'stig-manager:collection'
   '/collections/{collectionId}/reviews':
     get:
       tags:
@@ -9021,7 +8770,13 @@ components:
       description: A path parameter that identifies a User Group
       required: true
       schema:
-        $ref: '#/components/schemas/StringIntId'
+        $ref: '#/components/schemas/UserGroupId'
+    UserGroupIdQuery:
+      name: userGroupId
+      in: query
+      description: A query parameter that identifies a User Group
+      schema:
+        $ref: '#/components/schemas/UserGroupId'
     UserGroupProjectionQuery:
       name: projection
       in: query
@@ -9046,7 +8801,7 @@ components:
     UserIdQuery:
       name: userId
       in: query
-      description: A path parameter that identifies a User
+      description: A query parameter that identifies a User
       schema:
         $ref: '#/components/schemas/UserId'
     UsernameQuery:

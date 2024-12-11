@@ -231,8 +231,8 @@ describe(`Test Restricted user access controls`, () => {
           userId: lvl1.userId,
           accessLevel: 1
         }])
-    expect(res).to.have.status(200)
-    lvl1DirectGrantId = res.body.grantId
+    expect(res).to.have.status(201)
+    lvl1DirectGrantId = res.body[0].grantId
   })
   it("Remove Base appdata userGroups grant from test Colleciton", async () => {
 
@@ -530,9 +530,9 @@ describe("Test restricted user group access controls", ()  => {
       userGroupId: userGroup.userGroupId,
       accessLevel: 1
     }])
-    expect(res).to.have.status(200)
-    expect(res.body.accessLevel).to.equal(1)
-    userGroup.grantId = res.body.grantId
+    expect(res).to.have.status(201)
+    expect(res.body[0].accessLevel).to.equal(1)
+    userGroup.grantId = res.body[0].grantId
   })
   // give it read only to something use lvl1TEstAcl object
   it("should set userGroups ACL in test collection", async () => {
@@ -700,9 +700,9 @@ describe("Test manage user group access control", () => {
       userGroupId: userGroup.userGroupId,
       accessLevel: 3
     }])
-    expect(res).to.have.status(200)
-    expect(res.body.accessLevel).to.equal(3)
-    userGroup.grantId = res.body.grantId
+    expect(res).to.have.status(201)
+    expect(res.body[0].accessLevel).to.equal(3)
+    userGroup.grantId = res.body[0].grantId
   })
   // give it read only to something use lvl1TEstAcl object
   it("should set userGroups ACL in test collection", async () => {

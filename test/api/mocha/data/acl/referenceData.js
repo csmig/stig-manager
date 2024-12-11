@@ -33,6 +33,7 @@ const reference = {
     fullLabelName: "test-label-full",
     testGroup: {
       userGroupId: 1,
+      grantId: 32,
       users: ["lvl1"]
     },
     labels: [

@@ -530,14 +530,14 @@ const resetTestAsset = async () => {
     },
     stigs: ["VPN_SRG_TEST", "Windows_10_STIG_TEST"],
   })
-  const res2 = await setRestrictedUsers("21", "86", [
+  const res2 = await setRestrictedUsers("21", "1", [
     {
       assetId: "42",
       benchmarkId: "Windows_10_STIG_TEST",
       access: "rw"
     },
   ])
-  const res3 = await setGroupAccess("21", "1", 
+  const res3 = await setGroupAccess("21", "32", 
     [
       {
         benchmarkId: 'VPN_SRG_TEST',
@@ -556,9 +556,9 @@ const resetTestAsset = async () => {
     ])
 }
 
-const setGroupAccess = async (collectionId, userGroupId, body) => {
+const setGroupAccess = async (collectionId, grantId, body) => {
 
-  const res = await fetch(`${config.baseUrl}/collections/${collectionId}/grants/user-group/${userGroupId}/access`, {
+  const res = await fetch(`${config.baseUrl}/collections/${collectionId}/grants/${grantId}/acl`, {
     method: 'PUT',
     headers: {
       Authorization: `Bearer ${adminToken}`,
@@ -587,9 +587,9 @@ const resetScrapAsset = async () => {
     })
 }
 
-const setRestrictedUsers = async (collectionId, userId, body) => {
+const setRestrictedUsers = async (collectionId, grantId, body) => {
 
-  const res = await fetch(`${config.baseUrl}/collections/${collectionId}/grants/user/${userId}/access`, {
+  const res = await fetch(`${config.baseUrl}/collections/${collectionId}/grants/${grantId}/acl`, {
     method: 'PUT',
     headers: {
       Authorization: `Bearer ${adminToken}`,

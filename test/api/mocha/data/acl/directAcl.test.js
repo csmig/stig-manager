@@ -29,21 +29,14 @@ describe('GET - Test Effective ACL', () => {
 
     it("should give lvl1 user restricted access to test collection", async () => {
       const res = await chai.request(config.baseUrl)
-          .put(`/collections/${reference.testCollection.collectionId}/grants/user/${user.userId}`)
+          .post(`/collections/${reference.testCollection.collectionId}/grants`)
           .set('Authorization', `Bearer ${config.adminToken}`)
-          .send({
-            "accessLevel": 1
-          })
+          .send([{
+            userId: user.userId,
+            accessLevel: 1
+          }])
+      user.grantId = res.body[0].grantId
       expect(res).to.have.status(201)
-    })
-
-    it("Remove Base appdata userGroup from test Colleciton", async () => {
-
-      const res = await chai.request(config.baseUrl)  
-        .delete(`/collections/${reference.testCollection.collectionId}/grants/user-group/${reference.testCollection.testGroup.userGroupId}`)
-        .set('Authorization', `Bearer ${config.adminToken}`)
-
-      expect(res).to.have.status(200)
     })
 
     for(const iteration of iterations){
@@ -52,7 +45,7 @@ describe('GET - Test Effective ACL', () => {
 
         it(`should set lvl1 users ACL: ${iteration.name}`, async () => {
           const res = await chai.request(config.baseUrl)
-          .put(`/collections/${reference.testCollection.collectionId}/grants/user/${user.userId}/access`)
+          .put(`/collections/${reference.testCollection.collectionId}/grants/${user.grantId}/acl`)
           .set('Authorization', `Bearer ${config.adminToken}`)
           .send(iteration.put)
 
@@ -62,7 +55,7 @@ describe('GET - Test Effective ACL', () => {
 
         it("should confirm users acl was set", async () => {
           const res = await chai.request(config.baseUrl)
-            .get(`/collections/${reference.testCollection.collectionId}/grants/user/${user.userId}/access`)
+            .get(`/collections/${reference.testCollection.collectionId}/grants/${user.grantId}/acl`)
             .set('Authorization', `Bearer ${config.adminToken}`)
           expect(res).to.have.status(200)
           expect(res.body.defaultAccess).to.equal("none")

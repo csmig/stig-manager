@@ -2426,12 +2426,6 @@ exports.exportToCollection = async function ({srcCollectionId, dstCollectionId, 
   }
 }
 
-exports.getGrantByCollectionUser = async function ({collectionId, userId}) {
-  const sqlGrantByCollectionUser = dbUtils.sqlGrantees({collectionId, userId, includeColumnCollectionId: false})
-  const [response] = await dbUtils.pool.query(sqlGrantByCollectionUser, [collectionId, userId, collectionId, userId])
-  return response[0]
-}
-
 exports.setGrantByCollection = async function ({collectionId, userId, userGroupId, accessLevel}) {
 
   const sqlInsertGrant = 
@@ -2441,35 +2435,6 @@ exports.setGrantByCollection = async function ({collectionId, userId, userGroupI
   // resolving if we are inserting a new db record or updating an existing.
   const httpStatus = (response.affectedRows === 1 && response.insertId !== 0) ? 201 : 200
   return httpStatus
-}
-
-exports.deleteGrantByCollectionUser = function ({collectionId, userId}) {
-
-  const deleteGrantByCollectionUser = 
-  `DELETE FROM collection_grant WHERE collectionId = ? AND userId = ?`
-  return dbUtils.pool.query(deleteGrantByCollectionUser, [collectionId, userId])
-}
-
-exports.getGrantByCollectionUserGroup = async function ({collectionId, userGroupId}) {
-
-  const getGrantByCollectionUserGroup = 
-  `SELECT 
-      CAST(cg.userGroupId AS CHAR) as userGroupId,
-      cg.accessLevel
-    FROM
-      collection_grant cg
-    WHERE
-    cg.collectionId = ? AND cg.userGroupId = ?`
-
-  const [response] = await dbUtils.pool.query(getGrantByCollectionUserGroup, [collectionId, userGroupId])
-  return response
-}
-
-exports.deleteGrantByCollectionUserGroup = function ({collectionId, userGroupId}) {
-
-  const deleteGrantByCollectionUserGroup = 
-  `DELETE FROM collection_grant WHERE collectionId = ? AND userGroupId = ?`
-  return dbUtils.pool.query(deleteGrantByCollectionUserGroup, [collectionId, userGroupId])
 }
 
 exports.getEffectiveAclByCollectionUser = async function ({collectionId, userId}) {
@@ -2598,50 +2563,6 @@ exports.setValidatedAcl = async function({validatedAcl, grantId, attributionUser
   }
 }
 
-exports.setReviewAclByCollectionUserGroup = async function(collectionId, userGroupId, stigAssets, svcStatus = {}) {
-  let connection // available to try, catch, and finally blocks
-  try {
-    connection = await dbUtils.pool.getConnection()
-    connection.config.namedPlaceholders = true
-    async function transaction () {
-      await connection.query('START TRANSACTION');
-      const sqlDelete = `DELETE FROM 
-        user_group_stig_asset_map
-      WHERE
-        userGroupId = ?
-        and saId IN (
-          SELECT saId from stig_asset_map left join asset using (assetId) where asset.collectionId = ?
-        )`
-        await connection.execute(sqlDelete, [userGroupId, collectionId])
-      if (stigAssets.length > 0) {
-        // Get saIds
-        const bindsInsertSaIds = [ userGroupId ]
-        const predicatesInsertSaIds = []
-        for (const stigAsset of stigAssets) {
-          bindsInsertSaIds.push(stigAsset.benchmarkId, stigAsset.assetId)
-          predicatesInsertSaIds.push('(benchmarkId = ? AND assetId = ?)')
-        }
-        let sqlInsertSaIds = `INSERT IGNORE INTO user_group_stig_asset_map (userGroupId, saId) SELECT ?, saId FROM stig_asset_map WHERE `
-        sqlInsertSaIds += predicatesInsertSaIds.join('\nOR\n')
-        await connection.execute(sqlInsertSaIds, bindsInsertSaIds)
-      }
-      await connection.commit()
-    }
-    await dbUtils.retryOnDeadlock(transaction, svcStatus)
-  }
-  catch (err) {
-    if (typeof connection !== 'undefined') {
-      await connection.rollback()
-    }
-    throw (err)
-  }
-  finally {
-    if (typeof connection !== 'undefined') {
-      await connection.release()
-    }
-  }
-}
-
 exports._reviewAclValidate = async function ({grantId, acl}) {
   const sql = `
   select
@@ -2744,7 +2665,7 @@ exports._getCollectionGrant = async function ({collectionId, grantId, grantIds, 
   }
   const [response] = await dbUtils.pool.query(sql, [collectionId, grantId || grantIds || userId || userGroupId])
   const grants = response.map(row => row.grantJson)
-  return grants.length > 1 ? grants : grants[0]
+  return grants
 }
 
 exports.putGrantById = function ({grantId, grant, isRoleChange = false, svcStatus = {}}) {
