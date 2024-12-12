@@ -1,12 +1,13 @@
-const chai = require("chai")
-const chaiHttp = require("chai-http")
-chai.use(chaiHttp)
-const expect = chai.expect
-const fs = require("fs")
-const path = require("path")
-const config = require("../testConfig.json")
-const utils = require("../utils/testUtils")
-const reference = require("../referenceData")
+// import { use, expect } from "chai"
+// import chaiHttp from "chai-http"
+const { expect } = chai
+//let chai = use(chaiHttp)
+import path from 'path'
+import fs from 'fs'
+import { fileURLToPath } from 'url';
+import {config } from '../testConfig.js'
+import * as utils from '../utils/testUtils.js'
+import reference from '../referenceData.js'
 const user = {
   name: "admin",
   grant: "Owner",
@@ -62,7 +63,7 @@ describe('PATCH - updateCollection - /collections/{collectionId}', () => {
                   ]
               } 
         
-            const res = await chai.request(config.baseUrl)
+            const res = await chai.request.execute(config.baseUrl)
                 .patch(`/collections/${reference.scrapCollection.collectionId}`)
                 .set('Authorization', `Bearer ${user.token}`)
                 .send(patchRequest)
@@ -96,7 +97,7 @@ describe('PATCH - updateCollection - /collections/{collectionId}', () => {
                   ]
               }
         
-            const res = await chai.request(config.baseUrl)
+            const res = await chai.request.execute(config.baseUrl)
                 .patch(`/collections/${reference.scrapCollection.collectionId}`)
                 .set('Authorization', `Bearer ${user.token}`)
                 .send(patchRequest)
@@ -130,7 +131,7 @@ describe('PATCH - updateCollection - /collections/{collectionId}', () => {
                   ]
               }
         
-            const res = await chai.request(config.baseUrl)
+            const res = await chai.request.execute(config.baseUrl)
                 .patch(`/collections/${reference.scrapCollection.collectionId}`)
                 .set('Authorization', `Bearer ${user.token}`)
                 .send(patchRequest)
@@ -183,7 +184,7 @@ describe('PATCH - updateCollection - /collections/{collectionId}', () => {
                   ]
               }
         
-            const res = await chai.request(config.baseUrl)
+            const res = await chai.request.execute(config.baseUrl)
                 .put(`/collections/${reference.scrapCollection.collectionId}?projection=grants&projection=owners`)
                 .set('Authorization', `Bearer ${user.token}`)
                 .send(putRequest)
@@ -226,15 +227,14 @@ describe('POST - createCollection - /collections', () => {
                 ]
             }
             
-            const res = await chai.request(config.baseUrl)
+            const res = await chai.request.execute(config.baseUrl)
                 .post(`/collections`)
                 .set('Authorization', `Bearer ${user.token}`)
                 .send(postRequest)
             expect(res).to.have.status(400)
         })
         it("Missing settings",async function () {
-            const res = await chai
-              .request(config.baseUrl)
+            const res = await chai.request.execute(config.baseUrl)
               .post(`/collections`)
               .set("Authorization", `Bearer ${user.token}`)
               .send({
@@ -262,12 +262,10 @@ describe('POST - cloneCollection - /collections/{collectionId}/clone - test vari
         })
         describe('clone data prep - set cloned collection default rev for test benchmark to non-"latest"', () => {
             it('Import a new STIG - VPN R1V0 copy', async () => {
-                const directoryPath = path.join(__dirname, '../../form-data-files/')
-                const testStigfile = reference.testStigfileNonLatest
-                const filePath = path.join(directoryPath, testStigfile)
-            
-                const res = await chai
-                    .request(config.baseUrl)
+                
+                const testStigfile = "U_VPN_SRG_V1R0_Manual-xccdf.xml"
+                const filePath = path.join(fileURLToPath(import.meta.url), '../../../form-data-files/', testStigfile)
+                const res = await chai.request.execute(config.baseUrl)
                     .post('/stigs?clobber=true&elevate=true')
                     .set('Authorization', `Bearer ${user.token}`)
                     .set('Content-Type', `multipart/form-data`)
@@ -276,7 +274,7 @@ describe('POST - cloneCollection - /collections/{collectionId}/clone - test vari
             })
             it('Set default rev for VPN_TEST_STIG and revision V1R0', async () => {
 
-                const res = await chai.request(config.baseUrl)
+                const res = await chai.request.execute(config.baseUrl)
                     .post(`/collections/${reference.testCollection.collectionId}/stigs/${reference.benchmark}`)
                     .set('Authorization', `Bearer ${user.token}`)
                     .send({
@@ -298,7 +296,7 @@ describe('POST - cloneCollection - /collections/{collectionId}/clone - test vari
         describe('clone param variations', () => {
             it('clone test collection - checking that new colleciton matches source', async () => {
 
-                const res = await chai.request(config.baseUrl)
+                const res = await chai.request.execute(config.baseUrl)
                     .post(`/collections/${reference.testCollection.collectionId}/clone?projection=assets&projection=grants&projection=owners&projection=statistics&projection=stigs&projection=labels`)
                     .set('Authorization', `Bearer ${user.token}`)
                     .send({
@@ -322,13 +320,13 @@ describe('POST - cloneCollection - /collections/{collectionId}/clone - test vari
                             expect(messageObject.collection).to.have.property('grants');
                               // remove grantId from grants response and grantsProjected expected response ( this cannot be tested well q)
                               let grantsProjectedResponse = []
-                              for (grant of messageObject.collection.grants){
+                              for (let grant of messageObject.collection.grants){
                                   let {grantId, ...grantCheckProps} = grant
                                   grantsProjectedResponse.push(grantCheckProps)
                               }
   
                               let expectedGrantsResponse = []
-                              for (grant of reference.testCollection.grantsProjected){
+                              for (let grant of reference.testCollection.grantsProjected){
                                   let {grantId, ...grantCheckProps} = grant
                                   expectedGrantsResponse.push(grantCheckProps)
                               }
@@ -343,7 +341,7 @@ describe('POST - cloneCollection - /collections/{collectionId}/clone - test vari
                             // labels 
                             expect(messageObject.collection).to.have.property('labels');
                             let labelProjectedResponse = []
-                            for (label of messageObject.collection.labels){
+                            for (let label of messageObject.collection.labels){
                                 let {labelId, ...labelCheckProps} = label
                                 labelProjectedResponse.push(labelCheckProps)
                             }
@@ -360,7 +358,7 @@ describe('POST - cloneCollection - /collections/{collectionId}/clone - test vari
 
                             //assets
                             let assetsProjectedResponse = []
-                            for (asset of messageObject.collection.assets){
+                            for (let asset of messageObject.collection.assets){
                                 let {assetId, ...assetCheckProps} = asset
                                 assetsProjectedResponse.push(assetCheckProps)
                             }                    
@@ -377,7 +375,7 @@ describe('POST - cloneCollection - /collections/{collectionId}/clone - test vari
             })
             it('clone test collection - no grants - no grants should be transfered', async () => {
 
-                const res = await chai.request(config.baseUrl)
+                const res = await chai.request.execute(config.baseUrl)
                 .post(`/collections/${reference.testCollection.collectionId}/clone?projection=assets&projection=grants&projection=owners&projection=statistics&projection=stigs&projection=labels`)
                 .set('Authorization', `Bearer ${user.token}`)
                 .send({
@@ -432,7 +430,7 @@ describe('POST - cloneCollection - /collections/{collectionId}/clone - test vari
                             // labels 
                             expect(messageObject.collection).to.have.property('labels');
                             let labelProjectedResponse = []
-                            for (label of messageObject.collection.labels){
+                            for (let label of messageObject.collection.labels){
                                 let {labelId, ...labelCheckProps} = label
                                 labelProjectedResponse.push(labelCheckProps)
                             }
@@ -441,7 +439,7 @@ describe('POST - cloneCollection - /collections/{collectionId}/clone - test vari
                             //owners 
                             expect(messageObject.collection).to.have.property('owners');
                             let ownerProjectedResponse = []
-                            for (owner of messageObject.collection.owners){
+                            for (let owner of messageObject.collection.owners){
                                 let {email, ...ownerCheckProps} = owner
                                 ownerProjectedResponse.push(ownerCheckProps)
                             }
@@ -449,7 +447,7 @@ describe('POST - cloneCollection - /collections/{collectionId}/clone - test vari
 
                             //assets
                             let assetsProjectedResponse = []
-                            for (asset of messageObject.collection.assets){
+                            for (let asset of messageObject.collection.assets){
                                 let {assetId, ...assetCheckProps} = asset
                                 assetsProjectedResponse.push(assetCheckProps)
                             }                    
@@ -465,7 +463,7 @@ describe('POST - cloneCollection - /collections/{collectionId}/clone - test vari
             })
             it('clone test collection - no labels will be transfered', async () => {
 
-                const res = await chai.request(config.baseUrl)
+                const res = await chai.request.execute(config.baseUrl)
                     .post(`/collections/${reference.testCollection.collectionId}/clone?projection=assets&projection=grants&projection=owners&projection=statistics&projection=stigs&projection=labels`)
                     .set('Authorization', `Bearer ${user.token}`)
                     .send({
@@ -493,13 +491,13 @@ describe('POST - cloneCollection - /collections/{collectionId}/clone - test vari
 
                             // remove grantId from grants response and grantsProjected expected response ( this cannot be tested well q)
                             let grantsProjectedResponse = []
-                            for (grant of messageObject.collection.grants){
+                            for (let grant of messageObject.collection.grants){
                                 let {grantId, ...grantCheckProps} = grant
                                 grantsProjectedResponse.push(grantCheckProps)
                             }
 
                             let expectedGrantsResponse = []
-                            for (grant of reference.testCollection.grantsProjected){
+                            for (let grant of reference.testCollection.grantsProjected){
                                 let {grantId, ...grantCheckProps} = grant
                                 expectedGrantsResponse.push(grantCheckProps)
                             }
@@ -531,7 +529,7 @@ describe('POST - cloneCollection - /collections/{collectionId}/clone - test vari
 
                             //assets
                             let assetsProjectedResponse = []
-                            for (asset of messageObject.collection.assets){
+                            for (let asset of messageObject.collection.assets){
                                 let {assetId, ...assetCheckProps} = asset
                                 assetsProjectedResponse.push(assetCheckProps)
                             }        
@@ -547,7 +545,7 @@ describe('POST - cloneCollection - /collections/{collectionId}/clone - test vari
             })
             it('clone test collection - no assets will be transfered', async () => {
 
-                const res = await chai.request(config.baseUrl)
+                const res = await chai.request.execute(config.baseUrl)
                     .post(`/collections/${reference.testCollection.collectionId}/clone?projection=assets&projection=grants&projection=owners&projection=statistics&projection=stigs&projection=labels`)
                     .set('Authorization', `Bearer ${user.token}`)
                     .send({
@@ -591,13 +589,13 @@ describe('POST - cloneCollection - /collections/{collectionId}/clone - test vari
                             expect(messageObject.collection).to.have.property('grants');
                               // remove grantId from grants response and grantsProjected expected response ( this cannot be tested well q)
                               let grantsProjectedResponse = []
-                              for (grant of messageObject.collection.grants){
+                              for (let grant of messageObject.collection.grants){
                                   let {grantId, ...grantCheckProps} = grant
                                   grantsProjectedResponse.push(grantCheckProps)
                               }
   
                               let expectedGrantsResponse = []
-                              for (grant of reference.testCollection.grantsProjected){
+                              for (let grant of reference.testCollection.grantsProjected){
                                   let {grantId, ...grantCheckProps} = grant
                                   expectedGrantsResponse.push(grantCheckProps)
                               }
@@ -612,7 +610,7 @@ describe('POST - cloneCollection - /collections/{collectionId}/clone - test vari
                             // labels 
                             expect(messageObject.collection).to.have.property('labels');
                             let labelProjectedResponse = []
-                            for (label of messageObject.collection.labels){
+                            for (let label of messageObject.collection.labels){
                                 let {labelId, ...labelCheckProps} = label
                                 labelProjectedResponse.push(labelCheckProps)
                             }
@@ -643,7 +641,7 @@ describe('POST - cloneCollection - /collections/{collectionId}/clone - test vari
             })
             it('clone test collection - stigMapping=none - stig mappings not transfered', async () => {
 
-                const res = await chai.request(config.baseUrl)
+                const res = await chai.request.execute(config.baseUrl)
                     .post(`/collections/${reference.testCollection.collectionId}/clone?projection=assets&projection=grants&projection=owners&projection=statistics&projection=stigs&projection=labels`)
                     .set('Authorization', `Bearer ${user.token}`)
                     .send({
@@ -671,13 +669,13 @@ describe('POST - cloneCollection - /collections/{collectionId}/clone - test vari
                             expect(messageObject.collection).to.have.property('grants');
                             // remove grantId from grants response and grantsProjected expected response ( this cannot be tested well q)
                             let grantsProjectedResponse = []
-                            for (grant of messageObject.collection.grants){
+                            for (let grant of messageObject.collection.grants){
                                 let {grantId, ...grantCheckProps} = grant
                                 grantsProjectedResponse.push(grantCheckProps)
                             }
 
                             let expectedGrantsResponse = []
-                            for (grant of reference.testCollection.grantsProjected){
+                            for (let grant of reference.testCollection.grantsProjected){
                                 let {grantId, ...grantCheckProps} = grant
                                 expectedGrantsResponse.push(grantCheckProps)
                             }
@@ -692,7 +690,7 @@ describe('POST - cloneCollection - /collections/{collectionId}/clone - test vari
                             // labels 
                             expect(messageObject.collection).to.have.property('labels');
                             let labelProjectedResponse = []
-                            for (label of messageObject.collection.labels){
+                            for (let label of messageObject.collection.labels){
                                 let {labelId, ...labelCheckProps} = label
                                 labelProjectedResponse.push(labelCheckProps)
                             }
@@ -709,7 +707,7 @@ describe('POST - cloneCollection - /collections/{collectionId}/clone - test vari
 
                             //assets
                             let assetsProjectedResponse = []
-                            for (asset of messageObject.collection.assets){
+                            for (let asset of messageObject.collection.assets){
                                 let {assetId, ...assetCheckProps} = asset
                                 assetsProjectedResponse.push(assetCheckProps)
                             }                    
@@ -725,7 +723,7 @@ describe('POST - cloneCollection - /collections/{collectionId}/clone - test vari
             })
             it('clone test collection - stigMapping=withoutReviews', async () => {
 
-                const res = await chai.request(config.baseUrl)
+                const res = await chai.request.execute(config.baseUrl)
                     .post(`/collections/${reference.testCollection.collectionId}/clone?projection=assets&projection=grants&projection=owners&projection=statistics&projection=stigs&projection=labels`)
                     .set('Authorization', `Bearer ${user.token}`)
                     .send({
@@ -750,13 +748,13 @@ describe('POST - cloneCollection - /collections/{collectionId}/clone - test vari
                             expect(messageObject.collection).to.have.property('grants');
                             // remove grantId from grants response and grantsProjected expected response ( this cannot be tested well q)
                             let grantsProjectedResponse = []
-                            for (grant of messageObject.collection.grants){
+                            for (let grant of messageObject.collection.grants){
                                 let {grantId, ...grantCheckProps} = grant
                                 grantsProjectedResponse.push(grantCheckProps)
                             }
 
                             let expectedGrantsResponse = []
-                            for (grant of reference.testCollection.grantsProjected){
+                            for (let grant of reference.testCollection.grantsProjected){
                                 let {grantId, ...grantCheckProps} = grant
                                 expectedGrantsResponse.push(grantCheckProps)
                             }
@@ -771,7 +769,7 @@ describe('POST - cloneCollection - /collections/{collectionId}/clone - test vari
                             // labels 
                             expect(messageObject.collection).to.have.property('labels');
                             let labelProjectedResponse = []
-                            for (label of messageObject.collection.labels){
+                            for (let label of messageObject.collection.labels){
                                 let {labelId, ...labelCheckProps} = label
                                 labelProjectedResponse.push(labelCheckProps)
                             }
@@ -788,7 +786,7 @@ describe('POST - cloneCollection - /collections/{collectionId}/clone - test vari
 
                             //assets
                             let assetsProjectedResponse = []
-                            for (asset of messageObject.collection.assets){
+                            for (let asset of messageObject.collection.assets){
                                 let {assetId, ...assetCheckProps} = asset
                                 assetsProjectedResponse.push(assetCheckProps)
                             }                    
@@ -804,7 +802,7 @@ describe('POST - cloneCollection - /collections/{collectionId}/clone - test vari
             })
             it('clone test collection - sourceDefaults', async () => {
 
-                const res = await chai.request(config.baseUrl)
+                const res = await chai.request.execute(config.baseUrl)
                     .post(`/collections/${reference.testCollection.collectionId}/clone?projection=assets&projection=grants&projection=owners&projection=statistics&projection=stigs&projection=labels`)
                     .set('Authorization', `Bearer ${user.token}`)
                     .send({
@@ -833,13 +831,13 @@ describe('POST - cloneCollection - /collections/{collectionId}/clone - test vari
                             expect(messageObject.collection).to.have.property('grants');
                             // remove grantId from grants response and grantsProjected expected response ( this cannot be tested well q)
                             let grantsProjectedResponse = []
-                            for (grant of messageObject.collection.grants){
+                            for (let grant of messageObject.collection.grants){
                                 let {grantId, ...grantCheckProps} = grant
                                 grantsProjectedResponse.push(grantCheckProps)
                             }
 
                             let expectedGrantsResponse = []
-                            for (grant of reference.testCollection.grantsProjected){
+                            for (let grant of reference.testCollection.grantsProjected){
                                 let {grantId, ...grantCheckProps} = grant
                                 expectedGrantsResponse.push(grantCheckProps)
                             }
@@ -854,7 +852,7 @@ describe('POST - cloneCollection - /collections/{collectionId}/clone - test vari
                             // labels 
                             expect(messageObject.collection).to.have.property('labels');
                             let labelProjectedResponse = []
-                            for (label of messageObject.collection.labels){
+                            for (let label of messageObject.collection.labels){
                                 let {labelId, ...labelCheckProps} = label
                                 labelProjectedResponse.push(labelCheckProps)
                             }
@@ -871,7 +869,7 @@ describe('POST - cloneCollection - /collections/{collectionId}/clone - test vari
 
                             //assets
                             let assetsProjectedResponse = []
-                            for (asset of messageObject.collection.assets){
+                            for (let asset of messageObject.collection.assets){
                                 let {assetId, ...assetCheckProps} = asset
                                 assetsProjectedResponse.push(assetCheckProps)
                             }                    
@@ -891,7 +889,7 @@ describe('POST - cloneCollection - /collections/{collectionId}/clone - test vari
             let clonedCollectionId = null
 
             it('post collection for later review check', async () => {
-                const res = await chai.request(config.baseUrl)
+                const res = await chai.request.execute(config.baseUrl)
                     .post(`/collections/${reference.testCollection.collectionId}/clone?projection=assets&projection=grants&projection=owners&projection=statistics&projection=stigs&projection=labels`)
                     .set('Authorization', `Bearer ${user.token}`)
                     .send({
@@ -920,7 +918,7 @@ describe('POST - cloneCollection - /collections/{collectionId}/clone - test vari
             })
             it('Check Reviews in cloned collection', async () => {  
 
-                const res = await chai.request(config.baseUrl)
+                const res = await chai.request.execute(config.baseUrl)
                     .get(`/collections/${clonedCollectionId}/reviews`)
                     .set('Authorization', `Bearer ${user.token}`)
                 expect(res).to.have.status(200)
@@ -934,7 +932,7 @@ describe('POST - cloneCollection - /collections/{collectionId}/clone - test vari
         describe('clone param variations - user is either not lvl4 or not collectioncreator', () => {
             it('clone test collection - lvl4 - not collectioncreator', async () => {
 
-                const res = await chai.request(config.baseUrl)
+                const res = await chai.request.execute(config.baseUrl)
                     .post(`/collections/${reference.testCollection.collectionId}/clone?projection=assets&projection=grants&projection=owners&projection=statistics&projection=stigs&projection=labels`)
                     .set('Authorization', `Bearer ${lvl4.token}`)
                     .send({
@@ -952,7 +950,7 @@ describe('POST - cloneCollection - /collections/{collectionId}/clone - test vari
             })
             it('clone test collection - lvl4 - not collectioncreator', async () => {
 
-                const res = await chai.request(config.baseUrl)
+                const res = await chai.request.execute(config.baseUrl)
                     .post(`/collections/${reference.testCollection.collectionId}/clone?projection=assets&projection=grants&projection=owners&projection=statistics&projection=stigs&projection=labels`)
                     .set('Authorization', `Bearer ${collectioncreator.token}`)
                     .send({
@@ -978,10 +976,11 @@ describe('POST - exportToCollection - /collections/{collectionId}/export-to/{dst
         before(async function () {
             await utils.loadAppData()
         })
-        let exportedAsset = null
-        let exportedAssetResults = null
+        let exportedAsset 
+        let exportedAssetResults 
+        let exportedAssetStatuses
         it('Merge provided properties with a Collection Copy', async () => {
-            const res = await chai.request(config.baseUrl)
+            const res = await chai.request.execute(config.baseUrl)
                 .patch(`/collections/${reference.scrapCollection.collectionId}?elevate=true`)
                 .set('Authorization', `Bearer ${user.token}`)
                 .send({
@@ -1038,8 +1037,7 @@ describe('POST - exportToCollection - /collections/{collectionId}/export-to/{dst
         })
         it("export results to another collection - entire asset - create asset in destination", async () => {
 
-            const res = await chai
-            .request(config.baseUrl)
+            const res = await chai.request.execute(config.baseUrl)
             .post(`/collections/${reference.testCollection.collectionId}/export-to/${reference.scrapCollection.collectionId}`)
             .set("Authorization", `Bearer ${user.token}`)
             .send([
@@ -1066,7 +1064,7 @@ describe('POST - exportToCollection - /collections/{collectionId}/export-to/{dst
             }
         })
         it('get asset created via export-to', async () => {
-            const res = await chai.request(config.baseUrl)
+            const res = await chai.request.execute(config.baseUrl)
                 .get(`/assets?collectionId=${reference.scrapCollection.collectionId}&name=Collection_X_lvl1_asset-1`)
                 .set('Authorization', `Bearer ${user.token}`)
             expect(res).to.have.status(200)
@@ -1074,7 +1072,7 @@ describe('POST - exportToCollection - /collections/{collectionId}/export-to/{dst
         })
         it('Return detail metrics - asset agg - with param assetId SOURCE', async () => {
 
-            const res = await chai.request(config.baseUrl)
+            const res = await chai.request.execute(config.baseUrl)
                 .get(`/collections/${reference.testCollection.collectionId}/metrics/detail/asset?assetId=${reference.testAsset.assetId}`)
                 .set('Authorization', `Bearer ${user.token}`)
             expect(res).to.have.status(200)
@@ -1084,7 +1082,7 @@ describe('POST - exportToCollection - /collections/{collectionId}/export-to/{dst
         })
         it('Return detail metrics - asset agg - with param assetId DEST', async () => {
 
-            const res = await chai.request(config.baseUrl)
+            const res = await chai.request.execute(config.baseUrl)
                 .get(`/collections/${reference.scrapCollection.collectionId}/metrics/detail/asset?assetId=${exportedAsset}`)
                 .set('Authorization', `Bearer ${user.token}`)
             expect(res).to.have.status(200)
@@ -1093,7 +1091,7 @@ describe('POST - exportToCollection - /collections/{collectionId}/export-to/{dst
         })
         it('PUT Review: stigs and rule projections Copy', async () => {
 
-            const res = await chai.request(config.baseUrl)
+            const res = await chai.request.execute(config.baseUrl)
                 .put(`/collections/${reference.scrapCollection.collectionId}/reviews/${exportedAsset}/${reference.ruleId}?projection=rule&projection=stigs`)
                 .set('Authorization', `Bearer ${user.token}`)
                 .send({
@@ -1108,8 +1106,7 @@ describe('POST - exportToCollection - /collections/{collectionId}/export-to/{dst
         })
         it("export results to another collection - entire asset - asset exists Copy", async () => {
 
-            const res = await chai
-                .request(config.baseUrl)
+            const res = await chai.request.execute(config.baseUrl)
                 .post(`/collections/${reference.testCollection.collectionId}/export-to/${reference.scrapCollection.collectionId}`)
                 .set("Authorization", `Bearer ${user.token}`)
                 .send([
@@ -1135,7 +1132,7 @@ describe('POST - exportToCollection - /collections/{collectionId}/export-to/{dst
         })
         it('Return detail metrics - asset agg - with param assetId DEST Copy', async () => {
 
-            const res = await chai.request(config.baseUrl)
+            const res = await chai.request.execute(config.baseUrl)
                 .get(`/collections/${reference.scrapCollection.collectionId}/metrics/detail/asset?assetId=${exportedAsset}`)
                 .set('Authorization', `Bearer ${user.token}`)
             expect(res).to.have.status(200)
@@ -1161,7 +1158,7 @@ describe('POST - exportToCollection - /collections/{collectionId}/export-to/{dst
             expect(res.body[0].metrics.statuses, "comparing source asset to exported asset statuses").to.eql(expectedStatuses);
         })
         it('Merge provided properties with a Collection Copy 2', async () => {
-            const res = await chai.request(config.baseUrl)
+            const res = await chai.request.execute(config.baseUrl)
                 .patch(`/collections/${reference.scrapCollection.collectionId}?elevate=true`)
                 .set('Authorization', `Bearer ${user.token}`)
                 .send({
@@ -1218,7 +1215,7 @@ describe('POST - exportToCollection - /collections/{collectionId}/export-to/{dst
         })
         it('PUT Review: stigs and rule projections Copy 2 ', async () => {
 
-            const res = await chai.request(config.baseUrl)
+            const res = await chai.request.execute(config.baseUrl)
                 .put(`/collections/${reference.scrapCollection.collectionId}/reviews/${exportedAsset}/${reference.ruleId}?projection=rule&projection=stigs`)
                 .set('Authorization', `Bearer ${user.token}`)
                 .send({
@@ -1232,8 +1229,7 @@ describe('POST - exportToCollection - /collections/{collectionId}/export-to/{dst
         })
         it("export results to another collection - entire asset - asset exists Copy 2", async () => {
 
-            const res = await chai
-                .request(config.baseUrl)
+            const res = await chai.request.execute(config.baseUrl)
                 .post(`/collections/${reference.testCollection.collectionId}/export-to/${reference.scrapCollection.collectionId}`)
                 .set("Authorization", `Bearer ${user.token}`)
                 .send([
@@ -1259,7 +1255,7 @@ describe('POST - exportToCollection - /collections/{collectionId}/export-to/{dst
         })
         it('Return detail metrics - asset agg - with param assetId DEST Copy 2', async () => {
 
-            const res = await chai.request(config.baseUrl)
+            const res = await chai.request.execute(config.baseUrl)
                 .get(`/collections/${reference.scrapCollection.collectionId}/metrics/detail/asset?assetId=${exportedAsset}`)
                 .set('Authorization', `Bearer ${user.token}`)
             expect(res).to.have.status(200)
@@ -1295,11 +1291,10 @@ describe('POST - postReviewsByAsset - /collections/{collectionId}/reviews/{asset
         })
         it('Import a new STIG - VPN  (as admin) Copy', async () => {
 
-            const directoryPath = path.join(__dirname, '../../form-data-files/')
             const testStigfile = reference.rulesMatchingFingerprints
-            const filePath = path.join(directoryPath, testStigfile)
+            const filePath = path.join(fileURLToPath(import.meta.url), '../../../form-data-files/', reference.testStigfile)
     
-            const res = await chai.request(config.baseUrl)
+            const res = await chai.request.execute(config.baseUrl)
                 .post('/stigs?elevate=true&clobber=true')
                 .set('Authorization', `Bearer ${user.token}`)
                 .set('Content-Type', `multipart/form-data`)
@@ -1308,14 +1303,14 @@ describe('POST - postReviewsByAsset - /collections/{collectionId}/reviews/{asset
         })
         it('PUT a STIG assignment to an Asset Copy 2', async () => {
 
-            const res = await chai.request(config.baseUrl)
+            const res = await chai.request.execute(config.baseUrl)
                 .put(`/assets/${reference.testAsset.assetId}/stigs/VPN_SRG_Rule-fingerprint-match-test`)
                 .set('Authorization', `Bearer ${user.token}`)
             expect(res).to.have.status(200)
         })
         it('Import one or more Reviews with matching Rule Fingerprints - 2 of these rules have matching fingerprints, so only 2 rules are actually inserted and the other is ignored. ', async () => {
 
-            const res = await chai.request(config.baseUrl)
+            const res = await chai.request.execute(config.baseUrl)
                 .post(`/collections/${reference.testCollection.collectionId}/reviews/${reference.testAsset.assetId}`)
                 .set('Authorization', `Bearer ${user.token}`)
                 .send([
@@ -1356,13 +1351,13 @@ describe('POST - postReviewsByAsset - /collections/{collectionId}/reviews/{asset
         })
         it('Return detailed metrics for the specified Collection - with params Copy', async () => {
 
-            const res = await chai.request(config.baseUrl)
+            const res = await chai.request.execute(config.baseUrl)
                 .get(`/collections/${reference.testCollection.collectionId}/metrics/detail?benchmarkId=VPN_SRG_Rule-fingerprint-match-test&assetId=${reference.testAsset.assetId}`)
                 .set('Authorization', `Bearer ${user.token}`)
             expect(res).to.have.status(200)
             let testChecklistLength = 3
             let testBenchmark = "VPN_SRG_Rule-fingerprint-match-test"
-            for(item of res.body){
+            for(let item of res.body){
                 expect(item.benchmarkId).to.eql(testBenchmark)
                 expect(item.assetId).to.eql(reference.testAsset.assetId)
                 let responseLabels = [];
@@ -1383,27 +1378,27 @@ describe('POST - postReviewsByAsset - /collections/{collectionId}/reviews/{asset
         })
         it('Delete a STIG assignment to an Asset Copy', async () => {
                 
-                const res = await chai.request(config.baseUrl)
+                const res = await chai.request.execute(config.baseUrl)
                     .delete(`/assets/${reference.testAsset.assetId}/stigs/VPN_SRG_Rule-fingerprint-match-test`)
                     .set('Authorization', `Bearer ${user.token}`)
                 expect(res).to.have.status(200)
         })
         it('PUT a STIG assignment to an Asset Copy 2', async () => {
 
-            const res = await chai.request(config.baseUrl)
+            const res = await chai.request.execute(config.baseUrl)
                 .put(`/assets/${reference.testAsset.assetId}/stigs/VPN_SRG_Rule-fingerprint-match-test`)
                 .set('Authorization', `Bearer ${user.token}`)
             expect(res).to.have.status(200)
         })
         it('Return detailed metrics for the specified Collection - with params Copy 2', async () => {
 
-            const res = await chai.request(config.baseUrl)
+            const res = await chai.request.execute(config.baseUrl)
                 .get(`/collections/${reference.testCollection.collectionId}/metrics/detail?benchmarkId=VPN_SRG_Rule-fingerprint-match-test&assetId=${reference.testAsset.assetId}`)
                 .set('Authorization', `Bearer ${user.token}`)
             expect(res).to.have.status(200)
             let testChecklistLength = 3
             let testBenchmark = "VPN_SRG_Rule-fingerprint-match-test"
-            for(item of res.body){
+            for(let item of res.body){
                 expect(item.benchmarkId).to.eql(testBenchmark)
                 expect(item.assetId).to.eql(reference.testAsset.assetId)
                 let responseLabels = [];
@@ -1434,14 +1429,14 @@ describe('POST - postReviewsByAsset - /collections/{collectionId}/reviews/{asset
         })
         it('PUT a STIG assignment to an Asset Copy 3', async () => {
 
-            const res = await chai.request(config.baseUrl)
+            const res = await chai.request.execute(config.baseUrl)
                 .put(`/assets/${reference.testAsset.assetId}/stigs/VPN_SRG_Rule-fingerprint-match-test`)
                 .set('Authorization', `Bearer ${user.token}`)
             expect(res).to.have.status(200)
         })
         it('Import one or more Reviews with matching RuleIds - 2 rules match, only one is inserted, 2 total.', async () => {
                 
-                const res = await chai.request(config.baseUrl)
+                const res = await chai.request.execute(config.baseUrl)
                     .post(`/collections/${reference.testCollection.collectionId}/reviews/${reference.testAsset.assetId}`)
                     .set('Authorization', `Bearer ${user.token}`)
                     .send([
@@ -1482,13 +1477,13 @@ describe('POST - postReviewsByAsset - /collections/{collectionId}/reviews/{asset
         })
         it('Return detailed metrics for the specified Collection - with params Copy 2', async () => {
 
-            const res = await chai.request(config.baseUrl)
+            const res = await chai.request.execute(config.baseUrl)
                 .get(`/collections/${reference.testCollection.collectionId}/metrics/detail?benchmarkId=VPN_SRG_Rule-fingerprint-match-test&assetId=${reference.testAsset.assetId}`)
                 .set('Authorization', `Bearer ${user.token}`)
             expect(res).to.have.status(200)
             let testChecklistLength = 3
             let testBenchmark = "VPN_SRG_Rule-fingerprint-match-test"
-            for(item of res.body){
+            for(let item of res.body){
                 expect(item.benchmarkId).to.eql(testBenchmark)
                 expect(item.assetId).to.eql(reference.testAsset.assetId)
                 let responseLabels = [];
@@ -1519,7 +1514,7 @@ describe('GET - putAssetsByCollectionLabelId - /collections/{collectionId}/label
 
         it('Merge provided properties with an Asset Copy', async () => {
 
-            const res = await chai.request(config.baseUrl)
+            const res = await chai.request.execute(config.baseUrl)
                 .patch(`/assets/${reference.scrapAsset.assetId}?projection=statusStats&projection=stigs`)
                 .set('Authorization', `Bearer ${user.token}`)
                 .send({
@@ -1546,7 +1541,7 @@ describe('GET - putAssetsByCollectionLabelId - /collections/{collectionId}/label
         })
         it('Replace an assets label', async () => {
 
-            const res = await chai.request(config.baseUrl)
+            const res = await chai.request.execute(config.baseUrl)
                 .put(`/collections/${reference.testCollection.collectionId}/labels/${reference.scrapCollection.scrapLabel}/assets`)
                 .set('Authorization', `Bearer ${user.token}`)
                 .send([
@@ -1556,7 +1551,7 @@ describe('GET - putAssetsByCollectionLabelId - /collections/{collectionId}/label
         })
         it('Create an Asset Copy', async () => {
 
-            const res = await chai.request(config.baseUrl)
+            const res = await chai.request.execute(config.baseUrl)
                 .post(`/assets?projection=stigs`)
                 .set('Authorization', `Bearer ${user.token}`)
                 .send({
@@ -1588,7 +1583,7 @@ describe('GET - putAssetsByCollectionLabelId - /collections/{collectionId}/label
             expect(assetGetToPost(res.body)).to.eql(request)
         })
         it('Set all properties of an Asset Copy', async () => {
-            const res = await chai.request(config.baseUrl)
+            const res = await chai.request.execute(config.baseUrl)
                 .put(`/assets/${reference.scrapAsset.assetId}`)
                 .set('Authorization', `Bearer ${user.token}`)
                 .send({
@@ -1616,7 +1611,7 @@ describe('GET - putAssetsByCollectionLabelId - /collections/{collectionId}/label
             expect(res).to.have.status(200)
         })
         it('check that request body without collectionId properly sets labels - GH-1293', async () => {
-            const res = await chai.request(config.baseUrl)
+            const res = await chai.request.execute(config.baseUrl)
                 .patch(`/assets/${reference.scrapAsset.assetId}`)
                 .set('Authorization', `Bearer ${user.token}`)
                 .send({
@@ -1635,7 +1630,7 @@ describe('PUT - setStigAssetsByCollectionUser - /collections/{collectionId}/gran
 
         it('Add restricted user to collection Y', async () => {
 
-            const res = await chai.request(config.baseUrl)
+            const res = await chai.request.execute(config.baseUrl)
                 .patch(`/collections/${83}?elevate=true&projection=grants`)
                 .set('Authorization', `Bearer ${user.token}`)
                 .send({
@@ -1670,19 +1665,19 @@ describe('PUT - setStigAssetsByCollectionUser - /collections/{collectionId}/gran
             }
         })
         it("should give lvl1 user restricted access to test collection", async () => {
-            const res = await chai.request(config.baseUrl)
+            const res = await chai.request.execute(config.baseUrl)
                 .post(`/collections/${reference.testCollection.collectionId}/grants`)
                 .set('Authorization', `Bearer ${user.token}`)
                 .send([{
                    userId: reference.lvl1User.userId,
                    accessLevel: 1
                 }])
-            expect(res).to.have.status(201)
-            reference.lvl1User.grantId = res.body[0].grantId
+            expect(res).to.have.status(200)
+            reference.lvl1User.grantId = res.body.grantId
         })
         it('set stig-asset grants for a lvl1 user in test collection, with asset from another collection', async () => {
 
-            const res = await chai.request(config.baseUrl)
+            const res = await chai.request.execute(config.baseUrl)
                 .put(`/collections/${reference.testCollection.collectionId}/grants/${reference.lvl1User.grantId}/acl`)
                 .set('Authorization', `Bearer ${user.token}`)
                 .send([
@@ -1701,7 +1696,7 @@ describe('PUT - setStigAssetsByCollectionUser - /collections/{collectionId}/gran
         })
         it('Return stig-asset grants for a lvl1 user in this collection. Copy', async () => {
 
-            const res = await chai.request(config.baseUrl)
+            const res = await chai.request.execute(config.baseUrl)
                 .get(`/collections/${83}/grants/${reference.lvl1User.grantId}/acl`)
                 .set('Authorization', `Bearer ${user.token}`)
             expect(res).to.have.status(404)

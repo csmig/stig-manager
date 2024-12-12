@@ -1,11 +1,9 @@
-const chai = require("chai")
-const chaiHttp = require("chai-http")
-chai.use(chaiHttp)
-const expect = chai.expect
-const config = require("../testConfig.json")
-const utils = require("../utils/testUtils")
-const reference = require("../referenceData")
-const iterations = require("../iterations")
+
+const { expect } = chai
+import {config } from '../testConfig.js'
+import * as utils from '../utils/testUtils.js'
+import reference from '../referenceData.js'
+import {iterations} from '../iterations.js'
 
 describe('PATCH - patchReviewByAssetRule - /collections/{collectionId}/reviews/{assetId}/{ruleId} - PUT - putReviewByAssetRule - /collections/{collectionId}/reviews/{assetId}/{ruleId}', () => {
     
@@ -16,7 +14,7 @@ describe('PATCH - patchReviewByAssetRule - /collections/{collectionId}/reviews/{
                     await utils.loadAppData()
                 })
                 it('Delete a Review - freshRuleId - review may or may not exist', async () => {
-                    const res = await chai.request(config.baseUrl)
+                    const res = await chai.request.execute(config.baseUrl)
                       .delete(`/collections/${reference.testCollection.collectionId}/reviews/${reference.testAsset.assetId}/${reference.freshRuleId}`)
                       .set('Authorization', `Bearer ${user.token}`)
                     if(user.name === 'collectioncreator') {
@@ -26,7 +24,7 @@ describe('PATCH - patchReviewByAssetRule - /collections/{collectionId}/reviews/{
                     expect(res).to.have.status(204)
                 })
                 it('Return the Review for an Asset and Rule', async () => {
-                    const res = await chai.request(config.baseUrl)
+                    const res = await chai.request.execute(config.baseUrl)
                       .get(`/collections/${reference.testCollection.collectionId}/reviews/${reference.testAsset.assetId}/${reference.ruleId}?projection=rule&projection=stigs&projection=metadata&projection=history`)
                       .set('Authorization', `Bearer ${user.token}`)
 
@@ -48,8 +46,7 @@ describe('PATCH - patchReviewByAssetRule - /collections/{collectionId}/reviews/{
                     } 
                 })
                 it('resultEngine only - expect fail', async () => {
-                    const res = await chai
-                      .request(config.baseUrl)
+                    const res = await chai.request.execute(config.baseUrl)
                       .patch(
                         `/collections/${reference.testCollection.collectionId}/reviews/${reference.testAsset.assetId}/${reference.ruleId}`
                       )
@@ -77,8 +74,7 @@ describe('PATCH - patchReviewByAssetRule - /collections/{collectionId}/reviews/{
                     expect(res).to.have.status(422)
                 })
                 it('resultEngine only - expect success', async () => {
-                  const res = await chai
-                    .request(config.baseUrl)
+                  const res = await chai.request.execute(config.baseUrl)
                     .patch(
                       `/collections/${reference.testCollection.collectionId}/reviews/${reference.testAsset.assetId}/${reference.ruleId}`
                     )
@@ -121,7 +117,7 @@ describe('PATCH - patchReviewByAssetRule - /collections/{collectionId}/reviews/{
                         status: 'saved'
                     }
 
-                    const res = await chai.request(config.baseUrl)
+                    const res = await chai.request.execute(config.baseUrl)
                         .put(`/collections/${reference.testCollection.collectionId}/reviews/${reference.testAsset.assetId}/${reference.freshRuleId}`)
                         .set('Authorization', `Bearer ${user.token}`)
                         .send(putBody)
@@ -166,7 +162,7 @@ describe('PATCH - patchReviewByAssetRule - /collections/{collectionId}/reviews/{
                     expect(res.body).to.eql(expectedResponse)
                 })
                 it('Delete a Review - freshRuleId - review may or may not exist', async () => {
-                    const res = await chai.request(config.baseUrl)
+                    const res = await chai.request.execute(config.baseUrl)
                       .delete(`/collections/${reference.testCollection.collectionId}/reviews/${reference.testAsset.assetId}/${reference.freshRuleId}`)
                       .set('Authorization', `Bearer ${user.token}`)
                     if(user.name === 'collectioncreator') {
@@ -176,7 +172,7 @@ describe('PATCH - patchReviewByAssetRule - /collections/{collectionId}/reviews/{
                     expect(res).to.have.status(200)
                 })
                 it('Import one or more Reviews from a JSON body', async () => {
-                    const res = await chai.request(config.baseUrl)
+                    const res = await chai.request.execute(config.baseUrl)
                       .post(`/collections/${reference.testCollection.collectionId}/reviews/${reference.testAsset.assetId}`)
                       .set('Authorization', `Bearer ${user.token}`)
                       .send([

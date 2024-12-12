@@ -1,12 +1,10 @@
-const chai = require('chai')
-const chaiHttp = require('chai-http')
-chai.use(chaiHttp)
-const expect = chai.expect
-const config = require('../../testConfig.json')
-const utils = require('../../utils/testUtils')
-const iterations = require('../../iterations.js')
-const expectations = require('./expectations.js')
-const reference = require('../../referenceData.js')
+
+const { expect } = chai
+import {config } from '../../testConfig.js'
+import * as utils from '../../utils/testUtils.js'
+import reference from '../../referenceData.js'
+import {iterations} from '../../iterations.js'
+import {expectations} from './expectations.js'
 
 describe('PATCH - Asset', function () {
 
@@ -38,8 +36,7 @@ describe('PATCH - Asset', function () {
       describe(`updateAsset - /assets/{assetId}`, function () {
 
         it('Merge provided properties with an Asset - Change Collection - Fail for all iterations', async function () {
-          const res = await chai
-            .request(config.baseUrl)
+          const res = await chai.request.execute(config.baseUrl)
             .patch(`/assets/${reference.testAsset.assetId}?projection=statusStats&projection=stigs`)
             .set('Authorization', 'Bearer ' + iteration.token)
             .send({ 
@@ -59,8 +56,7 @@ describe('PATCH - Asset', function () {
         })
 
         it('Merge provided properties with an Asset - Change Collection - valid for lvl3 and lvl4 only (IE works for admin for me)', async function () {
-          const res = await chai
-            .request(config.baseUrl)
+          const res = await chai.request.execute(config.baseUrl)
             .patch(`/assets/${reference.testAsset.assetId}?projection=statusStats&projection=stigs`)
             .set('Authorization', 'Bearer ' + iteration.token)
             .send({
@@ -109,8 +105,7 @@ describe('PATCH - Asset', function () {
     
         it('Merge provided properties with an Asset', async function () {
         
-          const res = await chai
-            .request(config.baseUrl)
+          const res = await chai.request.execute(config.baseUrl)
             .patch(`/assets/${reference.scrapAsset.assetId}?projection=statusStats&projection=stigs`)
             .set('Authorization', 'Bearer ' + iteration.token)
             .send({
@@ -174,8 +169,7 @@ describe('PATCH - Asset', function () {
       describe(`patchAssetMetadata - /assets/{assetId}/metadata`, function () {
         
         it('Merge provided properties with an Asset - Change metadata', async function () {
-          const res = await chai
-            .request(config.baseUrl)
+          const res = await chai.request.execute(config.baseUrl)
             .patch(`/assets/${reference.testAsset.assetId}/metadata`)
             .set('Authorization', 'Bearer ' + iteration.token)
             .send({
@@ -195,8 +189,7 @@ describe('PATCH - Asset', function () {
             })
         })
         it('Merge metadata property/value into an Asset', async function () {
-          const res = await chai
-            .request(config.baseUrl)
+          const res = await chai.request.execute(config.baseUrl)
             .patch(`/assets/${reference.scrapAsset.assetId}/metadata`)
             .set('Authorization', 'Bearer ' + iteration.token)
             .send({
@@ -232,8 +225,7 @@ describe('PATCH - Asset', function () {
 
             const assetIds = [asset1.assetId, asset2.assetId]
 
-            const res = await chai
-            .request(config.baseUrl)
+            const res = await chai.request.execute(config.baseUrl)
             .patch(`/assets?collectionId=${reference.testCollection.collectionId}`)
             .set('Authorization', 'Bearer ' + iteration.token)
             .send({
@@ -257,8 +249,7 @@ describe('PATCH - Asset', function () {
             
         })
         it('Delete Assets - assets not in collection', async function () {
-            const res = await chai
-              .request(config.baseUrl)
+            const res = await chai.request.execute(config.baseUrl)
               .patch(`/assets?collectionId=${reference.testCollection.collectionId}`)
               .set('Authorization', 'Bearer ' + iteration.token)
               .send({
@@ -268,8 +259,7 @@ describe('PATCH - Asset', function () {
               expect(res, "assets are not in collection 21.").to.have.status(403)
         })
         it('Delete Assets - collection does not exist', async function () {
-          const res = await chai
-            .request(config.baseUrl)
+          const res = await chai.request.execute(config.baseUrl)
             .patch(`/assets?collectionId=${99999}`)
             .set('Authorization', 'Bearer ' + iteration.token)
             .send({

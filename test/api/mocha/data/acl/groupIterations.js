@@ -1,6 +1,5 @@
-const reference = require('../../referenceData.js')
-
-const iterations = [
+import reference from '../../referenceData.js'
+export const iterations = [
   {
     name: 'label_rw',
     put: [{"labelId":reference.testCollection.fullLabel,"access":"rw"}],
@@ -204,7 +203,7 @@ const iterations = [
             ],
           },
         ]
-},
+  },
   {
     name: 'label_none',
     put:[{"labelId":reference.testCollection.fullLabel,"access":"none"}],
@@ -6491,5 +6490,3 @@ const iterations = [
     ]
   },
 ]
-
-module.exports = iterations

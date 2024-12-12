@@ -1,13 +1,8 @@
 
-const chai = require("chai")
-const chaiHttp = require("chai-http")
-const deepEqualInAnyOrder = require('deep-equal-in-any-order')
-chai.use(chaiHttp)
-chai.use(deepEqualInAnyOrder)
-const expect = chai.expect
-const config = require("../testConfig.json")
-const utils = require("../utils/testUtils.js")
-const reference = require("../referenceData.js")
+const { expect } = chai
+import {config } from '../testConfig.js'
+import * as utils from '../utils/testUtils.js'
+import reference from '../referenceData.js'
 
 const admin = {
   name: "admin",
@@ -34,15 +29,14 @@ describe("Multiple Group ACL Collisions", () => {
 
   it("Remove Base appdata userGroup grant from test Colleciton", async () => {
 
-    const res = await chai.request(config.baseUrl)  
+    const res = await chai.request.execute(config.baseUrl)  
       .delete(`/collections/${reference.testCollection.collectionId}/grants/${reference.testCollection.testGroup.testCollectionGrantId}`)
       .set('Authorization', `Bearer ${admin.token}`)
     expect(res).to.have.status(200)
   })
   
   it('should create a test user group with lvl1 user in it.', async () => {
-      const res = await chai
-          .request(config.baseUrl)
+      const res = await chai.request.execute(config.baseUrl)
           .post(`/user-groups?elevate=true&projection=collections`)
           .set('Authorization', 'Bearer ' + config.adminToken)
           .send({
@@ -59,8 +53,7 @@ describe("Multiple Group ACL Collisions", () => {
 
   it('should another test user group with lvl1 user in it.', async () => {
 
-      const res = await chai
-          .request(config.baseUrl)
+      const res = await chai.request.execute(config.baseUrl)
           .post(`/user-groups?elevate=true&projection=collections`)
           .set('Authorization', 'Bearer ' + config.adminToken)
           .send({
@@ -78,27 +71,27 @@ describe("Multiple Group ACL Collisions", () => {
 
   it("should assign both groups created to the test collection with restricted grant", async function () {
 
-      const res = await chai.request(config.baseUrl)
+      const res = await chai.request.execute(config.baseUrl)
         .post(`/collections/${reference.testCollection.collectionId}/grants`)
         .set('Authorization', `Bearer ${config.adminToken}`)
         .send([{
             userGroupId: userGroup1.userGroupId,
             accessLevel: 1
         }])
-      expect(res).to.have.status(201)
-      expect(res.body[0].accessLevel).to.equal(1)
-      userGroup1.grantId = res.body[0].grantId
+      expect(res).to.have.status(200)
+      expect(res.body.accessLevel).to.equal(1)
+      userGroup1.grantId = res.body.grantId
 
-      const res2 = await chai.request(config.baseUrl)
+      const res2 = await chai.request.execute(config.baseUrl)
           .post(`/collections/${reference.testCollection.collectionId}/grants`)
           .set('Authorization', `Bearer ${config.adminToken}`)
           .send([{
             userGroupId: userGroup2.userGroupId,
               accessLevel: 1
           }])
-      expect(res2).to.have.status(201)
-      expect(res2.body[0].accessLevel).to.equal(1)
-      userGroup2.grantId = res2.body[0].grantId
+      expect(res2).to.have.status(200)
+      expect(res2.body.accessLevel).to.equal(1)
+      userGroup2.grantId = res2.body.grantId
   })
 
   /*
@@ -107,7 +100,7 @@ describe("Multiple Group ACL Collisions", () => {
   describe("Group 1: r, Group 2: rw on Asset", () => {
 
       it(`should set group1 acl to r on test asset`, async () => {
-          const res = await chai.request(config.baseUrl)
+          const res = await chai.request.execute(config.baseUrl)
           .put(`/collections/${reference.testCollection.collectionId}/grants/${userGroup1.grantId}/acl`)
           .set('Authorization', `Bearer ${config.adminToken}`)
           .send([{"assetId":reference.testAsset.assetId,"access":"r"}])
@@ -121,7 +114,7 @@ describe("Multiple Group ACL Collisions", () => {
       })
 
       it(`should set group2 acl to rw on test asset`, async () => {
-          const res = await chai.request(config.baseUrl)
+          const res = await chai.request.execute(config.baseUrl)
           .put(`/collections/${reference.testCollection.collectionId}/grants/${userGroup2.grantId}/acl`)
           .set('Authorization', `Bearer ${config.adminToken}`)
           .send([{"assetId":reference.testAsset.assetId,"access":"rw"}])
@@ -134,7 +127,7 @@ describe("Multiple Group ACL Collisions", () => {
       })
 
       it("should confirm group1 acl was set", async () => {
-          const res = await chai.request(config.baseUrl)
+          const res = await chai.request.execute(config.baseUrl)
               .get(`/collections/${reference.testCollection.collectionId}/grants/${userGroup1.grantId}/acl`)
               .set('Authorization', `Bearer ${config.adminToken}`)
           expect(res).to.have.status(200)
@@ -144,7 +137,7 @@ describe("Multiple Group ACL Collisions", () => {
       })
 
       it("should confirm group2 acl was set", async () => {
-          const res = await chai.request(config.baseUrl)
+          const res = await chai.request.execute(config.baseUrl)
               .get(`/collections/${reference.testCollection.collectionId}/grants/${userGroup2.grantId}/acl`)
               .set('Authorization', `Bearer ${config.adminToken}`)
           expect(res).to.have.status(200)
@@ -154,7 +147,7 @@ describe("Multiple Group ACL Collisions", () => {
       })
 
       it('should return all resources with access of "r" from ACLCollisionGroup1', async () => {
-          const res = await chai.request(config.baseUrl)
+          const res = await chai.request.execute(config.baseUrl)
               .get(`/collections/${reference.testCollection.collectionId}/grants/user/${lvl1.userId}/access/effective`)
               .set('Authorization', `Bearer ${config.adminToken}`)
           expect(res).to.have.status(200)
@@ -173,7 +166,7 @@ describe("Multiple Group ACL Collisions", () => {
   describe("Group 1: r, Group 2: none on Asset", () => {
 
       it(`should set group1 acl to r on test asset`, async () => {
-          const res = await chai.request(config.baseUrl)
+          const res = await chai.request.execute(config.baseUrl)
           .put(`/collections/${reference.testCollection.collectionId}/grants/${userGroup1.grantId}/acl`)
           .set('Authorization', `Bearer ${config.adminToken}`)
           .send([{"assetId":reference.testAsset.assetId,"access":"r"}])
@@ -187,7 +180,7 @@ describe("Multiple Group ACL Collisions", () => {
       })
 
       it(`should set group2 acl to none on test asset`, async () => {
-          const res = await chai.request(config.baseUrl)
+          const res = await chai.request.execute(config.baseUrl)
           .put(`/collections/${reference.testCollection.collectionId}/grants/${userGroup2.grantId}/acl`)
           .set('Authorization', `Bearer ${config.adminToken}`)
           .send([{"assetId":reference.testAsset.assetId,"access":"none"}])
@@ -200,7 +193,7 @@ describe("Multiple Group ACL Collisions", () => {
       })
 
       it("should confirm group1 acl was set", async () => {
-          const res = await chai.request(config.baseUrl)
+          const res = await chai.request.execute(config.baseUrl)
               .get(`/collections/${reference.testCollection.collectionId}/grants/${userGroup1.grantId}/acl`)
               .set('Authorization', `Bearer ${config.adminToken}`)
           expect(res).to.have.status(200)
@@ -210,7 +203,7 @@ describe("Multiple Group ACL Collisions", () => {
       })
 
       it("should confirm group2 acl was set", async () => {
-          const res = await chai.request(config.baseUrl)
+          const res = await chai.request.execute(config.baseUrl)
               .get(`/collections/${reference.testCollection.collectionId}/grants/${userGroup2.grantId}/acl`)
               .set('Authorization', `Bearer ${config.adminToken}`)
           expect(res).to.have.status(200)
@@ -220,7 +213,7 @@ describe("Multiple Group ACL Collisions", () => {
       })
 
       it('should return empty array because user as "none"', async () => {
-          const res = await chai.request(config.baseUrl)
+          const res = await chai.request.execute(config.baseUrl)
               .get(`/collections/${reference.testCollection.collectionId}/grants/user/${lvl1.userId}/access/effective`)
               .set('Authorization', `Bearer ${config.adminToken}`)
           expect(res).to.have.status(200)
@@ -232,7 +225,7 @@ describe("Multiple Group ACL Collisions", () => {
   describe("Group 1: rw, Group 2: r on Test Label", () => {
 
       it(`should set group1 acl to rw on test label`, async () => {
-          const res = await chai.request(config.baseUrl)
+          const res = await chai.request.execute(config.baseUrl)
           .put(`/collections/${reference.testCollection.collectionId}/grants/${userGroup1.grantId}/acl`)
           .set('Authorization', `Bearer ${config.adminToken}`)
           .send([{"labelId":reference.testCollection.fullLabel,"access":"rw"}])
@@ -246,7 +239,7 @@ describe("Multiple Group ACL Collisions", () => {
       })
 
       it(`should set group2 acl to r on test label`, async () => {
-          const res = await chai.request(config.baseUrl)
+          const res = await chai.request.execute(config.baseUrl)
           .put(`/collections/${reference.testCollection.collectionId}/grants/${userGroup2.grantId}/acl`)
           .set('Authorization', `Bearer ${config.adminToken}`)
           .send([{"labelId":reference.testCollection.fullLabel,"access":"r"}])
@@ -259,7 +252,7 @@ describe("Multiple Group ACL Collisions", () => {
       })
 
       it("should confirm group1 acl was set", async () => {
-          const res = await chai.request(config.baseUrl)
+          const res = await chai.request.execute(config.baseUrl)
               .get(`/collections/${reference.testCollection.collectionId}/grants/${userGroup1.grantId}/acl`)
               .set('Authorization', `Bearer ${config.adminToken}`)
           expect(res).to.have.status(200)
@@ -269,7 +262,7 @@ describe("Multiple Group ACL Collisions", () => {
       })
 
       it("should confirm group2 acl was set", async () => {
-          const res = await chai.request(config.baseUrl)
+          const res = await chai.request.execute(config.baseUrl)
               .get(`/collections/${reference.testCollection.collectionId}/grants/${userGroup2.grantId}/acl`)
               .set('Authorization', `Bearer ${config.adminToken}`)
           expect(res).to.have.status(200)
@@ -279,7 +272,7 @@ describe("Multiple Group ACL Collisions", () => {
       })
 
       it('should return read only assets from group 2s read ACL', async () => {
-          const res = await chai.request(config.baseUrl)
+          const res = await chai.request.execute(config.baseUrl)
               .get(`/collections/${reference.testCollection.collectionId}/grants/user/${lvl1.userId}/access/effective`)
               .set('Authorization', `Bearer ${config.adminToken}`)
           expect(res).to.have.status(200)
@@ -297,7 +290,7 @@ describe("Multiple Group ACL Collisions", () => {
   describe("Advanced ACL collision", () => {
 
       it(`should set group1 acl to rw on test label`, async () => {
-          const res = await chai.request(config.baseUrl)
+          const res = await chai.request.execute(config.baseUrl)
           .put(`/collections/${reference.testCollection.collectionId}/grants/${userGroup1.grantId}/acl`)
           .set('Authorization', `Bearer ${config.adminToken}`)
           .send([{"labelId":reference.testCollection.fullLabel, "benchmarkId":reference.testCollection.benchmark, "access":"rw"}, {"assetId":"154","access":"r"}])
@@ -316,7 +309,7 @@ describe("Multiple Group ACL Collisions", () => {
       })
 
       it(`should set group2 acl to r on test label`, async () => {
-          const res = await chai.request(config.baseUrl)
+          const res = await chai.request.execute(config.baseUrl)
           .put(`/collections/${reference.testCollection.collectionId}/grants/${userGroup2.grantId}/acl`)
           .set('Authorization', `Bearer ${config.adminToken}`)
           .send([{"labelId":reference.testCollection.fullLabel,"access":"r"}])
@@ -329,7 +322,7 @@ describe("Multiple Group ACL Collisions", () => {
       })
 
       it("should confirm group1 acl was set", async () => {
-          const res = await chai.request(config.baseUrl)
+          const res = await chai.request.execute(config.baseUrl)
               .get(`/collections/${reference.testCollection.collectionId}/grants/${userGroup1.grantId}/acl`)
               .set('Authorization', `Bearer ${config.adminToken}`)
           expect(res).to.have.status(200)
@@ -346,7 +339,7 @@ describe("Multiple Group ACL Collisions", () => {
       })
 
       it("should confirm group2 acl was set", async () => {
-          const res = await chai.request(config.baseUrl)
+          const res = await chai.request.execute(config.baseUrl)
               .get(`/collections/${reference.testCollection.collectionId}/grants/${userGroup2.grantId}/acl`)
               .set('Authorization', `Bearer ${config.adminToken}`)
           expect(res).to.have.status(200)
@@ -356,7 +349,7 @@ describe("Multiple Group ACL Collisions", () => {
       })
 
       it('should return effective ACLs belonging from a combination of both groups', async () => {
-          const res = await chai.request(config.baseUrl)
+          const res = await chai.request.execute(config.baseUrl)
               .get(`/collections/${reference.testCollection.collectionId}/grants/user/${lvl1.userId}/access/effective`)
               .set('Authorization', `Bearer ${config.adminToken}`)
           expect(res).to.have.status(200)
@@ -388,7 +381,7 @@ describe("Test sending acl for rw access to entire collection", () => {
 
     it("change test group to role 2 (full)", async () => {
 
-        const res = await chai.request(config.baseUrl)
+        const res = await chai.request.execute(config.baseUrl)
             .put(`/collections/${reference.testCollection.collectionId}/grants/${reference.testCollection.testGroup.testCollectionGrantId}`)
             .set('Authorization', `Bearer ${admin.token}`)
             .send({
@@ -402,7 +395,7 @@ describe("Test sending acl for rw access to entire collection", () => {
 
     it("give testgroup r only on test asset", async () => {
 
-        const res = await chai.request(config.baseUrl)
+        const res = await chai.request.execute(config.baseUrl)
             .put(`/collections/${reference.testCollection.collectionId}/grants/${reference.testCollection.testGroup.testCollectionGrantId}/acl`)
             .set('Authorization', `Bearer ${admin.token}`)
             .send([{"assetId":reference.testAsset.assetId,"access":"r"}])
@@ -416,7 +409,7 @@ describe("Test sending acl for rw access to entire collection", () => {
 
     it("confirm r access by attempting writing review to asset it should fail. request sent as lvl1", async () => {
 
-        const res = await chai.request(config.baseUrl)
+        const res = await chai.request.execute(config.baseUrl)
             .put(`/collections/${reference.testCollection.collectionId}/reviews/${reference.testAsset.assetId}/${reference.testCollection.ruleId}`)
             .set('Authorization', `Bearer ${lvl1.token}`)
             .send({
@@ -431,7 +424,7 @@ describe("Test sending acl for rw access to entire collection", () => {
 
     it("alter acl to [] (entire collection)", async () => {
             
-        const res = await chai.request(config.baseUrl)
+        const res = await chai.request.execute(config.baseUrl)
             .put(`/collections/${reference.testCollection.collectionId}/grants/${reference.testCollection.testGroup.testCollectionGrantId}/acl`)
             .set('Authorization', `Bearer ${admin.token}`)
             .send([])
@@ -443,7 +436,7 @@ describe("Test sending acl for rw access to entire collection", () => {
 
     it("confirm rw access to test asset", async () => {
 
-        const res = await chai.request(config.baseUrl)
+        const res = await chai.request.execute(config.baseUrl)
         .put(`/collections/${reference.testCollection.collectionId}/reviews/${reference.testAsset.assetId}/${reference.testCollection.ruleId}`)
         .set('Authorization', `Bearer ${lvl1.token}`)
         .send({

@@ -1,13 +1,12 @@
-const chai = require('chai')
-const chaiHttp = require('chai-http')
-chai.use(chaiHttp)
-const expect = chai.expect
-const config = require('../../testConfig.json')
-const utils = require('../../utils/testUtils')
-const reference = require('../../referenceData.js')
-const iterations = require('../../iterations.js')
-const expectations = require('./expectations.js')
-const requestBodies = require('./requestBodies.js')
+
+const { expect } = chai
+import {config } from '../../testConfig.js'
+import * as utils from '../../utils/testUtils.js'
+import reference from '../../referenceData.js'
+import {requestBodies} from "./requestBodies.js"
+import {iterations} from '../../iterations.js'
+import {expectations} from './expectations.js'
+
 
 describe('PATCH - Review', () => {
 
@@ -28,7 +27,7 @@ describe('PATCH - Review', () => {
           await utils.putReviewByAssetRule(reference.testCollection.collectionId, reference.testAsset.assetId, reference.testCollection.ruleId, requestBodies.resetRule)
         })
         it('PATCH Review with new details, expect status to remain', async () => {
-          const res = await chai.request(config.baseUrl)
+          const res = await chai.request.execute(config.baseUrl)
             .patch(`/collections/${reference.testCollection.collectionId}/reviews/${reference.testAsset.assetId}/${reference.testCollection.ruleId}`)
             .set('Authorization', `Bearer ${iteration.token}`)
             .send({detail:"these details have changed, but the status remains"})
@@ -37,7 +36,7 @@ describe('PATCH - Review', () => {
           expect(res.body.status).to.have.property('label').that.equals('submitted')
         })
         it('PATCH Review with new result, expect status to reset to saved', async () => {
-            const res = await chai.request(config.baseUrl)
+            const res = await chai.request.execute(config.baseUrl)
               .patch(`/collections/${reference.testCollection.collectionId}/reviews/${reference.testAsset.assetId}/${reference.testCollection.ruleId}`)
               .set('Authorization', `Bearer ${iteration.token}`)
               .send({result: "pass"})
@@ -47,7 +46,7 @@ describe('PATCH - Review', () => {
             expect(res.body.status).to.have.property('label').that.equals('saved')
         })
         it('PATCH Review to submitted status', async () => {
-            const res = await chai.request(config.baseUrl)
+            const res = await chai.request.execute(config.baseUrl)
               .patch(`/collections/${reference.testCollection.collectionId}/reviews/${reference.testAsset.assetId}/${reference.testCollection.ruleId}`)
               .set('Authorization', `Bearer ${iteration.token}`)
               .send({status: "submitted"})
@@ -56,7 +55,7 @@ describe('PATCH - Review', () => {
             expect(res.body.status).to.have.property('label').that.equals('submitted')
         })
         it('PATCH Review patched and no longer meets Collection Requirements', async () => {
-            const res = await chai.request(config.baseUrl)
+            const res = await chai.request.execute(config.baseUrl)
               .patch(`/collections/${reference.testCollection.collectionId}/reviews/${reference.testAsset.assetId}/${reference.testCollection.ruleId}`)
               .set('Authorization', `Bearer ${iteration.token}`)
               .send({result: "fail"})
@@ -66,7 +65,7 @@ describe('PATCH - Review', () => {
             expect(res.body.status).to.have.property('label').that.equals('saved')
         })
         it('PATCH Review to Accepted', async () => {
-          const res = await chai.request(config.baseUrl)
+          const res = await chai.request.execute(config.baseUrl)
             .patch(`/collections/${reference.testCollection.collectionId}/reviews/${reference.testAsset.assetId}/${reference.testCollection.ruleId}`)
             .set('Authorization', `Bearer ${iteration.token}`)
             .send({status: "accepted"})
@@ -79,8 +78,7 @@ describe('PATCH - Review', () => {
           expect(res.body).to.have.property("touchTs").to.eql(res.body.status.ts)
         })
         it('Merge provided properties with a Review', async () => {
-          const res = await chai
-            .request(config.baseUrl)
+          const res = await chai.request.execute(config.baseUrl)
             .patch(
               `/collections/${reference.testCollection.collectionId}/reviews/${reference.testAsset.assetId}/${reference.testCollection.ruleId}`)
             .set("Authorization", `Bearer ${iteration.token}`)
@@ -99,8 +97,7 @@ describe('PATCH - Review', () => {
         })
         it("patch review that is read only for lvl1 user expect 403 for lvl1 user iteration ", async () => {
 
-          const res = await chai
-            .request(config.baseUrl)
+          const res = await chai.request.execute(config.baseUrl)
             .patch(
               `/collections/${reference.testCollection.collectionId}/reviews/${reference.testCollection.lvl1ReadOnlyAssetId}/${reference.testCollection.ruleId}`)
             .set("Authorization", `Bearer ${iteration.token}`)
@@ -120,7 +117,7 @@ describe('PATCH - Review', () => {
       describe('PATCH - patchReviewMetadata - /collections/{collectionId}/reviews/{assetId}/{ruleId}/metadata', () => {
 
         it('Merge metadata property/value into a Review', async () => {
-          const res = await chai.request(config.baseUrl)
+          const res = await chai.request.execute(config.baseUrl)
             .patch(`/collections/${reference.testCollection.collectionId}/reviews/${reference.testAsset.assetId}/${reference.testCollection.ruleId}/metadata`)
             .set('Authorization', `Bearer ${iteration.token}`)
             .send({[reference.reviewMetadataKey]: reference.reviewMetadataValue})
@@ -131,7 +128,7 @@ describe('PATCH - Review', () => {
         })
         it("patch review metadata to asset with read only for lvl1 user expect 403 for lvl1 user iteration ", async () => {
 
-          const res = await chai.request(config.baseUrl)
+          const res = await chai.request.execute(config.baseUrl)
             .patch(`/collections/${reference.testCollection.collectionId}/reviews/${reference.testCollection.lvl1ReadOnlyAssetId}/${reference.testCollection.ruleId}/metadata`)
             .set('Authorization', `Bearer ${iteration.token}`)
             .send({[reference.reviewMetadataKey]: reference.reviewMetadataValue})
@@ -143,7 +140,7 @@ describe('PATCH - Review', () => {
 
         })
         it("should return SmError.PrivilegeError if user cannot modify review", async () => {
-          const res = await chai.request(config.baseUrl)
+          const res = await chai.request.execute(config.baseUrl)
             .get(`/collections/${reference.testCollection.collectionId}/reviews/${reference.testAsset.assetId}/${reference.scrapRuleIdWindows10}/metadata`)
             .set('Authorization', `Bearer ${iteration.token}`)
           if(distinct.canPatchReview){

@@ -1,18 +1,16 @@
-const chai = require("chai")
-const chaiHttp = require("chai-http")
-chai.use(chaiHttp)
-const expect = chai.expect
-const deepEqualInAnyOrder = require('deep-equal-in-any-order')
-chai.use(deepEqualInAnyOrder)
-const config = require("../../testConfig.json")
-const utils = require("../../utils/testUtils")
-const iterations = require("../../iterations.js")
-const expectations = require('./expectations.js')
-const reference = require('../../referenceData.js')
-const requestBodies = require('./requestBodies.js')
-const { v4: uuidv4 } = require('uuid')
-const JSZip = require("jszip")
-const {reviewsFromCkl, reviewsFromScc, reviewsFromCklb } = require("@nuwcdivnpt/stig-manager-client-modules")
+
+const { expect } = chai
+import { v4 as uuidv4 } from 'uuid'
+import JSZip from 'jszip';
+import {config } from '../../testConfig.js'
+import * as utils from '../../utils/testUtils.js'
+import reference from '../../referenceData.js'
+import {requestBodies} from "./requestBodies.js"
+import {iterations} from '../../iterations.js'
+import {expectations} from './expectations.js'
+import { reviewsFromCkl, reviewsFromScc, reviewsFromCklb } from "@nuwcdivnpt/stig-manager-client-modules"
+
+
 
 describe('POST - Collection - not all tests run for all iterations', function () {
 
@@ -44,8 +42,7 @@ describe('POST - Collection - not all tests run for all iterations', function ()
         it("Create a Collection and test projections",async function () {
           const post = JSON.parse(JSON.stringify(requestBodies.createCollection))
           post.name = "testCollection" + random
-          const res = await chai
-          .request(config.baseUrl)
+          const res = await chai.request.execute(config.baseUrl)
           .post(
             `/collections?elevate=${distinct.canElevate}&projection=grants&projection=labels&projection=assets&projection=owners&projection=statistics&projection=stigs`
           )
@@ -111,8 +108,7 @@ describe('POST - Collection - not all tests run for all iterations', function ()
           const post = requestBodies.createCollectionWithTestGroup
           let uuid = uuidv4().slice(0, 10)
           post.name = "testCollection" + uuid
-          const res = await chai
-            .request(config.baseUrl)
+          const res = await chai.request.execute(config.baseUrl)
             .post(`/collections?elevate=${distinct.canElevate}&projection=grants`)
             .set("Authorization", `Bearer ${iteration.token}`)
             .send(post)
@@ -130,8 +126,7 @@ describe('POST - Collection - not all tests run for all iterations', function ()
           const post = JSON.parse(JSON.stringify(requestBodies.createCollection))
           post.grants.push(post.grants[0])
           post.name = "TEST" + utils.getUUIDSubString()
-          const res = await chai
-            .request(config.baseUrl)
+          const res = await chai.request.execute(config.baseUrl)
             .post(`/collections?elevate=${distinct.canElevate}`)
             .set("Authorization", `Bearer ${iteration.token}`)
             .send(post)
@@ -146,8 +141,7 @@ describe('POST - Collection - not all tests run for all iterations', function ()
         it("should throw SmError.UnprocessableError due to duplicate name exists ",async function () {
           const post = JSON.parse(JSON.stringify(requestBodies.createCollection))
           post.name = "testCollection" + random
-          const res = await chai
-           .request(config.baseUrl)
+          const res = await chai.request.execute(config.baseUrl)
            .post(`/collections?elevate=${distinct.canElevate}&projection=grants&projection=labels&projection=assets&projection=owners&projection=statistics&projection=stigs`)
            .set("Authorization", `Bearer ${iteration.token}`)
            .send(post)
@@ -170,8 +164,7 @@ describe('POST - Collection - not all tests run for all iterations', function ()
 
         it("should download a CKL and get the test asset with test benchmark ",async function () {
 
-          const res = await chai
-            .request(config.baseUrl)
+          const res = await chai.request.execute(config.baseUrl)
             .post(`/collections/${reference.testCollection.collectionId}/archive/ckl`)
             .set("Authorization", `Bearer ${iteration.token}`)
             .send(requestBodies.postArchiveBenchmarkRevision)
@@ -204,8 +197,7 @@ describe('POST - Collection - not all tests run for all iterations', function ()
 
         it("should download a CKL for an asset that does not have stigs attached, should throw. Lvl1 and collection creator do not  have access to asset",async function () {
 
-          const res = await chai
-            .request(config.baseUrl)
+          const res = await chai.request.execute(config.baseUrl)
             .post(`/collections/${reference.testCollection.collectionId}/archive/ckl`)
             .set("Authorization", `Bearer ${iteration.token}`)
             .send(requestBodies.postArchiveBenchmarkRevisionLvl1NoAccess)
@@ -219,8 +211,7 @@ describe('POST - Collection - not all tests run for all iterations', function ()
 
         it("should download a CKL and get the test asset with test benchmark and no revision specified. should return latest",async function () {
 
-          const res = await chai
-            .request(config.baseUrl)
+          const res = await chai.request.execute(config.baseUrl)
             .post(`/collections/${reference.testCollection.collectionId}/archive/ckl`)
             .set("Authorization", `Bearer ${iteration.token}`)
             .send(requestBodies.postArchiveBenchmark)
@@ -252,8 +243,7 @@ describe('POST - Collection - not all tests run for all iterations', function ()
         })
         it("should download a CKL and get the test asset with all benchmarks in a multi stig CKL file ",async function () {
 
-          const res = await chai
-            .request(config.baseUrl)
+          const res = await chai.request.execute(config.baseUrl)
             .post(`/collections/${reference.testCollection.collectionId}/archive/ckl?mode=multi`)
             .set("Authorization", `Bearer ${iteration.token}`)
             .send(requestBodies.postArchiveDefault)
@@ -297,8 +287,7 @@ describe('POST - Collection - not all tests run for all iterations', function ()
 
         it("should download a CKLB and get the test asset with test benchmark ",async function () {
 
-          const res = await chai
-            .request(config.baseUrl)
+          const res = await chai.request.execute(config.baseUrl)
             .post(`/collections/${reference.testCollection.collectionId}/archive/cklb`)
             .set("Authorization", `Bearer ${iteration.token}`)
             .send(requestBodies.postArchiveBenchmarkRevision)
@@ -331,8 +320,7 @@ describe('POST - Collection - not all tests run for all iterations', function ()
 
         it("should download a CKLB for an asset that does not have stigs attached, should throw. Lvl1 and collection creator do not  have access to asset",async function () {
 
-          const res = await chai
-            .request(config.baseUrl)
+          const res = await chai.request.execute(config.baseUrl)
             .post(`/collections/${reference.testCollection.collectionId}/archive/cklb`)
             .set("Authorization", `Bearer ${iteration.token}`)
             .send(requestBodies.postArchiveBenchmarkRevisionLvl1NoAccess)
@@ -346,8 +334,7 @@ describe('POST - Collection - not all tests run for all iterations', function ()
 
         it("should download a CKLB and get the test asset with test benchmark and no revision specified. should return latest",async function () {
 
-          const res = await chai
-            .request(config.baseUrl)
+          const res = await chai.request.execute(config.baseUrl)
             .post(`/collections/${reference.testCollection.collectionId}/archive/cklB`)
             .set("Authorization", `Bearer ${iteration.token}`)
             .send(requestBodies.postArchiveBenchmark)
@@ -380,8 +367,7 @@ describe('POST - Collection - not all tests run for all iterations', function ()
 
         it("should download a CKLB and get the test asset with all benchmarks in a multi stig CKLB file ",async function () {
 
-          const res = await chai
-            .request(config.baseUrl)
+          const res = await chai.request.execute(config.baseUrl)
             .post(`/collections/${reference.testCollection.collectionId}/archive/cklb?mode=multi`)
             .set("Authorization", `Bearer ${iteration.token}`)
             .send(requestBodies.postArchiveDefault)
@@ -444,8 +430,7 @@ describe('POST - Collection - not all tests run for all iterations', function ()
 
         it("should download a xccdf and get the test asset with test benchmark ",async function () {
 
-          const res = await chai
-            .request(config.baseUrl)
+          const res = await chai.request.execute(config.baseUrl)
             .post(`/collections/${reference.testCollection.collectionId}/archive/xccdf`)
             .set("Authorization", `Bearer ${iteration.token}`)
             .send(requestBodies.postArchiveBenchmarkRevision)
@@ -478,8 +463,7 @@ describe('POST - Collection - not all tests run for all iterations', function ()
 
         it("should download a xccdf for an asset that does not have stigs attached, should throw. Lvl1 and collection creator do not  have access to asset",async function () {
 
-          const res = await chai
-            .request(config.baseUrl)
+          const res = await chai.request.execute(config.baseUrl)
             .post(`/collections/${reference.testCollection.collectionId}/archive/xccdf`)
             .set("Authorization", `Bearer ${iteration.token}`)
             .send(requestBodies.postArchiveBenchmarkRevisionLvl1NoAccess)
@@ -493,8 +477,7 @@ describe('POST - Collection - not all tests run for all iterations', function ()
 
         it("should download a xccdf and get the test asset with test benchmark and no revision specified. should return latest",async function () {
 
-          const res = await chai
-            .request(config.baseUrl)
+          const res = await chai.request.execute(config.baseUrl)
             .post(`/collections/${reference.testCollection.collectionId}/archive/xccdf`)
             .set("Authorization", `Bearer ${iteration.token}`)
             .send(requestBodies.postArchiveBenchmark)
@@ -527,8 +510,7 @@ describe('POST - Collection - not all tests run for all iterations', function ()
 
         it("should download a xccdf and get the test asset with all benchmarks in a multi stig xccdf file ",async function () {
 
-          const res = await chai
-            .request(config.baseUrl)
+          const res = await chai.request.execute(config.baseUrl)
             .post(`/collections/${reference.testCollection.collectionId}/archive/xccdf`)
             .set("Authorization", `Bearer ${iteration.token}`)
             .send(requestBodies.postArchiveDefault)
@@ -603,8 +585,7 @@ describe('POST - Collection - not all tests run for all iterations', function ()
         let clonedCollection = null
         it("Clone test collection and check that cloned collection matches source ",async function () {
 
-          const res = await chai
-            .request(config.baseUrl)
+          const res = await chai.request.execute(config.baseUrl)
             .post(`/collections/${reference.testCollection.collectionId}/clone?projection=assets&projection=grants&projection=owners&projection=statistics&projection=stigs&projection=labels&projection=users`)
             .set("Authorization", `Bearer ${iteration.token}`)
             .send({
@@ -647,7 +628,7 @@ describe('POST - Collection - not all tests run for all iterations', function ()
                         }
 
                         let expectedGrantsResponse = []
-                        for (grant of reference.testCollection.grantsProjected){
+                        for (let grant of reference.testCollection.grantsProjected){
                             let {grantId, ...grantCheckProps} = grant
                             expectedGrantsResponse.push(grantCheckProps)
                         }
@@ -669,7 +650,7 @@ describe('POST - Collection - not all tests run for all iterations', function ()
                         // confirm that ACLs have been transfered. will check with the testGroup acl in new collection 
                         const testGroupGrantId = messageObj.collection.grants.find(g => g.userGroup?.userGroupId === reference.testCollection.testGroup.userGroupId).grantId
 
-                        const acl = await chai.request(config.baseUrl)
+                        const acl = await chai.request.execute(config.baseUrl)
                           .get(`/collections/${clonedCollection}/grants/${testGroupGrantId}/acl`)
                           .set("Authorization", `Bearer ${iteration.token}`)
                         expect(acl).to.have.status(200)
@@ -720,8 +701,7 @@ describe('POST - Collection - not all tests run for all iterations', function ()
         
         it("export entire asset to another collection, should create asset in destination",async function () {
 
-          const res = await chai
-            .request(config.baseUrl)
+          const res = await chai.request.execute(config.baseUrl)
             .post(`/collections/${reference.testCollection.collectionId}/export-to/${reference.scrapCollection.collectionId}`)
             .set("Authorization", `Bearer ${iteration.token}`)
             .send([
@@ -754,8 +734,7 @@ describe('POST - Collection - not all tests run for all iterations', function ()
 
         it("export entire asset to another collection, asset already exists so we will be updating reviews",async function () {
 
-          const res = await chai
-            .request(config.baseUrl)
+          const res = await chai.request.execute(config.baseUrl)
             .post(`/collections/${reference.testCollection.collectionId}/export-to/${reference.scrapCollection.collectionId}`)
             .set("Authorization", `Bearer ${iteration.token}`)
             .send([
@@ -798,8 +777,7 @@ describe('POST - Collection - not all tests run for all iterations', function ()
               "description": "test label POSTED",
               "color": "aa34cc"
             }
-          const res = await chai
-            .request(config.baseUrl)
+          const res = await chai.request.execute(config.baseUrl)
             .post(`/collections/${reference.scrapCollection.collectionId}/labels`)
             .set("Authorization", `Bearer ${iteration.token}`)
             .send(request)
@@ -817,8 +795,7 @@ describe('POST - Collection - not all tests run for all iterations', function ()
         })
         it("Clean up - delete label",async function () {
             if(label){
-              const res = await chai
-                .request(config.baseUrl)
+              const res = await chai.request.execute(config.baseUrl)
                 .delete(`/collections/${reference.scrapCollection.collectionId}/labels/${label.labelId}`)
                 .set("Authorization", `Bearer ${iteration.token}`)
                 expect(res).to.have.status(204)
@@ -840,8 +817,7 @@ describe('POST - Collection - not all tests run for all iterations', function ()
             assetIds: ["62", "42", "154"],
           }
 
-          const res = await chai
-            .request(config.baseUrl)
+          const res = await chai.request.execute(config.baseUrl)
             .post(`/collections/${reference.testCollection.collectionId}/stigs/${reference.testCollection.benchmark}`)
             .set("Authorization", `Bearer ${iteration.token}`)
             .send(post)
@@ -866,8 +842,7 @@ describe('POST - Collection - not all tests run for all iterations', function ()
             assetIds: requestBodies.writeStigPropsByCollectionStig.assetIds,
           }
 
-          const res = await chai
-            .request(config.baseUrl)
+          const res = await chai.request.execute(config.baseUrl)
             .post(`/collections/${reference.testCollection.collectionId}/stigs/${reference.testCollection.benchmark}`)
             .set("Authorization", `Bearer ${iteration.token}`)
             .send(post)
@@ -891,8 +866,7 @@ describe('POST - Collection - not all tests run for all iterations', function ()
             assetIds: requestBodies.writeStigPropsByCollectionStig.assetIds,
           }
 
-          const res = await chai
-            .request(config.baseUrl)
+          const res = await chai.request.execute(config.baseUrl)
             .post(`/collections/${reference.testCollection.collectionId}/stigs/${reference.testCollection.benchmark}`)
             .set("Authorization", `Bearer ${iteration.token}`)
             .send(post)
@@ -916,8 +890,7 @@ describe('POST - Collection - not all tests run for all iterations', function ()
           defaultRevisionStr: "V1R5"
           }
 
-          const res = await chai
-            .request(config.baseUrl)
+          const res = await chai.request.execute(config.baseUrl)
             .post(`/collections/${reference.testCollection.collectionId}/stigs/${reference.testCollection.benchmark}`)
             .set("Authorization", `Bearer ${iteration.token}`)
             .send(post)
@@ -936,8 +909,7 @@ describe('POST - Collection - not all tests run for all iterations', function ()
           defaultRevisionStr: reference.testCollection.pinRevision
           }
 
-          const res = await chai
-            .request(config.baseUrl)
+          const res = await chai.request.execute(config.baseUrl)
             .post(`/collections/${reference.testCollection.collectionId}/stigs/${reference.testCollection.benchmark}`)
             .set("Authorization", `Bearer ${iteration.token}`)
             .send(post)
@@ -961,8 +933,7 @@ describe('POST - Collection - not all tests run for all iterations', function ()
           assetIds: []
           }
 
-          const res = await chai
-            .request(config.baseUrl)
+          const res = await chai.request.execute(config.baseUrl)
             .post(`/collections/${reference.testCollection.collectionId}/stigs/${reference.testCollection.benchmark}`)
             .set("Authorization", `Bearer ${iteration.token}`)
             .send(post)
@@ -986,8 +957,7 @@ describe('POST - Collection - not all tests run for all iterations', function ()
 
         it("Add grants to a collection",async function () {
 
-          const res = await chai
-            .request(config.baseUrl)
+          const res = await chai.request.execute(config.baseUrl)
             .post(`/collections/${reference.scrapCollection.collectionId}/grants?elevate=true`)
             .set("Authorization", `Bearer ${iteration.token}`)
             .send(requestBodies.postGrantsByCollection)
@@ -997,7 +967,7 @@ describe('POST - Collection - not all tests run for all iterations', function ()
               return
             }
 
-            expect(res).to.have.status(201)
+            expect(res).to.have.status(200)
 
             expect(res.body).to.have.lengthOf(requestBodies.postGrantsByCollection.length)
             for(const grant of res.body){
@@ -1017,8 +987,7 @@ describe('POST - Collection - not all tests run for all iterations', function ()
         })
         it("attempt to create owner grant, elevates should only work for admin user",async function () {
 
-          const res = await chai
-            .request(config.baseUrl)
+          const res = await chai.request.execute(config.baseUrl)
             .post(`/collections/${reference.scrapCollection.collectionId}/grants?elevate=true`)
             .set("Authorization", `Bearer ${iteration.token}`)
             .send(requestBodies.postOwners)
@@ -1027,7 +996,7 @@ describe('POST - Collection - not all tests run for all iterations', function ()
               expect(res).to.have.status(403)
               return
             }
-            expect(res).to.have.status(201)
+            expect(res).to.have.status(200)
         })
         it("Post Owner grant to collection no elevate",async function () {
 
@@ -1038,8 +1007,7 @@ describe('POST - Collection - not all tests run for all iterations', function ()
             },
           ]
 
-          const res = await chai
-            .request(config.baseUrl)
+          const res = await chai.request.execute(config.baseUrl)
             .post(`/collections/${reference.scrapCollection.collectionId}/grants`)
             .set("Authorization", `Bearer ${iteration.token}`)
             .send(postGrantsByCollectionOwner)
@@ -1048,9 +1016,9 @@ describe('POST - Collection - not all tests run for all iterations', function ()
               expect(res).to.have.status(403)
               return
             }
-            expect(res).to.have.status(201)
-            expect(res.body[0].user.userId).to.eql("43")
-            expect(res.body[0].accessLevel).to.equal(4)
+            expect(res).to.have.status(200)
+            expect(res.body.user.userId).to.eql("43")
+            expect(res.body.accessLevel).to.equal(4)
         })
       })
     })

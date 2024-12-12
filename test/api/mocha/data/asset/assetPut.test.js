@@ -1,13 +1,12 @@
-const chai = require('chai')
-const chaiHttp = require('chai-http')
-chai.use(chaiHttp)
-const expect = chai.expect
-const config = require('../../testConfig.json')
-const utils = require('../../utils/testUtils')
-const iterations = require('../../iterations.js')
-const expectations = require('./expectations.js')
-const reference = require('../../referenceData.js')
-const { v4: uuidv4 } = require('uuid')
+
+
+const { expect } = chai
+import {config } from '../../testConfig.js'
+import * as utils from '../../utils/testUtils.js'
+import reference from '../../referenceData.js'
+import {iterations} from '../../iterations.js'
+import {expectations} from './expectations.js'
+import { v4 as uuidv4 } from 'uuid'
 
 describe('PUT - Asset', function () {
 
@@ -27,7 +26,7 @@ describe('PUT - Asset', function () {
       describe(`replaceAsset -/assets/{assetId}`, function () {
         
         it('Set all properties of an Asset', async function () {
-          const res = await chai.request(config.baseUrl)
+          const res = await chai.request.execute(config.baseUrl)
             .put(`/assets/${reference.scrapAsset.assetId}?projection=statusStats&projection=stigs`)
             .set('Authorization', 'Bearer ' + iteration.token)
             .send({
@@ -96,7 +95,7 @@ describe('PUT - Asset', function () {
         })
 
         it('Set all properties of an Asset - assign new STIG', async function () {
-          const res = await chai.request(config.baseUrl)
+          const res = await chai.request.execute(config.baseUrl)
             .put(`/assets/${reference.testAsset.assetId}?projection=statusStats&projection=stigs`)
             .set('Authorization', 'Bearer ' + iteration.token)
             .send({
@@ -147,7 +146,7 @@ describe('PUT - Asset', function () {
         })
 
         it('Set all properties of an Asset- with metadata', async function () {
-          const res = await chai.request(config.baseUrl)
+          const res = await chai.request.execute(config.baseUrl)
             .put(`/assets/${reference.scrapAsset.assetId}`)
             .set('Authorization', 'Bearer ' + iteration.token)
             .send({
@@ -184,7 +183,7 @@ describe('PUT - Asset', function () {
         })
 
         it('Set all properties of an Asset - Change Collection - invalid for all iteration', async function () {
-          const res = await chai.request(config.baseUrl)
+          const res = await chai.request.execute(config.baseUrl)
             .put(`/assets/${reference.scrapAsset.assetId}`)
             .set('Authorization', 'Bearer ' + iteration.token)
             .send({
@@ -206,7 +205,7 @@ describe('PUT - Asset', function () {
       describe(`putAssetMetadata - /assets/{assetId}/metadata`, function () {
 
         it('Set metadata of an Asset', async function () {
-          const res = await chai.request(config.baseUrl)
+          const res = await chai.request.execute(config.baseUrl)
             .put(`/assets/${reference.scrapAsset.assetId}/metadata`)
             .set('Authorization', 'Bearer ' + iteration.token)
             .send({
@@ -228,7 +227,7 @@ describe('PUT - Asset', function () {
       describe(`putAssetMetadataValue - /assets/{assetId}/metadata/keys/{key}`, function () {
       
         it('Set one metadata key/value of an Asset', async function () {
-          const res = await chai.request(config.baseUrl)
+          const res = await chai.request.execute(config.baseUrl)
             .put(`/assets/${reference.scrapAsset.assetId}/metadata/keys/${reference.scrapAsset.metadataKey}`)
             .set('Authorization', 'Bearer ' + iteration.token)
             .set('Content-Type', 'application/json') 
@@ -247,7 +246,7 @@ describe('PUT - Asset', function () {
       describe(`attachStigToAsset - /assets/{assetId}/stigs/{benchmarkId}`, function () {
       
         it('PUT a STIG assignment to an Asset', async function () {
-          const res = await chai.request(config.baseUrl)
+          const res = await chai.request.execute(config.baseUrl)
             .put(`/assets/${reference.scrapAsset.assetId}/stigs/${reference.scrapAsset.scrapBenchmark}`)
             .set('Authorization', 'Bearer ' + iteration.token)
           if(!distinct.canModifyCollection){
@@ -274,7 +273,7 @@ describe('PUT - Asset', function () {
       describe(`putAssetsByCollectionLabelId - /collections/{collectionId}/labels/{labelId}/assets`, function () {
       
         it('Replace a Labels Asset Mappings in a Collection', async function () {
-          const res = await chai.request(config.baseUrl)
+          const res = await chai.request.execute(config.baseUrl)
             .put(`/collections/${reference.testCollection.collectionId}/labels/${reference.testCollection.fullLabel}/assets`)
             .set('Authorization', 'Bearer ' + iteration.token)
             .send([reference.testAsset.assetId])
@@ -292,7 +291,7 @@ describe('PUT - Asset', function () {
           expect(effectedAsset[0].assetId).to.equal(reference.testAsset.assetId)
         })
         it('Replace a Labels Asset Mappings in a Collection assign to an asset that does not exist', async function () {
-          const res = await chai.request(config.baseUrl)
+          const res = await chai.request.execute(config.baseUrl)
             .put(`/collections/${reference.testCollection.collectionId}/labels/${reference.testCollection.fullLabel}/assets`)
             .set('Authorization', 'Bearer ' + iteration.token)
             .send(["9999"])
@@ -300,7 +299,7 @@ describe('PUT - Asset', function () {
         })
         it("should throw SmError.NotFoundError when updating a label that doesn't exist.",async function () {
           const labelId = uuidv4()
-          const res = await chai.request(config.baseUrl)
+          const res = await chai.request.execute(config.baseUrl)
               .put(`/collections/${reference.testCollection.collectionId}/labels/${labelId}/assets`)
               .set('Authorization', `Bearer ${iteration.token}`)
               .send([reference.testAsset.assetId])
@@ -315,7 +314,7 @@ describe('PUT - Asset', function () {
       })
       describe(`attachAssetsToStig - /collections/{collectionId}/stigs/{benchmarkId}/assets`, function () {
         it('Set the Assets mapped to a STIG', async function () {
-          const res = await chai.request(config.baseUrl)
+          const res = await chai.request.execute(config.baseUrl)
           .put(`/collections/${reference.scrapCollection.collectionId}/stigs/${reference.scrapAsset.scrapBenchmark}/assets`)
           .set('Authorization', 'Bearer ' + iteration.token)
           .send([reference.scrapAsset.assetId])
@@ -331,7 +330,7 @@ describe('PUT - Asset', function () {
           expect(res.body[0].collectionId).to.equal(reference.scrapCollection.collectionId)
         })
         it('should throw SM privilege error due to assetId not being apart of collection.', async function () {
-          const res = await chai.request(config.baseUrl)
+          const res = await chai.request.execute(config.baseUrl)
           .put(`/collections/${reference.scrapCollection.collectionId}/stigs/${reference.scrapAsset.scrapBenchmark}/assets`)
           .set('Authorization', 'Bearer ' + iteration.token)
           .send([`1234321`])

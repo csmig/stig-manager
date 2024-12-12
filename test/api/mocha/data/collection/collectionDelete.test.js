@@ -1,16 +1,12 @@
-const chai = require('chai')
-const chaiHttp = require('chai-http')
-const { v4: uuidv4 } = require('uuid');
-chai.use(chaiHttp)
-const expect = chai.expect
-const deepEqualInAnyOrder = require('deep-equal-in-any-order')
-chai.use(deepEqualInAnyOrder)
-const config = require('../../testConfig.json')
-const utils = require('../../utils/testUtils')
-const iterations = require('../../iterations')
-const expectations = require('./expectations')
-const reference = require('../../referenceData.js')
-const requestBodies = require('./requestBodies')
+
+const { expect } = chai
+import { v4 as uuidv4 } from 'uuid'
+import {config } from '../../testConfig.js'
+import * as utils from '../../utils/testUtils.js'
+import reference from '../../referenceData.js'
+import {requestBodies} from "./requestBodies.js"
+import {iterations} from '../../iterations.js'
+import {expectations} from './expectations.js'
 
 describe('DELETE - Collection ', function () {
 
@@ -35,7 +31,7 @@ describe('DELETE - Collection ', function () {
         })
 
         it('Delete tempCollection collection (stigmanadmin only)',async function () {
-          const res = await chai.request(config.baseUrl)
+          const res = await chai.request.execute(config.baseUrl)
               .delete(`/collections/${tempCollection.collectionId}`)
               .set('Authorization', `Bearer ${iteration.token}`)
 
@@ -63,7 +59,7 @@ describe('DELETE - Collection ', function () {
           tempLabel = await utils.createCollectionLabel(reference.testCollection.collectionId, labelPost)
         })
         it('Delete a scrap collection scrap Label',async function () {
-            const res = await chai.request(config.baseUrl)
+            const res = await chai.request.execute(config.baseUrl)
                 .delete(`/collections/${reference.testCollection.collectionId}/labels/${tempLabel.labelId}`)
                 .set('Authorization', `Bearer ${iteration.token}`)
             if(distinct.canModifyCollection === false){
@@ -76,7 +72,7 @@ describe('DELETE - Collection ', function () {
         })
         it("should throw SmError.NotFoundError when deleting a non-existent label.",async function () {
           const labelId = uuidv4()
-          const res = await chai.request(config.baseUrl)
+          const res = await chai.request.execute(config.baseUrl)
               .delete(`/collections/${reference.scrapCollection.collectionId}/labels/${labelId}`)
               .set('Authorization', `Bearer ${iteration.token}`)
           if(distinct.canModifyCollection === false){
@@ -94,7 +90,7 @@ describe('DELETE - Collection ', function () {
           const res = await utils.putCollection(reference.testCollection.collectionId, requestBodies.resetTestCollection)
         })
         it('Delete a scrap collection Metadata Key',async function () {
-            const res = await chai.request(config.baseUrl)
+            const res = await chai.request.execute(config.baseUrl)
                 .delete(`/collections/${reference.testCollection.collectionId}/metadata/keys/${reference.testCollection.collectionMetadataKey}`)
                 .set('Authorization', `Bearer ${iteration.token}`)
 
@@ -115,7 +111,7 @@ describe('DELETE - Collection ', function () {
         })
 
         it('Delete review History records - retentionDate',async function () {
-            const res = await chai.request(config.baseUrl)
+            const res = await chai.request.execute(config.baseUrl)
                 .delete(`/collections/${reference.testCollection.collectionId}/review-history?retentionDate=${reference.testCollection.reviewHistory.endDate}`)
                 .set('Authorization', `Bearer ${iteration.token}`)
                 
@@ -128,7 +124,7 @@ describe('DELETE - Collection ', function () {
             expect(res.body.HistoryEntriesDeleted).to.be.equal(reference.testCollection.reviewHistory.deletedEntriesByDate)
         })
         it('Delete review History records - date and assetId',async function () {
-            const res = await chai.request(config.baseUrl)
+            const res = await chai.request.execute(config.baseUrl)
                 .delete(`/collections/${reference.testCollection.collectionId}/review-history?retentionDate=${reference.testCollection.reviewHistory.endDate}&assetId=${reference.testCollection.testAssetId}`)
                 .set('Authorization', `Bearer ${iteration.token}`)
 
@@ -149,7 +145,7 @@ describe('DELETE - Collection ', function () {
         })  
         it('Delete scrap lvl1 bizzaro users grant.  ',async function () {
 
-            const res = await chai.request(config.baseUrl)
+            const res = await chai.request.execute(config.baseUrl)
                 .delete(`/collections/${reference.testCollection.collectionId}/grants/${reference.scrapLvl1User.testCollectionGrantId}`)
                 .set('Authorization', `Bearer ${iteration.token}`)
                 
@@ -163,9 +159,9 @@ describe('DELETE - Collection ', function () {
             expect(res.body.user.userId).to.eql(reference.scrapLvl1User.userId)
 
         })
-        it("Delete an owner grant, is succeeding for all users role owner without elevate.",async function () {
+        it("Delete an owner grant, is succeeding for all users with role owner without elevate.",async function () {
 
-          const res = await chai.request(config.baseUrl)
+          const res = await chai.request.execute(config.baseUrl)
               .delete(`/collections/${reference.testCollection.collectionId}/grants/${reference.adminBurke.testCollectionGrantId}`)
               .set('Authorization', `Bearer ${iteration.token}`)
 
@@ -175,9 +171,10 @@ describe('DELETE - Collection ', function () {
           }
           expect(res).to.have.status(200)
         })
+
         it("Delete an owner grant, using elevate should only succeed with stigmanadmin",async function () {
 
-          const res = await chai.request(config.baseUrl)
+          const res = await chai.request.execute(config.baseUrl)
               .delete(`/collections/${reference.testCollection.collectionId}/grants/${"7"}?elevate=true`)
               .set('Authorization', `Bearer ${iteration.token}`)
 
@@ -189,7 +186,7 @@ describe('DELETE - Collection ', function () {
         })
         it("attempt to delete grant that does not exist expect error",async function () {
 
-          const res = await chai.request(config.baseUrl)
+          const res = await chai.request.execute(config.baseUrl)
               .delete(`/collections/${reference.testCollection.collectionId}/grants/${"54321"}`)
               .set('Authorization', `Bearer ${iteration.token}`)
           if(distinct.canModifyCollection === false){

@@ -1,10 +1,8 @@
-const chai = require("chai")
-const chaiHttp = require("chai-http")
-chai.use(chaiHttp)
-const expect = chai.expect
-const config = require("../testConfig.json")
-const utils = require("../utils/testUtils")
-const reference = require("../referenceData.js")
+
+const { expect } = chai
+import {config } from '../testConfig.js'
+import * as utils from '../utils/testUtils.js'
+import reference from '../referenceData.js'
 
 const user = {
   name: "admin",
@@ -21,7 +19,7 @@ describe(`PUT - attachAssetsToStig - /collections/{collectionId}/stigs/{benchmar
       await utils.loadAppData()
     })
     it('gh-756 issue (assigning a benchmark in one collection removes all assignements for that benchmark from all other collections) . assign a benchmark used in test Collection in scrap Collection', async function () {
-      const res = await chai.request(config.baseUrl)
+      const res = await chai.request.execute(config.baseUrl)
       .put(`/collections/${reference.scrapCollection.collectionId}/stigs/${reference.testCollection.benchmark}/assets`)
       .set('Authorization', 'Bearer ' + user.token)
       .send([reference.scrapAsset.assetId])
@@ -32,7 +30,7 @@ describe(`PUT - attachAssetsToStig - /collections/{collectionId}/stigs/{benchmar
       expect(res.body[0].assetId).to.equal(reference.scrapAsset.assetId)
     })
     it('Verify that test collection still has expected benchmark assignments', async function () {
-        const res = await chai.request(config.baseUrl)
+        const res = await chai.request.execute(config.baseUrl)
         .get(`/collections/${reference.testCollection.collectionId}/stigs`)
         .set('Authorization', 'Bearer ' + user.token)
         expect(res).to.have.status(200)
@@ -55,7 +53,7 @@ describe(`GET - getChecklistByAssetStig - /assets/{assetId}/checklists/{benchmar
     
     let createdAssetId = null
     it('should Create an Asset in collection to be deleted', async function () {
-      const res = await chai.request(config.baseUrl)
+      const res = await chai.request.execute(config.baseUrl)
       .post(`/assets?projection=stigs`)
       .set('Authorization', 'Bearer ' + user.token)
       .send({
@@ -79,7 +77,7 @@ describe(`GET - getChecklistByAssetStig - /assets/{assetId}/checklists/{benchmar
       createdAssetId = res.body.assetId
     })
     it('Return the ckl for Asset with reserved chars', async function () {
-      const res = await chai.request(config.baseUrl)
+      const res = await chai.request.execute(config.baseUrl)
       .get(`/assets/${createdAssetId}/checklists/${reference.benchmark}/${reference.testCollection.defaultRevision}?format=ckl`)
       .set('Authorization', 'Bearer ' + user.token)
       expect(res).to.have.status(200)
@@ -88,7 +86,7 @@ describe(`GET - getChecklistByAssetStig - /assets/{assetId}/checklists/{benchmar
 
     })
     it('Return the cklB for Asset with reserved chars', async function () {
-      const res = await chai.request(config.baseUrl)
+      const res = await chai.request.execute(config.baseUrl)
       .get(`/assets/${createdAssetId}/checklists/${reference.benchmark}/${reference.testCollection.defaultRevision}?format=cklb`)
       .set('Authorization', 'Bearer ' + user.token)
       expect(res).to.have.status(200)
@@ -96,7 +94,7 @@ describe(`GET - getChecklistByAssetStig - /assets/{assetId}/checklists/{benchmar
       expect(res.headers['content-disposition'], "Content-Disposition is set with expected filename").to.match(regex)
     })
     it('Return the xccdf for Asset with reserved chars', async function () {
-      const res = await chai.request(config.baseUrl)
+      const res = await chai.request.execute(config.baseUrl)
       .get(`/assets/${createdAssetId}/checklists/${reference.benchmark}/${reference.testCollection.defaultRevision}?format=xccdf`)
       .set('Authorization', 'Bearer ' + user.token)
       expect(res).to.have.status(200)

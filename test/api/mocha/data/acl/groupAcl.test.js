@@ -1,15 +1,9 @@
-const chai = require('chai')
-const deepEqualInAnyOrder = require('deep-equal-in-any-order')
-const chaiHttp = require('chai-http')
-chai.use(chaiHttp)
-chai.use(deepEqualInAnyOrder)
-const { v4: uuidv4 } = require('uuid')
-const expect = chai.expect
-const config = require('../../testConfig.json')
-const utils = require('../../utils/testUtils.js')
-const reference = require('./referenceData.js')
-//const requestBodies = require('./aclData.js')
-const iterations = require('./groupIterations.js')
+
+const { expect } = chai
+import {config } from '../../testConfig.js'
+import * as utils from '../../utils/testUtils.js'
+import reference from './referenceData.js'
+import {iterations} from './groupIterations.js'
 
 const user = {
     name: 'lvl1',
@@ -29,7 +23,7 @@ describe('GET- getEffectiveAclByCollectionUser - /collection/{collectionId}/gran
     describe(`iteration:${iteration.name}`, () => {
       
       it(`should set test groups ACL: ${iteration.name}`, async () => {
-        const res = await chai.request(config.baseUrl)
+        const res = await chai.request.execute(config.baseUrl)
         .put(`/collections/${reference.testCollection.collectionId}/grants/${reference.testCollection.testGroup.grantId}/acl`)
         .set('Authorization', `Bearer ${config.adminToken}`)
         .send(iteration.put)
@@ -39,7 +33,7 @@ describe('GET- getEffectiveAclByCollectionUser - /collection/{collectionId}/gran
       })
 
       it("should confirm group acl was set", async () => {
-        const res = await chai.request(config.baseUrl)
+        const res = await chai.request.execute(config.baseUrl)
           .get(`/collections/${reference.testCollection.collectionId}/grants/${reference.testCollection.testGroup.grantId}/acl`)
           .set('Authorization', `Bearer ${config.adminToken}`)
         expect(res).to.have.status(200)
@@ -74,7 +68,7 @@ describe('GET- getEffectiveAclByCollectionUser - /collection/{collectionId}/gran
       })
 
       it('should return 200 and the effective acl for the iteration', async () => {
-        const res = await chai.request(config.baseUrl)
+        const res = await chai.request.execute(config.baseUrl)
         .get(`/collections/${reference.testCollection.collectionId}/grants/user/${user.userId}/access/effective`)
         .set('Authorization', `Bearer ${config.adminToken}`)
         expect(res).to.have.status(200)

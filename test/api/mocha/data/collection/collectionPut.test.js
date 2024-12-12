@@ -1,15 +1,11 @@
-const chai = require('chai')
-const chaiHttp = require('chai-http')
-chai.use(chaiHttp)
-const expect = chai.expect
-const deepEqualInAnyOrder = require('deep-equal-in-any-order')
-chai.use(deepEqualInAnyOrder)
-const config = require('../../testConfig.json')
-const utils = require('../../utils/testUtils')
-const iterations = require("../../iterations.js")
-const expectations = require('./expectations.js')
-const reference = require('../../referenceData.js')
-const requestBodies = require('./requestBodies.js')
+
+const { expect } = chai
+import {config } from '../../testConfig.js'
+import * as utils from '../../utils/testUtils.js'
+import reference from '../../referenceData.js'
+import {requestBodies} from "./requestBodies.js"
+import {iterations} from '../../iterations.js'
+import {expectations} from './expectations.js'
 
 describe('PUT - Collection', function () {
 
@@ -35,7 +31,7 @@ describe('PUT - Collection', function () {
         it('Set all properties of a Collection',async function () {
 
             const putRequest = requestBodies.replaceCollection
-            const res = await chai.request(config.baseUrl)
+            const res = await chai.request.execute(config.baseUrl)
                 .put(`/collections/${reference.testCollection.collectionId}?projection=grants&projection=owners&projection=statistics&projection=stigs&projection=assets`)
                 .set('Authorization', `Bearer ${iteration.token}`)
                 .send(putRequest)
@@ -90,7 +86,7 @@ describe('PUT - Collection', function () {
           const putRequest = JSON.parse(JSON.stringify(requestBodies.replaceCollection))
           putRequest.grants.push(putRequest.grants[0])
           putRequest.name = "TEST" + utils.getUUIDSubString()
-          const res = await chai.request(config.baseUrl)
+          const res = await chai.request.execute(config.baseUrl)
               .put(`/collections/${reference.testCollection.collectionId}`)
               .set('Authorization', `Bearer ${iteration.token}`)
               .send(putRequest)
@@ -153,7 +149,7 @@ describe('PUT - Collection', function () {
                 ],
             }
       
-            const res = await chai.request(config.baseUrl)
+            const res = await chai.request.execute(config.baseUrl)
                 .put(`/collections/${reference.testCollection.collectionId}?projection=grants&projection=owners&projection=statistics&projection=stigs&projection=assets`)
                 .set('Authorization', `Bearer ${iteration.token}`)
                 .send(putRequest    )
@@ -204,7 +200,7 @@ describe('PUT - Collection', function () {
                 [reference.testCollection.metadataKey]: reference.testCollection.metadataValue
             }
 
-            const res = await chai.request(config.baseUrl)
+            const res = await chai.request.execute(config.baseUrl)
                 .put(`/collections/${reference.testCollection.collectionId}/metadata`)
                 .set('Authorization', `Bearer ${iteration.token}`)
                 .send(putRequest)
@@ -221,7 +217,7 @@ describe('PUT - Collection', function () {
       describe('putCollectionMetadataValue - /collections/{collectionId}/metadata/keys/{key}', function () {
 
         it('Set one metadata key/value of a Collection',async function () {
-          const res = await chai.request(config.baseUrl)
+          const res = await chai.request.execute(config.baseUrl)
             .put(`/collections/${reference.testCollection.collectionId}/metadata/keys/${reference.testCollection.collectionMetadataKey}`)
             .set('Authorization', `Bearer ${iteration.token}`)
             .set('Content-Type', 'application/json') 
@@ -243,7 +239,7 @@ describe('PUT - Collection', function () {
 
         it("should replace access level and keep the same user in the test group in the test colleciton, not elevated", async function () {
           
-          const res = await chai.request(config.baseUrl)
+          const res = await chai.request.execute(config.baseUrl)
           .put(`/collections/${reference.testCollection.collectionId}/grants/${reference.testCollection.testGroup.testCollectionGrantId}`)
           .set('Authorization', `Bearer ${iteration.token}`)
           .send({
@@ -262,7 +258,7 @@ describe('PUT - Collection', function () {
 
         it("should replace access level and user of the test group grant id in the test colleciton,  elevated only stigmanadmin success", async function () {
 
-          const res = await chai.request(config.baseUrl)
+          const res = await chai.request.execute(config.baseUrl)
           .put(`/collections/${reference.testCollection.collectionId}/grants/${reference.testCollection.testGroup.testCollectionGrantId}?elevate=true`)
           .set('Authorization', `Bearer ${iteration.token}`)
           .send({
@@ -280,7 +276,7 @@ describe('PUT - Collection', function () {
 
         it("should throw error, the user does not have grant to the collection ", async function () {
 
-          const res = await chai.request(config.baseUrl)
+          const res = await chai.request.execute(config.baseUrl)
           .put(`/collections/${reference.scrapCollection.collectionId}/grants/${reference.testCollection.testGroup.testCollectionGrantId}`)
           .set('Authorization', `Bearer ${iteration.token}`)
           .send({
@@ -297,7 +293,7 @@ describe('PUT - Collection', function () {
 
       it("should throw error, the user has < 4 access level and is attempting to modified an existing owners grant. ", async function () {
 
-        const res = await chai.request(config.baseUrl)
+        const res = await chai.request.execute(config.baseUrl)
         .put(`/collections/${reference.testCollection.collectionId}/grants/${reference.adminBurke.testCollectionGrantId}`)
         .set('Authorization', `Bearer ${iterations[1].token}`)
         .send({
@@ -319,7 +315,7 @@ describe('PUT - Collection', function () {
 
         it('Set all ACL rules of a Collection',async function () {
 
-            const res = await chai.request(config.baseUrl)
+            const res = await chai.request.execute(config.baseUrl)
                 .put(`/collections/${reference.testCollection.collectionId}/grants/${reference.testCollection.testGroup.testCollectionGrantId}/acl`)
                 .set('Authorization', `Bearer ${iteration.token}`)
                 .send(requestBodies.putGroupAcl)
@@ -345,7 +341,7 @@ describe('PUT - Collection', function () {
 
         it("should throw 422 error, because groupId does not exist. ", async function () {
 
-          const res = await chai.request(config.baseUrl)
+          const res = await chai.request.execute(config.baseUrl)
           .put(`/collections/${reference.testCollection.collectionId}/grants/${"1234321"}/acl`)
               .set('Authorization', `Bearer ${iteration.token}`)
               .send(requestBodies.putGroupAcl)
@@ -358,7 +354,7 @@ describe('PUT - Collection', function () {
 
         it("Should throw 403 because collectionId does not exist", async function () {
 
-          const res = await chai.request(config.baseUrl)
+          const res = await chai.request.execute(config.baseUrl)
           .put(`/collections/${1234321}/grants/${reference.testCollection.testGroup.testCollectionGrantId}/acl`)
             .set('Authorization', `Bearer ${iteration.token}`)
             .send(requestBodies.putGroupAcl)

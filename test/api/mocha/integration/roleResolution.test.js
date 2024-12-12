@@ -1,14 +1,9 @@
 
-const chai = require("chai")
-const chaiHttp = require("chai-http")
-const deepEqualInAnyOrder = require('deep-equal-in-any-order')
-const { v4: uuidv4 } = require('uuid')
-chai.use(chaiHttp)
-chai.use(deepEqualInAnyOrder)
-const expect = chai.expect
-const config = require("../testConfig.json")
-const utils = require("../utils/testUtils.js")
-const reference = require("../referenceData.js")
+const { expect } = chai
+import { v4 as uuidv4 } from 'uuid'
+import {config } from '../testConfig.js'
+import * as utils from '../utils/testUtils.js'
+import reference from '../referenceData.js'
 
 const admin = {
   name: "admin",
@@ -143,8 +138,7 @@ describe("Test grantee resolution is resolved from assigning a user to a group",
     //first 20 chars
     uuid = uuid.substring(0, 20)
 
-    const res = await chai
-    .request(config.baseUrl)
+    const res = await chai.request.execute(config.baseUrl)
     .post(`/users?elevate=true&projection=collectionGrants&projection=statistics`)
     .set('Authorization', 'Bearer ' + admin.token)
     .send({
@@ -160,12 +154,11 @@ describe("Test grantee resolution is resolved from assigning a user to a group",
   // create test group
   it("create a temporary userGroup with the user we created in it", async function () {
 
-    const uuid = uuidv4()
+    let uuid = uuidv4()
     //first 20 chars
-    let = uuid.substring(0, 20)
+    uuid = uuid.substring(0, 20)
 
-    const res = await chai
-    .request(config.baseUrl)
+    const res = await chai.request.execute(config.baseUrl)
     .post(`/user-groups?elevate=true`)
     .set('Authorization', 'Bearer ' + admin.token)
     .send({
@@ -181,22 +174,22 @@ describe("Test grantee resolution is resolved from assigning a user to a group",
   // assign it to the test collection 
   it("assign the userGroup to the test collection with restricted grant", async function () {
 
-    const res = await chai.request(config.baseUrl)
+    const res = await chai.request.execute(config.baseUrl)
     .post(`/collections/${reference.testCollection.collectionId}/grants`)
     .set('Authorization', `Bearer ${admin.token}`)
     .send([{
       userGroupId: tempGroup.userGroupId,
       accessLevel: 1
     }])
-    expect(res).to.have.status(201)
-    tempGroup.grantId = res.body[0].grantId
+    expect(res).to.have.status(200)
+    tempGroup.grantId = res.body.grantId
   })
 
   // then get the grant and test grantee = userGroup.
   it("should return the grant for the user in the collection and check that grantee is from a group grant",async function () {
     
 
-    const res = await chai.request(config.baseUrl)
+    const res = await chai.request.execute(config.baseUrl)
       .get(`/users/${tempUser.userId}?elevate=true&projection=collectionGrants&projection=userGroups`)
       .set('Authorization', `Bearer ${config.adminToken}`)
     expect(res).to.have.status(200)
@@ -222,7 +215,7 @@ describe(`Testing grantee resolution between a direct grant and group grant`, ()
 
       it("Remove Base appdata userGroup from test Colleciton", async () => {
 
-        const res = await chai.request(config.baseUrl)  
+        const res = await chai.request.execute(config.baseUrl)  
           .delete(`/collections/${reference.testCollection.collectionId}/grants/${reference.testCollection.testGroup.testCollectionGrantId}`)
           .set('Authorization', `Bearer ${admin.token}`)
     
@@ -230,21 +223,20 @@ describe(`Testing grantee resolution between a direct grant and group grant`, ()
       })
 
       it("should give lvl1 user restricted access to test collection", async () => {
-        const res = await chai.request(config.baseUrl)
+        const res = await chai.request.execute(config.baseUrl)
             .post(`/collections/${reference.testCollection.collectionId}/grants`)
             .set('Authorization', `Bearer ${admin.token}`)
             .send([{
               "userId": lvl1.userId,
               "accessLevel": 1
             }])
-        expect(res).to.have.status(201)
-        lvl1DirectGrantId = res.body[0].grantId
+        expect(res).to.have.status(200)
+        lvl1DirectGrantId = res.body.grantId
       })
       // user has direct grant to collection
       it("make sure grantee has a userID property which means it has a direct grant ", async () => {
 
-          const res = await chai
-              .request(config.baseUrl)
+          const res = await chai.request.execute(config.baseUrl)
               .get(`/collections/${reference.testCollection.collectionId}/grants/user/${lvl1.userId}/access/effective`)
               .set('Authorization', 'Bearer ' + admin.token)
       
@@ -258,8 +250,7 @@ describe(`Testing grantee resolution between a direct grant and group grant`, ()
 
       // make group
       it("should create a userGroup with lvl1 in it", async () => {
-          const res = await chai
-              .request(config.baseUrl)
+          const res = await chai.request.execute(config.baseUrl)
               .post(`/user-groups?elevate=true&projection=users`)
               .set('Authorization', 'Bearer ' + admin.token)
               .send({
@@ -280,22 +271,20 @@ describe(`Testing grantee resolution between a direct grant and group grant`, ()
       // add group to collection
       it("should give created group restricted access to test collection", async () => {
 
-          const res = await chai
-              .request(config.baseUrl)
+          const res = await chai.request.execute(config.baseUrl)
               .post(`/collections/${reference.testCollection.collectionId}/grants`)
               .set('Authorization', 'Bearer ' + admin.token)
               .send([{
                   "userGroupId": userGroup.userGroupId,
                   accessLevel: 1
               }])
-          expect(res).to.have.status(201)
-          userGroupGrantId = res.body[0].grantId
+          expect(res).to.have.status(200)
+          userGroupGrantId = res.body.grantId
       })
 
       it("should set userGroups ACL in test collection", async () => {
 
-          const res = await chai
-              .request(config.baseUrl)
+          const res = await chai.request.execute(config.baseUrl)
               .put(`/collections/${reference.testCollection.collectionId}/grants/${userGroupGrantId}/acl`)
               .set('Authorization', 'Bearer ' + admin.token)
               .send(lvl1TestAcl.put)
@@ -304,8 +293,7 @@ describe(`Testing grantee resolution between a direct grant and group grant`, ()
 
       it("should confirm users effective acl was set. User has group and direct grant expect to get effective from the direct", async () => {
 
-          const res = await chai
-              .request(config.baseUrl)
+          const res = await chai.request.execute(config.baseUrl)
               .get(`/collections/${reference.testCollection.collectionId}/grants/user/${lvl1.userId}/access/effective`)
               .set('Authorization', 'Bearer ' + admin.token)
       
@@ -319,15 +307,14 @@ describe(`Testing grantee resolution between a direct grant and group grant`, ()
 
       it("should delete users direct grant to test collection", async () => {
 
-          const res = await chai.request(config.baseUrl)  
+          const res = await chai.request.execute(config.baseUrl)  
               .delete(`/collections/${reference.testCollection.collectionId}/grants/${lvl1DirectGrantId}`)
               .set('Authorization', `Bearer ${admin.token}`)
           expect(res).to.have.status(200)
       })
 
       it("should confirm that the direct grant was deleted", async () => {  
-        const res = await chai
-            .request(config.baseUrl)
+        const res = await chai.request.execute(config.baseUrl)
             .get(`/collections/${reference.testCollection.collectionId}/grants/${lvl1DirectGrantId}`)
             .set('Authorization', 'Bearer ' + admin.token)
         expect(res).to.have.status(404)
@@ -335,8 +322,7 @@ describe(`Testing grantee resolution between a direct grant and group grant`, ()
       
       it("User now only has a group grant, check that grantee was resolved from a group", async () => {
 
-        const res = await chai
-            .request(config.baseUrl)
+        const res = await chai.request.execute(config.baseUrl)
             .get(`/collections/${reference.testCollection.collectionId}/grants/user/${lvl1.userId}/access/effective`)
             .set('Authorization', 'Bearer ' + admin.token)
         expect(res).to.have.status(200)
@@ -348,16 +334,14 @@ describe(`Testing grantee resolution between a direct grant and group grant`, ()
       })
 
       it("should delete the userGroup", async () => {
-          const res = await chai
-              .request(config.baseUrl)
+          const res = await chai.request.execute(config.baseUrl)
               .delete(`/user-groups/${userGroup.userGroupId}?elevate=true`)
               .set('Authorization', 'Bearer ' + admin.token)
           expect(res).to.have.status(200)
       })
 
       it("should confirm that the userGroup was deleted", async () => {
-          const res = await chai
-              .request(config.baseUrl)
+          const res = await chai.request.execute(config.baseUrl)
               .get(`/user-groups/${userGroup.userGroupId}?elevate=true`)
               .set('Authorization', 'Bearer ' + admin.token)
           expect(res).to.have.status(404)
@@ -365,8 +349,7 @@ describe(`Testing grantee resolution between a direct grant and group grant`, ()
       
       it("User now has no grant to the collection should get 422 error", async () => {
 
-          const res = await chai
-              .request(config.baseUrl)
+          const res = await chai.request.execute(config.baseUrl)
               .get(`/collections/${reference.testCollection.collectionId}/grants/user/${lvl1.userId}/access/effective`)
               .set('Authorization', 'Bearer ' + admin.token)
           expect(res).to.have.status(422)
@@ -387,7 +370,7 @@ describe(`Multiple Group Role Collisions`, () => {
 
   it("Remove Base appdata userGroup from test Colleciton", async () => {
 
-    const res = await chai.request(config.baseUrl)  
+    const res = await chai.request.execute(config.baseUrl)  
       .delete(`/collections/${reference.testCollection.collectionId}/grants/${reference.testCollection.testGroup.testCollectionGrantId}`)
       .set('Authorization', `Bearer ${admin.token}`)
 
@@ -396,15 +379,14 @@ describe(`Multiple Group Role Collisions`, () => {
 
   it("Delete base appdata userGroup", async () => {
 
-    const res = await chai.request(config.baseUrl)  
+    const res = await chai.request.execute(config.baseUrl)  
       .delete(`/user-groups/${reference.testCollection.testGroup.userGroupId}?elevate=true`)
       .set('Authorization', `Bearer ${admin.token}`)
     expect(res).to.have.status(200)
   })
 
   it('should create a test user group with lvl1 user in it.', async () => {
-    const res = await chai
-        .request(config.baseUrl)
+    const res = await chai.request.execute(config.baseUrl)
         .post(`/user-groups?elevate=true&projection=collections`)
         .set('Authorization', 'Bearer ' + config.adminToken)
         .send({
@@ -421,8 +403,7 @@ describe(`Multiple Group Role Collisions`, () => {
 
   it('should create another test user group with lvl1 user in it.', async () => {
 
-      const res = await chai
-          .request(config.baseUrl)
+      const res = await chai.request.execute(config.baseUrl)
           .post(`/user-groups?elevate=true&projection=collections`)
           .set('Authorization', 'Bearer ' + config.adminToken)
           .send({
@@ -440,32 +421,32 @@ describe(`Multiple Group Role Collisions`, () => {
   
   it("should assign both groups created to the test collection with restricted grant", async function () {
 
-    const res = await chai.request(config.baseUrl)
+    const res = await chai.request.execute(config.baseUrl)
       .post(`/collections/${reference.testCollection.collectionId}/grants`)
       .set('Authorization', `Bearer ${config.adminToken}`)
       .send([{
           userGroupId: userGroup1.userGroupId,
           accessLevel: 1
       }])
-    expect(res).to.have.status(201)
-    expect(res.body[0].accessLevel).to.equal(1)
-    userGroup1.grantId = res.body[0].grantId
+    expect(res).to.have.status(200)
+    expect(res.body.accessLevel).to.equal(1)
+    userGroup1.grantId = res.body.grantId
 
-    const res2 = await chai.request(config.baseUrl)
+    const res2 = await chai.request.execute(config.baseUrl)
         .post(`/collections/${reference.testCollection.collectionId}/grants`)
         .set('Authorization', `Bearer ${config.adminToken}`)
         .send([{
           userGroupId: userGroup2.userGroupId,
           accessLevel: 1
         }])
-      expect(res2).to.have.status(201)
-      expect(res2.body[0].accessLevel).to.equal(1)
-      userGroup2.grantId = res2.body[0].grantId
+      expect(res2).to.have.status(200)
+      expect(res2.body.accessLevel).to.equal(1)
+      userGroup2.grantId = res2.body.grantId
   })
 
   it("get lvl1 user check that lvl1 user obtained accessLevel = 1 due to membership in two groups with accessLevel = 1", async () => {
 
-       const res = await chai.request(config.baseUrl)
+       const res = await chai.request.execute(config.baseUrl)
           .get(`/users/${reference.lvl1User.userId}?elevate=true&projection=collectionGrants&projection=userGroups`)
           .set('Authorization', `Bearer ${config.adminToken}`)
       expect(res).to.have.status(200)
@@ -480,7 +461,7 @@ describe(`Multiple Group Role Collisions`, () => {
   })
 
   it("should change userGroup1 accessLevel to 2", async () => {
-      const res = await chai.request(config.baseUrl)
+      const res = await chai.request.execute(config.baseUrl)
           .put(`/collections/${reference.testCollection.collectionId}/grants/${userGroup1.grantId}`)
           .set('Authorization', `Bearer ${config.adminToken}`)
           .send({
@@ -493,7 +474,7 @@ describe(`Multiple Group Role Collisions`, () => {
 
   it("get users assigned to the test collection and check that lvl1 user obtained accessLevel = 2 due to membership in two groups with highest being accessLevel = 2", async () => {
 
-    const res = await chai.request(config.baseUrl)
+    const res = await chai.request.execute(config.baseUrl)
       .get(`/users/${reference.lvl1User.userId}?elevate=true&projection=collectionGrants&projection=userGroups`)
       .set('Authorization', `Bearer ${config.adminToken}`)
     expect(res).to.have.status(200) 
@@ -507,7 +488,7 @@ describe(`Multiple Group Role Collisions`, () => {
   })
 
   it("should change userGroup2 accessLevel to 3", async () => {
-      const res = await chai.request(config.baseUrl)
+      const res = await chai.request.execute(config.baseUrl)
           .put(`/collections/${reference.testCollection.collectionId}/grants/${userGroup2.grantId}`)
           .set('Authorization', `Bearer ${config.adminToken}`)
           .send({
@@ -520,7 +501,7 @@ describe(`Multiple Group Role Collisions`, () => {
 
   it("get users assigned to the test collection and check that lvl1 user obtained accessLevel = 3 due to membership in two groups with highest being accessLevel = 3", async () => {
 
-    const res = await chai.request(config.baseUrl)
+    const res = await chai.request.execute(config.baseUrl)
       .get(`/users/${reference.lvl1User.userId}?elevate=true&projection=collectionGrants&projection=userGroups`)
       .set('Authorization', `Bearer ${config.adminToken}`)
     expect(res).to.have.status(200)
@@ -534,7 +515,7 @@ describe(`Multiple Group Role Collisions`, () => {
   })
 
   it("should change userGroup1 accessLevel to 4", async () => {
-      const res = await chai.request(config.baseUrl)
+      const res = await chai.request.execute(config.baseUrl)
           .put(`/collections/${reference.testCollection.collectionId}/grants/${userGroup1.grantId}`)
           .set('Authorization', `Bearer ${config.adminToken}`)
           .send({
@@ -547,7 +528,7 @@ describe(`Multiple Group Role Collisions`, () => {
   
   it("get users assigned to the test collection and check that lvl1 user obtained accessLevel = 4 due to membership in two groups with highest being accessLevel = 4", async () => {
 
-    const res = await chai.request(config.baseUrl)
+    const res = await chai.request.execute(config.baseUrl)
       .get(`/users/${reference.lvl1User.userId}?elevate=true&projection=collectionGrants&projection=userGroups`)
      .set('Authorization', `Bearer ${config.adminToken}`)
     expect(res).to.have.status(200)
@@ -561,8 +542,7 @@ describe(`Multiple Group Role Collisions`, () => {
   })
 
   it("create a new userGroup with lvl1 user in it", async () => {
-      const res = await chai
-          .request(config.baseUrl)
+      const res = await chai.request.execute(config.baseUrl)
           .post(`/user-groups?elevate=true&projection=collections`)
           .set('Authorization', 'Bearer ' + config.adminToken)
           .send({
@@ -578,20 +558,20 @@ describe(`Multiple Group Role Collisions`, () => {
   })
 
   it("assign userGroup3 to the test collection with accessLevel = 4", async () => {
-    const res = await chai.request(config.baseUrl)
+    const res = await chai.request.execute(config.baseUrl)
         .post(`/collections/${reference.testCollection.collectionId}/grants`)
         .set('Authorization', `Bearer ${config.adminToken}`)
         .send([{
             userGroupId: userGroup3.userGroupId,
             accessLevel: 4
         }])
-    expect(res).to.have.status(201)
-    expect(res.body[0].accessLevel).to.equal(4)
+    expect(res).to.have.status(200)
+    expect(res.body.accessLevel).to.equal(4)
   })
 
   it("get users assigned to the test collection and check that lvl1 user obtained accessLevel = 4 due to membership in three groups with two groups being accessLevel = 4", async () => {
 
-    const res = await chai.request(config.baseUrl)
+    const res = await chai.request.execute(config.baseUrl)
       .get(`/users/${reference.lvl1User.userId}?elevate=true&projection=collectionGrants&projection=userGroups`)
       .set('Authorization', `Bearer ${config.adminToken}`)
 
@@ -621,8 +601,7 @@ describe("Testing user grant for a user that has a 'grantee' from a userGroup gr
     //first 20 chars
     uuid = uuid.substring(0, 20)
 
-    const res = await chai
-    .request(config.baseUrl)
+    const res = await chai.request.execute(config.baseUrl)
     .post(`/users?elevate=true&projection=collectionGrants&projection=statistics`)
     .set('Authorization', 'Bearer ' + admin.token)
     .send({
@@ -638,12 +617,10 @@ describe("Testing user grant for a user that has a 'grantee' from a userGroup gr
   // create test group
   it("create a temporary userGroup with our temp user in it", async function () {
 
-    const uuid = uuidv4()
+    let uuid = uuidv4()
     //first 20 chars
-    let = uuid.substring(0, 20)
-
-    const res = await chai
-    .request(config.baseUrl)
+    uuid = uuid.substring(0, 20)
+    const res = await chai.request.execute(config.baseUrl)
     .post(`/user-groups?elevate=true`)
     .set('Authorization', 'Bearer ' + admin.token)
     .send({
@@ -659,22 +636,21 @@ describe("Testing user grant for a user that has a 'grantee' from a userGroup gr
   // assign it to the test collection 
   it("assign the userGroup to the test collection with restricted grant", async function () {
 
-    const res = await chai.request(config.baseUrl)
+    const res = await chai.request.execute(config.baseUrl)
     .post(`/collections/${reference.testCollection.collectionId}/grants`)
     .set('Authorization', `Bearer ${admin.token}`)
     .send([{
       userGroupId: tempGroupID,
       accessLevel: 1
     }])
-    expect(res).to.have.status(201)
-    tempGroupID.grantId = res.body[0].grantId
-
+    expect(res).to.have.status(200)
+    //tempGroupID.grantId = res.body.grantId
   })
 
   // then get the grant and test grantee = userGroup.
   it("should return the grant for the user in the collection and check that grantee is from a group grant",async function () {
     
-    const res = await chai.request(config.baseUrl)
+    const res = await chai.request.execute(config.baseUrl)
       .get(`/users/${tempUserID}?elevate=true&projection=collectionGrants&projection=userGroups`)
       .set('Authorization', `Bearer ${config.adminToken}`)
     expect(res).to.have.status(200)

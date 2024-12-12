@@ -1,14 +1,12 @@
-const chai = require('chai')
-const chaiHttp = require('chai-http')
-chai.use(chaiHttp)
-const expect = chai.expect
-const config = require('../../testConfig.json')
-const utils = require('../../utils/testUtils')
-const { XMLParser } = require(`fast-xml-parser`)
-const iterations = require('../../iterations.js')
-const expectations = require('./expectations.js')
-const reference = require('../../referenceData.js')
-const requestBodies = require('./requestBodies.js')
+
+const { expect } = chai
+import { XMLParser } from 'fast-xml-parser'
+import {config } from '../../testConfig.js'
+import * as utils from '../../utils/testUtils.js'
+import reference from '../../referenceData.js'
+import {requestBodies} from "./requestBodies.js"
+import {iterations} from '../../iterations.js'
+import {expectations} from './expectations.js'
 
 describe('PUT - Review', () => {
 
@@ -37,7 +35,7 @@ describe('PUT - Review', () => {
                         autoResult: false
                     }
 
-                    const res = await chai.request(config.baseUrl)
+                    const res = await chai.request.execute(config.baseUrl)
                         .put(`/collections/${reference.testCollection.collectionId}/reviews/${reference.testAsset.assetId}/${reference.testCollection.ruleId}`)
                         .set('Authorization', `Bearer ${iteration.token}`)
                         .send(putBody)
@@ -56,7 +54,7 @@ describe('PUT - Review', () => {
                         autoResult: false
                     }
 
-                    const res = await chai.request(config.baseUrl)
+                    const res = await chai.request.execute(config.baseUrl)
                         .put(`/collections/${reference.testCollection.collectionId}/reviews/${reference.testAsset.assetId}/${reference.testCollection.ruleId}`)
                         .set('Authorization', `Bearer ${iteration.token}`)
                         .send(putBody)
@@ -82,7 +80,7 @@ describe('PUT - Review', () => {
                         autoResult: false
                     }
 
-                    const res = await chai.request(config.baseUrl)
+                    const res = await chai.request.execute(config.baseUrl)
                         .put(`/collections/${reference.testCollection.collectionId}/reviews/${reference.testAsset.assetId}/${reference.testCollection.ruleId}`)
                         .set('Authorization', `Bearer ${iteration.token}`)
                         .send(putBody)
@@ -99,7 +97,7 @@ describe('PUT - Review', () => {
                         autoResult: false
                     }
 
-                    const res = await chai.request(config.baseUrl)
+                    const res = await chai.request.execute(config.baseUrl)
                         .put(`/collections/${reference.testCollection.collectionId}/reviews/${reference.testAsset.assetId}/${reference.testCollection.ruleId}`)
                         .set('Authorization', `Bearer ${iteration.token}`)
                         .send(putBody)
@@ -119,7 +117,7 @@ describe('PUT - Review', () => {
                     status: 'saved'
                     }
 
-                    const res = await chai.request(config.baseUrl)
+                    const res = await chai.request.execute(config.baseUrl)
                         .put(`/collections/${reference.testCollection.collectionId}/reviews/${reference.testAsset.assetId}/${reference.testCollection.ruleId}?projection=rule&projection=history&projection=stigs`)
                         .set('Authorization', `Bearer ${iteration.token}`)
                         .send(putBody)
@@ -184,7 +182,7 @@ describe('PUT - Review', () => {
                         autoResult: false
                     }
 
-                    const res = await chai.request(config.baseUrl)
+                    const res = await chai.request.execute(config.baseUrl)
                         .put(`/collections/${reference.testCollection.collectionId}/reviews/${reference.testAsset.assetId}/${reference.testCollection.ruleId}`)
                         .set('Authorization', `Bearer ${iteration.token}`)
                         .send(putBody)
@@ -206,7 +204,7 @@ describe('PUT - Review', () => {
                         }
                     }))
 
-                    const res = await chai.request(config.baseUrl)
+                    const res = await chai.request.execute(config.baseUrl)
                         .put(`/collections/${reference.testCollection.collectionId}/reviews/${reference.testAsset.assetId}/${reference.testCollection.ruleId}?projection=rule&projection=history&projection=stigs&projection=metadata`)
                         .set('Authorization', `Bearer ${iteration.token}`)
                         .send(putBody)
@@ -236,7 +234,7 @@ describe('PUT - Review', () => {
                         autoResult: false,
                         status: 'submitted'
                     }
-                    const res = await chai.request(config.baseUrl)
+                    const res = await chai.request.execute(config.baseUrl)
                         .put(`/collections/${deletedCollection}/reviews/${deletedAsset}/${reference.testCollection.ruleId}`)
                         .set('Authorization', `Bearer ${iteration.token}`)
                         .send(putBody)
@@ -253,7 +251,7 @@ describe('PUT - Review', () => {
                         status: 'submitted'
                     }
 
-                    const res = await chai.request(config.baseUrl)
+                    const res = await chai.request.execute(config.baseUrl)
                         .put(`/collections/${reference.testCollection.collectionId}/reviews/${reference.testAsset.assetId}/${reference.testCollection.ruleId}?projection=rule&projection=stigs&projection=metadata`)
                         .set('Authorization', `Bearer ${iteration.token}`)
                         .send(putBody)
@@ -314,7 +312,7 @@ describe('PUT - Review', () => {
                         "status": "saved"
                     }
                     
-                    const res = await chai.request(config.baseUrl)
+                    const res = await chai.request.execute(config.baseUrl)
                     .put(`/collections/${reference.testCollection.collectionId}/reviews/${reference.testAsset.assetId}/${reference.testCollection.ruleId}?projection=rule&projection=history&projection=stigs&projection=metadata`)
                     .set('Authorization', `Bearer ${iteration.token}`)
                     .send(putBody)
@@ -337,7 +335,7 @@ describe('PUT - Review', () => {
                         autoResult: false,
                         status: 'submitted'
                     }
-                    const res = await chai.request(config.baseUrl)
+                    const res = await chai.request.execute(config.baseUrl)
                         .put(`/collections/${reference.testCollection.collectionId}/reviews/${reference.testCollection.lvl1ReadOnlyAssetId}/${reference.testCollection.ruleId}`)
                         .set('Authorization', `Bearer ${iteration.token}`)
                         .send(putBody)
@@ -365,7 +363,7 @@ describe('PUT - Review', () => {
                 })
                 
                 it('Set all metadata of a Review', async () => {
-                    const res = await chai.request(config.baseUrl)
+                    const res = await chai.request.execute(config.baseUrl)
                     .put(`/collections/${reference.testCollection.collectionId}/reviews/${reference.testAsset.assetId}/${reference.testCollection.ruleId}/metadata`)
                     .set('Authorization', `Bearer ${iteration.token}`)
                     .send({[reference.reviewMetadataKey]: reference.reviewMetadataValue})
@@ -375,7 +373,7 @@ describe('PUT - Review', () => {
 
                 })
                 it('Set all metadata of a Review, lvl1 has r on asset, expect rejection for lvl1 iteration. ', async () => {
-                    const res = await chai.request(config.baseUrl)
+                    const res = await chai.request.execute(config.baseUrl)
                     .put(`/collections/${reference.testCollection.collectionId}/reviews/${reference.testCollection.lvl1ReadOnlyAssetId}/${reference.testCollection.ruleId}/metadata`)
                     .set('Authorization', `Bearer ${iteration.token}`)
                     .send({[reference.reviewMetadataKey]: reference.reviewMetadataValue})
@@ -388,7 +386,7 @@ describe('PUT - Review', () => {
                     expect(res.body).to.eql({[reference.reviewMetadataKey]: reference.reviewMetadataValue})
                 })
                 it("should return SmError.PrivilegeError if user cannot put review", async () => {
-                    const res = await chai.request(config.baseUrl)
+                    const res = await chai.request.execute(config.baseUrl)
                         .get(`/collections/${reference.testCollection.collectionId}/reviews/${reference.testAsset.assetId}/${reference.scrapRuleIdWindows10}/metadata`)
                         .set('Authorization', `Bearer ${iteration.token}`)
                     if(distinct.canPatchReview){
@@ -406,7 +404,7 @@ describe('PUT - Review', () => {
                     await utils.putReviewByAssetRule(reference.testCollection.collectionId, reference.testAsset.assetId, reference.testCollection.ruleId, requestBodies.resetRule)
                 })
                 it('Set one metadata key/value of a Review', async () => {
-                    const res = await chai.request(config.baseUrl)
+                    const res = await chai.request.execute(config.baseUrl)
                         .put(`/collections/${reference.testCollection.collectionId}/reviews/${reference.testAsset.assetId}/${reference.testCollection.ruleId}/metadata/keys/${reference.reviewMetadataKey}`)
                         .set('Authorization', `Bearer ${iteration.token}`)
                         .set('Content-Type', 'application/json') 
@@ -415,7 +413,7 @@ describe('PUT - Review', () => {
                     expect(res).to.have.status(204)
                 })
                 it('Set one metadata key/value of a Review, lvl1 has read only on asset, expect rejection for lvl1 iteration', async () => {
-                    const res = await chai.request(config.baseUrl)
+                    const res = await chai.request.execute(config.baseUrl)
                         .put(`/collections/${reference.testCollection.collectionId}/reviews/${reference.testCollection.lvl1ReadOnlyAssetId}/${reference.testCollection.ruleId}/metadata/keys/${reference.reviewMetadataKey}`)
                         .set('Authorization', `Bearer ${iteration.token}`)
                         .set('Content-Type', 'application/json') 

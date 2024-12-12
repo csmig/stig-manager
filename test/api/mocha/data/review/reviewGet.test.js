@@ -1,12 +1,10 @@
-const chai = require('chai')
-const chaiHttp = require('chai-http')
-chai.use(chaiHttp)
-const expect = chai.expect
-const config = require('../../testConfig.json')
-const utils = require('../../utils/testUtils')
-const expectations = require('./expectations.js')
-const reference = require('../../referenceData.js')
-const iterations = require('../../iterations.js')
+
+const { expect } = chai
+import {config } from '../../testConfig.js'
+import * as utils from '../../utils/testUtils.js'
+import reference from '../../referenceData.js'
+import {iterations} from '../../iterations.js'
+import {expectations} from './expectations.js'
 
 describe('GET - Review', () => {
   
@@ -24,7 +22,7 @@ describe('GET - Review', () => {
       describe('GET - getReviewsByCollection - /collections/{collectionId}/reviews', () => {
         
         it('Return a list of reviews accessible to the requester', async () => {
-          const res = await chai.request(config.baseUrl)
+          const res = await chai.request.execute(config.baseUrl)
             .get(`/collections/${reference.testCollection.collectionId}/reviews?projection=rule&projection=stigs&projection=metadata`)
             .set('Authorization', `Bearer ${iteration.token}`)
 
@@ -57,7 +55,7 @@ describe('GET - Review', () => {
           }
         })
         it('Return a list of reviews accessible to the requester, assetId Projection.', async () => {
-          const res = await chai.request(config.baseUrl)
+          const res = await chai.request.execute(config.baseUrl)
             .get(`/collections/${reference.testCollection.collectionId}/reviews?assetId=${reference.testAsset.assetId}&projection=rule&projection=stigs&projection=metadata`)
             .set('Authorization', `Bearer ${iteration.token}`)
   
@@ -82,7 +80,7 @@ describe('GET - Review', () => {
           }
         })
         it('Return a list of reviews accessible to the requester, benchmarkId Projection.', async () => {
-          const res = await chai.request(config.baseUrl)
+          const res = await chai.request.execute(config.baseUrl)
             .get(`/collections/${reference.testCollection.collectionId}/reviews?benchmarkId=${reference.benchmark}&projection=rule&projection=stigs&projection=metadata`)
             .set('Authorization', `Bearer ${iteration.token}`)
          
@@ -107,7 +105,7 @@ describe('GET - Review', () => {
           }
         })
         it('Return a list of reviews accessible to the requester, metadata Projection.', async () => {
-          const res = await chai.request(config.baseUrl)
+          const res = await chai.request.execute(config.baseUrl)
             .get(`/collections/${reference.testCollection.collectionId}/reviews?projection=rule&projection=stigs&metadata=${reference.reviewMetadataKey}%3A${reference.reviewMetadataValue}&projection=metadata`)
             .set('Authorization', `Bearer ${iteration.token}`)
          
@@ -162,7 +160,7 @@ describe('GET - Review', () => {
               labels: [
               ]
             })
-          const res = await chai.request(config.baseUrl)
+          const res = await chai.request.execute(config.baseUrl)
             .get(`/collections/${tempCollectionWithMetadata.collectionId}/reviews?projection=rule&projection=stigs&metadata=testKey%3Atest%3Avalue&projection=metadata`)
             .set('Authorization', `Bearer ${iteration.token}`)
           if(iteration.name === 'lvl2' || iteration.name === 'lvl3' || iteration.name === 'lvl4') {
@@ -174,7 +172,7 @@ describe('GET - Review', () => {
           expect(res.body).to.be.lengthOf(0)
         })
         it('Return a list of reviews accessible to the requester, result projection fail only', async () => {
-          const res = await chai.request(config.baseUrl)
+          const res = await chai.request.execute(config.baseUrl)
             .get(`/collections/${reference.testCollection.collectionId}/reviews?result=fail&projection=rule&projection=stigs&projection=metadata`)
             .set('Authorization', `Bearer ${iteration.token}`)
          
@@ -187,7 +185,7 @@ describe('GET - Review', () => {
           }
         })
         it('Return a list of reviews accessible to the requester, ruleid projection', async () => {
-          const res = await chai.request(config.baseUrl)
+          const res = await chai.request.execute(config.baseUrl)
             .get(`/collections/${reference.testCollection.collectionId}/reviews?ruleId=${reference.testCollection.ruleId}&projection=rule&projection=stigs&projection=metadata`)
             .set('Authorization', `Bearer ${iteration.token}`)
           
@@ -201,7 +199,7 @@ describe('GET - Review', () => {
           }
         })
         it('Return a list of reviews accessible to the requester, status projection: saved.', async () => {
-          const res = await chai.request(config.baseUrl)
+          const res = await chai.request.execute(config.baseUrl)
             .get(`/collections/${reference.testCollection.collectionId}/reviews?status=saved&projection=rule&projection=stigs&projection=metadata`)
             .set('Authorization', `Bearer ${iteration.token}`)
         
@@ -214,7 +212,7 @@ describe('GET - Review', () => {
           }
         })
         it('Return a list of reviews accessible to the requester, userId projection.', async () => {
-          const res = await chai.request(config.baseUrl)
+          const res = await chai.request.execute(config.baseUrl)
             .get(`/collections/${reference.testCollection.collectionId}/reviews?userId=${reference.stigmanadmin.userId}&projection=rule&projection=stigs&projection=metadata`)
             .set('Authorization', `Bearer ${iteration.token}`)
           
@@ -227,14 +225,14 @@ describe('GET - Review', () => {
         })
         it('Return a list of reviews accessible to the requester, cci prjections', async () => {
           
-          const res = await chai.request(config.baseUrl)
+          const res = await chai.request.execute(config.baseUrl)
             .get(`/collections/${reference.testCollection.collectionId}/reviews?cci=${reference.testCci.id}`)
             .set('Authorization', `Bearer ${iteration.token}`)
 
           expect(res).to.have.status(200)
         })
         it('Return a list of reviews accessible to the requester, groupid', async () => {
-          const res = await chai.request(config.baseUrl)
+          const res = await chai.request.execute(config.baseUrl)
             .get(`/collections/${reference.testCollection.collectionId}/reviews?groupId=${reference.testGroupId}`)
             .set('Authorization', `Bearer ${iteration.token}`)
 
@@ -247,7 +245,7 @@ describe('GET - Review', () => {
           }
         })
         it('Return a list of reviews accessible to the requester, rules=all', async () => {
-          const res = await chai.request(config.baseUrl)
+          const res = await chai.request.execute(config.baseUrl)
             .get(`/collections/${reference.testCollection.collectionId}/reviews?rules=all`)
             .set('Authorization', `Bearer ${iteration.token}`)
 
@@ -259,7 +257,7 @@ describe('GET - Review', () => {
           }
         })
         it('Return a list of reviews accessible to the requester, rules=default-mapped', async () => {
-          const res = await chai.request(config.baseUrl)
+          const res = await chai.request.execute(config.baseUrl)
             .get(`/collections/${reference.testCollection.collectionId}/reviews?rules=default-mapped`)
             .set('Authorization', `Bearer ${iteration.token}`)
 
@@ -271,7 +269,7 @@ describe('GET - Review', () => {
           }
         })
         it('Return a list of reviews accessible to the requester, rules=not-default', async () => {
-          const res = await chai.request(config.baseUrl)
+          const res = await chai.request.execute(config.baseUrl)
             .get(`/collections/${reference.testCollection.collectionId}/reviews?rules=not-default`)
             .set('Authorization', `Bearer ${iteration.token}`)
 
@@ -283,7 +281,7 @@ describe('GET - Review', () => {
           }
         })
         it('Return a list of reviews accessible to the requester, rules=default', async () => {
-          const res = await chai.request(config.baseUrl)
+          const res = await chai.request.execute(config.baseUrl)
             .get(`/collections/${reference.testCollection.collectionId}/reviews?rules=default`)
             .set('Authorization', `Bearer ${iteration.token}`)
 
@@ -295,7 +293,7 @@ describe('GET - Review', () => {
           }
         })
         it('Return a list of reviews accessible to the requester, rules=not-default-mapped', async () => {
-          const res = await chai.request(config.baseUrl)
+          const res = await chai.request.execute(config.baseUrl)
             .get(`/collections/${reference.testCollection.collectionId}/reviews?rules=not-default-mapped`)
             .set('Authorization', `Bearer ${iteration.token}`)
 
@@ -306,7 +304,7 @@ describe('GET - Review', () => {
       describe('GET - getReviewsByAsset - /collections/{collectionId}/reviews/{assetId}', () => {
 
         it('Return a list of Reviews for an Asset', async () => {
-          const res = await chai.request(config.baseUrl)
+          const res = await chai.request.execute(config.baseUrl)
             .get(`/collections/${reference.testCollection.collectionId}/reviews/${reference.testAsset.assetId}?projection=rule&projection=stigs&projection=metadata`)
             .set('Authorization', `Bearer ${iteration.token}`)
    
@@ -338,7 +336,7 @@ describe('GET - Review', () => {
         })
         it("should return all reviews for asset ID 62, which is r only for lvl1 user", async () => {
 
-          const res = await chai.request(config.baseUrl)
+          const res = await chai.request.execute(config.baseUrl)
             .get(`/collections/${reference.testCollection.collectionId}/reviews/62`)
             .set('Authorization', `Bearer ${iteration.token}`)
           expect(res).to.have.status(200)
@@ -355,7 +353,7 @@ describe('GET - Review', () => {
 
         })
         it('Return a list of Reviews for an Asset, benchmarkId Projection.', async () => {
-          const res = await chai.request(config.baseUrl)
+          const res = await chai.request.execute(config.baseUrl)
             .get(`/collections/${reference.testCollection.collectionId}/reviews/${reference.testAsset.assetId}?benchmarkId=${reference.benchmark}&projection=rule&projection=stigs&projection=metadata`)
             .set('Authorization', `Bearer ${iteration.token}`)
          
@@ -383,7 +381,7 @@ describe('GET - Review', () => {
         })
         it("should return all review for assetID 154 which for lvl1 is r only on benchmark VPN_SRG_TEST", async () => {
 
-          const res = await chai.request(config.baseUrl)
+          const res = await chai.request.execute(config.baseUrl)
             .get(`/collections/${reference.testCollection.collectionId}/reviews/154?benchmarkId=VPN_SRG_TEST`)
             .set('Authorization', `Bearer ${iteration.token}`)
           expect(res).to.have.status(200)
@@ -399,7 +397,7 @@ describe('GET - Review', () => {
 
         })
         it('Return a list of Reviews for an Asset , metadata Projection.', async () => {
-          const res = await chai.request(config.baseUrl)
+          const res = await chai.request.execute(config.baseUrl)
             .get(`/collections/${reference.testCollection.collectionId}/reviews/${reference.testAsset.assetId}?projection=rule&projection=stigs&metadata=${reference.reviewMetadataKey}%3A${reference.reviewMetadataValue}&projection=metadata`)
             .set('Authorization', `Bearer ${iteration.token}`)
   
@@ -415,7 +413,7 @@ describe('GET - Review', () => {
           }
         })
         it('Return a list of reviews accessible to the requester, result projection pass only', async () => {
-          const res = await chai.request(config.baseUrl)
+          const res = await chai.request.execute(config.baseUrl)
             .get(`/collections/${reference.testCollection.collectionId}/reviews/${reference.testAsset.assetId}?result=pass&projection=rule&projection=stigs&projection=metadata`)
             .set('Authorization', `Bearer ${iteration.token}`)
          
@@ -431,7 +429,7 @@ describe('GET - Review', () => {
           }
         })
         it('Return a list of reviews accessible to the requester, result projection fail only', async () => {
-          const res = await chai.request(config.baseUrl)
+          const res = await chai.request.execute(config.baseUrl)
             .get(`/collections/${reference.testCollection.collectionId}/reviews/${reference.testAsset.assetId}?result=fail&projection=rule&projection=stigs&projection=metadata`)
             .set('Authorization', `Bearer ${iteration.token}`)
          
@@ -445,7 +443,7 @@ describe('GET - Review', () => {
           }
         })
         it('Return a list of reviews accessible to the requester, result projection informational only', async () => {
-          const res = await chai.request(config.baseUrl)
+          const res = await chai.request.execute(config.baseUrl)
             .get(`/collections/${reference.testCollection.collectionId}/reviews/${reference.testAsset.assetId}?result=informational&projection=rule&projection=stigs&projection=metadata`)
             .set('Authorization', `Bearer ${iteration.token}`)
          
@@ -459,7 +457,7 @@ describe('GET - Review', () => {
           }
         })
         it('Return a list of reviews accessible to the requester, status projection: saved.', async () => {
-          const res = await chai.request(config.baseUrl)
+          const res = await chai.request.execute(config.baseUrl)
             .get(`/collections/${reference.testCollection.collectionId}/reviews/${reference.testAsset.assetId}?status=saved&projection=rule&projection=stigs&projection=metadata`)
             .set('Authorization', `Bearer ${iteration.token}`)
           
@@ -474,7 +472,7 @@ describe('GET - Review', () => {
           }
         })
         it('Return a list of reviews accessible to the requester, status projection: submitted.', async () => {
-          const res = await chai.request(config.baseUrl)
+          const res = await chai.request.execute(config.baseUrl)
             .get(`/collections/${reference.testCollection.collectionId}/reviews/${reference.testAsset.assetId}?status=submitted&projection=rule&projection=stigs&projection=metadata`)
             .set('Authorization', `Bearer ${iteration.token}`)
          
@@ -491,7 +489,7 @@ describe('GET - Review', () => {
       describe('GET - getReviewByAssetRule - /collections/{collectionId}/reviews/{assetId}/{ruleId}', () => {
 
         it('Return the Review for an Asset and Rule', async () => {
-          const res = await chai.request(config.baseUrl)
+          const res = await chai.request.execute(config.baseUrl)
             .get(`/collections/${reference.testCollection.collectionId}/reviews/${reference.testAsset.assetId}/${reference.testCollection.ruleId}?projection=rule&projection=stigs&projection=metadata&projection=history`)
             .set('Authorization', `Bearer ${iteration.token}`)
         
@@ -516,7 +514,7 @@ describe('GET - Review', () => {
       })
       describe('GET - getReviewMetadata - /collections/{collectionId}/reviews/{assetId}/{ruleId}/metadata', () => {
         it('Return the metadata for a Review', async () => {
-          const res = await chai.request(config.baseUrl)
+          const res = await chai.request.execute(config.baseUrl)
             .get(`/collections/${reference.testCollection.collectionId}/reviews/${reference.testAsset.assetId}/${reference.testCollection.ruleId}/metadata`)
             .set('Authorization', `Bearer ${iteration.token}`)
          
@@ -528,7 +526,7 @@ describe('GET - Review', () => {
         // useless if we test other users 
         if(iteration.name === 'lvl1'){
           it("should return SmError.PrivilegeError if user cannot access review", async () => {
-            const res = await chai.request(config.baseUrl)
+            const res = await chai.request.execute(config.baseUrl)
               .get(`/collections/${reference.testCollection.collectionId}/reviews/${reference.testAsset.assetId}/${reference.scrapRuleIdWindows10}/metadata`)
               .set('Authorization', `Bearer ${iteration.token}`)
             expect(res).to.have.status(403)
@@ -539,7 +537,7 @@ describe('GET - Review', () => {
       describe('GET - getReviewMetadataKeys - /collections/{collectionId}/reviews/{assetId}/{ruleId}/metadata/keys', () => {
           
           it('Return the Review Metadata KEYS for an Asset and Rule', async () => {
-            const res = await chai.request(config.baseUrl)
+            const res = await chai.request.execute(config.baseUrl)
               .get(`/collections/${reference.testCollection.collectionId}/reviews/${reference.testAsset.assetId}/${reference.testCollection.ruleId}/metadata/keys`)
               .set('Authorization', `Bearer ${iteration.token}`)
           
@@ -552,7 +550,7 @@ describe('GET - Review', () => {
       describe('GET - getReviewMetadataValue - /collections/{collectionId}/reviews/{assetId}/{ruleId}/metadata/keys/{key}', () => {
 
         it('Return the Review Metadata VALUE for an Asset/Rule/metadata KEY', async () => {
-          const res = await chai.request(config.baseUrl)
+          const res = await chai.request.execute(config.baseUrl)
             .get(`/collections/${reference.testCollection.collectionId}/reviews/${reference.testAsset.assetId}/${reference.testCollection.ruleId}/metadata/keys/${reference.reviewMetadataKey}`)
             .set('Authorization', `Bearer ${iteration.token}`)
           expect(res).to.have.status(200)
@@ -560,7 +558,7 @@ describe('GET - Review', () => {
           expect(res.body).to.equal(reference.reviewMetadataValue)  
         })
         it('Should throw SmError.NotFoundError no metadatakey found', async () => {
-          const res = await chai.request(config.baseUrl)
+          const res = await chai.request.execute(config.baseUrl)
             .get(`/collections/${reference.testCollection.collectionId}/reviews/${reference.testAsset.assetId}/${reference.testCollection.ruleId}/metadata/keys/notakey`)
             .set('Authorization', `Bearer ${iteration.token}`)
           expect(res).to.have.status(404)

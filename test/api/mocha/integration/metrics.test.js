@@ -1,12 +1,11 @@
-const chai = require('chai')
-const chaiHttp = require('chai-http')
-chai.use(chaiHttp)
-const expect = chai.expect
-const fs = require('fs')
-const path = require('path')
-const config = require('../testConfig.json')
-const utils = require('../utils/testUtils')
-const reference = require('../referenceData.js')
+
+const { expect } = chai
+import {config } from '../testConfig.js'
+import * as utils from '../utils/testUtils.js'
+import reference from '../referenceData.js'
+import path from 'path'
+import fs from 'fs'
+import  { fileURLToPath } from 'url'
 const user = {
   name: 'stigmanadmin',
   grant: 'Owner',
@@ -36,8 +35,7 @@ describe('GET - getMetricsDetailByCollection - /collections/{collectionId}/metri
     // })
     it('Set the Assets mapped to a STIG - default rev only - scrap collection for transfer test', async () => {
 
-        const res = await chai
-            .request(config.baseUrl)
+        const res = await chai.request.execute(config.baseUrl)
             .post(`/collections/${reference.scrapCollection.collectionId}/stigs/${reference.benchmark}`)
             .set('Authorization', `Bearer ${user.token}`)
             .send({
@@ -57,8 +55,7 @@ describe('GET - getMetricsDetailByCollection - /collections/{collectionId}/metri
     })
     it('Set all properties of an Asset - Change Collection to scrap collection - then check for recalculated metrics', async () => {
 
-        const res = await chai
-            .request(config.baseUrl)
+        const res = await chai.request.execute(config.baseUrl)
             .put(`/assets/${reference.testAsset.assetId}`)
             .set('Authorization', `Bearer ${user.token}`)
             .send({
@@ -79,8 +76,7 @@ describe('GET - getMetricsDetailByCollection - /collections/{collectionId}/metri
     })
     it('verify metrics were recalculated relative to new pinned rev after transfer', async () => {
 
-        const res = await chai
-            .request(config.baseUrl)
+        const res = await chai.request.execute(config.baseUrl)
             .get(`/collections/${reference.scrapCollection.collectionId}/metrics/detail`)
             .set('Authorization', `Bearer ${user.token}`)
 
@@ -196,11 +192,10 @@ describe('GET - getMetricsSummaryByCollectionAggStig - /collections/{collectionI
 
         it('Import a new STIG - new Copy', async function () {
       
-            const directoryPath = path.join(__dirname, '../../form-data-files/')
             const testStigfile = 'U_VPN_SRG_V1R1_Manual-xccdf.xml'
-            const filePath = path.join(directoryPath, testStigfile)
-      
-            const res = await chai.request(config.baseUrl)
+            const filePath = path.join(fileURLToPath(import.meta.url), '../../../form-data-files/', reference.testStigfile)
+
+            const res = await chai.request.execute(config.baseUrl)
             .post('/stigs?clobber=true&elevate=true')
             .set('Authorization', `Bearer ${user.token}`)
             .set('Content-Type', `multipart/form-data`)
@@ -216,13 +211,13 @@ describe('GET - getMetricsSummaryByCollectionAggStig - /collections/{collectionI
         })
         it('Deletes the specified revision of a STIG v1r0 - with force - could fail if not present, so no tests Copy', async function () {
 
-            const res = await chai.request(config.baseUrl)
+            const res = await chai.request.execute(config.baseUrl)
                 .delete(`/stigs/${reference.benchmark}/revisions/V1R1?elevate=true&force=true`)
                 .set('Authorization', `Bearer ${user.token}`)
         })
         it('Return summary metrics - check no null benchmarks', async function () {
 
-            const res = await chai.request(config.baseUrl)
+            const res = await chai.request.execute(config.baseUrl)
                 .get(`/collections/${reference.testCollection.collectionId}/metrics/summary/stig`)
                 .set('Authorization', `Bearer ${user.token}`)
          

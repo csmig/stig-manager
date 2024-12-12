@@ -1,14 +1,13 @@
-const chai = require('chai')
-const deepEqualInAnyOrder = require('deep-equal-in-any-order')
-const chaiHttp = require('chai-http')
-chai.use(chaiHttp)
-chai.use(deepEqualInAnyOrder)
-const expect = chai.expect
-const config = require('../../testConfig.json')
-const utils = require('../../utils/testUtils')
-const iterations = require('../../iterations.js')
-const expectations = require('./expectations.js')
-const reference = require('../../referenceData.js')
+
+const { expect } = chai
+import {config } from '../../testConfig.js'
+import * as utils from '../../utils/testUtils.js'
+import reference from '../../referenceData.js'
+import {requestBodies} from "./requestBodies.js"
+import {iterations} from '../../iterations.js'
+import {expectations} from './expectations.js'
+
+
 
 describe('POST - Asset', function () {
   for (const iteration of iterations) {
@@ -20,8 +19,7 @@ describe('POST - Asset', function () {
       const distinct = expectations[iteration.name]
       describe(`createAsset - /assets`, function () {
         it('Create an Asset (with statusStats and stigs projection', async function () {
-          const res = await chai
-            .request(config.baseUrl)
+          const res = await chai.request.execute(config.baseUrl)
             .post('/assets?projection=statusStats&projection=stigs')
             .set('Authorization', 'Bearer ' + iteration.token)
             .send({
@@ -72,8 +70,7 @@ describe('POST - Asset', function () {
         })
         it('should fail, duplicate asset name', async function () {
 
-          const res = await chai
-            .request(config.baseUrl)
+          const res = await chai.request.execute(config.baseUrl)
             .post('/assets')
             .set('Authorization', 'Bearer ' + iteration.token)
             .send({
@@ -95,8 +92,7 @@ describe('POST - Asset', function () {
           expect(res).to.have.status(422)
         })
         it('Create an Asset', async function () {
-          const res = await chai
-            .request(config.baseUrl)
+          const res = await chai.request.execute(config.baseUrl)
             .post('/assets')
             .set('Authorization', 'Bearer ' + iteration.token)
             .send({

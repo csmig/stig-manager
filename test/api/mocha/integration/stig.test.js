@@ -1,12 +1,11 @@
-const chai = require("chai")
-const chaiHttp = require("chai-http")
-chai.use(chaiHttp)
-const expect = chai.expect
-const fs = require("fs")
-const path = require("path")
-const config = require("../testConfig.json")
-const utils = require("../utils/testUtils")
-const reference = require("../referenceData.js")
+
+const { expect } = chai
+import { fileURLToPath } from 'url';
+import {config } from '../testConfig.js'
+import * as utils from '../utils/testUtils.js'
+import reference from '../referenceData.js'
+import path from 'path'
+import fs from 'fs'
 
 const user = {
   name: "stigmanadmin",
@@ -30,11 +29,10 @@ describe(`POST - importBenchmark - /stigs`, () => {
     })
     it('Import a new STIG - with new RuleID matching old content', async function () {
       
-        const directoryPath = path.join(__dirname, '../../../api/form-data-files/')
         const testStigfile = reference.reviewKeyChangeFile
-        const filePath = path.join(directoryPath, testStigfile)
+        const filePath = path.join(fileURLToPath(import.meta.url), '../../../../api/form-data-files/', reference.testStigfile)
    
-        const res = await chai.request(config.baseUrl)
+        const res = await chai.request.execute(config.baseUrl)
         .post('/stigs?elevate=true&clobber=true')
         .set('Authorization', `Bearer ${user.token}`)
         .set('Content-Type', `multipart/form-data`)
@@ -43,7 +41,7 @@ describe(`POST - importBenchmark - /stigs`, () => {
     })
     it('Return the Review for an Asset and Rule - rule matches on stigId/checkContent', async function () {
 
-        const res = await chai.request(config.baseUrl)
+        const res = await chai.request.execute(config.baseUrl)
           .get(`/collections/${reference.testCollection.collectionId}/reviews/${reference.testAsset.assetId}/${'SV-106179r1_yyyy'}?projection=stigs&projection=rule`)
           .set('Authorization', `Bearer ${user.token}`)
         expect(res).to.have.status(200)
@@ -65,7 +63,7 @@ describe(`POST - importBenchmark - /stigs`, () => {
             "status": "submitted"
         }
 
-        const res = await chai.request(config.baseUrl)
+        const res = await chai.request.execute(config.baseUrl)
             .put(`/collections/${reference.testCollection.collectionId}/reviews/${reference.testAsset.assetId}/${'SV-106179r1_yyyy'}`)
             .set('Authorization', `Bearer ${user.token}`)
             .send(putBody)
@@ -73,7 +71,7 @@ describe(`POST - importBenchmark - /stigs`, () => {
         expect(res).to.have.status(403)
     })    
     it('Set all properties of an Asset - assign new STIG', async function () {
-        const res = await chai.request(config.baseUrl)
+        const res = await chai.request.execute(config.baseUrl)
           .put(`/assets/${reference.testAsset.assetId}`)
           .set('Authorization', 'Bearer ' + user.token)
           .send({
@@ -106,7 +104,7 @@ describe(`POST - importBenchmark - /stigs`, () => {
             "autoResult": false,
             "status": "submitted"
         }
-        const respData = await chai.request(config.baseUrl)
+        const respData = await chai.request.execute(config.baseUrl)
           .put(`/collections/${reference.testCollection.collectionId}/reviews/${reference.testAsset.assetId}/${'SV-106179r1_yyyy'}?projection=stigs&projection=rule`)
           .set('Authorization', `Bearer ${user.token}`)
           .send(reqData)
@@ -165,7 +163,7 @@ describe(`POST - importBenchmark - /stigs`, () => {
     })
     it('Return the Review for an Asset and Rule - rule matches on stigId/checkContent Copy', async function () {
 
-        const res = await chai.request(config.baseUrl)
+        const res = await chai.request.execute(config.baseUrl)
           .get(`/collections/${reference.testCollection.collectionId}/reviews/${reference.testAsset.assetId}/${'SV-106179r1_yyyy'}?projection=stigs&projection=rule`)
           .set('Authorization', `Bearer ${user.token}`)
         expect(res).to.have.status(200)
@@ -192,15 +190,14 @@ describe(`POST - importBenchmark - /stigs`, () => {
 
     it('Import a new STIG - clobber', async () => {
                 
-      const directoryPath = path.join(__dirname, '../../form-data-files/')
       const testStigfile = 'U_VPN_SRG_V1R1_Manual-xccdf.xml'
-      const filePath = path.join(directoryPath, testStigfile)
+      const filePath = path.join(fileURLToPath(import.meta.url), '../../../form-data-files/', testStigfile)
 
-      const res = await chai.request(config.baseUrl)
+      const res = await chai.request.execute(config.baseUrl)
       .post('/stigs?elevate=true&clobber=true')
       .set('Authorization', `Bearer ${user.token}`)
       .set('Content-Type', `multipart/form-data`)
-      .attach('importFile', fs.readFileSync(filePath), testStigfile) // Attach the file here
+      .attach('importFile', fs.readFileSync(filePath), testStigfile) 
       let expectedRevData = 
       {
         "benchmarkId": "VPN_SRG_TEST",
@@ -212,11 +209,10 @@ describe(`POST - importBenchmark - /stigs`, () => {
     })
     it('Import another stig with check-system collision', async () => {
                   
-      const directoryPath = path.join(__dirname, '../../form-data-files/')
       const testStigfile = "U_VPN_SRG-OTHER_V1R1_Manual-xccdf.xml"    
-      const filePath = path.join(directoryPath, testStigfile)
+      const filePath = path.join(fileURLToPath(import.meta.url), '../../../form-data-files/', testStigfile)
 
-      const res = await chai.request(config.baseUrl)
+      const res = await chai.request.execute(config.baseUrl)
         .post('/stigs?elevate=true&clobber=true')
         .set('Authorization', `Bearer ${user.token}`)
         .set('Content-Type', `multipart/form-data`)
@@ -233,7 +229,7 @@ describe(`POST - importBenchmark - /stigs`, () => {
     })
     it('Return rule data for the specified revision of a STIG - after import of "other" stig with checkId collision', async () => {
 
-      const res = await chai.request(config.baseUrl)
+      const res = await chai.request.execute(config.baseUrl)
         .get(`/stigs/${reference.benchmark}/revisions/${reference.testCollection.defaultRevision}/rules?projection=check`)
         .set('Authorization', `Bearer ${user.token}`)
       expect(res).to.have.status(200)
@@ -252,7 +248,7 @@ describe(`POST - importBenchmark - /stigs`, () => {
     })
     it("Return rule data for the specified revision of a STIG - expect matches to other rev - requests V2R2", async () => {
 
-      const res = await chai.request(config.baseUrl)
+      const res = await chai.request.execute(config.baseUrl)
         .get(`/stigs/${'VPN_SRG_OTHER'}/revisions/V2R2/rules?projection=check`)
         .set('Authorization', `Bearer ${user.token}`)
       expect(res).to.have.status(200)
@@ -272,7 +268,7 @@ describe(`POST - importBenchmark - /stigs`, () => {
     })
     it("Return rule data for the specified Rule in a revision of a STIG. request specific rule, expect one content match", async () => {
 
-      const res = await chai.request(config.baseUrl)
+      const res = await chai.request.execute(config.baseUrl)
         .get(`/stigs/${reference.benchmark}/revisions/${reference.testCollection.defaultRevision}/rules/${reference.ruleId}?projection=check`)
         .set('Authorization', `Bearer ${user.token}`)
       expect(res).to.have.status(200)
@@ -296,11 +292,10 @@ describe(`POST - importBenchmark - /stigs`, () => {
 
     it('Import and replace a STIG revision', async function () {
       
-      const directoryPath = path.join(__dirname, '../../form-data-files/')
       const testStigfile = 'U_VPN_SRG_V1R1_Manual-xccdf-replace.xml'
-      const filePath = path.join(directoryPath, testStigfile)
+      const filePath = path.join(fileURLToPath(import.meta.url), '../../../form-data-files/', testStigfile)
 
-      const res = await chai.request(config.baseUrl)
+      const res = await chai.request.execute(config.baseUrl)
       .post('/stigs?clobber=true&elevate=true')
       .set('Authorization', `Bearer ${user.token}`)
       .set('Content-Type', `multipart/form-data`)
@@ -315,7 +310,7 @@ describe(`POST - importBenchmark - /stigs`, () => {
       expect(res.body).to.deep.eql(expectedRevData)
     })
     it('Return a list of revisions for the specified STIG - check for updated revision', async function () {
-      const res = await chai.request(config.baseUrl)
+      const res = await chai.request.execute(config.baseUrl)
         .get(`/stigs/${reference.benchmark}/revisions`)
         .set('Authorization', `Bearer ${user.token}`)
       expect(res).to.have.status(200)
@@ -325,7 +320,7 @@ describe(`POST - importBenchmark - /stigs`, () => {
       }
     })
     it('Return rule data for the specified revision of a STIG after update', async function () {
-      const res = await chai.request(config.baseUrl)
+      const res = await chai.request.execute(config.baseUrl)
         .get(`/stigs/${reference.benchmark}/revisions/${reference.testCollection.defaultRevision}/rules?projection=detail&projection=ccis&projection=check&projection=fix`)
         .set('Authorization', `Bearer ${user.token}`)
       expect(res).to.have.status(200)
@@ -339,7 +334,7 @@ describe(`POST - importBenchmark - /stigs`, () => {
     })
     it('Return rule data for the specified Rule in a revision of a STIG after update', async function () {
 
-      const res = await chai.request(config.baseUrl)
+      const res = await chai.request.execute(config.baseUrl)
         .get(`/stigs/${reference.benchmark}/revisions/${reference.testCollection.defaultRevision}/rules/${reference.ruleId}?projection=detail&projection=ccis&projection=check&projection=fix`)
         .set('Authorization', `Bearer ${user.token}`)
         expect(res).to.have.status(200)
