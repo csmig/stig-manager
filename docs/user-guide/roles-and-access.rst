@@ -88,6 +88,15 @@ These controls allow Collection Owners and Managers to precisely define who can 
 The Users tab in the Manage Collection interface provides a granular view of the effective access for each User in the Collection, based on their Grants and Access Controls.
 
 
+
+Role-Based Access Control (RBAC) Details
+------------------------------------------------
+
+For a granular breakdown of the RBAC model in STIG Manager, see the following description:
+:doc:`Role-Based Access Control Details <rbac>`
+
+
+
 Examples?
 --------------------------------------------------------
 

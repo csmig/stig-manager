@@ -25,5 +25,6 @@ These pages describe how to use STIG Manager.
 	roles-and-access
 	review-handling
 	rule-exceptions
+	rbac.md
 	
 	
