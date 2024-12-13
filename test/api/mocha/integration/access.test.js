@@ -2,16 +2,11 @@
 // will use the lvl1 user and the lvl3 manage user to test r rw and none 
 // will first set the access level to an acl rule then attempt to write to that item and write outside to throw errors 
 
-const chai = require("chai")
-const chaiHttp = require("chai-http")
-const deepEqualInAnyOrder = require('deep-equal-in-any-order')
-const { v4: uuidv4 } = require('uuid')
-chai.use(chaiHttp)
-chai.use(deepEqualInAnyOrder)
-const expect = chai.expect
-const config = require("../testConfig.json")
-const utils = require("../utils/testUtils")
-const reference = require("../referenceData.js")
+const { expect } = chai
+import { v4 as uuidv4 } from 'uuid'
+import {config } from '../testConfig.js'
+import * as utils from '../utils/testUtils.js'
+import reference from '../referenceData.js'
 
 const admin = {
   name: "admin",
@@ -224,26 +219,26 @@ describe(`Test Restricted user access controls`, () => {
       await utils.loadAppData()
   })
   it("should give lvl1 user restricted access to test collection", async () => {
-    const res = await chai.request(config.baseUrl)
+    const res = await chai.request.execute(config.baseUrl)
         .post(`/collections/${reference.testCollection.collectionId}/grants`)
         .set('Authorization', `Bearer ${admin.token}`)
         .send([{
           userId: lvl1.userId,
           accessLevel: 1
         }])
-    expect(res).to.have.status(201)
-    lvl1DirectGrantId = res.body[0].grantId
+    expect(res).to.have.status(200)
+    lvl1DirectGrantId = res.body.grantId
   })
   it("Remove Base appdata userGroups grant from test Colleciton", async () => {
 
-    const res = await chai.request(config.baseUrl)  
+    const res = await chai.request.execute(config.baseUrl)  
       .delete(`/collections/${reference.testCollection.collectionId}/grants/${reference.testCollection.testGroup.testCollectionGrantId}`)
       .set('Authorization', `Bearer ${admin.token}`)
 
     expect(res).to.have.status(200)
   })
   it(`should set users ACL in test collection `, async () => {
-      const res = await chai.request(config.baseUrl)
+      const res = await chai.request.execute(config.baseUrl)
           .put(`/collections/${reference.testCollection.collectionId}/grants/${lvl1DirectGrantId}/acl`)
           .set('Authorization', `Bearer ${admin.token}`)
           .send(lvl1TestAcl.put)
@@ -251,7 +246,7 @@ describe(`Test Restricted user access controls`, () => {
       expect(res.body.acl).to.deep.equalInAnyOrder(lvl1TestAcl.putResponse.acl)
   })
   it("should confirm users effective acl was set ", async () => {
-      const res = await chai.request(config.baseUrl)
+      const res = await chai.request.execute(config.baseUrl)
           .get(`/collections/${reference.testCollection.collectionId}/grants/user/${lvl1.userId}/access/effective`)
           .set('Authorization', `Bearer ${admin.token}`)
           expect(res).to.have.status(200)
@@ -259,7 +254,7 @@ describe(`Test Restricted user access controls`, () => {
   })
   it("should get reviews that is associated with the ACL and confirm that is it all read only.", async () => {
 
-      const res = await chai.request(config.baseUrl)
+      const res = await chai.request.execute(config.baseUrl)
           .get(`/collections/${reference.testCollection.collectionId}/reviews?rules=default-mapped`)
           .set('Authorization', `Bearer ${lvl1.token}`)
           expect(res).to.have.status(200)
@@ -279,7 +274,7 @@ describe(`Test Restricted user access controls`, () => {
   })
   it("should reject PUT modification to reviews that is associated with the ACLs that are read only", async () => {
 
-    const res = await chai.request(config.baseUrl)
+    const res = await chai.request.execute(config.baseUrl)
         .put(`/collections/${reference.testCollection.collectionId}/reviews/${reference.testAsset.assetId}/${reference.testCollection.ruleId}`)
         .set('Authorization', `Bearer ${lvl1.token}`)
         .send({
@@ -294,7 +289,7 @@ describe(`Test Restricted user access controls`, () => {
   })
   it("should reject PATCH modification to read only review on test asset with test ruleId", async () => {
 
-    const res = await chai.request(config.baseUrl)
+    const res = await chai.request.execute(config.baseUrl)
         .patch(`/collections/${reference.testCollection.collectionId}/reviews/${reference.testAsset.assetId}/${reference.testCollection.ruleId}`)
         .set('Authorization', `Bearer ${lvl1.token}`)
         .send({
@@ -305,7 +300,7 @@ describe(`Test Restricted user access controls`, () => {
   })
   it("should reject DELETE modification to read only review on test asset with test ruleId", async () => {
 
-    const res = await chai.request(config.baseUrl)
+    const res = await chai.request.execute(config.baseUrl)
         .delete(`/collections/${reference.testCollection.collectionId}/reviews/${reference.testAsset.assetId}/${reference.testCollection.ruleId}`)
         .set('Authorization', `Bearer ${lvl1.token}`)
         
@@ -313,7 +308,7 @@ describe(`Test Restricted user access controls`, () => {
   })
   it("should reject put modification to read only review metadata on test asset with test ruleId", async () => {
 
-    const res = await chai.request(config.baseUrl)
+    const res = await chai.request.execute(config.baseUrl)
         .put(`/collections/${reference.testCollection.collectionId}/reviews/${reference.testAsset.assetId}/${reference.testCollection.ruleId}/metadata`)
         .set('Authorization', `Bearer ${lvl1.token}`)
         .send({[reference.reviewMetadataKey]: reference.reviewMetadataValue})
@@ -323,7 +318,7 @@ describe(`Test Restricted user access controls`, () => {
   })
   it("should reject patch modification to read only review metadata on test asset with test ruleId", async () => {
 
-    const res = await chai.request(config.baseUrl)
+    const res = await chai.request.execute(config.baseUrl)
         .patch(`/collections/${reference.testCollection.collectionId}/reviews/${reference.testAsset.assetId}/${reference.testCollection.ruleId}/metadata`)
         .set('Authorization', `Bearer ${lvl1.token}`)
         .send({[reference.reviewMetadataKey]: reference.reviewMetadataValue})
@@ -333,7 +328,7 @@ describe(`Test Restricted user access controls`, () => {
   })
   it("should reject put modification to read only review metadata on test asset with test ruleId", async () => {
 
-    const res = await chai.request(config.baseUrl)
+    const res = await chai.request.execute(config.baseUrl)
         .put(`/collections/${reference.testCollection.collectionId}/reviews/${reference.testAsset.assetId}/${reference.testCollection.ruleId}/metadata`)
         .set('Authorization', `Bearer ${lvl1.token}`)
         .send({[reference.reviewMetadataKey]: reference.reviewMetadataValue})
@@ -341,7 +336,7 @@ describe(`Test Restricted user access controls`, () => {
     expect(res.body.detail).to.equal("User has insufficient privilege to put the review of this rule.")
   })
   it('should reject delete modification  of metadata key to read only review metadata on test asset with test ruleId', async () => {
-    const res = await chai.request(config.baseUrl)
+    const res = await chai.request.execute(config.baseUrl)
       .delete(`/collections/${reference.testCollection.collectionId}/reviews/${reference.testAsset.assetId}/${reference.testAsset.testRuleId}/metadata/keys/${reference.reviewMetadataKey}`)
       .set('Authorization', `Bearer ${lvl1.token}`)
       .send(`${JSON.stringify(reference.reviewMetadataValue)}`)
@@ -356,7 +351,7 @@ describe(`Test manage user access control`, () => {`  `
         await utils.loadAppData()
     })
     it(`should set users ACL in test collection `, async () => {
-      const res = await chai.request(config.baseUrl)
+      const res = await chai.request.execute(config.baseUrl)
             .put(`/collections/${reference.testCollection.collectionId}/grants/${lvl3.grantId}/acl`)
             .set('Authorization', `Bearer ${admin.token}`)
             .send(lvl3TestAcl.put)
@@ -365,7 +360,7 @@ describe(`Test manage user access control`, () => {`  `
         expect(res.body.defaultAccess).to.equal("rw")
     })
     it("should confirm users effective acl was set ", async () => {
-        const res = await chai.request(config.baseUrl)
+        const res = await chai.request.execute(config.baseUrl)
             .get(`/collections/${reference.testCollection.collectionId}/grants/user/${lvl3.userId}/access/effective`)
             .set('Authorization', `Bearer ${admin.token}`)
             expect(res).to.have.status(200)
@@ -373,7 +368,7 @@ describe(`Test manage user access control`, () => {`  `
     })
     it("should get reviews that is associated with the ACL and confirm that is it all read only.", async () => {
 
-        const res = await chai.request(config.baseUrl)
+        const res = await chai.request.execute(config.baseUrl)
             .get(`/collections/${reference.testCollection.collectionId}/reviews?rules=default-mapped`)
             .set('Authorization', `Bearer ${lvl3.token}`)
             expect(res).to.have.status(200)
@@ -393,7 +388,7 @@ describe(`Test manage user access control`, () => {`  `
     it("should reject POST  modification to reviews that is associated with the ACLs that are read only", async () => {
       
 
-      const res = await chai.request(config.baseUrl)
+      const res = await chai.request.execute(config.baseUrl)
           .post(`/collections/${reference.testCollection.collectionId}/reviews/${reference.testAsset.assetId}`)
           .set('Authorization', `Bearer ${lvl3.token}`)
           .send([
@@ -412,7 +407,7 @@ describe(`Test manage user access control`, () => {`  `
     })
     it("should reject PUT modification to reviews that is associated with the ACLs that are read only", async () => {
 
-      const res = await chai.request(config.baseUrl)
+      const res = await chai.request.execute(config.baseUrl)
           .put(`/collections/${reference.testCollection.collectionId}/reviews/${reference.testAsset.assetId}/${reference.testCollection.ruleId}`)
           .set('Authorization', `Bearer ${lvl3.token}`)
           .send({
@@ -427,7 +422,7 @@ describe(`Test manage user access control`, () => {`  `
     })
     it("should reject PATCH modification to read only review on test asset with test ruleId", async () => {
 
-      const res = await chai.request(config.baseUrl)
+      const res = await chai.request.execute(config.baseUrl)
           .patch(`/collections/${reference.testCollection.collectionId}/reviews/${reference.testAsset.assetId}/${reference.testCollection.ruleId}`)
           .set('Authorization', `Bearer ${lvl3.token}`)
           .send({
@@ -438,7 +433,7 @@ describe(`Test manage user access control`, () => {`  `
     })
     it("should reject DELETE modification to read only review on test asset with test ruleId", async () => {
 
-      const res = await chai.request(config.baseUrl)
+      const res = await chai.request.execute(config.baseUrl)
           .delete(`/collections/${reference.testCollection.collectionId}/reviews/${reference.testAsset.assetId}/${reference.testCollection.ruleId}`)
           .set('Authorization', `Bearer ${lvl3.token}`)
          
@@ -446,7 +441,7 @@ describe(`Test manage user access control`, () => {`  `
     })
     it("should reject put modification to read only review metadata on test asset with test ruleId", async () => {
 
-      const res = await chai.request(config.baseUrl)
+      const res = await chai.request.execute(config.baseUrl)
           .put(`/collections/${reference.testCollection.collectionId}/reviews/${reference.testAsset.assetId}/${reference.testCollection.ruleId}/metadata`)
           .set('Authorization', `Bearer ${lvl3.token}`)
           .send({[reference.reviewMetadataKey]: reference.reviewMetadataValue})
@@ -456,7 +451,7 @@ describe(`Test manage user access control`, () => {`  `
     })
     it("should reject patch modification to read only review metadata on test asset with test ruleId", async () => {
 
-      const res = await chai.request(config.baseUrl)
+      const res = await chai.request.execute(config.baseUrl)
           .patch(`/collections/${reference.testCollection.collectionId}/reviews/${reference.testAsset.assetId}/${reference.testCollection.ruleId}/metadata`)
           .set('Authorization', `Bearer ${lvl3.token}`)
           .send({[reference.reviewMetadataKey]: reference.reviewMetadataValue})
@@ -466,7 +461,7 @@ describe(`Test manage user access control`, () => {`  `
     })
     it("should reject put modification to read only review metadata on test asset with test ruleId", async () => {
 
-      const res = await chai.request(config.baseUrl)
+      const res = await chai.request.execute(config.baseUrl)
           .put(`/collections/${reference.testCollection.collectionId}/reviews/${reference.testAsset.assetId}/${reference.testCollection.ruleId}/metadata`)
           .set('Authorization', `Bearer ${lvl3.token}`)
           .send({[reference.reviewMetadataKey]: reference.reviewMetadataValue})
@@ -474,7 +469,7 @@ describe(`Test manage user access control`, () => {`  `
       expect(res.body.detail).to.equal("User has insufficient privilege to put the review of this rule.")
     })
     it('should reject delete modification  of metadata key to read only review metadata on test asset with test ruleId', async () => {
-      const res = await chai.request(config.baseUrl)
+      const res = await chai.request.execute(config.baseUrl)
         .delete(`/collections/${reference.testCollection.collectionId}/reviews/${reference.testAsset.assetId}/${reference.testAsset.testRuleId}/metadata/keys/${reference.reviewMetadataKey}`)
         .set('Authorization', `Bearer ${lvl3.token}`)
         .send(`${JSON.stringify(reference.reviewMetadataValue)}`)
@@ -492,7 +487,7 @@ describe("Test restricted user group access controls", ()  => {
 
   it("Remove Base appdata userGroup from test Colleciton", async () => {
 
-    const res = await chai.request(config.baseUrl)  
+    const res = await chai.request.execute(config.baseUrl)  
       .delete(`/collections/${reference.testCollection.collectionId}/grants/${reference.testCollection.testGroup.testCollectionGrantId}`) 
       .set('Authorization', `Bearer ${admin.token}`)
 
@@ -500,8 +495,7 @@ describe("Test restricted user group access controls", ()  => {
   })
   // make a group with lvl1 in it
   it('should create a userGroup', async () => {
-    const res = await chai
-        .request(config.baseUrl)
+    const res = await chai.request.execute(config.baseUrl)
         .post(`/user-groups?elevate=true&projection=collections&projection=users`)
         .set('Authorization', 'Bearer ' + admin.token)
         .send({
@@ -523,21 +517,21 @@ describe("Test restricted user group access controls", ()  => {
   // assign group to test collection with restricted 
   it("should assign group created to the test collection with restricted grant", async function () {
 
-    const res = await chai.request(config.baseUrl)
+    const res = await chai.request.execute(config.baseUrl)
     .post(`/collections/${reference.testCollection.collectionId}/grants`)
     .set('Authorization', `Bearer ${admin.token}`)
     .send([{
       userGroupId: userGroup.userGroupId,
       accessLevel: 1
     }])
-    expect(res).to.have.status(201)
-    expect(res.body[0].accessLevel).to.equal(1)
-    userGroup.grantId = res.body[0].grantId
+    expect(res).to.have.status(200)
+    expect(res.body.accessLevel).to.equal(1)
+    userGroup.grantId = res.body.grantId
   })
   // give it read only to something use lvl1TEstAcl object
   it("should set userGroups ACL in test collection", async () => {
 
-    const res = await chai.request(config.baseUrl)
+    const res = await chai.request.execute(config.baseUrl)
         .put(`/collections/${reference.testCollection.collectionId}/grants/${userGroup.grantId}/acl`)
         .set('Authorization', `Bearer ${admin.token}`)
         .send(lvl1TestAcl.put)
@@ -546,7 +540,7 @@ describe("Test restricted user group access controls", ()  => {
   })
   // get the effective acl and confirm that it is read only and grantee from the group
   it("should confirm users effective acl was set ", async () => {
-    const res = await chai.request(config.baseUrl)
+    const res = await chai.request.execute(config.baseUrl)
         .get(`/collections/${reference.testCollection.collectionId}/grants/user/${lvl1.userId}/access/effective`)
         .set('Authorization', `Bearer ${admin.token}`)
     expect(res).to.have.status(200)
@@ -560,7 +554,7 @@ describe("Test restricted user group access controls", ()  => {
   })
   it("should get reviews that is associated with the ACL and confirm that is it all read only.", async () => {
 
-    const res = await chai.request(config.baseUrl)
+    const res = await chai.request.execute(config.baseUrl)
         .get(`/collections/${reference.testCollection.collectionId}/reviews?rules=default-mapped`)
         .set('Authorization', `Bearer ${lvl1.token}`)
     expect(res).to.have.status(200)
@@ -580,7 +574,7 @@ describe("Test restricted user group access controls", ()  => {
   })
   it("should reject PUT modification to reviews that is associated with the ACLs that are read only", async () => {
       
-      const res = await chai.request(config.baseUrl)
+      const res = await chai.request.execute(config.baseUrl)
           .put(`/collections/${reference.testCollection.collectionId}/reviews/${reference.testAsset.assetId}/${reference.testCollection.ruleId}`)
           .set('Authorization', `Bearer ${lvl1.token}`)
           .send({
@@ -595,7 +589,7 @@ describe("Test restricted user group access controls", ()  => {
   })
   it("should reject PATCH modification to read only review on test asset with test ruleId", async () => {
       
-      const res = await chai.request(config.baseUrl)
+      const res = await chai.request.execute(config.baseUrl)
           .patch(`/collections/${reference.testCollection.collectionId}/reviews/${reference.testAsset.assetId}/${reference.testCollection.ruleId}`)
           .set('Authorization', `Bearer ${lvl1.token}`)
           .send({
@@ -606,7 +600,7 @@ describe("Test restricted user group access controls", ()  => {
   })
   it("should reject DELETE modification to read only review on test asset with test ruleId", async () => {
 
-    const res = await chai.request(config.baseUrl)
+    const res = await chai.request.execute(config.baseUrl)
         .delete(`/collections/${reference.testCollection.collectionId}/reviews/${reference.testAsset.assetId}/${reference.testCollection.ruleId}`)
         .set('Authorization', `Bearer ${lvl1.token}`)
         
@@ -614,7 +608,7 @@ describe("Test restricted user group access controls", ()  => {
   })
   it("should reject put modification to read only review metadata on test asset with test ruleId", async () => {
 
-    const res = await chai.request(config.baseUrl)
+    const res = await chai.request.execute(config.baseUrl)
         .put(`/collections/${reference.testCollection.collectionId}/reviews/${reference.testAsset.assetId}/${reference.testCollection.ruleId}/metadata`)
         .set('Authorization', `Bearer ${lvl1.token}`)
         .send({[reference.reviewMetadataKey]: reference.reviewMetadataValue})
@@ -624,7 +618,7 @@ describe("Test restricted user group access controls", ()  => {
   })
   it("should reject patch modification to read only review metadata on test asset with test ruleId", async () => {
 
-    const res = await chai.request(config.baseUrl)
+    const res = await chai.request.execute(config.baseUrl)
         .patch(`/collections/${reference.testCollection.collectionId}/reviews/${reference.testAsset.assetId}/${reference.testCollection.ruleId}/metadata`)
         .set('Authorization', `Bearer ${lvl1.token}`)
         .send({[reference.reviewMetadataKey]: reference.reviewMetadataValue})
@@ -634,7 +628,7 @@ describe("Test restricted user group access controls", ()  => {
   })
   it("should reject put modification to read only review metadata on test asset with test ruleId", async () => {
 
-    const res = await chai.request(config.baseUrl)
+    const res = await chai.request.execute(config.baseUrl)
         .put(`/collections/${reference.testCollection.collectionId}/reviews/${reference.testAsset.assetId}/${reference.testCollection.ruleId}/metadata`)
         .set('Authorization', `Bearer ${lvl1.token}`)
         .send({[reference.reviewMetadataKey]: reference.reviewMetadataValue})
@@ -642,7 +636,7 @@ describe("Test restricted user group access controls", ()  => {
     expect(res.body.detail).to.equal("User has insufficient privilege to put the review of this rule.")
   })
   it('should reject delete modification  of metadata key to read only review metadata on test asset with test ruleId', async () => {
-    const res = await chai.request(config.baseUrl)
+    const res = await chai.request.execute(config.baseUrl)
       .delete(`/collections/${reference.testCollection.collectionId}/reviews/${reference.testAsset.assetId}/${reference.testAsset.testRuleId}/metadata/keys/${reference.reviewMetadataKey}`)
       .set('Authorization', `Bearer ${lvl1.token}`)
       .send(`${JSON.stringify(reference.reviewMetadataValue)}`)
@@ -662,7 +656,7 @@ describe("Test manage user group access control", () => {
 
   it("Remove Base appdata userGroup from test Colleciton", async () => {
 
-    const res = await chai.request(config.baseUrl)  
+    const res = await chai.request.execute(config.baseUrl)  
       .delete(`/collections/${reference.testCollection.collectionId}/grants/${reference.testCollection.testGroup.testCollectionGrantId}`) 
       .set('Authorization', `Bearer ${admin.token}`)
 
@@ -670,8 +664,7 @@ describe("Test manage user group access control", () => {
   })
   // make a group with lvl1 in it
   it('should create a userGroup', async () => {
-    const res = await chai
-        .request(config.baseUrl)
+    const res = await chai.request.execute(config.baseUrl)
         .post(`/user-groups?elevate=true&projection=collections&projection=users`)
         .set('Authorization', 'Bearer ' + admin.token)
         .send({
@@ -693,21 +686,21 @@ describe("Test manage user group access control", () => {
   // assign group to test collection with restricted 
   it("should assign group created to the test collection with manage grant", async function () {
 
-    const res = await chai.request(config.baseUrl)
+    const res = await chai.request.execute(config.baseUrl)
     .post(`/collections/${reference.testCollection.collectionId}/grants`)
     .set('Authorization', `Bearer ${admin.token}`)
     .send([{
       userGroupId: userGroup.userGroupId,
       accessLevel: 3
     }])
-    expect(res).to.have.status(201)
-    expect(res.body[0].accessLevel).to.equal(3)
-    userGroup.grantId = res.body[0].grantId
+    expect(res).to.have.status(200)
+    expect(res.body.accessLevel).to.equal(3)
+    userGroup.grantId = res.body.grantId
   })
   // give it read only to something use lvl1TEstAcl object
   it("should set userGroups ACL in test collection", async () => {
 
-    const res = await chai.request(config.baseUrl)
+    const res = await chai.request.execute(config.baseUrl)
         .put(`/collections/${reference.testCollection.collectionId}/grants/${userGroup.grantId}/acl`)
         .set('Authorization', `Bearer ${admin.token}`)
         .send(lvl3TestAcl.put)
@@ -716,7 +709,7 @@ describe("Test manage user group access control", () => {
   })
   // get the effective acl and confirm that it is read only and grantee from the group
   it("should confirm users effective acl was set ", async () => {
-    const res = await chai.request(config.baseUrl)
+    const res = await chai.request.execute(config.baseUrl)
         .get(`/collections/${reference.testCollection.collectionId}/grants/user/${lvl1.userId}/access/effective`)
         .set('Authorization', `Bearer ${admin.token}`)
     expect(res).to.have.status(200)
@@ -730,7 +723,7 @@ describe("Test manage user group access control", () => {
   })
   it("should get reviews that is associated with the ACL and confirm that is it all read only.", async () => {
 
-    const res = await chai.request(config.baseUrl)
+    const res = await chai.request.execute(config.baseUrl)
         .get(`/collections/${reference.testCollection.collectionId}/reviews?rules=default-mapped`)
         .set('Authorization', `Bearer ${lvl1.token}`)
     expect(res).to.have.status(200)
@@ -746,7 +739,7 @@ describe("Test manage user group access control", () => {
   })
   it("should reject PUT modification to reviews that is associated with the ACLs that are read only", async () => {
       
-      const res = await chai.request(config.baseUrl)
+      const res = await chai.request.execute(config.baseUrl)
           .put(`/collections/${reference.testCollection.collectionId}/reviews/${reference.testAsset.assetId}/${reference.testCollection.ruleId}`)
           .set('Authorization', `Bearer ${lvl1.token}`)
           .send({
@@ -761,7 +754,7 @@ describe("Test manage user group access control", () => {
   })
   it("should reject PATCH modification to read only review on test asset with test ruleId", async () => {
       
-      const res = await chai.request(config.baseUrl)
+      const res = await chai.request.execute(config.baseUrl)
           .patch(`/collections/${reference.testCollection.collectionId}/reviews/${reference.testAsset.assetId}/${reference.testCollection.ruleId}`)
           .set('Authorization', `Bearer ${lvl1.token}`)
           .send({
@@ -772,7 +765,7 @@ describe("Test manage user group access control", () => {
   })
   it("should reject DELETE modification to read only review on test asset with test ruleId", async () => {
 
-    const res = await chai.request(config.baseUrl)
+    const res = await chai.request.execute(config.baseUrl)
         .delete(`/collections/${reference.testCollection.collectionId}/reviews/${reference.testAsset.assetId}/${reference.testCollection.ruleId}`)
         .set('Authorization', `Bearer ${lvl1.token}`)
         
@@ -780,7 +773,7 @@ describe("Test manage user group access control", () => {
   })
   it("should reject put modification to read only review metadata on test asset with test ruleId", async () => {
 
-    const res = await chai.request(config.baseUrl)
+    const res = await chai.request.execute(config.baseUrl)
         .put(`/collections/${reference.testCollection.collectionId}/reviews/${reference.testAsset.assetId}/${reference.testCollection.ruleId}/metadata`)
         .set('Authorization', `Bearer ${lvl1.token}`)
         .send({[reference.reviewMetadataKey]: reference.reviewMetadataValue})
@@ -790,7 +783,7 @@ describe("Test manage user group access control", () => {
   })
   it("should reject patch modification to read only review metadata on test asset with test ruleId", async () => {
 
-    const res = await chai.request(config.baseUrl)
+    const res = await chai.request.execute(config.baseUrl)
         .patch(`/collections/${reference.testCollection.collectionId}/reviews/${reference.testAsset.assetId}/${reference.testCollection.ruleId}/metadata`)
         .set('Authorization', `Bearer ${lvl1.token}`)
         .send({[reference.reviewMetadataKey]: reference.reviewMetadataValue})
@@ -800,7 +793,7 @@ describe("Test manage user group access control", () => {
   })
   it("should reject put modification to read only review metadata on test asset with test ruleId", async () => {
 
-    const res = await chai.request(config.baseUrl)
+    const res = await chai.request.execute(config.baseUrl)
         .put(`/collections/${reference.testCollection.collectionId}/reviews/${reference.testAsset.assetId}/${reference.testCollection.ruleId}/metadata`)
         .set('Authorization', `Bearer ${lvl1.token}`)
         .send({[reference.reviewMetadataKey]: reference.reviewMetadataValue})
@@ -808,7 +801,7 @@ describe("Test manage user group access control", () => {
     expect(res.body.detail).to.equal("User has insufficient privilege to put the review of this rule.")
   })
   it('should reject delete modification  of metadata key to read only review metadata on test asset with test ruleId', async () => {
-    const res = await chai.request(config.baseUrl)
+    const res = await chai.request.execute(config.baseUrl)
       .delete(`/collections/${reference.testCollection.collectionId}/reviews/${reference.testAsset.assetId}/${reference.testAsset.testRuleId}/metadata/keys/${reference.reviewMetadataKey}`)
       .set('Authorization', `Bearer ${lvl1.token}`)
       .send(`${JSON.stringify(reference.reviewMetadataValue)}`)

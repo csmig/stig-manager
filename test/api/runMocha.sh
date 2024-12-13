@@ -8,20 +8,24 @@ usage() {
   echo "  -d directory   Run tests in specific directory."
   echo "  -i iteration   Run tests for specific iteration.name (see iterations.js)" 
   echo "  -c coverage    Run all tests and generate coverage report. (cannot be used with other options)"
+  echo "  -b bail    Stop running tests after the first failure."
   echo -e "  -h help        examples: \n ./runMocha.sh \n ./runMocha.sh -p \"the name of my test\" \n ./runMocha.sh -p \"getCollections|getAsset\" \n ./runMocha.sh -p getCollections \n ./runMocha.sh -i lvl1 -i lvl2 -p getCollections \n ./runMocha.sh -f collectionGet.test.js \n ./runMocha.sh -d mocha/data/collection"
   exit 
 }
 
-DEFAULT_COMMAND="npx mocha --reporter mochawesome --no-timeouts --showFailed --exit './mocha/**/*.test.js'"
-COMMAND="npx mocha --reporter mochawesome --no-timeouts --showFailed --exit"
+DEFAULT_COMMAND="npx mocha --reporter mochawesome --no-timeouts --showFailed --exit --require ./setup.js './mocha/**/*.test.js'"
+COMMAND="npx mocha --reporter mochawesome --no-timeouts --showFailed --exit --require ./setup.js"
 COVERAGE=false
 PATTERNS=()
 FILES=()
 DIRECTORIES=()
 USERS=()
 
-while getopts "cp:f:d:i:h:" opt; do
+while getopts "cbp:f:d:i:h:" opt; do
   case ${opt} in
+    b)
+      COMMAND+=" --bail"
+      ;;
     c)
       COVERAGE=true
       ;;

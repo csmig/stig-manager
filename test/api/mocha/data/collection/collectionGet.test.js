@@ -1,15 +1,11 @@
-const chai = require('chai')
-const deepEqualInAnyOrder = require('deep-equal-in-any-order')
-const chaiHttp = require('chai-http')
-const { v4: uuidv4 } = require('uuid')
-chai.use(chaiHttp)
-chai.use(deepEqualInAnyOrder)
-const expect = chai.expect
-const config = require('../../testConfig.json')
-const utils = require('../../utils/testUtils')
-const iterations = require('../../iterations.js')
-const expectations = require('./expectations.js')
-const reference = require('../../referenceData.js')
+
+const { expect } = chai
+import { v4 as uuidv4 } from 'uuid'
+import {config } from '../../testConfig.js'
+import * as utils from '../../utils/testUtils.js'
+import reference from '../../referenceData.js'
+import {iterations} from '../../iterations.js'
+import {expectations} from './expectations.js'
 
 describe('GET - Collection', function () {
 
@@ -31,7 +27,7 @@ describe('GET - Collection', function () {
 
           it('Return Collections accessible to the requester No Filters - elevated stigmanadmin only', async function () {
 
-            const res = await chai.request(config.baseUrl)
+            const res = await chai.request.execute(config.baseUrl)
               .get('/collections?projection=owners&projection=statistics&elevate=true')
               .set('Authorization', `Bearer ${iteration.token}`)
             
@@ -49,7 +45,7 @@ describe('GET - Collection', function () {
         }
 
         it('Return a list of Collections accessible to the requester No Filters no elevate!',async function () {
-            const res = await chai.request(config.baseUrl)
+            const res = await chai.request.execute(config.baseUrl)
               .get('/collections?projection=owners&projection=statistics')
               .set('Authorization', `Bearer ${iteration.token}`)
             expect(res).to.have.status(200)
@@ -60,7 +56,7 @@ describe('GET - Collection', function () {
             }
         })
         it('Return a list of Collections accessible to the requester METADATA',async function () {
-            const res = await chai.request(config.baseUrl)
+            const res = await chai.request.execute(config.baseUrl)
               .get(`/collections?metadata=${reference.testCollection.collectionMetadataKey}%3A${reference.testCollection.collectionMetadataValue}`)
               .set('Authorization', `Bearer ${iteration.token}`)
             expect(res).to.have.status(200)
@@ -113,7 +109,7 @@ describe('GET - Collection', function () {
               ]
             })
           
-          const res = await chai.request(config.baseUrl)
+          const res = await chai.request.execute(config.baseUrl)
             .get(`/collections?metadata=testKey%3Atest%3Avalue`)
             .set('Authorization', `Bearer ${iteration.token}`)
           expect(res).to.have.status(200)
@@ -126,7 +122,7 @@ describe('GET - Collection', function () {
           expect(res.body[0].collectionId).to.equal(tempCollectionWithMetadata.collectionId)
         })
         it('Return a list of Collections accessible to the requester NAME exact',async function () {
-        const res = await chai.request(config.baseUrl)
+        const res = await chai.request.execute(config.baseUrl)
             .get(`/collections?name=${reference.testCollection.name}&name-match=exact`)
             .set('Authorization', `Bearer ${iteration.token}`)
         expect(res).to.have.status(200)
@@ -140,7 +136,7 @@ describe('GET - Collection', function () {
         expect(res.body[0].collectionId).to.equal(reference.testCollection.collectionId)
         })
         it('Return a list of Collections accessible to the requester NAME starts With',async function () {
-        const res = await chai.request(config.baseUrl)
+        const res = await chai.request.execute(config.baseUrl)
             .get(`/collections?name=${'Collection'}&name-match=startsWith`)
             .set('Authorization', `Bearer ${iteration.token}`)
         expect(res).to.have.status(200)
@@ -155,7 +151,7 @@ describe('GET - Collection', function () {
         }
         })
         it('Return a list of Collections accessible to the requester NAME ends With',async function () {
-        const res = await chai.request(config.baseUrl)
+        const res = await chai.request.execute(config.baseUrl)
             .get(`/collections?name=${'X'}&name-match=endsWith`)
             .set('Authorization', `Bearer ${iteration.token}`)
         expect(res).to.have.status(200)
@@ -167,7 +163,7 @@ describe('GET - Collection', function () {
         expect(res.body[0].name).to.have.string('X')
         })
         it('Return a list of Collections accessible to the requester NAME contains elevated',async function () {
-        const res = await chai.request(config.baseUrl)
+        const res = await chai.request.execute(config.baseUrl)
             .get(`/collections?name=${'delete'}&name-match=contains&elevate=true`)
             .set('Authorization', `Bearer ${iteration.token}`)
         if(iteration.name !== 'stigmanadmin'){
@@ -180,7 +176,7 @@ describe('GET - Collection', function () {
         expect(res.body[0].name).to.have.string('delete')
         })
         it('Return a list of Collections accessible to the requester NAME contains no elevate',async function () {
-          const res = await chai.request(config.baseUrl)
+          const res = await chai.request.execute(config.baseUrl)
               .get(`/collections?name=${'delete'}&name-match=contains`)
               .set('Authorization', `Bearer ${iteration.token}`)
           expect(res).to.have.status(200)
@@ -193,7 +189,7 @@ describe('GET - Collection', function () {
 
       describe('getCollection - /collections/{collectionId}', function () {
         it('Return a Collection',async function () { 
-          const res = await chai.request(config.baseUrl)
+          const res = await chai.request.execute(config.baseUrl)
             .get(`/collections/${reference.testCollection.collectionId}?projection=assets&projection=grants&projection=owners&projection=users&projection=statistics&projection=stigs&projection=labels`)
             .set('Authorization', `Bearer ${iteration.token}`)
           if (distinct.grant === "none"){
@@ -249,7 +245,7 @@ describe('GET - Collection', function () {
 
       describe('getChecklistByCollectionStig - /collections/{collectionId}/checklists/{benchmarkId}/{revisionStr}', function () {
         it('Return the Checklist for the supplied Collection and STIG-latest',async function () {
-          const res = await chai.request(config.baseUrl)
+          const res = await chai.request.execute(config.baseUrl)
             .get(`/collections/${reference.testCollection.collectionId}/checklists/${reference.benchmark}/${'latest'}`)
             .set('Authorization', `Bearer ${iteration.token}`)
             if (distinct.grant === "none"){
@@ -260,7 +256,7 @@ describe('GET - Collection', function () {
             expect(res.body).to.be.an('array').of.length(reference.checklistLength)
         })
         it('Return the Checklist for the supplied Collection and STIG-revStr',async function () {
-          const res = await chai.request(config.baseUrl)
+          const res = await chai.request.execute(config.baseUrl)
             .get(`/collections/${reference.testCollection.collectionId}/checklists/${reference.benchmark}/${reference.revisionStr}`)
             .set('Authorization', `Bearer ${iteration.token}`)
             if (distinct.grant === "none"){
@@ -276,7 +272,7 @@ describe('GET - Collection', function () {
       describe('getFindingsByCollection - /collections/{collectionId}/findings', function () {
         
         it('Return the Findings for the specified Collection by ruleId',async function () {
-          const res = await chai.request(config.baseUrl)
+          const res = await chai.request.execute(config.baseUrl)
             .get(`/collections/${reference.testCollection.collectionId}/findings?aggregator=cci&acceptedOnly=false&projection=assets&projection=groups&projection=rules&projection=stigs&projection=ccis`)
             .set('Authorization', `Bearer ${iteration.token}`)
             if (distinct.grant === "none"){
@@ -311,7 +307,7 @@ describe('GET - Collection', function () {
         })
 
         it('Return the Findings for the specified Collection by groupId',async function () {
-          const res = await chai.request(config.baseUrl)
+          const res = await chai.request.execute(config.baseUrl)
             .get(`/collections/${reference.testCollection.collectionId}/findings?aggregator=groupId&acceptedOnly=false&projection=assets`)
             .set('Authorization', `Bearer ${iteration.token}`)
             if (distinct.grant === "none"){
@@ -331,7 +327,7 @@ describe('GET - Collection', function () {
         })
 
         it('Return the Findings for the specified Collection by cci',async function () {
-          const res = await chai.request(config.baseUrl)
+          const res = await chai.request.execute(config.baseUrl)
             .get(`/collections/${reference.testCollection.collectionId}/findings?aggregator=cci&acceptedOnly=false&projection=assets`)
             .set('Authorization', `Bearer ${iteration.token}`)
             if (distinct.grant === "none"){
@@ -351,7 +347,7 @@ describe('GET - Collection', function () {
         })
 
         it('Return the Findings for the specified Collection for benchmarkId x ruleId',async function () {
-          const res = await chai.request(config.baseUrl)
+          const res = await chai.request.execute(config.baseUrl)
             .get(`/collections/${reference.testCollection.collectionId}/findings?aggregator=ruleId&acceptedOnly=false&benchmarkId=${reference.benchmark}&projection=assets`)
             .set('Authorization', `Bearer ${iteration.token}`)
             if (distinct.grant === "none"){
@@ -371,7 +367,7 @@ describe('GET - Collection', function () {
         })
 
         it('Return the Findings for the specified Collection for asset x ruleId Copy',async function () {
-          const res = await chai.request(config.baseUrl)
+          const res = await chai.request.execute(config.baseUrl)
             .get(`/collections/${reference.testCollection.collectionId}/findings?aggregator=ruleId&acceptedOnly=false&assetId=${reference.testAsset.assetId}&projection=assets`)
             .set('Authorization', `Bearer ${iteration.token}`)
             if (distinct.grant === "none"){
@@ -393,7 +389,7 @@ describe('GET - Collection', function () {
       // describe('getStigAssetsByCollectionUser - /collections/{collectionId}/grants/{userId}/access', function () {
 
       //   it('Return stig-asset grants for a lvl1 iteration in this collection.',async function () {
-      //     const res = await chai.request(config.baseUrl)
+      //     const res = await chai.request.execute(config.baseUrl)
       //       .get(`/collections/${reference.testCollection.collectionId}/grants/${reference.testCollection.grantCheckUserId}/access`)
       //       .set('Authorization', `Bearer ${iteration.token}`)
       //       if (distinct.grant === "none"){
@@ -428,7 +424,7 @@ describe('GET - Collection', function () {
       describe('getEffectiveAclByCollectionUser - /collections/{collectionId}/grants/user/{userId}/access/effective', function () {
 
         it("should return the effective ACL for the user in the collection users < manage will get rejected",async function () {
-          const res = await chai.request(config.baseUrl)
+          const res = await chai.request.execute(config.baseUrl)
             .get(`/collections/${reference.testCollection.collectionId}/grants/user/${iteration.userId}/access/effective`)
             .set('Authorization', `Bearer ${iteration.token}`)
             if (distinct.grant === "none" || distinct.canModifyCollection === false){
@@ -440,7 +436,7 @@ describe('GET - Collection', function () {
         })
 
         it("should return the effective ACL for the user in the collection users uses only admin token",async function () {
-          const res = await chai.request(config.baseUrl)
+          const res = await chai.request.execute(config.baseUrl)
             .get(`/collections/${reference.testCollection.collectionId}/grants/user/${iteration.userId}/access/effective`)
             .set('Authorization', `Bearer ${iterations[0].token}`)
             
@@ -453,7 +449,7 @@ describe('GET - Collection', function () {
         })
         it("should return SmError.UnprocessableError because the user has no direct grant in the collection",async function () {
 
-          const res = await chai.request(config.baseUrl)
+          const res = await chai.request.execute(config.baseUrl)
             .get(`/collections/${reference.testCollection.collectionId}/grants/user/${"1234321"}/access/effective`)
             .set('Authorization', `Bearer ${iteration.token}`)
             if (distinct.grant === "none" || distinct.canModifyCollection === false){
@@ -468,7 +464,7 @@ describe('GET - Collection', function () {
       describe('getCollectionLabels - /collections/{collectionId}/labels', function () {
 
         it('Labels for the specified Collection',async function () {
-          const res = await chai.request(config.baseUrl)
+          const res = await chai.request.execute(config.baseUrl)
             .get(`/collections/${reference.testCollection.collectionId}/labels`)
             .set('Authorization', `Bearer ${iteration.token}`)
             if (distinct.grant === "none"){
@@ -493,7 +489,7 @@ describe('GET - Collection', function () {
 
       describe('getCollectionLabelById - /collections/{collectionId}/labels/{labelId}', function () {
         it('Collection label',async function () {
-          const res = await chai.request(config.baseUrl)
+          const res = await chai.request.execute(config.baseUrl)
             .get(`/collections/${reference.testCollection.collectionId}/labels/${reference.testCollection.fullLabel}`)
             .set('Authorization', `Bearer ${iteration.token}`)
             if (distinct.grant === "none"){
@@ -510,7 +506,7 @@ describe('GET - Collection', function () {
 
           const randomUUID = uuidv4()
 
-          const res = await chai.request(config.baseUrl)
+          const res = await chai.request.execute(config.baseUrl)
             .get(`/collections/${reference.testCollection.collectionId}/labels/${randomUUID}`)
             .set('Authorization', `Bearer ${iteration.token}`)
             if (distinct.grant === "none"){
@@ -524,7 +520,7 @@ describe('GET - Collection', function () {
 
       describe('getCollectionMetadata - /collections/{collectionId}/metadata', function () {
         it('Metadata for the specified Collection',async function () {
-          const res = await chai.request(config.baseUrl)
+          const res = await chai.request.execute(config.baseUrl)
             .get(`/collections/${reference.testCollection.collectionId}/metadata`)
             .set('Authorization', `Bearer ${iteration.token}`)
             if (distinct.grant === "none"){
@@ -544,7 +540,7 @@ describe('GET - Collection', function () {
       describe('getCollectionMetadataKeys - /collections/{collectionId}/metadata/keys', function () {
 
         it('Return the Metadata KEYS for a Collection',async function () {
-          const res = await chai.request(config.baseUrl)
+          const res = await chai.request.execute(config.baseUrl)
             .get(`/collections/${reference.testCollection.collectionId}/metadata/keys?`)
             .set('Authorization', `Bearer ${iteration.token}`)
             if (distinct.grant === "none"){
@@ -614,7 +610,7 @@ describe('GET - Collection', function () {
               }
             ]
           })
-          const res = await chai.request(config.baseUrl)
+          const res = await chai.request.execute(config.baseUrl)
             .get(`/collections/${collectionNoMetadata.collectionId}/metadata/keys`)
             .set('Authorization', `Bearer ${iteration.token}`)
             if (distinct.grant === "none"){
@@ -636,7 +632,7 @@ describe('GET - Collection', function () {
       describe('getCollectionMetadataValue - /collections/{collectionId}/metadata/keys/{key}', function () {
 
         it('Return the Metadata VALUE for a Collection metadata KEY',async function () {
-          const res = await chai.request(config.baseUrl)
+          const res = await chai.request.execute(config.baseUrl)
             .get(`/collections/${reference.testCollection.collectionId}/metadata/keys/${reference.testCollection.collectionMetadataKey}`)
             .set('Authorization', `Bearer ${iteration.token}`)
             if (distinct.grant === "none"){
@@ -651,7 +647,7 @@ describe('GET - Collection', function () {
             expect(res.body).to.equal(reference.testCollection.collectionMetadataValue)
         })
         it('should throw SmError.NotFoundError because the collection does not contain the key',async function () {
-          const res = await chai.request(config.baseUrl)
+          const res = await chai.request.execute(config.baseUrl)
             .get(`/collections/${reference.testCollection.collectionId}/metadata/keys/trashkey`)
             .set('Authorization', `Bearer ${iteration.token}`)
             if (distinct.grant === "none"){
@@ -671,7 +667,7 @@ describe('GET - Collection', function () {
       describe('getPoamByCollection - /collections/{collectionId}/poam', function () {
 
         it('Return a POAM-like spreadsheet aggregated by groupId',async function () {
-          const res = await chai.request(config.baseUrl)
+          const res = await chai.request.execute(config.baseUrl)
             .get(`/collections/${reference.testCollection.collectionId}/poam?aggregator=groupId&date=01%2F01%2F1970&office=MyOffice&status=Ongoing&acceptedOnly=true`)
             .set('Authorization', `Bearer ${iteration.token}`)
             if (distinct.grant === "none"){
@@ -682,7 +678,7 @@ describe('GET - Collection', function () {
         })
 
         it('Return a POAM-like spreadsheet aggregated by ruleId',async function () {
-          const res = await chai.request(config.baseUrl)
+          const res = await chai.request.execute(config.baseUrl)
             .get(`/collections/${reference.testCollection.collectionId}/poam?aggregator=ruleId&date=01%2F01%2F1970&office=MyOffice&status=Ongoing&acceptedOnly=true`)
             .set('Authorization', `Bearer ${iteration.token}`)
             if (distinct.grant === "none"){
@@ -693,7 +689,7 @@ describe('GET - Collection', function () {
         })
 
         it('Return an EMASS formatted POAM-like spreadsheet aggregated by groupId',async function () {
-          const res = await chai.request(config.baseUrl)
+          const res = await chai.request.execute(config.baseUrl)
             .get(`/collections/${reference.testCollection.collectionId}/poam?format=EMASS&aggregator=groupId&date=01%2F01%2F1970&office=MyOffice&status=Ongoing&acceptedOnly=true&mccastPackageId=PackageID&mccastAuthName=AuthPackageName`)
             .set('Authorization', `Bearer ${iteration.token}`)
             if (distinct.grant === "none"){
@@ -704,7 +700,7 @@ describe('GET - Collection', function () {
         })
 
         it('Return an EMASS formatted POAM-like spreadsheet aggregated by ruleId',async function () {
-          const res = await chai.request(config.baseUrl)
+          const res = await chai.request.execute(config.baseUrl)
             .get(`/collections/${reference.testCollection.collectionId}/poam?format=EMASS&aggregator=ruleId&date=01%2F01%2F1970&office=MyOffice&status=Ongoing&mccastPackageId=PackageID&mccastAuthName=AuthPackageName`)
             .set('Authorization', `Bearer ${iteration.token}`)
             if (distinct.grant === "none"){
@@ -715,7 +711,7 @@ describe('GET - Collection', function () {
         })
 
         it('Return an MCCAST formatted POAM-like spreadsheet aggregated by groupId',async function () {
-          const res = await chai.request(config.baseUrl)
+          const res = await chai.request.execute(config.baseUrl)
             .get(`/collections/${reference.testCollection.collectionId}/poam?format=MCCAST&aggregator=groupId&date=01%2F01%2F1970&office=MyOffice&status=Started&acceptedOnly=true&mccastPackageId=PackageID&mccastAuthName=AuthPackageName`)
             .set('Authorization', `Bearer ${iteration.token}`)
             if (distinct.grant === "none"){
@@ -726,7 +722,7 @@ describe('GET - Collection', function () {
         })
   
         it('Return an MCCAST formatted POAM-like spreadsheet aggregated by ruleId',async function () {
-          const res = await chai.request(config.baseUrl)
+          const res = await chai.request.execute(config.baseUrl)
             .get(`/collections/${reference.testCollection.collectionId}/poam?format=MCCAST&aggregator=ruleId&date=01%2F01%2F1970&office=MyOffice&status=Started&mccastPackageId=PackageID&mccastAuthName=AuthPackageName`)
             .set('Authorization', `Bearer ${iteration.token}`)
             if (distinct.grant === "none"){
@@ -740,7 +736,7 @@ describe('GET - Collection', function () {
       describe('getReviewHistoryByCollection - /collections/{collectionId}/review-history', function () {
 
         it('History records - no query params',async function () {
-          const res = await chai.request(config.baseUrl)
+          const res = await chai.request.execute(config.baseUrl)
             .get(`/collections/${reference.testCollection.collectionId}/review-history`)
             .set('Authorization', `Bearer ${iteration.token}`)
             if (distinct.grant === "none"){
@@ -754,7 +750,7 @@ describe('GET - Collection', function () {
             }
             expect(res.body).to.be.an('array').of.length(reference.testCollection.assetsWithHistory.length)
 
-            for(asset of res.body){
+            for(const asset of res.body){
               if(asset.assetId === reference.testCollection.reviewHistory.assetId){
                 expect(asset.reviewHistories).to.be.an('array').of.length(reference.testCollection.reviewHistory.reviewHistoryRuleCnt)
                 for(const history of asset.reviewHistories){
@@ -770,7 +766,7 @@ describe('GET - Collection', function () {
         })
 
         it('History records - asset only',async function () {
-          const res = await chai.request(config.baseUrl)
+          const res = await chai.request.execute(config.baseUrl)
             .get(`/collections/${reference.testCollection.collectionId}/review-history?assetId=${reference.testCollection.reviewHistory.assetId}`)
             .set('Authorization', `Bearer ${iteration.token}`)
 
@@ -780,7 +776,7 @@ describe('GET - Collection', function () {
             }
             //requesting one assets history
             expect(res.body).to.be.an('array').of.length(1)
-            for(asset of res.body){
+            for(const asset of res.body){
               expect(asset.assetId).to.equal(reference.testCollection.reviewHistory.assetId)
               expect(asset.reviewHistories).to.be.an('array').of.length(reference.testCollection.reviewHistory.rulesWithHistoryCnt)
               for(const history of asset.reviewHistories){
@@ -795,7 +791,7 @@ describe('GET - Collection', function () {
         })
 
         it('History records - endDate only',async function () {
-          const res = await chai.request(config.baseUrl)
+          const res = await chai.request.execute(config.baseUrl)
             .get(`/collections/${reference.testCollection.collectionId}/review-history?endDate=${reference.testCollection.reviewHistory.endDate}`)
             .set('Authorization', `Bearer ${iteration.token}`)
             
@@ -804,7 +800,7 @@ describe('GET - Collection', function () {
               return
             }
             expect(res.body).to.be.an('array').of.length(reference.testCollection.assetsWithHistory.length)
-            for(asset of res.body){
+            for(const asset of res.body){
               for(const history of asset.reviewHistories){
                 expect(history.history).to.be.an('array').of.length(2)
                 for(const record of history.history){
@@ -815,7 +811,7 @@ describe('GET - Collection', function () {
         })
 
         it('History records - startDate only',async function () {
-          const res = await chai.request(config.baseUrl)
+          const res = await chai.request.execute(config.baseUrl)
             .get(`/collections/${reference.testCollection.collectionId}/review-history?startDate=${reference.testCollection.reviewHistory.startDate}`)
             .set('Authorization', `Bearer ${iteration.token}`)
             
@@ -824,7 +820,7 @@ describe('GET - Collection', function () {
               return
             }
             expect(res.body).to.be.an('array').of.length(reference.testCollection.assetsWithHistory.length)
-            for(asset of res.body){
+            for(const asset of res.body){
               for(const history of asset.reviewHistories){
                 for(const record of history.history){
                   expect(Date.parse(record.ts)).to.be.above(Date.parse(reference.testCollection.reviewHistory.startDate))
@@ -834,7 +830,7 @@ describe('GET - Collection', function () {
         })
 
         it('History records - rule only',async function () {
-          const res = await chai.request(config.baseUrl)
+          const res = await chai.request.execute(config.baseUrl)
             .get(`/collections/${reference.testCollection.collectionId}/review-history?ruleId=${reference.testCollection.reviewHistory.ruleId}`)
             .set('Authorization', `Bearer ${iteration.token}`)
             
@@ -843,7 +839,7 @@ describe('GET - Collection', function () {
               return
             }
             expect(res.body).to.be.an('array').of.length(reference.testCollection.assetsWithHistory.length)
-            for(asset of res.body){
+            for(const asset of res.body){
               for(const history of asset.reviewHistories){
                 expect(history.ruleId).to.equal(reference.testCollection.reviewHistory.ruleId)
               }
@@ -851,7 +847,7 @@ describe('GET - Collection', function () {
         })
 
         it('History records - start and end dates',async function () {
-          const res = await chai.request(config.baseUrl)
+          const res = await chai.request.execute(config.baseUrl)
             .get(`/collections/${reference.testCollection.collectionId}/review-history?startDate=${reference.testCollection.reviewHistory.startDate}&endDate=${reference.testCollection.reviewHistory.endDate}`)
             .set('Authorization', `Bearer ${iteration.token}`)
             
@@ -860,7 +856,7 @@ describe('GET - Collection', function () {
               return
             }
             expect(res.body).to.be.an('array').of.length(reference.testCollection.assetsWithHistory.length)
-            for(asset of res.body){
+            for(const asset of res.body){
               for(const history of asset.reviewHistories){
                 for(const record of history.history){
                   expect(Date.parse(record.ts)).to.be.above(Date.parse(reference.testCollection.reviewHistory.startDate))
@@ -871,7 +867,7 @@ describe('GET - Collection', function () {
         })
 
         it('History records - status only',async function () {
-          const res = await chai.request(config.baseUrl)
+          const res = await chai.request.execute(config.baseUrl)
             .get(`/collections/${reference.testCollection.collectionId}/review-history?status=${reference.testCollection.reviewHistory.status}`)
             .set('Authorization', `Bearer ${iteration.token}`)
             
@@ -880,7 +876,7 @@ describe('GET - Collection', function () {
               return
             }
             expect(res.body).to.be.an('array').of.length(reference.testCollection.assetsWithHistory.length)
-            for(asset of res.body){
+            for(const asset of res.body){
               for(const history of asset.reviewHistories){
                 for(const record of history.history){
                   expect(record.status.label).to.equal(reference.testCollection.reviewHistory.status)
@@ -890,7 +886,7 @@ describe('GET - Collection', function () {
         })
 
         it('History records - all params',async function () {
-          const res = await chai.request(config.baseUrl)
+          const res = await chai.request.execute(config.baseUrl)
             .get(`/collections/${reference.testCollection.collectionId}/review-history?status=${reference.testCollection.reviewHistory.status}&assetId=${reference.testCollection.reviewHistory.assetId}&ruleId=${reference.testCollection.reviewHistory.ruleId}&startDate=${reference.testCollection.reviewHistory.startDate}&endDate=${reference.testCollection.reviewHistory.endDate}`)
             .set('Authorization', `Bearer ${iteration.token}`)
             
@@ -919,7 +915,7 @@ describe('GET - Collection', function () {
       describe('getReviewHistoryStatsByCollection - /collections/{collectionId}/review-history/stats', function () {
 
         it('History stats - no query params',async function () {
-          const res = await chai.request(config.baseUrl)
+          const res = await chai.request.execute(config.baseUrl)
             .get(`/collections/${reference.testCollection.collectionId}/review-history/stats`)
             .set('Authorization', `Bearer ${iteration.token}`)
             
@@ -932,7 +928,7 @@ describe('GET - Collection', function () {
         })
 
         it('History stats - startDate only',async function () {
-          const res = await chai.request(config.baseUrl)
+          const res = await chai.request.execute(config.baseUrl)
             .get(`/collections/${reference.testCollection.collectionId}/review-history/stats?startDate=${reference.testCollection.reviewHistory.startDate}`)
             .set('Authorization', `Bearer ${iteration.token}`)
             
@@ -945,7 +941,7 @@ describe('GET - Collection', function () {
         })
 
         it('History stats - startDate - Asset Projection',async function () {
-          const res = await chai.request(config.baseUrl)
+          const res = await chai.request.execute(config.baseUrl)
             .get(`/collections/${reference.testCollection.collectionId}/review-history/stats?startDate=${reference.testCollection.reviewHistory.startDate}&projection=asset`)
             .set('Authorization', `Bearer ${iteration.token}`)
             
@@ -966,7 +962,7 @@ describe('GET - Collection', function () {
         })
 
         it('History stats - endDate only',async function () {
-          const res = await chai.request(config.baseUrl)
+          const res = await chai.request.execute(config.baseUrl)
             .get(`/collections/${reference.testCollection.collectionId}/review-history/stats?endDate=${reference.testCollection.reviewHistory.endDate}`)
             .set('Authorization', `Bearer ${iteration.token}`)
             
@@ -979,7 +975,7 @@ describe('GET - Collection', function () {
         })
 
         it('History stats - start and end dates',async function () {
-          const res = await chai.request(config.baseUrl)
+          const res = await chai.request.execute(config.baseUrl)
             .get(`/collections/${reference.testCollection.collectionId}/review-history/stats?endDate=${reference.testCollection.reviewHistory.endDate}&startDate=${reference.testCollection.reviewHistory.startDate}`)
             .set('Authorization', `Bearer ${iteration.token}`)
             
@@ -992,7 +988,7 @@ describe('GET - Collection', function () {
         })
 
         it('History stats - asset only',async function () {
-          const res = await chai.request(config.baseUrl)
+          const res = await chai.request.execute(config.baseUrl)
             .get(`/collections/${reference.testCollection.collectionId}/review-history/stats?assetId=${reference.testCollection.reviewHistory.assetId}`)
             .set('Authorization', `Bearer ${iteration.token}`)
             
@@ -1003,7 +999,7 @@ describe('GET - Collection', function () {
             expect(res.body.collectionHistoryEntryCount).to.equal(reference.testCollection.reviewHistory.reviewHistory_testAssetCnt)
         })
         it('History stats - rule only',async function () {
-          const res = await chai.request(config.baseUrl)
+          const res = await chai.request.execute(config.baseUrl)
             .get(`/collections/${reference.testCollection.collectionId}/review-history/stats?ruleId=${reference.testCollection.reviewHistory.ruleId}`)
             .set('Authorization', `Bearer ${iteration.token}`)
             
@@ -1016,7 +1012,7 @@ describe('GET - Collection', function () {
         })
 
         it('History stats - status only',async function () {
-          const res = await chai.request(config.baseUrl)
+          const res = await chai.request.execute(config.baseUrl)
             .get(`/collections/${reference.testCollection.collectionId}/review-history/stats?status=${reference.testCollection.reviewHistory.status}`)
             .set('Authorization', `Bearer ${iteration.token}`)
             
@@ -1030,7 +1026,7 @@ describe('GET - Collection', function () {
         })
 
         it('History stats - all params',async function () {
-          const res = await chai.request(config.baseUrl)
+          const res = await chai.request.execute(config.baseUrl)
             .get(`/collections/${reference.testCollection.collectionId}/review-history/stats?endDate=${reference.testCollection.reviewHistory.endDate}&startDate=${reference.testCollection.reviewHistory.startDate}&assetId=${reference.testCollection.reviewHistory.assetId}&status=${reference.testCollection.reviewHistory.status}&ruleId=${reference.testCollection.reviewHistory.ruleId}&projection=asset`)
             .set('Authorization', `Bearer ${iteration.token}`)
             
@@ -1048,7 +1044,7 @@ describe('GET - Collection', function () {
       describe('getStigsByCollection - /collections/{collectionId}/stigs', function () {
 
         it('Return the STIGs mapped in the specified Collection',async function () {
-          const res = await chai.request(config.baseUrl)
+          const res = await chai.request.execute(config.baseUrl)
             .get(`/collections/${reference.testCollection.collectionId}/stigs`)
             .set('Authorization', `Bearer ${iteration.token}`)
             if (distinct.grant === "none"){
@@ -1068,7 +1064,7 @@ describe('GET - Collection', function () {
         })
 
         it('Return the STIGs mapped in the specified Collection - label',async function () {
-          const res = await chai.request(config.baseUrl)
+          const res = await chai.request.execute(config.baseUrl)
             .get(`/collections/${reference.testCollection.collectionId}/stigs?labelId=${reference.testCollection.fullLabel}`)
             .set('Authorization', `Bearer ${iteration.token}`)
             if (distinct.grant === "none"){
@@ -1094,7 +1090,7 @@ describe('GET - Collection', function () {
         })
 
         it('Return the STIGs mapped in the specified Collection - asset projection',async function () {
-          const res = await chai.request(config.baseUrl)
+          const res = await chai.request.execute(config.baseUrl)
             .get(`/collections/${reference.testCollection.collectionId}/stigs?projection=assets`)
             .set('Authorization', `Bearer ${iteration.token}`)
             if (distinct.grant === "none"){
@@ -1118,7 +1114,7 @@ describe('GET - Collection', function () {
         })
         it("return the stigs mapped to test collection label names predicate",async function () {
 
-          const res = await chai.request(config.baseUrl)
+          const res = await chai.request.execute(config.baseUrl)
             .get(`/collections/${reference.testCollection.collectionId}/stigs?labelName=${reference.testCollection.fullLabelName}`)
             .set('Authorization', `Bearer ${iteration.token}`)
             if (distinct.grant === "none"){
@@ -1143,7 +1139,7 @@ describe('GET - Collection', function () {
             }
           })
           it("return the stigs mapped to test colleciton label match = null",async function () {
-            const res = await chai.request(config.baseUrl)
+            const res = await chai.request.execute(config.baseUrl)
               .get(`/collections/${reference.testCollection.collectionId}/stigs?labelName=null`)
               .set('Authorization', `Bearer ${iteration.token}`)
               if (distinct.grant === "none"){
@@ -1158,7 +1154,7 @@ describe('GET - Collection', function () {
       describe('getStigByCollection - /collections/{collectionId}/stigs/{benchmarkId}', function () {
 
             it('Return Pinned Revision for this STIG',async function () {
-              const res = await chai.request(config.baseUrl)
+              const res = await chai.request.execute(config.baseUrl)
                 .get(`/collections/${reference.testCollection.collectionId}/stigs/${reference.benchmark}`)
                 .set('Authorization', `Bearer ${iteration.token}`)
                 if (distinct.grant === "none"){
@@ -1173,7 +1169,7 @@ describe('GET - Collection', function () {
             })
 
             it('Should return 204, no stig available (this probably needs to be 404? idk',async function () {
-              const res = await chai.request(config.baseUrl)
+              const res = await chai.request.execute(config.baseUrl)
                 .get(`/collections/${reference.testCollection.collectionId}/stigs/notastig`)
                 .set('Authorization', `Bearer ${iteration.token}`)
                 if (distinct.grant === "none"){
@@ -1184,7 +1180,7 @@ describe('GET - Collection', function () {
             })
 
             it('Return the info about the specified STIG from the specified Collection - asset projection',async function () {
-              const res = await chai.request(config.baseUrl)
+              const res = await chai.request.execute(config.baseUrl)
                 .get(`/collections/${reference.testCollection.collectionId}/stigs/${reference.benchmark}?projection=assets`)
                 .set('Authorization', `Bearer ${iteration.token}`)
                 if (distinct.grant === "none"){
@@ -1207,7 +1203,7 @@ describe('GET - Collection', function () {
       describe('getUnreviewedAssetsByCollection - /collections/{collectionId}/unreviewed/assets', function () {
 
         it("should return 200 ",async function () {
-          const res = await chai.request(config.baseUrl)
+          const res = await chai.request.execute(config.baseUrl)
             .get(`/collections/${reference.testCollection.collectionId}/unreviewed/assets`)
             .set('Authorization', `Bearer ${iteration.token}`)
           if (distinct.grant === "none"){
@@ -1221,7 +1217,7 @@ describe('GET - Collection', function () {
       describe('getUnreviewedRulesByCollection - /collections/{collectionId}/unreviewed/rules', function () {
 
         it("should return200",async function () {
-          const res = await chai.request(config.baseUrl)
+          const res = await chai.request.execute(config.baseUrl)
             .get(`/collections/${reference.testCollection.collectionId}/unreviewed/rules`)
             .set('Authorization', `Bearer ${iteration.token}`)
           if (distinct.grant === "none"){
@@ -1236,7 +1232,7 @@ describe('GET - Collection', function () {
 
         it("should return all grants for the collection",async function () {  
           
-          const res = await chai.request(config.baseUrl)
+          const res = await chai.request.execute(config.baseUrl)
             .get(`/collections/${reference.testCollection.collectionId}/grants`)
             .set('Authorization', `Bearer ${iteration.token}`)
             if (distinct.canModifyCollection === false){
@@ -1249,7 +1245,7 @@ describe('GET - Collection', function () {
         })
         it("should return all grants for the collection elevated, stigman admin should only pass. ",async function () {  
           
-          const res = await chai.request(config.baseUrl)
+          const res = await chai.request.execute(config.baseUrl)
             .get(`/collections/${reference.testCollection.collectionId}/grants?elevate=true`)
             .set('Authorization', `Bearer ${iteration.token}`)
             if (iteration.name !== "stigmanadmin"){
@@ -1265,7 +1261,7 @@ describe('GET - Collection', function () {
       describe('getGrantByCollectionGrant - /collections/{collectionId}/grants/{grantId}', function () {
 
         it("should return grant info for the test group",async function () {
-          const res =  await chai.request(config.baseUrl)
+          const res =  await chai.request.execute(config.baseUrl)
             .get(`/collections/${reference.testCollection.collectionId}/grants/${reference.testCollection.testGroup.testCollectionGrantId}`)
             .set('Authorization', `Bearer ${iteration.token}`)
           if (distinct.canModifyCollection === false){
@@ -1279,7 +1275,7 @@ describe('GET - Collection', function () {
           expect(res.body.userGroup.name).to.equal(reference.testCollection.testGroup.name)
         })
         it("should return grant for the test collection admin user (admin burke userId 87)",async function () {
-          const res =  await chai.request(config.baseUrl)
+          const res =  await chai.request.execute(config.baseUrl)
             .get(`/collections/${reference.testCollection.collectionId}/grants/${reference.adminBurke.testCollectionGrantId}`)
             .set('Authorization', `Bearer ${iteration.token}`)
           if (distinct.canModifyCollection === false){
@@ -1294,7 +1290,7 @@ describe('GET - Collection', function () {
         })
 
         it("should return grant for the test collection admin user (admin burke userId 87) elevated only stigmanadmin success",async function () {
-          const res =  await chai.request(config.baseUrl)
+          const res =  await chai.request.execute(config.baseUrl)
             .get(`/collections/${reference.testCollection.collectionId}/grants/${reference.adminBurke.testCollectionGrantId}?elevate=true`)
             .set('Authorization', `Bearer ${iteration.token}`)
           if (iteration.name !== "stigmanadmin"){
@@ -1312,7 +1308,7 @@ describe('GET - Collection', function () {
         
         it("should return an error, there is no such grantId",async function () {
           
-          const res =  await chai.request(config.baseUrl)
+          const res =  await chai.request.execute(config.baseUrl)
             .get(`/collections/${reference.testCollection.collectionId}/grants/${"12345678"}`)
             .set('Authorization', `Bearer ${iteration.token}`)
           if (distinct.canModifyCollection === false){
@@ -1326,7 +1322,7 @@ describe('GET - Collection', function () {
       describe('getAclRulesByCollectionGrant - /collections/{collectionId}/grants/{grantId}/acl', function () {
 
         it("should return acl for the testGroup",async function () {
-          const res = await chai.request(config.baseUrl)
+          const res = await chai.request.execute(config.baseUrl)
             .get(`/collections/${reference.testCollection.collectionId}/grants/${reference.testCollection.testGroup.testCollectionGrantId}/acl`)
             .set('Authorization', `Bearer ${iteration.token}`)
           if (distinct.canModifyCollection === false){
@@ -1340,7 +1336,7 @@ describe('GET - Collection', function () {
 
         it("should return the ACL for the direct users in the iteration (all using admin token for lvl1 and 2 success",async function () {
 
-          const res = await chai.request(config.baseUrl)
+          const res = await chai.request.execute(config.baseUrl)
             .get(`/collections/${reference.testCollection.collectionId}/grants/${iteration.grantId}/acl`)
             .set('Authorization', `Bearer ${iterations[0].token}`)
           if(iteration.name === "collectioncreator"){
@@ -1355,7 +1351,7 @@ describe('GET - Collection', function () {
 
         it("Should throw error collection id is bad",async function () {
 
-          const res = await chai.request(config.baseUrl)
+          const res = await chai.request.execute(config.baseUrl)
             .get(`/collections/${"12345678"}/grants/${reference.testCollection.testGroup.testCollectionGrantId}/acl`)
             .set('Authorization', `Bearer ${iteration.token}`)
           expect(res).to.have.status(403)
@@ -1363,7 +1359,7 @@ describe('GET - Collection', function () {
 
         it("should throw error grantId is bad",async function () {
 
-          const res = await chai.request(config.baseUrl)
+          const res = await chai.request.execute(config.baseUrl)
             .get(`/collections/${reference.testCollection.collectionId}/grants/${"12345678"}/acl`)
             .set('Authorization', `Bearer ${iteration.token}`)
           if(distinct.canModifyCollection === false){

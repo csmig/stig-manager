@@ -1,4 +1,4 @@
-const metrics = {
+export const metrics = {
   'Return detailed metrics for the specified Collection no param': {
     stigmanadmin: [
       {
@@ -28708,5 +28708,3 @@ const metrics = {
     ]
   }
 }
-
-module.exports = metrics

@@ -1,10 +1,8 @@
-const chai = require("chai")
-const chaiHttp = require("chai-http")
-chai.use(chaiHttp)
-const expect = chai.expect
-const config = require("../testConfig.json")
-const utils = require("../utils/testUtils")
-const reference = require("../referenceData")
+
+const { expect } = chai
+import {config } from '../testConfig.js'
+import * as utils from '../utils/testUtils.js'
+import reference from '../referenceData.js'
 const user = {
   name: "admin",
   grant: "Owner",
@@ -24,8 +22,7 @@ describe('DELETE - deleteAsset - /assets/{assetId} - DELETE - deleteCollection -
         let deletedCollection = null
         it('Create a Collection in order to delete it', async () => {
             
-            const res = await chai
-                .request(config.baseUrl)
+            const res = await chai.request.execute(config.baseUrl)
                 .post("/collections?elevate=true&projection=grants&projection=labels")
                 .set("Authorization", `Bearer ${user.token}`)
                 .send({
@@ -80,8 +77,7 @@ describe('DELETE - deleteAsset - /assets/{assetId} - DELETE - deleteCollection -
         })
         it('Create an Asset in collection to be deleted', async () => {
 
-            const res = await chai
-                .request(config.baseUrl)
+            const res = await chai.request.execute(config.baseUrl)
                 .post(`/assets?projection=stigs`)
                 .set("Authorization", `Bearer ${user.token}`)
                 .send({
@@ -107,8 +103,7 @@ describe('DELETE - deleteAsset - /assets/{assetId} - DELETE - deleteCollection -
         })
         it('Import one or more Reviews from a JSON body Copy', async () => {
 
-            const res = await chai
-                .request(config.baseUrl)
+            const res = await chai.request.execute(config.baseUrl)
                 .post(`/collections/${collectionToDelete}/reviews/${assetToDelete}`)
                 .set("Authorization", `Bearer ${user.token}`)
                 .send([
@@ -134,8 +129,7 @@ describe('DELETE - deleteAsset - /assets/{assetId} - DELETE - deleteCollection -
         })
         it(`Delete a Collection should now be deleted`, async () => {
 
-            const res = await chai
-                .request(config.baseUrl)
+            const res = await chai.request.execute(config.baseUrl)
                 .delete(`/collections/${collectionToDelete}?elevate=true`)
                 .set("Authorization", `Bearer ${user.token}`)
             expect(res).to.have.status(200)
@@ -143,8 +137,7 @@ describe('DELETE - deleteAsset - /assets/{assetId} - DELETE - deleteCollection -
         })
         it('put review of an asset in a deleted collection should fail', async () => {
 
-            const res = await chai
-                .request(config.baseUrl)
+            const res = await chai.request.execute(config.baseUrl)
                 .put(`/collections/${collectionToDelete}/reviews/${assetToDelete}/${reference.ruleId}?projection=rule&projection=stigs`)
                 .set("Authorization", `Bearer ${user.token}`)
                 .send({
@@ -158,16 +151,14 @@ describe('DELETE - deleteAsset - /assets/{assetId} - DELETE - deleteCollection -
         })
         it('Return the STIGs - from deleted collection should fail', async () => {
 
-            const res = await chai
-                .request(config.baseUrl)
+            const res = await chai.request.execute(config.baseUrl)
                 .get(`/collections/${collectionToDelete}/stigs`)
                 .set("Authorization", `Bearer ${user.token}`)
             expect(res).to.have.status(403)
         })
         it('import reviews for asset in deleted collection should fail', async () => {
 
-            const res = await chai
-                .request(config.baseUrl)
+            const res = await chai.request.execute(config.baseUrl)
                 .post(`/collections/${collectionToDelete}/reviews/${assetToDelete}`)
                 .set("Authorization", `Bearer ${user.token}`)
                 .send([
@@ -184,16 +175,14 @@ describe('DELETE - deleteAsset - /assets/{assetId} - DELETE - deleteCollection -
         })
         it('Delete an asset in a deleted collection should fail', async () => {
 
-            const res = await chai
-                .request(config.baseUrl)
+            const res = await chai.request.execute(config.baseUrl)
                 .delete(`/assets/${assetToDelete}`)
                 .set("Authorization", `Bearer ${user.token}`)
             expect(res).to.have.status(403)
         }) 
         it('Import reviews for deleted asset should fail', async () => {
 
-            const res = await chai
-                .request(config.baseUrl)
+            const res = await chai.request.execute(config.baseUrl)
                 .post(`/collections/${collectionToDelete}/reviews/${reference.testAsset.assetId}`)
                 .set("Authorization", `Bearer ${user.token}`)
                 .send([
@@ -210,16 +199,14 @@ describe('DELETE - deleteAsset - /assets/{assetId} - DELETE - deleteCollection -
         })
         it('Return a deleted Collection no data returned 204', async () => {
 
-            const res = await chai
-                .request(config.baseUrl)
+            const res = await chai.request.execute(config.baseUrl)
                 .get(`/collections/${collectionToDelete}?elevate=true&projection=assets&projection=grants&projection=owners&projection=statistics&projection=stigs&projection=labels`)
                 .set("Authorization", `Bearer ${user.token}`)
             expect(res).to.have.status(204)
         })
         it('Create an Asset in deleted collection should fail', async () => {
 
-            const res = await chai
-                .request(config.baseUrl)
+            const res = await chai.request.execute(config.baseUrl)
                 .post(`/assets?projection=stigs`)
                 .set("Authorization", `Bearer ${user.token}`)
                 .send({
@@ -244,16 +231,14 @@ describe('DELETE - deleteAsset - /assets/{assetId} - DELETE - deleteCollection -
         })
         it('should delete the test asset', async () => {
 
-            const res = await chai
-                .request(config.baseUrl)
+            const res = await chai.request.execute(config.baseUrl)
                 .delete(`/assets/${reference.testAsset.assetId}`)
                 .set("Authorization", `Bearer ${user.token}`)
             expect(res).to.have.status(200)
         })
         it('get asset, it should return 403 because asset is deleted', async () => {
             
-            const res = await chai
-                .request(config.baseUrl)
+            const res = await chai.request.execute(config.baseUrl)
                 .get(`/assets/${reference.testAsset.assetId}`)
                 .set("Authorization", `Bearer ${user.token}`)
             expect(res).to.have.status(403)

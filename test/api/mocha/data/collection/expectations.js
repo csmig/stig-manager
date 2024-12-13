@@ -1,7 +1,7 @@
 //This data contains expected response data that varies by iteration "scenario" or "iteration" for each test case. These expectations are relative to the "referenceData.js" data used to construct the API requests. 
-const reference = require('../../referenceData.js')
+import reference from '../../referenceData.js'
 
-const distinct = {
+export const expectations = {
   stigmanadmin: {
     iteration: "admin",
     acl: [],
@@ -392,5 +392,4 @@ const distinct = {
     canDeleteCollection: false,
     canModifyCollection: false,
   },
-};
-module.exports = distinct;
+}

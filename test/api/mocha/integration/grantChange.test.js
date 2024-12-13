@@ -1,12 +1,8 @@
-const chai = require("chai")
-const chaiHttp = require("chai-http")
-const deepEqualInAnyOrder = require('deep-equal-in-any-order')
-chai.use(chaiHttp)
-chai.use(deepEqualInAnyOrder)
-const expect = chai.expect
-const config = require("../testConfig.json")
-const utils = require("../utils/testUtils")
-const reference = require("../referenceData.js")
+
+const { expect } = chai
+import {config } from '../testConfig.js'
+import * as utils from '../utils/testUtils.js'
+import reference from '../referenceData.js'
 
 const admin = {
   name: "admin",
@@ -25,8 +21,7 @@ describe(`putGrantByCollectionGrant - /collections/{collectionId}/grants/{grantI
 
         it("should verify the test groups grant info", async () => {
 
-            const res = await chai
-                .request(config.baseUrl)
+            const res = await chai.request.execute(config.baseUrl)
                 .get(`/collections/${reference.testCollection.collectionId}/grants/${reference.testCollection.testGroup.testCollectionGrantId}`)
                 .set("Authorization", `Bearer ${admin.token}`)
 
@@ -37,8 +32,7 @@ describe(`putGrantByCollectionGrant - /collections/{collectionId}/grants/{grantI
 
         it("should verify the test groups acl", async () => {
 
-            const res = await chai
-                .request(config.baseUrl)
+            const res = await chai.request.execute(config.baseUrl)
                 .get(`/collections/${reference.testCollection.collectionId}/grants/${reference.testCollection.testGroup.testCollectionGrantId}/acl`)
                 .set("Authorization", `Bearer ${admin.token}`)
             expect(res.status).to.equal(200)
@@ -47,8 +41,7 @@ describe(`putGrantByCollectionGrant - /collections/{collectionId}/grants/{grantI
 
         it("should alter the grantId associated with the test group and put it directly to the lvl1 user", async () => {
 
-            const res = await chai
-                .request(config.baseUrl)
+            const res = await chai.request.execute(config.baseUrl)
                 .put(`/collections/${reference.testCollection.collectionId}/grants/${reference.testCollection.testGroup.testCollectionGrantId}`)
                 .set("Authorization", `Bearer ${admin.token}`)
                 .send({userId:reference.lvl1User.userId,
@@ -60,8 +53,7 @@ describe(`putGrantByCollectionGrant - /collections/{collectionId}/grants/{grantI
 
         it("should verify lvl1 user has a direct acl that is equivalent to the appdata base usergroup", async () => {
 
-            const res = await chai
-                .request(config.baseUrl)
+            const res = await chai.request.execute(config.baseUrl)
                 .get(`/collections/${reference.testCollection.collectionId}/grants/${reference.testCollection.testGroup.testCollectionGrantId}/acl`)
                 .set("Authorization", `Bearer ${admin.token}`)
             expect(res.status).to.equal(200)

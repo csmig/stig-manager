@@ -1,5 +1,5 @@
 
-const distinct = {
+export const expectations = {
   stigmanadmin: {
     iteration: "admin",
     acl: [],
@@ -178,5 +178,4 @@ const distinct = {
       canCreateCollection: true,
     }
   },
-};
-module.exports = distinct;
+}

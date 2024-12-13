@@ -251,4 +251,4 @@ const reference = {
   testRuleIdWin: "SV-77809r3_rule",
 };
 
-module.exports = reference;
+export default reference

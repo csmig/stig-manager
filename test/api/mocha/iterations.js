@@ -1,4 +1,4 @@
-const iterations = [
+export const iterations = [
   {
     // Has admin and createCollection privileges, standard appdata: Owner role in all collections
     name: "stigmanadmin",
@@ -45,4 +45,3 @@ const iterations = [
   }  
 ]
 
-module.exports = iterations;

@@ -552,4 +552,4 @@ const reference = {
   // reviewMetadataValue: 'testvalue',
 }
 
-module.exports = reference;
+export default reference

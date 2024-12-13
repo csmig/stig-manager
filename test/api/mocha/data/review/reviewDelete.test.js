@@ -1,12 +1,11 @@
-const chai = require('chai')
-const chaiHttp = require('chai-http')
-chai.use(chaiHttp)
-const expect = chai.expect
-const config = require('../../testConfig.json')
-const utils = require('../../utils/testUtils')
-const iterations = require('../../iterations.js')
-const expectations = require('./expectations.js')
-const reference = require('../../referenceData.js')
+
+const { expect } = chai
+import {config } from '../../testConfig.js'
+import * as utils from '../../utils/testUtils.js'
+import reference from '../../referenceData.js'
+import {iterations} from '../../iterations.js'
+import {expectations} from './expectations.js'
+
 
 describe('DELETE - Review', () => {
 
@@ -30,7 +29,7 @@ describe('DELETE - Review', () => {
         })
         
         it('Delete a Review', async () => {
-          const res = await chai.request(config.baseUrl)
+          const res = await chai.request.execute(config.baseUrl)
             .delete(`/collections/${reference.testCollection.collectionId}/reviews/${reference.testAsset.assetId}/${reference.testAsset.testRuleId}?projection=rule&projection=history&projection=stigs`)
             .set('Authorization', `Bearer ${iteration.token}`)
 
@@ -51,7 +50,7 @@ describe('DELETE - Review', () => {
 
         it("Delete review that is read only for lvl1 user, expect 403 for lvl1 iteration", async () => {
 
-          const res = await chai.request(config.baseUrl)
+          const res = await chai.request.execute(config.baseUrl)
             .delete(`/collections/${reference.testCollection.collectionId}/reviews/${reference.testCollection.lvl1ReadOnlyAssetId}/${reference.testAsset.testRuleId}`)
             .set('Authorization', `Bearer ${iteration.token}`)
 
@@ -66,12 +65,13 @@ describe('DELETE - Review', () => {
 
       describe('DELETE - deleteReviewMetadataKey - /collections/{collectionId}/reviews/{assetId}/{ruleId}/metadata/keys/{key}', () => {
 
+        let review = null
         before(async function () {
           review = await utils.importReview(reference.testCollection.collectionId, reference.testAsset.assetId, reference.testAsset.testRuleId)
         })
 
         it('should create metadata to be deleted', async () => {
-          const res = await chai.request(config.baseUrl)
+          const res = await chai.request.execute(config.baseUrl)
           .put(`/collections/${reference.testCollection.collectionId}/reviews/${reference.testAsset.assetId}/${reference.testCollection.ruleId}/metadata`)
           .set('Authorization', `Bearer ${iteration.token}`)
           .send({[reference.reviewMetadataKey]: reference.reviewMetadataValue})
@@ -80,7 +80,7 @@ describe('DELETE - Review', () => {
 
         })
         it('Delete one metadata key/value of a Review', async () => {
-          const res = await chai.request(config.baseUrl)
+          const res = await chai.request.execute(config.baseUrl)
             .delete(`/collections/${reference.testCollection.collectionId}/reviews/${reference.testAsset.assetId}/${reference.testAsset.testRuleId}/metadata/keys/${reference.reviewMetadataKey}`)
             .set('Authorization', `Bearer ${iteration.token}`)
             .send(`${JSON.stringify(reference.reviewMetadataValue)}`)

@@ -1,12 +1,10 @@
-const chai = require('chai')
-const chaiHttp = require('chai-http')
-chai.use(chaiHttp)
-const expect = chai.expect
-const config = require('../../testConfig.json')
-const utils = require('../../utils/testUtils')
-const iterations = require('../../iterations.js')
-const expectations = require('./expectations.js')
-const reference = require('../../referenceData.js')
+
+const { expect } = chai
+import {config } from '../../testConfig.js'
+import * as utils from '../../utils/testUtils.js'
+import reference from '../../referenceData.js'
+import {iterations} from '../../iterations.js'
+import {expectations} from './expectations.js'
 
 const otherTestRuleId = "SV-106181r1_rule"
 
@@ -62,7 +60,7 @@ describe('POST - Review', () => {
                 }
               }
 
-              const res = await chai.request(config.baseUrl)
+              const res = await chai.request.execute(config.baseUrl)
                 .post(`/collections/${reference.testCollection.collectionId}/reviews`)
                 .set('Authorization', `Bearer ${iteration.token}`)
                 .send(postreview)
@@ -104,7 +102,7 @@ describe('POST - Review', () => {
                   }
               }
 
-              const res = await chai.request(config.baseUrl)
+              const res = await chai.request.execute(config.baseUrl)
                 .post(`/collections/${reference.testCollection.collectionId}/reviews`)
                 .set('Authorization', `Bearer ${iteration.token}`)
                 .send(postreview)
@@ -146,7 +144,7 @@ describe('POST - Review', () => {
                   }
                 }
 
-              const res = await chai.request(config.baseUrl)
+              const res = await chai.request.execute(config.baseUrl)
                 .post(`/collections/${reference.testCollection.collectionId}/reviews`)
                 .set('Authorization', `Bearer ${iteration.token}`)
                 .send(postreview)
@@ -186,7 +184,7 @@ describe('POST - Review', () => {
                   }
                 }
 
-              const res = await chai.request(config.baseUrl)
+              const res = await chai.request.execute(config.baseUrl)
                 .post(`/collections/${reference.testCollection.collectionId}/reviews`)
                 .set('Authorization', `Bearer ${iteration.token}`)
                 .send(postreview)
@@ -237,7 +235,7 @@ describe('POST - Review', () => {
               }
             }
 
-            const res = await chai.request(config.baseUrl)
+            const res = await chai.request.execute(config.baseUrl)
               .post(`/collections/${reference.testCollection.collectionId}/reviews`)
               .set('Authorization', `Bearer ${iteration.token}`)
               .send(postreview)
@@ -267,7 +265,7 @@ describe('POST - Review', () => {
                 }
               }
 
-            const res = await chai.request(config.baseUrl)
+            const res = await chai.request.execute(config.baseUrl)
               .post(`/collections/${reference.testCollection.collectionId}/reviews`)
               .set('Authorization', `Bearer ${iteration.token}`)
               .send(postreview)
@@ -310,7 +308,7 @@ describe('POST - Review', () => {
               }
             }
 
-            const res = await chai.request(config.baseUrl)
+            const res = await chai.request.execute(config.baseUrl)
               .post(`/collections/${reference.testCollection.collectionId}/reviews`)
               .set('Authorization', `Bearer ${iteration.token}`)
               .send(postreview)
@@ -341,7 +339,7 @@ describe('POST - Review', () => {
                 action: "insert"
               }
 
-            const res = await chai.request(config.baseUrl)
+            const res = await chai.request.execute(config.baseUrl)
               .post(`/collections/${reference.testCollection.collectionId}/reviews`)
               .set('Authorization', `Bearer ${iteration.token}`)
               .send(postreview)
@@ -397,7 +395,7 @@ describe('POST - Review', () => {
                 action: "merge"
             }
 
-            const res = await chai.request(config.baseUrl)
+            const res = await chai.request.execute(config.baseUrl)
               .post(`/collections/${reference.testCollection.collectionId}/reviews`)
               .set('Authorization', `Bearer ${iteration.token}`)
               .send(postreview)
@@ -449,7 +447,7 @@ describe('POST - Review', () => {
               }
             }
 
-            const res = await chai.request(config.baseUrl)
+            const res = await chai.request.execute(config.baseUrl)
               .post(`/collections/${reference.testCollection.collectionId}/reviews`)
               .set('Authorization', `Bearer ${iterations[0].token}`)
               .send(postreview)
@@ -484,7 +482,7 @@ describe('POST - Review', () => {
               action: 'update'
             }
 
-            const res = await chai.request(config.baseUrl)
+            const res = await chai.request.execute(config.baseUrl)
               .post(`/collections/${reference.testCollection.collectionId}/reviews`)
               .set('Authorization', `Bearer ${iteration.token}`)
               .send(postreview)
@@ -530,7 +528,7 @@ describe('POST - Review', () => {
               }
             }
 
-            const res = await chai.request(config.baseUrl)
+            const res = await chai.request.execute(config.baseUrl)
               .post(`/collections/${reference.testCollection.collectionId}/reviews`)
               .set('Authorization', `Bearer ${iterations[0].token}`)
               .send(postreview)
@@ -566,7 +564,7 @@ describe('POST - Review', () => {
               action: 'update'
               }
 
-            const res = await chai.request(config.baseUrl)
+            const res = await chai.request.execute(config.baseUrl)
               .post(`/collections/${reference.testCollection.collectionId}/reviews`)
               .set('Authorization', `Bearer ${iteration.token}`)
               .send(postreview)
@@ -624,7 +622,7 @@ describe('POST - Review', () => {
               action: 'update'
               }
 
-            const res = await chai.request(config.baseUrl)
+            const res = await chai.request.execute(config.baseUrl)
               .post(`/collections/${reference.testCollection.collectionId}/reviews`)
               .set('Authorization', `Bearer ${iteration.token}`)
               .send(postreview)
@@ -670,7 +668,7 @@ describe('POST - Review', () => {
               }
             }
 
-            const res = await chai.request(config.baseUrl)
+            const res = await chai.request.execute(config.baseUrl)
               .post(`/collections/${reference.testCollection.collectionId}/reviews`)
               .set('Authorization', `Bearer ${iterations[0].token}`)
               .send(postreview)
@@ -707,7 +705,7 @@ describe('POST - Review', () => {
               action: 'update'
             }
 
-            const res = await chai.request(config.baseUrl)
+            const res = await chai.request.execute(config.baseUrl)
               .post(`/collections/${reference.testCollection.collectionId}/reviews`)
               .set('Authorization', `Bearer ${iteration.token}`)
               .send(postreview)
@@ -753,7 +751,7 @@ describe('POST - Review', () => {
               }
             }
 
-            const res = await chai.request(config.baseUrl)
+            const res = await chai.request.execute(config.baseUrl)
               .post(`/collections/${reference.testCollection.collectionId}/reviews`)
               .set('Authorization', `Bearer ${iterations[0].token}`)
               .send(postreview)
@@ -791,7 +789,7 @@ describe('POST - Review', () => {
               action: 'update'
             }
 
-            const res = await chai.request(config.baseUrl)
+            const res = await chai.request.execute(config.baseUrl)
               .post(`/collections/${reference.testCollection.collectionId}/reviews`)
               .set('Authorization', `Bearer ${iteration.token}`)
               .send(postreview)
@@ -836,7 +834,7 @@ describe('POST - Review', () => {
               }
             }
 
-            const res = await chai.request(config.baseUrl)
+            const res = await chai.request.execute(config.baseUrl)
               .post(`/collections/${reference.testCollection.collectionId}/reviews`)
               .set('Authorization', `Bearer ${iterations[0].token}`)
               .send(postreview)
@@ -871,7 +869,7 @@ describe('POST - Review', () => {
                 action: 'update'
               }
 
-              const res = await chai.request(config.baseUrl)
+              const res = await chai.request.execute(config.baseUrl)
                 .post(`/collections/${reference.testCollection.collectionId}/reviews`)
                 .set('Authorization', `Bearer ${iteration.token}`)
                 .send(postreview)
@@ -922,7 +920,7 @@ describe('POST - Review', () => {
                 rules: { ruleIds: ['SV-106179r1_rule'] }
               }
 
-            const res = await chai.request(config.baseUrl)
+            const res = await chai.request.execute(config.baseUrl)
               .post(`/collections/${reference.testCollection.collectionId}/reviews`)
               .set('Authorization', `Bearer ${iteration.token}`)
               .send(postreview)
@@ -935,7 +933,7 @@ describe('POST - Review', () => {
             expect(res.body.validationErrors).to.have.length(2)
                   
             if (iteration.name == "lvl1"){
-              for (review of res.body.validationErrors){
+              for (const review of res.body.validationErrors){
                   expect(review.error).to.be.oneOf(["status is not allowed for the result","no grant for this asset/ruleId"])
                   if (review.assetId == 29) {
                       expect(review.error).to.eql("no grant for this asset/ruleId")                
@@ -943,7 +941,7 @@ describe('POST - Review', () => {
               }
             }
             else {
-              for (review of res.body.validationErrors){
+              for (const review of res.body.validationErrors){
                   expect(review.error).to.eql("status is not allowed for the result")
               }   
             }    
@@ -965,7 +963,7 @@ describe('POST - Review', () => {
               rules: { ruleIds: ['SV-106179r1_rule'] }
             }
 
-            const res = await chai.request(config.baseUrl)
+            const res = await chai.request.execute(config.baseUrl)
               .post(`/collections/${reference.testCollection.collectionId}/reviews`)
               .set('Authorization', `Bearer ${iteration.token}`)
               .send(postreview)
@@ -995,7 +993,7 @@ describe('POST - Review', () => {
                 rules: { ruleIds: ['SV-106179r1_rule'] }
               }
 
-          const res = await chai.request(config.baseUrl)
+          const res = await chai.request.execute(config.baseUrl)
             .post(`/collections/${reference.testCollection.collectionId}/reviews`)
             .set('Authorization', `Bearer ${iteration.token}`)
             .send(postreview)
@@ -1027,7 +1025,7 @@ describe('POST - Review', () => {
               rules: { ruleIds: ['SV-106179r1_rule'] }
             }
 
-            const res = await chai.request(config.baseUrl)
+            const res = await chai.request.execute(config.baseUrl)
               .post(`/collections/${reference.testCollection.collectionId}/reviews`)
               .set('Authorization', `Bearer ${iteration.token}`)
               .send(postreview)
@@ -1113,7 +1111,7 @@ describe('POST - Review', () => {
                 benchmarkIds: ['VPN_SRG_TEST_Batch']
               }
             }
-            const res = await chai.request(config.baseUrl)
+            const res = await chai.request.execute(config.baseUrl)
               .post(`/collections/${tempCollectionCanAcceptFalse.collectionId}/reviews`)
               .set('Authorization', `Bearer ${iteration.token}`)
               .send(postreview)
@@ -1135,7 +1133,7 @@ describe('POST - Review', () => {
                 benchmarkIds: ['VPN_SRG_TEST_Batch']
               }
             }
-            const res = await chai.request(config.baseUrl)
+            const res = await chai.request.execute(config.baseUrl)
               .post(`/collections/${tempCollectionCanAcceptFalse.collectionId}/reviews`)
               .set('Authorization', `Bearer ${iteration.token}`)
               .send(postreview)
@@ -1143,7 +1141,7 @@ describe('POST - Review', () => {
           })
           it("should throw SmError.PriviledgeError, lvl1 user no acccess to asset ", async () => {
 
-            const res = await chai.request(config.baseUrl)
+            const res = await chai.request.execute(config.baseUrl)
               .post(`/collections/${reference.testCollection.collectionId}/reviews`)
               .set('Authorization', `Bearer ${iteration.token}`)
               .send({
@@ -1174,7 +1172,7 @@ describe('POST - Review', () => {
           })
           it("should throw error, user cannot accept/reject reviews in colleciton ", async () => {
 
-            const res = await chai.request(config.baseUrl)
+            const res = await chai.request.execute(config.baseUrl)
               .post(`/collections/${reference.testCollection.collectionId}/reviews`)
               .set('Authorization', `Bearer ${iteration.token}`)
               .send({
@@ -1209,7 +1207,7 @@ describe('POST - Review', () => {
         })
 
         it('Import one or more Reviews from a JSON body new ruleId', async () => {
-          const res = await chai.request(config.baseUrl)
+          const res = await chai.request.execute(config.baseUrl)
             .post(`/collections/${reference.testCollection.collectionId}/reviews/${reference.testAsset.assetId}`)
             .set('Authorization', `Bearer ${iteration.token}`)
             .send([
@@ -1235,7 +1233,7 @@ describe('POST - Review', () => {
         })
         it("Import review for an asset, asset is read only for lvl1 user, expect rejection.", async () => {
 
-          const res = await chai.request(config.baseUrl)
+          const res = await chai.request.execute(config.baseUrl)
             .post(`/collections/${reference.testCollection.collectionId}/reviews/${reference.testCollection.lvl1ReadOnlyAssetId}`)
             .set('Authorization', `Bearer ${iteration.token}`)
             .send([
@@ -1264,7 +1262,7 @@ describe('POST - Review', () => {
 
         })
         it('Import one or more Reviews from a JSON body already used ruleId should be an update', async () => {
-          const res = await chai.request(config.baseUrl)
+          const res = await chai.request.execute(config.baseUrl)
             .post(`/collections/${reference.testCollection.collectionId}/reviews/${reference.testAsset.assetId}`)
             .set('Authorization', `Bearer ${iteration.token}`)
             .send([
@@ -1289,7 +1287,7 @@ describe('POST - Review', () => {
           expect(res.body).to.deep.equal(expectedResponse)
         })
         it('Import reviews for asset in deleted collection and deleted asset', async () => {
-          const res = await chai.request(config.baseUrl)
+          const res = await chai.request.execute(config.baseUrl)
             .post(`/collections/${deletedCollection}/reviews/${deletedAsset}`)
             .set('Authorization', `Bearer ${iteration.token}`)
             .send([
@@ -1305,7 +1303,7 @@ describe('POST - Review', () => {
           expect(res).to.have.status(403) 
         })
         it('Import reviews for asset in deleted collection', async () => {
-          const res = await chai.request(config.baseUrl)
+          const res = await chai.request.execute(config.baseUrl)
             .post(`/collections/${deletedCollection}/reviews/${reference.testAsset.assetId}`)
             .set('Authorization', `Bearer ${iteration.token}`)
             .send([
@@ -1321,7 +1319,7 @@ describe('POST - Review', () => {
           expect(res).to.have.status(403) 
         })
         it('Import reviews for deleted asset', async () => {
-          const res = await chai.request(config.baseUrl)
+          const res = await chai.request.execute(config.baseUrl)
             .post(`/collections/${deletedCollection}/reviews/${reference.testAsset.assetId}`)
             .set('Authorization', `Bearer ${iteration.token}`)
             .send([

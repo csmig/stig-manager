@@ -1,20 +1,21 @@
-const config = require('../testConfig.json')
-const { Blob } = require('buffer')
-const fs = require('fs')
-const path = require('path')
-const { v4: uuidv4 } = require('uuid')
-const reference = require('../referenceData')
+import { config } from '../testConfig.js'
+import { Blob } from 'buffer'
+import { readFileSync, writeFileSync } from 'fs'
+import { v4 as uuidv4 } from 'uuid'
+import { fileURLToPath } from 'url';
+import { join, dirname } from 'path';
+const baseUrl = config.baseUrl
 const adminToken = config.adminToken
 
 // canidate for a function? (used to store responses for a test (metrics))
 const metricsOutputToJSON = (testCaseName, username, responseData, outputJsonFile) => {
-  const metricsFilePath = path.join(__dirname, outputJsonFile)
-  let metricsData = JSON.parse(fs.readFileSync(metricsFilePath, 'utf8'))
+  const metricsFilePath = join(import.meta.url, outputJsonFile)
+  let metricsData = JSON.parse(readFileSync(metricsFilePath, 'utf8'))
   if (!metricsData[testCaseName]) {
     metricsData[testCaseName] = {}
   }
   metricsData[testCaseName][username] = responseData
-  fs.writeFileSync(metricsFilePath, JSON.stringify(metricsData, null, 2), 'utf8')
+  writeFileSync(metricsFilePath, JSON.stringify(metricsData, null, 2), 'utf8')
 }
 
 const getUUIDSubString = (length = 20) => {
@@ -23,10 +24,14 @@ const getUUIDSubString = (length = 20) => {
 
 const loadAppData = async (appdataFileName = 'appdata.jsonl') => {
 
-  const filePath = path.join(__dirname, `../../appdata/${appdataFileName}`)
-  const fileContent = fs.readFileSync(filePath, 'utf-8')
+
+  const __filename = fileURLToPath(import.meta.url)
+  const __dirname = dirname(__filename)
+  const filePath = join(__dirname, `../../appdata/${appdataFileName}`);
   
-  const res = await fetch(`${config.baseUrl}/op/appdata?elevate=true`, {
+  const fileContent = readFileSync(filePath, 'utf-8')
+  
+  const res = await fetch(`${baseUrl}/op/appdata?elevate=true`, {
     method: 'POST',
     headers: {
       Authorization: `Bearer ${adminToken}`,
@@ -97,7 +102,7 @@ const createTempCollection = async (collectionPost) => {
       }
   }
   
-  const res = await fetch(`${config.baseUrl}/collections?elevate=true&projection=grants&projection=labels`, {
+  const res = await fetch(`${baseUrl}/collections?elevate=true&projection=grants&projection=labels`, {
     method: 'POST',
     headers: {
       Authorization: `Bearer ${adminToken}`,
@@ -113,7 +118,7 @@ const createTempCollection = async (collectionPost) => {
 
 const deleteCollection = async (collectionId) => {
 
-  const res = await fetch(`${config.baseUrl}/collections/${collectionId}?elevate=true&projection=assets&projection=grants&projection=owners&projection=statistics&projection=stigs`, {
+  const res = await fetch(`${baseUrl}/collections/${collectionId}?elevate=true&projection=assets&projection=grants&projection=owners&projection=statistics&projection=stigs`, {
     method: 'DELETE',
     headers: {
       Authorization: `Bearer ${adminToken}`,
@@ -145,7 +150,7 @@ const createTempAsset = async asset => {
     }
   }
 
-  const res = await fetch(`${config.baseUrl}/assets`, {
+  const res = await fetch(`${baseUrl}/assets`, {
     method: 'POST',
     headers: {
       Authorization: `Bearer ${adminToken}`,
@@ -161,7 +166,7 @@ const createTempAsset = async asset => {
 
 const deleteAsset = async assetId => {
 
-  const res = await fetch(`${config.baseUrl}/assets/${assetId}`, {
+  const res = await fetch(`${baseUrl}/assets/${assetId}`, {
     method: 'DELETE',
     headers: {
       Authorization: `Bearer ${adminToken}`,
@@ -192,7 +197,7 @@ const createDisabledCollectionsandAssets = async ({context = 'full'} = {}) => {
 
 const importReview = async (collectionId, assetId, ruleId = "SV-106179r1_rule") => {
 
-  const res = await fetch(`${config.baseUrl}/collections/${collectionId}/reviews/${assetId}`, {
+  const res = await fetch(`${baseUrl}/collections/${collectionId}/reviews/${assetId}`, {
     method: 'POST',
     headers: {
       Authorization: `Bearer ${adminToken}`,
@@ -217,7 +222,7 @@ const importReview = async (collectionId, assetId, ruleId = "SV-106179r1_rule") 
 
 const setStigGrants = async (collectionId, userId, assetId) => {
 
-  const res = await fetch(`${config.baseUrl}/collections/${collectionId}/grants/user/${userId}/access`, {
+  const res = await fetch(`${baseUrl}/collections/${collectionId}/grants/user/${userId}/access`, {
     method: 'PUT',
     headers: {
       Authorization: `Bearer ${adminToken}`,
@@ -246,7 +251,7 @@ const setStigGrants = async (collectionId, userId, assetId) => {
 
 const setStigGrantsMeta = async (collectionId, userId, assetId) => {
 
-  const res = await fetch(`${config.baseUrl}/collections/${collectionId}/grants/user/${userId}/access`, {
+  const res = await fetch(`${baseUrl}/collections/${collectionId}/grants/user/${userId}/access`, {
     method: 'PUT',
     headers: {
       Authorization: `Bearer ${adminToken}`,
@@ -271,17 +276,20 @@ const setStigGrantsMeta = async (collectionId, userId, assetId) => {
 
 const uploadTestStig = async (filename) => {
 
-  const filePath = path.join(__dirname, '../../form-data-files/', filename)
-  const fileContents = fs.readFileSync(filePath)
+  const __filename = fileURLToPath(import.meta.url)
+  const __dirname = dirname(__filename)
+  const filePath = join(__dirname, `../../form-data-files/${filename}`);
+  
+  const fileContent = readFileSync(filePath, 'utf-8')
   
   // Create a Blob for the file content
-  const blob = new Blob([fileContents], { type: 'text/xml' })
+  const blob = new Blob([fileContent], { type: 'text/xml' })
 
   const formData = new FormData()
   formData.append('importFile', blob, filename)
 
 
-  const response = await fetch(`${config.baseUrl}/stigs?elevate=true&clobber=true`, {
+  const response = await fetch(`${baseUrl}/stigs?elevate=true&clobber=true`, {
     method: 'POST',
     headers: {
       Authorization: `Bearer ${adminToken}`,
@@ -300,7 +308,7 @@ const uploadTestStig = async (filename) => {
 
 const deleteStigByRevision = async (benchmarkId, revisionStr) => {
 
-  const res = await fetch(`${config.baseUrl}/stigs/${benchmarkId}/revisions/${revisionStr}?elevate=true&force=true`, {
+  const res = await fetch(`${baseUrl}/stigs/${benchmarkId}/revisions/${revisionStr}?elevate=true&force=true`, {
     method: 'DELETE',
     headers: {
       Authorization: `Bearer ${adminToken}`,
@@ -315,7 +323,7 @@ const deleteStigByRevision = async (benchmarkId, revisionStr) => {
 
 const deleteStig = async (benchmarkId) => {
 
-  const res = await fetch(`${config.baseUrl}/stigs/${benchmarkId}?elevate=true&force=true`, {
+  const res = await fetch(`${baseUrl}/stigs/${benchmarkId}?elevate=true&force=true`, {
     method: 'DELETE',
     headers: {
       Authorization: `Bearer ${adminToken}`,
@@ -329,7 +337,7 @@ const deleteStig = async (benchmarkId) => {
 }
 
 const getAsset = async assetId => {
-  const res = await fetch(`${config.baseUrl}/assets/${assetId}?projection=statusStats&projection=stigs`, {
+  const res = await fetch(`${baseUrl}/assets/${assetId}?projection=statusStats&projection=stigs`, {
     method: 'GET',
     headers: {
       Authorization: `Bearer ${adminToken}`,
@@ -350,7 +358,7 @@ const getAsset = async assetId => {
 const getStigByBenchmarkId = async benchmarkId => {
   try {
 
-    const res = await fetch(`${config.baseUrl}/stigs/${benchmarkId}?elevate=true`, {
+    const res = await fetch(`${baseUrl}/stigs/${benchmarkId}?elevate=true`, {
       method: 'GET',
       headers: {
         Authorization: `Bearer ${adminToken}`,
@@ -376,7 +384,7 @@ const getStigByBenchmarkId = async benchmarkId => {
 const getUser = async userId => {
   try {
 
-    const res = await fetch(`${config.baseUrl}/users/${userId}?elevate=true&projection=collectionGrants&projection=statistics`, {
+    const res = await fetch(`${baseUrl}/users/${userId}?elevate=true&projection=collectionGrants&projection=statistics`, {
       method: 'GET',
       headers: {
         Authorization: `Bearer ${adminToken}`,
@@ -401,7 +409,7 @@ const getUser = async userId => {
 
 const getAssetsByLabel = async (collectionId, labelId) => {
 
-  const res = await fetch(`${config.baseUrl}/collections/${collectionId}/labels/${labelId}/assets`, {
+  const res = await fetch(`${baseUrl}/collections/${collectionId}/labels/${labelId}/assets`, {
     method: 'GET',
     headers: {
       Authorization: `Bearer ${adminToken}`,
@@ -416,7 +424,7 @@ const getAssetsByLabel = async (collectionId, labelId) => {
 
 const getCollectionMetricsDetails = async (collectionId) => {
 
-  const res = await fetch(`${config.baseUrl}/collections/${collectionId}/metrics/detail`, {
+  const res = await fetch(`${baseUrl}/collections/${collectionId}/metrics/detail`, {
     method: 'GET',
     headers: {
       Authorization: `Bearer ${adminToken}`,
@@ -431,7 +439,7 @@ const getCollectionMetricsDetails = async (collectionId) => {
 
 const getReviews = async (collectionId) => {
 
-  const res = await fetch(`${config.baseUrl}/collections/${collectionId}/reviews`, {
+  const res = await fetch(`${baseUrl}/collections/${collectionId}/reviews`, {
     method: 'GET',
     headers: {
       Authorization: `Bearer ${adminToken}`,
@@ -446,7 +454,7 @@ const getReviews = async (collectionId) => {
 
 const getChecklist = async (assetId, benchmarkId, revisionStr) => {
 
-  const res = await fetch(`${config.baseUrl}/assets/${assetId}/checklists/${benchmarkId}/${revisionStr}?format=ckl`, {
+  const res = await fetch(`${baseUrl}/assets/${assetId}/checklists/${benchmarkId}/${revisionStr}?format=ckl`, {
     method: 'GET',
     headers: {
       Authorization: `Bearer ${adminToken}`,
@@ -461,7 +469,7 @@ const getChecklist = async (assetId, benchmarkId, revisionStr) => {
 
 const getCollection = async (collectionId) => {
 
-  const res = await fetch(`${config.baseUrl}/collections/${collectionId}?projection=grants&projection=assets&projection=labels&projection=owners&projection=statistics&projection=stigs`, {
+  const res = await fetch(`${baseUrl}/collections/${collectionId}?projection=grants&projection=assets&projection=labels&projection=owners&projection=statistics&projection=stigs`, {
     method: 'GET',
     headers: {
       Authorization: `Bearer ${adminToken}`,
@@ -479,7 +487,7 @@ const getCollection = async (collectionId) => {
 
 const setDefaultRevision = async (collectionId, benchmarkId, revisionStr) => {
 
-  const res = await fetch(`${config.baseUrl}/collections/${collectionId}/stigs/${benchmarkId}`, {
+  const res = await fetch(`${baseUrl}/collections/${collectionId}/stigs/${benchmarkId}`, {
     method: 'POST',
     headers: {
       Authorization: `Bearer ${adminToken}`,
@@ -495,7 +503,7 @@ const setDefaultRevision = async (collectionId, benchmarkId, revisionStr) => {
 
 const putReviewByAssetRule = async (collectionId, assetId, ruleId, body) => {
 
-  const res = await fetch(`${config.baseUrl}/collections/${collectionId}/reviews/${assetId}/${ruleId}`, {
+  const res = await fetch(`${baseUrl}/collections/${collectionId}/reviews/${assetId}/${ruleId}`, {
     method: 'PUT',
     headers: {
       Authorization: `Bearer ${adminToken}`,
@@ -605,7 +613,7 @@ const setRestrictedUsers = async (collectionId, grantId, body) => {
 
 const createUser = async (user) => {
 
-  const res = await fetch(`${config.baseUrl}/users?elevate=true`, {
+  const res = await fetch(`${baseUrl}/users?elevate=true`, {
     method: 'POST',
     headers: {
       Authorization: `Bearer ${adminToken}`,
@@ -621,7 +629,7 @@ const createUser = async (user) => {
 
 const putAsset = async (assetId, asset) => {
 
-  const res = await fetch(`${config.baseUrl}/assets/${assetId}`, {
+  const res = await fetch(`${baseUrl}/assets/${assetId}`, {
     method: 'PUT',
     headers: {
       Authorization: `Bearer ${adminToken}`,
@@ -637,7 +645,7 @@ const putAsset = async (assetId, asset) => {
 
 const putCollection = async (collectionId, collection) => {
 
-  const res = await fetch(`${config.baseUrl}/collections/${collectionId}`, {
+  const res = await fetch(`${baseUrl}/collections/${collectionId}`, {
     method: 'PUT',
     headers: {
       Authorization: `Bearer ${adminToken}`,
@@ -653,7 +661,7 @@ const putCollection = async (collectionId, collection) => {
 
 const createCollectionLabel = async (collectionId, label) => {
 
-  const res = await fetch(`${config.baseUrl}/collections/${collectionId}/labels`, {
+  const res = await fetch(`${baseUrl}/collections/${collectionId}/labels`, {
     method: 'POST',
     headers: {
       Authorization: `Bearer ${adminToken}`,
@@ -669,7 +677,7 @@ const createCollectionLabel = async (collectionId, label) => {
 
 const deleteReview = async (collectionId, assetId, ruleId) => {
 
-  const res = await fetch(`${config.baseUrl}/collections/${collectionId}/reviews/${assetId}/${ruleId}`, {
+  const res = await fetch(`${baseUrl}/collections/${collectionId}/reviews/${assetId}/${ruleId}`, {
     method: 'DELETE',
     headers: {
       Authorization: `Bearer ${adminToken}`,
@@ -686,7 +694,7 @@ const deleteReview = async (collectionId, assetId, ruleId) => {
 }
 
 
-module.exports = {
+export {
   deleteReview,
   createCollectionLabel,
   putCollection,

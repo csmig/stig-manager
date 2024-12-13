@@ -1,19 +1,12 @@
-const chai = require('chai')
-const chaiHttp = require('chai-http')
-chai.use(chaiHttp)
-const { v4: uuidv4 } = require('uuid')
-const expect = chai.expect
-const config = require('../../testConfig.json')
-const utils = require('../../utils/testUtils.js')
-const iterations = require('../../iterations.js')
-const reference = require('../../referenceData.js')
-const requestBodies = require('./requestBodies.js')
+
+const { expect } = chai
+import { v4 as uuidv4 } from 'uuid'
+import {config } from '../../testConfig.js'
+import * as utils from '../../utils/testUtils.js'
+import reference from '../../referenceData.js'
+import {iterations} from '../../iterations.js'
 
 describe('user-group', () => {
-
-  before(async function () {
-   // await utils.loadAppData()
-  })
 
   for(const iteration of iterations) {
 
@@ -24,8 +17,7 @@ describe('user-group', () => {
         describe(`POST - createUserGroup - /user-groups`, () => {
         
           it('should create a userGroup', async () => {
-            const res = await chai
-                .request(config.baseUrl)
+            const res = await chai.request.execute(config.baseUrl)
                 .post(`/user-groups?elevate=true&projection=collections&projection=users&projection=attributions`)
                 .set('Authorization', 'Bearer ' + iteration.token)
                 .send({
@@ -56,8 +48,7 @@ describe('user-group', () => {
           if(iteration.name == "stigmanadmin"){
           
             it('should throw SmError.UnprocessableError Duplicate name exists.', async () => {
-              const res = await chai
-                  .request(config.baseUrl)
+              const res = await chai.request.execute(config.baseUrl)
                   .post(`/user-groups?elevate=true`)
                   .set('Authorization', 'Bearer ' + iteration.token)
                   .send({
@@ -87,8 +78,7 @@ describe('user-group', () => {
 
           it('should return all userGroups  ', async () => {
 
-            const res = await chai
-              .request(config.baseUrl)
+            const res = await chai.request.execute(config.baseUrl)
               .get(`/user-groups?projection=users&projection=collections&elevate=true`)
               .set('Authorization', 'Bearer ' + iteration.token)
             
@@ -118,8 +108,7 @@ describe('user-group', () => {
           })
           it('should return all userGroups no projections for all users sucess ', async () => {
 
-            const res = await chai
-              .request(config.baseUrl)
+            const res = await chai.request.execute(config.baseUrl)
               .get(`/user-groups`)
               .set('Authorization', 'Bearer ' + iteration.token)
               
@@ -134,8 +123,7 @@ describe('user-group', () => {
         describe(`getUserGroup - /user-groups/{userGroupId}`, () => {
 
           it('should return the test usergroup', async () => {
-            const res = await chai
-              .request(config.baseUrl)
+            const res = await chai.request.execute(config.baseUrl)
               .get(`/user-groups/${reference.testCollection.testGroup.userGroupId}`)
               .set('Authorization', 'Bearer ' + iteration.token)
            
@@ -153,8 +141,7 @@ describe('user-group', () => {
 
             it("should change the name and description of the userGroup", async () => {
 
-                const res = await chai
-                    .request(config.baseUrl)
+                const res = await chai.request.execute(config.baseUrl)
                     .patch(`/user-groups/${reference.testCollection.testGroup.userGroupId}?elevate=true`)
                     .set('Authorization', 'Bearer ' + iteration.token)
                     .send({
@@ -174,8 +161,7 @@ describe('user-group', () => {
 
             it("should change userId list of the group ", async () => {
 
-                const res = await chai
-                    .request(config.baseUrl)
+                const res = await chai.request.execute(config.baseUrl)
                     .patch(`/user-groups/${reference.testCollection.testGroup.userGroupId}?elevate=true&projection=users`)
                     .set('Authorization', 'Bearer ' + iteration.token)
                     .send({
@@ -201,9 +187,8 @@ describe('user-group', () => {
             
             it("should return empty 200, usergroupId doesnt exist", async () => {
 
-                randomUserGroupId = "1234321"
-                const res = await chai
-                    .request(config.baseUrl)
+                let randomUserGroupId = "1234321"
+                const res = await chai.request.execute(config.baseUrl)
                     .patch(`/user-groups/${randomUserGroupId}?elevate=true`)
                     .set('Authorization', 'Bearer ' + iteration.token)
                     .send({
@@ -227,8 +212,7 @@ describe('user-group', () => {
           it(`Set all properties of a user group`, async () => {
             const newGroupName = "putGroupName" +  uuidv4()
             const newDescription = "putDescription" + uuidv4()
-            const res = await chai
-            .request(config.baseUrl)
+            const res = await chai.request.execute(config.baseUrl)
             .put(`/user-groups/${reference.testCollection.testGroup.userGroupId}?elevate=true&projection=users`)
             .set('Authorization', 'Bearer ' + iteration.token)
             .send({
@@ -263,8 +247,7 @@ describe('user-group', () => {
             let testGroup
 
             it('should create a userGroup if user can elevate ', async () => {
-                const res = await chai
-                    .request(config.baseUrl)
+                const res = await chai.request.execute(config.baseUrl)
                     .post(`/user-groups?elevate=true`)
                     .set('Authorization', 'Bearer ' + iteration.token)
                     .send({
@@ -284,8 +267,7 @@ describe('user-group', () => {
             
             if(iteration.name == "stigmanadmin"){
                 it("should delete the test userGroup", async () => {
-                    const res = await chai
-                        .request(config.baseUrl)
+                    const res = await chai.request.execute(config.baseUrl)
                         .delete(`/user-groups/${testGroup.userGroupId}?elevate=true`)
                         .set('Authorization', 'Bearer ' + iteration.token)
                     if(iteration.name != "stigmanadmin"){
@@ -299,8 +281,7 @@ describe('user-group', () => {
                 })
 
                 it("verify that the userGroup is deleted", async () => {
-                    const res = await chai
-                        .request(config.baseUrl)
+                    const res = await chai.request.execute(config.baseUrl)
                         .get(`/user-groups/${testGroup.userGroupId}`)
                         .set('Authorization', 'Bearer ' + iteration.token)
                     expect(res.body.error).to.exist

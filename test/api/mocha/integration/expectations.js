@@ -1,5 +1,5 @@
 // only used in revision pinning 
-const distinct = {
+export const expectations = {
   stigmanadmin: {
     user: 'admin',
     userId: '1',
@@ -69,5 +69,3 @@ const distinct = {
     canModifyCollection: false
   }
 }
-module.exports = distinct
-

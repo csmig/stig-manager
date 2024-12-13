@@ -1,12 +1,10 @@
-const chai = require("chai")
-const chaiHttp = require("chai-http")
-chai.use(chaiHttp)
-const expect = chai.expect
-const config = require("../testConfig.json")
-const utils = require("../utils/testUtils.js")
-const reference = require("../referenceData.js")
-const iterations = require("../iterations.js")
-const expectations = require("./expectations.js")
+
+const { expect } = chai
+import {config } from '../testConfig.js'
+import * as utils from '../utils/testUtils.js'
+import reference from '../referenceData.js'
+import {iterations} from '../iterations.js'
+import {expectations} from './expectations.js'
 
 describe(`POST - writeStigPropsByCollectionStig - /collections/{collectionId}/stigs/{benchmarkId} - postReviewBatch - /collections/{collectionId}/reviews`, () => {
 
@@ -41,7 +39,7 @@ describe(`POST - writeStigPropsByCollectionStig - /collections/{collectionId}/st
                 describe('Pin Revision for Collection', () => {
 
                     it('Return the STIGs mapped in the specified Collection', async () => {
-                        const res = await chai.request(config.baseUrl)
+                        const res = await chai.request.execute(config.baseUrl)
                           .get(`/collections/${reference.testCollection.collectionId}/stigs`)
                           .set('Authorization', `Bearer ${user.token}`)
                         if (distinct.grant === "none"){
@@ -63,8 +61,7 @@ describe(`POST - writeStigPropsByCollectionStig - /collections/{collectionId}/st
                       assetIds: reference.writeStigPropsByCollectionStig,
                      }
             
-                    const res = await chai
-                        .request(config.baseUrl)
+                    const res = await chai.request.execute(config.baseUrl)
                         .post(`/collections/${reference.testCollection.collectionId}/stigs/${reference.testCollection.benchmark}`)
                         .set("Authorization", `Bearer ${user.token}`)
                         .send(post)
@@ -88,8 +85,7 @@ describe(`POST - writeStigPropsByCollectionStig - /collections/{collectionId}/st
                         assetIds: ["62", "42", "154"],
                     }
             
-                    const res = await chai
-                        .request(config.baseUrl)
+                    const res = await chai.request.execute(config.baseUrl)
                         .post(`/collections/${reference.testCollection.collectionId}/stigs/${reference.testCollection.benchmark}`)
                         .set("Authorization", `Bearer ${user.token}`)
                         .send(post)
@@ -112,8 +108,7 @@ describe(`POST - writeStigPropsByCollectionStig - /collections/{collectionId}/st
                         assetIds: reference.writeStigPropsByCollectionStig,
                     }
             
-                    const res = await chai
-                        .request(config.baseUrl)
+                    const res = await chai.request.execute(config.baseUrl)
                         .post(`/collections/${reference.testCollection.collectionId}/stigs/${reference.testCollection.benchmark}`)
                         .set("Authorization", `Bearer ${user.token}`)
                         .send(post)
@@ -136,8 +131,7 @@ describe(`POST - writeStigPropsByCollectionStig - /collections/{collectionId}/st
                     defaultRevisionStr: "V1R5"
                     }
             
-                    const res = await chai
-                        .request(config.baseUrl)
+                    const res = await chai.request.execute(config.baseUrl)
                         .post(`/collections/${reference.testCollection.collectionId}/stigs/${reference.testCollection.benchmark}`)
                         .set("Authorization", `Bearer ${user.token}`)
                         .send(post)
@@ -155,8 +149,7 @@ describe(`POST - writeStigPropsByCollectionStig - /collections/{collectionId}/st
                         defaultRevisionStr: reference.testCollection.pinRevision
                     }
             
-                    const res = await chai
-                        .request(config.baseUrl)
+                    const res = await chai.request.execute(config.baseUrl)
                         .post(`/collections/${reference.testCollection.collectionId}/stigs/${reference.testCollection.benchmark}`)
                         .set("Authorization", `Bearer ${user.token}`)
                         .send(post)
@@ -175,7 +168,7 @@ describe(`POST - writeStigPropsByCollectionStig - /collections/{collectionId}/st
                     })
                     it("Return mapped STIGs - expect v1r0 pin", async () => {
 
-                        const res = await chai.request(config.baseUrl)
+                        const res = await chai.request.execute(config.baseUrl)
                             .get(`/collections/${reference.testCollection.collectionId}/stigs`)
                             .set('Authorization', `Bearer ${user.token}`)
                         if (distinct.grant === "none"){
@@ -196,7 +189,7 @@ describe(`POST - writeStigPropsByCollectionStig - /collections/{collectionId}/st
                     })
                     it("verify metrics were recalculated relative to new pinned rev", async () => {
                         
-                        const res = await chai.request(config.baseUrl)
+                        const res = await chai.request.execute(config.baseUrl)
                             .get(`/collections/${reference.testCollection.collectionId}/metrics/detail`)
                             .set('Authorization', `Bearer ${user.token}`)
                         if (distinct.grant === "none"){
@@ -314,8 +307,7 @@ describe(`POST - writeStigPropsByCollectionStig - /collections/{collectionId}/st
                     assetIds: []
                     }
             
-                    const res = await chai
-                        .request(config.baseUrl)
+                    const res = await chai.request.execute(config.baseUrl)
                         .post(`/collections/${reference.testCollection.collectionId}/stigs/${reference.testCollection.benchmark}`)
                         .set("Authorization", `Bearer ${user.token}`)
                         .send(post)
@@ -333,8 +325,7 @@ describe(`POST - writeStigPropsByCollectionStig - /collections/{collectionId}/st
                         assetIds: reference.writeStigPropsByCollectionStig,
                     }
             
-                    const res = await chai
-                        .request(config.baseUrl)
+                    const res = await chai.request.execute(config.baseUrl)
                         .post(`/collections/${reference.testCollection.collectionId}/stigs/${reference.testCollection.benchmark}`)
                         .set("Authorization", `Bearer ${user.token}`)
                         .send(post)
@@ -353,7 +344,7 @@ describe(`POST - writeStigPropsByCollectionStig - /collections/{collectionId}/st
                     })
                     it("TEST that re-adding STIG does not have old pin", async () => {
 
-                        const res = await chai.request(config.baseUrl)
+                        const res = await chai.request.execute(config.baseUrl)
                             .get(`/collections/${reference.testCollection.collectionId}/stigs`)
                             .set('Authorization', `Bearer ${user.token}`)
                         if (distinct.grant === "none"){
@@ -373,8 +364,7 @@ describe(`POST - writeStigPropsByCollectionStig - /collections/{collectionId}/st
                         defaultRevisionStr: reference.testCollection.pinRevision
                         }
                 
-                        const res = await chai
-                            .request(config.baseUrl)
+                        const res = await chai.request.execute(config.baseUrl)
                             .post(`/collections/${reference.testCollection.collectionId}/stigs/${reference.testCollection.benchmark}`)
                             .set("Authorization", `Bearer ${user.token}`)
                             .send(post)
@@ -395,7 +385,7 @@ describe(`POST - writeStigPropsByCollectionStig - /collections/{collectionId}/st
                     
                     it("PUT Review: rule only in latest, not default", async () => {
 
-                        const res = await chai.request(config.baseUrl)
+                        const res = await chai.request.execute(config.baseUrl)
                             .put(`/collections/${reference.testCollection.collectionId}/reviews/${reference.testAsset.assetId}/${reference.ruleId}?projection=rule&projection=stigs`)
                             .set('Authorization', `Bearer ${user.token}`)
                             .send({
@@ -464,7 +454,7 @@ describe(`POST - writeStigPropsByCollectionStig - /collections/{collectionId}/st
                     })
                     it("PUT Review: rule is only in pinned rev - expect 201", async () => {
 
-                        const res = await chai.request(config.baseUrl)
+                        const res = await chai.request.execute(config.baseUrl)
                             .put(`/collections/${reference.testCollection.collectionId}/reviews/${reference.testAsset.assetId}/${reference.ruleIdPinnedRev}?projection=rule&projection=stigs`)
                             .set('Authorization', `Bearer ${user.token}`)
                             .send({
@@ -535,7 +525,7 @@ describe(`POST - writeStigPropsByCollectionStig - /collections/{collectionId}/st
                     })
                     it("PUT Review: rule is only in pinned rev - 200 expected", async () => {
 
-                        const res = await chai.request(config.baseUrl)
+                        const res = await chai.request.execute(config.baseUrl)
                             .put(`/collections/${reference.testCollection.collectionId}/reviews/${reference.testAsset.assetId}/${reference.ruleIdPinnedRev}?projection=rule&projection=stigs`)
                             .set('Authorization', `Bearer ${user.token}`)
                             .send({
@@ -609,8 +599,7 @@ describe(`POST - writeStigPropsByCollectionStig - /collections/{collectionId}/st
 
                     it("POST batch review: target rules defined by stig (expect pinned rules only)", async () => {
 
-                        const res = await chai
-                          .request(config.baseUrl)
+                        const res = await chai.request.execute(config.baseUrl)
                           .post(
                             `/collections/${reference.testCollection.collectionId}/reviews`
                           )
@@ -631,7 +620,7 @@ describe(`POST - writeStigPropsByCollectionStig - /collections/{collectionId}/st
 
                     it("Return detailed metrics for the specified Collection - check previously empty asset for 80 assesments (overlap between pin and current)", async () => {
 
-                        const res = await chai.request(config.baseUrl)
+                        const res = await chai.request.execute(config.baseUrl)
                             .get(`/collections/${reference.testCollection.collectionId}/metrics/detail`)
                             .set('Authorization', `Bearer ${user.token}`)
                         if (distinct.grant === "none"){
@@ -639,7 +628,7 @@ describe(`POST - writeStigPropsByCollectionStig - /collections/{collectionId}/st
                             return
                         }
                         let testAsset = 154
-                        for(item of res.body){
+                        for(let item of res.body){
                             if (item.assetId ==  reference.testAsset.assetId && item.benchmarkId == reference.benchmark) {
                                 expect(item.metrics.assessed).to.equal(reference.checklistLength)
                             }
@@ -650,7 +639,7 @@ describe(`POST - writeStigPropsByCollectionStig - /collections/{collectionId}/st
 
                     it('Return the STIGs mapped in the specified Collection Copy', async () => {
                         
-                        const res = await chai.request(config.baseUrl)
+                        const res = await chai.request.execute(config.baseUrl)
                             .get(`/collections/${reference.testCollection.collectionId}/stigs`)
                             .set('Authorization', `Bearer ${user.token}`)
                         if (distinct.grant === "none"){

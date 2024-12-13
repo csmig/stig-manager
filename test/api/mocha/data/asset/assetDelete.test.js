@@ -1,13 +1,12 @@
-const chai = require('chai')
-const chaiHttp = require('chai-http')
-chai.use(chaiHttp)
-const expect = chai.expect
-const config = require('../../testConfig.json')
-const utils = require('../../utils/testUtils')
-const iterations = require('../../iterations.js')
-const expectations = require('./expectations.js')
-const reference = require('../../referenceData.js')
-const requestBodies = require('./requestBodies.js')
+
+
+const { expect } = chai
+import {config } from '../../testConfig.js'
+import * as utils from '../../utils/testUtils.js'
+import reference from '../../referenceData.js'
+import {requestBodies} from "./requestBodies.js"
+import {iterations} from '../../iterations.js'
+import {expectations} from './expectations.js'
 
 
 const createTempAsset = async () => {
@@ -35,8 +34,7 @@ describe('DELETE - Asset', function () {
       const distinct = expectations[iteration.name]
       describe(`deleteAssetMetadataKey - /assets/{assetId}/metadata/keys/{key}`, function () {
         it('Delete one metadata key/value of an Asset', async function () {
-          const res = await chai
-            .request(config.baseUrl)
+          const res = await chai.request.execute(config.baseUrl)
             .delete(`/assets/${reference.testAsset.assetId}/metadata/keys/${reference.testAsset.metadataKey}`)
             .set('Content-Type', 'application/json') 
             .set('Authorization', 'Bearer ' + iteration.token)
@@ -53,8 +51,7 @@ describe('DELETE - Asset', function () {
       })
       describe(`removeStigFromAsset - /assets/{assetId}/stigs/{benchmarkId}`, function () {
         it('Delete a STIG assignment to an Asset', async function () {
-          const res = await chai
-            .request(config.baseUrl)
+          const res = await chai.request.execute(config.baseUrl)
             .delete(`/assets/${reference.testAsset.assetId}/stigs/${reference.benchmark}`)
             .set('Authorization', 'Bearer ' + iteration.token)
           if(!distinct.canModifyCollection){
@@ -69,8 +66,7 @@ describe('DELETE - Asset', function () {
       })
       describe(`removeStigsFromAsset -/assets/{assetId}/stigs`, function () {
         it('Delete all STIG assignments to an Asset', async function () {
-          const res = await chai
-            .request(config.baseUrl)
+          const res = await chai.request.execute(config.baseUrl)
             .delete(`/assets/${reference.testAsset.assetId}/stigs`)
             .set('Authorization', 'Bearer ' + iteration.token)
           if(!distinct.canModifyCollection){
@@ -88,8 +84,7 @@ describe('DELETE - Asset', function () {
         let localTestAsset = null
         
         it('Create an Asset', async function () {
-          const res = await chai
-            .request(config.baseUrl)
+          const res = await chai.request.execute(config.baseUrl)
             .post('/assets')
             .set('Authorization', 'Bearer ' + iteration.token)
             .send({
@@ -120,8 +115,7 @@ describe('DELETE - Asset', function () {
           if(!distinct.canModifyCollection){
             return
           }
-          const res = await chai
-            .request(config.baseUrl)
+          const res = await chai.request.execute(config.baseUrl)
             .delete(`/assets/${localTestAsset.assetId}?projection=statusStats&projection=stigs`)
             .set('Authorization', 'Bearer ' + iteration.token) 
           if(!distinct.canModifyCollection){

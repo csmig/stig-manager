@@ -1,20 +1,18 @@
-const chai = require('chai')
-const chaiHttp = require('chai-http')
-const { v4: uuidv4 } = require('uuid')
-chai.use(chaiHttp)
-const expect = chai.expect
-const config = require('../../testConfig.json')
-const utils = require('../../utils/testUtils')
-const iterations = require('../../iterations.js')
-const expectations = require('./expectations.js')
-const reference = require('../../referenceData.js')
-const requestBodies = require('./requestBodies.js')
+
+const { expect } = chai
+import { v4 as uuidv4 } from 'uuid'
+import {config } from '../../testConfig.js'
+import * as utils from '../../utils/testUtils.js'
+import reference from '../../referenceData.js'
+import {requestBodies} from "./requestBodies.js"
+import {iterations} from '../../iterations.js'
+import {expectations} from './expectations.js'
+
 
 describe('PATCH - Collection', function () {
 
     before(async function () {
         await utils.loadAppData()
-        // await utils.uploadTestStigs()
     })
 
     for(const iteration of iterations) {
@@ -34,7 +32,7 @@ describe('PATCH - Collection', function () {
           it('Patch test collection, send 5 new grants and metadata.',async function () {
 
             const patchRequest = requestBodies.updateCollection            
-            const res = await chai.request(config.baseUrl)
+            const res = await chai.request.execute(config.baseUrl)
                   .patch(`/collections/${reference.testCollection.collectionId}?&projection=grants&projection=stigs`)
                   .set('Authorization', `Bearer ${iteration.token}`)
                   .send(patchRequest)
@@ -70,7 +68,7 @@ describe('PATCH - Collection', function () {
             const patchRequest = JSON.parse(JSON.stringify(requestBodies.updateCollection))
             patchRequest.grants.push(patchRequest.grants[0])
             patchRequest.name = "TEST" + utils.getUUIDSubString()
-            const res = await chai.request(config.baseUrl)
+            const res = await chai.request.execute(config.baseUrl)
                 .patch(`/collections/${reference.testCollection.collectionId}`)
                 .set('Authorization', `Bearer ${iteration.token}`)
                 .send(patchRequest)
@@ -89,7 +87,7 @@ describe('PATCH - Collection', function () {
            // patchRequest.grants.push(patchRequest.grants[0])
             patchRequest.grants.push({userGroupId: reference.testCollection.testGroup.userGroupId, accessLevel: 1})
             patchRequest.name = "TEST" + utils.getUUIDSubString()
-            const res = await chai.request(config.baseUrl)
+            const res = await chai.request.execute(config.baseUrl)
                 .patch(`/collections/${reference.testCollection.collectionId}`)
                 .set('Authorization', `Bearer ${iteration.token}`)
                 .send(patchRequest)
@@ -107,7 +105,7 @@ describe('PATCH - Collection', function () {
 
           it('Patch test collection label, change color, description and name ',async function () {
             // this needed to be done because we are putting the collection in beforeeach which alters the labelId
-            const labelGet = await chai.request(config.baseUrl)  
+            const labelGet = await chai.request.execute(config.baseUrl)  
               .get(`/collections/${reference.testCollection.collectionId}/labels`)
               .set('Authorization', `Bearer ${iteration.token}`)
             if(distinct.canModifyCollection === false){
@@ -116,7 +114,7 @@ describe('PATCH - Collection', function () {
             const fullLabel = labelGet.body.find(label => label.name === "test-label-full")
             
             const body = requestBodies.patchCollectionLabelById
-            const res = await chai.request(config.baseUrl)
+            const res = await chai.request.execute(config.baseUrl)
                 .patch(`/collections/${reference.testCollection.collectionId}/labels/${fullLabel.labelId}`)
                 .set('Authorization', `Bearer ${iteration.token}`)
                 .send(body)
@@ -135,7 +133,7 @@ describe('PATCH - Collection', function () {
           it("should throw SmError.NotFoundError when updating a label that doesn't exist.",async function () {
 
             const body = requestBodies.patchCollectionLabelById
-            const res = await chai.request(config.baseUrl)
+            const res = await chai.request.execute(config.baseUrl)
                 .patch(`/collections/${reference.testCollection.collectionId}/labels/${uuidv4()}`)
                 .set('Authorization', `Bearer ${iteration.token}`)
                 .send(body)
@@ -151,7 +149,7 @@ describe('PATCH - Collection', function () {
 
           it('Patch test collection metadata',async function () {
               
-              const res = await chai.request(config.baseUrl)
+              const res = await chai.request.execute(config.baseUrl)
                   .patch(`/collections/${reference.testCollection.collectionId}/metadata`)
                   .set('Authorization', `Bearer ${iteration.token}`)
                   .send({[reference.testCollection.collectionMetadataKey]: reference.testCollection.collectionMetadataValue})

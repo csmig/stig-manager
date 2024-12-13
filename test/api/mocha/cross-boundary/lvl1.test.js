@@ -1,10 +1,13 @@
-const chai = require('chai')
-const chaiHttp = require('chai-http')
-chai.use(chaiHttp)
-const expect = chai.expect
-const config = require('../testConfig.json')
-const utils = require('../utils/testUtils.js')
-const reference = require('../referenceData.js')
+
+
+// import {config } from '../testConfig.js'
+// import * as utils from '../utils/testUtils.js'
+// import reference from '../referenceData.js'
+
+const { expect } = chai
+import {config } from '../testConfig.js'
+import * as utils from '../utils/testUtils.js'
+import reference from '../referenceData.js'
 
 const user =
 {
@@ -29,26 +32,25 @@ describe("lvl1 cross-boundary tests", () => {
     })
     describe('GET - getUserObject - /user', () => {
         it('Return the requesters user information - check user', async () => {
-            const res = await chai
-                .request(config.baseUrl)
+            const res = await chai.request.execute(config.baseUrl)
                 .get(`/user`)
                 .set('Authorization', 'Bearer ' + user.token)
 
             expect(res).to.have.status(200)
             expect(res.body.username).to.equal(user.name)
-            for(grant of res.body.collectionGrants) {
-            expect(grant).to.exist
-            expect(grant).to.have.property('collection')
-            expect(grant).to.have.property('accessLevel')
-            expect(grant.collection).to.have.property('collectionId')
-            expect(grant.collection.collectionId).to.eql(reference.testCollection.collectionId)
+            for(const grant of res.body.collectionGrants) {
+              expect(grant).to.exist
+              expect(grant).to.have.property('collection')
+              expect(grant).to.have.property('accessLevel')
+              expect(grant.collection).to.have.property('collectionId')
+              expect(grant.collection.collectionId).to.eql(reference.testCollection.collectionId)
             }
         })
     })
     describe('GET - getReviewByAssetRule - /collections/{collectionId}/reviews/{assetId}/{ruleId}', () => {
 
         it('Return the Review for an Asset and Rule - expect fail for lvl1', async () => {
-          const res = await chai.request(config.baseUrl)
+          const res = await chai.request.execute(config.baseUrl)
             .get(`/collections/${reference.testCollection.collectionId}/reviews/${reference.testAsset.assetId}/${reference.ruleIdLvl1NoAccess}?projection=rule&projection=stigs&projection=metadata&projection=history`)
             .set('Authorization', `Bearer ${user.token}`)
           expect(res).to.have.status(204)
@@ -57,7 +59,7 @@ describe("lvl1 cross-boundary tests", () => {
     describe('GET - getStigsByCollection - /collections/{collectionId}/stigs', function () {
 
         it('Return the STIGs mapped in the specified Collection - lvl1 - stigStats check',async function () {
-          const res = await chai.request(config.baseUrl)
+          const res = await chai.request.execute(config.baseUrl)
             .get(`/collections/${reference.testCollection.collectionId}/stigs`)
             .set('Authorization', `Bearer ${user.token}`)
            
@@ -80,8 +82,7 @@ describe("lvl1 cross-boundary tests", () => {
     })
     describe('GET - getAsset - /assets/{assetId}', () => {
         it('Return an Asset (lvl1 user requests w/ 1 of 2 stig grants, check proper AdminStats)', async () => {
-            const res = await chai
-              .request(config.baseUrl)
+            const res = await chai.request.execute(config.baseUrl)
               .get(`/assets/${reference.testAsset.assetId}?projection=statusStats&projection=stigs`)
               .set('Authorization', 'Bearer ' + user.token)
             expect(res).to.have.status(200)
@@ -89,8 +90,7 @@ describe("lvl1 cross-boundary tests", () => {
             expect(res.body.statusStats.submittedCount).to.equal(5);
         })
         it('Return an Asset (lvl1 user requests w/ ZERO of 2 stig grants, expect fail)', async () => {
-            const res = await chai
-              .request(config.baseUrl)
+            const res = await chai.request.execute(config.baseUrl)
               .get(`/assets/${reference.testAssetLvl1NoAccess}?projection=statusStats&projection=stigs`)
               .set('Authorization', 'Bearer ' + user.token)
             expect(res).to.have.status(403)
@@ -100,7 +100,7 @@ describe("lvl1 cross-boundary tests", () => {
     describe('GET - getChecklistByCollectionStig - /collections/{collectionId}/checklists/{benchmarkId}/{revisionStr}', function () {
        
         it('Return the Checklist for the supplied Collection and STIG-revStr - lvl1 no access, empty array',async function () {
-          const res = await chai.request(config.baseUrl)
+          const res = await chai.request.execute(config.baseUrl)
             .get(`/collections/${reference.testCollection.collectionId}/checklists/${'Windows_10_STIG_TEST'}/${'V2R1'}`)
             .set('Authorization', `Bearer ${user.token}`)
             expect(res).to.have.status(200)
@@ -110,8 +110,7 @@ describe("lvl1 cross-boundary tests", () => {
     describe('POST - postReviewsByAsset - /collections/{collectionId}/reviews/{assetId}', () => {
 
         it('Import one or more Reviews from a JSON body - ADMIN - lvl1 asset access', async () => {
-            const res = await chai
-              .request(config.baseUrl)
+            const res = await chai.request.execute(config.baseUrl)
               .post(
                 `/collections/${reference.testCollection.collectionId}/reviews/${reference.testAsset.assetId}`
               )
@@ -137,8 +136,7 @@ describe("lvl1 cross-boundary tests", () => {
             expect(res).to.have.status(200)
         })
         it('Import one or more Reviews from a JSON body - ADMIN - lvl1 no asset access', async () => {
-        const res = await chai
-            .request(config.baseUrl)
+        const res = await chai.request.execute(config.baseUrl)
             .post(
             `/collections/${reference.testCollection.collectionId}/reviews/${reference.testAssetLvl1NoAccess}`
             )
@@ -164,8 +162,7 @@ describe("lvl1 cross-boundary tests", () => {
         expect(res).to.have.status(200)
         })
         it('Import one or more Reviews from a JSON body - no Asset Access', async () => {
-            const res = await chai
-              .request(config.baseUrl)
+            const res = await chai.request.execute(config.baseUrl)
               .post(
                 `/collections/${reference.testCollection.collectionId}/reviews/${reference.testAssetLvl1NoAccess}`
               )
@@ -187,8 +184,7 @@ describe("lvl1 cross-boundary tests", () => {
             expect(res.body.rejected).to.have.lengthOf(1)
         })
         it('Import one or more Reviews from a JSON body - no Asset Access - multiple posts', async () => {
-            const res = await chai
-              .request(config.baseUrl)
+            const res = await chai.request.execute(config.baseUrl)
               .post(
                 `/collections/${reference.testCollection.collectionId}/reviews/${reference.testAssetLvl1NoAccess}`
               )
@@ -218,8 +214,7 @@ describe("lvl1 cross-boundary tests", () => {
             expect(res.body.rejected).to.have.lengthOf(2)
         })
         it('Import one or more Reviews from a JSON body - no STIG-Asset Access', async () => {
-            const res = await chai
-              .request(config.baseUrl)
+            const res = await chai.request.execute(config.baseUrl)
               .post(
                 `/collections/${reference.testCollection.collectionId}/reviews/${reference.testAsset.assetId}`
               )
@@ -241,8 +236,7 @@ describe("lvl1 cross-boundary tests", () => {
             expect(res.body.rejected).to.have.lengthOf(1)
         })
         it('Import one or more Reviews from a JSON body - no STIG-Asset Access - multiple reviews', async () => {
-            const res = await chai
-              .request(config.baseUrl)
+            const res = await chai.request.execute(config.baseUrl)
               .post(
                 `/collections/${reference.testCollection.collectionId}/reviews/${reference.testAsset.assetId}`
               )
@@ -302,7 +296,7 @@ describe("lvl1 cross-boundary tests", () => {
                   }
               ]
           }           
-            const res = await chai.request(config.baseUrl)
+            const res = await chai.request.execute(config.baseUrl)
                 .patch(`/collections/${reference.testCollection.collectionId}?projection=assets&projection=grants&projection=owners&projection=statistics&projection=stigs`)
                 .set('Authorization', `Bearer ${user.token}`)
                 .send(patchRequest)
@@ -313,7 +307,7 @@ describe("lvl1 cross-boundary tests", () => {
 
         it('Set all properties of a Collection - expect fail for lvl1',async function () {
 
-            const res = await chai.request(config.baseUrl)
+            const res = await chai.request.execute(config.baseUrl)
                 // .put(`/collections/${reference.testCollection.collectionId}`)
                 .put(`/collections/${reference.testCollection.collectionId}?projection=grants&projection=owners&projection=statistics&projection=stigs&projection=assets`)
                 .set('Authorization', `Bearer ${user.token}`)
@@ -368,7 +362,7 @@ describe("lvl1 cross-boundary tests", () => {
     describe('PUT - putReviewByAssetRule - /collections/{collectionId}/reviews/{assetId}/{ruleId}', () => {
         it('Set all properties of a Review - lvl1 should work', async () => {
 
-            const res = await chai.request(config.baseUrl)
+            const res = await chai.request.execute(config.baseUrl)
                 .put(`/collections/${reference.testCollection.collectionId}/reviews/${reference.testAsset.assetId}/${reference.testRule.ruleId}?projection=rule&projection=history&projection=stigs&projection=metadata`)
                 .set('Authorization', `Bearer ${user.token}`)
                 .send({
@@ -382,7 +376,7 @@ describe("lvl1 cross-boundary tests", () => {
         })
         it('Set all properties of a Review - lvl1 test - no Asset Access', async () => {
 
-            const res = await chai.request(config.baseUrl)
+            const res = await chai.request.execute(config.baseUrl)
                 .put(`/collections/${reference.testCollection.collectionId}/reviews/${reference.testAssetLvl1NoAccess}/${reference.testCollection.ruleId}?projection=rule&projection=history&projection=stigs&projection=metadata`)
                 .set('Authorization', `Bearer ${user.token}`)
                 .send({
@@ -396,7 +390,7 @@ describe("lvl1 cross-boundary tests", () => {
         })
         it('Set all properties of a Review - lvl1 test - no STIG-Asset Access', async () => {
 
-            const res = await chai.request(config.baseUrl)
+            const res = await chai.request.execute(config.baseUrl)
                 .put(`/collections/${reference.testCollection.collectionId}/reviews/${reference.testAsset.assetId}/${reference.ruleIdLvl1NoAccess}?projection=rule&projection=history&projection=stigs&projection=metadata`)
                 .set('Authorization', `Bearer ${user.token}`)
                 .send({
@@ -411,8 +405,7 @@ describe("lvl1 cross-boundary tests", () => {
     })
     describe('PATCH - patchReviewByAssetRule - /collections/{collectionId}/reviews/{assetId}/{ruleId}', () => {
         it('Merge provided properties with a Review - lvl1 test - noAssetAccess - w admin request check Copy 2', async () => {
-            const res = await chai
-              .request(config.baseUrl)
+            const res = await chai.request.execute(config.baseUrl)
               .patch(
                 `/collections/${reference.testCollection.collectionId}/reviews/${reference.testAssetLvl1NoAccess}/${reference.testCollection.ruleId}`)
               .set("Authorization", `Bearer ${user.token}`)
@@ -425,8 +418,7 @@ describe("lvl1 cross-boundary tests", () => {
             expect(res).to.have.status(404)
         })
         it('Merge provided properties with a Review - lvl1 test - noAssetAccess - w admin request check Copy 2', async () => {
-            const res = await chai
-              .request(config.baseUrl)
+            const res = await chai.request.execute(config.baseUrl)
               .patch(
                 `/collections/${reference.testCollection.collectionId}/reviews/${reference.testAsset.assetId}/${reference.ruleIdLvl1NoAccess}`)
               .set("Authorization", `Bearer ${user.token}`)
@@ -441,13 +433,13 @@ describe("lvl1 cross-boundary tests", () => {
     })
     describe('DELETE - deleteReviewByAssetRule - /collections/{collectionId}/reviews/{assetId}/{ruleId}', () => {
         it('Delete a Review - lvl1 test - noAssetAccess', async () => {
-            const res = await chai.request(config.baseUrl)
+            const res = await chai.request.execute(config.baseUrl)
               .delete(`/collections/${reference.testCollection.collectionId}/reviews/${reference.testAssetLvl1NoAccess}/${reference.testAsset.testRuleId}?projection=rule&projection=history&projection=stigs`)
               .set('Authorization', `Bearer ${user.token}`)
             expect(res).to.have.status(403)
         })
         it('Delete a Review - lvl1 test - no STIG-Asset Access', async () => {
-            const res = await chai.request(config.baseUrl)
+            const res = await chai.request.execute(config.baseUrl)
               .delete(`/collections/${reference.testCollection.collectionId}/reviews/${reference.testAsset.assetId}/${reference.ruleIdLvl1NoAccess}?projection=rule&projection=history&projection=stigs`)
               .set('Authorization', `Bearer ${user.token}`)
             expect(res).to.have.status(403)
@@ -456,7 +448,7 @@ describe("lvl1 cross-boundary tests", () => {
     describe('GET - getReviewMetadataValue - /collections/{collectionId}/reviews/{assetId}/{ruleId}/metadata/keys/{key}', () => {
    
       it('Should throw SmError.PriviledgeError no access to review rule', async () => {
-        const res = await chai.request(config.baseUrl)
+        const res = await chai.request.execute(config.baseUrl)
           .get(`/collections/${reference.testCollection.collectionId}/reviews/${reference.testAsset.assetId}/${reference.scrapRuleIdWindows10}/metadata/keys/notakey`)
           .set('Authorization', `Bearer ${user.token}`)
         expect(res).to.have.status(403)
@@ -466,7 +458,7 @@ describe("lvl1 cross-boundary tests", () => {
     describe('PUT - putReviewMetadataValue - /collections/{collectionId}/reviews/{assetId}/{ruleId}/metadata/keys/{key}', () => {
 
       it('should throw SmError.PriviledgeError User has insufficient privilege to put the review of this rule. no acess to review rule', async () => {
-          const res = await chai.request(config.baseUrl)
+          const res = await chai.request.execute(config.baseUrl)
               .put(`/collections/${reference.testCollection.collectionId}/reviews/${reference.testAsset.assetId}/${reference.scrapRuleIdWindows10}/metadata/keys/${reference.reviewMetadataKey}`)
               .set('Authorization', `Bearer ${user.token}`)
               .set('Content-Type', 'application/json') 
@@ -478,7 +470,7 @@ describe("lvl1 cross-boundary tests", () => {
     describe('DELETE - deleteReviewMetadataKey - /collections/{collectionId}/reviews/{assetId}/{ruleId}/metadata/keys/{key}', () => {
 
       it('should throw SmError.PriviledgeError User has insufficient privilege to delete the review of this rule. no acess to review rule', async () => {
-        const res = await chai.request(config.baseUrl)
+        const res = await chai.request.execute(config.baseUrl)
           .delete(`/collections/${reference.testCollection.collectionId}/reviews/${reference.testAsset.assetId}/${reference.scrapRuleIdWindows10}/metadata/keys/${reference.reviewMetadataKey}`)
           .set('Authorization', `Bearer ${user.token}`)
           .send(`${JSON.stringify(reference.reviewMetadataValue)}`)
