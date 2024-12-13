@@ -31,8 +31,8 @@ describe('GET - Test Effective ACL', () => {
             userId: user.userId,
             accessLevel: 1
           }])
-      grantId = res.body.grantId
-      expect(res).to.have.status(200)
+      grantId = res.body[0].grantId
+      expect(res).to.have.status(201)
     })
 
     for(const iteration of iterations){

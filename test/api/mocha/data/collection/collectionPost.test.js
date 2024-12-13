@@ -967,7 +967,7 @@ describe('POST - Collection - not all tests run for all iterations', function ()
               return
             }
 
-            expect(res).to.have.status(200)
+            expect(res).to.have.status(201)
 
             expect(res.body).to.have.lengthOf(requestBodies.postGrantsByCollection.length)
             for(const grant of res.body){
@@ -996,7 +996,7 @@ describe('POST - Collection - not all tests run for all iterations', function ()
               expect(res).to.have.status(403)
               return
             }
-            expect(res).to.have.status(200)
+            expect(res).to.have.status(201)
         })
         it("Post Owner grant to collection no elevate",async function () {
 
@@ -1016,9 +1016,9 @@ describe('POST - Collection - not all tests run for all iterations', function ()
               expect(res).to.have.status(403)
               return
             }
-            expect(res).to.have.status(200)
-            expect(res.body.user.userId).to.eql("43")
-            expect(res.body.accessLevel).to.equal(4)
+            expect(res).to.have.status(201)
+            expect(res.body[0].user.userId).to.eql("43")
+            expect(res.body[0].accessLevel).to.equal(4)
         })
       })
     })

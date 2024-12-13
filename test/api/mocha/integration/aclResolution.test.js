@@ -71,27 +71,27 @@ describe("Multiple Group ACL Collisions", () => {
 
   it("should assign both groups created to the test collection with restricted grant", async function () {
 
-      const res = await chai.request.execute(config.baseUrl)
+    const res = await chai.request.execute(config.baseUrl)
+    .post(`/collections/${reference.testCollection.collectionId}/grants`)
+    .set('Authorization', `Bearer ${config.adminToken}`)
+    .send([{
+        userGroupId: userGroup1.userGroupId,
+        accessLevel: 1
+    }])
+    expect(res).to.have.status(201)
+    expect(res.body[0].accessLevel).to.equal(1)
+    userGroup1.grantId = res.body[0].grantId
+
+    const res2 = await chai.request.execute(config.baseUrl)
         .post(`/collections/${reference.testCollection.collectionId}/grants`)
         .set('Authorization', `Bearer ${config.adminToken}`)
         .send([{
-            userGroupId: userGroup1.userGroupId,
+        userGroupId: userGroup2.userGroupId,
             accessLevel: 1
         }])
-      expect(res).to.have.status(200)
-      expect(res.body.accessLevel).to.equal(1)
-      userGroup1.grantId = res.body.grantId
-
-      const res2 = await chai.request.execute(config.baseUrl)
-          .post(`/collections/${reference.testCollection.collectionId}/grants`)
-          .set('Authorization', `Bearer ${config.adminToken}`)
-          .send([{
-            userGroupId: userGroup2.userGroupId,
-              accessLevel: 1
-          }])
-      expect(res2).to.have.status(200)
-      expect(res2.body.accessLevel).to.equal(1)
-      userGroup2.grantId = res2.body.grantId
+    expect(res2).to.have.status(201)
+    expect(res2.body[0].accessLevel).to.equal(1)
+    userGroup2.grantId = res2.body[0].grantId
   })
 
   /*

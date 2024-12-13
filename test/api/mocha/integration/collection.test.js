@@ -1,7 +1,4 @@
-// import { use, expect } from "chai"
-// import chaiHttp from "chai-http"
 const { expect } = chai
-//let chai = use(chaiHttp)
 import path from 'path'
 import fs from 'fs'
 import { fileURLToPath } from 'url';
@@ -1672,8 +1669,8 @@ describe('PUT - setStigAssetsByCollectionUser - /collections/{collectionId}/gran
                    userId: reference.lvl1User.userId,
                    accessLevel: 1
                 }])
-            expect(res).to.have.status(200)
-            reference.lvl1User.grantId = res.body.grantId
+            expect(res).to.have.status(201)
+            reference.lvl1User.grantId = res.body[0].grantId
         })
         it('set stig-asset grants for a lvl1 user in test collection, with asset from another collection', async () => {
 
