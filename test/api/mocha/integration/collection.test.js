@@ -1701,6 +1701,36 @@ describe('PUT - setStigAssetsByCollectionUser - /collections/{collectionId}/gran
     })
 })
 
+describe('deleteGrantByCollectionGrant - /collections/{collectionId}/grants/{grantId}', function () {
+
+    describe('Owner delete another owner grant in collection they do not have a grant in', function () {
+
+        before(async function () {
+        await utils.loadAppData()
+        })  
+        it('Delete sitgmanadmin grant in Collection Y as stigmanadmin ',async function () {
+
+            const res = await chai.request.execute(config.baseUrl)
+                .delete(`/collections/${"83"}/grants/${"9"}`)
+                .set('Authorization', `Bearer ${user.token}`)
+                
+            expect(res).to.have.status(200)
+            expect(res.body.grantId).to.eql("9")
+            expect(res.body.user.userId).to.eql("1")
+
+        })
+      
+        it("Delete admin burkes owner grant in Collection Y as stigmanadmin",async function () {
+
+            const res = await chai.request.execute(config.baseUrl)
+                .delete(`/collections/${"83"}/grants/${"8"}?elevate=true`)
+                .set('Authorization', `Bearer ${user.token}`)
+            expect(res).to.have.status(200)
+        })
+    })
+})
+
+
 function assetGetToPost (assetGet) {
     // extract the transformed and unposted properties
     const { assetId, collection, stigs, mac, fqdn, ...assetPost } = assetGet
