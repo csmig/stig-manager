@@ -44,13 +44,13 @@ The following Collection Roles are available:
       - Default Access
     * - Owner
       - Add/Remove/Modify Assets, STIG assignments, Labels, and User Grants. Can delete the Collection.
-      - Full access to all Assets/Reviews (Can be restricted with Access Controls)
+      - Read/Write access to all Assets/Reviews (Can be restricted with Access Controls)
     * - Manage
       - Add/Remove/Modify Assets, STIG assignments, Labels, and User Grants with the exception of "Owner" grants. Optionally responsible for "Accepting" and "Rejecting" reviews from evaluators.
-      - Full access to all Assets/Reviews (Can be restricted with Access Controls)
+      - Read/Write access to all Assets/Reviews (Can be restricted with Access Controls)
     * - Full
       - None
-      - Full access to all Assets/Reviews (Can be restricted with Access Controls)
+      - Read/Write access to all Assets/Reviews (Can be restricted with Access Controls)
     * - Restricted
       - None
       - None (Access to Assets derived solely from Access Controls configured by Owner or Manager)
@@ -71,7 +71,7 @@ The level of Access to the resources defined by the above elements can be set to
   - **Read/Write**: Can create and modify reviews
   - **None**: No access (Restricted role only)
 
-Access Controls can be applied to individual Assets, STIGs, or Labels, and can be combined to create complex access rules. For example, a user could be granted Read access to all Assets with the "Database" label, and Read/Write access to the "PostgreSQL_9-x_STIG" STIG. This will have the effect of letting the user view all reviews for all STIGs assigned to "Database" Assets, but only create and modify reviews for the PostgreSQL STIG on those Assets.
+Access Controls can be applied to individual Assets, STIGs, or Labels, and can be combined to create complex access rules. For example, a user could be granted Read access to all Assets with the "Database" label, and Read/Write access to the "PostgreSQL_9-x_STIG" STIG. This will have the effect of letting the user **view** all reviews for all STIGs assigned to "Database" Assets, but only **create and modify** reviews for the PostgreSQL STIG on those Assets.
 
 
 Access Control Priority
@@ -79,10 +79,19 @@ Access Control Priority
 
 When multiple Access Controls apply to the same Asset or STIG, the following rules determine the final access level:
 
-1. The most specific resource takes precedence (e.g., direct Asset access overrides Label-based access)
-2. When access levels conflict, the most restrictive access level is applied
-3. Direct Grants to Users take precedence over any Grant to a Group the User belongs to
-4. When a user belongs to multiple Groups, the Grant with the highest priority Role is selected
+**1. The most specific resource takes precedence. For example, a Restricted User grant that has the following ACL applied:**
+  - An ACL Rule granting Read/Write access to "Asset-123 + Windows-10-STIG" is more specific than
+  - An ACL Rule granting Read access to assets with the Label 'Windows Workstation'
+  - In this case, if Asset-123 has the label "Windows Workstation", the first rule would take precedence where they overlap, and the User would have Read/Write access to the Windows-10-STIG on Asset-123, and Read only access on other STIGs on that Asset, and all STIGs on all Assets with the "Windows Workstation" label.
+
+**2. When access levels conflict, the most restrictive access level is applied. For example, a Restricted User grant that has the following ACL applied:**
+  - An ACL Rule granting Read/Write access to "Asset-123 + Windows-10-STIG" has the same specificity as
+  - An ACL Rule granting Read access to "Label 'Windows Workstation' + Windows-10-STIG"
+  - In this case, if Asset-123 has the label "Windows Workstation", both rules are composed of two elements, and apply to the same STIG on Asset-123. The Read access rule is more restrictive, so the User would have Read access to the Windows-10-STIG on Asset-123, AND Read access for the Windows-10-STIG on all other Assets with the 'Windows Workstation' label. 
+
+**3. Direct Grants to Users take precedence over any Grant to a Group the User belongs to**
+
+**4. When a user belongs to multiple Groups, the Grant with the highest priority Role is selected**
 
 These controls allow Collection Owners and Managers to precisely define who can access what within their Collection.
 The Users tab in the Manage Collection interface provides a granular view of the effective access for each User in the Collection, based on their Grants and Access Controls.

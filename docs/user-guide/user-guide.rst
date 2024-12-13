@@ -412,7 +412,7 @@ The table below describes the fields that are included in the exports available 
      - Array of JSON objects containing an entry for each User that set the current Status of a Review in the Collection, and the number of Reviews they have set the Status for.
      - 
      - **X**
-     
+
 |
 
 _______________________________________
@@ -982,9 +982,9 @@ Once the clone operation has started, a status bar will appear at the bottom of 
 Grants Tab
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-This Tab displays all the Users and Groups have been given a Grant to some portion of this Collection.
+This Tab displays all the Users and Groups that have been given a Grant to some portion of this Collection.
 
-User/Group Grants can be added or removed using toolbar buttons at the top of this Panel. When hovering over a Grant, click the "pen" icon to change the User or Role associated with the Grant. Click the "target" icon to change the Access Control List associated with the Grant.  Click the "trash" icon to remove the Grant.
+User/Group Grants can be added or removed using the toolbar buttons at the top of this Panel. When hovering over a Grant, click the "pen" icon to change the User or Role associated with the Grant. Click the "target" icon to change the Access Control List applied to the Grant.  Click the "trash" icon to remove the Grant.
 
 See the :ref:`Roles and Access<roles-and-access>` section for more information about Grants, Roles, and Access Control.
 
