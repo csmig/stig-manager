@@ -200,18 +200,6 @@ SM.Review.Form.ResultEngineSprite = Ext.extend(Ext.form.DisplayField, {
   }
 })
 
-SM.Review.Form.Button = Ext.extend(Ext.Button, {
-  initComponent: function () {
-    const _this = this
-    const config = {
-      text: 'Loading...',
-      disabled: true
-    }
-    Ext.apply(this, Ext.apply(this.initialConfig, config))
-    SM.Review.Form.Button.superclass.initComponent.call(this)
-  }
-})
-
 SM.Review.Form.Panel = Ext.extend(Ext.form.FormPanel, {
   initComponent: function () {
     const _this = this
@@ -291,11 +279,17 @@ SM.Review.Form.Panel = Ext.extend(Ext.form.FormPanel, {
         <span class="sm-review-sprite sm-review-sprite-${v.label}"></span>`)
       }
     })
-    const btn1 = new SM.Review.Form.Button({
-      handler: _this.btnHandler
+    const btn1 = new Ext.Button({
+      hidden: this.defaultAccess !== 'rw',
+      text: '',
+      iconCls: 'sm-disk-icon',
+      handler: this.btnHandler
     })
-    const btn2 = new SM.Review.Form.Button({
-      handler: _this.btnHandler
+    const btn2 = new Ext.Button({
+      disabled: this.defaultAccess !== 'rw',
+      text: this.defaultAccess !== 'rw' ? 'Read only' : '',
+      iconCls: this.defaultAccess !== 'rw' ? 'sm-lock-icon' : '',
+      handler: this.btnHandler
     })
 
     let statusLabel = ''
@@ -421,14 +415,14 @@ SM.Review.Form.Panel = Ext.extend(Ext.form.FormPanel, {
         }
       }
       if (access != 'rw') {
-        // button 1
-        button1.disable();
-        button1.setText('Read only');
-        button1.setIconClass('sm-disk-icon');
-        // button 2
-        button2.disable();
-        button2.setText('Read only');
-        button2.setIconClass('sm-disk-icon');
+        // // button 1
+        // button1.hide();
+        // button1.setText('Read only');
+        // button1.setIconClass('sm-disk-icon');
+        // // button 2
+        // button2.disable();
+        // button2.setText('Read only');
+        // button2.setIconClass('sm-disk-icon');
       }
       else if (isReviewSubmittable()) {
         if (fp.reviewChanged()) {

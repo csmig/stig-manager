@@ -2074,7 +2074,7 @@ a.x-menu-item {
 }
 
 .x-form-field-wrap.x-form-field-trigger-wrap .x-form-field.sm-review-combo-input[disabled] {
-    color: #e8e6e3;
+    color: gray;
     background-color: transparent
 }
 
@@ -3205,3 +3205,8 @@ embed[type="application/pdf"] {
 .x-toolbar .x-btn:hover {
     background-color: var(--metrics-status-chart-submitted-dark);
 }
+
+.sm-label-sprite.sm-checklist-read {
+    color: #000000;
+}
+

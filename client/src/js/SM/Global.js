@@ -166,7 +166,7 @@ SM.RuleContentTpl = new Ext.XTemplate(
     '<pre>{[SM.he(values.fix?.text?.trim())]}</pre>',
     '</div>',
     '</div>',
-    '<div class=cs-home-header-sub></div>',
+    // '<div class=cs-home-header-sub></div>',
     '<div class=cs-home-body-title>Other Data',
     '<tpl if="values.detail.vulnDiscussion">',
       '<div class=cs-home-body-text><b>Vulnerability Discussion</b><br><br>',

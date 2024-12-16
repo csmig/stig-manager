@@ -559,7 +559,7 @@ a.x-grid3-hd-btn:hover {
   margin-left: 5px
 }
 .x-form-field-wrap.x-form-field-trigger-wrap .x-form-field.sm-review-combo-input[disabled] {
-  color: #000;
+  color: gray;
   background-color: transparent;
   cursor: auto
 }
@@ -1272,8 +1272,9 @@ td.x-grid3-hd-over .x-grid3-hd-inner {
 .cs-home-body-title {
   padding: 10px 20px;
   font: bold 14px Open Sans,helvetica,sans-serif;
-  background-color: #eee;
+  background-color: #ddd;
   border-radius: 6px;
+  margin-bottom: 6px;
   color: #36c
 }
 .cs-home-body-text {
@@ -2466,4 +2467,10 @@ td.x-grid3-hd-over .x-grid3-hd-inner {
 
 .sm-vbox-disabled .x-box-inner {
 	filter: opacity(0.25)
+}
+
+.sm-label-sprite.sm-checklist-read {
+	float: right;
+	background-color: #757c8a;
+	color: #eee;
 }

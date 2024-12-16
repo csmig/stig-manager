@@ -516,10 +516,10 @@ SM.Acl.Panel = Ext.extend(Ext.Panel, {
     this.assignmentGrid = assignedRulesGrid
 
     const addBtnMenuItems = [
-      {text: 'with Read/Write access', access: 'rw', handler: handleAddBtnItem},
-      {text: 'with Read Only access', access: 'r', handler: handleAddBtnItem},
+      {text: 'with Read/Write access', iconCls: 'sm-add-assignment-icon', access: 'rw', handler: handleAddBtnItem},
+      {text: 'with Read Only access', iconCls: 'sm-add-assignment-icon', access: 'r', handler: handleAddBtnItem},
     ]
-    if (this.accessLevel === 1) addBtnMenuItems.push({text: 'with No access', access: 'none', handler: handleAddBtnItem})
+    if (this.accessLevel === 1) addBtnMenuItems.push({text: 'with No access', iconCls: 'sm-add-assignment-icon', access: 'none', handler: handleAddBtnItem})
     const addBtn = new SM.Acl.ResourceAddBtn({
       tree: navTree,
       margins: "10 0 10 0",

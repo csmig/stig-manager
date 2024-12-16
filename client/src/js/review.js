@@ -108,9 +108,11 @@ async function addReview( params ) {
     },
     listeners: {
       load: function (store, records) {
-        reviewForm.defaultAccess = store.reader.jsonData.access
-        groupChecklistMenu.importItem.setVisible(store.reader.jsonData.access === 'rw')
-        groupGrid.accessStr = store.reader.jsonData.access === 'rw' ? '' : 'read only'
+        const access = store.reader.jsonData.access
+        reviewForm.defaultAccess = access
+        attachmentsGrid.fileUploadField.setDisabled(access !== 'rw')
+        groupChecklistMenu.importItem.setVisible(access === 'rw')
+        groupGrid.accessStr = access === 'rw' ? '' : '<span class="sm-label-sprite sm-checklist-read">Read only</span>'
         // Were we passed a specific rule to select?
         if ('undefined' !== typeof selectedRule) {
           var index = store.find('ruleId', selectedRule);
@@ -696,7 +698,7 @@ async function addReview( params ) {
       if (groupChecklistMenu.revisionMenuItem === undefined) {
         groupChecklistMenu.addItem(revisionObject.menu);
       }
-      groupGrid.setTitle(`${SM.he(revisionObject.activeRevisionLabel)} (${groupGrid.accessStr})`);
+      groupGrid.setTitle(`${SM.he(revisionObject.activeRevisionLabel)} ${groupGrid.accessStr}`);
     }
     catch (e) {
       SM.Error.handleError(e)
@@ -1020,6 +1022,7 @@ async function addReview( params ) {
     collectionId: leaf.collectionId,
     assetId: leaf.assetId
   })
+  
   /******************************************************/
   // END Attachments Panel
   /******************************************************/
