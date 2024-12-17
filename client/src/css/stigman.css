@@ -1225,73 +1225,48 @@ td.x-grid3-hd-over .x-grid3-hd-inner {
 .icon-excel {
   background: url(../img/excel-16.gif) 0 no-repeat!important
 }
-.cs-home-header-top,
+.sm-rule-header-top,
 .sm-rule-content-header-top {
   font: bold 22px Open Sans,helvetica,sans-serif
-}
-.cs-home-header-reviews {
-  background-image: url(../img/security_firewall_on_48.png);
-  background-position: left top;
-  background-repeat: no-repeat;
-  font: bold 28px Open Sans,helvetica,sans-serif;
-  padding-bottom: 40px;
-  padding-left: 56px;
-  padding-top: 8px
 }
 .cs-section-five-o-eight {
   font: 9px Open Sans,helvetica,sans-serif;
   text-decoration: underline;
   cursor: pointer
 }
-.cs-home-header-reports {
-  background-image: url(../img/windows_table_48.png);
-  background-position: left top;
-  background-repeat: no-repeat;
-  font: bold 28px Open Sans,helvetica,sans-serif;
-  padding-bottom: 40px;
-  padding-left: 56px;
-  padding-top: 8px
-}
-.cs-home-header-admin {
-  background-image: url(../img/Settings-icon-48.png);
-  background-position: left top;
-  background-repeat: no-repeat;
-  font: bold 28px Open Sans,helvetica,sans-serif;
-  padding-bottom: 40px;
-  padding-left: 56px;
-  padding-top: 8px
-}
-.cs-home-version {
+.sm-rule-version {
   padding: 10px;
   font: 10px Open Sans,helvetica,sans-serif
 }
-.cs-home-header-sub {
+.sm-rule-header-sub {
   padding: 20px;
   font: bold 14px Open Sans,helvetica,sans-serif
 }
-.cs-home-body-title {
+.sm-rule-body {
   padding: 10px 20px;
-  font: bold 14px Open Sans,helvetica,sans-serif;
   background-color: #ddd;
   border-radius: 6px;
   margin-bottom: 6px;
+}
+.sm-rule-body-title {
+  font: bold 14px Open Sans,helvetica,sans-serif;
   color: #36c
 }
-.cs-home-body-text {
+.sm-rule-body-text {
   padding: 10px 20px;
   font: 11px Open Sans,helvetica,sans-serif;
   color: #000;
   word-wrap: break-word
 }
-.cs-home-body-text pre {
+.sm-rule-body-text pre {
   white-space: pre-wrap;
   font: 11px Open Sans,helvetica,sans-serif
 }
-.cs-home-body-table {
+.sm-rule-body-table {
   width: 100%;
   border-collapse: collapse
 }
-.cs-home-body-table td {
+.sm-rule-body-table td {
   padding: 2px
 }
 .sm-reviews-home-body-title {
@@ -1311,7 +1286,7 @@ td.x-grid3-hd-over .x-grid3-hd-inner {
 .sm-reviews-home-no-tasks {
   background-color: #bbe6b8
 }
-.cs-home-body-text li {
+.sm-rule-body-text li {
   margin-top: 5px
 }
 .sm-feedback-panel-active {
@@ -1781,97 +1756,9 @@ td.x-grid3-hd-over .x-grid3-hd-inner {
   opacity: 1;
   background: 0 0
 }
-.cs-home-header-nessus {
-  background-image: url(../img/nessus_48.png);
-  background-position: left top;
-  background-repeat: no-repeat;
-  font: bold 28px Open Sans,helvetica,sans-serif;
-  padding-bottom: 40px;
-  padding-left: 56px;
-  padding-top: 8px
-}
-.sm-nessus-severity-4-grid-row {
-  background-color: #f9f;
-  border-color: #ddc0e6;
-  border-top: 0
-}
-.sm-nessus-severity-3-grid-row {
-  background-color: #ffcaca;
-  border-color: #e6b6b6;
-  border-top: 0
-}
-.sm-nessus-severity-2-grid-row {
-  background-color: #ffd4aa;
-  border-color: #e6bf99;
-  border-top: 0
-}
-.sm-nessus-severity-1-grid-row {
-  background-color: #b8d4ff;
-  border-color: #a6bfe6;
-  border-top: 0
-}
-.sm-nessus-severity-0-grid-row {
-  background-color: #bbf0c6;
-  border-color: #bbf0c6;
-  border-top: 0
-}
-.sm-nessus-16-icon {
-  background-image: url(../img/nessus_16.png)!important
-}
-.sm-nessus-48-icon {
-  background-image: url(../img/nessus_48.png)!important
-}
 .sm-progress-textarea {
   font-size: 8pt;
   font-family: Consolas,Courier,monospace
-}
-.cs-grid3-row-overdue {
-  background-color: #ffa0a0;
-  border-top-color: #ffa0a0
-}
-.x-grid3-row-over.cs-grid3-row-overdue {
-  background: 0 0;
-  background-color: #ffd1d1!important
-}
-.x-grid3-row-selected.cs-grid3-row-overdue {
-  background-color: #efc4cb!important;
-  border: 1px dashed #e63333
-}
-.cs-grid3-row-new-overdue {
-  background-color: plum;
-  border-top-color: plum
-}
-.x-grid3-row-over.cs-grid3-row-new-overdue {
-  background: 0 0;
-  background-color: #ebc7eb!important
-}
-.x-grid3-row-selected.cs-grid3-row-new-overdue {
-  background-color: #dec4ea!important;
-  border: 1px dashed #c256c2
-}
-.cs-grid3-row-warning {
-  background-color: #fc9;
-  border-top-color: #fc9
-}
-.x-grid3-row-over.cs-grid3-row-warning {
-  background: 0 0;
-  background-color: #ffe6cc!important
-}
-.x-grid3-row-selected.cs-grid3-row-warning {
-  background-color: #efdac8!important;
-  border: 1px dashed #ff9e3d
-}
-.cs-grid3-row-pending {
-  background-color: #7ed89b;
-  border-top-color: #7ed89b
-}
-.x-grid3-row-over.cs-grid3-row-pending {
-  background: 0 0;
-  background-color: #b4e9c5!important
-}
-.x-grid3-row-selected.cs-grid3-row-pending {
-  background-color: #cde7d7!important;
-  border: 1px dashed #2f9d52
 }
 .sm-combo-loading {
   background-image: url(../img/loading.gif);
@@ -2469,8 +2356,14 @@ td.x-grid3-hd-over .x-grid3-hd-inner {
 	filter: opacity(0.25)
 }
 
-.sm-label-sprite.sm-checklist-read {
+.sm-label-sprite.sm-sprite-read {
 	float: right;
 	background-color: #757c8a;
+	color: #eee;
+}
+
+.sm-label-sprite.sm-sprite-readwrite {
+	float: right;
+	background-color: #976a6e;
 	color: #eee;
 }

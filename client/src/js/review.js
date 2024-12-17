@@ -1353,7 +1353,7 @@ async function addReview( params ) {
   thisTab.updateTitle.call(thisTab)
   thisTab.show();
 
-  groupGrid.getStore().load();
+  await groupGrid.getStore().loadPromise()
   loadRevisionMenu(leaf.benchmarkId, leaf.revisionStr, idAppend)
 
   async function saveReview(saveParams) {

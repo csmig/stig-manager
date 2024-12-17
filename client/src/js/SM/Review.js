@@ -280,15 +280,13 @@ SM.Review.Form.Panel = Ext.extend(Ext.form.FormPanel, {
       }
     })
     const btn1 = new Ext.Button({
-      hidden: this.defaultAccess !== 'rw',
-      text: '',
-      iconCls: 'sm-disk-icon',
+      hidden: true,
+      hideMode: 'visibility',
       handler: this.btnHandler
     })
     const btn2 = new Ext.Button({
-      disabled: this.defaultAccess !== 'rw',
-      text: this.defaultAccess !== 'rw' ? 'Read only' : '',
-      iconCls: this.defaultAccess !== 'rw' ? 'sm-lock-icon' : '',
+      hidden: true,
+      hideMode: 'visibility',
       handler: this.btnHandler
     })
 
@@ -370,8 +368,6 @@ SM.Review.Form.Panel = Ext.extend(Ext.form.FormPanel, {
       const detailTextArea = dta
       const commentTextArea = cta
       const autoResultField = ack
-      const button1 = btn1 // left button
-      const button2 = btn2 // right button
       const fp = _this
       const fieldSettings = _this.fieldSettings
 
@@ -414,53 +410,52 @@ SM.Review.Form.Panel = Ext.extend(Ext.form.FormPanel, {
           commentTextArea.disable()
         }
       }
-      if (access != 'rw') {
-        // // button 1
-        // button1.hide();
-        // button1.setText('Read only');
-        // button1.setIconClass('sm-disk-icon');
-        // // button 2
-        // button2.disable();
-        // button2.setText('Read only');
-        // button2.setIconClass('sm-disk-icon');
+
+      btn1.setVisible(access === 'rw')
+      btn2.setVisible(true)
+      if (access !== 'rw') {
+        btn2.disable()
+        btn2.setText('Read only')
+        btn2.setIconClass('sm-disk-icon')
       }
       else if (isReviewSubmittable()) {
+        btn1.show()
         if (fp.reviewChanged()) {
           // review has been changed (is dirty)
           switch (statusLabel) {
             case '':
             case 'saved':
               // button 1
-              button1.enable();
-              button1.setText('Save without submitting');
-              button1.setIconClass('sm-disk-icon');
-              button1.actionType = 'save';
-              button1.setTooltip('');
+              btn1.enable()
+              btn1.setText('Save without submitting')
+              btn1.setIconClass('sm-disk-icon')
+              btn1.actionType = 'save'
+              btn1.setTooltip('')
               // button 2
-              button2.enable();
-              button2.setText('Save and Submit');
-              button2.setIconClass('sm-ready-icon');
-              button2.actionType = 'save and submit';
-              button2.setTooltip('');
-              break;
+              btn2.enable()
+              btn2.setText('Save and Submit')
+              btn2.setIconClass('sm-ready-icon')
+              btn2.actionType = 'save and submit'
+              btn2.setTooltip('')
+              break
             case 'submitted': // 'ready' (a.k.a 'submitted'), dirty review can't happen
-              break;
+              break
             case 'rejected': // 'rejected'
               // button 1
-              button1.enable();
-              button1.setText('Save without submitting');
-              button1.setIconClass('sm-disk-icon');
-              button1.actionType = 'save';
-              button1.setTooltip('');
+              btn1.enable()
+              btn1.setText('Save without submitting')
+              btn1.setIconClass('sm-disk-icon')
+              btn1.actionType = 'save'
+              btn1.setTooltip('')
               // button 2
-              button2.enable();
-              button2.setText('Save and Resubmit');
-              button2.setIconClass('sm-ready-icon');
-              button2.actionType = 'save and submit';
-              button2.setTooltip('');
-              break;
+              btn2.enable()
+              btn2.setText('Save and Resubmit')
+              btn2.setIconClass('sm-ready-icon')
+              btn2.actionType = 'save and submit'
+              btn2.setTooltip('')
+              break
             case 'accepted': // 'approved', dirty review can't happen
-              break;
+              break
           }
         } 
         else {
@@ -469,69 +464,69 @@ SM.Review.Form.Panel = Ext.extend(Ext.form.FormPanel, {
             case '':
             case 'saved': // in progress
               // button 1
-              button1.disable();
-              button1.setText('Save without submitting');
-              button1.setIconClass('sm-disk-icon');
-              button1.actionType = '';
-              button1.setTooltip('This button is disabled because the review has not been modified.');
+              btn1.disable()
+              btn1.setText('Save without submitting')
+              btn1.setIconClass('sm-disk-icon')
+              btn1.actionType = ''
+              btn1.setTooltip('This button is disabled because the review has not been modified.')
               // button 2
-              button2.enable();
-              button2.setText('Submit');
-              button2.setIconClass('sm-ready-icon');
-              button2.actionType = 'submit';
-              button2.setTooltip('');
-              break;
+              btn2.enable()
+              btn2.setText('Submit')
+              btn2.setIconClass('sm-ready-icon')
+              btn2.actionType = 'submit'
+              btn2.setTooltip('')
+              break
             case 'submitted': // ready
               // button 1
-              button1.enable();
-              button1.setText('Unsubmit');
-              button1.setIconClass('sm-disk-icon');
-              button1.actionType = 'unsubmit';
-              button1.setTooltip('');
+              btn1.enable()
+              btn1.setText('Unsubmit')
+              btn1.setIconClass('sm-disk-icon')
+              btn1.actionType = 'unsubmit'
+              btn1.setTooltip('')
               // button 2
               if (_this.canAccept) {
-                button2.enable();
-                button2.setText('Accept');
-                button2.setIconClass('sm-star-icon-16');
-                button2.actionType = 'accept';
-                button2.setTooltip('');
+                btn2.enable()
+                btn2.setText('Accept')
+                btn2.setIconClass('sm-star-icon-16')
+                btn2.actionType = 'accept'
+                btn2.setTooltip('')
               }
               else {
-                button2.disable();
-                button2.setText('Submit');
-                button2.setIconClass('sm-ready-icon');
-                button2.actionType = '';
-                button2.setTooltip('This button is disabled because the review has already been submitted.');
+                btn2.disable()
+                btn2.setText('Submit')
+                btn2.setIconClass('sm-ready-icon')
+                btn2.actionType = ''
+                btn2.setTooltip('This button is disabled because the review has already been submitted.')
               }
-              break;
+              break
             case 'accepted':
               // button 1
-              button1.enable();
-              button1.setText('Unsubmit');
-              button1.setIconClass('sm-disk-icon');
-              button1.actionType = 'unsubmit';
-              button1.setTooltip('');
+              btn1.enable()
+              btn1.setText('Unsubmit')
+              btn1.setIconClass('sm-disk-icon')
+              btn1.actionType = 'unsubmit'
+              btn1.setTooltip('')
               // button 2
-              button2.disable();
-              button2.setText('Accept');
-              button2.setIconClass('sm-star-icon-16');
-              button2.actionType = '';
-              button2.setTooltip('This button is disabled because the review has already been accepted.');
-              break;
+              btn2.disable()
+              btn2.setText('Accept')
+              btn2.setIconClass('sm-star-icon-16')
+              btn2.actionType = ''
+              btn2.setTooltip('This button is disabled because the review has already been accepted.')
+              break
             case 'rejected': // rejected
               // button 1
-              button1.disable();
-              button1.setText('Save without submitting');
-              button1.setIconClass('sm-disk-icon');
-              button1.actionType = '';
-              button1.setTooltip('This button is disabled because the review has not been modified.');
+              btn1.disable()
+              btn1.setText('Save without submitting')
+              btn1.setIconClass('sm-disk-icon')
+              btn1.actionType = ''
+              btn1.setTooltip('This button is disabled because the review has not been modified.')
               // button 2
-              button2.disable();
-              button2.setText('Save and Resubmit');
-              button2.setIconClass('sm-ready-icon');
-              button2.actionType = '';
-              button2.setTooltip('This button is disabled because the review has not been modified.');
-              break;
+              btn2.disable()
+              btn2.setText('Save and Resubmit')
+              btn2.setIconClass('sm-ready-icon')
+              btn2.actionType = ''
+              btn2.setTooltip('This button is disabled because the review has not been modified.')
+              break
           }
         }
       } 
@@ -540,41 +535,41 @@ SM.Review.Form.Panel = Ext.extend(Ext.form.FormPanel, {
         if (fp.reviewChanged()) {
           // review has been changed
           // button 1
-          button1.enable();
-          button1.setText('Save without submitting');
-          button1.setIconClass('sm-disk-icon');
-          button1.actionType = 'save and unsubmit';
-          button1.setTooltip('');
+          btn1.enable()
+          btn1.setText('Save without submitting')
+          btn1.setIconClass('sm-disk-icon')
+          btn1.actionType = 'save and unsubmit'
+          btn1.setTooltip('')
           // button 2
-          button2.disable();
-          button2.setText('Save and Submit');
-          button2.setIconClass('sm-ready-icon');
-          button2.actionType = '';
-          button2.setTooltip('This button is disabled because the review is not complete and cannot be submitted.');
+          btn2.disable()
+          btn2.setText('Save and Submit')
+          btn2.setIconClass('sm-ready-icon')
+          btn2.actionType = ''
+          btn2.setTooltip('This button is disabled because the review is not complete and cannot be submitted.')
         } 
         else {
           // review has not been changed (as loaded)
           // button 1
           if (statusLabel === 'submitted') {
-            button1.enable();
-            button1.setText('Unsubmit');
-            button1.setIconClass('sm-disk-icon');
-            button1.actionType = 'unsubmit';
-            button1.setTooltip('');
+            btn1.enable()
+            btn1.setText('Unsubmit')
+            btn1.setIconClass('sm-disk-icon')
+            btn1.actionType = 'unsubmit'
+            btn1.setTooltip('')
           }
           else {
-            button1.disable();
-            button1.setText('Save without submitting');
-            button1.setIconClass('sm-disk-icon');
-            button1.actionType = '';
-            button1.setTooltip('This button is disabled because the review has not been modified.');
+            btn1.disable()
+            btn1.setText('Save without submitting')
+            btn1.setIconClass('sm-disk-icon')
+            btn1.actionType = ''
+            btn1.setTooltip('This button is disabled because the review has not been modified.')
           }
           // button 2
-          button2.disable();
-          button2.setText('Save and Submit');
-          button2.setIconClass('sm-ready-icon');
-          button2.actionType = '';
-          button2.setTooltip('This button is disabled because the review is not complete and cannot be submitted.');
+          btn2.disable()
+          btn2.setText('Save and Submit')
+          btn2.setIconClass('sm-ready-icon')
+          btn2.actionType = ''
+          btn2.setTooltip('This button is disabled because the review is not complete and cannot be submitted.')
         }
       }      
     }

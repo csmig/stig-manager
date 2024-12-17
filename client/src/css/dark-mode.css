@@ -2456,28 +2456,19 @@ td.sort-asc, td.sort-desc, td.x-grid3-hd-menu-open, td.x-grid3-hd-over {
     background-color: initial!important
 }
 
-.cs-home-header-reviews {
-    background-image: url("../img/security_firewall_on_48.png")
-}
-
 .cs-section-five-o-eight {
     text-decoration-color: initial
 }
 
-.cs-home-header-reports {
-    background-image: url("../img/windows_table_48.png")
-}
-
-.cs-home-header-admin {
-    background-image: url("../img/Settings-icon-48.png")
-}
-
-.cs-home-body-title {
+.sm-rule-body {
     background-color: hsl(210deg 6% 16%);
+}
+
+.sm-rule-body-title {
     color: #5c98d6
 }
 
-.cs-home-body-text {
+.sm-rule-body-text {
     color: hsl(36deg 10% 85%)
 }
 
@@ -2884,103 +2875,6 @@ td.sort-asc, td.sort-desc, td.x-grid3-hd-menu-open, td.x-grid3-hd-over {
     background-color: initial
 }
 
-.cs-home-header-nessus {
-    background-image: url("../img/nessus_48.png")
-}
-
-.sm-nessus-severity-4-grid-row {
-    background-color: #700070;
-    border-color: initial #4f245c #4f245c
-}
-
-.sm-nessus-severity-3-grid-row {
-    background-color: #530000;
-    border-color: initial #622222 #622222
-}
-
-.sm-nessus-severity-2-grid-row {
-    background-color: #663200;
-    border-color: initial #71451c #71451c
-}
-
-.sm-nessus-severity-1-grid-row {
-    background-color: #2c3032;
-    border-color: initial #1e3c6a #1e3c6a
-}
-
-.sm-nessus-severity-0-grid-row {
-    background-color: #12532c;
-    border-color: initial #176828 #176828
-}
-
-.sm-nessus-16-icon {
-    background-image: url("../img/nessus_16.png")!important
-}
-
-.sm-nessus-48-icon {
-    background-image: url("../img/nessus_48.png")!important
-}
-
-.cs-grid3-row-overdue {
-    background-color: #6c0000;
-    border-top-color: #830000
-}
-
-.x-grid3-row-over.cs-grid3-row-overdue {
-    background-image: initial;
-    background-color: #4f0000!important
-}
-
-.x-grid3-row-selected.cs-grid3-row-overdue {
-    border-color: #981313;
-    background-color: #4c141d!important
-}
-
-.cs-grid3-row-new-overdue {
-    background-color: #5f225f;
-    border-top-color: #682568
-}
-
-.x-grid3-row-over.cs-grid3-row-new-overdue {
-    background-image: initial;
-    background-color: #471947!important
-}
-
-.x-grid3-row-selected.cs-grid3-row-new-overdue {
-    border-color: #7e2d7e;
-    background-color: #3a1a49!important
-}
-
-.cs-grid3-row-warning {
-    background-color: #703800;
-    border-top-color: #854200
-}
-
-.x-grid3-row-over.cs-grid3-row-warning {
-    background-image: initial;
-    background-color: #522a00!important
-}
-
-.x-grid3-row-selected.cs-grid3-row-warning {
-    border-color: #a05000;
-    background-color: #492d15!important
-}
-
-.cs-grid3-row-pending {
-    background-color: #23754b;
-    border-top-color: #23753e
-}
-
-.x-grid3-row-over.cs-grid3-row-pending {
-    background-image: initial;
-    background-color: #195436!important
-}
-
-.x-grid3-row-selected.cs-grid3-row-pending {
-    border-color: #2d954e;
-    background-color: #1f4031!important
-}
-
 .sm-combo-loading {
     background-image: url("../img/loading.gif")
 }
@@ -3206,7 +3100,7 @@ embed[type="application/pdf"] {
     background-color: var(--metrics-status-chart-submitted-dark);
 }
 
-.sm-label-sprite.sm-checklist-read {
+.sm-label-sprite.sm-sprite-read, .sm-label-sprite.sm-sprite-readwrite {
     color: #000000;
 }
 
