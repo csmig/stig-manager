@@ -1,11 +1,14 @@
 
-const { expect } = chai
 import {config } from '../testConfig.js'
 import * as utils from '../utils/testUtils.js'
 import reference from '../referenceData.js'
 import path from 'path'
 import fs from 'fs'
 import  { fileURLToPath } from 'url'
+import deepEqualInAnyOrder from 'deep-equal-in-any-order'
+import {use, expect} from 'chai'
+use(deepEqualInAnyOrder)
+
 const user = {
   name: 'stigmanadmin',
   grant: 'Owner',
@@ -20,28 +23,11 @@ describe('GET - getMetricsDetailByCollection - /collections/{collectionId}/metri
       await utils.loadAppData()
       await utils.uploadTestStig(reference.testStigfileNonLatest)
     })
-    // it('Import a new STIG - VPN R1V0 Copy 2', async () => {
-    //   const directoryPath = path.join(__dirname, '../../form-data-files/')
-    //   const testStigfile = reference.testStigfile
-    //   const filePath = path.join(directoryPath, testStigfile)
-
-    //   const res = await chai
-    //     .request(config.baseUrl)
-    //     .post('/stigs?clobber=true&elevate=true')
-    //     .set('Authorization', `Bearer ${user.token}`)
-    //     .set('Content-Type', `multipart/form-data`)
-    //     .attach('importFile', fs.readFileSync(filePath), testStigfile) // Attach the file here
-    //   expect(res).to.have.status(200)
-    // })
     it('Set the Assets mapped to a STIG - default rev only - scrap collection for transfer test', async () => {
-
-        const res = await chai.request.execute(config.baseUrl)
-            .post(`/collections/${reference.scrapCollection.collectionId}/stigs/${reference.benchmark}`)
-            .set('Authorization', `Bearer ${user.token}`)
-            .send({
-                "defaultRevisionStr": "V1R0"
-            })
-        expect(res).to.have.status(200)
+        const res = await utils.executeRequest(`${config.baseUrl}/collections/${reference.scrapCollection.collectionId}/stigs/${reference.benchmark}`, 'POST', user.token, {
+            "defaultRevisionStr": "V1R0"
+        })
+        expect(res.status).to.eql(200)
         const expectedResponse = {
             benchmarkId: reference.benchmark,
             title: "Virtual Private Network (VPN) Security Requirements Guide",
@@ -54,131 +40,124 @@ describe('GET - getMetricsDetailByCollection - /collections/{collectionId}/metri
         expect(res.body).to.deep.equal(expectedResponse)
     })
     it('Set all properties of an Asset - Change Collection to scrap collection - then check for recalculated metrics', async () => {
-
-        const res = await chai.request.execute(config.baseUrl)
-            .put(`/assets/${reference.testAsset.assetId}`)
-            .set('Authorization', `Bearer ${user.token}`)
-            .send({
-                "name": "Collection_X_lvl1_asset-1",
-                "collectionId": reference.scrapCollection.collectionId,
-                "description": "test desc",
-                "ip": "1.1.1.1",
-                "noncomputing": true,
-                "metadata": {},
-                "stigs": [
-                    "VPN_SRG_TEST",
-                    "Windows_10_STIG_TEST",
-                    "RHEL_7_STIG_TEST"
-                ]
-            })
-        expect(res).to.have.status(200)
+        const res = await utils.executeRequest(`${config.baseUrl}/assets/${reference.testAsset.assetId}`, 'PUT', user.token, {
+            "name": "Collection_X_lvl1_asset-1",
+            "collectionId": reference.scrapCollection.collectionId,
+            "description": "test desc",
+            "ip": "1.1.1.1",
+            "noncomputing": true,
+            "metadata": {},
+            "stigs": [
+                "VPN_SRG_TEST",
+                "Windows_10_STIG_TEST",
+                "RHEL_7_STIG_TEST"
+            ]
+        })
+        expect(res.status).to.eql(200)
         expect(res.body.collection.collectionId, "collectionId").to.equal(reference.scrapCollection.collectionId)
     })
     it('verify metrics were recalculated relative to new pinned rev after transfer', async () => {
+        const res = await utils.executeRequest(`${config.baseUrl}/collections/${reference.scrapCollection.collectionId}/metrics/detail`, 'GET', user.token)
 
-        const res = await chai.request.execute(config.baseUrl)
-            .get(`/collections/${reference.scrapCollection.collectionId}/metrics/detail`)
-            .set('Authorization', `Bearer ${user.token}`)
-
-            let metricsReferenceCommon = {
-                assessed: 6,
-                assessments: reference.checklistLength,
-                maxTs: "2022-02-03T00:07:05Z",
-                minTs: "2020-08-11T22:27:26Z",
-                results: {
-                    fail: {
-                        total: 3,
-                        resultEngine: 0
-                    },
-                    pass: {
-                        total: 1,
-                        resultEngine: 0
-                    },
-                    error: {
-                        total: 0,
-                        resultEngine: 0
-                    },
-                    fixed: {
-                        total: 0,
-                        resultEngine: 0
-                    },
-                    unknown: {
-                        total: 0,
-                        resultEngine: 0
-                    },
-                    notchecked: {
-                        total: 0,
-                        resultEngine: 0
-                    },
-                    notselected: {
-                        total: 0,
-                        resultEngine: 0
-                    },
-                    informational: {
-                        total: 0,
-                        resultEngine: 0
-                    },
-                    notapplicable: {
-                        total: 1,
-                        resultEngine: 0
-                    }
+        let metricsReferenceCommon = {
+            assessed: 6,
+            assessments: reference.checklistLength,
+            maxTs: "2022-02-03T00:07:05Z",
+            minTs: "2020-08-11T22:27:26Z",
+            results: {
+                fail: {
+                    total: 3,
+                    resultEngine: 0
                 },
-                findings: {
-                    low: 1,
-                    medium: 2,
-                    high: 0
-                },    
-                statuses: {
-                    saved: {
-                        total: 1,
-                        resultEngine: 0
-                    },
-                    accepted: {
-                        total: 0,
-                        resultEngine: 0
-                    },
-                    rejected: {
-                        total: 0,
-                        resultEngine: 0
-                    },
-                    submitted: {
-                        total: 4,
-                        resultEngine: 0
-                    }
-                }	 
-            }
-        
-            metricsReferenceCommon.results.unassessed = {
-                total:  metricsReferenceCommon.results.informational.total + 
-                        metricsReferenceCommon.results.notselected.total + 
-                        metricsReferenceCommon.results.notchecked.total + 
-                        metricsReferenceCommon.results.error.total + 
-                        metricsReferenceCommon.results.fixed.total
-            }
-
-            for(const item of res.body){
-                if (item.assetId ==  reference.testAsset.assetId && item.benchmarkId == reference.benchmark) {
-                    expect(item.metrics.maxTs).to.equal(metricsReferenceCommon.maxTs)
-                    expect(item.metrics.minTs).to.equal(metricsReferenceCommon.minTs)
-                    expect(item.metrics.findings.low).to.equal(metricsReferenceCommon.findings.low)
-                    expect(item.metrics.findings.medium).to.equal(metricsReferenceCommon.findings.medium)
-                    expect(item.metrics.findings.high).to.equal(metricsReferenceCommon.findings.high)
-                    expect(item.metrics.results.notapplicable.total).to.equal(metricsReferenceCommon.results.notapplicable.total)
-                    expect(item.metrics.results.pass.total).to.equal(metricsReferenceCommon.results.pass.total)
-                    expect(item.metrics.results.fail.total).to.equal(metricsReferenceCommon.results.fail.total)
-                    expect(item.metrics.results.informational.total).to.equal(metricsReferenceCommon.results.informational.total)
-                    expect(item.metrics.results.notchecked.total).to.equal(metricsReferenceCommon.results.notchecked.total)
-                    expect(item.metrics.results.notselected.total).to.equal(metricsReferenceCommon.results.notselected.total)
-                    expect(item.metrics.results.error.total).to.equal(metricsReferenceCommon.results.error.total)
-                    expect(item.metrics.results.fixed.total).to.equal(metricsReferenceCommon.results.fixed.total)
-                    expect(item.metrics.statuses.saved.total).to.equal(metricsReferenceCommon.statuses.saved.total)
-                    expect(item.metrics.statuses.submitted.total).to.equal(metricsReferenceCommon.statuses.submitted.total)
-                    expect(item.metrics.statuses.accepted.total).to.equal(metricsReferenceCommon.statuses.accepted.total)
-                    expect(item.metrics.statuses.rejected.total).to.equal(metricsReferenceCommon.statuses.rejected.total)
-                    expect(item.metrics.assessments).to.equal(metricsReferenceCommon.assessments)
-                    expect(item.metrics.assessed).to.equal(5)
+                pass: {
+                    total: 1,
+                    resultEngine: 0
+                },
+                error: {
+                    total: 0,
+                    resultEngine: 0
+                },
+                fixed: {
+                    total: 0,
+                    resultEngine: 0
+                },
+                unknown: {
+                    total: 0,
+                    resultEngine: 0
+                },
+                notchecked: {
+                    total: 0,
+                    resultEngine: 0
+                },
+                notselected: {
+                    total: 0,
+                    resultEngine: 0
+                },
+                informational: {
+                    total: 0,
+                    resultEngine: 0
+                },
+                notapplicable: {
+                    total: 1,
+                    resultEngine: 0
                 }
+            },
+            findings: {
+                low: 1,
+                medium: 2,
+                high: 0
+            },    
+            statuses: {
+                saved: {
+                    total: 1,
+                    resultEngine: 0
+                },
+                accepted: {
+                    total: 0,
+                    resultEngine: 0
+                },
+                rejected: {
+                    total: 0,
+                    resultEngine: 0
+                },
+                submitted: {
+                    total: 4,
+                    resultEngine: 0
+                }
+            }	 
+        }
+    
+        metricsReferenceCommon.results.unassessed = {
+            total:  metricsReferenceCommon.results.informational.total + 
+                    metricsReferenceCommon.results.notselected.total + 
+                    metricsReferenceCommon.results.notchecked.total + 
+                    metricsReferenceCommon.results.error.total + 
+                    metricsReferenceCommon.results.fixed.total
+        }
+
+        for(const item of res.body){
+            if (item.assetId ==  reference.testAsset.assetId && item.benchmarkId == reference.benchmark) {
+                expect(item.metrics.maxTs).to.equal(metricsReferenceCommon.maxTs)
+                expect(item.metrics.minTs).to.equal(metricsReferenceCommon.minTs)
+                expect(item.metrics.findings.low).to.equal(metricsReferenceCommon.findings.low)
+                expect(item.metrics.findings.medium).to.equal(metricsReferenceCommon.findings.medium)
+                expect(item.metrics.findings.high).to.equal(metricsReferenceCommon.findings.high)
+                expect(item.metrics.results.notapplicable.total).to.equal(metricsReferenceCommon.results.notapplicable.total)
+                expect(item.metrics.results.pass.total).to.equal(metricsReferenceCommon.results.pass.total)
+                expect(item.metrics.results.fail.total).to.equal(metricsReferenceCommon.results.fail.total)
+                expect(item.metrics.results.informational.total).to.equal(metricsReferenceCommon.results.informational.total)
+                expect(item.metrics.results.notchecked.total).to.equal(metricsReferenceCommon.results.notchecked.total)
+                expect(item.metrics.results.notselected.total).to.equal(metricsReferenceCommon.results.notselected.total)
+                expect(item.metrics.results.error.total).to.equal(metricsReferenceCommon.results.error.total)
+                expect(item.metrics.results.fixed.total).to.equal(metricsReferenceCommon.results.fixed.total)
+                expect(item.metrics.statuses.saved.total).to.equal(metricsReferenceCommon.statuses.saved.total)
+                expect(item.metrics.statuses.submitted.total).to.equal(metricsReferenceCommon.statuses.submitted.total)
+                expect(item.metrics.statuses.accepted.total).to.equal(metricsReferenceCommon.statuses.accepted.total)
+                expect(item.metrics.statuses.rejected.total).to.equal(metricsReferenceCommon.statuses.rejected.total)
+                expect(item.metrics.assessments).to.equal(metricsReferenceCommon.assessments)
+                expect(item.metrics.assessed).to.equal(5)
             }
+        }
     })
   })
 })
@@ -191,37 +170,40 @@ describe('GET - getMetricsSummaryByCollectionAggStig - /collections/{collectionI
         })
 
         it('Import a new STIG - new Copy', async function () {
-      
-            const testStigfile = 'U_VPN_SRG_V1R1_Manual-xccdf.xml'
-            const filePath = path.join(fileURLToPath(import.meta.url), '../../../form-data-files/', reference.testStigfile)
+            const filename = 'U_VPN_SRG_V1R1_Manual-xccdf.xml'
+            const __filename = fileURLToPath(import.meta.url)
+            const __dirname = path.dirname(__filename)
+            const filePath = path.join(__dirname, `../../form-data-files/${filename}`)
+            const fileContent = fs.readFileSync(filePath, 'utf-8')
+            
+            const blob = new Blob([fileContent], { type: 'text/xml' })
+        
+            const formData = new FormData()
+            formData.append('importFile', blob, filename)
 
-            const res = await chai.request.execute(config.baseUrl)
-            .post('/stigs?clobber=true&elevate=true')
-            .set('Authorization', `Bearer ${user.token}`)
-            .set('Content-Type', `multipart/form-data`)
-            .attach('importFile', fs.readFileSync(filePath), testStigfile)
+            const res = await fetch(`${config.baseUrl}/stigs?elevate=true&clobber=true`, {
+                method: 'POST',
+                headers: {
+                  Authorization: `Bearer ${user.token}`,
+                },
+                body: formData,
+              })
             let expectedRevData = 
             {
                 "benchmarkId": "VPN_SRG_TEST",
                 "revisionStr": "V1R1",
                 "action": "replaced"
             }
-            expect(res).to.have.status(200)
-            expect(res.body).to.deep.eql(expectedRevData)
+            expect(res.status).to.eql(200)
+            const data = await res.json()   
+            expect(data).to.deep.eql(expectedRevData)
         })
         it('Deletes the specified revision of a STIG v1r0 - with force - could fail if not present, so no tests Copy', async function () {
-
-            const res = await chai.request.execute(config.baseUrl)
-                .delete(`/stigs/${reference.benchmark}/revisions/V1R1?elevate=true&force=true`)
-                .set('Authorization', `Bearer ${user.token}`)
+            await utils.executeRequest(`${config.baseUrl}/stigs/${reference.benchmark}/revisions/V1R1?elevate=true&force=true`, 'DELETE', user.token)
         })
         it('Return summary metrics - check no null benchmarks', async function () {
-
-            const res = await chai.request.execute(config.baseUrl)
-                .get(`/collections/${reference.testCollection.collectionId}/metrics/summary/stig`)
-                .set('Authorization', `Bearer ${user.token}`)
-         
-            expect(res).to.have.status(200)
+            const res = await utils.executeRequest(`${config.baseUrl}/collections/${reference.testCollection.collectionId}/metrics/summary/stig`, 'GET', user.token)
+            expect(res.status).to.eql(200)
             for (let stig of res.body){
                 expect(stig.benchmarkId).to.not.equal(null)
             }

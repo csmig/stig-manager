@@ -1,5 +1,4 @@
 
-const { expect } = chai
 import { v4 as uuidv4 } from 'uuid'
 import {config } from '../../testConfig.js'
 import * as utils from '../../utils/testUtils.js'
@@ -7,6 +6,7 @@ import reference from '../../referenceData.js'
 import {requestBodies} from "./requestBodies.js"
 import {iterations} from '../../iterations.js'
 import {expectations} from './expectations.js'
+import { expect } from 'chai'
 
 
 describe('PATCH - Collection', function () {
@@ -32,16 +32,13 @@ describe('PATCH - Collection', function () {
           it('Patch test collection, send 5 new grants and metadata.',async function () {
 
             const patchRequest = requestBodies.updateCollection            
-            const res = await chai.request.execute(config.baseUrl)
-                  .patch(`/collections/${reference.testCollection.collectionId}?&projection=grants&projection=stigs`)
-                  .set('Authorization', `Bearer ${iteration.token}`)
-                  .send(patchRequest)
+            const res = await utils.executeRequest(`${config.baseUrl}/collections/${reference.testCollection.collectionId}?&projection=grants&projection=stigs`, 'PATCH', iteration.token, patchRequest)
             
             if(distinct.canModifyCollection === false){
-                expect(res).to.have.status(403)
+                expect(res.status).to.eql(403)
                 return
             }
-            expect(res).to.have.status(200)
+            expect(res.status).to.eql(200)
             expect(res.body.metadata.pocName).to.equal(patchRequest.metadata.pocName)
             expect(res.body.metadata.pocEmail).to.equal(patchRequest.metadata.pocEmail)
             expect(res.body.metadata.pocPhone).to.equal(patchRequest.metadata.pocPhone)
@@ -68,15 +65,12 @@ describe('PATCH - Collection', function () {
             const patchRequest = JSON.parse(JSON.stringify(requestBodies.updateCollection))
             patchRequest.grants.push(patchRequest.grants[0])
             patchRequest.name = "TEST" + utils.getUUIDSubString()
-            const res = await chai.request.execute(config.baseUrl)
-                .patch(`/collections/${reference.testCollection.collectionId}`)
-                .set('Authorization', `Bearer ${iteration.token}`)
-                .send(patchRequest)
+            const res = await utils.executeRequest(`${config.baseUrl}/collections/${reference.testCollection.collectionId}`, 'PATCH', iteration.token, patchRequest)
               if(distinct.canModifyCollection === false){
-                  expect(res).to.have.status(403)
+                  expect(res.status).to.eql(403)
                   return
               }
-              expect(res).to.have.status(422)
+              expect(res.status).to.eql(422)
               expect(res.body.error).to.equal("Unprocessable Entity.")
               expect(res.body.detail).to.equal("Duplicate user in grant array")
           })
@@ -87,15 +81,12 @@ describe('PATCH - Collection', function () {
            // patchRequest.grants.push(patchRequest.grants[0])
             patchRequest.grants.push({userGroupId: reference.testCollection.testGroup.userGroupId, accessLevel: 1})
             patchRequest.name = "TEST" + utils.getUUIDSubString()
-            const res = await chai.request.execute(config.baseUrl)
-                .patch(`/collections/${reference.testCollection.collectionId}`)
-                .set('Authorization', `Bearer ${iteration.token}`)
-                .send(patchRequest)
+            const res = await utils.executeRequest(`${config.baseUrl}/collections/${reference.testCollection.collectionId}`, 'PATCH', iteration.token, patchRequest)
               if(distinct.canModifyCollection === false){
-                  expect(res).to.have.status(403)
+                  expect(res.status).to.eql(403)
                   return
               }
-              expect(res).to.have.status(422)
+              expect(res.status).to.eql(422)
               expect(res.body.error).to.equal("Unprocessable Entity.")
               expect(res.body.detail).to.equal("Duplicate user in grant array")
 
@@ -105,25 +96,20 @@ describe('PATCH - Collection', function () {
 
           it('Patch test collection label, change color, description and name ',async function () {
             // this needed to be done because we are putting the collection in beforeeach which alters the labelId
-            const labelGet = await chai.request.execute(config.baseUrl)  
-              .get(`/collections/${reference.testCollection.collectionId}/labels`)
-              .set('Authorization', `Bearer ${iteration.token}`)
+            const labelGet = await utils.executeRequest(`${config.baseUrl}/collections/${reference.testCollection.collectionId}/labels`, 'GET', iteration.token)
             if(distinct.canModifyCollection === false){
               return
             }
             const fullLabel = labelGet.body.find(label => label.name === "test-label-full")
             
             const body = requestBodies.patchCollectionLabelById
-            const res = await chai.request.execute(config.baseUrl)
-                .patch(`/collections/${reference.testCollection.collectionId}/labels/${fullLabel.labelId}`)
-                .set('Authorization', `Bearer ${iteration.token}`)
-                .send(body)
+            const res = await utils.executeRequest(`${config.baseUrl}/collections/${reference.testCollection.collectionId}/labels/${fullLabel.labelId}`, 'PATCH', iteration.token, body)
                 
               if(distinct.canModifyCollection === false){
-                expect(res).to.have.status(403)
+                expect(res.status).to.eql(403)
                 return
               }
-              expect(res).to.have.status(200)
+              expect(res.status).to.eql(200)
   
               expect(res.body.labelId).to.equal(fullLabel.labelId)
               expect(res.body.description).to.equal(body.description)
@@ -133,15 +119,12 @@ describe('PATCH - Collection', function () {
           it("should throw SmError.NotFoundError when updating a label that doesn't exist.",async function () {
 
             const body = requestBodies.patchCollectionLabelById
-            const res = await chai.request.execute(config.baseUrl)
-                .patch(`/collections/${reference.testCollection.collectionId}/labels/${uuidv4()}`)
-                .set('Authorization', `Bearer ${iteration.token}`)
-                .send(body)
+            const res = await utils.executeRequest(`${config.baseUrl}/collections/${reference.testCollection.collectionId}/labels/${uuidv4()}`, 'PATCH', iteration.token, body)
               if(distinct.canModifyCollection === false){
-                  expect(res).to.have.status(403)
+                  expect(res.status).to.eql(403)
                   return
               }
-              expect(res).to.have.status(404)
+              expect(res.status).to.eql(404)
               expect(res.body.error).to.equal("Resource not found.")
           })
         })
@@ -149,17 +132,14 @@ describe('PATCH - Collection', function () {
 
           it('Patch test collection metadata',async function () {
               
-              const res = await chai.request.execute(config.baseUrl)
-                  .patch(`/collections/${reference.testCollection.collectionId}/metadata`)
-                  .set('Authorization', `Bearer ${iteration.token}`)
-                  .send({[reference.testCollection.collectionMetadataKey]: reference.testCollection.collectionMetadataValue})
+              const res = await utils.executeRequest(`${config.baseUrl}/collections/${reference.testCollection.collectionId}/metadata`, 'PATCH', iteration.token, {[reference.testCollection.collectionMetadataKey]: reference.testCollection.collectionMetadataValue})
 
                 if(distinct.canModifyCollection === false){
-                  expect(res).to.have.status(403)
+                  expect(res.status).to.eql(403)
                   return
                 }
 
-                expect(res).to.have.status(200)
+                expect(res.status).to.eql(200)
                 expect(res.body).to.contain({[reference.testCollection.collectionMetadataKey]: reference.testCollection.collectionMetadataValue})
           })
         })

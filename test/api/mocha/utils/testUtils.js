@@ -7,7 +7,28 @@ import { join, dirname } from 'path';
 const baseUrl = config.baseUrl
 const adminToken = config.adminToken
 
-// canidate for a function? (used to store responses for a test (metrics))
+const executeRequest = async (url, method, token, body = null) => {
+
+  const options = {
+    method,
+    headers: {
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'application/json'
+    },
+    body: body ? JSON.stringify(body) : null,
+  }
+  const response = await fetch(url, options)
+  const headers = {};
+  response.headers.forEach((value, key) => {
+    headers[key] = value;
+  })
+  return {
+    status: response.status,
+    headers,
+    body: await response.json().catch(() => ({}))
+  }
+}
+
 const metricsOutputToJSON = (testCaseName, username, responseData, outputJsonFile) => {
   const metricsFilePath = join(import.meta.url, outputJsonFile)
   let metricsData = JSON.parse(readFileSync(metricsFilePath, 'utf8'))
@@ -278,7 +299,7 @@ const uploadTestStig = async (filename) => {
 
   const __filename = fileURLToPath(import.meta.url)
   const __dirname = dirname(__filename)
-  const filePath = join(__dirname, `../../form-data-files/${filename}`);
+  const filePath = join(__dirname, `../../form-data-files/${filename}`)
   
   const fileContent = readFileSync(filePath, 'utf-8')
   
@@ -706,7 +727,6 @@ export {
   setRestrictedUsers,
   loadAppData,
   deleteCollection,
-  // uploadTestStigs,
   deleteAsset,
   putAsset,
   setDefaultRevision,
@@ -725,5 +745,6 @@ export {
   getCollection,
   uploadTestStig,
   deleteStigByRevision,
-  getUUIDSubString
+  getUUIDSubString,
+  executeRequest
 }

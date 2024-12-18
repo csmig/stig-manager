@@ -1,8 +1,8 @@
 
-const { expect } = chai
 import {config } from '../testConfig.js'
 import * as utils from '../utils/testUtils.js'
 import reference from '../referenceData.js'
+import { expect } from 'chai'
 
 const user = {
   name: "admin",
@@ -19,21 +19,16 @@ describe(`PUT - attachAssetsToStig - /collections/{collectionId}/stigs/{benchmar
       await utils.loadAppData()
     })
     it('gh-756 issue (assigning a benchmark in one collection removes all assignements for that benchmark from all other collections) . assign a benchmark used in test Collection in scrap Collection', async function () {
-      const res = await chai.request.execute(config.baseUrl)
-      .put(`/collections/${reference.scrapCollection.collectionId}/stigs/${reference.testCollection.benchmark}/assets`)
-      .set('Authorization', 'Bearer ' + user.token)
-      .send([reference.scrapAsset.assetId])
+      const res = await utils.executeRequest(`${config.baseUrl}/collections/${reference.scrapCollection.collectionId}/stigs/${reference.testCollection.benchmark}/assets`, 'PUT', user.token, [reference.scrapAsset.assetId])
       
-      expect(res).to.have.status(200)
+      expect(res.status).to.eql(200)
       expect(res.body).to.be.an('array')
       expect(res.body).to.be.an('array').of.length(1)
       expect(res.body[0].assetId).to.equal(reference.scrapAsset.assetId)
     })
     it('Verify that test collection still has expected benchmark assignments', async function () {
-        const res = await chai.request.execute(config.baseUrl)
-        .get(`/collections/${reference.testCollection.collectionId}/stigs`)
-        .set('Authorization', 'Bearer ' + user.token)
-        expect(res).to.have.status(200)
+        const res = await utils.executeRequest(`${config.baseUrl}/collections/${reference.testCollection.collectionId}/stigs`, 'GET', user.token)
+        expect(res.status).to.eql(200)
         let returnedStigs = []
         for (let stig of res.body) {
             returnedStigs.push(stig.benchmarkId)
@@ -53,10 +48,7 @@ describe(`GET - getChecklistByAssetStig - /assets/{assetId}/checklists/{benchmar
     
     let createdAssetId = null
     it('should Create an Asset in collection to be deleted', async function () {
-      const res = await chai.request.execute(config.baseUrl)
-      .post(`/assets?projection=stigs`)
-      .set('Authorization', 'Bearer ' + user.token)
-      .send({
+      const res = await utils.executeRequest(`${config.baseUrl}/assets?projection=stigs`, 'POST', user.token, {
         "name": "TxxxxxEST_\\slash:colon..x2",
         "collectionId": reference.scrapCollection.collectionId,
         "description": "test desc",
@@ -73,31 +65,25 @@ describe(`GET - getChecklistByAssetStig - /assets/{assetId}/checklists/{benchmar
             "Windows_10_STIG_TEST"
         ]
     })
-      expect(res).to.have.status(201)
+      expect(res.status).to.eql(201)
       createdAssetId = res.body.assetId
     })
     it('Return the ckl for Asset with reserved chars', async function () {
-      const res = await chai.request.execute(config.baseUrl)
-      .get(`/assets/${createdAssetId}/checklists/${reference.benchmark}/${reference.testCollection.defaultRevision}?format=ckl`)
-      .set('Authorization', 'Bearer ' + user.token)
-      expect(res).to.have.status(200)
+      const res = await utils.executeRequest(`${config.baseUrl}/assets/${createdAssetId}/checklists/${reference.benchmark}/${reference.testCollection.defaultRevision}?format=ckl`, 'GET', user.token)
+      expect(res.status).to.eql(200)
       const regex = /^inline; filename="TxxxxxEST_&bsol;slash&colon;colon\.\.x2-VPN_SRG_TEST-V1R1/
       expect(res.headers['content-disposition'], "Content-Disposition is set with expected filename").to.match(regex)
 
     })
     it('Return the cklB for Asset with reserved chars', async function () {
-      const res = await chai.request.execute(config.baseUrl)
-      .get(`/assets/${createdAssetId}/checklists/${reference.benchmark}/${reference.testCollection.defaultRevision}?format=cklb`)
-      .set('Authorization', 'Bearer ' + user.token)
-      expect(res).to.have.status(200)
+      const res = await utils.executeRequest(`${config.baseUrl}/assets/${createdAssetId}/checklists/${reference.benchmark}/${reference.testCollection.defaultRevision}?format=cklb`, 'GET', user.token)
+      expect(res.status).to.eql(200)
       const regex = /^inline; filename="TxxxxxEST_&bsol;slash&colon;colon\.\.x2-VPN_SRG_TEST-V1R1/
       expect(res.headers['content-disposition'], "Content-Disposition is set with expected filename").to.match(regex)
     })
     it('Return the xccdf for Asset with reserved chars', async function () {
-      const res = await chai.request.execute(config.baseUrl)
-      .get(`/assets/${createdAssetId}/checklists/${reference.benchmark}/${reference.testCollection.defaultRevision}?format=xccdf`)
-      .set('Authorization', 'Bearer ' + user.token)
-      expect(res).to.have.status(200)
+      const res = await utils.executeRequest(`${config.baseUrl}/assets/${createdAssetId}/checklists/${reference.benchmark}/${reference.testCollection.defaultRevision}?format=xccdf`, 'GET', user.token)
+      expect(res.status).to.eql(200)
       const regex = /^inline; filename="TxxxxxEST_&bsol;slash&colon;colon\.\.x2-VPN_SRG_TEST-V1R1/
       expect(res.headers['content-disposition'], "Content-Disposition is set with expected filename").to.match(regex)
     })

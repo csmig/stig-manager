@@ -1,10 +1,9 @@
 
-const { expect } = chai
 import {config } from '../../testConfig.js'
 import * as utils from '../../utils/testUtils.js'
 import reference from '../../referenceData.js'
 import {iterations} from '../../iterations.js'
-
+import { expect } from 'chai'
 
 describe('GET - Op', () => {
   let disabledCollection
@@ -16,40 +15,32 @@ describe('GET - Op', () => {
     describe(`iteration:${iteration.name}`, () => {
       describe('getAppData - /op/appdata', () => {
         it('Export application data', async () => {
-        const res = await chai.request.execute(config.baseUrl)
-            .get(`/op/appdata?format=jsonl&elevate=true`)
-            .set('Authorization', `Bearer ${iteration.token}`)
-        if(iteration.name !== "stigmanadmin"){
-          expect(res).to.have.status(403)
-          return
-        }
-        expect(res).to.have.status(200)
+          const res = await utils.executeRequest(`${config.baseUrl}/op/appdata?format=jsonl&elevate=true`, 'GET', iteration.token)
+          if(iteration.name !== "stigmanadmin"){
+            expect(res.status).to.eql(403)
+            return
+          }
+          expect(res.status).to.eql(200)
         })
       })
       describe('getConfiguration - /op/configuration', () => {
         it('Return API version and configuration information', async () => {
-        const res = await chai.request.execute(config.baseUrl)
-            .get(`/op/configuration`)
-            .set('Authorization', `Bearer ${iteration.token}`)
-        expect(res).to.have.status(200)
+          const res = await utils.executeRequest(`${config.baseUrl}/op/configuration`, 'GET', iteration.token)
+          expect(res.status).to.eql(200)
         })
         it('delate alter test', async () => {
-          const res = await chai.request.execute(config.baseUrl)
-              .get(`/op/configuration`)
-              .set('Authorization', `Bearer ${iteration.token}`)
-          expect(res).to.have.status(200)
-          })
+          const res = await utils.executeRequest(`${config.baseUrl}/op/configuration`, 'GET', iteration.token)
+          expect(res.status).to.eql(200)
+        })
       })
       describe('getAppInfo - /op/appinfo', () => {
         it('Return API Deployment Details', async () => {
-          const res = await chai.request.execute(config.baseUrl)
-              .get(`/op/appinfo?elevate=true`)
-              .set('Authorization', `Bearer ${iteration.token}`)
+          const res = await utils.executeRequest(`${config.baseUrl}/op/appinfo?elevate=true`, 'GET', iteration.token)
           if(iteration.name !== "stigmanadmin"){
-            expect(res).to.have.status(403)
+            expect(res.status).to.eql(403)
             return
           }
-          expect(res).to.have.status(200)
+          expect(res.status).to.eql(200)
           expect(res.body).to.be.an('object')
           const rtc = reference.testCollection
           expect(res.body).to.nested.include({
@@ -65,10 +56,8 @@ describe('GET - Op', () => {
       })
       describe('getDefinition - /op/definition', () => {
         it('Return API Deployment Definition', async () => {
-        const res = await chai.request.execute(config.baseUrl)
-            .get(`/op/definition`)
-            .set('Authorization', `Bearer ${iteration.token}`)
-        expect(res).to.have.status(200)
+          const res = await utils.executeRequest(`${config.baseUrl}/op/definition`, 'GET', iteration.token)
+          expect(res.status).to.eql(200)
         })
       })
     })

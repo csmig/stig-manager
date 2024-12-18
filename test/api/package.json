@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "description": "testing",
   "scripts": {
-    "test": "mocha --reporter mochawesome --timeout 10000 --showFailed --exit --require ./setup.js './mocha/**/*.test.js'"
+    "test": "mocha --reporter mochawesome --timeout 10000 --showFailed --exit './mocha/**/*.test.js'"
   },
   "keywords": [],
   "author": "",
@@ -12,7 +12,6 @@
   "dependencies": {
     "@nuwcdivnpt/stig-manager-client-modules": "^1.4.3",
     "chai": "^5.1.2",
-    "chai-http": "^5.1.1",
     "deep-equal-in-any-order": "^2.0.6",
     "fast-xml-parser": "^4.5.0",
     "jszip": "^3.10.1",

@@ -1,5 +1,7 @@
 
-const { expect } = chai
+import deepEqualInAnyOrder from 'deep-equal-in-any-order'
+import {use, expect} from 'chai'
+use(deepEqualInAnyOrder)
 import {config } from '../../testConfig.js'
 import * as utils from '../../utils/testUtils.js'
 import reference from './referenceData.js'
@@ -23,20 +25,15 @@ describe('GET- getEffectiveAclByCollectionUser - /collection/{collectionId}/gran
     describe(`iteration:${iteration.name}`, () => {
       
       it(`should set test groups ACL: ${iteration.name}`, async () => {
-        const res = await chai.request.execute(config.baseUrl)
-        .put(`/collections/${reference.testCollection.collectionId}/grants/${reference.testCollection.testGroup.grantId}/acl`)
-        .set('Authorization', `Bearer ${config.adminToken}`)
-        .send(iteration.put)
+        const res = await utils.executeRequest(`${config.baseUrl}/collections/${reference.testCollection.collectionId}/grants/${reference.testCollection.testGroup.grantId}/acl`, 'PUT', config.adminToken, iteration.put)
 
-        expect(res).to.have.status(200)
+        expect(res.status).to.eql(200)
         expect(res.body.defaultAccess).to.equal("none")
       })
 
       it("should confirm group acl was set", async () => {
-        const res = await chai.request.execute(config.baseUrl)
-          .get(`/collections/${reference.testCollection.collectionId}/grants/${reference.testCollection.testGroup.grantId}/acl`)
-          .set('Authorization', `Bearer ${config.adminToken}`)
-        expect(res).to.have.status(200)
+        const res = await utils.executeRequest(`${config.baseUrl}/collections/${reference.testCollection.collectionId}/grants/${reference.testCollection.testGroup.grantId}/acl`, 'GET', config.adminToken)
+        expect(res.status).to.eql(200)
         expect(res.body.defaultAccess).to.equal("none")
         expect(res.body.acl.length).to.equal(iteration.put.length)
         
@@ -68,10 +65,8 @@ describe('GET- getEffectiveAclByCollectionUser - /collection/{collectionId}/gran
       })
 
       it('should return 200 and the effective acl for the iteration', async () => {
-        const res = await chai.request.execute(config.baseUrl)
-        .get(`/collections/${reference.testCollection.collectionId}/grants/user/${user.userId}/access/effective`)
-        .set('Authorization', `Bearer ${config.adminToken}`)
-        expect(res).to.have.status(200)
+        const res = await utils.executeRequest(`${config.baseUrl}/collections/${reference.testCollection.collectionId}/grants/user/${user.userId}/access/effective`, 'GET', config.adminToken)
+        expect(res.status).to.eql(200)
 
         const putAcl = iteration.put
         expect(res.body).to.deep.equalInAnyOrder(iteration.response)

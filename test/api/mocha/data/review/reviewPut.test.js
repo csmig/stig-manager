@@ -1,5 +1,4 @@
 
-const { expect } = chai
 import { XMLParser } from 'fast-xml-parser'
 import {config } from '../../testConfig.js'
 import * as utils from '../../utils/testUtils.js'
@@ -7,6 +6,7 @@ import reference from '../../referenceData.js'
 import {requestBodies} from "./requestBodies.js"
 import {iterations} from '../../iterations.js'
 import {expectations} from './expectations.js'
+import { expect } from 'chai'
 
 describe('PUT - Review', () => {
 
@@ -35,12 +35,9 @@ describe('PUT - Review', () => {
                         autoResult: false
                     }
 
-                    const res = await chai.request.execute(config.baseUrl)
-                        .put(`/collections/${reference.testCollection.collectionId}/reviews/${reference.testAsset.assetId}/${reference.testCollection.ruleId}`)
-                        .set('Authorization', `Bearer ${iteration.token}`)
-                        .send(putBody)
+                    const res = await utils.executeRequest(`${config.baseUrl}/collections/${reference.testCollection.collectionId}/reviews/${reference.testAsset.assetId}/${reference.testCollection.ruleId}`, 'PUT', iteration.token, putBody)
 
-                    expect(res).to.have.status(403)
+                    expect(res.status).to.eql(403)
                     expect(res.body).to.be.an('object')
                     expect(res.body).to.have.property("error")
                 })
@@ -54,12 +51,9 @@ describe('PUT - Review', () => {
                         autoResult: false
                     }
 
-                    const res = await chai.request.execute(config.baseUrl)
-                        .put(`/collections/${reference.testCollection.collectionId}/reviews/${reference.testAsset.assetId}/${reference.testCollection.ruleId}`)
-                        .set('Authorization', `Bearer ${iteration.token}`)
-                        .send(putBody)
+                    const res = await utils.executeRequest(`${config.baseUrl}/collections/${reference.testCollection.collectionId}/reviews/${reference.testAsset.assetId}/${reference.testCollection.ruleId}`, 'PUT', iteration.token, putBody)
                  
-                    expect(res).to.have.status(200)
+                    expect(res.status).to.eql(200)
                     expect(res.body).to.be.an('object')
                     expect(res.body).to.have.property("result")
                     expect(res.body).to.have.property("detail")
@@ -80,12 +74,9 @@ describe('PUT - Review', () => {
                         autoResult: false
                     }
 
-                    const res = await chai.request.execute(config.baseUrl)
-                        .put(`/collections/${reference.testCollection.collectionId}/reviews/${reference.testAsset.assetId}/${reference.testCollection.ruleId}`)
-                        .set('Authorization', `Bearer ${iteration.token}`)
-                        .send(putBody)
+                    const res = await utils.executeRequest(`${config.baseUrl}/collections/${reference.testCollection.collectionId}/reviews/${reference.testAsset.assetId}/${reference.testCollection.ruleId}`, 'PUT', iteration.token, putBody)
 
-                    expect(res).to.have.status(403)
+                    expect(res.status).to.eql(403)
                 })
                 it('PUT Review: submitted, pass, no detail Copy', async () => {
 
@@ -97,12 +88,9 @@ describe('PUT - Review', () => {
                         autoResult: false
                     }
 
-                    const res = await chai.request.execute(config.baseUrl)
-                        .put(`/collections/${reference.testCollection.collectionId}/reviews/${reference.testAsset.assetId}/${reference.testCollection.ruleId}`)
-                        .set('Authorization', `Bearer ${iteration.token}`)
-                        .send(putBody)
+                    const res = await utils.executeRequest(`${config.baseUrl}/collections/${reference.testCollection.collectionId}/reviews/${reference.testAsset.assetId}/${reference.testCollection.ruleId}`, 'PUT', iteration.token, putBody)
 
-                    expect(res).to.have.status(403)
+                    expect(res.status).to.eql(403)
                     expect(res.body).to.be.an('object')
                     expect(res.body).to.have.property("error")
                 })
@@ -117,12 +105,9 @@ describe('PUT - Review', () => {
                     status: 'saved'
                     }
 
-                    const res = await chai.request.execute(config.baseUrl)
-                        .put(`/collections/${reference.testCollection.collectionId}/reviews/${reference.testAsset.assetId}/${reference.testCollection.ruleId}?projection=rule&projection=history&projection=stigs`)
-                        .set('Authorization', `Bearer ${iteration.token}`)
-                        .send(putBody)
+                    const res = await utils.executeRequest(`${config.baseUrl}/collections/${reference.testCollection.collectionId}/reviews/${reference.testAsset.assetId}/${reference.testCollection.ruleId}?projection=rule&projection=history&projection=stigs`, 'PUT', iteration.token, putBody)
                   
-                    expect(res).to.have.status(200)
+                    expect(res.status).to.eql(200)
                     expect(res.body).to.be.an('object')
                     expect(res.body).to.have.property("result")
                     expect(res.body).to.have.property("detail")
@@ -182,12 +167,9 @@ describe('PUT - Review', () => {
                         autoResult: false
                     }
 
-                    const res = await chai.request.execute(config.baseUrl)
-                        .put(`/collections/${reference.testCollection.collectionId}/reviews/${reference.testAsset.assetId}/${reference.testCollection.ruleId}`)
-                        .set('Authorization', `Bearer ${iteration.token}`)
-                        .send(putBody)
+                    const res = await utils.executeRequest(`${config.baseUrl}/collections/${reference.testCollection.collectionId}/reviews/${reference.testAsset.assetId}/${reference.testCollection.ruleId}`, 'PUT', iteration.token, putBody)
 
-                    expect(res).to.have.status(400)
+                    expect(res.status).to.eql(400)
                     expect(res.body).to.be.an('object')
                     expect(res.body).to.have.property("error")
                 })
@@ -204,12 +186,9 @@ describe('PUT - Review', () => {
                         }
                     }))
 
-                    const res = await chai.request.execute(config.baseUrl)
-                        .put(`/collections/${reference.testCollection.collectionId}/reviews/${reference.testAsset.assetId}/${reference.testCollection.ruleId}?projection=rule&projection=history&projection=stigs&projection=metadata`)
-                        .set('Authorization', `Bearer ${iteration.token}`)
-                        .send(putBody)
+                    const res = await utils.executeRequest(`${config.baseUrl}/collections/${reference.testCollection.collectionId}/reviews/${reference.testAsset.assetId}/${reference.testCollection.ruleId}?projection=rule&projection=history&projection=stigs&projection=metadata`, 'PUT', iteration.token, putBody)
                    
-                    expect(res).to.have.status(200)
+                    expect(res.status).to.eql(200)
                     expect(res.body).to.be.an('object')
                     expect(res.body).to.have.property("result")
                     expect(res.body).to.have.property("detail")
@@ -234,12 +213,9 @@ describe('PUT - Review', () => {
                         autoResult: false,
                         status: 'submitted'
                     }
-                    const res = await chai.request.execute(config.baseUrl)
-                        .put(`/collections/${deletedCollection}/reviews/${deletedAsset}/${reference.testCollection.ruleId}`)
-                        .set('Authorization', `Bearer ${iteration.token}`)
-                        .send(putBody)
+                    const res = await utils.executeRequest(`${config.baseUrl}/collections/${deletedCollection}/reviews/${deletedAsset}/${reference.testCollection.ruleId}`, 'PUT', iteration.token, putBody)
 
-                    expect(res).to.have.status(403)
+                    expect(res.status).to.eql(403)
                 })
                 it('Test all projections are returned and contain accurate data. (besides history that is tested better elsewhere)', async () => {
 
@@ -251,12 +227,9 @@ describe('PUT - Review', () => {
                         status: 'submitted'
                     }
 
-                    const res = await chai.request.execute(config.baseUrl)
-                        .put(`/collections/${reference.testCollection.collectionId}/reviews/${reference.testAsset.assetId}/${reference.testCollection.ruleId}?projection=rule&projection=stigs&projection=metadata`)
-                        .set('Authorization', `Bearer ${iteration.token}`)
-                        .send(putBody)
+                    const res = await utils.executeRequest(`${config.baseUrl}/collections/${reference.testCollection.collectionId}/reviews/${reference.testAsset.assetId}/${reference.testCollection.ruleId}?projection=rule&projection=stigs&projection=metadata`, 'PUT', iteration.token, putBody)
                    
-                    expect(res).to.have.status(200)
+                    expect(res.status).to.eql(200)
                     expect(res.body).to.be.an('object')
                     expect(res.body.result).to.equal(putBody.result)
                     expect(res.body.detail).to.equal(putBody.detail)
@@ -312,12 +285,9 @@ describe('PUT - Review', () => {
                         "status": "saved"
                     }
                     
-                    const res = await chai.request.execute(config.baseUrl)
-                    .put(`/collections/${reference.testCollection.collectionId}/reviews/${reference.testAsset.assetId}/${reference.testCollection.ruleId}?projection=rule&projection=history&projection=stigs&projection=metadata`)
-                    .set('Authorization', `Bearer ${iteration.token}`)
-                    .send(putBody)
+                    const res = await utils.executeRequest(`${config.baseUrl}/collections/${reference.testCollection.collectionId}/reviews/${reference.testAsset.assetId}/${reference.testCollection.ruleId}?projection=rule&projection=history&projection=stigs&projection=metadata`, 'PUT', iteration.token, putBody)
                    
-                    expect(res).to.have.status(200)
+                    expect(res.status).to.eql(200)
                     expect(res.body.assetId).to.be.eql(reference.testAsset.assetId)
                     expect(res.body.result).to.be.eql(putBody.result)
                     expect(res.body.detail).to.be.eql(putBody.detail)
@@ -335,15 +305,12 @@ describe('PUT - Review', () => {
                         autoResult: false,
                         status: 'submitted'
                     }
-                    const res = await chai.request.execute(config.baseUrl)
-                        .put(`/collections/${reference.testCollection.collectionId}/reviews/${reference.testCollection.lvl1ReadOnlyAssetId}/${reference.testCollection.ruleId}`)
-                        .set('Authorization', `Bearer ${iteration.token}`)
-                        .send(putBody)
+                    const res = await utils.executeRequest(`${config.baseUrl}/collections/${reference.testCollection.collectionId}/reviews/${reference.testCollection.lvl1ReadOnlyAssetId}/${reference.testCollection.ruleId}`, 'PUT', iteration.token, putBody)
                     if(iteration.name == 'lvl1'){
-                        expect(res).to.have.status(403)
+                        expect(res.status).to.eql(403)
                         return
                     }
-                    expect(res).to.have.status(200)
+                    expect(res.status).to.eql(200)
                     expect(res.body).to.be.an('object')
                     expect(res.body).to.have.property("result")
                     expect(res.body).to.have.property("detail")
@@ -363,37 +330,29 @@ describe('PUT - Review', () => {
                 })
                 
                 it('Set all metadata of a Review', async () => {
-                    const res = await chai.request.execute(config.baseUrl)
-                    .put(`/collections/${reference.testCollection.collectionId}/reviews/${reference.testAsset.assetId}/${reference.testCollection.ruleId}/metadata`)
-                    .set('Authorization', `Bearer ${iteration.token}`)
-                    .send({[reference.reviewMetadataKey]: reference.reviewMetadataValue})
+                    const res = await utils.executeRequest(`${config.baseUrl}/collections/${reference.testCollection.collectionId}/reviews/${reference.testAsset.assetId}/${reference.testCollection.ruleId}/metadata`, 'PUT', iteration.token, {[reference.reviewMetadataKey]: reference.reviewMetadataValue})
                     
-                    expect(res).to.have.status(200)
+                    expect(res.status).to.eql(200)
                     expect(res.body).to.eql({[reference.reviewMetadataKey]: reference.reviewMetadataValue})
 
                 })
                 it('Set all metadata of a Review, lvl1 has r on asset, expect rejection for lvl1 iteration. ', async () => {
-                    const res = await chai.request.execute(config.baseUrl)
-                    .put(`/collections/${reference.testCollection.collectionId}/reviews/${reference.testCollection.lvl1ReadOnlyAssetId}/${reference.testCollection.ruleId}/metadata`)
-                    .set('Authorization', `Bearer ${iteration.token}`)
-                    .send({[reference.reviewMetadataKey]: reference.reviewMetadataValue})
+                    const res = await utils.executeRequest(`${config.baseUrl}/collections/${reference.testCollection.collectionId}/reviews/${reference.testCollection.lvl1ReadOnlyAssetId}/${reference.testCollection.ruleId}/metadata`, 'PUT', iteration.token, {[reference.reviewMetadataKey]: reference.reviewMetadataValue})
                     
                     if(iteration.name == 'lvl1'){
-                        expect(res).to.have.status(403)
+                        expect(res.status).to.eql(403)
                         return
                     }
-                    expect(res).to.have.status(200)
+                    expect(res.status).to.eql(200)
                     expect(res.body).to.eql({[reference.reviewMetadataKey]: reference.reviewMetadataValue})
                 })
                 it("should return SmError.PrivilegeError if user cannot put review", async () => {
-                    const res = await chai.request.execute(config.baseUrl)
-                        .get(`/collections/${reference.testCollection.collectionId}/reviews/${reference.testAsset.assetId}/${reference.scrapRuleIdWindows10}/metadata`)
-                        .set('Authorization', `Bearer ${iteration.token}`)
+                    const res = await utils.executeRequest(`${config.baseUrl}/collections/${reference.testCollection.collectionId}/reviews/${reference.testAsset.assetId}/${reference.scrapRuleIdWindows10}/metadata`, 'GET', iteration.token)
                     if(distinct.canPatchReview){
-                        expect(res).to.have.status(200)
+                        expect(res.status).to.eql(200)
                         return
                     }
-                    expect(res).to.have.status(403)
+                    expect(res.status).to.eql(403)
                     expect(res.body.error).to.be.equal("User has insufficient privilege to complete this request.")
                 })
             })
@@ -404,26 +363,18 @@ describe('PUT - Review', () => {
                     await utils.putReviewByAssetRule(reference.testCollection.collectionId, reference.testAsset.assetId, reference.testCollection.ruleId, requestBodies.resetRule)
                 })
                 it('Set one metadata key/value of a Review', async () => {
-                    const res = await chai.request.execute(config.baseUrl)
-                        .put(`/collections/${reference.testCollection.collectionId}/reviews/${reference.testAsset.assetId}/${reference.testCollection.ruleId}/metadata/keys/${reference.reviewMetadataKey}`)
-                        .set('Authorization', `Bearer ${iteration.token}`)
-                        .set('Content-Type', 'application/json') 
-                        .send(`${JSON.stringify(reference.reviewMetadataValue)}`)
+                    const res = await utils.executeRequest(`${config.baseUrl}/collections/${reference.testCollection.collectionId}/reviews/${reference.testAsset.assetId}/${reference.testCollection.ruleId}/metadata/keys/${reference.reviewMetadataKey}`, 'PUT', iteration.token, `${JSON.stringify(reference.reviewMetadataValue)}`)
                     
-                    expect(res).to.have.status(204)
+                    expect(res.status).to.eql(204)
                 })
                 it('Set one metadata key/value of a Review, lvl1 has read only on asset, expect rejection for lvl1 iteration', async () => {
-                    const res = await chai.request.execute(config.baseUrl)
-                        .put(`/collections/${reference.testCollection.collectionId}/reviews/${reference.testCollection.lvl1ReadOnlyAssetId}/${reference.testCollection.ruleId}/metadata/keys/${reference.reviewMetadataKey}`)
-                        .set('Authorization', `Bearer ${iteration.token}`)
-                        .set('Content-Type', 'application/json') 
-                        .send(`${JSON.stringify(reference.reviewMetadataValue)}`)
+                    const res = await utils.executeRequest(`${config.baseUrl}/collections/${reference.testCollection.collectionId}/reviews/${reference.testCollection.lvl1ReadOnlyAssetId}/${reference.testCollection.ruleId}/metadata/keys/${reference.reviewMetadataKey}`, 'PUT', iteration.token, `${JSON.stringify(reference.reviewMetadataValue)}`)
 
                     if(iteration.name == 'lvl1'){
-                        expect(res).to.have.status(403)
+                        expect(res.status).to.eql(403)
                         return
                     }
-                    expect(res).to.have.status(204)
+                    expect(res.status).to.eql(204)
                 })
             })
         })

@@ -1,10 +1,12 @@
 
-const { expect } = chai
 import {config } from '../../testConfig.js'
 import * as utils from '../../utils/testUtils.js'
 import reference from '../../referenceData.js'
 import {iterations} from '../../iterations.js'
 import {expectations} from './expectations.js'
+import deepEqualInAnyOrder from 'deep-equal-in-any-order'
+import {use, expect} from 'chai'
+use(deepEqualInAnyOrder)
 
 const otherTestRuleId = "SV-106181r1_rule"
 
@@ -60,12 +62,9 @@ describe('POST - Review', () => {
                 }
               }
 
-              const res = await chai.request.execute(config.baseUrl)
-                .post(`/collections/${reference.testCollection.collectionId}/reviews`)
-                .set('Authorization', `Bearer ${iteration.token}`)
-                .send(postreview)
+              const res = await utils.executeRequest(`${config.baseUrl}/collections/${reference.testCollection.collectionId}/reviews`, 'POST', iteration.token, postreview)
               
-              expect(res).to.have.status(200)
+              expect(res.status).to.eql(200)
             
               const reviews = await utils.getReviews(reference.testCollection.collectionId)
             
@@ -102,12 +101,9 @@ describe('POST - Review', () => {
                   }
               }
 
-              const res = await chai.request.execute(config.baseUrl)
-                .post(`/collections/${reference.testCollection.collectionId}/reviews`)
-                .set('Authorization', `Bearer ${iteration.token}`)
-                .send(postreview)
+              const res = await utils.executeRequest(`${config.baseUrl}/collections/${reference.testCollection.collectionId}/reviews`, 'POST', iteration.token, postreview)
               
-              expect(res).to.have.status(200)
+              expect(res.status).to.eql(200)
 
               const reviews = await utils.getReviews(reference.testCollection.collectionId)
               
@@ -144,12 +140,9 @@ describe('POST - Review', () => {
                   }
                 }
 
-              const res = await chai.request.execute(config.baseUrl)
-                .post(`/collections/${reference.testCollection.collectionId}/reviews`)
-                .set('Authorization', `Bearer ${iteration.token}`)
-                .send(postreview)
+              const res = await utils.executeRequest(`${config.baseUrl}/collections/${reference.testCollection.collectionId}/reviews`, 'POST', iteration.token, postreview)
           
-              expect(res).to.have.status(200)
+              expect(res.status).to.eql(200)
               const reviews = await utils.getReviews(reference.testCollection.collectionId)
               expect(res.body.inserted).to.eql(distinct.postReviews.targetAssetsAndRule.inserted)
               expect(res.body.updated).to.eql( distinct.postReviews.targetAssetsAndRule.updated)
@@ -184,12 +177,9 @@ describe('POST - Review', () => {
                   }
                 }
 
-              const res = await chai.request.execute(config.baseUrl)
-                .post(`/collections/${reference.testCollection.collectionId}/reviews`)
-                .set('Authorization', `Bearer ${iteration.token}`)
-                .send(postreview)
+              const res = await utils.executeRequest(`${config.baseUrl}/collections/${reference.testCollection.collectionId}/reviews`, 'POST', iteration.token, postreview)
             
-              expect(res).to.have.status(200)
+              expect(res.status).to.eql(200)
               expect(res.body).to.be.an('object')
               expect(res.body).to.have.property('failedValidation')
               expect(res.body).to.have.property('updated')
@@ -235,12 +225,9 @@ describe('POST - Review', () => {
               }
             }
 
-            const res = await chai.request.execute(config.baseUrl)
-              .post(`/collections/${reference.testCollection.collectionId}/reviews`)
-              .set('Authorization', `Bearer ${iteration.token}`)
-              .send(postreview)
+            const res = await utils.executeRequest(`${config.baseUrl}/collections/${reference.testCollection.collectionId}/reviews`, 'POST', iteration.token, postreview)
 
-            expect(res).to.have.status(200)
+            expect(res.status).to.eql(200)
 
             expect(res.body.inserted).to.eql(1)
             expect(res.body.updated).to.eql(0)
@@ -265,12 +252,9 @@ describe('POST - Review', () => {
                 }
               }
 
-            const res = await chai.request.execute(config.baseUrl)
-              .post(`/collections/${reference.testCollection.collectionId}/reviews`)
-              .set('Authorization', `Bearer ${iteration.token}`)
-              .send(postreview)
+            const res = await utils.executeRequest(`${config.baseUrl}/collections/${reference.testCollection.collectionId}/reviews`, 'POST', iteration.token, postreview)
           
-            expect(res).to.have.status(200)
+            expect(res.status).to.eql(200)
             expect(res.body).to.be.an('object')
             expect(res.body).to.have.property('failedValidation')
             expect(res.body).to.have.property('updated')
@@ -308,12 +292,9 @@ describe('POST - Review', () => {
               }
             }
 
-            const res = await chai.request.execute(config.baseUrl)
-              .post(`/collections/${reference.testCollection.collectionId}/reviews`)
-              .set('Authorization', `Bearer ${iteration.token}`)
-              .send(postreview)
+            const res = await utils.executeRequest(`${config.baseUrl}/collections/${reference.testCollection.collectionId}/reviews`, 'POST', iteration.token, postreview)
 
-            expect(res).to.have.status(200)
+            expect(res.status).to.eql(200)
 
             expect(res.body.inserted).to.eql(1)
             expect(res.body.updated).to.eql(0)
@@ -339,12 +320,9 @@ describe('POST - Review', () => {
                 action: "insert"
               }
 
-            const res = await chai.request.execute(config.baseUrl)
-              .post(`/collections/${reference.testCollection.collectionId}/reviews`)
-              .set('Authorization', `Bearer ${iteration.token}`)
-              .send(postreview)
+            const res = await utils.executeRequest(`${config.baseUrl}/collections/${reference.testCollection.collectionId}/reviews`, 'POST', iteration.token, postreview)
           
-            expect(res).to.have.status(200)
+            expect(res.status).to.eql(200)
     
             const reviews = await utils.getReviews(reference.testCollection.collectionId)
 
@@ -395,12 +373,9 @@ describe('POST - Review', () => {
                 action: "merge"
             }
 
-            const res = await chai.request.execute(config.baseUrl)
-              .post(`/collections/${reference.testCollection.collectionId}/reviews`)
-              .set('Authorization', `Bearer ${iteration.token}`)
-              .send(postreview)
+            const res = await utils.executeRequest(`${config.baseUrl}/collections/${reference.testCollection.collectionId}/reviews`, 'POST', iteration.token, postreview)
            
-            expect(res).to.have.status(200)
+            expect(res.status).to.eql(200)
             expect(res.body).to.be.an('object')
             expect(res.body).to.have.property('failedValidation')
             expect(res.body).to.have.property('updated')
@@ -447,12 +422,9 @@ describe('POST - Review', () => {
               }
             }
 
-            const res = await chai.request.execute(config.baseUrl)
-              .post(`/collections/${reference.testCollection.collectionId}/reviews`)
-              .set('Authorization', `Bearer ${iterations[0].token}`)
-              .send(postreview)
+            const res = await utils.executeRequest(`${config.baseUrl}/collections/${reference.testCollection.collectionId}/reviews`, 'POST', iterations[0].token, postreview)
 
-            expect(res).to.have.status(200)
+            expect(res.status).to.eql(200)
 
             expect(res.body.inserted).to.eql(1)
             expect(res.body.updated).to.eql(0)
@@ -482,12 +454,9 @@ describe('POST - Review', () => {
               action: 'update'
             }
 
-            const res = await chai.request.execute(config.baseUrl)
-              .post(`/collections/${reference.testCollection.collectionId}/reviews`)
-              .set('Authorization', `Bearer ${iteration.token}`)
-              .send(postreview)
+            const res = await utils.executeRequest(`${config.baseUrl}/collections/${reference.testCollection.collectionId}/reviews`, 'POST', iteration.token, postreview)
            
-            expect(res).to.have.status(200)
+            expect(res.status).to.eql(200)
             expect(res.body).to.be.an('object')
             expect(res.body).to.have.property('failedValidation')
             expect(res.body).to.have.property('updated')
@@ -528,12 +497,9 @@ describe('POST - Review', () => {
               }
             }
 
-            const res = await chai.request.execute(config.baseUrl)
-              .post(`/collections/${reference.testCollection.collectionId}/reviews`)
-              .set('Authorization', `Bearer ${iterations[0].token}`)
-              .send(postreview)
+            const res = await utils.executeRequest(`${config.baseUrl}/collections/${reference.testCollection.collectionId}/reviews`, 'POST', iterations[0].token, postreview)
 
-            expect(res).to.have.status(200)
+            expect(res.status).to.eql(200)
 
             expect(res.body.inserted).to.eql(0)
             expect(res.body.updated).to.eql(1)
@@ -564,12 +530,9 @@ describe('POST - Review', () => {
               action: 'update'
               }
 
-            const res = await chai.request.execute(config.baseUrl)
-              .post(`/collections/${reference.testCollection.collectionId}/reviews`)
-              .set('Authorization', `Bearer ${iteration.token}`)
-              .send(postreview)
+            const res = await utils.executeRequest(`${config.baseUrl}/collections/${reference.testCollection.collectionId}/reviews`, 'POST', iteration.token, postreview)
           
-            expect(res).to.have.status(200)
+            expect(res.status).to.eql(200)
             expect(res.body).to.be.an('object')
             expect(res.body).to.have.property('failedValidation')
             expect(res.body).to.have.property('updated')
@@ -622,12 +585,9 @@ describe('POST - Review', () => {
               action: 'update'
               }
 
-            const res = await chai.request.execute(config.baseUrl)
-              .post(`/collections/${reference.testCollection.collectionId}/reviews`)
-              .set('Authorization', `Bearer ${iteration.token}`)
-              .send(postreview)
+            const res = await utils.executeRequest(`${config.baseUrl}/collections/${reference.testCollection.collectionId}/reviews`, 'POST', iteration.token, postreview)
             
-            expect(res).to.have.status(200)
+            expect(res.status).to.eql(200)
             expect(res.body).to.be.an('object')
             expect(res.body).to.have.property('failedValidation')
             expect(res.body).to.have.property('updated')
@@ -668,12 +628,9 @@ describe('POST - Review', () => {
               }
             }
 
-            const res = await chai.request.execute(config.baseUrl)
-              .post(`/collections/${reference.testCollection.collectionId}/reviews`)
-              .set('Authorization', `Bearer ${iterations[0].token}`)
-              .send(postreview)
+            const res = await utils.executeRequest(`${config.baseUrl}/collections/${reference.testCollection.collectionId}/reviews`, 'POST', iterations[0].token, postreview)
 
-            expect(res).to.have.status(200)
+            expect(res.status).to.eql(200)
 
             expect(res.body.inserted).to.eql(0)
             expect(res.body.updated).to.eql(1)
@@ -705,12 +662,9 @@ describe('POST - Review', () => {
               action: 'update'
             }
 
-            const res = await chai.request.execute(config.baseUrl)
-              .post(`/collections/${reference.testCollection.collectionId}/reviews`)
-              .set('Authorization', `Bearer ${iteration.token}`)
-              .send(postreview)
+            const res = await utils.executeRequest(`${config.baseUrl}/collections/${reference.testCollection.collectionId}/reviews`, 'POST', iteration.token, postreview)
           
-            expect(res).to.have.status(200)
+            expect(res.status).to.eql(200)
             expect(res.body).to.be.an('object')
             expect(res.body).to.have.property('failedValidation')
             expect(res.body).to.have.property('updated')
@@ -751,12 +705,9 @@ describe('POST - Review', () => {
               }
             }
 
-            const res = await chai.request.execute(config.baseUrl)
-              .post(`/collections/${reference.testCollection.collectionId}/reviews`)
-              .set('Authorization', `Bearer ${iterations[0].token}`)
-              .send(postreview)
+            const res = await utils.executeRequest(`${config.baseUrl}/collections/${reference.testCollection.collectionId}/reviews`, 'POST', iterations[0].token, postreview)
 
-            expect(res).to.have.status(200)
+            expect(res.status).to.eql(200)
 
             expect(res.body.inserted).to.eql(0)
             expect(res.body.updated).to.eql(1)
@@ -789,12 +740,9 @@ describe('POST - Review', () => {
               action: 'update'
             }
 
-            const res = await chai.request.execute(config.baseUrl)
-              .post(`/collections/${reference.testCollection.collectionId}/reviews`)
-              .set('Authorization', `Bearer ${iteration.token}`)
-              .send(postreview)
+            const res = await utils.executeRequest(`${config.baseUrl}/collections/${reference.testCollection.collectionId}/reviews`, 'POST', iteration.token, postreview)
           
-            expect(res).to.have.status(200)
+            expect(res.status).to.eql(200)
             expect(res.body).to.be.an('object')
             expect(res.body).to.have.property('failedValidation')
             expect(res.body).to.have.property('updated')
@@ -810,7 +758,7 @@ describe('POST - Review', () => {
 
             for(let review of reviews){
               expect(review.assetId).to.eql("62")
-              expect(review.ruleId).to.eql(reference.testCollection.ruleId)
+              expect(review.ruleId). to.eql(reference.testCollection.ruleId)
               expect(review.status.label).to.eql("saved")
               expect(review.status.user.username).to.eql(iteration.name)
               expect(review.username).to.eql("stigmanadmin")
@@ -834,12 +782,9 @@ describe('POST - Review', () => {
               }
             }
 
-            const res = await chai.request.execute(config.baseUrl)
-              .post(`/collections/${reference.testCollection.collectionId}/reviews`)
-              .set('Authorization', `Bearer ${iterations[0].token}`)
-              .send(postreview)
+            const res = await utils.executeRequest(`${config.baseUrl}/collections/${reference.testCollection.collectionId}/reviews`, 'POST', iterations[0].token, postreview)
 
-            expect(res).to.have.status(200)
+            expect(res.status).to.eql(200)
 
             expect(res.body.inserted).to.eql(0)
             expect(res.body.updated).to.eql(1)
@@ -869,12 +814,9 @@ describe('POST - Review', () => {
                 action: 'update'
               }
 
-              const res = await chai.request.execute(config.baseUrl)
-                .post(`/collections/${reference.testCollection.collectionId}/reviews`)
-                .set('Authorization', `Bearer ${iteration.token}`)
-                .send(postreview)
+              const res = await utils.executeRequest(`${config.baseUrl}/collections/${reference.testCollection.collectionId}/reviews`, 'POST', iteration.token, postreview)
             
-              expect(res).to.have.status(200)
+              expect(res.status).to.eql(200)
               expect(res.body).to.be.an('object')
               expect(res.body).to.have.property('failedValidation')
               expect(res.body).to.have.property('updated')
@@ -920,12 +862,9 @@ describe('POST - Review', () => {
                 rules: { ruleIds: ['SV-106179r1_rule'] }
               }
 
-            const res = await chai.request.execute(config.baseUrl)
-              .post(`/collections/${reference.testCollection.collectionId}/reviews`)
-              .set('Authorization', `Bearer ${iteration.token}`)
-              .send(postreview)
+            const res = await utils.executeRequest(`${config.baseUrl}/collections/${reference.testCollection.collectionId}/reviews`, 'POST', iteration.token, postreview)
           
-            expect(res).to.have.status(200)
+            expect(res.status).to.eql(200)
 
             expect(res.body.inserted).to.eql(0)
             expect(res.body.updated).to.eql(0)
@@ -963,12 +902,9 @@ describe('POST - Review', () => {
               rules: { ruleIds: ['SV-106179r1_rule'] }
             }
 
-            const res = await chai.request.execute(config.baseUrl)
-              .post(`/collections/${reference.testCollection.collectionId}/reviews`)
-              .set('Authorization', `Bearer ${iteration.token}`)
-              .send(postreview)
+            const res = await utils.executeRequest(`${config.baseUrl}/collections/${reference.testCollection.collectionId}/reviews`, 'POST', iteration.token, postreview)
         
-            expect(res).to.have.status(200)
+            expect(res.status).to.eql(200)
             const reviews = await utils.getReviews(reference.testCollection.collectionId)
 
             expect(res.body.inserted).to.eql(distinct.postReviews.targetByStigOneRuleValidationFailure.inserted)
@@ -993,12 +929,9 @@ describe('POST - Review', () => {
                 rules: { ruleIds: ['SV-106179r1_rule'] }
               }
 
-          const res = await chai.request.execute(config.baseUrl)
-            .post(`/collections/${reference.testCollection.collectionId}/reviews`)
-            .set('Authorization', `Bearer ${iteration.token}`)
-            .send(postreview)
+          const res = await utils.executeRequest(`${config.baseUrl}/collections/${reference.testCollection.collectionId}/reviews`, 'POST', iteration.token, postreview)
           
-          expect(res).to.have.status(200)
+          expect(res.status).to.eql(200)
           
           const reviews = await utils.getReviews(reference.testCollection.collectionId)
       
@@ -1025,12 +958,9 @@ describe('POST - Review', () => {
               rules: { ruleIds: ['SV-106179r1_rule'] }
             }
 
-            const res = await chai.request.execute(config.baseUrl)
-              .post(`/collections/${reference.testCollection.collectionId}/reviews`)
-              .set('Authorization', `Bearer ${iteration.token}`)
-              .send(postreview)
+            const res = await utils.executeRequest(`${config.baseUrl}/collections/${reference.testCollection.collectionId}/reviews`, 'POST', iteration.token, postreview)
             
-            expect(res).to.have.status(200)
+            expect(res.status).to.eql(200)
             const reviews = await utils.getReviews(reference.testCollection.collectionId)
         
             expect(res.body.inserted).to.eql(distinct.postReviews.targetByStigOneRuleValidationFailure.inserted)
@@ -1111,12 +1041,9 @@ describe('POST - Review', () => {
                 benchmarkIds: ['VPN_SRG_TEST_Batch']
               }
             }
-            const res = await chai.request.execute(config.baseUrl)
-              .post(`/collections/${tempCollectionCanAcceptFalse.collectionId}/reviews`)
-              .set('Authorization', `Bearer ${iteration.token}`)
-              .send(postreview)
+            const res = await utils.executeRequest(`${config.baseUrl}/collections/${tempCollectionCanAcceptFalse.collectionId}/reviews`, 'POST', iteration.token, postreview)
             
-            expect(res).to.have.status(403)
+            expect(res.status).to.eql(403)
           })
           it(`should throw SmError.PriviledgeError`, async () => {
 
@@ -1133,18 +1060,12 @@ describe('POST - Review', () => {
                 benchmarkIds: ['VPN_SRG_TEST_Batch']
               }
             }
-            const res = await chai.request.execute(config.baseUrl)
-              .post(`/collections/${tempCollectionCanAcceptFalse.collectionId}/reviews`)
-              .set('Authorization', `Bearer ${iteration.token}`)
-              .send(postreview)
-            expect(res).to.have.status(403)
+            const res = await utils.executeRequest(`${config.baseUrl}/collections/${tempCollectionCanAcceptFalse.collectionId}/reviews`, 'POST', iteration.token, postreview)
+            expect(res.status).to.eql(403)
           })
           it("should throw SmError.PriviledgeError, lvl1 user no acccess to asset ", async () => {
 
-            const res = await chai.request.execute(config.baseUrl)
-              .post(`/collections/${reference.testCollection.collectionId}/reviews`)
-              .set('Authorization', `Bearer ${iteration.token}`)
-              .send({
+            const res = await utils.executeRequest(`${config.baseUrl}/collections/${reference.testCollection.collectionId}/reviews`, 'POST', iteration.token, {
                 source: {
                   review: {
                     result: 'fail',
@@ -1159,7 +1080,7 @@ describe('POST - Review', () => {
                 }
               })
 
-            expect(res).to.have.status(200)
+            expect(res.status).to.eql(200)
             if(iteration.name === "lvl1"){
               expect(res.body.failedValidation).to.eql(1)
               expect(res.body.validationErrors[0].error).to.eql("no grant for this asset/ruleId")
@@ -1172,10 +1093,7 @@ describe('POST - Review', () => {
           })
           it("should throw error, user cannot accept/reject reviews in colleciton ", async () => {
 
-            const res = await chai.request.execute(config.baseUrl)
-              .post(`/collections/${reference.testCollection.collectionId}/reviews`)
-              .set('Authorization', `Bearer ${iteration.token}`)
-              .send({
+            const res = await utils.executeRequest(`${config.baseUrl}/collections/${reference.testCollection.collectionId}/reviews`, 'POST', iteration.token, {
                 source: {
                   review: {
                     status: 'accepted'
@@ -1190,10 +1108,10 @@ describe('POST - Review', () => {
               })
 
             if(distinct.accessLevel < 3){
-              expect(res).to.have.status(403)
+              expect(res.status).to.eql(403)
               return
             }
-            expect(res).to.have.status(200)
+            expect(res.status).to.eql(200)
           })
         })
       })
@@ -1207,10 +1125,7 @@ describe('POST - Review', () => {
         })
 
         it('Import one or more Reviews from a JSON body new ruleId', async () => {
-          const res = await chai.request.execute(config.baseUrl)
-            .post(`/collections/${reference.testCollection.collectionId}/reviews/${reference.testAsset.assetId}`)
-            .set('Authorization', `Bearer ${iteration.token}`)
-            .send([
+          const res = await utils.executeRequest(`${config.baseUrl}/collections/${reference.testCollection.collectionId}/reviews/${reference.testAsset.assetId}`, 'POST', iteration.token, [
               {
               "ruleId": reference.testCollection.ruleId,
               "result": "pass",
@@ -1227,16 +1142,13 @@ describe('POST - Review', () => {
                 updated: 0
             }
           }
-          expect(res).to.have.status(200)
+          expect(res.status).to.eql(200)
           expect(res.body).to.be.an('object')
           expect(res.body).to.deep.equal(expectedResponse)
         })
         it("Import review for an asset, asset is read only for lvl1 user, expect rejection.", async () => {
 
-          const res = await chai.request.execute(config.baseUrl)
-            .post(`/collections/${reference.testCollection.collectionId}/reviews/${reference.testCollection.lvl1ReadOnlyAssetId}`)
-            .set('Authorization', `Bearer ${iteration.token}`)
-            .send([
+          const res = await utils.executeRequest(`${config.baseUrl}/collections/${reference.testCollection.collectionId}/reviews/${reference.testCollection.lvl1ReadOnlyAssetId}`, 'POST', iteration.token, [
               {
               "ruleId": reference.testCollection.ruleId,
               "result": "pass",
@@ -1247,7 +1159,7 @@ describe('POST - Review', () => {
               }
           ])
           
-          expect(res).to.have.status(200)
+          expect(res.status).to.eql(200)
           if(iteration.name == "lvl1"){
             expect(res.body.rejected).to.have.length(1)
             expect(res.body.rejected[0].reason).to.eql("no grant for this asset/ruleId")
@@ -1262,10 +1174,7 @@ describe('POST - Review', () => {
 
         })
         it('Import one or more Reviews from a JSON body already used ruleId should be an update', async () => {
-          const res = await chai.request.execute(config.baseUrl)
-            .post(`/collections/${reference.testCollection.collectionId}/reviews/${reference.testAsset.assetId}`)
-            .set('Authorization', `Bearer ${iteration.token}`)
-            .send([
+          const res = await utils.executeRequest(`${config.baseUrl}/collections/${reference.testCollection.collectionId}/reviews/${reference.testAsset.assetId}`, 'POST', iteration.token, [
               {
               "ruleId": `${reference.testCollection.ruleId}`,
               "result": "pass",
@@ -1282,15 +1191,12 @@ describe('POST - Review', () => {
                 updated: 1
             }
           }
-          expect(res).to.have.status(200)
+          expect(res.status).to.eql(200)
           expect(res.body).to.be.an('object')
           expect(res.body).to.deep.equal(expectedResponse)
         })
         it('Import reviews for asset in deleted collection and deleted asset', async () => {
-          const res = await chai.request.execute(config.baseUrl)
-            .post(`/collections/${deletedCollection}/reviews/${deletedAsset}`)
-            .set('Authorization', `Bearer ${iteration.token}`)
-            .send([
+          const res = await utils.executeRequest(`${config.baseUrl}/collections/${deletedCollection}/reviews/${deletedAsset}`, 'POST', iteration.token, [
               {
               "ruleId": `${reference.testCollection.ruleId}`,
               "result": "pass",
@@ -1300,13 +1206,10 @@ describe('POST - Review', () => {
               "status": "submitted"
               }
           ])
-          expect(res).to.have.status(403) 
+          expect(res.status).to.eql(403) 
         })
         it('Import reviews for asset in deleted collection', async () => {
-          const res = await chai.request.execute(config.baseUrl)
-            .post(`/collections/${deletedCollection}/reviews/${reference.testAsset.assetId}`)
-            .set('Authorization', `Bearer ${iteration.token}`)
-            .send([
+          const res = await utils.executeRequest(`${config.baseUrl}/collections/${deletedCollection}/reviews/${reference.testAsset.assetId}`, 'POST', iteration.token, [
               {
               "ruleId": `${reference.testCollection.ruleId}`,
               "result": "pass",
@@ -1316,13 +1219,10 @@ describe('POST - Review', () => {
               "status": "submitted"
               }
           ])
-          expect(res).to.have.status(403) 
+          expect(res.status).to.eql(403) 
         })
         it('Import reviews for deleted asset', async () => {
-          const res = await chai.request.execute(config.baseUrl)
-            .post(`/collections/${deletedCollection}/reviews/${reference.testAsset.assetId}`)
-            .set('Authorization', `Bearer ${iteration.token}`)
-            .send([
+          const res = await utils.executeRequest(`${config.baseUrl}/collections/${deletedCollection}/reviews/${reference.testAsset.assetId}`, 'POST', iteration.token, [
               {
               "ruleId": `${reference.testCollection.ruleId}`,
               "result": "pass",
@@ -1332,7 +1232,7 @@ describe('POST - Review', () => {
               "status": "submitted"
               }
           ])
-          expect(res).to.have.status(403) 
+          expect(res.status).to.eql(403) 
         })
       })
     })

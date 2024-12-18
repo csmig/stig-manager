@@ -1,11 +1,13 @@
 
-const { expect } = chai
 import {config } from '../../testConfig.js'
 import * as utils from '../../utils/testUtils.js'
 import reference from '../../referenceData.js'
 import {requestBodies} from "./requestBodies.js"
 import {iterations} from '../../iterations.js'
 import {expectations} from './expectations.js'
+import deepEqualInAnyOrder from 'deep-equal-in-any-order'
+import {use, expect} from 'chai'
+use(deepEqualInAnyOrder)
 
 describe('PUT - Collection', function () {
 
@@ -31,16 +33,13 @@ describe('PUT - Collection', function () {
         it('Set all properties of a Collection',async function () {
 
             const putRequest = requestBodies.replaceCollection
-            const res = await chai.request.execute(config.baseUrl)
-                .put(`/collections/${reference.testCollection.collectionId}?projection=grants&projection=owners&projection=statistics&projection=stigs&projection=assets`)
-                .set('Authorization', `Bearer ${iteration.token}`)
-                .send(putRequest)
+            const res = await utils.executeRequest(`${config.baseUrl}/collections/${reference.testCollection.collectionId}?projection=grants&projection=owners&projection=statistics&projection=stigs&projection=assets`, 'PUT', iteration.token, putRequest)
 
               if(distinct.canModifyCollection === false){
-                  expect(res).to.have.status(403)
+                  expect(res.status).to.eql(403)
                   return
               }
-              expect(res).to.have.status(200)
+              expect(res.status).to.eql(200)
 
               expect(res.body.description).to.equal("test")
               expect(res.body.name).to.equal("SetAllProperties")
@@ -86,15 +85,12 @@ describe('PUT - Collection', function () {
           const putRequest = JSON.parse(JSON.stringify(requestBodies.replaceCollection))
           putRequest.grants.push(putRequest.grants[0])
           putRequest.name = "TEST" + utils.getUUIDSubString()
-          const res = await chai.request.execute(config.baseUrl)
-              .put(`/collections/${reference.testCollection.collectionId}`)
-              .set('Authorization', `Bearer ${iteration.token}`)
-              .send(putRequest)
+          const res = await utils.executeRequest(`${config.baseUrl}/collections/${reference.testCollection.collectionId}`, 'PUT', iteration.token, putRequest)
             if(distinct.canModifyCollection === false){
-                expect(res).to.have.status(403)
+                expect(res.status).to.eql(403)
                 return
             }
-            expect(res).to.have.status(422)
+            expect(res.status).to.eql(422)
             expect(res.body.error).to.equal("Unprocessable Entity.")
             expect(res.body.detail).to.equal("Duplicate user in grant array")
         })
@@ -149,15 +145,12 @@ describe('PUT - Collection', function () {
                 ],
             }
       
-            const res = await chai.request.execute(config.baseUrl)
-                .put(`/collections/${reference.testCollection.collectionId}?projection=grants&projection=owners&projection=statistics&projection=stigs&projection=assets`)
-                .set('Authorization', `Bearer ${iteration.token}`)
-                .send(putRequest    )
+            const res = await utils.executeRequest(`${config.baseUrl}/collections/${reference.testCollection.collectionId}?projection=grants&projection=owners&projection=statistics&projection=stigs&projection=assets`, 'PUT', iteration.token, putRequest)
             if(distinct.canModifyCollection === false){ 
-              expect(res).to.have.status(403)
+              expect(res.status).to.eql(403)
               return
             } 
-            expect(res).to.have.status(200)
+            expect(res.status).to.eql(200)
             expect(res.body.description).to.equal("hellodescription")
             expect(res.body.name).to.equal("TestPutCollection")
             expect(res.body.settings.fields.detail.enabled).to.equal(putRequest.settings.fields.detail.enabled)
@@ -200,16 +193,13 @@ describe('PUT - Collection', function () {
                 [reference.testCollection.metadataKey]: reference.testCollection.metadataValue
             }
 
-            const res = await chai.request.execute(config.baseUrl)
-                .put(`/collections/${reference.testCollection.collectionId}/metadata`)
-                .set('Authorization', `Bearer ${iteration.token}`)
-                .send(putRequest)
+            const res = await utils.executeRequest(`${config.baseUrl}/collections/${reference.testCollection.collectionId}/metadata`, 'PUT', iteration.token, putRequest)
 
               if(distinct.canModifyCollection === false){
-                expect(res).to.have.status(403)
+                expect(res.status).to.eql(403)
                 return
               }
-              expect(res).to.have.status(200)
+              expect(res.status).to.eql(200)
             expect(res.body[reference.testCollection.metadataKey]).to.equal(reference.testCollection.metadataValue)
         })
       })
@@ -217,17 +207,13 @@ describe('PUT - Collection', function () {
       describe('putCollectionMetadataValue - /collections/{collectionId}/metadata/keys/{key}', function () {
 
         it('Set one metadata key/value of a Collection',async function () {
-          const res = await chai.request.execute(config.baseUrl)
-            .put(`/collections/${reference.testCollection.collectionId}/metadata/keys/${reference.testCollection.collectionMetadataKey}`)
-            .set('Authorization', `Bearer ${iteration.token}`)
-            .set('Content-Type', 'application/json') 
-            .send(`${JSON.stringify(reference.testCollection.collectionMetadataValue)}`)
+          const res = await utils.executeRequest(`${config.baseUrl}/collections/${reference.testCollection.collectionId}/metadata/keys/${reference.testCollection.collectionMetadataKey}`, 'PUT', iteration.token, `${JSON.stringify(reference.testCollection.collectionMetadataValue)}`)
 
           if(distinct.canModifyCollection === false){
-            expect(res).to.have.status(403)
+            expect(res.status).to.eql(403)
             return
           }
-          expect(res).to.have.status(204)
+          expect(res.status).to.eql(204)
         })
       })
 
@@ -239,18 +225,15 @@ describe('PUT - Collection', function () {
 
         it("should replace access level and keep the same user in the test group in the test colleciton, not elevated", async function () {
           
-          const res = await chai.request.execute(config.baseUrl)
-          .put(`/collections/${reference.testCollection.collectionId}/grants/${reference.testCollection.testGroup.testCollectionGrantId}`)
-          .set('Authorization', `Bearer ${iteration.token}`)
-          .send({
+          const res = await utils.executeRequest(`${config.baseUrl}/collections/${reference.testCollection.collectionId}/grants/${reference.testCollection.testGroup.testCollectionGrantId}`, 'PUT', iteration.token, {
             "userGroupId": reference.testCollection.testGroup.userGroupId,
             "accessLevel": 2
           })
           if(distinct.canModifyCollection === false){
-            expect(res).to.have.status(403)
+            expect(res.status).to.eql(403)
             return
           }
-          expect(res).to.have.status(200)
+          expect(res.status).to.eql(200)
           expect(res.body.userGroup.userGroupId).to.equal(reference.testCollection.testGroup.userGroupId)
           expect(res.body.accessLevel).to.equal(2)
           expect(res.body.grantId).to.equal(reference.testCollection.testGroup.testCollectionGrantId)
@@ -258,53 +241,44 @@ describe('PUT - Collection', function () {
 
         it("should replace access level and user of the test group grant id in the test colleciton,  elevated only stigmanadmin success", async function () {
 
-          const res = await chai.request.execute(config.baseUrl)
-          .put(`/collections/${reference.testCollection.collectionId}/grants/${reference.testCollection.testGroup.testCollectionGrantId}?elevate=true`)
-          .set('Authorization', `Bearer ${iteration.token}`)
-          .send({
+          const res = await utils.executeRequest(`${config.baseUrl}/collections/${reference.testCollection.collectionId}/grants/${reference.testCollection.testGroup.testCollectionGrantId}?elevate=true`, 'PUT', iteration.token, {
             "userId": reference.wfTest.userId,
             "accessLevel": 1
           })
           if(iteration.name !== "stigmanadmin"){
-            expect(res).to.have.status(403)
+            expect(res.status).to.eql(403)
             return
           }
-          expect(res).to.have.status(200)
+          expect(res.status).to.eql(200)
           expect(res.body.user.userId).to.equal(reference.wfTest.userId)
           expect(res.body.grantId).to.equal(reference.testCollection.testGroup.testCollectionGrantId)
         })
 
         it("should throw error, the user does not have grant to the collection ", async function () {
 
-          const res = await chai.request.execute(config.baseUrl)
-          .put(`/collections/${reference.scrapCollection.collectionId}/grants/${reference.testCollection.testGroup.testCollectionGrantId}`)
-          .set('Authorization', `Bearer ${iteration.token}`)
-          .send({
+          const res = await utils.executeRequest(`${config.baseUrl}/collections/${reference.scrapCollection.collectionId}/grants/${reference.testCollection.testGroup.testCollectionGrantId}`, 'PUT', iteration.token, {
             "userId": reference.lvl1User.userId,
             "accessLevel": 1
           })
           if(distinct.canModifyCollection === false){
-            expect(res).to.have.status(403)
+            expect(res.status).to.eql(403)
             return
           }
-          expect(res).to.have.status(404)
+          expect(res.status).to.eql(404)
         })
       })
 
       it("should throw error, the user has < 4 access level and is attempting to modified an existing owners grant. ", async function () {
 
-        const res = await chai.request.execute(config.baseUrl)
-        .put(`/collections/${reference.testCollection.collectionId}/grants/${reference.adminBurke.testCollectionGrantId}`)
-        .set('Authorization', `Bearer ${iterations[1].token}`)
-        .send({
+        const res = await utils.executeRequest(`${config.baseUrl}/collections/${reference.testCollection.collectionId}/grants/${reference.adminBurke.testCollectionGrantId}`, 'PUT', iterations[1].token, {
           "userId": reference.adminBurke.userId,
           "accessLevel": 2
         })
         if(distinct.accessLevel !== 4){
-          expect(res).to.have.status(403)
+          expect(res.status).to.eql(403)
           return
         }
-        expect(res).to.have.status(403)
+        expect(res.status).to.eql(403)
       })
 
       describe('putAclRulesByCollectionGrant - /collections/{collectionId}/grants/{grantId}/acl', function () {
@@ -315,16 +289,13 @@ describe('PUT - Collection', function () {
 
         it('Set all ACL rules of a Collection',async function () {
 
-            const res = await chai.request.execute(config.baseUrl)
-                .put(`/collections/${reference.testCollection.collectionId}/grants/${reference.testCollection.testGroup.testCollectionGrantId}/acl`)
-                .set('Authorization', `Bearer ${iteration.token}`)
-                .send(requestBodies.putGroupAcl)
+            const res = await utils.executeRequest(`${config.baseUrl}/collections/${reference.testCollection.collectionId}/grants/${reference.testCollection.testGroup.testCollectionGrantId}/acl`, 'PUT', iteration.token, requestBodies.putGroupAcl)
 
             if(distinct.canModifyCollection === false){
-              expect(res).to.have.status(403)
+              expect(res.status).to.eql(403)
               return
             }
-            expect(res).to.have.status(200)
+            expect(res.status).to.eql(200)
             expect(res.body.defaultAccess).to.equal(reference.testCollection.testGroup.defaultAccess)
             expect(res.body.acl).to.be.lengthOf(2)
             for(const item of res.body.acl){
@@ -341,24 +312,18 @@ describe('PUT - Collection', function () {
 
         it("should throw 422 error, because groupId does not exist. ", async function () {
 
-          const res = await chai.request.execute(config.baseUrl)
-          .put(`/collections/${reference.testCollection.collectionId}/grants/${"1234321"}/acl`)
-              .set('Authorization', `Bearer ${iteration.token}`)
-              .send(requestBodies.putGroupAcl)
+          const res = await utils.executeRequest(`${config.baseUrl}/collections/${reference.testCollection.collectionId}/grants/${"1234321"}/acl`, 'PUT', iteration.token, requestBodies.putGroupAcl)
           if(distinct.canModifyCollection === false){
-            expect(res).to.have.status(403)
+            expect(res.status).to.eql(403)
             return
           }
-          expect(res).to.have.status(404)
+          expect(res.status).to.eql(404)
         })
 
         it("Should throw 403 because collectionId does not exist", async function () {
 
-          const res = await chai.request.execute(config.baseUrl)
-          .put(`/collections/${1234321}/grants/${reference.testCollection.testGroup.testCollectionGrantId}/acl`)
-            .set('Authorization', `Bearer ${iteration.token}`)
-            .send(requestBodies.putGroupAcl)
-          expect(res).to.have.status(403)
+          const res = await utils.executeRequest(`${config.baseUrl}/collections/${1234321}/grants/${reference.testCollection.testGroup.testCollectionGrantId}/acl`, 'PUT', iteration.token, requestBodies.putGroupAcl)
+          expect(res.status).to.eql(403)
         })
       })
     })

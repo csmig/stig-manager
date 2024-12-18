@@ -12,7 +12,7 @@ usage() {
   exit 
 }
 
-DEFAULT_COMMAND="npx mocha --reporter mochawesome --no-timeouts --showFailed --exit --require ./setup.js"
+DEFAULT_COMMAND="npx mocha --reporter mochawesome --no-timeouts --showFailed --exit"
 COMMAND=$DEFAULT_COMMAND
 COVERAGE=false
 GREP=()
@@ -103,7 +103,7 @@ coverage() {
     // Wait for the API to start
     setTimeout(() => {
       console.log('Running Mocha tests...')
-      const tests = spawn('mocha', ['*/**/*.test.js', '--no-timeouts', '--require', './test/api/setup.js', '--ignore', '*/**/node_modules/**/*', '--recursive', '--ignore', './node_modules/**'], { stdio: 'inherit'})
+      const tests = spawn('mocha', ['*/**/*.test.js', '--no-timeouts', '--ignore', '*/**/node_modules/**/*', '--recursive', '--ignore', './node_modules/**'], { stdio: 'inherit'})
 
       tests.on('close', (code) => {
         console.log('Tests finished. Stopping server...')

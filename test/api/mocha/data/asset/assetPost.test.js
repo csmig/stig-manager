@@ -1,12 +1,11 @@
 
-const { expect } = chai
 import {config } from '../../testConfig.js'
 import * as utils from '../../utils/testUtils.js'
 import reference from '../../referenceData.js'
 import {requestBodies} from "./requestBodies.js"
 import {iterations} from '../../iterations.js'
 import {expectations} from './expectations.js'
-
+import { expect } from 'chai'
 
 
 describe('POST - Asset', function () {
@@ -19,10 +18,7 @@ describe('POST - Asset', function () {
       const distinct = expectations[iteration.name]
       describe(`createAsset - /assets`, function () {
         it('Create an Asset (with statusStats and stigs projection', async function () {
-          const res = await chai.request.execute(config.baseUrl)
-            .post('/assets?projection=statusStats&projection=stigs')
-            .set('Authorization', 'Bearer ' + iteration.token)
-            .send({
+          const res = await utils.executeRequest(`${config.baseUrl}/assets?projection=statusStats&projection=stigs`, 'POST', iteration.token, {
               name: 'TestAsset' + utils.getUUIDSubString(10),
               collectionId: reference.testCollection.collectionId,
               description: 'test',
@@ -39,10 +35,10 @@ describe('POST - Asset', function () {
             })
           
             if(!distinct.canModifyCollection){
-              expect(res).to.have.status(403)
+              expect(res.status).to.eql(403)
               return
             }
-            expect(res).to.have.status(201)
+            expect(res.status).to.eql(201)
             
             expect(res.body.collection.collectionId).to.equal(reference.testCollection.collectionId)
             expect(res.body.name).to.be.a('string')
@@ -70,10 +66,7 @@ describe('POST - Asset', function () {
         })
         it('should fail, duplicate asset name', async function () {
 
-          const res = await chai.request.execute(config.baseUrl)
-            .post('/assets')
-            .set('Authorization', 'Bearer ' + iteration.token)
-            .send({
+          const res = await utils.executeRequest(`${config.baseUrl}/assets`, 'POST', iteration.token, {
               name: reference.testAsset.name,
               collectionId: reference.testCollection.collectionId,
               description: 'test',
@@ -86,16 +79,13 @@ describe('POST - Asset', function () {
               stigs: reference.testCollection.validStigs
           })
           if(!distinct.canModifyCollection){
-            expect(res).to.have.status(403)
+            expect(res.status).to.eql(403)
             return
           }
-          expect(res).to.have.status(422)
+          expect(res.status).to.eql(422)
         })
         it('Create an Asset', async function () {
-          const res = await chai.request.execute(config.baseUrl)
-            .post('/assets')
-            .set('Authorization', 'Bearer ' + iteration.token)
-            .send({
+          const res = await utils.executeRequest(`${config.baseUrl}/assets`, 'POST', iteration.token, {
               name: 'TestAsset' + utils.getUUIDSubString(10),
               collectionId: reference.testCollection.collectionId,
               description: 'test',
@@ -112,10 +102,10 @@ describe('POST - Asset', function () {
             })
           
           if(!distinct.canModifyCollection){
-            expect(res).to.have.status(403)
+            expect(res.status).to.eql(403)
             return
           }
-          expect(res).to.have.status(201)         
+          expect(res.status).to.eql(201)         
         })
       })
     })

@@ -1,10 +1,12 @@
 
-const { expect } = chai
 import {config } from '../../testConfig.js'
 import * as utils from '../../utils/testUtils.js'
 import reference from '../../referenceData.js'
 import {iterations} from '../../iterations.js'
 import { metaMetrics } from './metaMetricsGet.js'
+import deepEqualInAnyOrder from 'deep-equal-in-any-order'
+import {use, expect} from 'chai'
+use(deepEqualInAnyOrder)
  
 describe('GET - MetaMetrics', function () { 
   before(async function () {
@@ -25,12 +27,10 @@ describe('GET - MetaMetrics', function () {
 
             it('meta metrics detail - no agg - no params', async function () {
                
-                const res = await chai.request.execute(config.baseUrl)
-                    .get('/collections/meta/metrics/detail')
-                    .set('Authorization', `Bearer ${iteration.token}`)
+                const res = await utils.executeRequest(`${config.baseUrl}/collections/meta/metrics/detail`, 'GET', iteration.token)
                 const expectedData = metaMetrics[this.test.title]
                 console.log(this.test.title)
-                expect(res).to.have.status(200)
+                expect(res.status).to.eql(200)
 
                 if(iteration.name === "lvl1"){
                     expect(res.body).to.deep.equalInAnyOrder(expectedData["lvl1"])
@@ -54,11 +54,9 @@ describe('GET - MetaMetrics', function () {
             })
             it('meta metrics detail - no agg - coll param', async function () {
            
-                const res = await chai.request.execute(config.baseUrl)
-                    .get(`/collections/meta/metrics/detail?collectionId=${reference.testCollection.collectionId}`)
-                    .set('Authorization', `Bearer ${iteration.token}`)
+                const res = await utils.executeRequest(`${config.baseUrl}/collections/meta/metrics/detail?collectionId=${reference.testCollection.collectionId}`, 'GET', iteration.token)
                 const expectedData = metaMetrics[this.test.title]
-                expect(res).to.have.status(200)
+                expect(res.status).to.eql(200)
                 if(iteration.name === 'lvl1'){
                     expect(res.body).to.deep.equalInAnyOrder(expectedData['lvl1'])
                 }
@@ -77,11 +75,9 @@ describe('GET - MetaMetrics', function () {
             })
             it('meta metrics detail - no agg - bench param', async function () {
 
-                const res = await chai.request.execute(config.baseUrl)
-                    .get(`/collections/meta/metrics/detail?benchmarkId=${reference.benchmark}`)
-                    .set('Authorization', `Bearer ${iteration.token}`)
+                const res = await utils.executeRequest(`${config.baseUrl}/collections/meta/metrics/detail?benchmarkId=${reference.benchmark}`, 'GET', iteration.token)
                 const expectedData = metaMetrics[this.test.title]
-                expect(res).to.have.status(200)
+                expect(res.status).to.eql(200)
                 if(iteration.name === 'lvl1'){
                     expect(res.body).to.deep.equalInAnyOrder(expectedData['lvl1'])
                 }
@@ -103,11 +99,9 @@ describe('GET - MetaMetrics', function () {
 
             it('meta metrics detail - agg by collection - no params', async function () { 
                
-                const res = await chai.request.execute(config.baseUrl)
-                    .get('/collections/meta/metrics/detail/collection')
-                    .set('Authorization', `Bearer ${iteration.token}`)
+                const res = await utils.executeRequest(`${config.baseUrl}/collections/meta/metrics/detail/collection`, 'GET', iteration.token)
                 const expectedData = metaMetrics[this.test.title]
-                expect(res).to.have.status(200)
+                expect(res.status).to.eql(200)
                 if(iteration.name === 'lvl1'){
                     expect(res.body).to.deep.equalInAnyOrder(expectedData['lvl1'])
                 }
@@ -125,11 +119,9 @@ describe('GET - MetaMetrics', function () {
             })
             it('meta metrics detail - collection agg - coll param', async function () { 
                
-                const res = await chai.request.execute(config.baseUrl)
-                    .get(`/collections/meta/metrics/detail/collection?collectionId=${reference.testCollection.collectionId}`)
-                    .set('Authorization', `Bearer ${iteration.token}`)
+                const res = await utils.executeRequest(`${config.baseUrl}/collections/meta/metrics/detail/collection?collectionId=${reference.testCollection.collectionId}`, 'GET', iteration.token)
                 const expectedData = metaMetrics[this.test.title]
-                expect(res).to.have.status(200)
+                expect(res.status).to.eql(200)
                 if(iteration.name === 'lvl1'){
                     expect(res.body).to.deep.equalInAnyOrder(expectedData['lvl1'])
                 }
@@ -147,11 +139,9 @@ describe('GET - MetaMetrics', function () {
             })
             it('meta metrics detail - collection agg - bench param', async function () { 
                 
-                const res = await chai.request.execute(config.baseUrl)
-                    .get(`/collections/meta/metrics/detail/collection?benchmarkId=${reference.benchmark}`)
-                    .set('Authorization', `Bearer ${iteration.token}`)
+                const res = await utils.executeRequest(`${config.baseUrl}/collections/meta/metrics/detail/collection?benchmarkId=${reference.benchmark}`, 'GET', iteration.token)
                 const expectedData = metaMetrics[this.test.title]
-                expect(res).to.have.status(200)
+                expect(res.status).to.eql(200)
                 if(iteration.name === 'lvl1'){
                     expect(res.body).to.deep.equalInAnyOrder(expectedData['lvl1'])
                 }
@@ -169,11 +159,9 @@ describe('GET - MetaMetrics', function () {
             })
             it('meta metrics detail - collection agg - rev param', async function () { 
        
-                const res = await chai.request.execute(config.baseUrl)
-                    .get(`/collections/meta/metrics/detail/collection?revisionId=${'VPN_SRG_TEST-1-1'}`)
-                    .set('Authorization', `Bearer ${iteration.token}`)
+                const res = await utils.executeRequest(`${config.baseUrl}/collections/meta/metrics/detail/collection?revisionId=${'VPN_SRG_TEST-1-1'}`, 'GET', iteration.token)
                 const expectedData = metaMetrics[this.test.title]
-                expect(res).to.have.status(200)
+                expect(res.status).to.eql(200)
                 if(iteration.name === 'lvl1'){
                     expect(res.body).to.deep.equalInAnyOrder(expectedData['lvl1'])
                 }
@@ -195,11 +183,9 @@ describe('GET - MetaMetrics', function () {
 
             it('meta metrics detail - stig agg - no params', async function () {
               
-                const res = await chai.request.execute(config.baseUrl)
-                    .get('/collections/meta/metrics/detail/stig')
-                    .set('Authorization', `Bearer ${iteration.token}`)
+                const res = await utils.executeRequest(`${config.baseUrl}/collections/meta/metrics/detail/stig`, 'GET', iteration.token)
                 const expectedData = metaMetrics[this.test.title]
-                expect(res).to.have.status(200)
+                expect(res.status).to.eql(200)
                 if(iteration.name === 'lvl1'){
                     expect(res.body).to.deep.equalInAnyOrder(expectedData['lvl1'])
                 }
@@ -217,11 +203,9 @@ describe('GET - MetaMetrics', function () {
             })
             it('meta metrics detail - stig agg - coll param', async function () {
                
-                const res = await chai.request.execute(config.baseUrl)
-                    .get(`/collections/meta/metrics/detail/stig?collectionId=${reference.testCollection.collectionId}`)
-                    .set('Authorization', `Bearer ${iteration.token}`)
+                const res = await utils.executeRequest(`${config.baseUrl}/collections/meta/metrics/detail/stig?collectionId=${reference.testCollection.collectionId}`, 'GET', iteration.token)
                 const expectedData = metaMetrics[this.test.title]
-                expect(res).to.have.status(200)
+                expect(res.status).to.eql(200)
                 if(iteration.name === 'lvl1'){
                     expect(res.body).to.deep.equalInAnyOrder(expectedData['lvl1'])
                 }
@@ -239,11 +223,9 @@ describe('GET - MetaMetrics', function () {
             })
             it('meta metrics detail - stig agg - bench param', async function () {
               
-                const res = await chai.request.execute(config.baseUrl)
-                    .get(`/collections/meta/metrics/detail/stig?benchmarkId=${reference.benchmark}`)
-                    .set('Authorization', `Bearer ${iteration.token}`)
+                const res = await utils.executeRequest(`${config.baseUrl}/collections/meta/metrics/detail/stig?benchmarkId=${reference.benchmark}`, 'GET', iteration.token)
                 const expectedData = metaMetrics[this.test.title]
-                expect(res).to.have.status(200)
+                expect(res.status).to.eql(200)
                 if(iteration.name === 'lvl1'){
                     expect(res.body).to.deep.equalInAnyOrder(expectedData['lvl1'])
                 }
@@ -265,11 +247,9 @@ describe('GET - MetaMetrics', function () {
 
             it('meta metrics summary- no agg - no params', async function () {
               
-                const res = await chai.request.execute(config.baseUrl)
-                    .get('/collections/meta/metrics/summary')
-                    .set('Authorization', `Bearer ${iteration.token}`)
+                const res = await utils.executeRequest(`${config.baseUrl}/collections/meta/metrics/summary`, 'GET', iteration.token)
                 const expectedData = metaMetrics[this.test.title]
-                expect(res).to.have.status(200)
+                expect(res.status).to.eql(200)
                 if(iteration.name === 'lvl1'){
                     expect(res.body).to.deep.equalInAnyOrder(expectedData['lvl1'])
                 }
@@ -287,11 +267,9 @@ describe('GET - MetaMetrics', function () {
             })
             it('meta metrics summary - no agg - collectionId param', async function () {
               
-                const res = await chai.request.execute(config.baseUrl)
-                    .get(`/collections/meta/metrics/summary?collectionId=${reference.testCollection.collectionId}`)
-                    .set('Authorization', `Bearer ${iteration.token}`)
+                const res = await utils.executeRequest(`${config.baseUrl}/collections/meta/metrics/summary?collectionId=${reference.testCollection.collectionId}`, 'GET', iteration.token)
                 const expectedData = metaMetrics[this.test.title]
-                expect(res).to.have.status(200)
+                expect(res.status).to.eql(200)
                 if(iteration.name === 'lvl1'){
                     expect(res.body).to.deep.equalInAnyOrder(expectedData['lvl1'])
                 }
@@ -309,11 +287,9 @@ describe('GET - MetaMetrics', function () {
             })
             it('meta metrics summary - no agg - benchmark param', async function () {
             
-                const res = await chai.request.execute(config.baseUrl)
-                    .get(`/collections/meta/metrics/summary?benchmarkId=${reference.benchmark}`)
-                    .set('Authorization', `Bearer ${iteration.token}`)
+                const res = await utils.executeRequest(`${config.baseUrl}/collections/meta/metrics/summary?benchmarkId=${reference.benchmark}`, 'GET', iteration.token)
                 const expectedData = metaMetrics[this.test.title]
-                expect(res).to.have.status(200)
+                expect(res.status).to.eql(200)
                 if(iteration.name === 'lvl1'){
                     expect(res.body).to.deep.equalInAnyOrder(expectedData['lvl1'])
                 }
@@ -335,11 +311,9 @@ describe('GET - MetaMetrics', function () {
             
             it('Return meta metrics summary - collection agg - no params Copy', async function () {
                   
-                const res = await chai.request.execute(config.baseUrl)
-                    .get('/collections/meta/metrics/summary/collection')
-                    .set('Authorization', `Bearer ${iteration.token}`)
+                const res = await utils.executeRequest(`${config.baseUrl}/collections/meta/metrics/summary/collection`, 'GET', iteration.token)
                 const expectedData = metaMetrics[this.test.title]
-                expect(res).to.have.status(200)
+                expect(res.status).to.eql(200)
                 if(iteration.name === 'lvl1'){
                     expect(res.body).to.deep.equalInAnyOrder(expectedData['lvl1'])
                 }
@@ -357,11 +331,9 @@ describe('GET - MetaMetrics', function () {
             })
             it('Return meta metrics summary - collection agg - collection param', async function () {
                 
-                const res = await chai.request.execute(config.baseUrl)
-                    .get(`/collections/meta/metrics/summary/collection?collectionId=${reference.testCollection.collectionId}`)
-                    .set('Authorization', `Bearer ${iteration.token}`)
+                const res = await utils.executeRequest(`${config.baseUrl}/collections/meta/metrics/summary/collection?collectionId=${reference.testCollection.collectionId}`, 'GET', iteration.token)
                 const expectedData = metaMetrics[this.test.title]
-                expect(res).to.have.status(200)
+                expect(res.status).to.eql(200)
                 if(iteration.name === 'lvl1'){
                     expect(res.body).to.deep.equalInAnyOrder(expectedData['lvl1'])
                 }
@@ -379,11 +351,9 @@ describe('GET - MetaMetrics', function () {
             })
             it('Return meta metrics summary - collection agg - benchmark param', async function () {
               
-                const res = await chai.request.execute(config.baseUrl)
-                    .get(`/collections/meta/metrics/summary/collection?benchmarkId=${reference.benchmark}`)
-                    .set('Authorization', `Bearer ${iteration.token}`)
+                const res = await utils.executeRequest(`${config.baseUrl}/collections/meta/metrics/summary/collection?benchmarkId=${reference.benchmark}`, 'GET', iteration.token)
                 const expectedData = metaMetrics[this.test.title]
-                expect(res).to.have.status(200)
+                expect(res.status).to.eql(200)
                 if(iteration.name === 'lvl1'){
                     expect(res.body).to.deep.equalInAnyOrder(expectedData['lvl1'])
                 }
@@ -401,11 +371,9 @@ describe('GET - MetaMetrics', function () {
             })
             it('Return meta metrics summary - collection agg - rev param', async function () {
               
-                const res = await chai.request.execute(config.baseUrl)
-                    .get(`/collections/meta/metrics/summary/collection?revisionId=${'VPN_SRG_TEST'}-1-0`)
-                    .set('Authorization', `Bearer ${iteration.token}`)
+                const res = await utils.executeRequest(`${config.baseUrl}/collections/meta/metrics/summary/collection?revisionId=${'VPN_SRG_TEST'}-1-0`, 'GET', iteration.token)
                 const expectedData = metaMetrics[this.test.title]
-                expect(res).to.have.status(200)
+                expect(res.status).to.eql(200)
                 if(iteration.name === 'lvl1'){
                     expect(res.body).to.deep.equalInAnyOrder(expectedData['lvl1'])
                 }
@@ -423,11 +391,9 @@ describe('GET - MetaMetrics', function () {
             })
             it('Return meta metrics summary - collection agg - rev param Copy', async function () {
               
-                const res = await chai.request.execute(config.baseUrl)
-                    .get(`/collections/meta/metrics/summary/collection?revisionId=${'VPN_SRG_TEST'}-1-1`)
-                    .set('Authorization', `Bearer ${iteration.token}`)
+                const res = await utils.executeRequest(`${config.baseUrl}/collections/meta/metrics/summary/collection?revisionId=${'VPN_SRG_TEST'}-1-1`, 'GET', iteration.token)
                 const expectedData = metaMetrics[this.test.title]
-                expect(res).to.have.status(200)
+                expect(res.status).to.eql(200)
                 if(iteration.name === 'lvl1'){
                     expect(res.body).to.deep.equalInAnyOrder(expectedData['lvl1'])
                 }
@@ -449,11 +415,9 @@ describe('GET - MetaMetrics', function () {
 
             it('Return meta metrics summary - stig agg - no params', async function () {  
                
-                const res = await chai.request.execute(config.baseUrl)
-                    .get('/collections/meta/metrics/summary/stig')
-                    .set('Authorization', `Bearer ${iteration.token}`)
+                const res = await utils.executeRequest(`${config.baseUrl}/collections/meta/metrics/summary/stig`, 'GET', iteration.token)
                 const expectedData = metaMetrics[this.test.title]
-                expect(res).to.have.status(200)
+                expect(res.status).to.eql(200)
                 if(iteration.name === 'lvl1'){
                     expect(res.body).to.deep.equalInAnyOrder(expectedData['lvl1'])
                 }
@@ -466,16 +430,14 @@ describe('GET - MetaMetrics', function () {
                 }
                 else 
                 {
-                    expect(res.body).to.deep.equalInAnyOrder(expectedData['lvl3lvl4'])
+                    expect(res.body). to.deep.equalInAnyOrder(expectedData['lvl3lvl4'])
                 }
             })
             it('Return meta metrics summary - stig agg - collection param', async function () {  
               
-                const res = await chai.request.execute(config.baseUrl)
-                    .get(`/collections/meta/metrics/summary/stig?collectionId=${reference.testCollection.collectionId}`)
-                    .set('Authorization', `Bearer ${iteration.token}`)
+                const res = await utils.executeRequest(`${config.baseUrl}/collections/meta/metrics/summary/stig?collectionId=${reference.testCollection.collectionId}`, 'GET', iteration.token)
                 const expectedData = metaMetrics[this.test.title]
-                expect(res).to.have.status(200)
+                expect(res.status).to.eql(200)
                 if(iteration.name === 'lvl1'){
                     expect(res.body).to.deep.equalInAnyOrder(expectedData['lvl1'])
                 }
@@ -493,11 +455,9 @@ describe('GET - MetaMetrics', function () {
             })
             it('Return meta metrics summary - stig agg - benchmark param', async function () {  
               
-                const res = await chai.request.execute(config.baseUrl)
-                    .get(`/collections/meta/metrics/summary/stig?benchmarkId=${reference.benchmark}`)
-                    .set('Authorization', `Bearer ${iteration.token}`)
+                const res = await utils.executeRequest(`${config.baseUrl}/collections/meta/metrics/summary/stig?benchmarkId=${reference.benchmark}`, 'GET', iteration.token)
                 const expectedData = metaMetrics[this.test.title]
-                expect(res).to.have.status(200)
+                expect(res.status).to.eql(200)
                 if(iteration.name === 'lvl1'){
                     expect(res.body).to.deep.equalInAnyOrder(expectedData['lvl1'])
                 }
@@ -515,11 +475,9 @@ describe('GET - MetaMetrics', function () {
             })
             it('Return meta metrics summary - stig agg - benchmark param and collection param', async function () {  
                
-                const res = await chai.request.execute(config.baseUrl)
-                    .get(`/collections/meta/metrics/summary/stig?benchmarkId=${reference.benchmark}&collectionId=${reference.testCollection.collectionId}`)
-                    .set('Authorization', `Bearer ${iteration.token}`)
+                const res = await utils.executeRequest(`${config.baseUrl}/collections/meta/metrics/summary/stig?benchmarkId=${reference.benchmark}&collectionId=${reference.testCollection.collectionId}`, 'GET', iteration.token)
                 const expectedData = metaMetrics[this.test.title]
-                expect(res).to.have.status(200)
+                expect(res.status).to.eql(200)
                 if(iteration.name === 'lvl1'){
                     expect(res.body).to.deep.equalInAnyOrder(expectedData['lvl1'])
                 }
