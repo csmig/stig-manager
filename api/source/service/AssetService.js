@@ -1290,7 +1290,7 @@ exports.getAssets = async function({filter, projections, grant}) {
   })
 }
 
-exports.getStigsByAsset = async function ({assetId, grant}) {
+exports.getStigsByAssetSlow = async function ({assetId, grant}) {
   const ctes = []
   const columns = [
     'distinct sa.benchmarkId', 
@@ -1320,6 +1320,50 @@ exports.getStigsByAsset = async function ({assetId, grant}) {
   const sql = dbUtils.makeQueryString({ctes, columns, joins, predicates, orderBy, format: true})
   let [rows] = await dbUtils.pool.query(sql)
   return (rows)
+}
+
+exports.getStigsByAsset = async function ({assetId, grant}) {
+
+  const connection = await dbUtils.pool.getConnection()
+  try{
+    const ctes = []
+    const columns = [
+      'distinct sa.benchmarkId', 
+      `concat('V', rev.version, 'R', rev.release) as revisionStr`, 
+      `date_format(rev.benchmarkDateSql,'%Y-%m-%d') as revisionDate`,
+      'rev.ruleCount as ruleCount'
+    ]
+    const joins = [
+      'asset a',
+      'left join collection c on a.collectionId = c.collectionId',
+      'inner join stig_asset_map sa on a.assetId = sa.assetId',
+      'left join default_rev dr on (sa.benchmarkId = dr.benchmarkId and a.collectionId = dr.collectionId)',
+      'left join revision rev on dr.revId = rev.revId'
+    ]
+    if (grant.accessLevel === 1) {
+      //ctes.push(dbUtils.cteAclEffective({cgIds: grant.grantIds}))
+      await dbUtils.cteAclEffective3({cgIds: grant.grantIds, connection: connection})
+      joins.push('inner join cteAclEffective cae on sa.saId = cae.saId')
+    }
+  
+    // PREDICATES
+    const predicates = {
+      statements: ['a.assetId = ?'],
+      binds: [assetId]
+    }
+    const orderBy = ['sa.benchmarkId']
+  
+    const sql = dbUtils.makeQueryString({ctes, columns, joins, predicates, orderBy, format: true})
+    let [rows] = await connection.query(sql)
+    return (rows)
+  }
+  catch (err) {
+    throw err
+  }
+  finally {
+    connection.release()
+  }
+
 }
 
 exports.getChecklistByAssetStig = async function(assetId, benchmarkId, revisionStr, format) {
