@@ -294,7 +294,7 @@ module.exports.getUserAssetStigAccess3 = async function ({
         stig_asset_map sa
         ${
           grant.accessLevel === 1 ? 'INNER' : 'LEFT'
-        } JOIN TempAclEffective ae USING (saId)
+        } JOIN cteAclEffective ae USING (saId)
       WHERE 
         sa.assetId = ? AND sa.benchmarkId = ?;
     `
@@ -900,9 +900,9 @@ module.exports.cteAclEffective3 = async function ({
   
   try{ 
     await connection.query(createAclRulesSQL, cgIds)
-    await connection.query(effective, cgIds)
     await connection.query(indexSQLs[0])
     await connection.query(indexSQLs[1])
+    await connection.query(effective, cgIds)
     await connection.query(indexSQLs[2])
     await connection.query(indexSQLs[3])
   }
