@@ -743,7 +743,7 @@ where
 	cga.grantId in (${inClause})
 ),
 cteAclRulesRanked as (
-    select${includeColumnCollectionId ? ' collectionId,' : ''}
+    select /*+ NO_MERGE() */ ${includeColumnCollectionId ? ' collectionId,' : ''}
 		saId,
     access,
 		row_number() over (partition by saId order by specificity desc, access asc) as rn
