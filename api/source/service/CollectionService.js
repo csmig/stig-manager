@@ -2524,11 +2524,11 @@ from
 	inner join asset a on sa.assetId = a.assetId and a.state = 'enabled' and cg.collectionId = a.collectionId
 where
 	cga.grantId in (
-		select jt.grantId from cteGrantees left join json_table (cteGrantees.grantIds, '$[*]' COLUMNS (grantId INT PATH '$')) jt on true
+		select /*+ NO_MERGE() */ jt.grantId from cteGrantees left join json_table (cteGrantees.grantIds, '$[*]' COLUMNS (grantId INT PATH '$')) jt on true
 	)
 ),
 cteAclRulesRanked as (
-    select
+    select /*+ NO_MERGE() */
 		saId,
         access,
         asset,
@@ -2538,7 +2538,7 @@ cteAclRulesRanked as (
 		row_number() over (partition by saId order by specificity desc, access asc) as rn
 	from 
 		cteAclRules)
-select access, asset, benchmarkId, aclSources from cteAclRulesRanked where rn = 1 and access != 'none'`
+select /*+ NO_MERGE() */ access, asset, benchmarkId, aclSources from cteAclRulesRanked where rn = 1 and access != 'none'`
   const [response] = await dbUtils.pool.query(sqlSelectEffectiveGrants, [collectionId, userId, collectionId, userId])
   return response
 }
