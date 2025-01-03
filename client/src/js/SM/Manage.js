@@ -1018,7 +1018,7 @@ SM.Manage.Collection.UsersGrid = Ext.extend(Ext.grid.GridPanel, {
       if (e.target.tagName === "IMG") {
         const r = grid.getStore().getAt(rowIndex)
         const defaultAccess = r.data.accessLevel === 1 ? 'none' : 'rw'
-        SM.User.showCollectionAcl({ collectionId: _this.collectionId, userId: r.data.userId, defaultAccess })
+        SM.User.showCollectionAcl({ collectionId: _this.collectionId, userId: r.data.userId, displayName: r.data.displayName, defaultAccess })
       }
     }
 
@@ -1029,7 +1029,7 @@ SM.Manage.Collection.UsersGrid = Ext.extend(Ext.grid.GridPanel, {
       handler: function () {
         const r = _this.getSelectionModel().getSelected()
         const defaultAccess = r.data.accessLevel === 1 ? 'none' : 'rw'
-        SM.User.showCollectionAcl({ collectionId: _this.collectionId, userId: r.data.userId, defaultAccess })
+        SM.User.showCollectionAcl({ collectionId: _this.collectionId, userId: r.data.userId, displayName: r.data.displayName, defaultAccess })
       }
     })
 

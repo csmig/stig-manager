@@ -1386,15 +1386,16 @@ SM.User.CollectionAclGrid = Ext.extend(Ext.grid.GridPanel, {
   }
 })
 
-SM.User.showCollectionAcl = async function ({userId, collectionId, defaultAccess}) {
+SM.User.showCollectionAcl = async function ({userId, displayName, collectionId, defaultAccess}) {
   const aclGrid = new SM.User.CollectionAclGrid({
     userId,
+    displayName,
     collectionId,
     border: false,
     title: `Effective Access, default = ${defaultAccess}`
   })
   const appwindow = new Ext.Window({
-    title: 'User ID ' + userId,
+    title: 'User: ' + displayName,
     cls: 'sm-dialog-window sm-round-panel',
     modal: true,
     hidden: true,
