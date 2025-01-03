@@ -1373,6 +1373,7 @@ SM.User.CollectionAclGrid = Ext.extend(Ext.grid.GridPanel, {
       })
 
       const config = {
+        loadMask: {msg: ''},
         fields,
         store,
         columns,
