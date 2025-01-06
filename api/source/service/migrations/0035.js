@@ -1,7 +1,6 @@
 const MigrationHandler = require('./lib/MigrationHandler')
 
 const upMigration = [
-  // `DROP TABLE IF EXISTS user_group_stig_asset_map`,
   `DROP TABLE IF EXISTS collection_grant_acl`,
   `DROP TABLE IF EXISTS collection_grant_group_acl`,
   `DROP TABLE IF EXISTS collection_grant_group`,
@@ -97,9 +96,9 @@ FROM
   left join asset a on sa.assetId = a.assetId
   left join collection_grant cg on (a.collectionId = cg.collectionId and usa.userId = cg.userId )
 WHERE
-  cg.grantId is not null`,
+  cg.accessLevel = 1`,
 
-  // `DROP TABLE user_stig_asset_map`
+  `DROP TABLE user_stig_asset_map`
 ]
 
 const downMigration = [
