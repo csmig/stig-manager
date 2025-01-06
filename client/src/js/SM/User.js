@@ -1150,7 +1150,6 @@ SM.User.UserFormPanel = Ext.extend(Ext.form.FormPanel, {
     let config = {
       baseCls: 'x-plain',
       labelWidth: 70,
-      monitorValid: true,
       items: [
         {
           xtype: 'fieldset',
@@ -1176,12 +1175,18 @@ SM.User.UserFormPanel = Ext.extend(Ext.form.FormPanel, {
 
 SM.User.showUserProps = async function showUserProps(userId) {
   try {
+    const listeners = {}
+    if (userId) {
+      listeners.propsupdate = onPropsUpdate //live updates for registered users
+    }
+    else {
+      listeners.clientvalidation = onClientValidation
+    }
     const userFormPanel = new SM.User.UserFormPanel({
       registeredUser: userId,
       padding: '10px 15px 10px 15px',
-      listeners: {
-        propsupdate: onPropsUpdate
-      }
+      listeners,
+      monitorValid: !userId //fires clientvalidation event for preregistered users
     })
 
     async function onPropsUpdate(property, value) {
@@ -1199,6 +1204,10 @@ SM.User.showUserProps = async function showUserProps(userId) {
         }
       })
       SM.Dispatcher.fireEvent('userchanged', apiUser)
+    }
+
+    function onClientValidation(formPanel, isValid) {
+      formPanel.ownerCt.buttons[0].setDisabled(!isValid)
     }
 
     async function windowBtnHandler(btn) {
@@ -1247,7 +1256,6 @@ SM.User.showUserProps = async function showUserProps(userId) {
       buttons: [{
         text: userId ? 'Close' : 'Save',
         action: userId ? 'close' : 'save',
-        formBind: true,
         handler: windowBtnHandler
       }]
     })
@@ -1372,8 +1380,41 @@ SM.User.CollectionAclGrid = Ext.extend(Ext.grid.GridPanel, {
         markDirty: false
       })
 
+      const totalTextCmp = new SM.RowCountTextItem({ store })
+
+      const bbar = new Ext.Toolbar({
+        items: [
+          {
+            xtype: 'tbbutton',
+            iconCls: 'icon-refresh',
+            tooltip: 'Reload this grid',
+            width: 20,
+            handler: function (btn) {
+              store.reload()
+            }
+          },
+          {
+            xtype: 'tbseparator'
+          },
+          {
+            xtype: 'exportbutton',
+            hasMenu: false,
+            gridBasename: 'Collection ACL',
+            exportType: 'grid',
+            iconCls: 'sm-export-icon',
+            text: 'CSV'
+          },
+          {
+            xtype: 'tbfill'
+          },
+          {
+            xtype: 'tbseparator'
+          },
+          totalTextCmp
+        ]
+      })
+
       const config = {
-        loadMask: {msg: ''},
         fields,
         store,
         columns,
@@ -1381,6 +1422,8 @@ SM.User.CollectionAclGrid = Ext.extend(Ext.grid.GridPanel, {
         view,
         stripeRows: true,
         layout: 'fit',
+        loadMask: true,
+        bbar
       }
       Ext.apply(this, Ext.apply(this.initialConfig, config))
       this.superclass().initComponent.call(this)

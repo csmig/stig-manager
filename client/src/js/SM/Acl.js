@@ -271,7 +271,6 @@ SM.Acl.ResourceRemoveBtn = Ext.extend(Ext.Button, {
 })
 
 SM.Acl.AssignedRulesGrid = Ext.extend(Ext.grid.EditorGridPanel, {
-  // config: { panel}
   initComponent: function() {
     const _this = this
     const assignmentStore = new Ext.data.JsonStore({
@@ -398,6 +397,42 @@ SM.Acl.AssignedRulesGrid = Ext.extend(Ext.grid.EditorGridPanel, {
         editor: accessComboBox
       }
     ]
+
+    const totalTextCmp = new SM.RowCountTextItem({ store: assignmentStore })
+
+    const bbar = new Ext.Toolbar({
+      items: [
+        {
+          xtype: 'tbbutton',
+          iconCls: 'icon-refresh',
+          tooltip: 'Reload this grid',
+          width: 20,
+          handler: function (btn) {
+            store.reload()
+          }
+        },
+        {
+          xtype: 'tbseparator'
+        },
+        {
+          xtype: 'exportbutton',
+          hasMenu: false,
+          gridBasename: 'Collection ACL',
+          exportType: 'grid',
+          iconCls: 'sm-export-icon',
+          text: 'CSV',
+          grid: this
+        },
+        {
+          xtype: 'tbfill'
+        },
+        {
+          xtype: 'tbseparator'
+        },
+        totalTextCmp
+      ]
+    })
+
     const config = {
       name: 'access',
       isFormField: true,
@@ -440,6 +475,7 @@ SM.Acl.AssignedRulesGrid = Ext.extend(Ext.grid.EditorGridPanel, {
       stripeRows: true,
       sm: selectionModel,
       columns,
+      bbar,
       listeners: {
         keydown: SM.CtrlAGridHandler
       }
