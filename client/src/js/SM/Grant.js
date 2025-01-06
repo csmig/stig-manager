@@ -535,10 +535,10 @@ SM.Grant.NewGrantPanel = Ext.extend(Ext.Panel, {
     }
 
     const addBtnMenuItems = [
-      {text: 'Role: Restricted', accessLevel: 1, handler: handleAddBtnItem},
-      {text: 'Role: Full', accessLevel: 2, handler: handleAddBtnItem},
-      {text: 'Role: Manage', accessLevel: 3, handler: handleAddBtnItem},
-      {text: 'Role: Owner', accessLevel: 4, handler: handleAddBtnItem},
+      {text: 'Role: Restricted', iconCls: 'sm-add-assignment-icon', accessLevel: 1, handler: handleAddBtnItem},
+      {text: 'Role: Full', iconCls: 'sm-add-assignment-icon', accessLevel: 2, handler: handleAddBtnItem},
+      {text: 'Role: Manage', iconCls: 'sm-add-assignment-icon', accessLevel: 3, handler: handleAddBtnItem},
+      {text: 'Role: Owner', iconCls: 'sm-add-assignment-icon', accessLevel: 4, handler: handleAddBtnItem},
     ]
 
     const addBtn = new Ext.Button({

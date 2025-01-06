@@ -1266,8 +1266,8 @@ SM.Manage.Collection.AdminGrid = Ext.extend(Ext.grid.GridPanel, {
           text: 'Delete Collection',
           disabled: !(curUser.privileges.canAdmin),
           handler: function () {
-            let record = collectionGrid.getSelectionModel().getSelected();
-            let confirmStr = "Delete collection, " + record.data.name + "?";
+            let record = selModel.getSelected()
+            let confirmStr = `Delete "${record.data.name}"?`
 
             Ext.Msg.confirm("Confirm", confirmStr, async function (btn, text) {
               try {
@@ -1516,12 +1516,9 @@ SM.Manage.Collection.AdminCreatePanel = Ext.extend(Ext.form.FormPanel, {
       margins: '10 0 0 0',
       canModifyOwners: true,
       context: 'admin',
-      // title: 'Grants',
       border: true,
       region: 'center'
     })
-    // show Owner role by default
-    newGrantPanel.roleComboBox.setValue(4)
 
     function getFieldValues () {
       return {

@@ -49,7 +49,7 @@ function addCollectionAdmin( params ) {
     cls: 'sm-round-panel sm-vbox-disabled',
     region: 'east',
 		margins: { top: SM.Margin.top, right: SM.Margin.edge, bottom: SM.Margin.bottom, left: SM.Margin.edge },
-    width: 300,
+    width: 400,
     split: true
   })
 
