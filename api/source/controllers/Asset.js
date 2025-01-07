@@ -535,7 +535,7 @@ function getCollectionIdAndVerifyAccess(request, minimumAccessLevel = Security.A
 async function getAssetInfoAndVerifyAccess(request, accessLevel = Security.ACCESS_LEVEL.Manage) {
   const assetId = request.params.assetId
   const [rows] = await dbUtils.selectCollectionByAssetId(assetId)
-  const grant = request.userObject.grants[rows[0].collectionId]
+  const grant = request.userObject.grants[rows[0]?.collectionId]
   // check if user has sufficient access level
   if (!grant || grant.accessLevel < accessLevel) {
     throw new SmError.PrivilegeError("Insufficient access to this asset's collection.")

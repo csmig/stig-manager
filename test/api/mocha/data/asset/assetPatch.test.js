@@ -157,6 +157,14 @@ describe('PATCH - Asset', function () {
             ])
           }
         })
+
+        it("asset id does not exist", async function () {
+
+          const res = await utils.executeRequest(`${config.baseUrl}/assets/999999`, 'PATCH', iteration.token, {
+              "description": "scrap",
+          })
+          expect(res.status).to.eql(403)
+        })
       })
 
       describe(`patchAssetMetadata - /assets/{assetId}/metadata`, function () {
