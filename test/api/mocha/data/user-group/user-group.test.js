@@ -163,7 +163,7 @@ describe('user-group', () => {
                 }
             })
             
-            it("should return empty 200, usergroupId doesnt exist", async () => {
+            it("should return empty 404, usergroupId doesnt exist", async () => {
                 let randomUserGroupId = "1234321"
                 const res = await utils.executeRequest(`${config.baseUrl}/user-groups/${randomUserGroupId}?elevate=true`, 'PATCH', iteration.token, {
                         "name": "test",
@@ -173,8 +173,7 @@ describe('user-group', () => {
                     expect(res.status).to.eql(403)
                     return
                 }
-                expect(res.status).to.eql(200)
-                expect(res.body).to.be.empty
+                expect(res.status).to.eql(404)
             })
         })
       })

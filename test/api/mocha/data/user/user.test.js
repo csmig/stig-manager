@@ -403,7 +403,7 @@ describe('user', () => {
           })
           it("should throw 404 userId doesnt exist.", async () => {
 
-            const res = await utils.executeRequest(`${config.baseUrl}/users/1234321?elevate=true`, 'PATCH', iteration.token, {
+            const res = await utils.executeRequest(`${config.baseUrl}/users/0?elevate=true`, 'PATCH', iteration.token, {
                   "username": "PatchTest",
                   "collectionGrants": [
                       {
@@ -539,6 +539,25 @@ describe('user', () => {
                 })
                 expect(res.status).to.eql(403)
           })
+
+          it("should throw 404 userId doesnt exist.", async () => {
+
+            const res = await utils.executeRequest(`${config.baseUrl}/users/0?elevate=true`, 'PUT', iteration.token, {
+                  "username": "put",
+                  "collectionGrants": [
+                      {
+                          "collectionId": `${reference.scrapCollection.collectionId}`,
+                          "accessLevel": 1
+                      }
+                  ]
+                })
+            if(iteration.name != "stigmanadmin"){
+              expect(res.status).to.eql(403)
+              return
+            }
+            expect(res.status).to.eql(404)
+          })
+
         })
       })
 

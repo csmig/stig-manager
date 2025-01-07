@@ -140,6 +140,11 @@ module.exports.replaceUser = async function replaceUser (req, res, next) {
     let body = req.body
     let projection = req.query.projection
 
+    let userData = await UserService.getUserByUserId(userId, projection, elevate, req.userObject)
+    if (!userData) {
+      throw new SmError.NotFoundError("UserId not found.")
+    }
+
     if (body.hasOwnProperty('collectionGrants') ) {
       // Verify each grant for a valid collectionId
       let requestedIds = body.collectionGrants.map( g => g.collectionId )
@@ -165,6 +170,11 @@ module.exports.updateUser = async function updateUser (req, res, next) {
     if (elevate) {
       let body = req.body
       let projection = req.query.projection
+
+      let userData = await UserService.getUserByUserId(userId, projection, elevate, req.userObject)
+      if (!userData) {
+        throw new SmError.NotFoundError("UserId not found.")
+      }
 
       if (body.hasOwnProperty('collectionGrants') ) {
         // Verify each grant for a valid collectionId
@@ -263,6 +273,11 @@ async function putOrPatchUserGroup (req, res, next) {
   try {
     if (!req.query.elevate) throw new SmError.PrivilegeError()
     const {userIds, ...userGroupFields} = req.body
+    const userGroup = await UserService.queryUserGroups({
+      projections: [],
+      filters: {userGroupId: req.params.userGroupId}
+    })
+    if (!userGroup.length) throw new SmError.NotFoundError("UserGroup not found.")
     const userGroupId = await UserService.addOrUpdateUserGroup({
       userGroupId: req.params.userGroupId,
       userGroupFields,
