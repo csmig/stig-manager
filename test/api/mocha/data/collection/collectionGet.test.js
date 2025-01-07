@@ -169,6 +169,15 @@ describe('GET - Collection', function () {
             expect(res.body[0].name).to.have.string('delete')
           }
         })
+        it("return collections with stats projection, no elevate",async function () {
+          const res =  await utils.executeRequest(`${config.baseUrl}/collections?projection=statistics`, 'GET', iteration.token)
+          expect(res.status).to.eql(200)
+          for(const collection of res.body){
+            if(collection.collectionId === reference.testCollection.collectionId){
+              expect(collection.statistics.assetCount).to.equal(distinct.assetIds.length)
+            }
+          }
+        })
       })
 
       describe('getCollection - /collections/{collectionId}', function () {
