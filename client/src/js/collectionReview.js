@@ -6,7 +6,7 @@ $Id: collectionReview.js 885 2018-02-20 16:26:08Z bmassey $
 async function addCollectionReview ( params ) {
 	const { leaf, selectedRule, selectedAsset, treePath } = params
 	try {
-		const idAppend = '-' + leaf.collectionId + '-' + leaf.benchmarkId.replace(".","_")
+		const idAppend = '-' + leaf.collectionId + '-' + leaf.benchmarkId.replace(/[. ]/g,'_')
 		const tab = Ext.getCmp('main-tab-panel').getItem('collection-review-tab' + idAppend)
 		if (tab) {
 			tab.show()
