@@ -1089,16 +1089,18 @@ paths:
             schema:
               type: array
               items:
-                $ref: '#/components/schemas/GrantPost'     
+                $ref: '#/components/schemas/GrantPost' 
       responses:
-        '200':
-          description: StigAssetBasic array response
+        '201':
+          description: Collection grant array response
           content:
             application/json:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/StigAssetBasic'
+                  $ref: '#/components/schemas/Grant'      
+        '403':
+          $ref: '#/components/responses/Forbidden'  
         default:
           description: unexpected error
           content:
@@ -1152,13 +1154,11 @@ paths:
                 - $ref: '#/components/schemas/UserGroupGrant'
       responses:
         '200':
-          description: StigAssetBasic array response
+          description: Collection grant array response
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/StigAssetBasic'
+                $ref: '#/components/schemas/Grant'     
         default:
           description: unexpected error
           content:
@@ -1179,6 +1179,14 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Grant'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
       security:
         - oauth:
             - 'stig-manager:collection'
@@ -4019,6 +4027,12 @@ paths:
             application/json:
               schema:
                   $ref: '#/components/schemas/UserGroupProjected'
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
       security:
         - oauth:
             - 'stig-manager:user'
@@ -4059,6 +4073,12 @@ paths:
             application/json:
               schema:
                   $ref: '#/components/schemas/UserGroupProjected'
+        'default':
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
       security:
         - oauth:
             - 'stig-manager:user:read'
@@ -4084,6 +4104,12 @@ paths:
             application/json:
               schema:
                   $ref: '#/components/schemas/UserGroupProjected'
+        'default':
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
       security:
         - oauth:
             - 'stig-manager:user'
@@ -4109,6 +4135,12 @@ paths:
             application/json:
               schema:
                   $ref: '#/components/schemas/UserGroupProjected'
+        'default':
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
       security:
         - oauth:
             - 'stig-manager:user'
@@ -4128,6 +4160,12 @@ paths:
             application/json:
               schema:
                   $ref: '#/components/schemas/UserGroupProjected'
+        'default':
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
       security:
         - oauth:
             - 'stig-manager:user'
@@ -4180,13 +4218,25 @@ components:
     AclRuleBasic:
       anyOf:
        - $ref: '#/components/schemas/AclRuleAssetBasic'
-       - $ref: '#/components/schemas/AclRuleLabelBasic'
-    AclRuleLabelBasic:
+       - $ref: '#/components/schemas/AclRuleLabel'
+    AclRuleLabel:
       additionalProperties: false
       type: object
       properties:
         label:
           $ref: '#/components/schemas/LabelBasicWithColor'
+        benchmarkId:
+          $ref: '#/components/schemas/BenchmarkId'
+        access:
+          $ref: '#/components/schemas/AclRuleAccess'
+      required:
+        - access
+    AclRuleLabelBasic:
+      additionalProperties: false
+      type: object
+      properties:
+        label:
+          $ref: '#/components/schemas/LabelBasic'
         benchmarkId:
           $ref: '#/components/schemas/BenchmarkId'
         access:
@@ -5736,7 +5786,7 @@ components:
         owners:
           type: array
           items:
-            $ref: '#/components/schemas/Grantee'
+            $ref: '#/components/schemas/Owner'
         settings:
           $ref: '#/components/schemas/CollectionSettings'
         statistics:
@@ -5982,7 +6032,7 @@ components:
         owners:
           type: array
           items:
-            $ref: '#/components/schemas/User'
+            $ref: '#/components/schemas/Owner'
         settings:
           $ref: '#/components/schemas/CollectionSettings'
         statistics:
@@ -6219,7 +6269,7 @@ components:
     GrantId:
       $ref: '#/components/schemas/StringIntId'
     GroupId:
-      $ref: '#/components/schemas/String255'
+      $ref: '#/components/schemas/String255Nullable'
     GroupProjected:
       additionalProperties: false
       type: object
@@ -6275,8 +6325,8 @@ components:
       properties:
         color:
           $ref: '#/components/schemas/StringHexColor'
-        description:
-          $ref: '#/components/schemas/String255Nullable'
+        labelId:
+          $ref: '#/components/schemas/LabelId'
         name:
           $ref: '#/components/schemas/LabelName'
       required:
@@ -6685,6 +6735,20 @@ components:
       format: date-time
       nullable: true
       type: string
+    Owner:
+      additionalProperties: false
+      type: object
+      properties:
+        userId:
+          $ref: '#/components/schemas/UserId'
+        username:
+          $ref: '#/components/schemas/Username'
+        displayName:
+          $ref: '#/components/schemas/DisplayName'
+      required:
+        - userId
+        - username
+        - displayName
     ParentControl:
       $ref: '#/components/schemas/String255'
     ResultEngine:
@@ -7599,7 +7663,9 @@ components:
         - high
         - medium
         - low
+        - null
       type: string
+      nullable: true
     RuleTitle:
       $ref: '#/components/schemas/StringMax'
     SCAPMap:
@@ -7649,7 +7715,7 @@ components:
       $ref: '#/components/schemas/String511Nullable'
     StigAssetBasic:
       additionalProperties: false
-      type: object
+      type: array
       properties:
         asset:
           $ref: '#/components/schemas/AssetBasic'
@@ -7893,6 +7959,8 @@ components:
           $ref: '#/components/schemas/UserId'
         username:
           $ref: '#/components/schemas/Username'
+        accessLevel:
+          $ref: '#/components/schemas/AccessLevel'
       required:
         - userId
         - username
@@ -7920,13 +7988,10 @@ components:
           $ref: '#/components/schemas/Username'
         displayName:
           $ref: '#/components/schemas/DisplayName'
-        lastAccess:
-          $ref: '#/components/schemas/UserLastAccess'
       required:
         - userId
         - username
         - displayName
-        - lastAccess
     UserCreateOrReplace:
       additionalProperties: false
       type: object
@@ -8009,6 +8074,8 @@ components:
           $ref: '#/components/schemas/UserGroupId'
         name:
           $ref: '#/components/schemas/String255'
+        accessLevel: 
+          $ref: '#/components/schemas/AccessLevel'
     UserGroupBasicWithCgId:
       type: object
       additionalProperties: false

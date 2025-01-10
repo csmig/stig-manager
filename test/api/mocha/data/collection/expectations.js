@@ -97,7 +97,7 @@ export const expectations = {
             grantee: {
               name: "TestGroup",
               accessLevel: 1,
-              userGroupId: 1,
+              userGroupId: "1",
             },
           },
         ],
@@ -121,7 +121,7 @@ export const expectations = {
             grantee: {
               name: "TestGroup",
               accessLevel: 1,
-              userGroupId: 1,
+              userGroupId: "1",
             },
           },
         ],
@@ -146,7 +146,7 @@ export const expectations = {
             grantee: {
               name: "TestGroup",
               accessLevel: 1,
-              userGroupId: 1,
+              userGroupId: "1",
             },
           },
         ],
@@ -171,7 +171,7 @@ export const expectations = {
             grantee: {
               name: "TestGroup",
               accessLevel: 1,
-              userGroupId: 1,
+              userGroupId: "1",
             },
           },
         ],

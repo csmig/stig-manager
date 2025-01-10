@@ -53,10 +53,10 @@ const verifyRequest = async function (req, requiredScopes, securityDefinition) {
 
     // Get privileges and check elevate param  
     const privileges = {
-        canCreateCollection: privilegeGetter(decoded).includes('create_collection'),
-        canAdmin: privilegeGetter(decoded).includes('admin')
+        create_collection: privilegeGetter(decoded).includes('create_collection'),
+        admin: privilegeGetter(decoded).includes('admin')
     }
-    if ('elevate' in req.query && (req.query.elevate === 'true' && !privileges.canAdmin)) {
+    if ('elevate' in req.query && (req.query.elevate === 'true' && !privileges.admin)) {
         throw(new SmError.PrivilegeError("User has insufficient privilege to complete this request."))
     }
 

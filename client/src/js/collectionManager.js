@@ -42,7 +42,7 @@ async function addCollectionManager( params ) {
 			layout: 'fit',
 			collapsible: true,
 			allowDelete: collectionGrant.accessLevel === 4,
-			allowClone: collectionGrant.accessLevel >= 3 && curUser.privileges.canCreateCollection,
+			allowClone: collectionGrant.accessLevel >= 3 && curUser.privileges.create_collection,
 			canModifyOwners: collectionGrant.accessLevel === 4,
 		})
 		let assetGrid = new SM.Manage.Asset.Grid({

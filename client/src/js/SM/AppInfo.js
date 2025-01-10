@@ -3188,7 +3188,7 @@ SM.AppInfo.fetchFromApi = async function () {
     responseType: 'json',
     url: `${STIGMAN.Env.apiBase}/op/appinfo`,
     params: {
-      elevate: curUser.privileges.canAdmin
+      elevate: curUser.privileges.admin
     },
     method: 'GET'
   })

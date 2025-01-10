@@ -402,12 +402,12 @@ exports.queryUserGroups = async function ({projections = [], filters = {}, eleva
     joins.add('left join user_data udModified on ug.modifiedUserId = udModified.userId')
     columns.push(`json_object(
       'created', json_object(
-        'userId', ug.createdUserId,
+        'userId', CAST(ug.createdUserId AS CHAR),
         'username', udCreated.username,
         'ts', DATE_FORMAT(ug.createdDate, '%Y-%m-%dT%H:%i:%sZ') 
         ),
       'modified', json_object(
-        'userId', ug.modifiedUserId,
+        'userId', CAST(ug.modifiedUserId AS CHAR),
         'username', udModified.username,
         'ts', DATE_FORMAT(ug.modifiedDate, '%Y-%m-%dT%H:%i:%sZ')
         )

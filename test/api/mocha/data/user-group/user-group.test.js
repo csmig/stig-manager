@@ -36,9 +36,9 @@ describe('user-group', () => {
                 expect(user.userId, "expect userId to be equal to the userId returned from API").to.equal(iteration.userId)
                 expect(user.username, "expect username to be equal to the username returned from API").to.equal(iteration.name)
               }
-              expect(res.body.attributions.created.userId, "expect userId to be equal to the userId returned from API").to.equal(parseInt(iteration.userId))
+              expect(res.body.attributions.created.userId, "expect userId to be equal to the userId returned from API").to.equal(iteration.userId)
               expect(res.body.attributions.created.username, "expect username to be equal to the username returned from API").to.equal(iteration.name)
-              expect(res.body.attributions.modified.userId, "expect userId to be equal to the userId returned from API").to.equal(parseInt(iteration.userId))
+              expect(res.body.attributions.modified.userId, "expect userId to be equal to the userId returned from API").to.equal(iteration.userId)
               expect(res.body.attributions.modified.username, "expect username to be equal to the username returned from API").to.equal(iteration.name)
           })
 

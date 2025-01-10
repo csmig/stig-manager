@@ -787,7 +787,7 @@ SM.User.UserGrid = Ext.extend(Ext.grid.GridPanel, {
         method: 'GET'
       }),
       baseParams: {
-        elevate: curUser.privileges.canAdmin,
+        elevate: curUser.privileges.admin,
         projection: ['userGroups', 'statistics']
       },
       root: '',
@@ -941,7 +941,7 @@ SM.User.UserGrid = Ext.extend(Ext.grid.GridPanel, {
                     if (user.data.lastAccess === 0) {
                       const apiUser = await Ext.Ajax.requestPromise({
                         responseType: 'json',
-                        url: `${STIGMAN.Env.apiBase}/users/${user.data.userId}?elevate=${curUser.privileges.canAdmin}`,
+                        url: `${STIGMAN.Env.apiBase}/users/${user.data.userId}?elevate=${curUser.privileges.admin}`,
                         method: 'DELETE'
                       })
                       store.remove(user)
@@ -950,7 +950,7 @@ SM.User.UserGrid = Ext.extend(Ext.grid.GridPanel, {
                     else {
                       const apiUser = await Ext.Ajax.requestPromise({
                         responseType: 'json',
-                        url: `${STIGMAN.Env.apiBase}/users/${user.data.userId}?elevate=${curUser.privileges.canAdmin}&projection=collectionGrants&projection=statistics`,
+                        url: `${STIGMAN.Env.apiBase}/users/${user.data.userId}?elevate=${curUser.privileges.admin}&projection=collectionGrants&projection=statistics`,
                         method: 'PATCH',
                         jsonData: { collectionGrants: [] }
                       })
@@ -1195,7 +1195,7 @@ SM.User.showUserProps = async function showUserProps(userId) {
         url: `${STIGMAN.Env.apiBase}/users/${userId}`,
         method: 'PATCH',
         params: {
-          elevate: curUser.privileges.canAdmin,
+          elevate: curUser.privileges.admin,
           projection: ['userGroups', 'collectionGrants', 'statistics']
         },
         headers: { 'Content-Type': 'application/json;charset=utf-8' },
@@ -1223,7 +1223,7 @@ SM.User.showUserProps = async function showUserProps(userId) {
               url: `${STIGMAN.Env.apiBase}/users`,
               method: 'POST',
               params: {
-                elevate: curUser.privileges.canAdmin,
+                elevate: curUser.privileges.admin,
                 projection: ['userGroups', 'collectionGrants', 'statistics']
               },
               headers: { 'Content-Type': 'application/json;charset=utf-8' },
@@ -1268,7 +1268,7 @@ SM.User.showUserProps = async function showUserProps(userId) {
         responseType: 'json',
         url: `${STIGMAN.Env.apiBase}/users/${userId}`,
         params: {
-          elevate: curUser.privileges.canAdmin,
+          elevate: curUser.privileges.admin,
           projection: ['statistics', 'collectionGrants', 'userGroups']
         },
         method: 'GET'

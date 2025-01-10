@@ -21,7 +21,7 @@ export const iterations = [
              access: "rw",
            },
             grantee: {
-            userGroupId: 1,
+            userGroupId: "1",
             name: "TestGroup",
             accessLevel: 1,
           },
@@ -45,7 +45,7 @@ export const iterations = [
              access: "rw",
            },
             grantee: {
-            userGroupId: 1,
+            userGroupId: "1",
             name: "TestGroup",
             accessLevel: 1,
           },
@@ -69,7 +69,7 @@ export const iterations = [
              access: "rw",
            },
             grantee: {
-            userGroupId: 1,
+            userGroupId: "1",
             name: "TestGroup",
             accessLevel: 1,
           },
@@ -93,7 +93,7 @@ export const iterations = [
              access: "rw",
            },
             grantee: {
-            userGroupId: 1,
+            userGroupId: "1",
             name: "TestGroup",
             accessLevel: 1,
           },
@@ -124,7 +124,7 @@ export const iterations = [
                 },
                 grantee: {
                   name: "TestGroup",
-                  userGroupId: 1,
+                  userGroupId: "1",
                   accessLevel: 1,
                 },
               },
@@ -147,7 +147,7 @@ export const iterations = [
                   access: "r",
                 },
                 grantee: {
-                  userGroupId: 1,
+                  userGroupId: "1",
                   name: "TestGroup",
                   accessLevel: 1,
                 },
@@ -171,7 +171,7 @@ export const iterations = [
                   access: "r",
                 },
                 grantee: {
-                  userGroupId: 1,
+                  userGroupId: "1",
                   name: "TestGroup",
                   accessLevel: 1,
                 },
@@ -195,7 +195,7 @@ export const iterations = [
                   access: "r",
                 },
                 grantee: {
-                  userGroupId: 1,
+                  userGroupId: "1",
                   name: "TestGroup",
                   accessLevel: 1,
                 },
@@ -227,7 +227,7 @@ export const iterations = [
               access: "rw",
             },
              grantee: {
-                  userGroupId: 1,
+                  userGroupId: "1",
                   name: "TestGroup",
                   accessLevel: 1,
                 },
@@ -248,7 +248,7 @@ export const iterations = [
               access: "rw",
             },
              grantee: {
-                  userGroupId: 1,
+                  userGroupId: "1",
                   name: "TestGroup",
                   accessLevel: 1,
                 },
@@ -269,7 +269,7 @@ export const iterations = [
               access: "rw",
             },
              grantee: {
-                  userGroupId: 1,
+                  userGroupId: "1",
                   name: "TestGroup",
                   accessLevel: 1,
                 },
@@ -296,7 +296,7 @@ export const iterations = [
               access: "r",
             },
              grantee: {
-                  userGroupId: 1,
+                  userGroupId: "1",
                   name: "TestGroup",
                   accessLevel: 1,
                 },
@@ -317,7 +317,7 @@ export const iterations = [
               access: "r",
             },
              grantee: {
-                  userGroupId: 1,
+                  userGroupId: "1",
                   name: "TestGroup",
                   accessLevel: 1,
                 },
@@ -338,7 +338,7 @@ export const iterations = [
               access: "r",
             },
              grantee: {
-                  userGroupId: 1,
+                  userGroupId: "1",
                   name: "TestGroup",
                   accessLevel: 1,
                 },
@@ -377,7 +377,7 @@ export const iterations = [
               access: "rw",
             },
              grantee: {
-                  userGroupId: 1,
+                  userGroupId: "1",
                   name: "TestGroup",
                   accessLevel: 1,
                 },
@@ -401,7 +401,7 @@ export const iterations = [
               access: "rw",
             },
              grantee: {
-                  userGroupId: 1,
+                  userGroupId: "1",
                   name: "TestGroup",
                   accessLevel: 1,
                 },
@@ -431,7 +431,7 @@ export const iterations = [
               access: "r",
             },
              grantee: {
-                  userGroupId: 1,
+                  userGroupId: "1",
                   name: "TestGroup",
                   accessLevel: 1,
                 },
@@ -455,7 +455,7 @@ export const iterations = [
               access: "r",
             },
              grantee: {
-                  userGroupId: 1,
+                  userGroupId: "1",
                   name: "TestGroup",
                   accessLevel: 1,
                 },
@@ -491,7 +491,7 @@ export const iterations = [
               benchmarkId: reference.testCollection.benchmark,
             },
              grantee: {
-                  userGroupId: 1,
+                  userGroupId: "1",
                   name: "TestGroup",
                   accessLevel: 1,
             },
@@ -524,7 +524,7 @@ export const iterations = [
                 },
                 grantee: {
                   name: "TestGroup",
-                  userGroupId: 1,
+                  userGroupId: "1",
                   accessLevel: 1,
                 },
               },
@@ -561,7 +561,7 @@ export const iterations = [
                 },
                 grantee: {
                   name: "TestGroup",
-                  userGroupId: 1,
+                  userGroupId: "1",
                   accessLevel: 1,
                 },
               },
@@ -586,7 +586,7 @@ export const iterations = [
                 },
                 grantee: {
                   name: "TestGroup",
-                  userGroupId: 1,
+                  userGroupId: "1",
                   accessLevel: 1,
                 },
               },
@@ -616,7 +616,7 @@ export const iterations = [
               benchmarkId: reference.testCollection.benchmark,
             },
              grantee: {
-                  userGroupId: 1,
+                  userGroupId: "1",
                   name: "TestGroup",
                   accessLevel: 1,
                 },
@@ -641,7 +641,7 @@ export const iterations = [
               benchmarkId: reference.testCollection.benchmark,
             },
              grantee: {
-                  userGroupId: 1,
+                  userGroupId: "1",
                   name: "TestGroup",
                   accessLevel: 1,
                 },
@@ -677,7 +677,7 @@ export const iterations = [
           },
           grantee: {
             name: "TestGroup",
-            userGroupId: 1,
+            userGroupId: "1",
             accessLevel: 1,
           },
         },
@@ -701,7 +701,7 @@ export const iterations = [
           },
           grantee: {
             name: "TestGroup",
-            userGroupId: 1,
+            userGroupId: "1",
             accessLevel: 1,
           },
         },
@@ -725,7 +725,7 @@ export const iterations = [
           },
           grantee: {
             name: "TestGroup",
-            userGroupId: 1,
+            userGroupId: "1",
             accessLevel: 1,
           },
         },
@@ -749,7 +749,7 @@ export const iterations = [
           },
           grantee: {
             name: "TestGroup",
-            userGroupId: 1,
+            userGroupId: "1",
             accessLevel: 1,
           },
         },
@@ -778,7 +778,7 @@ export const iterations = [
               access: "rw",
             },
              grantee: {
-                  userGroupId: 1,
+                  userGroupId: "1",
                   name: "TestGroup",
                   accessLevel: 1,
                 },
@@ -802,7 +802,7 @@ export const iterations = [
               access: "rw",
             },
              grantee: {
-                  userGroupId: 1,
+                  userGroupId: "1",
                   name: "TestGroup",
                   accessLevel: 1,
                 },
@@ -826,7 +826,7 @@ export const iterations = [
               access: "r",
             },
              grantee: {
-                  userGroupId: 1,
+                  userGroupId: "1",
                   name: "TestGroup",
                   accessLevel: 1,
                 },
@@ -850,7 +850,7 @@ export const iterations = [
               access: "r",
             },
              grantee: {
-                  userGroupId: 1,
+                  userGroupId: "1",
                   name: "TestGroup",
                   accessLevel: 1,
                 },
@@ -880,7 +880,7 @@ export const iterations = [
               access: "rw",
             },
              grantee: {
-                  userGroupId: 1,
+                  userGroupId: "1",
                   name: "TestGroup",
                   accessLevel: 1,
                 },
@@ -904,7 +904,7 @@ export const iterations = [
               access: "rw",
             },
              grantee: {
-                  userGroupId: 1,
+                  userGroupId: "1",
                   name: "TestGroup",
                   accessLevel: 1,
                 },
@@ -934,7 +934,7 @@ export const iterations = [
               access: "r",
             },
              grantee: {
-                  userGroupId: 1,
+                  userGroupId: "1",
                   name: "TestGroup",
                   accessLevel: 1,
                 },
@@ -958,7 +958,7 @@ export const iterations = [
               access: "r",
             },
              grantee: {
-                  userGroupId: 1,
+                  userGroupId: "1",
                   name: "TestGroup",
                   accessLevel: 1,
                 },
@@ -982,7 +982,7 @@ export const iterations = [
               access: "r",
             },
              grantee: {
-                  userGroupId: 1,
+                  userGroupId: "1",
                   name: "TestGroup",
                   accessLevel: 1,
                 },
@@ -1006,7 +1006,7 @@ export const iterations = [
               access: "r",
             },
              grantee: {
-                  userGroupId: 1,
+                  userGroupId: "1",
                   name: "TestGroup",
                   accessLevel: 1,
                 },
@@ -1036,7 +1036,7 @@ export const iterations = [
               access: "rw",
             },
              grantee: {
-                  userGroupId: 1,
+                  userGroupId: "1",
                   name: "TestGroup",
                   accessLevel: 1,
                 },
@@ -1060,7 +1060,7 @@ export const iterations = [
               access: "rw",
             },
              grantee: {
-                  userGroupId: 1,
+                  userGroupId: "1",
                   name: "TestGroup",
                   accessLevel: 1,
                 },
@@ -1085,7 +1085,7 @@ export const iterations = [
               benchmarkId: reference.windowsBenchmark
             },
              grantee: {
-                  userGroupId: 1,
+                  userGroupId: "1",
                   name: "TestGroup",
                   accessLevel: 1,
                 },
@@ -1115,7 +1115,7 @@ export const iterations = [
               access: "r",
             },
              grantee: {
-                  userGroupId: 1,
+                  userGroupId: "1",
                   name: "TestGroup",
                   accessLevel: 1,
                 },
@@ -1139,7 +1139,7 @@ export const iterations = [
               access: "r",
             },
              grantee: {
-                  userGroupId: 1,
+                  userGroupId: "1",
                   name: "TestGroup",
                   accessLevel: 1,
                 },
@@ -1163,7 +1163,7 @@ export const iterations = [
               access: "r",
             },
              grantee: {
-                  userGroupId: 1,
+                  userGroupId: "1",
                   name: "TestGroup",
                   accessLevel: 1,
                 },
@@ -1187,7 +1187,7 @@ export const iterations = [
               access: "r",
             },
              grantee: {
-                  userGroupId: 1,
+                  userGroupId: "1",
                   name: "TestGroup",
                   accessLevel: 1,
                 },
@@ -1212,7 +1212,7 @@ export const iterations = [
               benchmarkId: reference.testCollection.benchmark,
             },
              grantee: {
-                  userGroupId: 1,
+                  userGroupId: "1",
                   name: "TestGroup",
                   accessLevel: 1,
                 },
@@ -1242,7 +1242,7 @@ export const iterations = [
               access: "rw",
             },
              grantee: {
-                  userGroupId: 1,
+                  userGroupId: "1",
                   name: "TestGroup",
                   accessLevel: 1,
                 },
@@ -1266,7 +1266,7 @@ export const iterations = [
               access: "rw",
             },
              grantee: {
-                  userGroupId: 1,
+                  userGroupId: "1",
                   name: "TestGroup",
                   accessLevel: 1,
                 },
@@ -1290,7 +1290,7 @@ export const iterations = [
               access: "rw",
             },
              grantee: {
-                  userGroupId: 1,
+                  userGroupId: "1",
                   name: "TestGroup",
                   accessLevel: 1,
                 },
@@ -1314,7 +1314,7 @@ export const iterations = [
               access: "rw",
             },
              grantee: {
-                  userGroupId: 1,
+                  userGroupId: "1",
                   name: "TestGroup",
                   accessLevel: 1,
                 },
@@ -1339,7 +1339,7 @@ export const iterations = [
               benchmarkId: reference.testCollection.benchmark,
             },
              grantee: {
-                  userGroupId: 1,
+                  userGroupId: "1",
                   name: "TestGroup",
                   accessLevel: 1,
                 },
@@ -1369,7 +1369,7 @@ export const iterations = [
               access: "rw",
             },
              grantee: {
-                  userGroupId: 1,
+                  userGroupId: "1",
                   name: "TestGroup",
                   accessLevel: 1,
                 },
@@ -1393,7 +1393,7 @@ export const iterations = [
               access: "rw",
             },
              grantee: {
-                  userGroupId: 1,
+                  userGroupId: "1",
                   name: "TestGroup",
                   accessLevel: 1,
                 },
@@ -1417,7 +1417,7 @@ export const iterations = [
               access: "rw",
             },
              grantee: {
-                  userGroupId: 1,
+                  userGroupId: "1",
                   name: "TestGroup",
                   accessLevel: 1,
                 },
@@ -1447,7 +1447,7 @@ export const iterations = [
               access: "r",
             },
              grantee: {
-                  userGroupId: 1,
+                  userGroupId: "1",
                   name: "TestGroup",
                   accessLevel: 1,
                 },
@@ -1471,7 +1471,7 @@ export const iterations = [
               access: "r",
             },
              grantee: {
-                  userGroupId: 1,
+                  userGroupId: "1",
                   name: "TestGroup",
                   accessLevel: 1,
                 },
@@ -1495,7 +1495,7 @@ export const iterations = [
               access: "r",
             },
              grantee: {
-                  userGroupId: 1,
+                  userGroupId: "1",
                   name: "TestGroup",
                   accessLevel: 1,
                 },
@@ -1526,7 +1526,7 @@ export const iterations = [
               benchmarkId: reference.testCollection.benchmark,
             },
              grantee: {
-                  userGroupId: 1,
+                  userGroupId: "1",
                   name: "TestGroup",
                   accessLevel: 1,
                 },
@@ -1547,7 +1547,7 @@ export const iterations = [
               benchmarkId: reference.windowsBenchmark,
             },
              grantee: {
-                  userGroupId: 1,
+                  userGroupId: "1",
                   name: "TestGroup",
                   accessLevel: 1,
                 },
@@ -1569,7 +1569,7 @@ export const iterations = [
               benchmarkId: reference.windowsBenchmark,
             },
              grantee: {
-                  userGroupId: 1,
+                  userGroupId: "1",
                   name: "TestGroup",
                   accessLevel: 1,
                 },
@@ -1590,7 +1590,7 @@ export const iterations = [
               benchmarkId: reference.windowsBenchmark,
             },
              grantee: {
-                  userGroupId: 1,
+                  userGroupId: "1",
                   name: "TestGroup",
                   accessLevel: 1,
                 },
@@ -1621,7 +1621,7 @@ export const iterations = [
               benchmarkId: reference.testCollection.benchmark,
             },
              grantee: {
-                  userGroupId: 1,
+                  userGroupId: "1",
                   name: "TestGroup",
                   accessLevel: 1,
                 },
@@ -1642,7 +1642,7 @@ export const iterations = [
               benchmarkId: reference.windowsBenchmark,
             },
              grantee: {
-                  userGroupId: 1,
+                  userGroupId: "1",
                   name: "TestGroup",
                   accessLevel: 1,
                 },
@@ -1664,7 +1664,7 @@ export const iterations = [
               benchmarkId: reference.windowsBenchmark,
             },
              grantee: {
-                  userGroupId: 1,
+                  userGroupId: "1",
                   name: "TestGroup",
                   accessLevel: 1,
                 },
@@ -1685,7 +1685,7 @@ export const iterations = [
               benchmarkId: reference.windowsBenchmark,
             },
              grantee: {
-                  userGroupId: 1,
+                  userGroupId: "1",
                   name: "TestGroup",
                   accessLevel: 1,
                 },
@@ -1716,7 +1716,7 @@ export const iterations = [
               benchmarkId: reference.testCollection.benchmark,
             },
              grantee: {
-                  userGroupId: 1,
+                  userGroupId: "1",
                   name: "TestGroup",
                   accessLevel: 1,
                 },
@@ -1738,7 +1738,7 @@ export const iterations = [
               benchmarkId: reference.testCollection.benchmark,
             },
              grantee: {
-                  userGroupId: 1,
+                  userGroupId: "1",
                   name: "TestGroup",
                   accessLevel: 1,
                 },
@@ -1759,7 +1759,7 @@ export const iterations = [
               benchmarkId: reference.testCollection.benchmark,
             },
              grantee: {
-                  userGroupId: 1,
+                  userGroupId: "1",
                   name: "TestGroup",
                   accessLevel: 1,
                 },
@@ -1790,7 +1790,7 @@ export const iterations = [
               benchmarkId: reference.testCollection.benchmark,
             },
              grantee: {
-                  userGroupId: 1,
+                  userGroupId: "1",
                   name: "TestGroup",
                   accessLevel: 1,
                 },
@@ -1812,7 +1812,7 @@ export const iterations = [
               benchmarkId: reference.testCollection.benchmark,
             },
              grantee: {
-                  userGroupId: 1,
+                  userGroupId: "1",
                   name: "TestGroup",
                   accessLevel: 1,
                 },
@@ -1833,7 +1833,7 @@ export const iterations = [
               benchmarkId: reference.testCollection.benchmark,
             },
              grantee: {
-                  userGroupId: 1,
+                  userGroupId: "1",
                   name: "TestGroup",
                   accessLevel: 1,
                 },
@@ -1860,7 +1860,7 @@ export const iterations = [
               benchmarkId: reference.windowsBenchmark,
             },
              grantee: {
-                  userGroupId: 1,
+                  userGroupId: "1",
                   name: "TestGroup",
                   accessLevel: 1,
                 },
@@ -1881,7 +1881,7 @@ export const iterations = [
               benchmarkId: reference.windowsBenchmark,
             },
              grantee: {
-                  userGroupId: 1,
+                  userGroupId: "1",
                   name: "TestGroup",
                   accessLevel: 1,
                 },
@@ -1912,7 +1912,7 @@ export const iterations = [
               benchmarkId: reference.testCollection.benchmark,
             },
              grantee: {
-                  userGroupId: 1,
+                  userGroupId: "1",
                   name: "TestGroup",
                   accessLevel: 1,
                 },
@@ -1937,7 +1937,7 @@ export const iterations = [
               benchmarkId: reference.windowsBenchmark,
             },
              grantee: {
-                  userGroupId: 1,
+                  userGroupId: "1",
                   name: "TestGroup",
                   accessLevel: 1,
                 },
@@ -1968,7 +1968,7 @@ export const iterations = [
               benchmarkId: reference.testCollection.benchmark,
             },
              grantee: {
-                  userGroupId: 1,
+                  userGroupId: "1",
                   name: "TestGroup",
                   accessLevel: 1,
                 },
@@ -1993,7 +1993,7 @@ export const iterations = [
               benchmarkId: reference.windowsBenchmark,
             },
              grantee: {
-                  userGroupId: 1,
+                  userGroupId: "1",
                   name: "TestGroup",
                   accessLevel: 1,
                 },
@@ -2024,7 +2024,7 @@ export const iterations = [
               benchmarkId: reference.testCollection.benchmark,
             },
              grantee: {
-                  userGroupId: 1,
+                  userGroupId: "1",
                   name: "TestGroup",
                   accessLevel: 1,
                 },
@@ -2049,7 +2049,7 @@ export const iterations = [
               benchmarkId: reference.windowsBenchmark,
             },
              grantee: {
-                  userGroupId: 1,
+                  userGroupId: "1",
                   name: "TestGroup",
                   accessLevel: 1,
                 },
@@ -2079,7 +2079,7 @@ export const iterations = [
               access: "rw",
             },
              grantee: {
-                  userGroupId: 1,
+                  userGroupId: "1",
                   name: "TestGroup",
                   accessLevel: 1,
                 },
@@ -2090,7 +2090,7 @@ export const iterations = [
               benchmarkId: "VPN_SRG_TEST",
             },
              grantee: {
-                  userGroupId: 1,
+                  userGroupId: "1",
                   name: "TestGroup",
                   accessLevel: 1,
                 },
@@ -2114,7 +2114,7 @@ export const iterations = [
               access: "rw",
             },
              grantee: {
-                  userGroupId: 1,
+                  userGroupId: "1",
                   name: "TestGroup",
                   accessLevel: 1,
                 },
@@ -2138,7 +2138,7 @@ export const iterations = [
               access: "rw",
             },
              grantee: {
-                  userGroupId: 1,
+                  userGroupId: "1",
                   name: "TestGroup",
                   accessLevel: 1,
                 },
@@ -2149,7 +2149,7 @@ export const iterations = [
               benchmarkId: "VPN_SRG_TEST",
             },
              grantee: {
-                  userGroupId: 1,
+                  userGroupId: "1",
                   name: "TestGroup",
                   accessLevel: 1,
                 },
@@ -2173,7 +2173,7 @@ export const iterations = [
               access: "rw",
             },
              grantee: {
-                  userGroupId: 1,
+                  userGroupId: "1",
                   name: "TestGroup",
                   accessLevel: 1,
                 },
@@ -2194,7 +2194,7 @@ export const iterations = [
               benchmarkId: "VPN_SRG_TEST",
             },
              grantee: {
-                  userGroupId: 1,
+                  userGroupId: "1",
                   name: "TestGroup",
                   accessLevel: 1,
                 },
@@ -2221,7 +2221,7 @@ export const iterations = [
               benchmarkId: "VPN_SRG_TEST",
             },
              grantee: {
-                  userGroupId: 1,
+                  userGroupId: "1",
                   name: "TestGroup",
                   accessLevel: 1,
                 },
@@ -2245,7 +2245,7 @@ export const iterations = [
               access: "rw",
             },
              grantee: {
-                  userGroupId: 1,
+                  userGroupId: "1",
                   name: "TestGroup",
                   accessLevel: 1,
                 },
@@ -2266,7 +2266,7 @@ export const iterations = [
               benchmarkId: "VPN_SRG_TEST",
             },
              grantee: {
-                  userGroupId: 1,
+                  userGroupId: "1",
                   name: "TestGroup",
                   accessLevel: 1,
                 },
@@ -2290,7 +2290,7 @@ export const iterations = [
               access: "rw",
             },
              grantee: {
-                  userGroupId: 1,
+                  userGroupId: "1",
                   name: "TestGroup",
                   accessLevel: 1,
                 },
@@ -2311,7 +2311,7 @@ export const iterations = [
               benchmarkId: "VPN_SRG_TEST",
             },
              grantee: {
-                  userGroupId: 1,
+                  userGroupId: "1",
                   name: "TestGroup",
                   accessLevel: 1,
                 },
@@ -2341,7 +2341,7 @@ export const iterations = [
               access: "rw",
             },
              grantee: {
-                  userGroupId: 1,
+                  userGroupId: "1",
                   name: "TestGroup",
                   accessLevel: 1,
                 },
@@ -2365,7 +2365,7 @@ export const iterations = [
               access: "rw",
             },
              grantee: {
-                  userGroupId: 1,
+                  userGroupId: "1",
                   name: "TestGroup",
                   accessLevel: 1,
                 },
@@ -2392,7 +2392,7 @@ export const iterations = [
               benchmarkId: "VPN_SRG_TEST",
             },
              grantee: {
-                  userGroupId: 1,
+                  userGroupId: "1",
                   name: "TestGroup",
                   accessLevel: 1,
                 },
@@ -2422,7 +2422,7 @@ export const iterations = [
               access: "r",
             },
              grantee: {
-                  userGroupId: 1,
+                  userGroupId: "1",
                   name: "TestGroup",
                   accessLevel: 1,
                 },
@@ -2433,7 +2433,7 @@ export const iterations = [
               benchmarkId: "VPN_SRG_TEST",
             },
              grantee: {
-                  userGroupId: 1,
+                  userGroupId: "1",
                   name: "TestGroup",
                   accessLevel: 1,
                 },
@@ -2457,7 +2457,7 @@ export const iterations = [
               access: "r",
             },
              grantee: {
-                  userGroupId: 1,
+                  userGroupId: "1",
                   name: "TestGroup",
                   accessLevel: 1,
                 },
@@ -2481,7 +2481,7 @@ export const iterations = [
               access: "r",
             },
              grantee: {
-                  userGroupId: 1,
+                  userGroupId: "1",
                   name: "TestGroup",
                   accessLevel: 1,
                 },
@@ -2492,7 +2492,7 @@ export const iterations = [
               benchmarkId: "VPN_SRG_TEST",
             },
              grantee: {
-                  userGroupId: 1,
+                  userGroupId: "1",
                   name: "TestGroup",
                   accessLevel: 1,
                 },
@@ -2516,7 +2516,7 @@ export const iterations = [
               access: "r",
             },
              grantee: {
-                  userGroupId: 1,
+                  userGroupId: "1",
                   name: "TestGroup",
                   accessLevel: 1,
                 },
@@ -2537,7 +2537,7 @@ export const iterations = [
               benchmarkId: "VPN_SRG_TEST",
             },
              grantee: {
-                  userGroupId: 1,
+                  userGroupId: "1",
                   name: "TestGroup",
                   accessLevel: 1,
                 },
@@ -2568,7 +2568,7 @@ export const iterations = [
               access: "rw",
             },
              grantee: {
-                  userGroupId: 1,
+                  userGroupId: "1",
                   name: "TestGroup",
                   accessLevel: 1,
                 },
@@ -2592,7 +2592,7 @@ export const iterations = [
               access: "rw",
             },
              grantee: {
-                  userGroupId: 1,
+                  userGroupId: "1",
                   name: "TestGroup",
                   accessLevel: 1,
                 },
@@ -2616,7 +2616,7 @@ export const iterations = [
               access: "rw",
             },
              grantee: {
-                  userGroupId: 1,
+                  userGroupId: "1",
                   name: "TestGroup",
                   accessLevel: 1,
                 },
@@ -2640,7 +2640,7 @@ export const iterations = [
               access: "rw",
             },
              grantee: {
-                  userGroupId: 1,
+                  userGroupId: "1",
                   name: "TestGroup",
                   accessLevel: 1,
                 },
@@ -2664,7 +2664,7 @@ export const iterations = [
               },
             },
              grantee: {
-                  userGroupId: 1,
+                  userGroupId: "1",
                   name: "TestGroup",
                   accessLevel: 1,
                 },
@@ -2688,7 +2688,7 @@ export const iterations = [
               },
             },
              grantee: {
-                  userGroupId: 1,
+                  userGroupId: "1",
                   name: "TestGroup",
                   accessLevel: 1,
                 },
@@ -2720,7 +2720,7 @@ export const iterations = [
               },
             },
              grantee: {
-                  userGroupId: 1,
+                  userGroupId: "1",
                   name: "TestGroup",
                   accessLevel: 1,
                 },
@@ -2744,7 +2744,7 @@ export const iterations = [
               },
             },
              grantee: {
-                  userGroupId: 1,
+                  userGroupId: "1",
                   name: "TestGroup",
                   accessLevel: 1,
                 },
@@ -2768,7 +2768,7 @@ export const iterations = [
               access: "rw",
             },
              grantee: {
-                  userGroupId: 1,
+                  userGroupId: "1",
                   name: "TestGroup",
                   accessLevel: 1,
                 },
@@ -2792,7 +2792,7 @@ export const iterations = [
               access: "rw",
             },
              grantee: {
-                  userGroupId: 1,
+                  userGroupId: "1",
                   name: "TestGroup",
                   accessLevel: 1,
                 },
@@ -2823,7 +2823,7 @@ export const iterations = [
               access: "rw",
             },
              grantee: {
-                  userGroupId: 1,
+                  userGroupId: "1",
                   name: "TestGroup",
                   accessLevel: 1,
                 },
@@ -2847,7 +2847,7 @@ export const iterations = [
               access: "rw",
             },
              grantee: {
-                  userGroupId: 1,
+                  userGroupId: "1",
                   name: "TestGroup",
                   accessLevel: 1,
                 },
@@ -2879,7 +2879,7 @@ export const iterations = [
 
             },
              grantee: {
-                  userGroupId: 1,
+                  userGroupId: "1",
                   name: "TestGroup",
                   accessLevel: 1,
                 },
@@ -2903,7 +2903,7 @@ export const iterations = [
               access: "r",
             },
              grantee: {
-                  userGroupId: 1,
+                  userGroupId: "1",
                   name: "TestGroup",
                   accessLevel: 1,
                 },
@@ -2927,7 +2927,7 @@ export const iterations = [
               access: "r",
             },
              grantee: {
-                  userGroupId: 1,
+                  userGroupId: "1",
                   name: "TestGroup",
                   accessLevel: 1,
                 },
@@ -2951,7 +2951,7 @@ export const iterations = [
               access: "r",
             },
              grantee: {
-                  userGroupId: 1,
+                  userGroupId: "1",
                   name: "TestGroup",
                   accessLevel: 1,
                 },
@@ -2982,7 +2982,7 @@ export const iterations = [
               access: "r",
             },
              grantee: {
-                  userGroupId: 1,
+                  userGroupId: "1",
                   name: "TestGroup",
                   accessLevel: 1,
                 },
@@ -3006,7 +3006,7 @@ export const iterations = [
               access: "r",
             },
              grantee: {
-                  userGroupId: 1,
+                  userGroupId: "1",
                   name: "TestGroup",
                   accessLevel: 1,
                 },
@@ -3037,7 +3037,7 @@ export const iterations = [
               access: "r",
             },
              grantee: {
-                  userGroupId: 1,
+                  userGroupId: "1",
                   name: "TestGroup",
                   accessLevel: 1,
                 },
@@ -3061,7 +3061,7 @@ export const iterations = [
               access: "r",
             },
              grantee: {
-                  userGroupId: 1,
+                  userGroupId: "1",
                   name: "TestGroup",
                   accessLevel: 1,
                 },
@@ -3085,7 +3085,7 @@ export const iterations = [
               access: "r",
             },
              grantee: {
-                  userGroupId: 1,
+                  userGroupId: "1",
                   name: "TestGroup",
                   accessLevel: 1,
                 },
@@ -3109,7 +3109,7 @@ export const iterations = [
               access: "r",
             },
              grantee: {
-                  userGroupId: 1,
+                  userGroupId: "1",
                   name: "TestGroup",
                   accessLevel: 1,
                 },
@@ -3133,7 +3133,7 @@ export const iterations = [
               },
             },
              grantee: {
-                  userGroupId: 1,
+                  userGroupId: "1",
                   name: "TestGroup",
                   accessLevel: 1,
                 },
@@ -3157,7 +3157,7 @@ export const iterations = [
               },
             },
              grantee: {
-                  userGroupId: 1,
+                  userGroupId: "1",
                   name: "TestGroup",
                   accessLevel: 1,
                 },
@@ -3187,7 +3187,7 @@ export const iterations = [
               access: "rw",
             },
              grantee: {
-                  userGroupId: 1,
+                  userGroupId: "1",
                   name: "TestGroup",
                   accessLevel: 1,
                 },
@@ -3201,7 +3201,7 @@ export const iterations = [
               access: "rw",
             },
              grantee: {
-                  userGroupId: 1,
+                  userGroupId: "1",
                   name: "TestGroup",
                   accessLevel: 1,
                 },
@@ -3225,7 +3225,7 @@ export const iterations = [
               access: "rw",
             },
              grantee: {
-                  userGroupId: 1,
+                  userGroupId: "1",
                   name: "TestGroup",
                   accessLevel: 1,
                 },
@@ -3239,7 +3239,7 @@ export const iterations = [
               access: "rw",
             },
              grantee: {
-                  userGroupId: 1,
+                  userGroupId: "1",
                   name: "TestGroup",
                   accessLevel: 1,
                 },
@@ -3263,7 +3263,7 @@ export const iterations = [
               access: "rw",
             },
              grantee: {
-                  userGroupId: 1,
+                  userGroupId: "1",
                   name: "TestGroup",
                   accessLevel: 1,
                 },
@@ -3287,7 +3287,7 @@ export const iterations = [
               access: "rw",
             },
              grantee: {
-                  userGroupId: 1,
+                  userGroupId: "1",
                   name: "TestGroup",
                   accessLevel: 1,
                 },
@@ -3317,7 +3317,7 @@ export const iterations = [
               access: "r",
             },
              grantee: {
-                  userGroupId: 1,
+                  userGroupId: "1",
                   name: "TestGroup",
                   accessLevel: 1,
                 },
@@ -3341,7 +3341,7 @@ export const iterations = [
               access: "r",
             },
              grantee: {
-                  userGroupId: 1,
+                  userGroupId: "1",
                   name: "TestGroup",
                   accessLevel: 1,
                 },
@@ -3365,7 +3365,7 @@ export const iterations = [
               access: "rw",
             },
              grantee: {
-                  userGroupId: 1,
+                  userGroupId: "1",
                   name: "TestGroup",
                   accessLevel: 1,
                 },
@@ -3389,7 +3389,7 @@ export const iterations = [
               access: "rw",
             },
              grantee: {
-                  userGroupId: 1,
+                  userGroupId: "1",
                   name: "TestGroup",
                   accessLevel: 1,
                 },
@@ -3419,7 +3419,7 @@ export const iterations = [
               access: "rw",
             },
              grantee: {
-                  userGroupId: 1,
+                  userGroupId: "1",
                   name: "TestGroup",
                   accessLevel: 1,
                 },
@@ -3443,7 +3443,7 @@ export const iterations = [
               access: "rw",
             },
             grantee: {
-              userGroupId: 1,
+              userGroupId: "1",
               name: "TestGroup",
               accessLevel: 1,
             },
@@ -3481,7 +3481,7 @@ export const iterations = [
                 access: "r",
               },
                grantee: {
-                  userGroupId: 1,
+                  userGroupId: "1",
                   name: "TestGroup",
                   accessLevel: 1,
                 },
@@ -3505,7 +3505,7 @@ export const iterations = [
                 access: "r",
               },
                grantee: {
-                  userGroupId: 1,
+                  userGroupId: "1",
                   name: "TestGroup",
                   accessLevel: 1,
                 },
@@ -3526,7 +3526,7 @@ export const iterations = [
                 access: "rw",
               },
                grantee: {
-                  userGroupId: 1,
+                  userGroupId: "1",
                   name: "TestGroup",
                   accessLevel: 1,
                 },
@@ -3547,7 +3547,7 @@ export const iterations = [
                 access: "rw",
               },
                grantee: {
-                  userGroupId: 1,
+                  userGroupId: "1",
                   name: "TestGroup",
                   accessLevel: 1,
                 },
@@ -3575,7 +3575,7 @@ export const iterations = [
                 access: "rw",
               },
                grantee: {
-                  userGroupId: 1,
+                  userGroupId: "1",
                   name: "TestGroup",
                   accessLevel: 1,
                 },
@@ -3596,7 +3596,7 @@ export const iterations = [
                 access: "rw",
               },
                grantee: {
-                  userGroupId: 1,
+                  userGroupId: "1",
                   name: "TestGroup",
                   accessLevel: 1,
                 },
@@ -3624,7 +3624,7 @@ export const iterations = [
                 access: "r",
               },
                grantee: {
-                  userGroupId: 1,
+                  userGroupId: "1",
                   name: "TestGroup",
                   accessLevel: 1,
                 },
@@ -3648,7 +3648,7 @@ export const iterations = [
                 access: "rw",
               },
                grantee: {
-                  userGroupId: 1,
+                  userGroupId: "1",
                   name: "TestGroup",
                   accessLevel: 1,
                 },
@@ -3669,7 +3669,7 @@ export const iterations = [
                 access: "r",
               },
                grantee: {
-                  userGroupId: 1,
+                  userGroupId: "1",
                   name: "TestGroup",
                   accessLevel: 1,
                 },
@@ -3690,7 +3690,7 @@ export const iterations = [
                 access: "r",
               },
                grantee: {
-                  userGroupId: 1,
+                  userGroupId: "1",
                   name: "TestGroup",
                   accessLevel: 1,
                 },
@@ -3718,7 +3718,7 @@ export const iterations = [
                 access: "r",
               },
                grantee: {
-                  userGroupId: 1,
+                  userGroupId: "1",
                   name: "TestGroup",
                   accessLevel: 1,
                 },
@@ -3732,7 +3732,7 @@ export const iterations = [
                 access: "r",
               },
                grantee: {
-                  userGroupId: 1,
+                  userGroupId: "1",
                   name: "TestGroup",
                   accessLevel: 1,
                 },
@@ -3756,7 +3756,7 @@ export const iterations = [
                 access: "r",
               },
                grantee: {
-                  userGroupId: 1,
+                  userGroupId: "1",
                   name: "TestGroup",
                   accessLevel: 1,
                 },
@@ -3777,7 +3777,7 @@ export const iterations = [
                 access: "r",
               },
                grantee: {
-                  userGroupId: 1,
+                  userGroupId: "1",
                   name: "TestGroup",
                   accessLevel: 1,
                 },
@@ -3798,7 +3798,7 @@ export const iterations = [
                 access: "r",
               },
                grantee: {
-                  userGroupId: 1,
+                  userGroupId: "1",
                   name: "TestGroup",
                   accessLevel: 1,
                 },
@@ -3829,7 +3829,7 @@ export const iterations = [
               access: "r",
             },
              grantee: {
-                  userGroupId: 1,
+                  userGroupId: "1",
                   name: "TestGroup",
                   accessLevel: 1,
                 },
@@ -3857,7 +3857,7 @@ export const iterations = [
               access: "rw",
             },
              grantee: {
-                  userGroupId: 1,
+                  userGroupId: "1",
                   name: "TestGroup",
                   accessLevel: 1,
                 },
@@ -3878,7 +3878,7 @@ export const iterations = [
               access: "rw",
             },
              grantee: {
-                  userGroupId: 1,
+                  userGroupId: "1",
                   name: "TestGroup",
                   accessLevel: 1,
                 },
@@ -3899,7 +3899,7 @@ export const iterations = [
               access: "rw",
             },
              grantee: {
-                  userGroupId: 1,
+                  userGroupId: "1",
                   name: "TestGroup",
                   accessLevel: 1,
                 },
@@ -3920,7 +3920,7 @@ export const iterations = [
               access: "rw",
             },
              grantee: {
-                  userGroupId: 1,
+                  userGroupId: "1",
                   name: "TestGroup",
                   accessLevel: 1,
                 },
@@ -3941,7 +3941,7 @@ export const iterations = [
               access: "rw",
             },
              grantee: {
-                  userGroupId: 1,
+                  userGroupId: "1",
                   name: "TestGroup",
                   accessLevel: 1,
                 },
@@ -3962,7 +3962,7 @@ export const iterations = [
               access: "rw",
             },
              grantee: {
-                  userGroupId: 1,
+                  userGroupId: "1",
                   name: "TestGroup",
                   accessLevel: 1,
                 },
@@ -3990,7 +3990,7 @@ export const iterations = [
               access: "rw",
             },
              grantee: {
-                  userGroupId: 1,
+                  userGroupId: "1",
                   name: "TestGroup",
                   accessLevel: 1,
                 },
@@ -4011,7 +4011,7 @@ export const iterations = [
               access: "r",
             },
              grantee: {
-                  userGroupId: 1,
+                  userGroupId: "1",
                   name: "TestGroup",
                   accessLevel: 1,
                 },
@@ -4032,7 +4032,7 @@ export const iterations = [
               access: "rw",
             },
              grantee: {
-                  userGroupId: 1,
+                  userGroupId: "1",
                   name: "TestGroup",
                   accessLevel: 1,
                 },
@@ -4053,7 +4053,7 @@ export const iterations = [
               access: "r",
             },
              grantee: {
-                  userGroupId: 1,
+                  userGroupId: "1",
                   name: "TestGroup",
                   accessLevel: 1,
                 },
@@ -4074,7 +4074,7 @@ export const iterations = [
               access: "rw",
             },
              grantee: {
-                  userGroupId: 1,
+                  userGroupId: "1",
                   name: "TestGroup",
                   accessLevel: 1,
                 },
@@ -4095,7 +4095,7 @@ export const iterations = [
               access: "r",
             },
              grantee: {
-                  userGroupId: 1,
+                  userGroupId: "1",
                   name: "TestGroup",
                   accessLevel: 1,
                 },
@@ -4123,7 +4123,7 @@ export const iterations = [
               access: "rw",
             },
              grantee: {
-                  userGroupId: 1,
+                  userGroupId: "1",
                   name: "TestGroup",
                   accessLevel: 1,
                 },
@@ -4144,7 +4144,7 @@ export const iterations = [
               access: "rw",
             },
              grantee: {
-                  userGroupId: 1,
+                  userGroupId: "1",
                   name: "TestGroup",
                   accessLevel: 1,
                 },
@@ -4165,7 +4165,7 @@ export const iterations = [
               access: "rw",
             },
              grantee: {
-                  userGroupId: 1,
+                  userGroupId: "1",
                   name: "TestGroup",
                   accessLevel: 1,
                 },
@@ -4195,7 +4195,7 @@ export const iterations = [
               access: "rw",
             },
              grantee: {
-                  userGroupId: 1,
+                  userGroupId: "1",
                   name: "TestGroup",
                   accessLevel: 1,
                 },
@@ -4219,7 +4219,7 @@ export const iterations = [
               access: "rw",
             },
              grantee: {
-                  userGroupId: 1,
+                  userGroupId: "1",
                   name: "TestGroup",
                   accessLevel: 1,
                 },
@@ -4244,7 +4244,7 @@ export const iterations = [
               benchmarkId: "VPN_SRG_TEST",
             },
              grantee: {
-                  userGroupId: 1,
+                  userGroupId: "1",
                   name: "TestGroup",
                   accessLevel: 1,
                 },
@@ -4268,7 +4268,7 @@ export const iterations = [
               access: "rw",
             },
              grantee: {
-                  userGroupId: 1,
+                  userGroupId: "1",
                   name: "TestGroup",
                   accessLevel: 1,
                 },
@@ -4299,7 +4299,7 @@ export const iterations = [
               access: "r",
             },
              grantee: {
-                  userGroupId: 1,
+                  userGroupId: "1",
                   name: "TestGroup",
                   accessLevel: 1,
                 },
@@ -4323,7 +4323,7 @@ export const iterations = [
               access: "r",
             },
              grantee: {
-                  userGroupId: 1,
+                  userGroupId: "1",
                   name: "TestGroup",
                   accessLevel: 1,
                 },
@@ -4348,7 +4348,7 @@ export const iterations = [
               benchmarkId: "VPN_SRG_TEST",
             },
              grantee: {
-                  userGroupId: 1,
+                  userGroupId: "1",
                   name: "TestGroup",
                   accessLevel: 1,
                 },
@@ -4372,7 +4372,7 @@ export const iterations = [
               access: "r",
             },
              grantee: {
-                  userGroupId: 1,
+                  userGroupId: "1",
                   name: "TestGroup",
                   accessLevel: 1,
                 },
@@ -4403,7 +4403,7 @@ export const iterations = [
               access: "r",
             },
              grantee: {
-                  userGroupId: 1,
+                  userGroupId: "1",
                   name: "TestGroup",
                   accessLevel: 1,
                 },
@@ -4427,7 +4427,7 @@ export const iterations = [
               access: "r",
             },
              grantee: {
-                  userGroupId: 1,
+                  userGroupId: "1",
                   name: "TestGroup",
                   accessLevel: 1,
                 },
@@ -4452,7 +4452,7 @@ export const iterations = [
               benchmarkId: "VPN_SRG_TEST",
             },
              grantee: {
-                  userGroupId: 1,
+                  userGroupId: "1",
                   name: "TestGroup",
                   accessLevel: 1,
                 },
@@ -4476,7 +4476,7 @@ export const iterations = [
               access: "r",
             },
              grantee: {
-                  userGroupId: 1,
+                  userGroupId: "1",
                   name: "TestGroup",
                   accessLevel: 1,
                 },
@@ -4507,7 +4507,7 @@ export const iterations = [
               access: "r",
             },
              grantee: {
-                  userGroupId: 1,
+                  userGroupId: "1",
                   name: "TestGroup",
                   accessLevel: 1,
                 },
@@ -4531,7 +4531,7 @@ export const iterations = [
               access: "r",
             },
              grantee: {
-                  userGroupId: 1,
+                  userGroupId: "1",
                   name: "TestGroup",
                   accessLevel: 1,
                 },
@@ -4556,7 +4556,7 @@ export const iterations = [
               benchmarkId: "VPN_SRG_TEST",
             },
              grantee: {
-                  userGroupId: 1,
+                  userGroupId: "1",
                   name: "TestGroup",
                   accessLevel: 1,
                 },
@@ -4580,7 +4580,7 @@ export const iterations = [
               access: "r",
             },
              grantee: {
-                  userGroupId: 1,
+                  userGroupId: "1",
                   name: "TestGroup",
                   accessLevel: 1,
                 },
@@ -4612,7 +4612,7 @@ export const iterations = [
               benchmarkId: "VPN_SRG_TEST",
             },
              grantee: {
-                  userGroupId: 1,
+                  userGroupId: "1",
                   name: "TestGroup",
                   accessLevel: 1,
                 },
@@ -4643,7 +4643,7 @@ export const iterations = [
               access: "rw",
             },
              grantee: {
-                  userGroupId: 1,
+                  userGroupId: "1",
                   name: "TestGroup",
                   accessLevel: 1,
                 },
@@ -4667,7 +4667,7 @@ export const iterations = [
               access: "rw",
             },
              grantee: {
-                  userGroupId: 1,
+                  userGroupId: "1",
                   name: "TestGroup",
                   accessLevel: 1,
                 },
@@ -4691,7 +4691,7 @@ export const iterations = [
               access: "rw",
             },
              grantee: {
-                  userGroupId: 1,
+                  userGroupId: "1",
                   name: "TestGroup",
                   accessLevel: 1,
                 },
@@ -4723,7 +4723,7 @@ export const iterations = [
               benchmarkId: "VPN_SRG_TEST",
             },
              grantee: {
-                  userGroupId: 1,
+                  userGroupId: "1",
                   name: "TestGroup",
                   accessLevel: 1,
                 },
@@ -4744,7 +4744,7 @@ export const iterations = [
               benchmarkId: "Windows_10_STIG_TEST",
             },
              grantee: {
-                  userGroupId: 1,
+                  userGroupId: "1",
                   name: "TestGroup",
                   accessLevel: 1,
                 },
@@ -4769,7 +4769,7 @@ export const iterations = [
               benchmarkId: "VPN_SRG_TEST",
             },
              grantee: {
-                  userGroupId: 1,
+                  userGroupId: "1",
                   name: "TestGroup",
                   accessLevel: 1,
                 },
@@ -4790,7 +4790,7 @@ export const iterations = [
               benchmarkId: "Windows_10_STIG_TEST",
             },
              grantee: {
-                  userGroupId: 1,
+                  userGroupId: "1",
                   name: "TestGroup",
                   accessLevel: 1,
                 },
@@ -4811,7 +4811,7 @@ export const iterations = [
               benchmarkId: "Windows_10_STIG_TEST",
             },
              grantee: {
-                  userGroupId: 1,
+                  userGroupId: "1",
                   name: "TestGroup",
                   accessLevel: 1,
                 },
@@ -4844,7 +4844,7 @@ export const iterations = [
               benchmarkId: "VPN_SRG_TEST",
             },
              grantee: {
-                  userGroupId: 1,
+                  userGroupId: "1",
                   name: "TestGroup",
                   accessLevel: 1,
                 },
@@ -4869,7 +4869,7 @@ export const iterations = [
               benchmarkId: "VPN_SRG_TEST",
             },
              grantee: {
-                  userGroupId: 1,
+                  userGroupId: "1",
                   name: "TestGroup",
                   accessLevel: 1,
                 },
@@ -4890,7 +4890,7 @@ export const iterations = [
               benchmarkId: "VPN_SRG_TEST",
             },
              grantee: {
-                  userGroupId: 1,
+                  userGroupId: "1",
                   name: "TestGroup",
                   accessLevel: 1,
                 },
@@ -4923,7 +4923,7 @@ export const iterations = [
               benchmarkId: "VPN_SRG_TEST",
             },
              grantee: {
-                  userGroupId: 1,
+                  userGroupId: "1",
                   name: "TestGroup",
                   accessLevel: 1,
                 },
@@ -4948,7 +4948,7 @@ export const iterations = [
               benchmarkId: "VPN_SRG_TEST",
             },
              grantee: {
-                  userGroupId: 1,
+                  userGroupId: "1",
                   name: "TestGroup",
                   accessLevel: 1,
                 },
@@ -4981,7 +4981,7 @@ export const iterations = [
               benchmarkId: "VPN_SRG_TEST",
             },
              grantee: {
-                  userGroupId: 1,
+                  userGroupId: "1",
                   name: "TestGroup",
                   accessLevel: 1,
                 },
@@ -5006,7 +5006,7 @@ export const iterations = [
               benchmarkId: "VPN_SRG_TEST",
             },
              grantee: {
-                  userGroupId: 1,
+                  userGroupId: "1",
                   name: "TestGroup",
                   accessLevel: 1,
                 },
@@ -5027,7 +5027,7 @@ export const iterations = [
               benchmarkId: "VPN_SRG_TEST",
             },
              grantee: {
-                  userGroupId: 1,
+                  userGroupId: "1",
                   name: "TestGroup",
                   accessLevel: 1,
                 },
@@ -5056,7 +5056,7 @@ export const iterations = [
               benchmarkId: "VPN_SRG_TEST",
             },
              grantee: {
-                  userGroupId: 1,
+                  userGroupId: "1",
                   name: "TestGroup",
                   accessLevel: 1,
                 },
@@ -5093,7 +5093,7 @@ export const iterations = [
               benchmarkId: "VPN_SRG_TEST",
             },
              grantee: {
-                  userGroupId: 1,
+                  userGroupId: "1",
                   name: "TestGroup",
                   accessLevel: 1,
                 },
@@ -5118,7 +5118,7 @@ export const iterations = [
               benchmarkId: "VPN_SRG_TEST",
             },
              grantee: {
-                  userGroupId: 1,
+                  userGroupId: "1",
                   name: "TestGroup",
                   accessLevel: 1,
                 },
@@ -5142,7 +5142,7 @@ export const iterations = [
               access: "rw",
             },
              grantee: {
-                  userGroupId: 1,
+                  userGroupId: "1",
                   name: "TestGroup",
                   accessLevel: 1,
                 },
@@ -5166,7 +5166,7 @@ export const iterations = [
               access: "rw",
             },
              grantee: {
-                  userGroupId: 1,
+                  userGroupId: "1",
                   name: "TestGroup",
                   accessLevel: 1,
                 },
@@ -5198,7 +5198,7 @@ export const iterations = [
               benchmarkId: "VPN_SRG_TEST",
             },
              grantee: {
-                  userGroupId: 1,
+                  userGroupId: "1",
                   name: "TestGroup",
                   accessLevel: 1,
                 },
@@ -5223,7 +5223,7 @@ export const iterations = [
               benchmarkId: "VPN_SRG_TEST",
             },
              grantee: {
-                  userGroupId: 1,
+                  userGroupId: "1",
                   name: "TestGroup",
                   accessLevel: 1,
                 },
@@ -5247,7 +5247,7 @@ export const iterations = [
               access: "r",
             },
              grantee: {
-                  userGroupId: 1,
+                  userGroupId: "1",
                   name: "TestGroup",
                   accessLevel: 1,
                 },
@@ -5279,7 +5279,7 @@ export const iterations = [
               benchmarkId: "VPN_SRG_TEST",
             },
              grantee: {
-                  userGroupId: 1,
+                  userGroupId: "1",
                   name: "TestGroup",
                   accessLevel: 1,
                 },
@@ -5304,7 +5304,7 @@ export const iterations = [
               benchmarkId: "VPN_SRG_TEST",
             },
              grantee: {
-                  userGroupId: 1,
+                  userGroupId: "1",
                   name: "TestGroup",
                   accessLevel: 1,
                 },
@@ -5328,7 +5328,7 @@ export const iterations = [
               access: "r",
             },
              grantee: {
-                  userGroupId: 1,
+                  userGroupId: "1",
                   name: "TestGroup",
                   accessLevel: 1,
                 },
@@ -5359,7 +5359,7 @@ export const iterations = [
               benchmarkId: "VPN_SRG_TEST",
             },
              grantee: {
-                  userGroupId: 1,
+                  userGroupId: "1",
                   name: "TestGroup",
                   accessLevel: 1,
                 },
@@ -5384,7 +5384,7 @@ export const iterations = [
               benchmarkId: "VPN_SRG_TEST",
             },
              grantee: {
-                  userGroupId: 1,
+                  userGroupId: "1",
                   name: "TestGroup",
                   accessLevel: 1,
                 },
@@ -5408,7 +5408,7 @@ export const iterations = [
               access: "rw",
             },
              grantee: {
-                  userGroupId: 1,
+                  userGroupId: "1",
                   name: "TestGroup",
                   accessLevel: 1,
                 },
@@ -5439,7 +5439,7 @@ export const iterations = [
               access: "rw",
             },
              grantee: {
-                  userGroupId: 1,
+                  userGroupId: "1",
                   name: "TestGroup",
                   accessLevel: 1,
                 },
@@ -5471,7 +5471,7 @@ export const iterations = [
               benchmarkId: "VPN_SRG_TEST",
             },
              grantee: {
-                  userGroupId: 1,
+                  userGroupId: "1",
                   name: "TestGroup",
                   accessLevel: 1,
                 },
@@ -5496,7 +5496,7 @@ export const iterations = [
               benchmarkId: "VPN_SRG_TEST",
             },
              grantee: {
-                  userGroupId: 1,
+                  userGroupId: "1",
                   name: "TestGroup",
                   accessLevel: 1,
                 },
@@ -5521,7 +5521,7 @@ export const iterations = [
               benchmarkId: "Windows_10_STIG_TEST",
             },
              grantee: {
-                  userGroupId: 1,
+                  userGroupId: "1",
                   name: "TestGroup",
                   accessLevel: 1,
                 },
@@ -5553,7 +5553,7 @@ export const iterations = [
               benchmarkId: "VPN_SRG_TEST",
             },
              grantee: {
-                  userGroupId: 1,
+                  userGroupId: "1",
                   name: "TestGroup",
                   accessLevel: 1,
                 },
@@ -5578,7 +5578,7 @@ export const iterations = [
               benchmarkId: "VPN_SRG_TEST",
             },
              grantee: {
-                  userGroupId: 1,
+                  userGroupId: "1",
                   name: "TestGroup",
                   accessLevel: 1,
                 },
@@ -5610,7 +5610,7 @@ export const iterations = [
               benchmarkId: "VPN_SRG_TEST",
             },
              grantee: {
-                  userGroupId: 1,
+                  userGroupId: "1",
                   name: "TestGroup",
                   accessLevel: 1,
                 },
@@ -5642,7 +5642,7 @@ export const iterations = [
               benchmarkId: "VPN_SRG_TEST",
             },
              grantee: {
-                  userGroupId: 1,
+                  userGroupId: "1",
                   name: "TestGroup",
                   accessLevel: 1,
                 },
@@ -5667,7 +5667,7 @@ export const iterations = [
               benchmarkId: "VPN_SRG_TEST",
             },
              grantee: {
-                  userGroupId: 1,
+                  userGroupId: "1",
                   name: "TestGroup",
                   accessLevel: 1,
                 },
@@ -5699,7 +5699,7 @@ export const iterations = [
               benchmarkId: "VPN_SRG_TEST",
             },
              grantee: {
-                  userGroupId: 1,
+                  userGroupId: "1",
                   name: "TestGroup",
                   accessLevel: 1,
                 },
@@ -5730,7 +5730,7 @@ export const iterations = [
               benchmarkId: "Windows_10_STIG_TEST",
             },
              grantee: {
-                  userGroupId: 1,
+                  userGroupId: "1",
                   name: "TestGroup",
                   accessLevel: 1,
                 },
@@ -5755,7 +5755,7 @@ export const iterations = [
               benchmarkId: "VPN_SRG_TEST",
             },
              grantee: {
-                  userGroupId: 1,
+                  userGroupId: "1",
                   name: "TestGroup",
                   accessLevel: 1,
                 },
@@ -5780,7 +5780,7 @@ export const iterations = [
               benchmarkId: "Windows_10_STIG_TEST",
             },
              grantee: {
-                  userGroupId: 1,
+                  userGroupId: "1",
                   name: "TestGroup",
                   accessLevel: 1,
                 },
@@ -5811,7 +5811,7 @@ export const iterations = [
               benchmarkId: "Windows_10_STIG_TEST",
             },
              grantee: {
-                  userGroupId: 1,
+                  userGroupId: "1",
                   name: "TestGroup",
                   accessLevel: 1,
                 },
@@ -5836,7 +5836,7 @@ export const iterations = [
               benchmarkId: "VPN_SRG_TEST",
             },
              grantee: {
-                  userGroupId: 1,
+                  userGroupId: "1",
                   name: "TestGroup",
                   accessLevel: 1,
                 },
@@ -5861,7 +5861,7 @@ export const iterations = [
               benchmarkId: "Windows_10_STIG_TEST",
             },
              grantee: {
-                  userGroupId: 1,
+                  userGroupId: "1",
                   name: "TestGroup",
                   accessLevel: 1,
                 },
@@ -5893,7 +5893,7 @@ export const iterations = [
               benchmarkId: "Windows_10_STIG_TEST",
             },
              grantee: {
-                  userGroupId: 1,
+                  userGroupId: "1",
                   name: "TestGroup",
                   accessLevel: 1,
                 },
@@ -5918,7 +5918,7 @@ export const iterations = [
               benchmarkId: "VPN_SRG_TEST",
             },
              grantee: {
-                  userGroupId: 1,
+                  userGroupId: "1",
                   name: "TestGroup",
                   accessLevel: 1,
                 },
@@ -5943,7 +5943,7 @@ export const iterations = [
               benchmarkId: "Windows_10_STIG_TEST",
             },
              grantee: {
-                  userGroupId: 1,
+                  userGroupId: "1",
                   name: "TestGroup",
                   accessLevel: 1,
                 },
@@ -5977,7 +5977,7 @@ export const iterations = [
           },
           grantee: {
             name: "TestGroup",
-            userGroupId: 1,
+            userGroupId: "1",
             accessLevel: 1,
           },
         },
@@ -6004,7 +6004,7 @@ export const iterations = [
               benchmarkId: "VPN_SRG_TEST",
             },
              grantee: {
-                  userGroupId: 1,
+                  userGroupId: "1",
                   name: "TestGroup",
                   accessLevel: 1,
                 },
@@ -6028,7 +6028,7 @@ export const iterations = [
               access: "rw",
             },
              grantee: {
-                  userGroupId: 1,
+                  userGroupId: "1",
                   name: "TestGroup",
                   accessLevel: 1,
                 },
@@ -6049,7 +6049,7 @@ export const iterations = [
               benchmarkId: "VPN_SRG_TEST",
             },
              grantee: {
-                  userGroupId: 1,
+                  userGroupId: "1",
                   name: "TestGroup",
                   accessLevel: 1,
                 },
@@ -6076,7 +6076,7 @@ export const iterations = [
               benchmarkId: "VPN_SRG_TEST",
             },
              grantee: {
-                  userGroupId: 1,
+                  userGroupId: "1",
                   name: "TestGroup",
                   accessLevel: 1,
                 },
@@ -6100,7 +6100,7 @@ export const iterations = [
               access: "rw",
             },
              grantee: {
-                  userGroupId: 1,
+                  userGroupId: "1",
                   name: "TestGroup",
                   accessLevel: 1,
                 },
@@ -6124,7 +6124,7 @@ export const iterations = [
               access: "rw",
             },
              grantee: {
-                  userGroupId: 1,
+                  userGroupId: "1",
                   name: "TestGroup",
                   accessLevel: 1,
                 },
@@ -6145,7 +6145,7 @@ export const iterations = [
               benchmarkId: "VPN_SRG_TEST",
             },
              grantee: {
-                  userGroupId: 1,
+                  userGroupId: "1",
                   name: "TestGroup",
                   accessLevel: 1,
                 },
@@ -6176,7 +6176,7 @@ export const iterations = [
               benchmarkId: "VPN_SRG_TEST",
             },
              grantee: {
-                  userGroupId: 1,
+                  userGroupId: "1",
                   name: "TestGroup",
                   accessLevel: 1,
                 },
@@ -6200,7 +6200,7 @@ export const iterations = [
               access: "rw",
             },
              grantee: {
-                  userGroupId: 1,
+                  userGroupId: "1",
                   name: "TestGroup",
                   accessLevel: 1,
                 },
@@ -6230,7 +6230,7 @@ export const iterations = [
               access: "r",
             },
              grantee: {
-                  userGroupId: 1,
+                  userGroupId: "1",
                   name: "TestGroup",
                   accessLevel: 1,
                 },
@@ -6254,7 +6254,7 @@ export const iterations = [
               access: "r",
             },
              grantee: {
-                  userGroupId: 1,
+                  userGroupId: "1",
                   name: "TestGroup",
                   accessLevel: 1,
                 },
@@ -6278,7 +6278,7 @@ export const iterations = [
               access: "r",
             },
              grantee: {
-                  userGroupId: 1,
+                  userGroupId: "1",
                   name: "TestGroup",
                   accessLevel: 1,
                 },
@@ -6302,7 +6302,7 @@ export const iterations = [
               access: "r",
             },
              grantee: {
-                  userGroupId: 1,
+                  userGroupId: "1",
                   name: "TestGroup",
                   accessLevel: 1,
                 },
@@ -6332,7 +6332,7 @@ export const iterations = [
               access: "r",
             },
              grantee: {
-                  userGroupId: 1,
+                  userGroupId: "1",
                   name: "TestGroup",
                   accessLevel: 1,
                 },
@@ -6356,7 +6356,7 @@ export const iterations = [
               access: "r",
             },
              grantee: {
-                  userGroupId: 1,
+                  userGroupId: "1",
                   name: "TestGroup",
                   accessLevel: 1,
                 },
@@ -6377,7 +6377,7 @@ export const iterations = [
               benchmarkId: "VPN_SRG_TEST",
             },
              grantee: {
-                  userGroupId: 1,
+                  userGroupId: "1",
                   name: "TestGroup",
                   accessLevel: 1,
                 },
@@ -6408,7 +6408,7 @@ export const iterations = [
               benchmarkId: "VPN_SRG_TEST",
             },
              grantee: {
-                  userGroupId: 1,
+                  userGroupId: "1",
                   name: "TestGroup",
                   accessLevel: 1,
                 },
@@ -6432,7 +6432,7 @@ export const iterations = [
               access: "rw",
             },
              grantee: {
-                  userGroupId: 1,
+                  userGroupId: "1",
                   name: "TestGroup",
                   accessLevel: 1,
                 },
@@ -6456,7 +6456,7 @@ export const iterations = [
               access: "rw",
             },
              grantee: {
-                  userGroupId: 1,
+                  userGroupId: "1",
                   name: "TestGroup",
                   accessLevel: 1,
                 },
@@ -6480,7 +6480,7 @@ export const iterations = [
               access: "rw",
             },
              grantee: {
-                  userGroupId: 1,
+                  userGroupId: "1",
                   name: "TestGroup",
                   accessLevel: 1,
                 },

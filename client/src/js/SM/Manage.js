@@ -1147,7 +1147,7 @@ SM.Manage.Collection.AdminGrid = Ext.extend(Ext.grid.GridPanel, {
         method: 'GET'
       }),
       baseParams: {
-        elevate: curUser.privileges.canAdmin,
+        elevate: curUser.privileges.admin,
         projection: ['owners', 'statistics']
       },
       root: '',
@@ -1254,7 +1254,7 @@ SM.Manage.Collection.AdminGrid = Ext.extend(Ext.grid.GridPanel, {
         {
           iconCls: 'icon-add',
           text: 'New Collection',
-          disabled: !(curUser.privileges.canAdmin),
+          disabled: !(curUser.privileges.admin),
           handler: function () {
             showAdminCreatePanel(0);
           }
@@ -1264,7 +1264,7 @@ SM.Manage.Collection.AdminGrid = Ext.extend(Ext.grid.GridPanel, {
           ref: '../removeBtn',
           iconCls: 'icon-del',
           text: 'Delete Collection',
-          disabled: !(curUser.privileges.canAdmin),
+          disabled: !(curUser.privileges.admin),
           handler: function () {
             let record = selModel.getSelected()
             let confirmStr = `Delete "${record.data.name}"?`

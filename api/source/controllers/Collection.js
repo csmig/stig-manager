@@ -40,7 +40,7 @@ module.exports.createCollection = async function createCollection (req, res, nex
     const projection = req.query.projection
     const elevate = req.query.elevate
     const body = req.body
-    if ( elevate || req.userObject.privileges.canCreateCollection ) {
+    if ( elevate || req.userObject.privileges.create_collection ) {
       if (!hasUniqueGrants(body.grants)) {
         throw new SmError.UnprocessableError('Duplicate user or user group in grant array')
       }  
@@ -971,7 +971,7 @@ module.exports.cloneCollection = async function (req, res, next) {
     function progressCb(json) {
       res.write(JSON.stringify(json) + '\n')
     }
-    if ( req.userObject.privileges.canCreateCollection ) {
+    if ( req.userObject.privileges.create_collection ) {
       const { collectionId } = getCollectionInfoAndCheckPermission(req, Security.ACCESS_LEVEL.Manage)
       const options = {
         grants: true,

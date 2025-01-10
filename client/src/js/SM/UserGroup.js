@@ -50,7 +50,7 @@ SM.UserGroup.UserGroupGrid = Ext.extend(Ext.grid.GridPanel, {
         method: 'GET'
       }),
       baseParams: {
-        elevate: curUser.privileges.canAdmin,
+        elevate: curUser.privileges.admin,
         projection: ['users', 'collections', 'attributions']
       },
       root: '',
@@ -155,7 +155,7 @@ SM.UserGroup.UserGroupGrid = Ext.extend(Ext.grid.GridPanel, {
               if (btn == 'yes') {
                 const apiUserGroup = await Ext.Ajax.requestPromise({
                   responseType: 'json',
-                  url: `${STIGMAN.Env.apiBase}/user-groups/${selRec.data.userGroupId}?elevate=${curUser.privileges.canAdmin}`,
+                  url: `${STIGMAN.Env.apiBase}/user-groups/${selRec.data.userGroupId}?elevate=${curUser.privileges.admin}`,
                   method: 'DELETE'
                 })
                 store.remove(selRec)
@@ -481,7 +481,7 @@ SM.UserGroup.UserSelectingPanel = Ext.extend(Ext.Panel, {
           responseType: 'json',
           url: `${STIGMAN.Env.apiBase}/users`,
           params: {
-            elevate: curUser.privileges.canAdmin,
+            elevate: curUser.privileges.admin,
             projection: ['userGroups']
           },
           method: 'GET'
@@ -491,7 +491,7 @@ SM.UserGroup.UserSelectingPanel = Ext.extend(Ext.Panel, {
           responseType: 'json',
           url: `${STIGMAN.Env.apiBase}/user-groups/${userGroupId}`,
           params: {
-            elevate: curUser.privileges.canAdmin,
+            elevate: curUser.privileges.admin,
             projection: ['users']
           },
           method: 'GET'
@@ -667,7 +667,7 @@ SM.UserGroup.showUserGroupProps = async function (userGroupId) {
               url,
               method,
               params: {
-                elevate: curUser.privileges.canAdmin,
+                elevate: curUser.privileges.admin,
                 projection: ['users', 'collections', 'attributions']
               },
               headers: { 'Content-Type': 'application/json;charset=utf-8' },

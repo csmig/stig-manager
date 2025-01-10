@@ -298,7 +298,8 @@ exports.queryCollections = async function ({projections = [], filter = {}, eleva
       columns.push(`(select coalesce(json_arrayagg(grantJson),json_array()) from
         (select json_object(
           'userId', CAST(user_data.userId as char),
-          'username', user_data.username
+          'username', user_data.username,
+          'displayName', JSON_UNQUOTE(JSON_EXTRACT(user_data.lastClaims, "$.${config.oauth.claims.name}"))
           ) as grantJson
         from
           collection_grant inner join user_data using (userId) where collectionId = c.collectionId and accessLevel = 4
@@ -2482,9 +2483,9 @@ cteAclRules as (select
     json_object('assetId', cast(a.assetId as char), 'name', a.name) as asset,
     json_object(
 		'grantee', json_remove(json_object(
-			CASE WHEN ud.userId is null THEN 'x' ELSE 'userId' END, ud.userId,
+			CASE WHEN ud.userId is null THEN 'x' ELSE 'userId' END, CAST(ud.userId AS CHAR),
 			CASE WHEN ud.userId is null THEN 'x' ELSE 'username' END, ud.username,
-			CASE WHEN ug.userGroupId is null THEN 'x' ELSE 'userGroupId' END, ug.userGroupId,
+			CASE WHEN ug.userGroupId is null THEN 'x' ELSE 'userGroupId' END, CAST(ug.userGroupId AS CHAR),
 			CASE WHEN ug.userGroupId is null THEN 'x' ELSE 'name' END, ug.name,
             'accessLevel', cg.accessLevel
 			), '$.x'),

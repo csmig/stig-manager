@@ -9,8 +9,8 @@ export const expectations = {
     userGroupIds: [],
     collectionGrants: ["21", "83", "1", "84", "85", "92"],
     privileges: {
-      canAdmin: true,
-      canCreateCollection: true,
+      admin: true,
+      create_collection: true,
     }
   },
   lvl1: {
@@ -121,8 +121,8 @@ export const expectations = {
     userGroupIds: ["1"],
     collectionGrants: ["21"],
     privileges: {
-      canAdmin: false,
-      canCreateCollection: false,
+      admin: false,
+      create_collection: false,
     }
    
   },
@@ -135,8 +135,8 @@ export const expectations = {
     userGroupIds: [],
     collectionGrants: ["21","1"],
     privileges: {
-      canAdmin: false,
-      canCreateCollection: false,
+      admin: false,
+      create_collection: false,
     }
    
   },
@@ -149,8 +149,8 @@ export const expectations = {
     userGroupIds: [],
     collectionGrants: ["21", "1"],
     privileges: {
-      canAdmin: false,
-      canCreateCollection: false,
+      admin: false,
+      create_collection: false,
     }
    
   },
@@ -163,8 +163,8 @@ export const expectations = {
     userGroupIds: [],
     collectionGrants: ["21", "1", "85"],
     privileges: {
-      canAdmin: false,
-      canCreateCollection: false,
+      admin: false,
+      create_collection: false,
     }
    
   },
@@ -174,8 +174,8 @@ export const expectations = {
     userGroupIds: [],
     collectionGrants: [],
     privileges: {
-      canAdmin: false,
-      canCreateCollection: true,
+      admin: false,
+      create_collection: true,
     }
   },
 }

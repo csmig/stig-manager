@@ -232,7 +232,7 @@ SM.NavTree.TreePanel = Ext.extend(Ext.tree.TreePanel, {
           // Root node
           if (node == 'stigman-root') {
             let content = []
-            if (curUser.privileges.canAdmin) {
+            if (curUser.privileges.admin) {
               const children = [
                 {
                   id: 'collection-admin',
@@ -367,7 +367,7 @@ SM.NavTree.TreePanel = Ext.extend(Ext.tree.TreePanel, {
             const collectionMap = await SM.Cache.getCollections()
             const apiCollections = [...collectionMap.values()].sort((a, b) => a.name.localeCompare(b.name))
             let content = apiCollections.map(collection => SM.NavTree.CollectionLeafConfig(collection))
-            if (curUser.privileges.canCreateCollection) {
+            if (curUser.privileges.create_collection) {
               content.unshift({
                 id: `collection-create-leaf`,
                 action: 'collection-create',
