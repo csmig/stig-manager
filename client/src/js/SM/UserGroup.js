@@ -514,6 +514,10 @@ SM.UserGroup.UserSelectingPanel = Ext.extend(Ext.Panel, {
 
     }
 
+    function fireSelectedChanged () {
+      _this.fireEvent('selectedchanged', selectionsGrid.store.getRange().map( r => r.data.userGroupId ))
+    }
+
     function changeSelected(srcGrid, records, dstGrid) {
       srcGrid.store.suspendEvents()
       dstGrid.store.suspendEvents()
@@ -521,17 +525,18 @@ SM.UserGroup.UserSelectingPanel = Ext.extend(Ext.Panel, {
       dstGrid.store.add(records)
       const { field, direction } = dstGrid.store.getSortState()
       dstGrid.store.sort(field, direction)
+      dstGrid.getSelectionModel().selectRecords(records)
       srcGrid.store.resumeEvents()
       dstGrid.store.resumeEvents()
+
       srcGrid.store.fireEvent('datachanged', srcGrid.store)
       dstGrid.store.fireEvent('datachanged', dstGrid.store)
       srcGrid.store.fireEvent('update', srcGrid.store)
       dstGrid.store.fireEvent('update', dstGrid.store)
       dstGrid.store.filter(dstGrid.getView().getFilterFns())
 
-      dstGrid.getSelectionModel().selectRecords(records)
       dstGrid.getView().focusRow(dstGrid.store.indexOfId(records[0].data.assetId))
-      _this.fireEvent('userselectionschanged')
+      fireSelectedChanged ()
     }
 
     function getValue() {

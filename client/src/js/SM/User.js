@@ -392,10 +392,10 @@ SM.User.GrantSelectingPanel = Ext.extend(Ext.Panel, {
     const config = {
       layout: 'hbox',
       layoutConfig: {
-        align: 'stretch'
+        align: 'stretch',
+        padding: 10
       },
       name: 'collectionGrants',
-      border: false,
       items: [
         availableGrid,
         buttonPanel,
@@ -424,7 +424,7 @@ SM.User.GroupSelectingGrid = Ext.extend(Ext.grid.GridPanel, {
     const fields = Ext.data.Record.create([
       { name: 'userGroupId', type: 'string' },
       { name: 'name', type: 'string' },
-      { name: 'usernames', convert: (v, r) => r.users.map(user => user.username) },
+      // { name: 'usernames', convert: (v, r) => r.users.map(user => user.username) },
     ])
     const sm = new Ext.grid.CheckboxSelectionModel({
       singleSelect: false,
@@ -444,24 +444,24 @@ SM.User.GroupSelectingGrid = Ext.extend(Ext.grid.GridPanel, {
         sortable: true,
         filter: { type: 'string' }
       },
-      {
-        header: "Members",
-        width: 50,
-        align: 'center',
-        dataIndex: 'usernames',
-        sortable: true,
-        hidden: false,
-        filter: { type: 'values' },
-        renderer: function (value, metadata, record) {
-          let qtipWidth = 230
-          if (value.length > 0) {
-            let longest = Math.max(...(value.map(el => el.length)))
-            qtipWidth = longest * 8
-          }
-          metadata.attr = ` ext:qwidth=${qtipWidth} ext:qtip="<b>${record.data.name} Members</b><br>${value.join('<br>')}"`
-          return `<i>${value.length}</i>`
-        }
-      }
+      // {
+      //   header: "Members",
+      //   width: 50,
+      //   align: 'center',
+      //   dataIndex: 'usernames',
+      //   sortable: true,
+      //   hidden: false,
+      //   filter: { type: 'values' },
+      //   renderer: function (value, metadata, record) {
+      //     let qtipWidth = 230
+      //     if (value.length > 0) {
+      //       let longest = Math.max(...(value.map(el => el.length)))
+      //       qtipWidth = longest * 8
+      //     }
+      //     metadata.attr = ` ext:qwidth=${qtipWidth} ext:qtip="<b>${record.data.name} Members</b><br>${value.join('<br>')}"`
+      //     return `<i>${value.length}</i>`
+      //   }
+      // }
     ]
     const store = new Ext.data.JsonStore({
       fields,
@@ -605,7 +605,6 @@ SM.User.GroupSelectingPanel = Ext.extend(Ext.Panel, { initComponent:
       handler: function (btn) {
         const selectedRecords = availableGrid.getSelectionModel().getSelections()
         changeSelected(availableGrid, selectedRecords, selectionsGrid)
-        fireSelectedChanged()
         btn.disable()
       }
     })
@@ -616,7 +615,6 @@ SM.User.GroupSelectingPanel = Ext.extend(Ext.Panel, { initComponent:
       handler: function (btn) {
         const selectedRecords = selectionsGrid.getSelectionModel().getSelections()
         changeSelected(selectionsGrid, selectedRecords, availableGrid)
-        fireSelectedChanged()
         btn.disable()
       }
     })
@@ -698,16 +696,18 @@ SM.User.GroupSelectingPanel = Ext.extend(Ext.Panel, { initComponent:
       // }
       const { field, direction } = dstGrid.store.getSortState()
       dstGrid.store.sort(field, direction)
+      dstGrid.selModel.selectRecords(records)
       srcGrid.store.resumeEvents()
       dstGrid.store.resumeEvents()
+
       srcGrid.store.fireEvent('datachanged', srcGrid.store)
       dstGrid.store.fireEvent('datachanged', dstGrid.store)
       srcGrid.store.fireEvent('update', srcGrid.store)
       dstGrid.store.fireEvent('update', dstGrid.store)
       dstGrid.store.filter(dstGrid.getView().getFilterFns())
-
-      dstGrid.selModel.selectRecords(records)
       dstGrid.getView().focusRow(dstGrid.store.indexOfId(records[0].data.assetId))
+
+      fireSelectedChanged()
     }
 
     function getValue() {
@@ -718,10 +718,10 @@ SM.User.GroupSelectingPanel = Ext.extend(Ext.Panel, { initComponent:
     const config = {
       layout: 'hbox',
       layoutConfig: {
-        align: 'stretch'
+        align: 'stretch',
+        padding: 10
       },
       name: 'userGroups',
-      border: false,
       items: [
         availableGrid,
         buttonPanel,
@@ -1015,6 +1015,87 @@ SM.User.UserGrid = Ext.extend(Ext.grid.GridPanel, {
   }
 })
 
+SM.User.PropertiesPanel = Ext.extend(Ext.Panel, {
+  initComponent: function () {
+    const _this = this
+
+    const directGrantsPanel = new SM.User.GrantSelectingPanel({
+      name: 'collectionGrants',
+      title: 'Direct Grants',
+      iconCls: 'sm-lock-icon',
+      border: false,
+      listeners: {
+        selectedchanged: function (selections) {
+          _this.fireEvent('propsupdate', this.name, selections)
+        }
+      }
+    })
+    const userGroupsPanel = new SM.User.GroupSelectingPanel({
+      title: 'User Groups',
+      iconCls: 'sm-users-icon',
+      padding: '10 10 10 10',
+      border: false,
+      isFormField: true,
+      submitValue: true,
+      listeners: {
+        selectedchanged: function (selections) {
+          _this.fireEvent('propsupdate', this.name, selections)
+        }
+      }
+    })
+    const effectiveGrantsGrid = new SM.User.EffectiveGrantsGrid({
+      name: 'effectiveGrants',
+      title: 'Effective Grants',
+      iconCls: 'sm-lock-icon',
+      isFormField: true,
+      border: true
+    })
+    const lastClaimsPanel = new Ext.Panel({
+      title: 'Last Claims',
+      name: 'lastClaims',
+      html: '',
+      tree: JsonView.createTree({status: 'No claims have been presented.'}),
+      autoScroll: true,
+      iconCls: 'sm-json-icon',
+      layout: 'fit',
+      isFormField: true,
+      setValue: function (v) {
+        if (Object.keys(v).length === 0 && v.constructor === Object) {
+          return
+        }
+        this.tree = JsonView.createTree(v)
+      },
+      getValue: Ext.emptyFn,
+      markInvalid: Ext.emptyFn,
+      clearInvalid: Ext.emptyFn,
+      isValid: () => true,
+      getName: function () { return this.name },
+      validate: () => true,
+      listeners: {
+        render: function () {
+          JsonView.render(this.tree, this.body.dom)
+          JsonView.expandChildren(this.tree)
+        }
+      }
+    })
+
+    const config = {
+      layout: 'accordion',
+      layoutConfig: {
+        animate: true
+      },
+      items: [
+        userGroupsPanel,
+        directGrantsPanel,
+        effectiveGrantsGrid,
+        lastClaimsPanel
+      ]
+    }
+    Ext.apply(this, Ext.apply(this.initialConfig, config))
+    this.superclass().initComponent.call(this)
+  }
+})
+
 SM.User.UserFormPanel = Ext.extend(Ext.form.FormPanel, {
   initComponent: function () {
     const _this = this
@@ -1051,6 +1132,7 @@ SM.User.UserFormPanel = Ext.extend(Ext.form.FormPanel, {
     const lastClaimsPanel = new Ext.Panel({
       title: 'Last Claims',
       name: 'lastClaims',
+      border: true,
       html: '',
       tree: JsonView.createTree({status: 'No claims have been presented.'}),
       autoScroll: true,
@@ -1167,6 +1249,7 @@ SM.User.UserFormPanel = Ext.extend(Ext.form.FormPanel, {
       ],
       userGroupsPanel,
       directGrantsPanel,
+      effectiveGrantsGrid
     }
     Ext.apply(this, Ext.apply(this.initialConfig, config))
     this.superclass().initComponent.call(this)
@@ -1186,7 +1269,7 @@ SM.User.showUserProps = async function showUserProps(userId) {
       registeredUser: userId,
       padding: '10px 15px 10px 15px',
       listeners,
-      monitorValid: !userId //fires clientvalidation event for preregistered users
+      monitorValid: !userId //fires clientvalidation event for preregistered users,
     })
 
     async function onPropsUpdate(property, value) {
@@ -1203,6 +1286,7 @@ SM.User.showUserProps = async function showUserProps(userId) {
           [property]: value
         }
       })
+      userFormPanel.effectiveGrantsGrid.setValue(apiUser.collectionGrants)
       SM.Dispatcher.fireEvent('userchanged', apiUser)
     }
 
@@ -1293,7 +1377,7 @@ SM.User.showUserProps = async function showUserProps(userId) {
         canCreateCollection: privileges.includes('create_collection'),
         canAdmin: privileges.includes('admin'),
         lastClaims: apiUser.statistics.lastClaims,
-        collectionGrants: apiUser.collectionGrants || [],
+        // collectionGrants: apiUser.collectionGrants || [],
         effectiveGrants: apiUser.collectionGrants || []
       }
       userFormPanel.getForm().setValues(formValues)
