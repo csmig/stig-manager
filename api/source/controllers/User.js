@@ -140,7 +140,7 @@ module.exports.replaceUser = async function replaceUser (req, res, next) {
     let body = req.body
     let projection = req.query.projection
 
-    let userData = await UserService.getUserByUserId(userId, projection, elevate, req.userObject)
+    let userData = await UserService.getUserByUserId(userId)
     if (!userData) {
       throw new SmError.NotFoundError("UserId not found.")
     }
@@ -171,7 +171,7 @@ module.exports.updateUser = async function updateUser (req, res, next) {
       let body = req.body
       let projection = req.query.projection
 
-      let userData = await UserService.getUserByUserId(userId, projection, elevate, req.userObject)
+      let userData = await UserService.getUserByUserId(userId)
       if (!userData) {
         throw new SmError.NotFoundError("UserId not found.")
       }
