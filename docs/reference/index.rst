@@ -133,7 +133,7 @@ This is a glossary with definitions for terms like :term:`Asset`:
 
         * When you grant Users access to your Collection, or when you are granted access to another Collection by someone else, that Collection will appear in the Nav Tree on the left upon refresh of the app. 
 
-        For each Collection they are granted access to, Users can have one of 4 :term:`Roles <Role>` , providing different privileges and default access to your Collection.  See :ref:`roles-and-access` for more information. 
+        For each Collection they are granted access to, Users can have one of 4 :term:`Roles <Role>` , providing different capabilities and default access to your Collection.  See :ref:`roles-and-access` for more information. 
 
         Users can also be given one of 2 **Privileges** on the STIG Manager system. These privileges can be administered in your Authentication Provider (such as Keycloak):
             * Collection Creator: Gives the User the ability to create their own Collections in STIG Manager.  

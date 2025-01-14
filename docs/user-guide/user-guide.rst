@@ -988,7 +988,7 @@ User/Group Grants can be added or removed using the toolbar buttons at the top o
 
 See the :ref:`Roles and Access<roles-and-access>` section for more information about Grants, Roles, and Access Control.
 
-.. thumbnail:: /assets/images/collection-manage-grants-user-pulldown.png
+.. thumbnail:: /assets/images/collection-manage-new-grants-popup.png
       :width: 50% 
       :show_caption: True
       :title: The User Grants Panel
@@ -999,10 +999,10 @@ See the :ref:`Roles and Access<roles-and-access>` section for more information a
 
 Any Grant can be associated with an Access Control List.  The Access Control List can be used to restrict or expand the User's access to certain Assets, STIGs, or Labels in the Collection.
 
-.. thumbnail:: /assets/images/restricted-access-list.png
+.. thumbnail:: /assets/images/collection-manage-acl-popup.png
       :width: 50% 
       :show_caption: True
-      :title: The Restricted User Access List
+      :title: The Access Control List Popup
 
 |
 
@@ -1015,7 +1015,7 @@ Users Tab
 This tab displays all the Users that have been granted access to this Collection, with either a Direct Grant to the User or via a Grant to a User Group. Hover over a Grant and click the "target" icon to view an expanded list of every Asset and STIG that the User has access to in this Collection. This view is the "effective access" of the User to the Collection that has been calculated based on the User's Role and the Access Control Lists associated with their Grant.
 
 
-.. thumbnail:: /assets/images/restricted-access-list.png
+.. thumbnail:: /assets/images/collection-manage-effective-access.png
       :width: 50% 
       :show_caption: True
       :title: Users Effective Access

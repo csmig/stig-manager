@@ -29,7 +29,7 @@ Roles
 There are four Roles available in STIG Manager, defined below. Roles differ in the actions they can perform in a Collection, and their default Access to Assets and Reviews. 
 
 Each Role in STIG Manager combines two distinct aspects:
-- Collection Management Capabilities (Privileges): Actions the user can perform on the Collection itself.
+- Collection Management Capabilities: Actions the user can perform on the Collection itself.
 - Default Access: The base level of access granted to Assets and their Reviews. This access can be further refined with Access Controls.
 
 The following Collection Roles are available:

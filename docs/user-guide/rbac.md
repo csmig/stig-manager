@@ -9,7 +9,7 @@ Grant = Collection + User/Group + Role  (formerly Access Level)
     - merge ACL resources and on Asset/STIG access collision select lowest access.  
 
 ## 2. Role
-Role = Review ACL + Privileges + Priority
+Role = Review ACL + Capabilities + Priority
 
 ## 3. Review ACL
 ACL = List of Rules
@@ -30,7 +30,7 @@ Rule = Resource (unique per list) + Access
 ### Access collisions
     - lowest access is selected.
 
-## 4. Privileges
+## 4. Capabilities
 ### Collection
     - modify
     - delete
@@ -59,9 +59,9 @@ Rule = Resource (unique per list) + Access
 For the built-in Roles:
 - Each Role has a default Review ACL rule which cannot be removed.
 - For all Roles, the Review ACL can be extended.
-- Privileges cannot be modified or extended.
+- Capabilities cannot be modified or extended.
 
-| Priority | Role       | Default ACL rule        | Privileges: Collection | Privileges: Grant                                                                                                  | Privileges: Asset              | Privileges: Label                                   | Privileges: STIG  |
+| Priority | Role       | Default ACL rule        | Capabilities: Collection | Capabilities: Grant                                                                                                  | Capabilities: Asset              | Capabilities: Label                                   | Capabilities: STIG  |
 |----------|------------|-------------------------|------------------------|--------------------------------------------------------------------------------------------------------------------|--------------------------------|-----------------------------------------------------|-------------------|
 | 4        | Owner      |  read/write  | modify<br />delete     | create owner,<br />modify owner,<br />delete owner,<br />create non-owner,<br />modify non-owner,<br />delete non-owner | create<br />modify<br />delete | create<br />modify<br />delete<br />map<br />unmap  | map<br />unmap    |
 | 3        | Manage     |  read/write  | modify                 | create non-owner,<br />modify non-owner,<br />delete non-owner                                                       | create<br />modify<br />delete | create<br />modify<br />delete<br />map<br />unmap  | map<br />unmap    |

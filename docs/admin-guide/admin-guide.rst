@@ -70,8 +70,31 @@ The pop-up will list the User's email address and other Info, as well a list of 
 
 |
 
+User Groups Admin Panel
+---------------------------------
 
-------------------------------
+This Panel lists the groups created in the STIGMan system. The columns display the Group Name, Description, Creation Date, the number of Users in the group, and the number of Collections the group has access to.
+
+Only Application Managers can create or modify Groups and their User membership. Once a Group is created, it becomes available to all Collection Owners and Managers to be assigned Grants in their Collections. 
+
+
+.. thumbnail:: /assets/images/admin-user-groups.png
+      :width: 50% 
+      :show_caption: True
+      :title: User Groups Administration
+      
+
+Groups can be created, deleted, and modified with the buttons at the top of the panel. Users can be added to or removed from groups by double-clicking on the group, or selecting a group and clicking the "Modify Group..." button.
+
+Change the Users in the group by selecting the User and clicking the arrow buttons to move them between the "Available Users" and "Group Members" lists. Once Group Members is populated with the desired Users, click the "Save" button to save the changes.
+
+
+.. thumbnail:: /assets/images/admin-user-groups-popup.png
+      :width: 50% 
+      :show_caption: True
+      :title: User Group Popup Window
+
+
 
 STIG Benchmarks Admin Panel
 -----------------------------------------
@@ -92,7 +115,6 @@ Use the buttons at the top to add new STIGS, delete entire STIGs or specific rev
 
 .. note::
    STIG Manager only knows about the STIGs you have imported into the system. This action must be performed by App Managers, often quarterly to keep pace with DISA releases.  Once a new STIG revision is imported, that revision becomes the default STIG that is presented for Review to the User. Reviews for old STIGs still in the system can be viewed with the Checklist->Revisions menu item in the Asset Review workspace for that STIG.
-
 
 
 

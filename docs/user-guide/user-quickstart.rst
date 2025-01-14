@@ -60,7 +60,7 @@ By default, most users will have the Collection Creator role, allowing them to c
       :title: Navigation Tree
 
 
-#. You will be prompted for your Collection name, and some other info. Only a Collection name and Owner are required. Your Username will be prepopulated as an owner. Additional Grants, Settings and Metadata can stay as they are at this time. Click "Create" when finished. You will be taken to the Collection Configuration tab for this new Collection. You can access this Collection Configuration tab later using the "gear" icon next to your Collection in the Nav Tree, or the "Manage" button from the Collection Dashboard.
+#. You will be prompted for your Collection name and a description.  On Save, you will be automatically made an Owner of the new collection, and will be taken to the Collection Configuration tab for this new Collection. You can access this Collection Configuration tab later using the "gear" icon next to your Collection in the Nav Tree, or the "Manage" button from the Collection Dashboard.
 
 
    .. thumbnail:: /assets/images/create-collection-popup.png
@@ -121,7 +121,8 @@ Grant Users Roles in your Collection
    :show_caption: True
    :alt: Add Collection Grant
    :title: Add Collection Grant
-.. thumbnail:: /assets/images/collection-manage-grants-user-pulldown.png
+
+.. thumbnail:: /assets/images/collection-manage-new-grants-popup.png
    :width: 40% 
    :show_caption: True
    :alt: User Pulldown
