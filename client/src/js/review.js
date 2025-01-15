@@ -112,7 +112,7 @@ async function addReview( params ) {
         reviewForm.defaultAccess = access
         attachmentsGrid.fileUploadField.setDisabled(access !== 'rw')
         groupChecklistMenu.importItem.setVisible(access === 'rw')
-        groupGrid.accessStr = access === 'rw' ? '' : '<span class="sm-label-sprite sm-checklist-read">Read only</span>'
+        groupGrid.accessStr = `<span class="sm-label-sprite sm-checklist-${access === 'rw' ? 'read-write">Writeable' : 'read">Read only'}</span>`
         // Were we passed a specific rule to select?
         if ('undefined' !== typeof selectedRule) {
           var index = store.find('ruleId', selectedRule);

@@ -369,7 +369,7 @@
 .sm-label-sprite {
   font: 600 10px/14px Open Sans,helvetica,sans-serif;
   top: 0;
-  padding: 0 5px!important;
+  padding: 0 5px;
   border-radius: 3px;
   margin-left: 3px;
   white-space: nowrap
@@ -2375,4 +2375,15 @@ td.x-grid3-hd-over .x-grid3-hd-inner {
 	background-size: 16px;
 	/* visibility: hidden; */
 	background-image: url(../img/lock.svg);
+}
+
+.sm-checklist-read, .sm-checklist-read-write {
+	float: right;
+	color: #f2f2f2;
+}
+.sm-checklist-read-write {
+	background-color: hsl(145.08deg 100% 23.92%);
+}
+.sm-checklist-read {
+	background-color: hsl(330 55% 24% / 1);
 }
