@@ -890,13 +890,8 @@ async function addCollectionReview ( params ) {
 				},
 				selectionchange: function (sm) {
 					if (sm.getCount() == 1) { //single row selected
-						// historyData.grid.enable()
-						// loadResources(sm.getSelected().data.assetId, sm.grid.currentRuleId)
 						batchEditBtn.disable()
 					} else {
-						// historyData.store.removeAll()
-						// historyData.grid.disable()
-						// attachmentsGrid.getStore().removeAll()						
 						batchEditBtn.enable()
 
 					}
@@ -1344,7 +1339,6 @@ async function addCollectionReview ( params ) {
 
 						// hack to reselect the record for setReviewsGridButtonStates()
 						e.grid.getSelectionModel().onRefresh()
-						loadResources(e.record.data.assetId, e.grid.currentRuleId)
 
 						setReviewsGridButtonStates()
 		
@@ -1854,9 +1848,6 @@ async function addCollectionReview ( params ) {
 					})
 				}
 
-				if (selections.length === 1) {
-					loadResources(selections[0].data.assetId, grid.currentRuleId)
-				}
 				// ugly code follows
 				const record = groupGrid.getSelectionModel().getSelected()
 				await getReviews(leaf.collectionId, record)
@@ -1891,156 +1882,7 @@ async function addCollectionReview ( params ) {
 	// END Reviews Panel
 	/******************************************************/
 
-	const contentTpl = SM.RuleContentTpl
-
-	/******************************************************/
-	// START Resources Panel
-	/******************************************************/
-		async function loadResources (assetId, ruleId) {
-			let activeTab
-			try {
-				activeTab = Ext.getCmp('resources-tab-panel' + idAppend).getActiveTab()
-				// activeTab.getEl().mask('Loading...')
-				const attachmentsGrid = Ext.getCmp('attachmentsGrid' + idAppend)
-				attachmentsGrid.assetId = assetId
-				attachmentsGrid.ruleId = ruleId
-        attachmentsGrid.getStore().removeAll()
-
-				const result = await Ext.Ajax.requestPromise({
-					url: `${STIGMAN.Env.apiBase}/collections/${leaf.collectionId}/reviews/${assetId}/${ruleId}`,
-					method: 'GET',
-					params: {
-						projection: ['history']
-					}
-				})
-				if (result.response.status === 200) {
-					const apiReview = JSON.parse(result.response.responseText)
-					//TODO: Set the history (does not set history on handleGroupSelectionForCollection)
-					//append the current state of the review to history
-					const currentReview = {
-						ruleId: apiReview.ruleId,
-						comment: apiReview.comment,
-						resultEngine: apiReview.resultEngine,
-						autoResult: apiReview.autoResult,
-						rejectText: apiReview.rejectText,
-						result: apiReview.result,
-						detail: apiReview.detail,
-						status: apiReview.status,
-						ts: apiReview.ts,
-						touchTs: apiReview.touchTs,
-						userId: apiReview.userId,
-						username: apiReview.username
-					}
-					apiReview.history.push(currentReview)
-					Ext.getCmp('historyGrid' + idAppend).getStore().loadData(apiReview.history)
-		
-					// Attachments
-				attachmentsGrid.loadArtifacts()	
-				}
-			}
-			catch (e) {
-				SM.Error.handleError(e)
-			}
-			finally {
-				activeTab.getEl().unmask()
-			}
-		}
-		
-	/******************************************************/
-	// START Resources Panel/History
-	/******************************************************/
-		const historyData = new Sm_HistoryData(idAppend)
-
-	/******************************************************/
-	// END Resources Panel/History
-	/******************************************************/
-
-  /******************************************************/
-  // START Attachments Panel
-  /******************************************************/
-  const attachmentsGrid = new SM.Attachments.Grid({
-    id: 'attachmentsGrid' + idAppend,
-    title: 'Attachments',
-    collectionId: leaf.collectionId
-  })
-  /******************************************************/
-  // END Attachments Panel
-  /******************************************************/
-
-	/******************************************************/
-	// END Resources Panel
-	/******************************************************/
-
-		const tabItems = [
-			{
-				region: 'west',
-				layout: 'border',
-				width: '40%',
-				minWidth: 330,
-				border: false,
-				split:true,
-				collapsible: false,
-				id: 'west-panel' + idAppend,
-				items: [
-					groupGrid,
-					{
-						region: 'center',
-						xtype: 'panel',
-						cls: 'sm-round-panel',
-						margins: { top: SM.Margin.adjacent, right: SM.Margin.adjacent, bottom: SM.Margin.bottom, left: SM.Margin.edge },
-						border: false,
-						split:true,
-						collapsible: false,
-						padding: 20,
-						autoScroll: true,
-						id: 'content-panel' + idAppend,
-						title: 'Rule',
-						tpl: contentTpl
-					}
-				]
-			},
-			{
-				region: 'center',
-				layout: 'border',
-				border: false,
-				split:true,
-				collapsible: false,
-				id: 'center-panel' + idAppend,
-				items: [
-					reviewsGrid,
-					{
-						region: 'south',
-						xtype: 'tabpanel',
-						cls: 'sm-round-panel',
-						style: {
-							'background-color': 'transparent'
-						},
-						margins: { top: SM.Margin.adjacent, right: SM.Margin.edge, bottom: SM.Margin.bottom, left: SM.Margin.adjacent },
-						border: false,
-						id: 'resources-tab-panel' + idAppend,
-						height: '33%',
-						split:true,
-						collapsible: false,
-						activeTab: 'history',
-						items: [
-							{
-								title: 'History',
-								itemId: 'history',
-								layout: 'fit',
-								id: 'history-tab' + idAppend,
-								items: historyData.grid
-							},
-							{
-								title: 'Attachments',
-								id: 'attachment-panel' + idAppend,
-								layout: 'fit',
-								items: attachmentsGrid
-							}
-						]
-					}
-				]
-			}
-		]
+		const contentTpl = SM.RuleContentTpl
 
 		const tabItems2 = [
 			{
