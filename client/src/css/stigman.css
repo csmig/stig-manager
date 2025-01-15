@@ -875,7 +875,7 @@ body {
 }
 .ext-el-mask-modal {
 	background-color: rgb(0 0 0 / 50%);
-	backdrop-filter: blur(3px) grayscale();
+	backdrop-filter: blur(1px) grayscale();
 	animation: fadein 0.25s;
 	animation-fill-mode: forwards;
 	position: absolute;
