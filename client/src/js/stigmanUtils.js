@@ -347,7 +347,7 @@ function Sm_HistoryData (idAppend) {
     enableDragDrop: true,
     ddGroup: 'gridDDGroup',
 		plugins: expander,
-		border: false,
+		border: true,
 		id: 'historyGrid' + idAppend,
 		store: this.store,
 		stripeRows:true,

@@ -854,6 +854,9 @@ async function addCollectionReview ( params ) {
 		const sm = new Ext.grid.CheckboxSelectionModel ({
 			singleSelect: false,
 			checkOnly: false,
+			renderer: function (v, p, record) {
+				return `<div class="x-grid3-row-checker"${record.data.access === 'r' ? ' ext:qtip="Read only"' : ''}>&#160;</div>`
+			},
 			// override selectRow to suspend events when clearing existing selections > 1
 			selectRow: function (index, keepExisting, preventViewNotify) {
 				if (this.isLocked() || (index < 0 || index >= this.grid.store.getCount()) || (keepExisting && this.isSelected(index))) {
@@ -1104,10 +1107,10 @@ async function addCollectionReview ( params ) {
 				},
 				{
 					header: '',
-					width: 30,
+					width: 50,
+					fixed: true,
 					sortable: false,
 					renderer: function (v, m, r) {
-						const icon = 'sm-user-icon'
 						return `
 							<div class="sm-grid-cell-with-toolbar-2">
 								<div class="sm-dynamic-width">
@@ -1117,7 +1120,7 @@ async function addCollectionReview ( params ) {
 								</div>
 								<div class="sm-static-width">
 									<span class="sm-grid-cell-tool" style="padding-right:4px"><img data-action="showHistory" ext:qtip="History" src="img/clock.svg" width="14" height="14"></span>                
-									<span class="sm-grid-cell-tool" style="padding-right:4px"><img data-action="showAttachments" ext:qtip="Attachments" src="img/attach-16.png" width="14" height="14"></span>                
+									<span class="sm-grid-cell-tool" style="padding-right:4px"><img data-action="showAttachments" ext:qtip="Attachments" src="img/attachment.svg" width="14" height="14"></span>                
 								</div>
 							</div>`
 					}
@@ -1162,12 +1165,83 @@ async function addCollectionReview ( params ) {
       showAttachments
     }
 
-		function showHistory(data, record) {
+		async function getHistory({collectionId, assetId, ruleId}) {
+			try {
+				const result = await Ext.Ajax.requestPromise({
+					url: `${STIGMAN.Env.apiBase}/collections/${collectionId}/reviews/${assetId}/${ruleId}`,
+					method: 'GET',
+					params: {
+						projection: ['history']
+					}
+				})
+				if (result.response.status === 200) {
+					const apiReview = JSON.parse(result.response.responseText)
+					//TODO: Set the history (does not set history on handleGroupSelectionForCollection)
+					//append the current state of the review to history
+					const currentReview = {
+						ruleId: apiReview.ruleId,
+						comment: apiReview.comment,
+						resultEngine: apiReview.resultEngine,
+						autoResult: apiReview.autoResult,
+						rejectText: apiReview.rejectText,
+						result: apiReview.result,
+						detail: apiReview.detail,
+						status: apiReview.status,
+						ts: apiReview.ts,
+						touchTs: apiReview.touchTs,
+						userId: apiReview.userId,
+						username: apiReview.username
+					}
+					apiReview.history.push(currentReview)
+					return apiReview.history
+				}
+			}
+			catch (e){
+				SM.Error.handleError(e)
+			}
+		}
 
+		async function showHistory(data, record) {
+			try {
+				const historyGrid = new Sm_HistoryData().grid
+				historyGrid.getStore().loadData(await getHistory({collectionId: leaf.collectionId, assetId: data.assetId, ruleId: data.ruleId}))
+				const appwindow = new Ext.Window({
+					title: 'Review History',
+					layout: 'fit',
+					width: 600,
+					height: 600,
+					modal: true,
+					padding: 20,
+					closeAction: 'destroy',
+					items: historyGrid
+				})
+				appwindow.show()
+			}
+			catch (e){
+				SM.Error.handleError(e)
+			}
 		}
 
 		function showAttachments(data, record) {
-
+			const attachmentsGrid = new SM.Attachments.Grid({
+				collectionId: leaf.collectionId,
+				assetId: data.assetId,
+				ruleId: data.ruleId,
+				border: true
+			})
+			attachmentsGrid.fileUploadField.setDisabled(data.access !== 'rw')
+			const appwindow = new Ext.Window({
+				title: 'Attachments',
+				layout: 'fit',
+				width: 600,
+				height: 600,
+				modal: true,
+				padding: 20,
+				closeAction: 'destroy',
+				items: attachmentsGrid
+			})
+			appwindow.show()
+			attachmentsGrid.loadArtifacts()
 		}
 
     function cellclick(grid, rowIndex, columnIndex, e) {

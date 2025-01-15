@@ -625,7 +625,7 @@ SM.Review.Form.Panel = Ext.extend(Ext.form.FormPanel, {
               return ret;
             } 
           },
-          anchor: '100%, -90',
+          anchor: '100%, -100',
           title: 'Evaluation',
           items: [
             {
