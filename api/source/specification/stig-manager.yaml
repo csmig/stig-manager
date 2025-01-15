@@ -4963,16 +4963,6 @@ components:
           $ref: '#/components/schemas/CciString'
         version:
           $ref: '#/components/schemas/VersionString'
-    CciReferenceRev4:
-      additionalProperties: false
-      type: object
-      properties:
-        indexDisa:
-          $ref: '#/components/schemas/IndexDisa'
-        parentControl:
-          $ref: '#/components/schemas/ParentControl'
-        textRefNist:
-          $ref: '#/components/schemas/TextRefNist'
     CciStatus:
       $ref: '#/components/schemas/String20'
     CciString:
@@ -5421,7 +5411,7 @@ components:
         code:
           type: string
           enum:
-            - 400
+            - "400"
         data:
           $ref: '#/components/schemas/Collection'
         message:
@@ -5828,70 +5818,6 @@ components:
         - assetCount
         - userCount
         - checklistCount
-    CollectionStatus:
-      additionalProperties: false
-      type: object
-      properties:
-        assetId:
-          $ref: '#/components/schemas/AssetId'
-        assetLabelIds:
-          items:
-            $ref: '#/components/schemas/LabelId'
-          type: array
-        assetName:
-          $ref: '#/components/schemas/AssetName'
-        benchmarkId:
-          $ref: '#/components/schemas/BenchmarkId'
-        findings:
-          type: object
-          properties:
-            high:
-              type: integer
-            low:
-              type: integer
-            medium:
-              type: integer
-        maxTs:
-          $ref: '#/components/schemas/MaxTs'
-        minTs:
-          $ref: '#/components/schemas/MinTs'
-        result:
-          type: object
-          properties:
-            error:
-              $ref: '#/components/schemas/CollectionStatusCount'
-            fail:
-              $ref: '#/components/schemas/CollectionStatusCount'
-            fixed:
-              $ref: '#/components/schemas/CollectionStatusCount'
-            informational:
-              $ref: '#/components/schemas/CollectionStatusCount'
-            notapplicable:
-              $ref: '#/components/schemas/CollectionStatusCount'
-            notchecked:
-              $ref: '#/components/schemas/CollectionStatusCount'
-            notselected:
-              $ref: '#/components/schemas/CollectionStatusCount'
-            pass:
-              $ref: '#/components/schemas/CollectionStatusCount'
-            unknown:
-              $ref: '#/components/schemas/CollectionStatusCount'
-        rules:
-          type: object
-          properties:
-            total:
-              type: integer
-        status:
-          type: object
-          properties:
-            accepted:
-              $ref: '#/components/schemas/CollectionStatusCount'
-            rejected:
-              $ref: '#/components/schemas/CollectionStatusCount'
-            saved:
-              $ref: '#/components/schemas/CollectionStatusCount'
-            submitted:
-              $ref: '#/components/schemas/CollectionStatusCount'
     CollectionStatusCount:
       additionalProperties: false
       type: object
@@ -6229,22 +6155,6 @@ components:
       oneOf:
         - $ref: '#/components/schemas/UserGrant'     
         - $ref: '#/components/schemas/UserGroupGrant'
-      
-    GrantContextUser:
-      type: object
-      properties:
-        accessLevel:
-          $ref: '#/components/schemas/AccessLevel'
-      required:
-        - accessLevel
-    GrantContextUserGroup:
-      type: object
-      required:
-        - accessLevel
-      additionalProperties: false
-      properties:
-        accessLevel:
-          $ref: '#/components/schemas/AccessLevel'
     GrantEffective:
       type: object
       properties:
@@ -6928,6 +6838,8 @@ components:
     ReviewAssetRuleRead:
       type: object
       properties:
+        access:
+          $ref: '#/components/schemas/AclRuleAccess'
         autoResult:
           type: boolean
         comment:
@@ -6961,6 +6873,7 @@ components:
         username:
           $ref: '#/components/schemas/Username'
       required:
+        - access
         - result
         - detail
         - comment
@@ -6969,30 +6882,6 @@ components:
         - ts
         - status
         - touchTs
-    ReviewAssetWrite:
-      additionalProperties: false
-      type: object
-      properties:
-        autoResult:
-          type: boolean
-        comment:
-          $ref: '#/components/schemas/StringMaxNullable'
-        detail:
-          $ref: '#/components/schemas/CommentaryStringNullable'
-        metadata:
-          $ref: '#/components/schemas/Metadata'
-        result:
-          $ref: '#/components/schemas/ReviewResult'
-        ruleId:
-          $ref: '#/components/schemas/RuleId'
-        status:
-          $ref: '#/components/schemas/ReviewStatusRestrictedWrite'
-      required:
-        - ruleId
-        - result
-        - detail
-        - comment
-        - autoResult
     ReviewBatch:
       additionalProperties: false
       type: object
@@ -7443,11 +7332,6 @@ components:
         - accepted
         - rejected
       type: string
-    ReviewStatusLabelRestricted:
-      enum:
-        - saved
-        - submitted
-      type: string
     ReviewStatusRead:
       additionalProperties: false
       type: object
@@ -7465,19 +7349,6 @@ components:
         - text
         - user
         - ts
-    ReviewStatusRestrictedWrite:
-      oneOf:
-        - $ref: '#/components/schemas/ReviewStatusLabelRestricted'
-        - type: object
-        - additionalProperties: false
-          properties:
-            label:
-              $ref: '#/components/schemas/ReviewStatusLabelRestricted'
-            text:
-              $ref: '#/components/schemas/StatusText'
-          required:
-            - label
-            - text
     ReviewStatusWrite:
       oneOf:
         - $ref: '#/components/schemas/ReviewStatusLabel'
@@ -7566,8 +7437,6 @@ components:
     RevisionStrRaw:
       pattern: ^(V\d{1,3}R\d{1,3}(\.\d{1,3})?)$
       type: string
-    RevisionVersion:
-      $ref: '#/components/schemas/StringIntId'
     RuleAbbr:
       additionalProperties: false
       type: object
@@ -7713,47 +7582,8 @@ components:
         - collectionIds
     StatusText:
       $ref: '#/components/schemas/String511Nullable'
-    StigAssetBasic:
-      additionalProperties: false
-      type: array
-      properties:
-        asset:
-          $ref: '#/components/schemas/AssetBasic'
-        benchmarkId:
-          $ref: '#/components/schemas/BenchmarkId'
-        access:
-          $ref: '#/components/schemas/AclRuleAccess'
-      required:
-        - benchmarkId
-        - asset
-    StigAssetPut:
-      additionalProperties: false
-      type: object
-      properties:
-        assetId:
-          $ref: '#/components/schemas/AssetId'
-        benchmarkId:
-          $ref: '#/components/schemas/BenchmarkId'
-        access:
-          $ref: '#/components/schemas/AclRuleAccess'
-      required:
-        - benchmarkId
-        - assetId
     StigTitle:
       $ref: '#/components/schemas/String255'
-    StigUserBasic:
-      additionalProperties: false
-      type: object
-      properties:
-        benchmarkId:
-          $ref: '#/components/schemas/BenchmarkId'
-        users:
-          items:
-            $ref: '#/components/schemas/UserBasic'
-          type: array
-      required:
-        - benchmarkId
-        - users
     String20:
       maxLength: 20
       type: string
@@ -7782,9 +7612,6 @@ components:
       maxLength: 45
       nullable: true
       type: string
-    String511:
-      maxLength: 511
-      type: string
     String511Nullable:
       maxLength: 511
       nullable: true
@@ -7812,20 +7639,8 @@ components:
       minLength: 1
       pattern: ^[0-9]{1,10}$
       type: string
-    StringIntIdNullable:
-      nullable: true
-      pattern: ^[0-9]{1,10}$
-      type: string
-    StringIntIdReadOnly:
-      pattern: ^[0-9]{1,10}$
-      readOnly: true
-      type: string
     StringMax:
       maxLength: 16777215
-      type: string
-    StringMaxNullable:
-      maxLength: 16777215
-      nullable: true
       type: string
     StringUuid:
       pattern: ^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$
@@ -7834,13 +7649,7 @@ components:
       nullable: true
       pattern: ^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$
       type: string
-    StringUuidReadOnly:
-      pattern: ^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$
-      readOnly: true
-      type: string
     TextRefNist:
-      $ref: '#/components/schemas/String255'
-    TitleString:
       $ref: '#/components/schemas/String255'
     UnreviewedAsset:
       additionalProperties: false
@@ -7964,20 +7773,6 @@ components:
       required:
         - userId
         - username
-    UserBasicWithCgId:
-      additionalProperties: false
-      type: object
-      properties:
-        userId:
-          $ref: '#/components/schemas/UserId'
-        username:
-          $ref: '#/components/schemas/Username'
-        grantId:
-          type: integer
-      required:
-        - userId
-        - username
-        - grantId
     UserBasicWithDisplayName:
       additionalProperties: false
       type: object
@@ -8012,20 +7807,6 @@ components:
       required:
         - username
         - collectionGrants
-    UserGrantEffective:
-      type: object
-      additionalProperties: false
-      properties:
-        userId:
-          $ref: '#/components/schemas/UserId'
-        accessLevel:
-          $ref: '#/components/schemas/AccessLevel'
-        grantees:
-          $ref: '#/components/schemas/Grantees'
-      required:
-        - userId
-        - accessLevel
-        - grantees
     UserGrant:
       type: object
       required:
@@ -8076,20 +7857,6 @@ components:
           $ref: '#/components/schemas/String255'
         accessLevel: 
           $ref: '#/components/schemas/AccessLevel'
-    UserGroupBasicWithCgId:
-      type: object
-      additionalProperties: false
-      required:
-        - grantId
-        - userGroupId
-        - name
-      properties:
-        grantId:
-          type: integer
-        userGroupId:
-          $ref: '#/components/schemas/UserGroupId'
-        name:
-          $ref: '#/components/schemas/String255'
     UserGroupGrant:
       type: object
       required:
@@ -8345,23 +8112,6 @@ components:
       description: A query parameter that identifies a CCI
       schema:
         $ref: '#/components/schemas/CciString'
-    ChecklistProjectionQuery:
-      name: projection
-      in: query
-      description: Optional properties to return. Selecting "check" or "fix" will also select "fullrules"
-      style: form
-      explode: true
-      schema:
-        type: array
-        uniqueItems: true
-        minItems: 1
-        items:
-          type: string
-          enum:
-            - cci
-            - fullrules
-            - check
-            - fix
     CklModeQuery:
       name: mode
       in: query
@@ -8510,13 +8260,6 @@ components:
       required: true
       schema:
         $ref: '#/components/schemas/GrantId'
-    GroupIdPath:
-      name: groupId
-      in: path
-      description: A path parameter that identifies a Group
-      required: true
-      schema:
-        $ref: '#/components/schemas/GroupId'
     GroupIdQuery:
       name: groupId
       in: query
@@ -8738,12 +8481,6 @@ components:
       required: true
       schema:
         $ref: '#/components/schemas/RevisionStr'
-    RevisionStrQuery:
-      name: revisionStr
-      in: query
-      description: Selects Reviews mapped to a Revision [ V{version_num}R{release_num} |'latest' ]; requires benchmarkId
-      schema:
-        $ref: '#/components/schemas/RevisionStr'
     RuleIdPath:
       name: ruleId
       in: path
@@ -8836,12 +8573,6 @@ components:
       in: path
       description: A path parameter that identifies a User Group
       required: true
-      schema:
-        $ref: '#/components/schemas/UserGroupId'
-    UserGroupIdQuery:
-      name: userGroupId
-      in: query
-      description: A query parameter that identifies a User Group
       schema:
         $ref: '#/components/schemas/UserGroupId'
     UserGroupProjectionQuery:
