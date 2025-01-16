@@ -79,7 +79,7 @@ describe('PATCH - Collection', function () {
 
             const patchRequest = JSON.parse(JSON.stringify(requestBodies.updateCollection))
            // patchRequest.grants.push(patchRequest.grants[0])
-            patchRequest.grants.push({userGroupId: reference.testCollection.testGroup.userGroupId, accessLevel: 1})
+            patchRequest.grants.push({userGroupId: reference.testCollection.testGroup.userGroupId, roleId: 1})
             patchRequest.name = "TEST" + utils.getUUIDSubString()
             const res = await utils.executeRequest(`${config.baseUrl}/collections/${reference.testCollection.collectionId}`, 'PATCH', iteration.token, patchRequest)
               if(distinct.canModifyCollection === false){

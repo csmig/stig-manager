@@ -23,7 +23,7 @@
 [85,"2024-08-21 17:37:40",null,null,"{}","delete Collection lvl4","{\"fields\": {\"detail\": {\"enabled\": \"always\", \"required\": \"always\"}, \"comment\": {\"enabled\": \"findings\", \"required\": \"findings\"}}, \"status\": {\"canAccept\": true, \"resetCriteria\": \"result\", \"minAcceptGrant\": 3}}","enabled",null,null]
 [86,"2024-08-21 17:37:40",null,null,"{}","delete Collection NONE","{\"fields\": {\"detail\": {\"enabled\": \"always\", \"required\": \"always\"}, \"comment\": {\"enabled\": \"findings\", \"required\": \"findings\"}}, \"status\": {\"canAccept\": true, \"resetCriteria\": \"result\", \"minAcceptGrant\": 3}}","enabled",null,null]
 [92,"2024-08-21 17:37:40",null,null,"{}","test Collection","{\"fields\": {\"detail\": {\"enabled\": \"always\", \"required\": \"always\"}, \"comment\": {\"enabled\": \"findings\", \"required\": \"findings\"}}, \"status\": {\"canAccept\": true, \"resetCriteria\": \"result\", \"minAcceptGrant\": 3}}","enabled",null,null]
-{"table":"collection_grant","columns":"`accessLevel`,`cgId`,`collectionId`,`userId`","rowCount":22}
+{"table":"collection_grant","columns":"`roleId`,`cgId`,`collectionId`,`userId`","rowCount":22}
 [1,1,21,86]
 [1,2,21,85]
 [2,3,21,21]

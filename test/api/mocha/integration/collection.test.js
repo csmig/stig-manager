@@ -47,19 +47,19 @@ describe('PATCH - updateCollection - /collections/{collectionId}', () => {
                   "grants": [
                       {
                         "userId": "1",
-                        "accessLevel": 3
+                        "roleId": 3
                       },
                       {
                               "userId": "21",
-                          "accessLevel": 2
+                          "roleId": 2
                       },
                       {
                               "userId": "44",
-                          "accessLevel": 3
+                          "roleId": 3
                       },
                       {
                               "userId": "45",
-                          "accessLevel": 4
+                          "roleId": 4
                       }
                   ]
               } 
@@ -78,19 +78,19 @@ describe('PATCH - updateCollection - /collections/{collectionId}', () => {
                   "grants": [
                       {
                         "userId": "1",
-                        "accessLevel": 3
+                        "roleId": 3
                       },
                       {
                               "userId": "21",
-                          "accessLevel": 2
+                          "roleId": 2
                       },
                       {
                               "userId": "44",
-                          "accessLevel": 3
+                          "roleId": 3
                       },
                       {
                               "userId": "45",
-                          "accessLevel": 3
+                          "roleId": 3
                       }
                   ]
               }
@@ -109,19 +109,19 @@ describe('PATCH - updateCollection - /collections/{collectionId}', () => {
                   "grants": [
                       {
                         "userId": "1",
-                        "accessLevel": 3
+                        "roleId": 3
                       },
                       {
                               "userId": "21",
-                          "accessLevel": 3
+                          "roleId": 3
                       },
                       {
                               "userId": "44",
-                          "accessLevel": 2
+                          "roleId": 2
                       },
                       {
                               "userId": "45",
-                          "accessLevel": 4
+                          "roleId": 4
                       }
                   ]
               }
@@ -159,19 +159,19 @@ describe('PATCH - updateCollection - /collections/{collectionId}', () => {
                   "grants": [
                       {
                         "userId": "1",
-                        "accessLevel": 4
+                        "roleId": 4
                       },
                       {
                               "userId": "21",
-                          "accessLevel": 2
+                          "roleId": 2
                       },
                       {
                               "userId": "44",
-                          "accessLevel": 3
+                          "roleId": 3
                       },
                       {
                               "userId": "45",
-                          "accessLevel": 3
+                          "roleId": 3
                       }
                   ]
               }
@@ -211,7 +211,7 @@ describe('POST - createCollection - /collections', () => {
                 "grants": [
                     {
                             "userId": "1",
-                            "accessLevel": 4
+                            "roleId": 4
                     }
                 ]
             }
@@ -227,7 +227,7 @@ describe('POST - createCollection - /collections', () => {
                 grants: [
                   {
                     userId: "1",
-                    accessLevel: 4,
+                    roleId: 4,
                   },
                 ],
               })
@@ -405,7 +405,7 @@ describe('POST - cloneCollection - /collections/{collectionId}/clone - test vari
                             displayName: "STIGMAN Admin"
                         },
                         grantId: "41",
-                        accessLevel: 4
+                        roleId: 4
                     }
                 ]
                 const ownersProjected = [
@@ -1064,23 +1064,23 @@ describe('POST - exportToCollection - /collections/{collectionId}/export-to/{dst
                 "grants": [
                     {
                         "userId": "1",
-                        "accessLevel": 4
+                        "roleId": 4
                     },
                     {
                             "userId": "21",
-                        "accessLevel": 1
+                        "roleId": 1
                     },
                     {
                             "userId": "44",
-                        "accessLevel": 3
+                        "roleId": 3
                     },
                     {
                             "userId": "45",
-                        "accessLevel": 4
+                        "roleId": 4
                     },
                     {
                             "userId": "87",
-                        "accessLevel": 4
+                        "roleId": 4
                     }
                 ]
             })
@@ -1248,23 +1248,23 @@ describe('POST - exportToCollection - /collections/{collectionId}/export-to/{dst
                 "grants": [
                     {
                         "userId": "1",
-                        "accessLevel": 4
+                        "roleId": 4
                     },
                     {
                             "userId": "21",
-                        "accessLevel": 1
+                        "roleId": 1
                     },
                     {
                             "userId": "44",
-                        "accessLevel": 3
+                        "roleId": 3
                     },
                     {
                             "userId": "45",
-                        "accessLevel": 4
+                        "roleId": 4
                     },
                     {
                             "userId": "87",
-                        "accessLevel": 4
+                        "roleId": 4
                     }
                 ]
             })
@@ -1675,15 +1675,15 @@ describe('PUT - setStigAssetsByCollectionUser - /collections/{collectionId}/gran
                   "grants": [
                       {
                         "userId": "87",
-                        "accessLevel": 4
+                        "roleId": 4
                       },
                       {
                               "userId": "1",
-                          "accessLevel": 4
+                          "roleId": 4
                       },
                       {
                               "userId": "85",
-                          "accessLevel": 1
+                          "roleId": 1
                       }
                   ]
               })
@@ -1692,14 +1692,14 @@ describe('PUT - setStigAssetsByCollectionUser - /collections/{collectionId}/gran
             expect(res.body.grants).to.be.an('array').of.length(3)
             for(const grant of res.body.grants){
                 if(grant.userId === 85){
-                    expect(grant.accessLevel).to.eql(1)
+                    expect(grant.roleId).to.eql(1)
                 }
             }
         })
         it("should give lvl1 user restricted access to test collection", async () => {
             const res = await utils.executeRequest(`${config.baseUrl}/collections/${reference.testCollection.collectionId}/grants`, 'POST', user.token, [{
                userId: reference.lvl1User.userId,
-               accessLevel: 1
+               roleId: 1
             }])
             expect(res.status).to.eql(201)
             reference.lvl1User.grantId = res.body[0].grantId

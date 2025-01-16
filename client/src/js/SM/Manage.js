@@ -682,7 +682,7 @@ SM.Manage.Collection.GrantsGrid = Ext.extend(Ext.grid.GridPanel, {
       'grantId',
       'user',
       'userGroup',
-      'accessLevel',
+      'roleId',
       {
         name: 'name',
         convert: (v, r) => r.user?.displayName ?? r.userGroup.name
@@ -732,7 +732,7 @@ SM.Manage.Collection.GrantsGrid = Ext.extend(Ext.grid.GridPanel, {
         {
           header: '<span exportvalue="Role">Role<i class= "fa fa-question-circle sm-question-circle"></i></span>',
           width: 50,
-          dataIndex: 'accessLevel',
+          dataIndex: 'roleId',
           sortable: true,
           renderer: (v) => `<div class="sm-grid-cell-role">${SM.RoleStrings[v]}</div>`
         },
@@ -753,7 +753,7 @@ SM.Manage.Collection.GrantsGrid = Ext.extend(Ext.grid.GridPanel, {
                 </div>
               </div>
               <div class="sm-static-width" style="top: 25%">
-              ${r.data.accessLevel !== 4 || _this.canModifyOwners || _this.context === 'admin' ? toolsMarkup : ''}
+              ${r.data.roleId !== 4 || _this.canModifyOwners || _this.context === 'admin' ? toolsMarkup : ''}
               </div>
             </div>`   
           }
@@ -765,7 +765,7 @@ SM.Manage.Collection.GrantsGrid = Ext.extend(Ext.grid.GridPanel, {
       console.log(`changeGrantee ${JSON.stringify(grantData)}`)
       const selectedGrant = {
         grantId: grantData.grantId,
-        accessLevel: grantData.accessLevel,
+        roleId: grantData.roleId,
         userId: grantData.user?.userId,
         userGroupId: grantData.userGroup?.userGroupId
       }
@@ -834,8 +834,8 @@ SM.Manage.Collection.GrantsGrid = Ext.extend(Ext.grid.GridPanel, {
       markDirty: false,
       listeners: {
         refresh: function (view) {
-          // Setup the tooltip for column 'accessLevel'
-          const index = view.grid.getColumnModel().findColumnIndex('accessLevel')
+          // Setup the tooltip for column 'roleId'
+          const index = view.grid.getColumnModel().findColumnIndex('roleId')
           const tipEl = view.getHeaderCell(index).getElementsByClassName('fa')[0]
           if (tipEl) {
             new Ext.ToolTip({
@@ -843,7 +843,7 @@ SM.Manage.Collection.GrantsGrid = Ext.extend(Ext.grid.GridPanel, {
               showDelay: 0,
               dismissDelay: 0,
               maxWidth: 600,
-              html: SM.TipContent.AccessLevels
+              html: SM.TipContent.Roles
             })
           }
         },
@@ -867,8 +867,8 @@ SM.Manage.Collection.GrantsGrid = Ext.extend(Ext.grid.GridPanel, {
       ]
     })
     function viewready (grid) {
-      // Setup the tooltip for column 'accessLevel'
-      const index = grid.getColumnModel().findColumnIndex('accessLevel')
+      // Setup the tooltip for column 'role'
+      const index = grid.getColumnModel().findColumnIndex('roleId')
       const tipEl = grid.view.getHeaderCell(index).getElementsByClassName('fa')[0]
       if (tipEl) {
         new Ext.ToolTip({
@@ -876,7 +876,7 @@ SM.Manage.Collection.GrantsGrid = Ext.extend(Ext.grid.GridPanel, {
           showDelay: 0,
           dismissDelay: 0,
           maxWidth: 600,
-          html: SM.TipContent.AccessLevels
+          html: SM.TipContent.Roles
         })
       }
     }
@@ -888,10 +888,10 @@ SM.Manage.Collection.GrantsGrid = Ext.extend(Ext.grid.GridPanel, {
     function getValue () {
       return store.data.items.map(i => i.data.user ? {
           userId: i.data.user.userId,
-          accessLevel: i.data.accessLevel
+          roleId: i.data.roleId
         } : {
           userGroupId: i.data.userGroup.userGroupId,
-          accessLevel: i.data.accessLevel
+          roleId: i.data.roleId
         }
       )
       // return store.data.items.map(i => i.data.user ?? i.data.userGroup)
@@ -932,7 +932,7 @@ SM.Manage.Collection.UsersGrid = Ext.extend(Ext.grid.GridPanel, {
         name: 'username',
         mapping: 'user.username'
       },
-      'accessLevel',
+      'roleId',
       {
         name: 'displayName',
         mapping: 'user.displayName'
@@ -1006,7 +1006,7 @@ SM.Manage.Collection.UsersGrid = Ext.extend(Ext.grid.GridPanel, {
       {
         header: '<span exportvalue="Role">Role<i class= "fa fa-question-circle sm-question-circle"></i></span>',
         width: 100,
-        dataIndex: 'accessLevel',
+        dataIndex: 'roleId',
         sortable: true,
         renderer: (v) => SM.RoleStrings[v],
       }
@@ -1017,7 +1017,7 @@ SM.Manage.Collection.UsersGrid = Ext.extend(Ext.grid.GridPanel, {
     function cellclick(grid, rowIndex, columnIndex, e) {
       if (e.target.tagName === "IMG") {
         const r = grid.getStore().getAt(rowIndex)
-        const defaultAccess = r.data.accessLevel === 1 ? 'none' : 'rw'
+        const defaultAccess = r.data.roleId === 1 ? 'none' : 'rw'
         SM.User.showCollectionAcl({ collectionId: _this.collectionId, userId: r.data.userId, displayName: r.data.displayName, defaultAccess })
       }
     }
@@ -1028,7 +1028,7 @@ SM.Manage.Collection.UsersGrid = Ext.extend(Ext.grid.GridPanel, {
       text: 'View Effective Access List...',
       handler: function () {
         const r = _this.getSelectionModel().getSelected()
-        const defaultAccess = r.data.accessLevel === 1 ? 'none' : 'rw'
+        const defaultAccess = r.data.roleId === 1 ? 'none' : 'rw'
         SM.User.showCollectionAcl({ collectionId: _this.collectionId, userId: r.data.userId, displayName: r.data.displayName, defaultAccess })
       }
     })
@@ -1068,8 +1068,8 @@ SM.Manage.Collection.UsersGrid = Ext.extend(Ext.grid.GridPanel, {
         markDirty: false,
         listeners: {
           refresh: function (view) {
-            // Setup the tooltip for column 'accessLevel'
-            const index = view.grid.getColumnModel().findColumnIndex('accessLevel')
+            // Setup the tooltip for column 'roleId'
+            const index = view.grid.getColumnModel().findColumnIndex('roleId')
             const tipEl = view.getHeaderCell(index).getElementsByClassName('fa')[0]
             if (tipEl) {
               new Ext.ToolTip({
@@ -1077,7 +1077,7 @@ SM.Manage.Collection.UsersGrid = Ext.extend(Ext.grid.GridPanel, {
                 showDelay: 0,
                 dismissDelay: 0,
                 maxWidth: 600,
-                html: SM.TipContent.AccessLevels
+                html: SM.TipContent.Roles
               })
             }
           },
@@ -1086,8 +1086,8 @@ SM.Manage.Collection.UsersGrid = Ext.extend(Ext.grid.GridPanel, {
       bbar,
       listeners: {
         viewready: function (grid) {
-          // Setup the tooltip for column 'accessLevel'
-          const index = grid.getColumnModel().findColumnIndex('accessLevel')
+          // Setup the tooltip for column 'roleId'
+          const index = grid.getColumnModel().findColumnIndex('roleId')
           const tipEl = grid.view.getHeaderCell(index).getElementsByClassName('fa')[0]
           if (tipEl) {
             new Ext.ToolTip({
@@ -1095,7 +1095,7 @@ SM.Manage.Collection.UsersGrid = Ext.extend(Ext.grid.GridPanel, {
               showDelay: 0,
               dismissDelay: 0,
               maxWidth: 600,
-              html: SM.TipContent.AccessLevels
+              html: SM.TipContent.Roles
             })
           }
         },
@@ -2795,7 +2795,7 @@ SM.Manage.Collection.showCreateWindow = function () {
     btnHandler: async () => {
       try {
         let values = fp.getForm().getFieldValues()
-        values.grants = [{userId: curUser.userId, accessLevel: 4}]
+        values.grants = [{userId: curUser.userId, roleId: 4}]
         values.metadata = {}
         await SM.Manage.Collection.ApiAddOrUpdate(0, values, {
           showManager: true

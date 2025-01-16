@@ -210,7 +210,7 @@ module.exports.getUserAssetStigAccess = async function ({assetId, benchmarkId, g
     coalesce(ae.access, 'rw') as access
   from
 	  stig_asset_map sa
-    ${grant.accessLevel === 1 ? 'inner' : 'left'} join cteAclEffective ae using (saId)
+    ${grant.roleId === 1 ? 'inner' : 'left'} join cteAclEffective ae using (saId)
   where
 	  sa.assetId = ? and sa.benchmarkId = ?`
     const [rows] = await _this.pool.query(sql, binds)
@@ -258,7 +258,7 @@ module.exports.getUserAssetStigAccess2 = async function ({
       FROM 
         stig_asset_map sa
         ${
-          grant.accessLevel === 1 ? 'INNER' : 'LEFT'
+          grant.roleId === 1 ? 'INNER' : 'LEFT'
         } JOIN TempAclEffective ae USING (saId)
       WHERE 
         sa.assetId = ? AND sa.benchmarkId = ?;
@@ -293,7 +293,7 @@ module.exports.getUserAssetStigAccess3 = async function ({
       FROM 
         stig_asset_map sa
         ${
-          grant.accessLevel === 1 ? 'INNER' : 'LEFT'
+          grant.roleId === 1 ? 'INNER' : 'LEFT'
         } JOIN cteAclEffective ae USING (saId)
       WHERE 
         sa.assetId = ? AND sa.benchmarkId = ?;
@@ -665,7 +665,7 @@ module.exports.sqlGrantees = function ({collectionId, collectionIds, userId, use
   const sqlDirectGrants = `select 
   ${includeColumnCollectionId ? 'cg.collectionId,' : ''}
   cast(cg.userId as char) as userId,
-  cg.accessLevel,
+  cg.roleId,
   json_array(json_object('userId', cast(ud.userId as char),'username', ud.username)) as grantees,
   json_array(cg.grantId) as grantIds
 from
@@ -680,17 +680,17 @@ where
   const sqlGroupGrants = `select
   ${includeColumnCollectionId ? 'collectionId,' : ''}
   userId,
-  accessLevel,
+  roleId,
   grantees,
   grantIds
 from
   (select
-    ROW_NUMBER() OVER(PARTITION BY ugu.userId, cg.collectionId ORDER BY cg.accessLevel desc) as rn,
+    ROW_NUMBER() OVER(PARTITION BY ugu.userId, cg.collectionId ORDER BY cg.roleId desc) as rn,
     ${includeColumnCollectionId ? 'cg.collectionId,' : ''} 
     cast(ugu.userId as char) as userId, 
-    cg.accessLevel,
-    json_arrayagg(json_object('userGroupId', cast(cg.userGroupId as char),'name', ug.name)) OVER (PARTITION BY ugu.userId, cg.collectionId, cg.accessLevel) as grantees,
-    json_arrayagg(cg.grantId) OVER (PARTITION BY ugu.userId, cg.collectionId, cg.accessLevel) as grantIds
+    cg.roleId,
+    json_arrayagg(json_object('userGroupId', cast(cg.userGroupId as char),'name', ug.name)) OVER (PARTITION BY ugu.userId, cg.collectionId, cg.roleId) as grantees,
+    json_arrayagg(cg.grantId) OVER (PARTITION BY ugu.userId, cg.collectionId, cg.roleId) as grantIds
 from 
     collection_grant cg
     inner join collection c on (cg.collectionId = c.collectionId and c.state = 'enabled')

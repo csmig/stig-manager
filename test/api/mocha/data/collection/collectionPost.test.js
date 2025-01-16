@@ -72,7 +72,7 @@ describe('POST - Collection - not all tests run for all iterations', function ()
           // grants projection
           expect(res.body.grants).to.have.lengthOf(1)
           expect(res.body.grants[0].user.userId).to.equal("1")
-          expect(res.body.grants[0].accessLevel).to.equal(4)
+          expect(res.body.grants[0].roleId).to.equal(4)
           expect(res.body.grants[0].grantId).to.exist
 
           // labels projection
@@ -112,7 +112,7 @@ describe('POST - Collection - not all tests run for all iterations', function ()
           expect(res.status).to.eql(201)
           expect(res.body.grants).to.have.lengthOf(1)
           expect(res.body.grants[0].userGroup.userGroupId).to.equal("1")
-          expect(res.body.grants[0].accessLevel).to.equal(2)
+          expect(res.body.grants[0].roleId).to.equal(2)
         })
         it("should throw SmError.UnprocessableError due to duplicate user in grant array.",async function () {
 
@@ -1103,13 +1103,13 @@ describe('POST - Collection - not all tests run for all iterations', function ()
                 expect(grant.user.userId).to.eql(reference.lvl1User.userId)
                 expect(grant.user.username).to.eql(reference.lvl1User.username)
                 expect(grant.grantId).to.exist
-                expect(grant.accessLevel).to.equal(2)
+                expect(grant.roleId).to.equal(2)
               }
               if(grant.userGroup){
                 expect(grant.userGroup.userGroupId).to.eql(reference.testCollection.testGroup.userGroupId)
                 expect(grant.userGroup.name).to.eql(reference.testCollection.testGroup.name)
                 expect(grant.grantId).to.exist
-                expect(grant.accessLevel).to.equal(2)
+                expect(grant.roleId).to.equal(2)
               }
             }
         })
@@ -1128,7 +1128,7 @@ describe('POST - Collection - not all tests run for all iterations', function ()
           const postGrantsByCollectionOwner = [
             {
               userId: "43",  
-              accessLevel: 4,
+              roleId: 4,
             },
           ]
 
@@ -1140,7 +1140,7 @@ describe('POST - Collection - not all tests run for all iterations', function ()
             }
             expect(res.status).to.eql(201)
             expect(res.body[0].user.userId).to.eql("43")
-            expect(res.body[0].accessLevel).to.equal(4)
+            expect(res.body[0].roleId).to.equal(4)
         })
       })
     })

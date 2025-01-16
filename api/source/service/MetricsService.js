@@ -46,7 +46,7 @@ module.exports.queryMetrics = async function ({
     'left join revision rev on dr.revId = rev.revId',
     'left join stig on rev.benchmarkId = stig.benchmarkId'
   ]
-  if (grant.accessLevel === 1) {
+  if (grant.roleId === 1) {
     ctes.push(dbUtils.cteAclEffective({cgIds: grant.grantIds}))
     joins.push('inner join cteAclEffective cae on sa.saId = cae.saId')
   }
@@ -184,7 +184,7 @@ module.exports.queryMetaMetrics = async function ({
   }
   
   for (const collectionId of grantedCollectionIds) {
-    if (grants[collectionId].accessLevel === 1) {
+    if (grants[collectionId].roleId === 1) {
       restrictedCollectionIds.push(collectionId)
       restrictedGrantIds.push(grants[collectionId].grantIds)
     }

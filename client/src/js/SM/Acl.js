@@ -355,7 +355,7 @@ SM.Acl.AssignedRulesGrid = Ext.extend(Ext.grid.EditorGridPanel, {
       ['rw'],
       ['r']
     ]
-    if (this.accessLevel === 1) {
+    if (this.roleId === 1) {
       accessData.push(['none'])
     }
 
@@ -538,7 +538,7 @@ SM.Acl.Panel = Ext.extend(Ext.Panel, {
 
     const assignedRulesGrid = new SM.Acl.AssignedRulesGrid({
       panel: this,
-      accessLevel: this.accessLevel,
+      roleId: this.roleId,
       title: `Assigned ACL`,
       flex: 1
     })
@@ -555,7 +555,7 @@ SM.Acl.Panel = Ext.extend(Ext.Panel, {
       {text: 'with Read/Write access', iconCls: 'sm-add-assignment-icon', access: 'rw', handler: handleAddBtnItem},
       {text: 'with Read Only access', iconCls: 'sm-add-assignment-icon', access: 'r', handler: handleAddBtnItem},
     ]
-    if (this.accessLevel === 1) addBtnMenuItems.push({text: 'with No access', iconCls: 'sm-add-assignment-icon', access: 'none', handler: handleAddBtnItem})
+    if (this.roleId === 1) addBtnMenuItems.push({text: 'with No access', iconCls: 'sm-add-assignment-icon', access: 'none', handler: handleAddBtnItem})
     const addBtn = new SM.Acl.ResourceAddBtn({
       tree: navTree,
       margins: "10 0 10 0",
@@ -630,7 +630,7 @@ SM.Acl.showAccess = async function(collectionId, grantRecord) {
 
     const assignmentPanel = new SM.Acl.Panel({
         collectionId,
-        accessLevel: grantRecord.accessLevel
+        roleId: grantRecord.roleId
     })
 
     const appwindow = new Ext.Window({

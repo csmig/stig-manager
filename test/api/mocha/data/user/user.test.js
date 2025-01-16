@@ -231,7 +231,7 @@ describe('user', () => {
                   "collectionGrants": [
                       {
                           "collectionId": `${reference.scrapCollection.collectionId}`,
-                          "accessLevel": 1
+                          "roleId": 1
                       }
                   ]
               })
@@ -244,7 +244,7 @@ describe('user', () => {
               expect(res.body).to.be.an('object')
               for(let grant of res.body.collectionGrants) {
                 expect(grant).to.have.property('collection')
-                expect(grant).to.have.property('accessLevel')
+                expect(grant).to.have.property('roleId')
                 expect(grant.collection.collectionId, "Expect collectionId to be scrapColleciton Id").to.equal(reference.scrapCollection.collectionId)
               }
               const createdUser = await utils.getUser(res.body.userId)
@@ -272,7 +272,7 @@ describe('user', () => {
               expect(res.body.collectionGrants).to.be.an('array').of.length(1)              
               for(let grant of res.body.collectionGrants) {
                 expect(grant.collection.collectionId).to.be.eql(reference.testCollection.collectionId)
-                expect(grant.accessLevel, "expect grant to be restricted").to.equal(reference.testCollection.testGroup.accessLevel)
+                expect(grant.roleId, "expect grant to be restricted").to.equal(reference.testCollection.testGroup.roleId)
                 for(const grantee of grant.grantees) {
                   expect(grantee.userGroupId, "expect grantee to be in TestGroup").to.equal(reference.testCollection.testGroup.userGroupId)
                 }
@@ -286,7 +286,7 @@ describe('user', () => {
                     "collectionGrants": [
                         {
                             "collectionId": `${"1234321"}`,
-                            "accessLevel": 1
+                            "roleId": 1
                         }
                     ]
                 })
@@ -302,7 +302,7 @@ describe('user', () => {
                     "collectionGrants": [
                         {
                             "collectionId": `${reference.scrapCollection.collectionId}`,
-                            "accessLevel": 1
+                            "roleId": 1
                         }
                     ]
                 })
@@ -345,7 +345,7 @@ describe('user', () => {
 
                 for(let grant of res.body.collectionGrants) {
                   expect(grant).to.have.property('collection')
-                  expect(grant).to.have.property('accessLevel')
+                  expect(grant).to.have.property('roleId')
                   expect(grant.collection.collectionId, "expect collectionId to be scrapCollection Id").to.equal(reference.scrapCollection.collectionId)
                 }
 
@@ -391,7 +391,7 @@ describe('user', () => {
                   "collectionGrants": [
                       {
                           "collectionId": `1234321`,
-                          "accessLevel": 1
+                          "roleId": 1
                       }
                   ]
                 })
@@ -408,7 +408,7 @@ describe('user', () => {
                   "collectionGrants": [
                       {
                           "collectionId": `${reference.scrapCollection.collectionId}`,
-                          "accessLevel": 1
+                          "roleId": 1
                       }
                   ]
                 })
@@ -430,7 +430,7 @@ describe('user', () => {
               "collectionGrants": [
                   {
                       "collectionId": `${reference.scrapCollection.collectionId}`,
-                      "accessLevel": 1
+                      "roleId": 1
                   }
               ]
             })
@@ -447,7 +447,7 @@ describe('user', () => {
 
             for(let grant of res.body.collectionGrants) {
               expect(grant).to.have.property('collection')
-              expect(grant).to.have.property('accessLevel')
+              expect(grant).to.have.property('roleId')
               expect(grant.collection.collectionId, "expect to have grant to the scrap collection").to.equal(reference.scrapCollection.collectionId)
             }
 
@@ -466,7 +466,7 @@ describe('user', () => {
                   "collectionGrants": [
                       {
                           "collectionId": `1234321`,
-                          "accessLevel": 1
+                          "roleId": 1
                       }
                   ]
                 })
@@ -477,7 +477,7 @@ describe('user', () => {
                 expect(res.status).to.eql(422)
           })
 
-          it("edit lvl1 users group membership to no groups and add direct level 1 role to test collecton ", async () => {
+          it("edit lvl1 users group membership to no groups and add direct level 1 roleId to test collecton ", async () => {
             const res = await utils.executeRequest(
                 `${config.baseUrl}/users/${reference.lvl1User.userId}?elevate=true&projection=userGroups&projection=collectionGrants`,
                 'PUT',
@@ -486,7 +486,7 @@ describe('user', () => {
                   username: "lvl1",
                   collectionGrants: [
                     {
-                      accessLevel: 1,
+                      roleId: 1,
                       collectionId: reference.testCollection.collectionId,
                     },
                   ],
@@ -503,7 +503,7 @@ describe('user', () => {
               expect(res.body.userGroups).to.be.an('array').of.length(0)
               expect(res.body.collectionGrants).to.be.an('array').of.length(1)
               expect(res.body.collectionGrants[0].collection.collectionId, "expect collectionId to be testCollection").to.equal(reference.testCollection.collectionId)
-              expect(res.body.collectionGrants[0].accessLevel, "expect accessLevel to be 1").to.equal(1)
+              expect(res.body.collectionGrants[0].roleId, "expect roleId to be 1").to.equal(1)
               expect(res.body.collectionGrants[0].grantees).to.be.an('array').of.length(1)
               expect(res.body.collectionGrants[0].grantees[0].userId, "expect grantee to be the user").to.equal(reference.lvl1User.userId)
           })
@@ -533,7 +533,7 @@ describe('user', () => {
                   "collectionGrants": [
                       {
                           "collectionId": `${reference.scrapCollection.collectionId}`,
-                          "accessLevel": 1
+                          "roleId": 1
                       }
                   ]
                 })
@@ -547,7 +547,7 @@ describe('user', () => {
                   "collectionGrants": [
                       {
                           "collectionId": `${reference.scrapCollection.collectionId}`,
-                          "accessLevel": 1
+                          "roleId": 1
                       }
                   ]
                 })

@@ -55,11 +55,11 @@ describe('DELETE - deleteAsset - /assets/{assetId} - DELETE - deleteCollection -
                 "grants": [
                     {
                             "userId": "1",
-                            "accessLevel": 4
+                            "roleId": 4
                     },
                     {
                             "userId": "85",
-                            "accessLevel": 1
+                            "roleId": 1
                     }        
                 ],
                 "labels": [

@@ -6,7 +6,7 @@ export const requestBodies = {
       "collectionGrants": [
           {
               "collectionId": reference.scrapCollection.collectionId,
-              "accessLevel": 1
+              "roleId": 1
           }
       ]
   }

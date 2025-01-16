@@ -42,7 +42,7 @@ const lvl1TestAcl = {
               grantee: {
                 userId: 85,
                 username: "lvl1",
-                accessLevel: 1,
+                roleId: 1,
               },
             },
           ],
@@ -67,7 +67,7 @@ const lvl1TestAcl = {
               grantee: {
                 userId: 85,
                 username: "lvl1",
-                accessLevel: 1,
+                roleId: 1,
               },
             },
           ],
@@ -91,7 +91,7 @@ const lvl1TestAcl = {
               grantee: {
                 userId: 85,
                 username: "lvl1",
-                accessLevel: 1,
+                roleId: 1,
               },
             },
           ],
@@ -115,7 +115,7 @@ const lvl1TestAcl = {
               grantee: {
                 userId: 85,
                 username: "lvl1",
-                accessLevel: 1,
+                roleId: 1,
               },
             },
           ],
@@ -170,7 +170,7 @@ describe("Test grantee resolution is resolved from assigning a user to a group",
 
     const res = await utils.executeRequest(`${config.baseUrl}/collections/${reference.testCollection.collectionId}/grants`, 'POST', admin.token, [{
       userGroupId: tempGroup.userGroupId,
-      accessLevel: 1
+      roleId: 1
     }])
     expect(res.status).to.eql(201)
     tempGroup.grantId = res.body[0].grantId
@@ -184,7 +184,7 @@ describe("Test grantee resolution is resolved from assigning a user to a group",
     expect(res.status).to.eql(200)
 
     for(const grant of res.body.collectionGrants){
-        expect(grant.accessLevel).to.equal(1)
+        expect(grant.roleId).to.equal(1)
         for(const grantee of grant.grantees){ 
             expect(grantee.userGroupId).to.be.eql(tempGroup.userGroupId)
         }
@@ -212,7 +212,7 @@ describe(`Testing grantee resolution between a direct grant and group grant`, ()
       it("should give lvl1 user restricted access to test collection", async () => {
         const res = await utils.executeRequest(`${config.baseUrl}/collections/${reference.testCollection.collectionId}/grants`, 'POST', admin.token, [{
           "userId": lvl1.userId,
-          "accessLevel": 1
+          "roleId": 1
         }])
         expect(res.status).to.eql(201)
         lvl1DirectGrantId = res.body[0].grantId
@@ -252,7 +252,7 @@ describe(`Testing grantee resolution between a direct grant and group grant`, ()
 
           const res = await utils.executeRequest(`${config.baseUrl}/collections/${reference.testCollection.collectionId}/grants`, 'POST', admin.token, [{
               "userGroupId": userGroup.userGroupId,
-              accessLevel: 1
+              roleId: 1
           }])
           expect(res.status).to.eql(201)
           lvl1DirectGrantId = res.body[0].grantId
@@ -317,7 +317,7 @@ describe(`Testing grantee resolution between a direct grant and group grant`, ()
   })
 })
 
-describe(`Multiple Group Role Collisions`, () => {
+describe(`Multiple Group roleId Collisions`, () => {
 
   before(async function () {
       await utils.loadAppData()
@@ -371,94 +371,94 @@ describe(`Multiple Group Role Collisions`, () => {
 
     const res = await utils.executeRequest(`${config.baseUrl}/collections/${reference.testCollection.collectionId}/grants`, 'POST', config.adminToken, [{
       userGroupId: userGroup1.userGroupId,
-      accessLevel: 1
+      roleId: 1
     }])
     expect(res.status).to.eql(201)
-    expect(res.body[0].accessLevel).to.equal(1)
+    expect(res.body[0].roleId).to.equal(1)
     userGroup1.grantId = res.body[0].grantId
 
     const res2 = await utils.executeRequest(`${config.baseUrl}/collections/${reference.testCollection.collectionId}/grants`, 'POST', config.adminToken, [{
       userGroupId: userGroup2.userGroupId,
-      accessLevel: 1
+      roleId: 1
     }])
     expect(res2.status).to.eql(201)
-    expect(res2.body[0].accessLevel).to.equal(1)
+    expect(res2.body[0].roleId).to.equal(1)
     userGroup2.grantId = res2.body[0].grantId
   })
 
-  it("get lvl1 user check that lvl1 user obtained accessLevel = 1 due to membership in two groups with accessLevel = 1", async () => {
+  it("get lvl1 user check that lvl1 user obtained roleId = 1 due to membership in two groups with roleId = 1", async () => {
 
     const res = await utils.executeRequest(`${config.baseUrl}/users/${reference.lvl1User.userId}?elevate=true&projection=collectionGrants&projection=userGroups`, 'GET', config.adminToken)
     expect(res.status).to.eql(200)
 
     for(const grant of res.body.collectionGrants){
-      expect(grant.accessLevel).to.equal(1)
+      expect(grant.roleId).to.equal(1)
       for(const grantee of grant.grantees){ 
         expect(grantee.name).to.be.oneOf([userGroup1.name, userGroup2.name])
       }
     }
   })
 
-  it("should change userGroup1 accessLevel to 2", async () => {
+  it("should change userGroup1 roleId to 2", async () => {
     const res = await utils.executeRequest(`${config.baseUrl}/collections/${reference.testCollection.collectionId}/grants/${userGroup1.grantId}`, 'PUT', config.adminToken, {
       userGroupId: userGroup1.userGroupId,
-      accessLevel: 2
+      roleId: 2
     })
     expect(res.status).to.eql(200)
-    expect(res.body.accessLevel).to.equal(2)
+    expect(res.body.roleId).to.equal(2)
   })
 
-  it("get users assigned to the test collection and check that lvl1 user obtained accessLevel = 2 due to membership in two groups with highest being accessLevel = 2", async () => {
+  it("get users assigned to the test collection and check that lvl1 user obtained roleId = 2 due to membership in two groups with highest being roleId = 2", async () => {
 
     const res = await utils.executeRequest(`${config.baseUrl}/users/${reference.lvl1User.userId}?elevate=true&projection=collectionGrants&projection=userGroups`, 'GET', config.adminToken)
     expect(res.status).to.eql(200) 
 
     for(const grant of res.body.collectionGrants){
-      expect(grant.accessLevel).to.equal(2)
+      expect(grant.roleId).to.equal(2)
       for(const grantee of grant.grantees){ 
         expect(grantee.name).to.be.oneOf([userGroup1.name, userGroup2.name])
       }
     }
   })
 
-  it("should change userGroup2 accessLevel to 3", async () => {
+  it("should change userGroup2 roleId to 3", async () => {
     const res = await utils.executeRequest(`${config.baseUrl}/collections/${reference.testCollection.collectionId}/grants/${userGroup2.grantId}`, 'PUT', config.adminToken, {
       userGroupId: userGroup2.userGroupId,
-      accessLevel: 3
+      roleId: 3
     })
     expect(res.status).to.eql(200)
-    expect(res.body.accessLevel).to.equal(3)
+    expect(res.body.roleId).to.equal(3)
   })
 
-  it("get users assigned to the test collection and check that lvl1 user obtained accessLevel = 3 due to membership in two groups with highest being accessLevel = 3", async () => {
+  it("get users assigned to the test collection and check that lvl1 user obtained roleId = 3 due to membership in two groups with highest being roleId = 3", async () => {
 
     const res = await utils.executeRequest(`${config.baseUrl}/users/${reference.lvl1User.userId}?elevate=true&projection=collectionGrants&projection=userGroups`, 'GET', config.adminToken)
     expect(res.status).to.eql(200)
 
     for(const grant of res.body.collectionGrants){
-      expect(grant.accessLevel).to.equal(3)
+      expect(grant.roleId).to.equal(3)
       for(const grantee of grant.grantees){ 
         expect(grantee.name).to.be.oneOf([userGroup1.name, userGroup2.name])
       }
     }
   })
 
-  it("should change userGroup1 accessLevel to 4", async () => {
+  it("should change userGroup1 roleId to 4", async () => {
     const res = await utils.executeRequest(`${config.baseUrl}/collections/${reference.testCollection.collectionId}/grants/${userGroup1.grantId}`, 'PUT', config.adminToken, {
       userGroupId: userGroup1.userGroupId,
-      accessLevel: 4
+      roleId: 4
     })
     expect(res.status).to.eql(200)
-    expect(res.body.accessLevel).to.equal(4)
+    expect(res.body.roleId).to.equal(4)
   })
   
-  it("get users assigned to the test collection and check that lvl1 user obtained accessLevel = 4 due to membership in two groups with highest being accessLevel = 4", async () => {
+  it("get users assigned to the test collection and check that lvl1 user obtained roleId = 4 due to membership in two groups with highest being roleId = 4", async () => {
 
     const res = await utils.executeRequest(`${config.baseUrl}/users/${reference.lvl1User.userId}?elevate=true&projection=collectionGrants&projection=userGroups`, 'GET', config.adminToken)
     expect(res.status).to.eql(200)
 
     for(const grant of res.body.collectionGrants){
-      expect(grant.accessLevel).to.equal(4)
+      expect(grant.roleId).to.equal(4)
       for(const grantee of grant.grantees){ 
         expect(grantee.name).to.be.oneOf([userGroup1.name, userGroup2.name])
       }
@@ -478,22 +478,22 @@ describe(`Multiple Group Role Collisions`, () => {
     expect(res.body.collections).to.be.empty
   })
 
-  it("assign userGroup3 to the test collection with accessLevel = 4", async () => {
+  it("assign userGroup3 to the test collection with roleId = 4", async () => {
     const res = await utils.executeRequest(`${config.baseUrl}/collections/${reference.testCollection.collectionId}/grants`, 'POST', config.adminToken, [{
       userGroupId: userGroup3.userGroupId,
-      accessLevel: 4
+      roleId: 4
     }])
     expect(res.status).to.eql(201)
-    expect(res.body[0].accessLevel).to.equal(4)
+    expect(res.body[0].roleId).to.equal(4)
   })
 
-  it("get users assigned to the test collection and check that lvl1 user obtained accessLevel = 4 due to membership in three groups with two groups being accessLevel = 4", async () => {
+  it("get users assigned to the test collection and check that lvl1 user obtained roleId = 4 due to membership in three groups with two groups being roleId = 4", async () => {
 
     const res = await utils.executeRequest(`${config.baseUrl}/users/${reference.lvl1User.userId}?elevate=true&projection=collectionGrants&projection=userGroups`, 'GET', config.adminToken)
 
     expect(res.status).to.eql(200)
     for(const grant of res.body.collectionGrants){
-      expect(grant.accessLevel).to.equal(4)
+      expect(grant.roleId).to.equal(4)
       expect(grant.grantees.length).to.equal(2)
       for(const grantee of grant.grantees){ 
         expect(grantee.name).to.be.oneOf([userGroup1.name, userGroup2.name, userGroup3.name])
@@ -548,7 +548,7 @@ describe("Testing user grant for a user that has a 'grantee' from a userGroup gr
 
     const res = await utils.executeRequest(`${config.baseUrl}/collections/${reference.testCollection.collectionId}/grants`, 'POST', admin.token, [{
       userGroupId: tempGroupID,
-      accessLevel: 1
+      roleId: 1
     }])
     expect(res.status).to.eql(201)
   })
@@ -560,7 +560,7 @@ describe("Testing user grant for a user that has a 'grantee' from a userGroup gr
     expect(res.status).to.eql(200)
 
     for(const grant of res.body.collectionGrants){
-        expect(grant.accessLevel).to.equal(1)
+        expect(grant.roleId).to.equal(1)
     }
   })
 })

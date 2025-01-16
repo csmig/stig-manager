@@ -30,7 +30,7 @@ exports.queryCollection = async function ({collectionId, projections = [], eleva
     binds: []
   }
 
-  const requesterAccessLevel = elevate ? 4 : grants[collectionId].accessLevel
+  const requesterRole = elevate ? 4 : grants[collectionId].roleId
   const requesterGrantIds = grants[collectionId]?.grantIds
   predicates.statements.push('c.collectionId = ?')
   predicates.binds.push( collectionId )
@@ -42,8 +42,8 @@ exports.queryCollection = async function ({collectionId, projections = [], eleva
       'name', name)`,
       orderBy: 'name'
       })}, json_array()) from
-      ${requesterAccessLevel === 1 ? 'cteAssets' : 'asset where collectionId = c.collectionId and state = "enabled"'}) as assets`
-      if (requesterAccessLevel === 1) {
+      ${requesterRole === 1 ? 'cteAssets' : 'asset where collectionId = c.collectionId and state = "enabled"'}) as assets`
+      if (requesterRole === 1) {
       requireCteAcls = true
       requireCteAssets = true
     }
@@ -51,7 +51,7 @@ exports.queryCollection = async function ({collectionId, projections = [], eleva
   }
 
   if (projections.includes('stigs')) {
-    if (requesterAccessLevel === 1) {
+    if (requesterRole === 1) {
       requireCteAcls = true
       requireCteStigs = true
       columns.push(`(select coalesce(json_arrayagg(json_object(
@@ -92,7 +92,7 @@ exports.queryCollection = async function ({collectionId, projections = [], eleva
               'displayName', COALESCE(
                 JSON_UNQUOTE(JSON_EXTRACT(user_data.lastClaims, "$.${config.oauth.claims.name}")),
                 user_data.username)),
-              'accessLevel', accessLevel)
+              'roleId', roleId)
             as grantJson
           from
             collection_grant inner join user_data using (userId) where collectionId = c.collectionId
@@ -105,7 +105,7 @@ exports.queryCollection = async function ({collectionId, projections = [], eleva
                 'name', user_group.name,
                 'description', user_group.description
                 ),
-              'accessLevel', accessLevel
+              'roleId', roleId
             ) as grantJson
           from collection_grant inner join user_group using (userGroupId) where collectionId = c.collectionId
         ) as grantJsons)
@@ -124,13 +124,13 @@ exports.queryCollection = async function ({collectionId, projections = [], eleva
       'displayName', COALESCE(
       JSON_UNQUOTE(JSON_EXTRACT(ud.lastClaims, "$.name")),
       ud.username)),
-    'accessLevel', cgs.accessLevel,
+    'roleId', cgs.roleId,
     'grantees', cgs.grantees))
     from cteGrantees cgs left join user_data ud on cgs.userId = ud.userId) as users`)
   }
 
   if (projections.includes('labels')) {
-    if (requesterAccessLevel === 1) {
+    if (requesterRole === 1) {
       requireCteAcls = true
       requireCteLabels = 'restricted'
     }
@@ -157,18 +157,18 @@ exports.queryCollection = async function ({collectionId, projections = [], eleva
         'displayName', JSON_UNQUOTE(JSON_EXTRACT(user_data.lastClaims, "$.${config.oauth.claims.name}"))
         ) as grantJson
       from
-        collection_grant inner join user_data using (userId) where collectionId = c.collectionId and accessLevel = 4
+        collection_grant inner join user_data using (userId) where collectionId = c.collectionId and roleId = 4
       UNION
       select user_group.name, json_object(
         'userGroupId', CAST(user_group.userGroupId as char),
         'name', user_group.name,
         'description', user_group.description
       ) as grantJson
-      from collection_grant inner join user_group using (userGroupId) where collectionId = c.collectionId and accessLevel = 4 order by username) o) as owners`)
+      from collection_grant inner join user_group using (userGroupId) where collectionId = c.collectionId and roleId = 4 order by username) o) as owners`)
   }
 
   if (projections.includes('statistics')) {
-    if (requesterAccessLevel === 1) {
+    if (requesterRole === 1) {
       requireCteGrantees = true
       requireCteAcls = true
       columns.push(`(select
@@ -302,14 +302,14 @@ exports.queryCollections = async function ({projections = [], filter = {}, eleva
           'displayName', JSON_UNQUOTE(JSON_EXTRACT(user_data.lastClaims, "$.${config.oauth.claims.name}"))
           ) as grantJson
         from
-          collection_grant inner join user_data using (userId) where collectionId = c.collectionId and accessLevel = 4
+          collection_grant inner join user_data using (userId) where collectionId = c.collectionId and roleId = 4
         UNION
         select json_object(
           'userGroupId', CAST(user_group.userGroupId as char),
           'name', user_group.name,
           'description', user_group.description
         ) as grantJson
-        from collection_grant inner join user_group using (userGroupId) where collectionId = c.collectionId and accessLevel = 4) o) as owners`)
+        from collection_grant inner join user_group using (userGroupId) where collectionId = c.collectionId and roleId = 4) o) as owners`)
     }
     if (projections.includes('statistics')) {
       if (!elevate) {
@@ -319,12 +319,12 @@ exports.queryCollections = async function ({projections = [], filter = {}, eleva
           json_object(
           'created', DATE_FORMAT(c.created, '%Y-%m-%dT%TZ'),
           'userCount', dt4.userCount,
-          'assetCount', case when dt4.accessLevel = 1 then dt4.assetGrantedCount else dt4.assetCount end,
-          'checklistCount', case when dt4.accessLevel = 1 then dt4.checklistGrantedCount else dt4.checklistCount end
+          'assetCount', case when dt4.roleId = 1 then dt4.assetGrantedCount else dt4.assetCount end,
+          'checklistCount', case when dt4.roleId = 1 then dt4.checklistGrantedCount else dt4.checklistCount end
           )
           from 
             (SELECT
-            (select accessLevel from cteGrantees where collectionId = c.collectionId and userId = ?) as accessLevel,
+            (select roleId from cteGrantees where collectionId = c.collectionId and userId = ?) as roleId,
             (select count(userId) from cteGrantees where collectionId = c.collectionId) as userCount,
             (select count(distinct a.assetId) from asset a where a.collectionId = c.collectionId and a.state = "enabled") as assetCount,
             (select count(distinct sa.assetId) from cteAclEffective cae left join stig_asset_map sa using (saId) where cae.collectionId = c.collectionId) as assetGrantedCount,
@@ -364,7 +364,7 @@ exports.queryCollections = async function ({projections = [], filter = {}, eleva
                   'displayName', COALESCE(
                     JSON_UNQUOTE(JSON_EXTRACT(user_data.lastClaims, "$.${config.oauth.claims.name}")),
                     user_data.username)),
-                  'accessLevel', accessLevel)
+                  'roleId', roleId)
                 as grantJson
             from
               collection_grant inner join user_data using (userId) where collectionId = c.collectionId
@@ -376,7 +376,7 @@ exports.queryCollections = async function ({projections = [], filter = {}, eleva
                   'name', user_group.name,
                   'description', user_group.description
                   ),
-                'accessLevel', accessLevel
+                'roleId', roleId
               ) as grantJson
             from collection_grant inner join user_group using (userGroupId) where collectionId = c.collectionId
           ) as grantJsons)
@@ -486,12 +486,12 @@ exports.addOrUpdateCollection = async function(writeAction, collectionId, body, 
             )
             const sqlInsertUserGrants = `INSERT
             INTO 
-              collection_grant (collectionId, userId, accessLevel)
+              collection_grant (collectionId, userId, roleId)
             VALUES
               ? as new 
             ON DUPLICATE KEY UPDATE 
-              accessLevel = new.accessLevel`      
-            const binds = grantsByIdType.userGrants.map(i => [collectionId, i.userId, i.accessLevel])
+              roleId = new.roleId`      
+            const binds = grantsByIdType.userGrants.map(i => [collectionId, i.userId, i.roleId])
             await connection.query(sqlInsertUserGrants, [binds])
           }
           else {
@@ -505,12 +505,12 @@ exports.addOrUpdateCollection = async function(writeAction, collectionId, body, 
             )
             const sqlInsertGroupGrants = `INSERT 
             INTO 
-              collection_grant (collectionId, userGroupId, accessLevel) 
+              collection_grant (collectionId, userGroupId, roleId) 
             VALUES
               ? as new
             ON DUPLICATE KEY UPDATE 
-              accessLevel = new.accessLevel`      
-            const binds = grantsByIdType.userGroupGrants.map(i => [collectionId, i.userGroupId, i.accessLevel])
+              roleId = new.roleId`      
+            const binds = grantsByIdType.userGroupGrants.map(i => [collectionId, i.userGroupId, i.roleId])
             await connection.query(sqlInsertGroupGrants, [binds])
           }
           else {
@@ -667,7 +667,7 @@ exports.getChecklistByCollectionStig = async function (collectionId, benchmarkId
 
   // Access control
   const grant = userObject.grants[collectionId]
-  if (grant.accessLevel === 1) {
+  if (grant.roleId === 1) {
     ctes.push(dbUtils.cteAclEffective({cgIds: grant.grantIds}))
     joins.push('inner join cteAclEffective cae on sa.saId = cae.saId')
   }
@@ -756,7 +756,7 @@ exports.getFindingsByCollection = async function( {collectionId, aggregator, ben
     'inner join review rv on (rvcd.version = rv.version and rvcd.checkDigest = rv.checkDigest and a.assetId = rv.assetId and rv.resultId = 4)',
     'left join cci on rgrcc.cci = cci.cci'
   ]
-  if (grant.accessLevel === 1) {
+  if (grant.roleId === 1) {
     ctes.push(dbUtils.cteAclEffective({cgIds: grant.grantIds}))
     joins.push('inner join cteAclEffective cae on sa.saId = cae.saId')
   }
@@ -921,7 +921,7 @@ exports.getStigsByCollection = async function({collectionId, labelIds, labelName
       'name', a.name) order by a.name), ']') as json) as "assets"`)
   }
 
-  if (grant.accessLevel === 1) {
+  if (grant.roleId === 1) {
     ctes.push(dbUtils.cteAclEffective({cgIds: grant.grantIds}))
     joins.push('inner join cteAclEffective cae on sa.saId = cae.saId')
   }
@@ -1307,7 +1307,7 @@ exports.getCollectionLabels = async function (collectionId, grant) {
   const orderBy = [
     'cl.name'
   ]
-  if (grant.accessLevel === 1) {
+  if (grant.roleId === 1) {
     ctes.push(dbUtils.cteAclEffective({cgIds: grant.grantIds}))
     joins.push('inner join cteAclEffective cae on sa.saId = cae.saId')
   }
@@ -1354,7 +1354,7 @@ exports.getCollectionLabelById = async function (collectionId, labelId, grant) {
   }
   const groupBy = ['cl.clId']
   const orderBy = []
-  if (grant.accessLevel === 1) {
+  if (grant.roleId === 1) {
     ctes.push(dbUtils.cteAclEffective({cgIds: grant.grantIds}))
     joins.push('inner join cteAclEffective cae on sa.saId = cae.saId')
   }
@@ -1407,7 +1407,7 @@ exports.getAssetsByCollectionLabelId = async function (collectionId, labelId, gr
   }
   const groupBy = []
   const orderBy = ['a.name']
-  if (grant.accessLevel === 1) {
+  if (grant.roleId === 1) {
     ctes.push(dbUtils.cteAclEffective({cgIds: grant.grantIds}))
     joins.push(
       'left join stig_asset_map sa on a.assetId = sa.assetId',
@@ -1580,7 +1580,7 @@ async function queryUnreviewedByCollection ({
   const predicates = {
     statements: [
       'a.collectionId = ?',
-      // '(cg.userId = ? AND CASE WHEN cg.accessLevel = 1 THEN usa.userId = cg.userId ELSE TRUE END)',
+      // '(cg.userId = ? AND CASE WHEN cg.roleId = 1 THEN usa.userId = cg.userId ELSE TRUE END)',
       '(r.reviewId is null or r.resultId not in (2,3,4))',
     ],
     binds: [collectionId, userObject.userId]
@@ -1610,7 +1610,7 @@ async function queryUnreviewedByCollection ({
     predicates.statements.push('rgr.severity IN ?')
     predicates.binds.push([severities])
   }
-  if (grant.accessLevel === 1) {
+  if (grant.roleId === 1) {
     ctes.push(dbUtils.cteAclEffective({cgIds: grant.grantIds}))
     joins.push('inner join cteAclEffective cae on sa.saId = cae.saId')
   }
@@ -1730,7 +1730,7 @@ exports.cloneCollection = async function ({collectionId, userObject, name, descr
         finishText: 'Created core properties'
       },
       cloneGrants: {
-        query: `INSERT INTO collection_grant (collectionId, userId, userGroupId, accessLevel) SELECT @destCollectionId, userId, userGroupId, accessLevel FROM collection_grant where collectionId = @srcCollectionId`,
+        query: `INSERT INTO collection_grant (collectionId, userId, userGroupId, roleId) SELECT @destCollectionId, userId, userGroupId, roleId FROM collection_grant where collectionId = @srcCollectionId`,
         startText: 'Creating Grants',
         finishText: 'Creating Grants'
       },
@@ -1740,12 +1740,12 @@ exports.cloneCollection = async function ({collectionId, userObject, name, descr
         finishText: 'Creating Grants'
       },
       createGrantMap: {
-        query: `CREATE TEMPORARY TABLE t_grantid_map SELECT cg1.grantId as srcGrantId, cg2.grantId as destGrantId FROM collection_grant cg1 left join collection_grant cg2 on (cg1.collectionId = @srcCollectionId and (cg1.userId = cg2.userId or cg1.userGroupId = cg2.userGroupId) and cg1.accessLevel = cg2.accessLevel) WHERE cg2.collectionId = @destCollectionId`,
+        query: `CREATE TEMPORARY TABLE t_grantid_map SELECT cg1.grantId as srcGrantId, cg2.grantId as destGrantId FROM collection_grant cg1 left join collection_grant cg2 on (cg1.collectionId = @srcCollectionId and (cg1.userId = cg2.userId or cg1.userGroupId = cg2.userGroupId) and cg1.roleId = cg2.roleId) WHERE cg2.collectionId = @destCollectionId`,
         startText: 'Creating Grants',
         finishText: 'Creating Grants'
       },
       insertOwnerGrant: {
-        query: `INSERT INTO collection_grant (collectionId, userId, accessLevel) VALUES (@destCollectionId, @userId, 4) ON DUPLICATE KEY UPDATE accessLevel = 4`,
+        query: `INSERT INTO collection_grant (collectionId, userId, roleId) VALUES (@destCollectionId, @userId, 4) ON DUPLICATE KEY UPDATE roleId = 4`,
         startText: 'Creating Grants',
         finishText: 'Created Grants'
       },
@@ -2427,12 +2427,12 @@ exports.exportToCollection = async function ({srcCollectionId, dstCollectionId, 
   }
 }
 
-exports.setGrantByCollection = async function ({collectionId, userId, userGroupId, accessLevel}) {
+exports.setGrantByCollection = async function ({collectionId, userId, userGroupId, roleId}) {
 
   const sqlInsertGrant = 
-  `INSERT INTO collection_grant (collectionId, ${userId ? 'userId' : 'userGroupId'}, accessLevel) VALUES (?, ?, ?) AS new ON DUPLICATE KEY UPDATE accessLevel = new.accessLevel`
+  `INSERT INTO collection_grant (collectionId, ${userId ? 'userId' : 'userGroupId'}, roleId) VALUES (?, ?, ?) AS new ON DUPLICATE KEY UPDATE roleId = new.roleId`
 
-  const [response] = await dbUtils.pool.query(sqlInsertGrant, [collectionId, userId || userGroupId, accessLevel])
+  const [response] = await dbUtils.pool.query(sqlInsertGrant, [collectionId, userId || userGroupId, roleId])
   // resolving if we are inserting a new db record or updating an existing.
   const httpStatus = (response.affectedRows === 1 && response.insertId !== 0) ? 201 : 200
   return httpStatus
@@ -2457,8 +2457,8 @@ union
   from
     (
     select
-      ROW_NUMBER() OVER(PARTITION BY ugu.userId, cg.collectionId ORDER BY cg.accessLevel desc) as rn,
-      json_arrayagg(cg.grantId) OVER (PARTITION BY ugu.userId, cg.collectionId, cg.accessLevel) as grantIds
+      ROW_NUMBER() OVER(PARTITION BY ugu.userId, cg.collectionId ORDER BY cg.roleId desc) as rn,
+      json_arrayagg(cg.grantId) OVER (PARTITION BY ugu.userId, cg.collectionId, cg.roleId) as grantIds
     from 
       collection_grant cg
       left join user_group_user_map ugu on cg.userGroupId = ugu.userGroupId
@@ -2487,7 +2487,7 @@ cteAclRules as (select
 			CASE WHEN ud.userId is null THEN 'x' ELSE 'username' END, ud.username,
 			CASE WHEN ug.userGroupId is null THEN 'x' ELSE 'userGroupId' END, CAST(ug.userGroupId AS CHAR),
 			CASE WHEN ug.userGroupId is null THEN 'x' ELSE 'name' END, ug.name,
-            'accessLevel', cg.accessLevel
+            'roleId', cg.roleId
 			), '$.x'),
 		'aclRule', json_remove(json_object(
 			CASE WHEN cga.benchmarkId is null THEN 'x' ELSE 'benchmarkId' END, cga.benchmarkId,
@@ -2574,8 +2574,8 @@ exports._reviewAclValidate = async function ({grantId, acl}) {
     jt.benchmarkId,
     cl.clId,
       group_concat(jt.access) as access,
-      group_concat(case when any_value(cg.accessLevel) != 1 and jt.access = 'none'
-        then 'role prohibits access:none'
+      group_concat(case when any_value(cg.roleId) != 1 and jt.access = 'none'
+        then 'roleId prohibits access:none'
         else case when jt.assetId is not null and a.assetId is null
           then 'asset not found in collection'
           else case when jt.benchmarkId is not null and s.benchmarkId is null
@@ -2638,7 +2638,7 @@ exports._getCollectionGrant = async function ({collectionId, grantId, grantIds, 
       'displayName', COALESCE(
       JSON_UNQUOTE(JSON_EXTRACT(user_data.lastClaims, "$.name")),
       user_data.username)),
-    'accessLevel', accessLevel)
+    'roleId', roleId)
   else json_object(
     'grantId', cast(grantId as char),
     'userGroup', json_object(
@@ -2646,7 +2646,7 @@ exports._getCollectionGrant = async function ({collectionId, grantId, grantIds, 
       'name', user_group.name,
       'description', user_group.description
       ),
-    'accessLevel', accessLevel) end as grantJson
+    'roleId', roleId) end as grantJson
   from
     collection_grant
     left join user_data using (userId)
@@ -2671,8 +2671,8 @@ exports._getCollectionGrant = async function ({collectionId, grantId, grantIds, 
 
 exports.putGrantById = function ({grantId, grant, isRoleChange = false, svcStatus = {}}) {
 
-  const sqlUpdate = `UPDATE collection_grant SET userId = ?,userGroupId = ?,accessLevel = ? where grantId = ?`
-  const bindsUpdate = [grant.userId, grant.userGroupId, grant.accessLevel, grantId]
+  const sqlUpdate = `UPDATE collection_grant SET userId = ?,userGroupId = ?,roleId = ? where grantId = ?`
+  const bindsUpdate = [grant.userId, grant.userGroupId, grant.roleId, grantId]
 
   if (isRoleChange) {
     // need a transaction
@@ -2699,8 +2699,8 @@ exports.deleteGrantById = async function (grantId) {
 }
 
 exports.postGrantsByCollection = async function (collectionId, grants) {
-  const binds = grants.map( g => [collectionId, g.userId, g.userGroupId, g.accessLevel])
-  const sql = `INSERT into collection_grant (collectionId, userId, userGroupId, accessLevel) VALUES ?`
+  const binds = grants.map( g => [collectionId, g.userId, g.userGroupId, g.roleId])
+  const sql = `INSERT into collection_grant (collectionId, userId, userGroupId, roleId) VALUES ?`
   const [result] = await dbUtils.pool.query(sql, [binds])
   const grantIds = []
   for (let x = 0; x < result.affectedRows; x++) {
@@ -2724,7 +2724,7 @@ exports._hasCollectionGrant = async function ({collectionId, userId}) {
 
 exports.queryReviewAcl = async function ({grantId, collectionId, userId, userGroupId}) {
   const columns = [
-    `case when cg.accessLevel = 1 then 'none' else 'rw' end as defaultAccess`,
+    `case when cg.roleId = 1 then 'none' else 'rw' end as defaultAccess`,
     `case when count(cga.cgAclId) = 0
       THEN json_array()
       ELSE json_arrayagg(

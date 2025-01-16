@@ -14,7 +14,7 @@ const user =
       "eyJhbGciOiJSUzI1NiIsInR5cCIgOiAiSldUIiwia2lkIiA6ICJGSjg2R2NGM2pUYk5MT2NvNE52WmtVQ0lVbWZZQ3FvcXRPUWVNZmJoTmxFIn0.eyJleHAiOjE4NjQ3MDg5ODQsImlhdCI6MTY3MDU2ODE4NCwiYXV0aF90aW1lIjoxNjcwNTY4MTg0LCJqdGkiOiIxMDhmMDc2MC0wYmY5LTRkZjEtYjE0My05NjgzNmJmYmMzNjMiLCJpc3MiOiJodHRwOi8vbG9jYWxob3N0OjgwODAvYXV0aC9yZWFsbXMvc3RpZ21hbiIsImF1ZCI6WyJyZWFsbS1tYW5hZ2VtZW50IiwiYWNjb3VudCJdLCJzdWIiOiJlM2FlMjdiOC1kYTIwLTRjNDItOWRmOC02MDg5ZjcwZjc2M2IiLCJ0eXAiOiJCZWFyZXIiLCJhenAiOiJzdGlnLW1hbmFnZXIiLCJub25jZSI6IjE0ZmE5ZDdkLTBmZTAtNDQyNi04ZmQ5LTY5ZDc0YTZmMzQ2NCIsInNlc3Npb25fc3RhdGUiOiJiNGEzYWNmMS05ZGM3LTQ1ZTEtOThmOC1kMzUzNjJhZWM0YzciLCJhY3IiOiIxIiwicmVhbG1fYWNjZXNzIjp7InJvbGVzIjpbImRlZmF1bHQtcm9sZXMtc3RpZ21hbiJdfSwicmVzb3VyY2VfYWNjZXNzIjp7InJlYWxtLW1hbmFnZW1lbnQiOnsicm9sZXMiOlsidmlldy11c2VycyIsInF1ZXJ5LWdyb3VwcyIsInF1ZXJ5LXVzZXJzIl19LCJhY2NvdW50Ijp7InJvbGVzIjpbIm1hbmFnZS1hY2NvdW50IiwibWFuYWdlLWFjY291bnQtbGlua3MiLCJ2aWV3LXByb2ZpbGUiXX19LCJzY29wZSI6Im9wZW5pZCBzdGlnLW1hbmFnZXI6Y29sbGVjdGlvbiBzdGlnLW1hbmFnZXI6c3RpZzpyZWFkIHN0aWctbWFuYWdlcjp1c2VyOnJlYWQgc3RpZy1tYW5hZ2VyOmNvbGxlY3Rpb246cmVhZCIsInNpZCI6ImI0YTNhY2YxLTlkYzctNDVlMS05OGY4LWQzNTM2MmFlYzRjNyIsIm5hbWUiOiJyZXN0cmljdGVkIiwicHJlZmVycmVkX3VzZXJuYW1lIjoibHZsMSIsImdpdmVuX25hbWUiOiJyZXN0cmljdGVkIn0.OqLARi5ILt3j2rMikXy0ECTTqjWco0-CrMwzE88gUv2i8rVO9kMgVsXbtPk2L2c9NNNujnxqg7QIr2_sqA51saTrZHvzXcsT8lBruf74OubRMwcTQqJap-COmrzb60S7512k0WfKTYlHsoCn_uAzOb9sp8Trjr0NksU8OXCElDU"
 }
 const admin = {
-    // Has admin and createCollection privileges, standard appdata: Owner role in all collections
+    // Has admin and createCollection privileges, standard appdata: Owner roleId in all collections
     name: "stigmanadmin",
     grant: "Owner",
     userId: "1",
@@ -36,7 +36,7 @@ describe("lvl1 cross-boundary tests", () => {
             for(const grant of res.body.collectionGrants) {
               expect(grant).to.exist
               expect(grant).to.have.property('collection')
-              expect(grant).to.have.property('accessLevel')
+              expect(grant).to.have.property('roleId')
               expect(grant.collection).to.have.property('collectionId')
               expect(grant.collection.collectionId).to.eql(reference.testCollection.collectionId)
             }
@@ -235,19 +235,19 @@ describe("lvl1 cross-boundary tests", () => {
               "grants": [
                   {
                     "userId": "1",
-                    "accessLevel": 1
+                    "roleId": 1
                   },
                   {
                           "userId": "21",
-                      "accessLevel": 2
+                      "roleId": 2
                   },
                   {
                           "userId": "44",
-                      "accessLevel": 3
+                      "roleId": 3
                   },
                   {
                           "userId": "45",
-                      "accessLevel": 4
+                      "roleId": 4
                   }
               ]
           }           
@@ -288,19 +288,19 @@ describe("lvl1 cross-boundary tests", () => {
                       "grants": [
                           {
                             "userId": "1",
-                            "accessLevel": 4
+                            "roleId": 4
                           },
                           {
                                   "userId": "21",
-                              "accessLevel": 2
+                              "roleId": 2
                           },
                           {
                                   "userId": "44",
-                              "accessLevel": 3
+                              "roleId": 3
                           },
                           {
                                   "userId": "45",
-                              "accessLevel": 4
+                              "roleId": 4
                           }
                       ]
                   })

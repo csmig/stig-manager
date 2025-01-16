@@ -28,7 +28,7 @@ describe('GET - Test Effective ACL', () => {
     it("should give lvl1 user restricted access to test collection", async () => {
       const res = await utils.executeRequest(`${config.baseUrl}/collections/${reference.testCollection.collectionId}/grants`, 'POST', config.adminToken, [{
             userId: user.userId,
-            accessLevel: 1
+            roleId: 1
           }])
       grantId = res.body[0].grantId
       expect(res.status).to.eql(201)

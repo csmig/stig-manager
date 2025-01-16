@@ -566,11 +566,11 @@ exports.getAppInfo = async function() {
       'uniqueAssetsDisabled', count(distinct if(a.state = 'disabled', sam.assetId, null)),
       'uniqueStigs', count(distinct if(a.state = 'enabled', sam.benchmarkId, null)),
       'uniqueStigsDisabled', count(distinct if(a.state = 'disabled', sam.benchmarkId, null)),
-      'role', 
-        case when cg.accessLevel = 1 then 'restricted' else 
-          case when cg.accessLevel = 2 then 'full' else
-            case when cg.accessLevel = 3 then 'manage' else
-              case when cg.accessLevel = 4 then 'owner'
+      'roleId', 
+        case when cg.roleId = 1 then 'restricted' else 
+          case when cg.roleId = 2 then 'full' else
+            case when cg.roleId = 3 then 'manage' else
+              case when cg.roleId = 4 then 'owner'
               end
             end
           end
@@ -594,10 +594,10 @@ exports.getAppInfo = async function() {
   const sqlGrantCounts = `
   SELECT 
     collectionId,
-    SUM(CASE WHEN accessLevel = 1 THEN 1 ELSE 0 END) AS restricted,
-    SUM(CASE WHEN accessLevel = 2 THEN 1 ELSE 0 END) AS full,
-    SUM(CASE WHEN accessLevel = 3 THEN 1 ELSE 0 END) AS manage,
-    SUM(CASE WHEN accessLevel = 4 THEN 1 ELSE 0 END) AS owner
+    SUM(CASE WHEN roleId = 1 THEN 1 ELSE 0 END) AS restricted,
+    SUM(CASE WHEN roleId = 2 THEN 1 ELSE 0 END) AS full,
+    SUM(CASE WHEN roleId = 3 THEN 1 ELSE 0 END) AS manage,
+    SUM(CASE WHEN roleId = 4 THEN 1 ELSE 0 END) AS owner
   FROM 
     collection_grant
   GROUP BY 
@@ -616,10 +616,10 @@ exports.getAppInfo = async function() {
       json_array()
     ) as privileges,
     json_object(
-		  "restricted", sum(case when cg.accessLevel = 1 then 1 else 0 end),
-      "full", sum(case when cg.accessLevel = 2 then 1 else 0 end),
-		  "manage", sum(case when cg.accessLevel = 3 then 1 else 0 end),
-      "owner", sum(case when cg.accessLevel = 4 then 1 else 0 end)
+		  "restricted", sum(case when cg.roleId = 1 then 1 else 0 end),
+      "full", sum(case when cg.roleId = 2 then 1 else 0 end),
+		  "manage", sum(case when cg.roleId = 3 then 1 else 0 end),
+      "owner", sum(case when cg.roleId = 4 then 1 else 0 end)
 	  ) as roles
   from 
     user_data ud

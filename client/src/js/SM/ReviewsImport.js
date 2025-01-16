@@ -1995,7 +1995,7 @@ SM.ReviewsImport.ImportProgressPanel = Ext.extend(Ext.Panel, {
 async function showImportResultFiles(collectionId, createObjects = true) {
     try {
         const cachedCollection = SM.Cache.CollectionMap.get(collectionId)
-        const userGrant = curUser.collectionGrants.find( i => i.collection.collectionId === cachedCollection.collectionId )?.accessLevel
+        const userGrant = curUser.collectionGrants.find( i => i.collection.collectionId === cachedCollection.collectionId )?.roleId
         const canAccept = cachedCollection.settings.status.canAccept && (userGrant >= cachedCollection.settings.status.minAcceptGrant)
         const initialOptions = SM.safeJSONParse(cachedCollection.metadata.importOptions) ?? SM.ReviewsImport.DefaultOptions
         if (initialOptions?.autoStatus === 'accepted' && !canAccept) {
@@ -2432,7 +2432,7 @@ async function showImportResultFiles(collectionId, createObjects = true) {
 async function showImportResultFile(params) {
     try {
         const cachedCollection = SM.Cache.CollectionMap.get(params.collectionId)
-        const userGrant = curUser.collectionGrants.find( i => i.collection.collectionId === cachedCollection.collectionId )?.accessLevel
+        const userGrant = curUser.collectionGrants.find( i => i.collection.collectionId === cachedCollection.collectionId )?.roleId
         const canAccept = cachedCollection.settings.status.canAccept && (userGrant >= cachedCollection.settings.status.minAcceptGrant)
         const initialOptions = SM.safeJSONParse(cachedCollection.metadata.importOptions) ?? SM.ReviewsImport.DefaultOptions
         if (initialOptions?.autoStatus === 'accepted' && !canAccept) {

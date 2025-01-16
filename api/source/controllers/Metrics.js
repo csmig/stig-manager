@@ -1,13 +1,13 @@
 const config = require('../utils/config')
 const MetricsService = require(`../service/MetricsService`)
 const Collection = require('./Collection')
-const Security = require('../utils/accessLevels')
+const Security = require('../utils/roles')
 const SmError = require('../utils/error')
 const {stringify: csvStringify} = require('csv-stringify/sync')
 
 async function getCollectionMetrics (req, res, next, {style, aggregation, firstRowOnly = false}) {
   try {
-    const { collectionId, grant } = Collection.getCollectionInfoAndCheckPermission(req, Security.ACCESS_LEVEL.Restricted)
+    const { collectionId, grant } = Collection.getCollectionInfoAndCheckPermission(req, Security.ROLES.Restricted)
     const returnType = req.query.format || 'json'
     const filter = {
       labelNames: req.query.labelName,

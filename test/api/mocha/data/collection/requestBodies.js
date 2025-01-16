@@ -13,27 +13,27 @@ export const requestBodies = {
     grants: [
       {
         userId: '1',
-        accessLevel: 4
+        roleId: 4
       },
       {
         userId: '21',
-        accessLevel: 1
+        roleId: 1
       },
       {
         userId: '44',
-        accessLevel: 3
+        roleId: 3
       },
       {
         userId: '45',
-        accessLevel: 4
+        roleId: 4
       },
       {
         userGroupId: '1',
-        accessLevel: 1
+        roleId: 1
       },
       {
         userId: '87',
-        accessLevel: 4
+        roleId: 4
       }
     ]
   },
@@ -78,27 +78,27 @@ export const requestBodies = {
     grants: [
       {
         userId: '1',
-        accessLevel: 4
+        roleId: 4
       },
       {
         userId: '21',
-        accessLevel: 2
+        roleId: 2
       },
       {
         userId: '44',
-        accessLevel: 3
+        roleId: 3
       },
       {
         userId: '45',
-        accessLevel: 4
+        roleId: 4
       },
       {
         userId: '87',
-        accessLevel: 4
+        roleId: 4
       },
       {
         userGroupId: '1',
-        accessLevel: 1
+        roleId: 1
       }
     ]
   },
@@ -134,7 +134,7 @@ export const requestBodies = {
     grants: [
       {
         userId: '1',
-        accessLevel: 4
+        roleId: 4
       }
     ],
     labels: [
@@ -177,7 +177,7 @@ export const requestBodies = {
     grants: [
       {
         userGroupId: '1',
-        accessLevel: 2
+        roleId: 2
       }
     ],
     labels: [
@@ -224,31 +224,31 @@ export const requestBodies = {
     grants: [
       {
         userId: '1',
-        accessLevel: 4
+        roleId: 4
       },
       {
         userId: '45',
-        accessLevel: 4
+        roleId: 4
       },
       {
         userId: '87',
-        accessLevel: 4
+        roleId: 4
       },
       {
         userId: '44',
-        accessLevel: 3
+        roleId: 3
       },
       {
         userId: '21',
-        accessLevel: 2
+        roleId: 2
       },
       {
         userGroupId: '1',
-        accessLevel: 1
+        roleId: 1
       },
       {
         userId: '86',
-        accessLevel: 1
+        roleId: 1
       }
     ],
     labels: [
@@ -272,17 +272,17 @@ export const requestBodies = {
   postGrantsByCollection: [
     {
       userId: reference.lvl1User.userId,
-      accessLevel: 2
+      roleId: 2
     },
     {
       userGroupId: reference.testCollection.testGroup.userGroupId,
-      accessLevel: 2
+      roleId: 2
     }
   ],
   postOwners: [
     {
       userId: reference.wfTest.userId,
-      accessLevel: 4
+      roleId: 4
     }
   ],
   putGroupAcl: [

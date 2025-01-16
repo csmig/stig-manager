@@ -45,7 +45,7 @@ exports.postReviewBatch = async function ({
     return `cteReview AS (${cte})`
   }
   
-  function cteAssetGen({assetIds = [], benchmarkIds = []}, accessLevel) {
+  function cteAssetGen({assetIds = [], benchmarkIds = []}, roleId) {
     let cte
     if (assetIds?.length) {
       const json = JSON.stringify(assetIds)
@@ -63,7 +63,7 @@ exports.postReviewBatch = async function ({
       from
         asset a
         left join stig_asset_map sa using (assetId)
-        ${accessLevel === 1 ? 'inner' : 'left'} join cteAclEffective cae on sa.saId = cae.saId
+        ${roleId === 1 ? 'inner' : 'left'} join cteAclEffective cae on sa.saId = cae.saId
       where
         a.collectionId = @collectionId 
         and a.state = "enabled"
@@ -94,14 +94,14 @@ exports.postReviewBatch = async function ({
     return `cteRule AS (${cte})`
   }
   
-  function cteGrantGen(accessLevel) {
+  function cteGrantGen(roleId) {
     const cte = `select
     distinct a.assetId,
     rgr.ruleId 
   from 
     asset a
     left join stig_asset_map sa using (assetId)
-    ${accessLevel === 1 ? 'inner' : 'left'} join cteAclEffective cae on sa.saId = cae.saId
+    ${roleId === 1 ? 'inner' : 'left'} join cteAclEffective cae on sa.saId = cae.saId
     left join revision rev on sa.benchmarkId = rev.benchmarkId
     left join rev_group_rule_map rgr using (revId)
   where 
@@ -285,14 +285,14 @@ exports.postReviewBatch = async function ({
   }
   
   const cteReview = cteReviewGen()
-  const cteAsset = cteAssetGen(assets, grant.accessLevel)
+  const cteAsset = cteAssetGen(assets, grant.roleId)
   if (rules.benchmarkIds) {
     rules.collectionId = collectionId
   }
   const cteRule = cteRuleGen(rules)
   let cteGrant
   if (!skipGrantCheck) {
-    cteGrant = cteGrantGen(grant.accessLevel)
+    cteGrant = cteGrantGen(grant.roleId)
   }
   const cteCollectionSetting = cteCollectionSettingGen()
   const cteCandidate = cteCandidateGen({skipGrantCheck, action, updateFilters})
@@ -618,7 +618,7 @@ exports.getReviews = async function ({projections = [], filter = {}, grant}) {
     'left join stig_asset_map sa on (r.assetId = sa.assetId and revision.benchmarkId = sa.benchmarkId)',
   ]
 
-  if (grant.accessLevel === 1) {
+  if (grant.roleId === 1) {
     joins.push('inner join cteAclEffective cae on sa.saId = cae.saId')
     // newman tests will fail if we add the new column
     columns.push('min(cae.access) as access')
@@ -939,7 +939,7 @@ SELECT
   c.settings->>"$.fields.detail.required" AS detailRequired,
   c.settings->>"$.fields.comment.required" AS commentRequired,
   c.settings->>"$.status.canAccept" AS collectionCanAccept,
-  CASE WHEN c.settings->>"$.status.canAccept" = 'true' AND c.settings->>"$.status.minAcceptGrant" <= @accessLevel
+  CASE WHEN c.settings->>"$.status.canAccept" = 'true' AND c.settings->>"$.status.minAcceptGrant" <= @roleId
     THEN 'true'
     ELSE 'false'
   END AS userCanAccept,
@@ -986,7 +986,7 @@ select
 from 
   asset a
   left join stig_asset_map sa using (assetId)
-  ${grant.accessLevel === 1 ? 'inner' : 'left'} join cteAclEffective cae on sa.saId = cae.saId
+  ${grant.roleId === 1 ? 'inner' : 'left'} join cteAclEffective cae on sa.saId = cae.saId
   left join revision rev on sa.benchmarkId = rev.benchmarkId
   left join rev_group_rule_map rgr using (revId)
 where 
@@ -1264,8 +1264,8 @@ where
   try {
     connection = await dbUtils.pool.getConnection()
     
-    const sqlSetVariables = `set @collectionId = ?, @assetId = ?, @userId = ?, @accessLevel = ?, @reviews = ?, @utcTimestamp = UTC_TIMESTAMP()`
-    await connection.query(sqlSetVariables, [parseInt(collectionId), parseInt(assetId), parseInt(userId), grant.accessLevel, JSON.stringify(reviews)])
+    const sqlSetVariables = `set @collectionId = ?, @assetId = ?, @userId = ?, @roleId = ?, @reviews = ?, @utcTimestamp = UTC_TIMESTAMP()`
+    await connection.query(sqlSetVariables, [parseInt(collectionId), parseInt(assetId), parseInt(userId), grant.roleId, JSON.stringify(reviews)])
     const [settings] = await connection.query(`select c.settings->>"$.history.maxReviews" as maxReviews FROM collection c where collectionId = @collectionId`)
     const historyMaxReviews = settings[0].maxReviews
     await connection.query(sqlCreateTableValidatedReview)
@@ -1327,7 +1327,7 @@ exports.checkRuleByAssetUser = async function ({ruleId, assetId, collectionId, g
     from 
       asset a
       left join stig_asset_map sa using (assetId)
-      ${grant.accessLevel === 1 ? 'inner' : 'left'} join cteAclEffective cae on sa.saId = cae.saId
+      ${grant.roleId === 1 ? 'inner' : 'left'} join cteAclEffective cae on sa.saId = cae.saId
       left join revision rev on sa.benchmarkId = rev.benchmarkId
       left join rev_group_rule_map rgr using (revId)
     where 

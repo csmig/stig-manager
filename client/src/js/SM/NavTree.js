@@ -14,7 +14,7 @@ SM.NavTree.NodeSorter = (a, b) => {
 SM.NavTree.CollectionLeafConfig = function (collection) {
   const collectionGrant = curUser.collectionGrants.find( g => g.collection.collectionId === collection.collectionId )
   let toolsEl = ''
-  if (collectionGrant && collectionGrant.accessLevel >= 3) {
+  if (collectionGrant && collectionGrant.roleId >= 3) {
     toolsEl = '<img class="sm-tree-toolbar" src="img/gear.svg" width="12" height="12" ext:qtip="Manage Collection">'
   }
   return {

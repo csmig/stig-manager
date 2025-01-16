@@ -1811,7 +1811,7 @@ SM.CollectionPanel.showCollectionTab = async function (options) {
     })
     overviewPanel.inventoryPanel.on('render', (panel) => {
       const collectionGrant = curUser.collectionGrants.find(g => g.collection.collectionId === collectionId)
-      const isManager = !!(collectionGrant?.accessLevel >= 3)
+      const isManager = !!(collectionGrant?.roleId >= 3)
       panel.tools.manage.setDisplayed(isManager)
       panel.tools.spacer.setDisplayed(isManager)
     })

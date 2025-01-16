@@ -39,7 +39,7 @@ exports.queryAssets = async function ({projections = [], filter = {}, grant = {}
     'left join collection c on a.collectionId = c.collectionId',
     'left join stig_asset_map sa on a.assetId = sa.assetId'
   ]
-  if (grant.accessLevel === 1) {
+  if (grant.roleId === 1) {
     ctes.push(dbUtils.cteAclEffective({cgIds: grant.grantIds}))
     joins.push('inner join cteAclEffective cae on sa.saId = cae.saId')
   }
@@ -1305,7 +1305,7 @@ exports.getStigsByAssetSlow = async function ({assetId, grant}) {
     'left join default_rev dr on (sa.benchmarkId = dr.benchmarkId and a.collectionId = dr.collectionId)',
     'left join revision rev on dr.revId = rev.revId'
   ]
-  if (grant.accessLevel === 1) {
+  if (grant.roleId === 1) {
     ctes.push(dbUtils.cteAclEffective({cgIds: grant.grantIds}))
     joins.push('inner join cteAclEffective cae on sa.saId = cae.saId')
   }
@@ -1340,7 +1340,7 @@ exports.getStigsByAsset = async function ({assetId, grant}) {
       'left join default_rev dr on (sa.benchmarkId = dr.benchmarkId and a.collectionId = dr.collectionId)',
       'left join revision rev on dr.revId = rev.revId'
     ]
-    if (grant.accessLevel === 1) {
+    if (grant.roleId === 1) {
       //ctes.push(dbUtils.cteAclEffective({cgIds: grant.grantIds}))
       await dbUtils.cteAclEffective3({cgIds: grant.grantIds, connection: connection})
       joins.push('inner join cteAclEffective cae on sa.saId = cae.saId')
@@ -1416,7 +1416,7 @@ exports.getAssetsByStig = async function({collectionId, benchmarkId, projections
     'inner join asset a on c.collectionId = a.collectionId',
     'left join stig_asset_map sa on a.assetId = sa.assetId',
   ]
-  if (grant.accessLevel === 1) {
+  if (grant.roleId === 1) {
     ctes.push(dbUtils.cteAclEffective({cgIds: grant.grantIds}))
     joins.push('inner join cteAclEffective cae on sa.saId = cae.saId')
   }

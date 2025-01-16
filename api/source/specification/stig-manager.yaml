@@ -4171,7 +4171,7 @@ paths:
             - 'stig-manager:user'
 components:
   schemas:
-    AccessLevel:
+    RoleId:
       maximum: 4
       minimum: 1
       type: integer
@@ -4536,13 +4536,13 @@ components:
     AppInfoGrantCounts:
       type: object
       properties:
-        accessLevel1:
+        role1:
           type: number
-        accessLevel2:
+        role2:
           type: number
-        accessLevel3:
+        role3:
           type: number
-        accessLevel4:
+        role4:
           type: number
     AppInfoRestrictedUsers:
       type: object
@@ -5706,19 +5706,19 @@ components:
       additionalProperties: false
       type: object
       properties:
-        accessLevel:
-          $ref: '#/components/schemas/AccessLevel'
+        roleId:
+          $ref: '#/components/schemas/RoleId'
         collectionId:
           $ref: '#/components/schemas/CollectionId'
       required:
         - collectionId
-        - accessLevel
+        - roleId
     CollectionGrantProjected:
       additionalProperties: false
       type: object
       properties:
-        accessLevel:
-          $ref: '#/components/schemas/AccessLevel'
+        roleId:
+          $ref: '#/components/schemas/RoleId'
         collection:
           type: object
           properties:
@@ -5933,8 +5933,8 @@ components:
           items:
             type: object
             properties:
-              accessLevel:
-                $ref: '#/components/schemas/AccessLevel'
+              roleId:
+                $ref: '#/components/schemas/RoleId'
               userId:
                 $ref: '#/components/schemas/UserId'
         metadata:
@@ -6158,14 +6158,14 @@ components:
     GrantEffective:
       type: object
       properties:
-        accessLevel:
-          $ref: '#/components/schemas/AccessLevel'
+        roleId:
+          $ref: '#/components/schemas/RoleId'
         grantees:
           $ref: '#/components/schemas/Grantees'
         user:
           $ref: '#/components/schemas/UserBasicWithDisplayName'
       required:
-        - accessLevel
+        - roleId
         - grantees
         - user
     Grantee:
@@ -7768,8 +7768,8 @@ components:
           $ref: '#/components/schemas/UserId'
         username:
           $ref: '#/components/schemas/Username'
-        accessLevel:
-          $ref: '#/components/schemas/AccessLevel'
+        roleId:
+          $ref: '#/components/schemas/RoleId'
       required:
         - userId
         - username
@@ -7811,25 +7811,25 @@ components:
       type: object
       required:
         - userId
-        - accessLevel
+        - roleId
       properties:
         userId:
           $ref: '#/components/schemas/UserId'
-        accessLevel:
-          $ref: '#/components/schemas/AccessLevel'
+        roleId:
+          $ref: '#/components/schemas/RoleId'
     UserGrantProjected:
       additionalProperties: false
       type: object
       properties:
         grantId:
           $ref: '#/components/schemas/GrantId'
-        accessLevel:
-          $ref: '#/components/schemas/AccessLevel'
+        roleId:
+          $ref: '#/components/schemas/RoleId'
         user:
           $ref: '#/components/schemas/UserBasicWithDisplayName'
       required:
         - user
-        - accessLevel
+        - roleId
     UserGroup:
       type: object
       additionalProperties: false
@@ -7855,18 +7855,18 @@ components:
           $ref: '#/components/schemas/UserGroupId'
         name:
           $ref: '#/components/schemas/String255'
-        accessLevel: 
-          $ref: '#/components/schemas/AccessLevel'
+        roleId: 
+          $ref: '#/components/schemas/RoleId'
     UserGroupGrant:
       type: object
       required:
         - userGroupId
-        - accessLevel
+        - roleId
       additionalProperties: false
       properties:
         userGroupId:
           $ref: '#/components/schemas/UserGroupId'
-        accessLevel:
+        roleId:
           type: integer
           minimum: 1
           maximum: 4
@@ -7874,15 +7874,15 @@ components:
       type: object
       required:
         - userGroup          
-        - accessLevel
+        - roleId
       additionalProperties: false
       properties:
         grantId:
           $ref: '#/components/schemas/GrantId'
         userGroup:
           $ref: '#/components/schemas/UserGroup'
-        accessLevel:
-          $ref: '#/components/schemas/AccessLevel'
+        roleId:
+          $ref: '#/components/schemas/RoleId'
     UserGroupId:
       $ref: '#/components/schemas/StringIntId' 
     UserGroupPatch:

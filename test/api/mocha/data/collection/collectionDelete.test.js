@@ -140,16 +140,16 @@ describe('DELETE - Collection ', function () {
               return
             }
             expect(res.status).to.eql(200)
-            expect(res.body.accessLevel).to.eql(1)
+            expect(res.body.roleId).to.eql(1)
             expect(res.body.grantId).to.eql(reference.scrapLvl1User.testCollectionGrantId)
             expect(res.body.user.userId).to.eql(reference.scrapLvl1User.userId)
 
         })
-        it("Delete an owner grant, is succeeding for all users with role owner without elevate.",async function () {
+        it("Delete an owner grant, is succeeding for all users with roleId owner without elevate.",async function () {
 
           const res = await utils.executeRequest(`${config.baseUrl}/collections/${reference.testCollection.collectionId}/grants/${reference.adminBurke.testCollectionGrantId}`, 'DELETE', iteration.token)
 
-          if (distinct.accessLevel < 4){
+          if (distinct.roleId < 4){
             expect(res.status).to.eql(403)
             return
           }

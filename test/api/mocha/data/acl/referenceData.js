@@ -105,7 +105,7 @@ const reference = {
           username: "bizarroLvl1",
           displayName: "bizarroLvl1"
           },
-        accessLevel: 1
+        roleId: 1
       },
       {
         user: {
@@ -113,7 +113,7 @@ const reference = {
           username: "lvl1",
           displayName: "lvl1"
         },
-        accessLevel: 1
+        roleId: 1
       },
       {
         user: {
@@ -121,7 +121,7 @@ const reference = {
           username: "lvl2",
           displayName: "lvl2"
         },
-        accessLevel: 2
+        roleId: 2
       },
       {
         user: {
@@ -129,7 +129,7 @@ const reference = {
           username: "lvl3",
           displayName: "lvl3"
         },
-        accessLevel: 3
+        roleId: 3
       },
       {
         user: {
@@ -137,7 +137,7 @@ const reference = {
           username: "admin",
           displayName: "Admin Burke"
         },
-        accessLevel: 4
+        roleId: 4
       },
       {
         user: {
@@ -145,7 +145,7 @@ const reference = {
           username: "stigmanadmin",
           displayName: "STIGMAN Admin"
         },
-        accessLevel: 4
+        roleId: 4
       },
       {
         user: {
@@ -153,7 +153,7 @@ const reference = {
           username: "lvl4",
           displayName: "lvl4"
         },
-        accessLevel: 4
+        roleId: 4
       }
     ],
     ownersProjected: [

@@ -74,7 +74,7 @@ function parseGrants (grants, elevate = false) {
   let requesterGrantIds = []
   if (!elevate) {
     for (const collectionId in grants) {
-      if (grants[collectionId].accessLevel === 1) {
+      if (grants[collectionId].roleId === 1) {
         requesterGrantIds.push(grants[collectionId].grantIds)
       }
       else {

@@ -26,7 +26,7 @@ SM.TipContent.ImportOptions.EmptyComment = `How to handle Reviews with empty com
 `
 
 
-SM.TipContent.AccessLevels = `
+SM.TipContent.Roles = `
 <b>Roles</b> <br>
 - <b>Restricted:</b> Can access specific STIGs on specific Assets only. <br>
 - <b>Full:</b> Can access any Asset/STIG in the Collection but cannot add/remove/modify Assets, STIGs, or Grants. <br>

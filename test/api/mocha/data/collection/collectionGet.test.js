@@ -98,7 +98,7 @@ describe('GET - Collection', function () {
               grants: [
                 {
                   userId: '1',
-                  accessLevel: 4
+                  roleId: 4
                 }
               ],
               labels: [
@@ -513,19 +513,19 @@ describe('GET - Collection', function () {
             grants: [
               {
                 userId: '1',
-                accessLevel: 4
+                roleId: 4
               },
               {
                 userId: '21',
-                accessLevel: 2
+                roleId: 2
               },
               {
                 userId: '44',
-                accessLevel: 3
+                roleId: 3
               },
               {
                 userId: '45',
-                accessLevel: 4
+                roleId: 4
               }
             ],
             labels: [
@@ -1117,7 +1117,7 @@ describe('GET - Collection', function () {
             return
           }
           expect(res.status).to.eql(200)
-          expect(res.body.accessLevel).to.equal(reference.testCollection.testGroup.accessLevel)
+          expect(res.body.roleId).to.equal(reference.testCollection.testGroup.roleId)
           expect(res.body.grantId).to.equal(reference.testCollection.testGroup.testCollectionGrantId)
           expect(res.body.userGroup.userGroupId).to.equal(reference.testCollection.testGroup.userGroupId)
           expect(res.body.userGroup.name).to.equal(reference.testCollection.testGroup.name)
@@ -1129,7 +1129,7 @@ describe('GET - Collection', function () {
             return
           }
           expect(res.status).to.eql(200)
-          expect(res.body.accessLevel).to.equal(reference.adminBurke.testCollectionAccessLevel)
+          expect(res.body.roleId).to.equal(reference.adminBurke.testCollectionrole)
           expect(res.body.grantId).to.equal(reference.adminBurke.testCollectionGrantId)
           expect(res.body.user.userId).to.equal(reference.adminBurke.userId)
           expect(res.body.user.username).to.equal(reference.adminBurke.username)
@@ -1142,7 +1142,7 @@ describe('GET - Collection', function () {
             return
           }
           expect(res.status).to.eql(200)
-          expect(res.body.accessLevel).to.equal(reference.adminBurke.testCollectionAccessLevel)
+          expect(res.body.roleId).to.equal(reference.adminBurke.testCollectionrole)
           expect(res.body.grantId).to.equal(reference.adminBurke.testCollectionGrantId)
           expect(res.body.user.userId).to.equal(reference.adminBurke.userId)
           expect(res.body.user.username).to.equal(reference.adminBurke.username)

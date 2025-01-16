@@ -21,8 +21,8 @@ async function addReview( params ) {
   })
   const apiFieldSettings = apiCollection.settings.fields
   const apiStatusSettings = apiCollection.settings.status
-  const accessLevel = curUser.collectionGrants.filter(g => g.collection.collectionId == apiCollection.collectionId)[0].accessLevel
-  const canAccept = apiStatusSettings.canAccept && accessLevel >= apiStatusSettings.minAcceptGrant
+  const roleId = curUser.collectionGrants.filter(g => g.collection.collectionId == apiCollection.collectionId)[0].roleId
+  const canAccept = apiStatusSettings.canAccept && roleId >= apiStatusSettings.minAcceptGrant
 
 
   // Classic compatability. Remove after modernization

@@ -44,7 +44,7 @@ exports.queryUsers = async function (inProjection, inPredicates, elevate, userOb
           'collectionId', CAST(cgs.collectionId as char),
           'name', c.name
         ),
-        'accessLevel', cgs.accessLevel,
+        'roleId', cgs.roleId,
         'grantees', cgs.grantees
       )`)}
     else json_array() 
@@ -183,12 +183,12 @@ exports.addOrUpdateUser = async function (writeAction, userId, body, projection,
         if (collectionGrants.length > 0) {
           let sqlInsertCollGrant = `
             INSERT INTO 
-              collection_grant (userId, collectionId, accessLevel)
+              collection_grant (userId, collectionId, roleId)
             VALUES
               ? as new
             ON DUPLICATE KEY UPDATE
-              accessLevel = new.accessLevel`      
-          binds = collectionGrants.map( grant => [userId, grant.collectionId, grant.accessLevel])
+              roleId = new.roleId`      
+          binds = collectionGrants.map( grant => [userId, grant.collectionId, grant.roleId])
           // INSERT into collection_grant
           await connection.query(sqlInsertCollGrant, [binds] )
         }
@@ -464,13 +464,13 @@ exports.getUserObject = async function (username) {
         dt2.collectionId, json_object(
           'collectionId', dt2.collectionId,
           'name', dt2.name,
-          'accessLevel', dt2.accessLevel, 
+          'roleId', dt2.roleId, 
           'grantIds', dt2.grantIds)), json_object())
     from   
       (select 
         cg.collectionId,
         c.name,
-        cg.accessLevel,
+        cg.roleId,
         json_array(cg.grantId) as grantIds
       from
         collection_grant cg
@@ -482,15 +482,15 @@ exports.getUserObject = async function (username) {
       select
         collectionId,
         name,
-        accessLevel,
+        roleId,
         grantIds
       from
         (select
-          ROW_NUMBER() OVER(PARTITION BY ugu.userId, cg.collectionId ORDER BY cg.accessLevel desc) as rn,
+          ROW_NUMBER() OVER(PARTITION BY ugu.userId, cg.collectionId ORDER BY cg.roleId desc) as rn,
           cg.collectionId,
           c.name, 
-          cg.accessLevel,
-          json_arrayagg(cg.grantId) OVER (PARTITION BY ugu.userId, cg.collectionId, cg.accessLevel) as grantIds
+          cg.roleId,
+          json_arrayagg(cg.grantId) OVER (PARTITION BY ugu.userId, cg.collectionId, cg.roleId) as grantIds
         from 
           collection_grant cg
           inner join collection c on (cg.collectionId = c.collectionId and c.state = 'enabled')

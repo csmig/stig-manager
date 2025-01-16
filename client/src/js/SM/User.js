@@ -22,7 +22,7 @@ SM.User.EffectiveGrantsGrid = Ext.extend(Ext.grid.GridPanel, {
         name: 'name',
         mapping: 'collection.name'
       },
-      'accessLevel',
+      'roleId',
       'grantees'
     ]
     const totalTextCmp = new Ext.Toolbar.TextItem({
@@ -70,7 +70,7 @@ SM.User.EffectiveGrantsGrid = Ext.extend(Ext.grid.GridPanel, {
       {
         header: "Role",
         width: 100,
-        dataIndex: 'accessLevel',
+        dataIndex: 'roleId',
         sortable: true,
         renderer: (v) => SM.RoleStrings[v],
       }
@@ -130,7 +130,7 @@ SM.User.EffectiveGrantsGrid = Ext.extend(Ext.grid.GridPanel, {
 SM.User.CollectionGrantGrid = Ext.extend(Ext.grid.GridPanel, {
   initComponent: function () {
     const _this = this
-    const fields = ['collectionId', 'name', 'accessLevel']
+    const fields = ['collectionId', 'name', 'roleId']
     const sm = new Ext.grid.CheckboxSelectionModel({
       singleSelect: false,
       checkOnly: false,
@@ -154,7 +154,7 @@ SM.User.CollectionGrantGrid = Ext.extend(Ext.grid.GridPanel, {
         header: "Role",
         width: 80,
         fixed: true,
-        dataIndex: 'accessLevel',
+        dataIndex: 'roleId',
         sortable: true,
         hidden: !this.showRole,
         renderer: (v) => `<div class="sm-grid-cell-with-menu">${SM.RoleStrings[v]}</div>`,
@@ -176,17 +176,17 @@ SM.User.CollectionGrantGrid = Ext.extend(Ext.grid.GridPanel, {
     })
 
     const roleCellMenuItems = [
-      {text: 'Role: Restricted', iconCls: 'sm-add-assignment-icon', accessLevel: 1, },
-      {text: 'Role: Full', iconCls: 'sm-add-assignment-icon', accessLevel: 2, },
-      {text: 'Role: Manage', iconCls: 'sm-add-assignment-icon', accessLevel: 3, },
-      {text: 'Role: Owner', iconCls: 'sm-add-assignment-icon', accessLevel: 4, },
+      {text: 'Role: Restricted', iconCls: 'sm-add-assignment-icon', roleId: 1, },
+      {text: 'Role: Full', iconCls: 'sm-add-assignment-icon', roleId: 2, },
+      {text: 'Role: Manage', iconCls: 'sm-add-assignment-icon', roleId: 3, },
+      {text: 'Role: Owner', iconCls: 'sm-add-assignment-icon', roleId: 4, },
     ]
 
     const roleCellMenu = new Ext.menu.Menu({
       items: roleCellMenuItems,
       listeners: {
         itemclick: function (item) {
-          this.currentRecord.data.accessLevel = item.accessLevel
+          this.currentRecord.data.roleId = item.roleId
           this.currentRecord.commit()
           _this.fireEvent('cellrolechanged')
         }
@@ -195,7 +195,7 @@ SM.User.CollectionGrantGrid = Ext.extend(Ext.grid.GridPanel, {
 
     function cellclick (grid, rowIndex, columnIndex, e) {
       const fieldName = grid.colModel.getDataIndex(columnIndex)
-      if (fieldName === 'accessLevel') {
+      if (fieldName === 'roleId') {
         roleCellMenu.currentRecord = grid.getStore().getAt(rowIndex)
         const cellEl = grid.view.getCell(rowIndex, columnIndex)
         const rect = cellEl.getBoundingClientRect()
@@ -270,10 +270,10 @@ SM.User.GrantSelectingPanel = Ext.extend(Ext.Panel, {
     selectionsGrid.getSelectionModel().on('selectionchange', handleSelections, availableGrid)
 
     const addBtnMenuItems = [
-      {text: 'Role: Restricted', iconCls: 'sm-add-assignment-icon', accessLevel: 1, handler: handleAddBtnItem},
-      {text: 'Role: Full', iconCls: 'sm-add-assignment-icon', accessLevel: 2, handler: handleAddBtnItem},
-      {text: 'Role: Manage', iconCls: 'sm-add-assignment-icon', accessLevel: 3, handler: handleAddBtnItem},
-      {text: 'Role: Owner', iconCls: 'sm-add-assignment-icon', accessLevel: 4, handler: handleAddBtnItem},
+      {text: 'Role: Restricted', iconCls: 'sm-add-assignment-icon', roleId: 1, handler: handleAddBtnItem},
+      {text: 'Role: Full', iconCls: 'sm-add-assignment-icon', roleId: 2, handler: handleAddBtnItem},
+      {text: 'Role: Manage', iconCls: 'sm-add-assignment-icon', roleId: 3, handler: handleAddBtnItem},
+      {text: 'Role: Owner', iconCls: 'sm-add-assignment-icon', roleId: 4, handler: handleAddBtnItem},
     ]
 
     const addBtn = new Ext.Button({
@@ -289,14 +289,14 @@ SM.User.GrantSelectingPanel = Ext.extend(Ext.Panel, {
     function fireSelectedChanged () {
       _this.fireEvent('selectedchanged', selectionsGrid.store.getRange().map( r => ({
         collectionId: r.data.collectionId,
-        accessLevel: r.data.accessLevel
+        roleId: r.data.roleId
       })))
     }
 
     function handleAddBtnItem (menuItem) {
       const selectedRecords = availableGrid.getSelectionModel().getSelections()
       for (const record of selectedRecords) {
-        record.data.accessLevel = menuItem.accessLevel
+        record.data.roleId = menuItem.roleId
       }
       changeSelected(availableGrid, selectedRecords, selectionsGrid)
       fireSelectedChanged()
@@ -372,7 +372,7 @@ SM.User.GrantSelectingPanel = Ext.extend(Ext.Panel, {
       const assignedGrants = apiUser?.collectionGrants?.filter(grant => grant.grantees[0].userId).map(grant => ({
         collectionId: grant.collection.collectionId,
         name: grant.collection.name,
-        accessLevel: grant.accessLevel
+        roleId: grant.roleId
       })) ?? []
       const assignedCollectionIds = assignedGrants.map( g => g.collectionId)
       const availableCollections = apiAvailableCollections.filter(collection => !assignedCollectionIds.includes(collection.collectionId))
@@ -385,7 +385,7 @@ SM.User.GrantSelectingPanel = Ext.extend(Ext.Panel, {
       const records = selectionsGrid.store.snapshot?.items ?? selectionsGrid.store.getRange()
       return records.map(record => ({
         collectionId: record.data.collectionId,
-        accessLevel: record.data.accessLevel
+        roleId: record.data.roleId
       }))
     }
 

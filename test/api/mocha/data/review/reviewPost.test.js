@@ -1005,11 +1005,11 @@ describe('POST - Review', () => {
               grants: [
                 {
                   userId: '1',
-                  accessLevel: 4
+                  roleId: 4
                 },
                 {
                   userId: '85',
-                  accessLevel: 1
+                  roleId: 1
                 }
               ],
               labels: [
@@ -1107,7 +1107,7 @@ describe('POST - Review', () => {
                 }
               })
 
-            if(distinct.accessLevel < 3){
+            if(distinct.roleId < 3){
               expect(res.status).to.eql(403)
               return
             }

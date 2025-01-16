@@ -4,7 +4,7 @@ export const expectations = {
     iteration: "admin",
     acl: [],
     defaultAccess: "rw",
-    accessLevel: 4,
+    roleId: 4,
     userId: "87",
     userGroupIds: [],
     collectionGrants: ["21", "83", "1", "84", "85", "92"],
@@ -34,7 +34,7 @@ export const expectations = {
             },
             grantee: {
               name: "TestGroup",
-              accessLevel: 1,
+              roleId: 1,
               userGroupId: 1,
             },
           },
@@ -58,7 +58,7 @@ export const expectations = {
             },
             grantee: {
               name: "TestGroup",
-              accessLevel: 1,
+              roleId: 1,
               userGroupId: 1,
             },
           },
@@ -83,7 +83,7 @@ export const expectations = {
             },
             grantee: {
               name: "TestGroup",
-              accessLevel: 1,
+              roleId: 1,
               userGroupId: 1,
             },
           },
@@ -108,7 +108,7 @@ export const expectations = {
             },
             grantee: {
               name: "TestGroup",
-              accessLevel: 1,
+              roleId: 1,
               userGroupId: 1,
             },
           },
@@ -117,7 +117,7 @@ export const expectations = {
     ],
     defaultAccess: "none",
     userId: "85",
-    accessLevel: 1,
+    roleId: 1,
     userGroupIds: ["1"],
     collectionGrants: ["21"],
     privileges: {
@@ -131,7 +131,7 @@ export const expectations = {
     userId: "87",
     acl: [],
     defaultAccess: "rw",
-    accessLevel: 2,
+    roleId: 2,
     userGroupIds: [],
     collectionGrants: ["21","1"],
     privileges: {
@@ -145,7 +145,7 @@ export const expectations = {
     acl: [],
     defaultAccess: "rw",
     userId: "87",
-    accessLevel: 3,
+    roleId: 3,
     userGroupIds: [],
     collectionGrants: ["21", "1"],
     privileges: {
@@ -159,7 +159,7 @@ export const expectations = {
     acl: [],
     defaultAccess: "rw",
     userId: "87",
-    accessLevel: 4,
+    roleId: 4,
     userGroupIds: [],
     collectionGrants: ["21", "1", "85"],
     privileges: {

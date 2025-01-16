@@ -9,7 +9,7 @@
 {"table":"collection","columns":"`collectionId`,`created`,`createdUserId`,`description`,`metadata`,`name`,`settings`,`state`,`stateDate`,`stateUserId`","rowCount":2}
 [21,"2024-08-21 17:38:03",null,null,"{\"reqRar\": \"true\", \"pocName\": \"poc2Patched\", \"pocEmail\": \"pocEmail@email.com\", \"pocPhone\": \"12342\"}","Collection X","{\"fields\": {\"detail\": {\"enabled\": \"always\", \"required\": \"always\"}, \"comment\": {\"enabled\": \"always\", \"required\": \"findings\"}}, \"status\": {\"canAccept\": true, \"resetCriteria\": \"result\", \"minAcceptGrant\": 3}, \"history\": {\"maxReviews\": 15}}","enabled",null,null]
 [83,"2024-08-21 17:38:03",null,null,"{\"reqRar\": \"true\", \"pocName\": \"string\", \"pocEmail\": \"string\", \"pocPhone\": \"string\"}","Collection Y","{\"fields\": {\"detail\": {\"enabled\": \"always\", \"required\": \"always\"}, \"comment\": {\"enabled\": \"findings\", \"required\": \"findings\"}}, \"status\": {\"canAccept\": true, \"resetCriteria\": \"result\", \"minAcceptGrant\": 3}, \"history\": {\"maxReviews\": 15}}","enabled",null,null]
-{"table":"collection_grant","columns":"`accessLevel`,`cgId`,`collectionId`,`userId`","rowCount":9}
+{"table":"collection_grant","columns":"`roleId`,`cgId`,`collectionId`,`userId`","rowCount":9}
 [1,23,21,86]
 [1,24,21,85]
 [2,25,21,21]

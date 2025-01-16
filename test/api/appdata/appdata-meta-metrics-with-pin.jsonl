@@ -624,7 +624,7 @@
 {"table":"collection","columns":"`collectionId`,`name`,`description`,`settings`,`metadata`,`created`,`state`,`createdUserId`,`stateDate`,`stateUserId`","rowCount":2}
 [21,"Collection X",null,"{\"fields\": {\"detail\": {\"enabled\": \"always\", \"required\": \"always\"}, \"comment\": {\"enabled\": \"always\", \"required\": \"findings\"}}, \"status\": {\"canAccept\": true, \"resetCriteria\": \"result\", \"minAcceptGrant\": 3}, \"history\": {\"maxReviews\": 15}}","{\"reqRar\": \"true\", \"pocName\": \"poc2Patched\", \"pocEmail\": \"pocEmail@email.com\", \"pocPhone\": \"12342\"}","2024-10-23 10:03:48","enabled",null,null,null]
 [83,"Collection Y",null,"{\"fields\": {\"detail\": {\"enabled\": \"always\", \"required\": \"always\"}, \"comment\": {\"enabled\": \"findings\", \"required\": \"findings\"}}, \"status\": {\"canAccept\": true, \"resetCriteria\": \"result\", \"minAcceptGrant\": 3}, \"history\": {\"maxReviews\": 15}}","{\"reqRar\": \"true\", \"pocName\": \"string\", \"pocEmail\": \"string\", \"pocPhone\": \"string\"}","2024-10-23 10:03:48","enabled",null,null,null]
-{"table":"collection_grant","columns":"`grantId`,`collectionId`,`userId`,`userGroupId`,`accessLevel`","rowCount":9}
+{"table":"collection_grant","columns":"`grantId`,`collectionId`,`userId`,`userGroupId`,`roleId`","rowCount":9}
 [1352,21,86,null,1]
 [1353,21,85,null,1]
 [1354,21,21,null,2]

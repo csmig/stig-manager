@@ -88,7 +88,7 @@ export const expectations = {
         },
         
       },
-      accessLevel:4
+      roleId:4
     },
     lvl1: {
       canPatchReview: false,
@@ -184,7 +184,7 @@ export const expectations = {
         reviewsForRulesAll: 14,
         reviewsDefaultMapped: 0
       },
-      accessLevel:1
+      roleId:1
     },
     lvl2: {
       canPatchReview: true,
@@ -281,7 +281,7 @@ export const expectations = {
         reviewsForRulesAll: 17,
         reviewsDefaultMapped: 0
       },
-      accessLevel:2
+      roleId:2
     },
     lvl3: {
       canPatchReview: true,
@@ -376,7 +376,7 @@ export const expectations = {
           reviewsLength: 2
         },
       },
-      accessLevel:3
+      roleId:3
     },
     lvl4: {
       canPatchReview: true,
@@ -472,6 +472,6 @@ export const expectations = {
           reviewsLength: 2
         },
       },
-      accessLevel:4
+      roleId:4
     }
 }

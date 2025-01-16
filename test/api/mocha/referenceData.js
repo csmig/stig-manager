@@ -53,7 +53,7 @@ const reference = {
       name: "TestGroup",
       description: "TestGroup",
       users: ["lvl1"],
-      accessLevel: 1,
+      roleId: 1,
       testCollectionGrantId: "32",
       defaultAccess: "none",
       acl: [
@@ -154,7 +154,7 @@ const reference = {
           displayName: "bizarroLvl1",
         },
         grantId: "1",
-        accessLevel: 1,
+        roleId: 1,
       },
       {
         user: {
@@ -163,7 +163,7 @@ const reference = {
           displayName: "lvl2",
         },
         grantId: "3",
-        accessLevel: 2,
+        roleId: 2,
       },
       {
         user: {
@@ -172,7 +172,7 @@ const reference = {
           displayName: "lvl3",
         },
         grantId: "4",
-        accessLevel: 3,
+        roleId: 3,
       },
       {
         user: {
@@ -181,7 +181,7 @@ const reference = {
           displayName: "Admin Burke",
         },
         grantId: "5",
-        accessLevel: 4,
+        roleId: 4,
       },
       {
         user: {
@@ -190,7 +190,7 @@ const reference = {
           displayName: "STIGMAN Admin",
         },
         grantId: "6",
-        accessLevel: 4,
+        roleId: 4,
       },
       {
         user: {
@@ -199,7 +199,7 @@ const reference = {
           displayName: "lvl4",
         },
         grantId: "7",
-        accessLevel: 4,
+        roleId: 4,
       },
       {
         userGroup: {
@@ -208,7 +208,7 @@ const reference = {
           userGroupId: "1",
         },
         grantId: "32",
-        accessLevel: 1,
+        roleId: 1,
       },
     ],
     ownersProjected: [
@@ -286,7 +286,7 @@ const reference = {
             username: "bizarroLvl1",
           },
         ],
-        accessLevel: 1,
+        roleId: 1,
       },
       {
         user: {
@@ -300,7 +300,7 @@ const reference = {
             username: "lvl2",
           },
         ],
-        accessLevel: 2,
+        roleId: 2,
       },
       {
         user: {
@@ -314,7 +314,7 @@ const reference = {
             username: "lvl3",
           },
         ],
-        accessLevel: 3,
+        roleId: 3,
       },
       {
         user: {
@@ -328,7 +328,7 @@ const reference = {
             username: "admin",
           },
         ],
-        accessLevel: 4,
+        roleId: 4,
       },
       {
         user: {
@@ -341,7 +341,7 @@ const reference = {
             username: "stigmanadmin",
           },
         ],
-        accessLevel: 4,
+        roleId: 4,
       },
       {
         user: {
@@ -355,7 +355,7 @@ const reference = {
             username: "lvl4",
           },
         ],
-        accessLevel: 4,
+        roleId: 4,
       },
       {
         user: {
@@ -369,7 +369,7 @@ const reference = {
             userGroupId: "1",
           },
         ],
-        accessLevel: 1,
+        roleId: 1,
       },
     ]
   },
@@ -482,7 +482,7 @@ const reference = {
     username: "admin",
     userId: "87",
     testCollectionGrantId: "5",
-    testCollectionAccessLevel: 4,
+    testCollectionrole: 4,
   },
   scrapLvl1User: {
     userId: "86",

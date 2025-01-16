@@ -6,7 +6,7 @@ const escape = require('../utils/escape')
 const AssetService = require(`../service/AssetService`)
 const CollectionService = require(`../service/CollectionService`)
 const Collection = require('./Collection')
-const Security = require('../utils/accessLevels')
+const Security = require('../utils/roles')
 const dbUtils = require(`../service/utils`)
 const {XMLBuilder} = require("fast-xml-parser")
 const SmError = require('../utils/error')
@@ -18,7 +18,7 @@ module.exports.createAsset = async function createAsset (req, res, next) {
     let projections = req.query.projection
     const body = req.body
     const grant = req.userObject.grants[body.collectionId]
-    if (!grant || grant.accessLevel < 3) throw new SmError.PrivilegeError()
+    if (!grant || grant.roleId < 3) throw new SmError.PrivilegeError()
     let assetId
     try {
       assetId = await AssetService.createAsset( {body, svcStatus: res.svcStatus})
@@ -130,7 +130,7 @@ module.exports.getAssets = async function (req, res, next) {
 
 module.exports.getStigsByAsset = async function (req, res, next) {
   try {
-    const {assetId, grant} = await getAssetInfoAndVerifyAccess(req, Security.ACCESS_LEVEL.Restricted)
+    const {assetId, grant} = await getAssetInfoAndVerifyAccess(req, Security.ROLES.Restricted)
     const response = await AssetService.getStigsByAsset({assetId, grant} )
     res.json(response)
   }
@@ -204,7 +204,7 @@ module.exports.getChecklistByAssetStig = async function getChecklistByAssetStig 
 
 module.exports.getChecklistByAsset = async function (req, res, next) {
   try {
-    const {assetId, grant} = await getAssetInfoAndVerifyAccess(req, Security.ACCESS_LEVEL.Restricted)
+    const {assetId, grant} = await getAssetInfoAndVerifyAccess(req, Security.ROLES.Restricted)
 
     const format = req.query.format //default of .ckl provided by EOV
 
@@ -257,7 +257,7 @@ module.exports.getAssetsByStig = async function getAssetsByStig (req, res, next)
     const labelMatch = req.query.labelMatch
     const projections = req.query.projection
 
-    const {collectionId, grant} = Collection.getCollectionInfoAndCheckPermission(req, Security.ACCESS_LEVEL.Restricted)
+    const {collectionId, grant} = Collection.getCollectionInfoAndCheckPermission(req, Security.ROLES.Restricted)
     const response = await AssetService.getAssetsByStig({
       collectionId, 
       benchmarkId, 
@@ -286,7 +286,7 @@ module.exports.replaceAsset = async function replaceAsset (req, res, next) {
     // }
     // // Check if the user has an appropriate grant to the asset's collection
     // const currentCollectionGrant = req.userObject.grants[currentAsset.collection.collectionId]
-    // if ( !currentCollectionGrant || currentCollectionGrant.accessLevel < 3 ) {
+    // if ( !currentCollectionGrant || currentCollectionGrant.roleId < 3 ) {
       
     // }
     // Check if the asset is being transferred
@@ -295,7 +295,7 @@ module.exports.replaceAsset = async function replaceAsset (req, res, next) {
     if (transferring) {
       // If so, Check if the user has an appropriate grant to the asset's updated collection
       const updatedCollectionGrant = req.userObject.grants[body.collectionId]
-      if ( !updatedCollectionGrant || updatedCollectionGrant.accessLevel < 3 ) {
+      if ( !updatedCollectionGrant || updatedCollectionGrant.roleId < 3 ) {
         throw new SmError.PrivilegeError(`insufficient privilege in destination collection to transfer this asset.`)
       }
     }
@@ -319,7 +319,7 @@ module.exports.attachAssetsToStig = async function attachAssetsToStig (req, res,
     let assetIds = req.body
     let projections = req.query.projection
 
-    const { collectionId, grant } = Collection.getCollectionInfoAndCheckPermission(req, Security.ACCESS_LEVEL.Manage)
+    const { collectionId, grant } = Collection.getCollectionInfoAndCheckPermission(req, Security.ROLES.Manage)
     let collection = await CollectionService.getCollection( collectionId, ['assets'], false, req.userObject)
     let collectionAssets = collection.assets.map( a => a.assetId)
     if (assetIds.every( a => collectionAssets.includes(a))) {
@@ -340,7 +340,7 @@ module.exports.attachStigToAsset = async function attachStigToAsset (req, res, n
   try {
 
     let benchmarkId = req.params.benchmarkId
-    const {assetId, grant} = await getAssetInfoAndVerifyAccess(req, Security.ACCESS_LEVEL.Manage)
+    const {assetId, grant} = await getAssetInfoAndVerifyAccess(req, Security.ROLES.Manage)
     await AssetService.attachStigToAsset({
       assetId,
       benchmarkId,
@@ -360,7 +360,7 @@ module.exports.updateAsset = async function updateAsset (req, res, next) {
     const projections = req.query.projection
     const body = req.body
 
-    const {assetId, grant} = await getAssetInfoAndVerifyAccess(req, Security.ACCESS_LEVEL.Manage)
+    const {assetId, grant} = await getAssetInfoAndVerifyAccess(req, Security.ROLES.Manage)
 
     // If this user has no grants permitting access to the asset, the response will be undefined
     const currentAsset = await AssetService.getAsset({assetId, projections, grant} )
@@ -369,7 +369,7 @@ module.exports.updateAsset = async function updateAsset (req, res, next) {
     // }
     // // Check if the user has an appropriate grant to the asset's collection
     // const currentCollectionGrant = req.userObject.grants[currentAsset.collection.collectionId]
-    // if ( !currentCollectionGrant || currentCollectionGrant.accessLevel < 3 ) {
+    // if ( !currentCollectionGrant || currentCollectionGrant.roleId < 3 ) {
     //   throw new SmError.PrivilegeError(`User has insufficient privilege in collectionId ${currentAsset.collection.collectionId} to modify this asset.`)
     // }
     // Check if the asset's collectionId is being changed
@@ -378,7 +378,7 @@ module.exports.updateAsset = async function updateAsset (req, res, next) {
     if (transferring) {
       // If so, Check if the user has an appropriate grant to the asset's updated collection
       const updatedCollectionGrant = req.userObject.grants[body.collectionId]
-      if ( !updatedCollectionGrant || updatedCollectionGrant.accessLevel < 3 ) {
+      if ( !updatedCollectionGrant || updatedCollectionGrant.roleId < 3 ) {
         throw new SmError.PrivilegeError(`User has insufficient privilege in destination collection to transfer this asset.`)
       }
     }
@@ -401,7 +401,7 @@ module.exports.updateAsset = async function updateAsset (req, res, next) {
 
 module.exports.getAssetMetadata = async function (req, res, next) {
   try {
-    let { assetId } = await getAssetInfoAndVerifyAccess(req, Security.ACCESS_LEVEL.Restricted)
+    let { assetId } = await getAssetInfoAndVerifyAccess(req, Security.ROLES.Restricted)
     let result = await AssetService.getAssetMetadata(assetId, req.userObject)
     res.json(result)
   }
@@ -438,7 +438,7 @@ module.exports.putAssetMetadata = async function (req, res, next) {
 
 module.exports.getAssetMetadataKeys = async function (req, res, next) {
   try {
-    let { assetId } = await getAssetInfoAndVerifyAccess(req, Security.ACCESS_LEVEL.Restricted)
+    let { assetId } = await getAssetInfoAndVerifyAccess(req, Security.ROLES.Restricted)
     let result = await AssetService.getAssetMetadataKeys(assetId, req.userObject)
     if (!result) {
       throw new SmError.NotFoundError('metadata keys not found')
@@ -452,7 +452,7 @@ module.exports.getAssetMetadataKeys = async function (req, res, next) {
 
 module.exports.getAssetMetadataValue = async function (req, res, next) {
   try {
-    let { assetId } = await getAssetInfoAndVerifyAccess(req, Security.ACCESS_LEVEL.Restricted)
+    let { assetId } = await getAssetInfoAndVerifyAccess(req, Security.ROLES.Restricted)
     let key = req.params.key
     let result = await AssetService.getAssetMetadataValue(assetId, key, req.userObject)
     if (!result) { 
@@ -496,7 +496,7 @@ module.exports.deleteAssetMetadataKey = async function (req, res, next) {
 module.exports.patchAssets = async function (req, res, next) {
   try {
     // feature supports delete only
-    const collectionId = getCollectionIdAndVerifyAccess(req, Security.ACCESS_LEVEL.Manage)
+    const collectionId = getCollectionIdAndVerifyAccess(req, Security.ROLES.Manage)
     const patchRequest = req.body
 
     // optimization: replace below with targeted sql query, select from asset where assetId in ? and collectionId != ?
@@ -516,10 +516,10 @@ module.exports.patchAssets = async function (req, res, next) {
   }
 }
 
-function getCollectionIdAndVerifyAccess(request, minimumAccessLevel = Security.ACCESS_LEVEL.Manage) {
+function getCollectionIdAndVerifyAccess(request, minimumRole = Security.ROLES.Manage) {
   let collectionId = request.query.collectionId
   const grant = request.userObject.grants[collectionId]
-  if (grant?.accessLevel < minimumAccessLevel || !grant) {
+  if (grant?.roleId < minimumRole || !grant) {
     throw new SmError.PrivilegeError()
   }
   return collectionId
@@ -532,12 +532,12 @@ function getCollectionIdAndVerifyAccess(request, minimumAccessLevel = Security.A
  * @returns {Promise<Object>} - A promise that resolves to an object containing the assetId and a grant.
  * @throws {SmError.PrivilegeError} - user does not have sufficient access level or the asset does not exist.
  */
-async function getAssetInfoAndVerifyAccess(request, accessLevel = Security.ACCESS_LEVEL.Manage) {
+async function getAssetInfoAndVerifyAccess(request, roleId = Security.ROLES.Manage) {
   const assetId = request.params.assetId
   const [rows] = await dbUtils.selectCollectionByAssetId(assetId)
   const grant = request.userObject.grants[rows[0]?.collectionId]
   // check if user has sufficient access level
-  if (!grant || grant.accessLevel < accessLevel) {
+  if (!grant || grant.roleId < roleId) {
     throw new SmError.PrivilegeError("Insufficient access to this asset's collection.")
   }
   return {assetId, grant}

@@ -79,7 +79,7 @@ const lvl1TestAcl = {
           grantee: {
             userId: "85",
             username: 'lvl1',
-            accessLevel: 1
+            roleId: 1
           }
         }
       ]
@@ -104,7 +104,7 @@ const lvl1TestAcl = {
           grantee: {
             userId: "85",
             username: 'lvl1',
-            accessLevel: 1
+            roleId: 1
           }
         }
       ]
@@ -128,7 +128,7 @@ const lvl1TestAcl = {
           grantee: {
             userId: "85",
             username: 'lvl1',
-            accessLevel: 1
+            roleId: 1
           }
         }
       ]
@@ -152,7 +152,7 @@ const lvl1TestAcl = {
           grantee: {
             userId: "85",
             username: 'lvl1',
-            accessLevel: 1
+            roleId: 1
           }
         }
       ]
@@ -189,7 +189,7 @@ const lvl3TestAcl = {
           grantee: {
             userId: "44",
             username: 'lvl3',
-            accessLevel: 3
+            roleId: 3
           }
         }
       ]
@@ -214,7 +214,7 @@ const lvl3TestAcl = {
           grantee: {
             userId: "44",
             username: 'lvl3',
-            accessLevel: 3
+            roleId: 3
           }
         }
       ]
@@ -232,7 +232,7 @@ describe(`Test Restricted user access controls`, () => {
     const res = await utils.executeRequest(`${config.baseUrl}/collections/${reference.testCollection.collectionId}/grants`, 'POST', admin.token, [
       {
         userId: lvl1.userId,
-        accessLevel: 1
+        roleId: 1
       }
     ])
     expect(res.status).to.eql(201)
@@ -440,11 +440,11 @@ describe('Test restricted user group access controls', () => {
     const res = await utils.executeRequest(`${config.baseUrl}/collections/${reference.testCollection.collectionId}/grants`, 'POST', admin.token, [
       {
         userGroupId: userGroup.userGroupId,
-        accessLevel: 1
+        roleId: 1
       }
     ])
     expect(res.status).to.eql(201)
-    expect(res.body[0].accessLevel).to.equal(1)
+    expect(res.body[0].roleId).to.equal(1)
     userGroup.grantId = res.body[0].grantId
   })
   // give it read only to something use lvl1TEstAcl object
@@ -562,11 +562,11 @@ describe('Test manage user group access control', () => {
     const res = await utils.executeRequest(`${config.baseUrl}/collections/${reference.testCollection.collectionId}/grants`, 'POST', admin.token, [
       {
         userGroupId: userGroup.userGroupId,
-        accessLevel: 3
+        roleId: 3
       }
     ])
     expect(res.status).to.eql(201)
-    expect(res.body[0].accessLevel).to.equal(3)
+    expect(res.body[0].roleId).to.equal(3)
     userGroup.grantId = res.body[0].grantId
   })
   // give it read only to something use lvl1TEstAcl object

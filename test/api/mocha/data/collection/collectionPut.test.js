@@ -124,23 +124,23 @@ describe('PUT - Collection', function () {
                 grants: [
                 {
                     userId: "1",
-                    accessLevel: 4,
+                    roleId: 4,
                 },
                 {
                     userId: "21",
-                    accessLevel: 2,
+                    roleId: 2,
                 },
                 {
                     userId: "44",
-                    accessLevel: 3,
+                    roleId: 3,
                 },
                 {
                     userId: "45",
-                    accessLevel: 4,
+                    roleId: 4,
                 },
                 {
                     userId: "87",
-                    accessLevel: 4,
+                    roleId: 4,
                 },
                 ],
             }
@@ -227,7 +227,7 @@ describe('PUT - Collection', function () {
           
           const res = await utils.executeRequest(`${config.baseUrl}/collections/${reference.testCollection.collectionId}/grants/${reference.testCollection.testGroup.testCollectionGrantId}`, 'PUT', iteration.token, {
             "userGroupId": reference.testCollection.testGroup.userGroupId,
-            "accessLevel": 2
+            "roleId": 2
           })
           if(distinct.canModifyCollection === false){
             expect(res.status).to.eql(403)
@@ -235,7 +235,7 @@ describe('PUT - Collection', function () {
           }
           expect(res.status).to.eql(200)
           expect(res.body.userGroup.userGroupId).to.equal(reference.testCollection.testGroup.userGroupId)
-          expect(res.body.accessLevel).to.equal(2)
+          expect(res.body.roleId).to.equal(2)
           expect(res.body.grantId).to.equal(reference.testCollection.testGroup.testCollectionGrantId)
         })
 
@@ -243,7 +243,7 @@ describe('PUT - Collection', function () {
 
           const res = await utils.executeRequest(`${config.baseUrl}/collections/${reference.testCollection.collectionId}/grants/${reference.testCollection.testGroup.testCollectionGrantId}?elevate=true`, 'PUT', iteration.token, {
             "userId": reference.wfTest.userId,
-            "accessLevel": 1
+            "roleId": 1
           })
           if(iteration.name !== "stigmanadmin"){
             expect(res.status).to.eql(403)
@@ -258,7 +258,7 @@ describe('PUT - Collection', function () {
 
           const res = await utils.executeRequest(`${config.baseUrl}/collections/${reference.scrapCollection.collectionId}/grants/${reference.testCollection.testGroup.testCollectionGrantId}`, 'PUT', iteration.token, {
             "userId": reference.lvl1User.userId,
-            "accessLevel": 1
+            "roleId": 1
           })
           if(distinct.canModifyCollection === false){
             expect(res.status).to.eql(403)
@@ -272,9 +272,9 @@ describe('PUT - Collection', function () {
 
         const res = await utils.executeRequest(`${config.baseUrl}/collections/${reference.testCollection.collectionId}/grants/${reference.adminBurke.testCollectionGrantId}`, 'PUT', iterations[1].token, {
           "userId": reference.adminBurke.userId,
-          "accessLevel": 2
+          "roleId": 2
         })
-        if(distinct.accessLevel !== 4){
+        if(distinct.roleId !== 4){
           expect(res.status).to.eql(403)
           return
         }

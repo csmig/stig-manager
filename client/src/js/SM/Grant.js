@@ -283,7 +283,7 @@ SM.Grant.GrantGrid = Ext.extend(Ext.grid.EditorGridPanel, {
       'grantTargetId',
       'title',
       'subtitle',
-      'accessLevel',
+      'roleId',
       'recordId',
       'grantee'
     ]
@@ -303,7 +303,7 @@ SM.Grant.GrantGrid = Ext.extend(Ext.grid.EditorGridPanel, {
       noun: 'grant',
       iconCls: 'sm-lock-icon'
     })
-    const accessLevelField = new SM.RoleComboBox({
+    const roleField = new SM.RoleComboBox({
       submitValue: false,
       grid: this,
       includeOwnerRole: this.canModifyOwners,
@@ -330,10 +330,10 @@ SM.Grant.GrantGrid = Ext.extend(Ext.grid.EditorGridPanel, {
         {
           header: '<span exportvalue="Role">Role<i class= "fa fa-question-circle sm-question-circle"></i></span>',
           width: 70,
-          dataIndex: 'accessLevel',
+          dataIndex: 'roleId',
           sortable: true,
           renderer: (v) => SM.RoleStrings[v],
-          editor: accessLevelField
+          editor: roleField
         }
       ]
     })
@@ -347,8 +347,8 @@ SM.Grant.GrantGrid = Ext.extend(Ext.grid.EditorGridPanel, {
       markDirty: false,
       listeners: {
         refresh: function (view) {
-          // Setup the tooltip for column 'accessLevel'
-          const index = view.grid.getColumnModel().findColumnIndex('accessLevel')
+          // Setup the tooltip for column 'role'
+          const index = view.grid.getColumnModel().findColumnIndex('roleId')
           const tipEl = view.getHeaderCell(index).getElementsByClassName('fa')[0]
           if (tipEl) {
             new Ext.ToolTip({
@@ -356,7 +356,7 @@ SM.Grant.GrantGrid = Ext.extend(Ext.grid.EditorGridPanel, {
               showDelay: 0,
               dismissDelay: 0,
               maxWidth: 600,
-              html: SM.TipContent.AccessLevels
+              html: SM.TipContent.Roles
             })
           }
         },
@@ -380,8 +380,8 @@ SM.Grant.GrantGrid = Ext.extend(Ext.grid.EditorGridPanel, {
       ]
     })
     function viewready (grid) {
-      // Setup the tooltip for column 'accessLevel'
-      const index = grid.getColumnModel().findColumnIndex('accessLevel')
+      // Setup the tooltip for column 'role'
+      const index = grid.getColumnModel().findColumnIndex('roleId')
       const tipEl = grid.view.getHeaderCell(index).getElementsByClassName('fa')[0]
       if (tipEl) {
         new Ext.ToolTip({
@@ -389,7 +389,7 @@ SM.Grant.GrantGrid = Ext.extend(Ext.grid.EditorGridPanel, {
           showDelay: 0,
           dismissDelay: 0,
           maxWidth: 600,
-          html: SM.TipContent.AccessLevels
+          html: SM.TipContent.Roles
         })
       }
     }
@@ -399,12 +399,12 @@ SM.Grant.GrantGrid = Ext.extend(Ext.grid.EditorGridPanel, {
         if (i.data.grantTarget === 'user')
           grants.push({
             userId: i.data.grantTargetId,
-            accessLevel: i.data.accessLevel
+            roleId: i.data.roleId
           })
         else
           grants.push({
             userGroupId: i.data.grantTargetId,
-            accessLevel: i.data.accessLevel
+            roleId: i.data.roleId
           })
       })
       return grants
@@ -416,7 +416,7 @@ SM.Grant.GrantGrid = Ext.extend(Ext.grid.EditorGridPanel, {
           grantTargetId: g.user.userId,
           subtitle: g.user.username,
           title: g.user.displayName,
-          accessLevel: g.accessLevel,
+          roleId: g.roleId,
           recordId: `U${g.user.userId}`
 
         }
@@ -425,7 +425,7 @@ SM.Grant.GrantGrid = Ext.extend(Ext.grid.EditorGridPanel, {
           grantTargetId: g.userGroup.userGroupId,
           title: g.userGroup.name,
           subtitle: g.userGroup.description,
-          accessLevel: g.accessLevel,
+          roleId: g.roleId,
           recordId: `UG${g.userGroup.userGroupId}`
         }
       })
@@ -510,7 +510,7 @@ SM.Grant.NewGrantPanel = Ext.extend(Ext.Panel, {
             grantTargetId: node.attributes.user.userId,
             subtitle: node.attributes.user.username,
             title: node.attributes.user.displayName,
-            accessLevel: menuItem.accessLevel,
+            roleId: menuItem.roleId,
             recordId: `U${node.attributes.user.userId}`,
             grantee: node.attributes.user
           } 
@@ -521,7 +521,7 @@ SM.Grant.NewGrantPanel = Ext.extend(Ext.Panel, {
             grantTargetId: node.attributes.userGroup.userGroupId,
             title: node.attributes.userGroup.name,
             subtitle: node.attributes.userGroup.description,
-            accessLevel: menuItem.accessLevel,
+            roleId: menuItem.roleId,
             recordId: `UG${node.attributes.userGroup.userGroupId}`,
             grantee: node.attributes.userGroup
           }
@@ -535,10 +535,10 @@ SM.Grant.NewGrantPanel = Ext.extend(Ext.Panel, {
     }
 
     const addBtnMenuItems = [
-      {text: 'Role: Restricted', iconCls: 'sm-add-assignment-icon', accessLevel: 1, handler: handleAddBtnItem},
-      {text: 'Role: Full', iconCls: 'sm-add-assignment-icon', accessLevel: 2, handler: handleAddBtnItem},
-      {text: 'Role: Manage', iconCls: 'sm-add-assignment-icon', accessLevel: 3, handler: handleAddBtnItem},
-      {text: 'Role: Owner', iconCls: 'sm-add-assignment-icon', accessLevel: 4, handler: handleAddBtnItem},
+      {text: 'Role: Restricted', iconCls: 'sm-add-assignment-icon', roleId: 1, handler: handleAddBtnItem},
+      {text: 'Role: Full', iconCls: 'sm-add-assignment-icon', roleId: 2, handler: handleAddBtnItem},
+      {text: 'Role: Manage', iconCls: 'sm-add-assignment-icon', roleId: 3, handler: handleAddBtnItem},
+      {text: 'Role: Owner', iconCls: 'sm-add-assignment-icon', roleId: 4, handler: handleAddBtnItem},
     ]
 
     const addBtn = new Ext.Button({
@@ -707,7 +707,7 @@ SM.Grant.showEditGrantWindow = function ({existingGrants, selectedGrant, include
     fieldLabel: 'Role',
     width: 80,
     padding: '5 0 0 0',
-    value: selectedGrant.accessLevel, 
+    value: selectedGrant.roleId, 
     includeOwnerRole
   })
 
@@ -751,7 +751,7 @@ SM.Grant.showEditGrantWindow = function ({existingGrants, selectedGrant, include
     const checkedAttributes = selectedNode.attributes
     const role = roleComboBox.getValue()
     const modifiedGrant = {
-      accessLevel: role
+      roleId: role
     }
     modifiedGrant[checkedAttributes.user ? 'userId' : 'userGroupId'] = checkedAttributes.user?.userId|| checkedAttributes.userGroup?.userGroupId
     cb(modifiedGrant)

@@ -24,7 +24,7 @@ describe(`putGrantByCollectionGrant - /collections/{collectionId}/grants/{grantI
         it("should verify the test groups grant info", async () => {
             const res = await utils.executeRequest(`${config.baseUrl}/collections/${reference.testCollection.collectionId}/grants/${reference.testCollection.testGroup.testCollectionGrantId}`, 'GET', admin.token)
             expect(res.status).to.equal(200)
-            expect(res.body.accessLevel).to.equal(1)
+            expect(res.body.roleId).to.equal(1)
             expect(res.body.userGroup.name).to.equal(reference.testCollection.testGroup.name)
         })
 
@@ -37,7 +37,7 @@ describe(`putGrantByCollectionGrant - /collections/{collectionId}/grants/{grantI
         it("should alter the grantId associated with the test group and put it directly to the lvl1 user", async () => {
             const res = await utils.executeRequest(`${config.baseUrl}/collections/${reference.testCollection.collectionId}/grants/${reference.testCollection.testGroup.testCollectionGrantId}`, 'PUT', admin.token, {
                 userId: reference.lvl1User.userId,
-                accessLevel: 1
+                roleId: 1
             })
             expect(res.status).to.equal(200)
             expect(res.body.user.userId).to.equal(reference.lvl1User.userId)

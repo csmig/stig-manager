@@ -61,18 +61,18 @@ describe("Multiple Group ACL Collisions", () => {
   it("should assign both groups created to the test collection with restricted grant", async function () {
     const res = await utils.executeRequest(`${config.baseUrl}/collections/${reference.testCollection.collectionId}/grants`, 'POST', config.adminToken, [{
         userGroupId: userGroup1.userGroupId,
-        accessLevel: 1
+        roleId: 1
     }])
     expect(res.status).to.eql(201)
-    expect(res.body[0].accessLevel).to.equal(1)
+    expect(res.body[0].roleId).to.equal(1)
     userGroup1.grantId = res.body[0].grantId
 
     const res2 = await utils.executeRequest(`${config.baseUrl}/collections/${reference.testCollection.collectionId}/grants`, 'POST', config.adminToken, [{
         userGroupId: userGroup2.userGroupId,
-        accessLevel: 1
+        roleId: 1
     }])
     expect(res2.status).to.eql(201)
-    expect(res2.body[0].accessLevel).to.equal(1)
+    expect(res2.body[0].roleId).to.equal(1)
     userGroup2.grantId = res2.body[0].grantId
   })
 
@@ -125,7 +125,7 @@ describe("Multiple Group ACL Collisions", () => {
               expect(acl.aclSources.length).to.be.equal(1)
               expect(acl.aclSources[0].aclRule.access).to.be.equal("r")
               expect(acl.aclSources[0].grantee.name).to.be.equal("ACLCollisionGroup1")
-              expect(acl.aclSources[0].grantee.accessLevel).to.be.equal(1)
+              expect(acl.aclSources[0].grantee.roleId).to.be.equal(1)
           }
       })
   })
@@ -218,7 +218,7 @@ describe("Multiple Group ACL Collisions", () => {
               expect(acl.aclSources.length).to.be.equal(1)
               expect(acl.aclSources[0].aclRule.access).to.be.equal("r")
               expect(acl.aclSources[0].grantee.name).to.be.equal("ACLCollisionGroup2")
-              expect(acl.aclSources[0].grantee.accessLevel).to.be.equal(1)
+              expect(acl.aclSources[0].grantee.roleId).to.be.equal(1)
           }
       })
   })
@@ -301,13 +301,13 @@ describe("Test sending acl for rw access to entire collection", () => {
         await utils.loadAppData()
     })
 
-    it("change test group to role 2 (full)", async () => {
+    it("change test group to roleId 2 (full)", async () => {
         const res = await utils.executeRequest(`${config.baseUrl}/collections/${reference.testCollection.collectionId}/grants/${reference.testCollection.testGroup.testCollectionGrantId}`, 'PUT', admin.token, {
             "userGroupId": reference.testCollection.testGroup.userGroupId,
-            "accessLevel":2
+            "roleId":2
         })
         expect(res.status).to.eql(200)
-        expect(res.body.accessLevel).to.equal(2)
+        expect(res.body.roleId).to.equal(2)
         expect(res.body.userGroup.userGroupId).to.equal(reference.testCollection.testGroup.userGroupId)
     })
 
