@@ -405,7 +405,7 @@ CREATE TABLE `review` (
 
 DROP TABLE IF EXISTS `review_history`;
 CREATE TABLE `review_history` (
-  `historyId` int NOT NULL AUTO_INCREMENT,
+  `historyId` bigint unsigned NOT NULL AUTO_INCREMENT,
   `reviewId` int NOT NULL,
   `resultId` int NOT NULL,
   `detail` mediumtext,
@@ -702,4 +702,4 @@ DROP TABLE IF EXISTS `v_latest_rev`;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2025-01-17  4:33:26
+-- Dump completed on 2025-01-17  7:10:02
