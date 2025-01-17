@@ -556,17 +556,17 @@ exports.getAppInfo = async function() {
     with ctePerUser as (select
       a.collectionId, 
       json_object(
-      'userId', usam.userId, 
+      'userId', cg.userId, 
       'ruleCounts', json_object(
-        'rw', count(usam.saId),
-        'r', 0,
-        'none', 0
+        'rw', count(cga.access = 'rw'),
+        'r', count(cga.access = 'r'),
+        'none', count(cga.access = 'none')
       ), 
       'uniqueAssets', count(distinct if(a.state = 'enabled', sam.assetId, null)),
       'uniqueAssetsDisabled', count(distinct if(a.state = 'disabled', sam.assetId, null)),
       'uniqueStigs', count(distinct if(a.state = 'enabled', sam.benchmarkId, null)),
       'uniqueStigsDisabled', count(distinct if(a.state = 'disabled', sam.benchmarkId, null)),
-      'roleId', 
+      'role', 
         case when cg.roleId = 1 then 'restricted' else 
           case when cg.roleId = 2 then 'full' else
             case when cg.roleId = 3 then 'manage' else
@@ -577,12 +577,12 @@ exports.getAppInfo = async function() {
         end
       ) as perUser
     from 
-      user_stig_asset_map usam
-      left join stig_asset_map sam on sam.saId=usam.saId
+      collection_grant_acl cga -- THIS NEEDS TO BE THE EFFECTIVE ACL INSTEAD
+      inner join stig_asset_map sam on sam.assetId=cga.assetId and sam.benchmarkId=cga.benchmarkId
       left join asset a on a.assetId = sam.assetId
-      left join collection_grant cg on usam.userId = cg.userId and a.collectionId = cg.collectionId
+      inner join collection_grant cg on cg.userId = cg.userId and a.collectionId = cg.collectionId
     group by
-      usam.userId, a.collectionId)
+      cg.userId, a.collectionId)
     select 
       collectionId, 
       json_arrayagg(perUser) as aclCounts

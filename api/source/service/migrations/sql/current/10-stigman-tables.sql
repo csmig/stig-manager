@@ -136,11 +136,11 @@ CREATE TABLE `collection_grant` (
   `collectionId` int NOT NULL,
   `userId` int DEFAULT NULL,
   `userGroupId` int DEFAULT NULL,
-  `accessLevel` int NOT NULL,
+  `roleId` int NOT NULL,
   PRIMARY KEY (`grantId`),
   UNIQUE KEY `INDEX_USER` (`userId`,`collectionId`),
   UNIQUE KEY `INDEX_USER_GROUP` (`userGroupId`,`collectionId`),
-  KEY `INDEX_COLLECTION` (`collectionId`,`accessLevel`),
+  KEY `INDEX_COLLECTION` (`collectionId`,`roleId`),
   CONSTRAINT `fk_collection_grant_1` FOREIGN KEY (`userId`) REFERENCES `user_data` (`userId`) ON DELETE CASCADE ON UPDATE CASCADE,
   CONSTRAINT `fk_collection_grant_2` FOREIGN KEY (`collectionId`) REFERENCES `collection` (`collectionId`) ON DELETE CASCADE ON UPDATE CASCADE,
   CONSTRAINT `fk_collection_grant_3` FOREIGN KEY (`userGroupId`) REFERENCES `user_group` (`userGroupId`) ON DELETE CASCADE ON UPDATE CASCADE
@@ -615,22 +615,6 @@ CREATE TABLE `user_group_user_map` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 --
--- Table structure for table `user_stig_asset_map`
---
-
-DROP TABLE IF EXISTS `user_stig_asset_map`;
-CREATE TABLE `user_stig_asset_map` (
-  `id` int NOT NULL AUTO_INCREMENT,
-  `userId` int NOT NULL,
-  `saId` int NOT NULL,
-  PRIMARY KEY (`id`),
-  KEY `fk_user_stig_asset_map_2` (`userId`),
-  KEY `fk_user_stig_asset_map_1` (`saId`),
-  CONSTRAINT `fk_user_stig_asset_map_1` FOREIGN KEY (`saId`) REFERENCES `stig_asset_map` (`saId`) ON DELETE CASCADE ON UPDATE CASCADE,
-  CONSTRAINT `fk_user_stig_asset_map_2` FOREIGN KEY (`userId`) REFERENCES `user_data` (`userId`) ON DELETE CASCADE ON UPDATE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
-
---
 -- Temporary view structure for view `v_current_rev`
 --
 
@@ -718,4 +702,4 @@ DROP TABLE IF EXISTS `v_latest_rev`;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2024-11-15  6:13:02
+-- Dump completed on 2025-01-17  4:33:26

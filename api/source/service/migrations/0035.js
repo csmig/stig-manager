@@ -57,7 +57,7 @@ const upMigration = [
   `ALTER TABLE collection_grant RENAME COLUMN cgId TO grantId`,
   `ALTER TABLE collection_grant ADD COLUMN userGroupId INT NULL AFTER userId, CHANGE COLUMN userId userId INT NULL`,
   `ALTER TABLE collection_grant ADD UNIQUE INDEX INDEX_USER_GROUP (userGroupId ASC, collectionId ASC) VISIBLE`,
-  `ALTER TABLE collection_grant CHANGE COLUMN accessLevel roleId INT`
+  `ALTER TABLE collection_grant CHANGE COLUMN accessLevel roleId INT NOT NULL`,
   `ALTER TABLE collection_grant ADD CONSTRAINT fk_collection_grant_1 FOREIGN KEY (userId) REFERENCES user_data (userId) ON DELETE CASCADE ON UPDATE CASCADE`,
   `ALTER TABLE collection_grant ADD CONSTRAINT fk_collection_grant_3 FOREIGN KEY (userGroupId) REFERENCES user_group (userGroupId) ON DELETE CASCADE ON UPDATE CASCADE`,
 
