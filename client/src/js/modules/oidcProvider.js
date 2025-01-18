@@ -20,11 +20,28 @@ async function authorize({clientId, oidcProvider, scope, autoRefresh}) {
   }
   else {
     // exchange authorization_code for token
+    const lastOidc = JSON.parse(localStorage.getItem('last-oidc') ?? '{}')
+    lastOidc.redirectHref = window.location.href
     const [redirectUrl, paramStr] = window.location.href.split('#')
     const params = processRedirectParams(paramStr)
-    let beforeTime = new Date().getTime()
-    const tokens = await requestToken(getTokenRequestBody(params.code, redirectUrl))
-    let clientTime = (beforeTime + new Date().getTime()) / 2
+
+    if (lastOidc.state !== params.state) {
+      throw new Error(`ERROR: OIDC redirection from unknown state.<br>Expected: ${lastOidc.state}<br>Actual: ${params.state}<br><br><a href="${redirectUrl}">Retry authorization.</a>`)
+    }
+
+    const beforeTime = new Date().getTime()
+    const tokenRequestBody = getTokenRequestBody(params.code, lastOidc.pkce.codeVerifier, redirectUrl)
+    let tokens
+    try {
+      lastOidc.tokenEndpoint = state.oidcConfiguration.token_endpoint
+      lastOidc.tokenRequestBody = tokenRequestBody.toString()
+      tokens = await requestToken(tokenRequestBody)
+    }
+    catch (e) {
+      e.message = `<textarea readonly wrap="off" rows="18" cols="80" style="font-size: 8px;">Error:\n${e.message}\n\nContext:\n${JSON.stringify(lastOidc, null, 2)}</textarea><br><br><a href="${redirectUrl}">Retry authorization.</a>`
+      throw e
+    }
+    const clientTime = (beforeTime + new Date().getTime()) / 2
     setTokens(tokens, clientTime)
     window.history.replaceState(window.history.state, '', redirectUrl)
     return tokens
@@ -52,11 +69,14 @@ function setTokens(tokens, clientTime) {
   state.tokens = tokens
   token = state.tokens.access_token
   refreshToken = state.tokens.refresh_token
+
   tokenParsed = decodeToken(token)
   refreshTokenParsed = decodeToken(refreshToken)
+  
   state.timeSkew = clientTime ? Math.floor(clientTime / 1000) - tokenParsed.iat : 0
   console.log('[OIDCPROVIDER] Estimated time difference between browser and server is ' + state.timeSkew + ' seconds')
   console.log('[OIDCPROVIDER] Token expires ' + new Date(tokenParsed.exp * 1000))
+  
   const tokenExpiresIn = (tokenParsed.exp - (new Date().getTime() / 1000) + state.timeSkew) * 1000
   if (tokenExpiresIn <= 0) {
     expiredCallback()
@@ -67,6 +87,7 @@ function setTokens(tokens, clientTime) {
     }
     state.tokenTimeoutHandle = setTimeout(expiredCallback, tokenExpiresIn)
   }
+
   if (state.autoRefresh && refreshToken) {
     const now = new Date().getTime()
     const expiration = refreshTokenParsed ? refreshTokenParsed.exp : tokenParsed.exp
@@ -158,6 +179,10 @@ async function requestToken(body) {
     method: 'post',
     body
   })
+  if (!response.ok) {
+    const text = await response.text()
+    throw new Error(text)
+  }
   return response.json()
 }
 
@@ -168,18 +193,20 @@ async function requestRefresh() {
     body
   })
   if (!response.ok) {
-    throw new Error()
+    const text = await response.text()
+    throw new Error(text)
   }
   return response.json()
 }
 
-function getTokenRequestBody(code, redirectUri) {
+function getTokenRequestBody(code, codeVerifier, redirectUri) {
   const params = new URLSearchParams()
   params.append('code', code)
   params.append('grant_type', 'authorization_code')
   params.append('client_id', state.clientId)
   params.append('redirect_uri', redirectUri)
-  params.append('code_verifier', localStorage.getItem('oidc-code-verifier'))
+  params.append('code_verifier', codeVerifier)
+    
   return params
 }
 
@@ -202,11 +229,11 @@ function processRedirectParams(paramStr) {
 
 async function getAuthorizationUrl() {
   const pkce = await getPkce()
-
+  const oidcState = crypto.randomUUID()
   const params = new URLSearchParams()
   params.append('client_id', state.clientId)
   params.append('redirect_uri', window.location.href)
-  params.append('state', crypto.randomUUID())
+  params.append('state', oidcState)
   params.append('response_mode', 'fragment')
   params.append('response_type', 'code')
   params.append('scope', state.scope)
@@ -215,9 +242,15 @@ async function getAuthorizationUrl() {
   params.append('code_challenge_method', 'S256')
 
   const authEndpoint = state.oidcConfiguration.authorization_endpoint
-  localStorage.setItem('oidc-code-verifier', pkce.codeVerifier)
+  const authRequest = `${authEndpoint}?${params.toString()}`
 
-  return `${authEndpoint}?${params.toString()}`
+  localStorage.setItem('last-oidc', JSON.stringify({
+    state: oidcState,
+    pkce,
+    authRequest
+  }))
+
+  return authRequest
 }
 
 async function getPkce() {  

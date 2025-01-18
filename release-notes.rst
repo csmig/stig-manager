@@ -1,3 +1,45 @@
+1.5.2
+-----
+
+Changes:
+
+  - (UI) fix: Meta-Collection Dashboard Asset labels now display properly.
+  - (UI) fix: Meta-Collection Dashboard correctly handles double-click action on Collections rows.
+  - (API/DB) fix: Change review_history.historyId to a bigint to support deployments that have created large numbers of history records. 
+  - (Workflows) Publish containers to Docker Hub for both AMD64 and ARM64 platforms. 
+
+  - **NOTE:** This release includes a database migration that changes the data type of the review_history.historyId column to a bigint. This migration may take quite some time to complete on deployments maintaining large numbers of Review History records.  
+
+
+1.5.1
+-----
+
+Changes:
+
+  - (UI) fix: Handle STIG Ids with spaces 
+
+
+1.5.0
+-----
+
+Changes:
+
+  - (API) chore: Update dependencies
+  - (UI) Update stigman-client-modules to 1.5.0
+  - (UI) provide detailed status during web app bootstrap; handle token errors; test oidc state before token request
+  - (Docs) Update license/contributors for 2025
+  - (Docs) Update build dependency
+  
+  
+ 1.4.19
+-----
+
+Changes:
+
+  - (API) chore: Update dependency Cross-Spawn 
+  - (API) fix: Allow for use and proper handling of backslashes in metadata values
+ 
+
 1.4.18
 -----
 
