@@ -362,10 +362,10 @@ describe('GET - Collection', function () {
         })
       })
 
-      describe('getEffectiveAclByCollectionUser - /collections/{collectionId}/grants/user/{userId}/access/effective', function () {
+      describe('getEffectiveAclByCollectionUser - /collections/{collectionId}/users/{userId}/effective-acl', function () {
 
         it("should return the effective ACL for the user in the collection users < manage will get rejected",async function () {
-          const res = await utils.executeRequest(`${config.baseUrl}/collections/${reference.testCollection.collectionId}/grants/user/${iteration.userId}/access/effective`, 'GET', iteration.token)
+          const res = await utils.executeRequest(`${config.baseUrl}/collections/${reference.testCollection.collectionId}/users/${iteration.userId}/effective-acl`, 'GET', iteration.token)
             if (distinct.grant === "none" || distinct.canModifyCollection === false){
               expect(res.status).to.eql(403)
               return
@@ -375,7 +375,7 @@ describe('GET - Collection', function () {
         })
 
         it("should return the effective ACL for the user in the collection users uses only admin token",async function () {
-          const res = await utils.executeRequest(`${config.baseUrl}/collections/${reference.testCollection.collectionId}/grants/user/${iteration.userId}/access/effective`, 'GET', iterations[0].token)
+          const res = await utils.executeRequest(`${config.baseUrl}/collections/${reference.testCollection.collectionId}/users/${iteration.userId}/effective-acl`, 'GET', iterations[0].token)
             
             if(iteration.name === 'collectioncreator'){
               expect(res.status).to.eql(422)
@@ -386,7 +386,7 @@ describe('GET - Collection', function () {
         })
         it("should return SmError.UnprocessableError because the user has no direct grant in the collection",async function () {
 
-          const res = await utils.executeRequest(`${config.baseUrl}/collections/${reference.testCollection.collectionId}/grants/user/${"1234321"}/access/effective`, 'GET', iteration.token)
+          const res = await utils.executeRequest(`${config.baseUrl}/collections/${reference.testCollection.collectionId}/users/${"1234321"}/effective-acl`, 'GET', iteration.token)
             if (distinct.grant === "none" || distinct.canModifyCollection === false){
               expect(res.status).to.eql(403)
               return

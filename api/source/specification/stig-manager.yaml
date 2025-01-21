@@ -1246,37 +1246,6 @@ paths:
       security:
         - oauth:
             - 'stig-manager:collection'      
-
-
-  '/collections/{collectionId}/grants/user/{userId}/access/effective':
-    parameters:
-      - $ref: '#/components/parameters/CollectionIdPath'
-      - $ref: '#/components/parameters/UserIdPath'
-    get:
-      tags:
-        - Collection
-      summary: Return a User's effective access rules for the specified Collection.
-      operationId: getEffectiveAclByCollectionUser
-      responses:
-        '200':
-          description: EffectiveAclContextCollectionUser array response
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/EffectiveAclContextCollectionUser'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        default:
-          description: unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-      security:
-        - oauth:
-            - 'stig-manager:collection:read'
   '/collections/{collectionId}/reviews':
     get:
       tags:
@@ -2952,7 +2921,35 @@ paths:
       security:
         - oauth:
             - 'stig-manager:collection:read'
-
+  '/collections/{collectionId}/users/{userId}/effective-acl':
+    parameters:
+      - $ref: '#/components/parameters/CollectionIdPath'
+      - $ref: '#/components/parameters/UserIdPath'
+    get:
+      tags:
+        - Collection
+      summary: Return a User's effective access rules for the specified Collection.
+      operationId: getEffectiveAclByCollectionUser
+      responses:
+        '200':
+          description: EffectiveAclContextCollectionUser array response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/EffectiveAclContextCollectionUser'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      security:
+        - oauth:
+            - 'stig-manager:collection:read'
   '/collections/meta/metrics/detail':
     parameters:
       - $ref: '#/components/parameters/CollectionIdArrayQuery'

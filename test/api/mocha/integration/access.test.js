@@ -248,7 +248,7 @@ describe(`Test Restricted user access controls`, () => {
     expect(res.body.acl).to.deep.equalInAnyOrder(lvl1TestAcl.putResponse.acl)
   })
   it('should confirm users effective acl was set ', async () => {
-    const res = await utils.executeRequest(`${config.baseUrl}/collections/${reference.testCollection.collectionId}/grants/user/${lvl1.userId}/access/effective`, 'GET', admin.token)
+    const res = await utils.executeRequest(`${config.baseUrl}/collections/${reference.testCollection.collectionId}/users/${lvl1.userId}/effective-acl`, 'GET', admin.token)
     expect(res.status).to.eql(200)
     expect(res.body).to.deep.equalInAnyOrder(lvl1TestAcl.effectiveAcl)
   })
@@ -328,7 +328,7 @@ describe(`Test manage user access control`, () => {
     expect(res.body.defaultAccess).to.equal('rw')
   })
   it('should confirm users effective acl was set ', async () => {
-    const res = await utils.executeRequest(`${config.baseUrl}/collections/${reference.testCollection.collectionId}/grants/user/${lvl3.userId}/access/effective`, 'GET', admin.token)
+    const res = await utils.executeRequest(`${config.baseUrl}/collections/${reference.testCollection.collectionId}/users/${lvl3.userId}/effective-acl`, 'GET', admin.token)
     expect(res.status).to.eql(200)
     expect(res.body).to.deep.equalInAnyOrder(lvl3TestAcl.response)
   })
@@ -455,7 +455,7 @@ describe('Test restricted user group access controls', () => {
   })
   // get the effective acl and confirm that it is read only and grantee from the group
   it('should confirm users effective acl was set ', async () => {
-    const res = await utils.executeRequest(`${config.baseUrl}/collections/${reference.testCollection.collectionId}/grants/user/${lvl1.userId}/access/effective`, 'GET', admin.token)
+    const res = await utils.executeRequest(`${config.baseUrl}/collections/${reference.testCollection.collectionId}/users/${lvl1.userId}/effective-acl`, 'GET', admin.token)
     expect(res.status).to.eql(200)
 
     for (const acl of res.body) {
@@ -577,7 +577,7 @@ describe('Test manage user group access control', () => {
   })
   // get the effective acl and confirm that it is read only and grantee from the group
   it('should confirm users effective acl was set ', async () => {
-    const res = await utils.executeRequest(`${config.baseUrl}/collections/${reference.testCollection.collectionId}/grants/user/${lvl1.userId}/access/effective`, 'GET', admin.token)
+    const res = await utils.executeRequest(`${config.baseUrl}/collections/${reference.testCollection.collectionId}/users/${lvl1.userId}/effective-acl`, 'GET', admin.token)
     expect(res.status).to.eql(200)
 
     for (const acl of res.body) {

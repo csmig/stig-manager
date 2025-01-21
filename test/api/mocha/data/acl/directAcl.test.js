@@ -22,7 +22,7 @@ describe('GET - Test Effective ACL', () => {
   before(async () => {
     await utils.loadAppData()
   })
-  describe(`getEffectiveAclByCollectionUser - /collection/{collectionId}/grants/user/{userId}/access/effective`, () => {
+  describe(`getEffectiveAclByCollectionUser - /collection/{collectionId}/users/{userId}/effective-acl`, () => {
 
 
     it("should give lvl1 user restricted access to test collection", async () => {
@@ -79,7 +79,7 @@ describe('GET - Test Effective ACL', () => {
         })
 
         it('should return 200 and the effective acl for the iteration', async () => {
-          const res = await utils.executeRequest(`${baseUrl}/collections/${reference.testCollection.collectionId}/grants/user/${user.userId}/access/effective`, 'GET', adminToken)
+          const res = await utils.executeRequest(`${baseUrl}/collections/${reference.testCollection.collectionId}/users/${user.userId}/effective-acl`, 'GET', adminToken)
           expect(res.status).to.eql(200)
 
           const putAcl = iteration.put

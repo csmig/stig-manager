@@ -220,7 +220,7 @@ describe(`Testing grantee resolution between a direct grant and group grant`, ()
       // user has direct grant to collection
       it("make sure grantee has a userID property which means it has a direct grant ", async () => {
 
-          const res = await utils.executeRequest(`${config.baseUrl}/collections/${reference.testCollection.collectionId}/grants/user/${lvl1.userId}/access/effective`, 'GET', admin.token)
+          const res = await utils.executeRequest(`${config.baseUrl}/collections/${reference.testCollection.collectionId}/users/${lvl1.userId}/effective-acl`, 'GET', admin.token)
       
           expect(res.status).to.eql(200)
           for(const grant of res.body){
@@ -266,7 +266,7 @@ describe(`Testing grantee resolution between a direct grant and group grant`, ()
 
       it("should confirm users effective acl was set. User has group and direct grant expect to get effective from the direct", async () => {
 
-          const res = await utils.executeRequest(`${config.baseUrl}/collections/${reference.testCollection.collectionId}/grants/user/${lvl1.userId}/access/effective`, 'GET', admin.token)
+          const res = await utils.executeRequest(`${config.baseUrl}/collections/${reference.testCollection.collectionId}/users/${lvl1.userId}/effective-acl`, 'GET', admin.token)
       
           expect(res.status).to.eql(200)
           for(const grant of res.body){
@@ -289,7 +289,7 @@ describe(`Testing grantee resolution between a direct grant and group grant`, ()
       
       it("User now only has a group grant, check that grantee was resolved from a group", async () => {
 
-        const res = await utils.executeRequest(`${config.baseUrl}/collections/${reference.testCollection.collectionId}/grants/user/${lvl1.userId}/access/effective`, 'GET', admin.token)
+        const res = await utils.executeRequest(`${config.baseUrl}/collections/${reference.testCollection.collectionId}/users/${lvl1.userId}/effective-acl`, 'GET', admin.token)
         expect(res.status).to.eql(200)
         for(const grant of res.body){
             for(const acl of grant.aclSources){
@@ -310,7 +310,7 @@ describe(`Testing grantee resolution between a direct grant and group grant`, ()
       
       it("User now has no grant to the collection should get 422 error", async () => {
 
-          const res = await utils.executeRequest(`${config.baseUrl}/collections/${reference.testCollection.collectionId}/grants/user/${lvl1.userId}/access/effective`, 'GET', admin.token)
+          const res = await utils.executeRequest(`${config.baseUrl}/collections/${reference.testCollection.collectionId}/users/${lvl1.userId}/effective-acl`, 'GET', admin.token)
           expect(res.status).to.eql(200)
           expect(res.body).to.be.empty
       })

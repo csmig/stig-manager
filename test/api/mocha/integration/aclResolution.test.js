@@ -116,7 +116,7 @@ describe("Multiple Group ACL Collisions", () => {
       })
 
       it('should return all resources with access of "r" from ACLCollisionGroup1', async () => {
-          const res = await utils.executeRequest(`${config.baseUrl}/collections/${reference.testCollection.collectionId}/grants/user/${lvl1.userId}/access/effective`, 'GET', config.adminToken)
+          const res = await utils.executeRequest(`${config.baseUrl}/collections/${reference.testCollection.collectionId}/users/${lvl1.userId}/effective-acl`, 'GET', config.adminToken)
           expect(res.status).to.eql(200)
 
           for(const acl of res.body){
@@ -167,7 +167,7 @@ describe("Multiple Group ACL Collisions", () => {
       })
 
       it('should return empty array because user as "none"', async () => {
-          const res = await utils.executeRequest(`${config.baseUrl}/collections/${reference.testCollection.collectionId}/grants/user/${lvl1.userId}/access/effective`, 'GET', config.adminToken)
+          const res = await utils.executeRequest(`${config.baseUrl}/collections/${reference.testCollection.collectionId}/users/${lvl1.userId}/effective-acl`, 'GET', config.adminToken)
           expect(res.status).to.eql(200)
           expect(res.body).to.be.empty
       })
@@ -210,7 +210,7 @@ describe("Multiple Group ACL Collisions", () => {
       })
 
       it('should return read only assets from group 2s read ACL', async () => {
-          const res = await utils.executeRequest(`${config.baseUrl}/collections/${reference.testCollection.collectionId}/grants/user/${lvl1.userId}/access/effective`, 'GET', config.adminToken)
+          const res = await utils.executeRequest(`${config.baseUrl}/collections/${reference.testCollection.collectionId}/users/${lvl1.userId}/effective-acl`, 'GET', config.adminToken)
           expect(res.status).to.eql(200)
           for(const acl of res.body){
               expect(acl.access).to.be.equal("r")
@@ -273,7 +273,7 @@ describe("Multiple Group ACL Collisions", () => {
       })
 
       it('should return effective ACLs belonging from a combination of both groups', async () => {
-          const res = await utils.executeRequest(`${config.baseUrl}/collections/${reference.testCollection.collectionId}/grants/user/${lvl1.userId}/access/effective`, 'GET', config.adminToken)
+          const res = await utils.executeRequest(`${config.baseUrl}/collections/${reference.testCollection.collectionId}/users/${lvl1.userId}/effective-acl`, 'GET', config.adminToken)
           expect(res.status).to.eql(200)
           for(const acl of res.body){
               if(acl.asset.assetId === "154"){
