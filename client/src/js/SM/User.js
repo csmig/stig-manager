@@ -83,7 +83,8 @@ SM.User.EffectiveGrantsGrid = Ext.extend(Ext.grid.GridPanel, {
           gridBasename: 'EffectiveGrants',
           exportType: 'grid',
           iconCls: 'sm-export-icon',
-          text: 'CSV'
+          text: 'CSV',
+          grid: this     
         }, {
           xtype: 'tbfill'
         }, {
@@ -997,7 +998,8 @@ SM.User.UserGrid = Ext.extend(Ext.grid.GridPanel, {
             gridBasename: 'User-Info',
             exportType: 'grid',
             iconCls: 'sm-export-icon',
-            text: 'CSV'
+            text: 'CSV',
+            grid: this     
           },
           {
             xtype: 'tbfill'

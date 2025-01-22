@@ -569,7 +569,8 @@ SM.Manage.Collection.MetadataGrid = Ext.extend(Ext.grid.GridPanel, {
           gridBasename: 'Metadata',
           exportType: 'grid',
           iconCls: 'sm-export-icon',
-          text: 'CSV'
+          text: 'CSV',
+          gridSource: this     
         },
         {
           xtype: 'tbfill'
@@ -857,7 +858,8 @@ SM.Manage.Collection.GrantsGrid = Ext.extend(Ext.grid.GridPanel, {
           gridBasename: 'CollectionGrants',
           exportType: 'grid',
           iconCls: 'sm-export-icon',
-          text: 'CSV'
+          text: 'CSV',
+          grid: this     
         }, {
           xtype: 'tbfill'
         }, {
@@ -1041,7 +1043,8 @@ SM.Manage.Collection.UsersGrid = Ext.extend(Ext.grid.GridPanel, {
           gridBasename: 'CollectionUsers',
           exportType: 'grid',
           iconCls: 'sm-export-icon',
-          text: 'CSV'
+          text: 'CSV',
+          grid: this     
         }, {
           xtype: 'tbfill'
         }, {
@@ -1312,7 +1315,8 @@ SM.Manage.Collection.AdminGrid = Ext.extend(Ext.grid.GridPanel, {
           gridBasename: 'Collection-Info',
           exportType: 'grid',
           iconCls: 'sm-export-icon',
-          text: 'CSV'
+          text: 'CSV',
+          grid: this     
         },
         {
           xtype: 'tbfill'
@@ -2419,7 +2423,7 @@ SM.Manage.Collection.LabelsGrid = Ext.extend(Ext.grid.GridPanel, {
           exportType: 'grid',
           iconCls: 'sm-export-icon',
           text: 'CSV',
-          gridSource: this
+          grid: this
         },
         {
           xtype: 'tbfill'
@@ -3379,7 +3383,8 @@ SM.Manage.Asset.Grid = Ext.extend(Ext.grid.GridPanel, {
             gridBasename: 'Assets (grid)',
             storeBasename: 'Assets (store)',
             iconCls: 'sm-export-icon',
-            text: 'CSV'
+            text: 'CSV',
+            grid: this      
           }, {
             xtype: 'tbfill'
           }, {
@@ -4345,7 +4350,9 @@ SM.Manage.Stig.Grid = Ext.extend(Ext.grid.GridPanel, {
                       gridBasename: 'STIGs (grid)',
                       storeBasename: 'STIGs (store)',
                       iconCls: 'sm-export-icon',
-                      text: 'CSV'
+                      text: 'CSV',
+                      grid: this      
+
                   },{
                       xtype: 'tbfill'
                   },{

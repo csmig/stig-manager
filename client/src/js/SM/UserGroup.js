@@ -214,7 +214,8 @@ SM.UserGroup.UserGroupGrid = Ext.extend(Ext.grid.GridPanel, {
           gridBasename: 'UserGroup-Info',
           exportType: 'grid',
           iconCls: 'sm-export-icon',
-          text: 'CSV'
+          text: 'CSV',
+          grid: this     
         },	
         {
           xtype: 'tbfill'
