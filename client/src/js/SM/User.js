@@ -1488,7 +1488,8 @@ SM.User.CollectionAclGrid = Ext.extend(Ext.grid.GridPanel, {
             gridBasename: 'Collection ACL',
             exportType: 'grid',
             iconCls: 'sm-export-icon',
-            text: 'CSV'
+            text: 'CSV',
+            grid: this
           },
           {
             xtype: 'tbfill'
