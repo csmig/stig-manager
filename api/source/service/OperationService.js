@@ -467,7 +467,7 @@ exports.replaceAppData = async function (buffer, contentType, progressCb = () =>
 }
 
 exports.getAppInfo = async function() {
-  const schema = 'stig-manager-appinfo-v1.0'
+  const schema = 'stig-manager-appinfo-v1.1'
   const sqlAnalyze = `ANALYZE TABLE collection, asset, review, review_history, user`
   const sqlInfoSchema = `
   SELECT
@@ -552,45 +552,49 @@ exports.getAppInfo = async function() {
   GROUP BY
     c.collectionId
   `  
-  const sqlAclUserCountsByCollection = `
-    with ctePerUser as (select
-      a.collectionId, 
+const sqlAclUserCountsByCollection = `
+    with ctePerGrantee as (select
+      cg.collectionId, 
       json_object(
-      'userId', cg.userId, 
-      'ruleCounts', json_object(
-        'rw', count(cga.access = 'rw'),
-        'r', count(cga.access = 'r'),
-        'none', count(cga.access = 'none')
-      ), 
-      'uniqueAssets', count(distinct if(a.state = 'enabled', sam.assetId, null)),
-      'uniqueAssetsDisabled', count(distinct if(a.state = 'disabled', sam.assetId, null)),
-      'uniqueStigs', count(distinct if(a.state = 'enabled', sam.benchmarkId, null)),
-      'uniqueStigsDisabled', count(distinct if(a.state = 'disabled', sam.benchmarkId, null)),
-      'role', 
-        case when cg.roleId = 1 then 'restricted' else 
-          case when cg.roleId = 2 then 'full' else
-            case when cg.roleId = 3 then 'manage' else
-              case when cg.roleId = 4 then 'owner'
+        'grantId', cg.grantId,
+        'grantee', json_object(
+          'userId', cg.userId,
+          'userGroupId', cg.userGroupId
+        ),
+        'ruleCounts', json_object(
+          'rw', SUM(CASE WHEN cga.access = 'rw' THEN 1 ELSE 0 END),
+          'r', SUM(CASE WHEN cga.access = 'r' THEN 1 ELSE 0 END),
+          'none', SUM(CASE WHEN cga.access = 'none' THEN 1 ELSE 0 END)
+        ), 
+        'uniqueAssets', count(distinct if(a.state = 'enabled', sam.assetId, null)),
+        'uniqueAssetsDisabled', count(distinct if(a.state = 'disabled', sam.assetId, null)),
+        'uniqueStigs', count(distinct if(a.state = 'enabled', sam.benchmarkId, null)),
+        'uniqueStigsDisabled', count(distinct if(a.state = 'disabled', sam.benchmarkId, null)),
+        'role', 
+          case when cg.roleId = 1 then 'restricted' else 
+            case when cg.roleId = 2 then 'full' else
+              case when cg.roleId = 3 then 'manage' else
+                case when cg.roleId = 4 then 'owner'
+                end
               end
             end
           end
-        end
-      ) as perUser
+      ) as perGrantee
     from 
-      collection_grant_acl cga -- THIS NEEDS TO BE THE EFFECTIVE ACL INSTEAD
-      inner join stig_asset_map sam on sam.assetId=cga.assetId and sam.benchmarkId=cga.benchmarkId
+      collection_grant_acl cga 
+      right join collection_grant cg ON cg.grantId = cga.grantId
+      left join stig_asset_map sam on sam.assetId=cga.assetId and sam.benchmarkId=cga.benchmarkId
       left join asset a on a.assetId = sam.assetId
-      inner join collection_grant cg on cg.userId = cg.userId and a.collectionId = cg.collectionId
     group by
-      cg.userId, a.collectionId)
-    select 
-      collectionId, 
-      json_arrayagg(perUser) as aclCounts
-    from 
-      ctePerUser
-    group by 
-      collectionId
-  `
+      cg.collectionId, cg.grantId, cg.roleId)
+        select 
+          collectionId, 
+          json_arrayagg(perGrantee) as aclCounts
+        from 
+          ctePerGrantee
+        group by 
+          collectionId
+`
   const sqlGrantCounts = `
   SELECT 
     collectionId,
@@ -627,6 +631,27 @@ exports.getAppInfo = async function() {
   group by
 	  ud.userId
   `
+
+  const sqlUserGroupInfo = `
+  select 
+    ug.userGroupId,
+    ug.name,
+    count(distinct ugum.userId) as members,
+    ug.createdDate as created, 
+    ug.modifiedDate, 
+    json_object(
+        "restricted", count(distinct case when cg.roleId = 1 then cg.collectionId else null end),
+        "full", count(distinct case when cg.roleId = 2 then cg.collectionId else null end),
+        "manage", count(distinct case when cg.roleId = 3 then cg.collectionId else null end),
+        "owner", count(distinct case when cg.roleId = 4 then cg.collectionId else null end)
+    ) as roles
+  from 
+    user_group ug
+    left join collection_grant cg on cg.userGroupId = ug.userGroupId
+	  left join user_group_user_map ugum ON ugum.userGroupId = ug.userGroupId
+  group by
+	  ug.userGroupId
+  `  
   const sqlMySqlVersion = `SELECT VERSION() as version`
 
   const mySqlVariablesOnly = [
@@ -718,6 +743,7 @@ exports.getAppInfo = async function() {
     [aclUserCountsByCollection],
     [grantCountsByCollection],
     [userInfo],
+    [userGroupInfo],
     [mySqlVersion],
     [mySqlVariables],
     [mySqlStatus],
@@ -729,6 +755,7 @@ exports.getAppInfo = async function() {
     dbUtils.pool.query(sqlAclUserCountsByCollection),
     dbUtils.pool.query(sqlGrantCounts),
     dbUtils.pool.query(sqlUserInfo),
+    dbUtils.pool.query(sqlUserGroupInfo),
     dbUtils.pool.query(sqlMySqlVersion),
     dbUtils.pool.query(sqlMySqlVariablesValues),
     dbUtils.pool.query(sqlMySqlStatusValues),
@@ -766,15 +793,20 @@ exports.getAppInfo = async function() {
       countsByCollection[collectionId].assetStigRanges = assetStigByCollection[collectionId]
     }
     if (aclUserCountsByCollection[collectionId]) {
-      countsByCollection[collectionId].aclCounts = {
-        users: createObjectFromKeyValue(aclUserCountsByCollection[collectionId].aclCounts, "userId"),
-        groups: {}
+      const aclCounts = {
+        grantees:{}
       }
+      
+      // For each ACL in the collection's array of ACLs
+      for (const acl of aclUserCountsByCollection[collectionId].aclCounts) {
+          aclCounts.grantees[acl.grantId] = acl
+      }
+      
+      countsByCollection[collectionId].aclCounts = aclCounts
     }
     else {
       countsByCollection[collectionId].aclCounts = {
-        users: {},
-        groups: {}
+        grantee: {}
       }
     }
     if (grantCountsByCollection[collectionId]) {
@@ -803,6 +835,7 @@ exports.getAppInfo = async function() {
       userInfo: createObjectFromKeyValue(userInfo, "userId", null),
       userPrivilegeCounts
     },
+    groups: createObjectFromKeyValue(userGroupInfo, "userGroupId", null),
     mysql: {
       version: mySqlVersion[0].version,
       tables,

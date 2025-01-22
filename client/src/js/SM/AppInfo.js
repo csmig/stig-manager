@@ -3,6 +3,7 @@ Ext.ns("SM.AppInfo.Collections")
 Ext.ns("SM.AppInfo.MySql")
 Ext.ns("SM.AppInfo.Requests")
 Ext.ns("SM.AppInfo.Users")
+Ext.ns("SM.AppInfo.Groups")
 Ext.ns("SM.AppInfo.Nodejs")
 Ext.ns("SM.AppInfo.ShareFile")
 
@@ -13,6 +14,7 @@ SM.AppInfo.numberRenderer = function (value) {
 }
 
 SM.AppInfo.usernameLookup = {}
+SM.AppInfo.groupNameLookup = {}
 
 SM.AppInfo.uptimeString = function uptimeString(uptime) {
   const days = Math.floor(uptime / 86400)
@@ -25,199 +27,259 @@ SM.AppInfo.uptimeString = function uptimeString(uptime) {
 }
 
 SM.AppInfo.transformPreviousSchemas = function (input) {
-  if (input.schema === 'stig-manager-appinfo-v1.0') {
+  if (input.schema === 'stig-manager-appinfo-v1.1') {
     return input
   }
-  if (!input.stigmanVersion) {
-    return false
+  //Before v1.1 (rbac-2), only "restricted" grants had ACLs, so the counts that get transformed here will not be directly comparable to v1.1 counts.
+  if (input.schema === 'stig-manager-appinfo-v1.0') {
+    return transformAppInfoToV1_1(input)
   }
+  // first version of appInfo had "stigmanVersion" property instead of "version"  
+  if (input.stigmanVersion){
+    // input.version = input.stigmanVersion
+    return SM.AppInfo.transformAppInfoToV1_0(input)
+  }
+  // if neither version nor stigmanVersion, not a supported file.
+  else{
+    return false
+  }  
 
-  // renames properties "assetStigByCollection" and "restrictedGrantCountsByUser"
-  function transformCountsByCollection(i) {
+  function transformAppInfoToV1_1(input) {
     const o = {}
-    const padLength = Object.keys(i).at(-1).length
-    for (const id in i) {
-      const { 
-        assetStigByCollection, 
-        restrictedGrantCountsByUser, 
-        assetsTotal, 
-        assetsDisabled, 
-        ruleCnt, 
-        reviewCntTotal, 
-        reviewCntDisabled,
-        labelCounts,
-        ...keep } = i[id]
+    // shifts aclCount.users to aclCount.grantees, creates grantId from userId and adds grantee object
+    function transformCountsByCollection(collections) {
+      const o = {}
+      for (const id in collections) {
+        const { 
+          aclCounts,
+          ...keep } = collections[id]
 
-      // rename restrictedGrantCountsByUser properties to match aclCounts schema
-      for (const userId in restrictedGrantCountsByUser) {
-        restrictedGrantCountsByUser[userId].ruleCounts = {
-          rw: restrictedGrantCountsByUser[userId].stigAssetCount,
-          r: 0,
-          none: 0
-        }
-        delete restrictedGrantCountsByUser[userId].stigAssetCount
-      }
-
-      // rename grantCounts properties
-      const grantCounts = {
-        restricted: keep.grantCounts.accessLevel1,
-        full: keep.grantCounts.accessLevel2,
-        manage: keep.grantCounts.accessLevel3,
-        owner: keep.grantCounts.accessLevel4        
-      }
-      delete keep.grantCounts
-
-      // rename labelCounts properties
-      labelCounts.collectionLabels = labelCounts.collectionLabelCount
-      delete labelCounts.collectionLabelCount
-      labelCounts.labeledAssets = labelCounts.labeledAssetCount
-      delete labelCounts.labeledAssetCount
-      labelCounts.assetLabels = labelCounts.assetLabelCount
-      delete labelCounts.assetLabelCount
-
-      o[id] = {
-        name: id.padStart(padLength, '0'),
-        assets: assetsTotal - assetsDisabled,
-        assetsDisabled,
-        rules: ruleCnt,
-        reviews: reviewCntTotal - reviewCntDisabled,
-        reviewsDisabled: reviewCntDisabled,
-        ...keep,
-        assetStigRanges: transformAssetStigByCollection(assetStigByCollection),
-        aclCounts: {
-          users: restrictedGrantCountsByUser || {}
-        },
-        grantCounts,
-        labelCounts,
-        settings: {
-          fields: {
-            detail: {
-              enabled: null,
-              required: null
-            },
-            comment: {
-              enabled: null,
-              required: null
+          aclCounts.grantees = {}
+          for (const grantId in aclCounts.users) {
+            aclCounts.grantees[grantId] = {
+              grantId: grantId,
+              grantee: {
+                userId: grantId,
+                groupId: null,
+              },
+              ...aclCounts.users[grantId]
             }
-          },
-          status: {
-            canAccept: null,
-            resetCriteria: null,
-            minAcceptGrant: null
           }
 
+        o[id] = {
+          aclCounts: aclCounts,
+          ...keep
         }
+        
       }
+      return o
     }
-    return o
+
+    const norm = {
+      date: input.date,
+      schema: 'stig-manager-appinfo-v1.1',
+      version: input.version,
+      collections: transformCountsByCollection(input.collections),
+      requests: input.requests,
+      users: input.users,
+      groups: {},
+      mysql: input.mysql,
+      nodejs: input.nodejs
+    }
+
+    return SM.AppInfo.transformPreviousSchemas(norm)
+
   }
 
-  // renames property "roles" and removes the string "other"
-  function transformUserInfo(i) {
-    const o = {}
-    const padLength = Object.keys(i).at(-1).length
-    for (const id in i) {
-      const { roles, ...keep } = i[id]
-      o[id] = {
-        username: id.padStart(padLength, '0'),
+  function transformAppInfoToV1_0(input) {
+    // renames properties "assetStigByCollection" and "restrictedGrantCountsByUser"
+    function transformCountsByCollection(i) {
+      const o = {}
+      const padLength = Object.keys(i).at(-1).length
+      for (const id in i) {
+        const { 
+          assetStigByCollection, 
+          restrictedGrantCountsByUser, 
+          assetsTotal, 
+          assetsDisabled, 
+          ruleCnt, 
+          reviewCntTotal, 
+          reviewCntDisabled,
+          labelCounts,
+          ...keep } = i[id]
+
+        // rename restrictedGrantCountsByUser properties to match aclCounts schema
+        for (const userId in restrictedGrantCountsByUser) {
+          restrictedGrantCountsByUser[userId].ruleCounts = {
+            rw: restrictedGrantCountsByUser[userId].stigAssetCount,
+            r: 0,
+            none: 0
+          }
+          delete restrictedGrantCountsByUser[userId].stigAssetCount
+        }
+
+        // rename grantCounts properties
+        const grantCounts = {
+          restricted: keep.grantCounts.accessLevel1,
+          full: keep.grantCounts.accessLevel2,
+          manage: keep.grantCounts.accessLevel3,
+          owner: keep.grantCounts.accessLevel4        
+        }
+        delete keep.grantCounts
+
+        // rename labelCounts properties
+        labelCounts.collectionLabels = labelCounts.collectionLabelCount
+        delete labelCounts.collectionLabelCount
+        labelCounts.labeledAssets = labelCounts.labeledAssetCount
+        delete labelCounts.labeledAssetCount
+        labelCounts.assetLabels = labelCounts.assetLabelCount
+        delete labelCounts.assetLabelCount
+
+        o[id] = {
+          name: id.padStart(padLength, '0'),
+          assets: assetsTotal - assetsDisabled,
+          assetsDisabled,
+          rules: ruleCnt,
+          reviews: reviewCntTotal - reviewCntDisabled,
+          reviewsDisabled: reviewCntDisabled,
           ...keep,
-        privileges: roles?.filter(v => v !== 'other') || [],
-        roles: {
-          restricted: null,
-          full: null,
-          manage: null,
-          owner: null
+          assetStigRanges: transformAssetStigByCollection(assetStigByCollection),
+          aclCounts: {
+            users: restrictedGrantCountsByUser || {}
+          },
+          grantCounts,
+          labelCounts,
+          settings: {
+            fields: {
+              detail: {
+                enabled: null,
+                required: null
+              },
+              comment: {
+                enabled: null,
+                required: null
+              }
+            },
+            status: {
+              canAccept: null,
+              resetCriteria: null,
+              minAcceptGrant: null
+            }
+
+          }
+        }
+      }
+      return o
+    }
+
+    // renames property "roles" and removes the string "other"
+    function transformUserInfo(i) {
+      const o = {}
+      const padLength = Object.keys(i).at(-1).length
+      for (const id in i) {
+        const { roles, ...keep } = i[id]
+        o[id] = {
+          username: id.padStart(padLength, '0'),
+            ...keep,
+          privileges: roles?.filter(v => v !== 'other') || [],
+          roles: {
+            restricted: null,
+            full: null,
+            manage: null,
+            owner: null
+          }
+        }
+      }
+      return o
+    }
+
+    // remove counts of the "other" string
+    function transformUserPrivilegeCounts(i) {
+      for (const category in i) {
+        delete i[category].other
+      }
+      return i
+    }
+
+    // add count of privilege "none" to each category
+    // must be called after transforming userInfo
+    function addNoPrivilegeCount(i) {
+      const dataTime = Math.floor(new Date(i.dateGenerated) / 1000)
+      const thirtyDaysAgo = dataTime - (30 * 24 * 60 * 60)
+      const ninetyDaysAgo = dataTime - (90 * 24 * 60 * 60)
+
+      i.userPrivilegeCounts.overall.none = 0
+      i.userPrivilegeCounts.activeInLast90Days.none = 0
+      i.userPrivilegeCounts.activeInLast30Days.none = 0
+
+      for (const userId in i.userInfo) {
+        const user = i.userInfo[userId]
+        if (user.privileges.length === 0) {
+          i.userPrivilegeCounts.overall.none++
+          // Update counts for the last 30 and 90 days based on lastAccess
+          if (user.lastAccess >= ninetyDaysAgo) {
+            i.userPrivilegeCounts.activeInLast90Days.none++
+          }
+          if (user.lastAccess >= thirtyDaysAgo) {
+            i.userPrivilegeCounts.activeInLast30Days.none++
+          }
         }
       }
     }
-    return o
-  }
 
-  // remove counts of the "other" string
-  function transformUserPrivilegeCounts(i) {
-    for (const category in i) {
-      delete i[category].other
+    function transformAssetStigByCollection(i) {
+      i.range00 = i.assetCnt - (i.range01to05 + i.range06to10 + i.range11to15 + i.range16plus)
+      delete i.assetCnt
+      return i
     }
-    return i
-  }
 
-  // add count of privilege "none" to each category
-  // must be called after transforming userInfo
-  function addNoPrivilegeCount(i) {
-    const dataTime = Math.floor(new Date(i.dateGenerated) / 1000)
-    const thirtyDaysAgo = dataTime - (30 * 24 * 60 * 60)
-    const ninetyDaysAgo = dataTime - (90 * 24 * 60 * 60)
+    const { operationIdStats, ...requestsKeep } = input.operationalStats
+    for (const opId in operationIdStats) {
+      operationIdStats[opId].errors = {}
+    }
 
-    i.userPrivilegeCounts.overall.none = 0
-    i.userPrivilegeCounts.activeInLast90Days.none = 0
-    i.userPrivilegeCounts.activeInLast30Days.none = 0
+    input.userInfo = transformUserInfo(input.userInfo)
+    addNoPrivilegeCount(input)
+    transformUserPrivilegeCounts(input.userPrivilegeCounts)
 
-    for (const userId in i.userInfo) {
-      const user = i.userInfo[userId]
-      if (user.privileges.length === 0) {
-        i.userPrivilegeCounts.overall.none++
-        // Update counts for the last 30 and 90 days based on lastAccess
-        if (user.lastAccess >= ninetyDaysAgo) {
-          i.userPrivilegeCounts.activeInLast90Days.none++
-        }
-        if (user.lastAccess >= thirtyDaysAgo) {
-          i.userPrivilegeCounts.activeInLast30Days.none++
-        }
+    function parseNodeUptimeString(uptimeString) {
+      const values = uptimeString.match(/\d+/g)
+      return (parseInt(values[0]) * 86400) +
+        (parseInt(values[1]) * 3600) +
+        (parseInt(values[2]) * 60) +
+        parseInt(values[3])
+    }    
+
+    const norm = {
+      date: input.dateGenerated,
+      schema: 'stig-manager-appinfo-v1.0',
+      version: input.stigmanVersion,
+      collections: transformCountsByCollection(input.countsByCollection),
+      requests: {
+        ...requestsKeep,
+        operationIds: operationIdStats
+      },
+      users: {
+        userInfo: input.userInfo,
+        userPrivilegeCounts: input.userPrivilegeCounts
+      },
+      mysql: {
+        version: input.mySqlVersion,
+        tables: input.dbInfo.tables,
+        variables: input.mySqlVariablesRaw,
+        status: input.mySqlStatusRaw
+      },
+      nodejs: {
+        version: 'v0.0.0',
+        uptime: parseNodeUptimeString(input.nodeUptime),
+        os: {},
+        environment: {},
+        memory: input.nodeMemoryUsageInMb,
+        cpus: []
       }
     }
-  }
 
-  function transformAssetStigByCollection(i) {
-    i.range00 = i.assetCnt - (i.range01to05 + i.range06to10 + i.range11to15 + i.range16plus)
-    delete i.assetCnt
-    return i
-  }
-
-  const { operationIdStats, ...requestsKeep } = input.operationalStats
-  for (const opId in operationIdStats) {
-    operationIdStats[opId].errors = {}
-  }
-
-  input.userInfo = transformUserInfo(input.userInfo)
-  addNoPrivilegeCount(input)
-  transformUserPrivilegeCounts(input.userPrivilegeCounts)
-
-  const norm = {
-    date: input.dateGenerated,
-    schema: 'stig-manager-appinfo-v1.0',
-    version: input.stigmanVersion,
-    collections: transformCountsByCollection(input.countsByCollection),
-    requests: {
-      ...requestsKeep,
-      operationIds: operationIdStats
-    },
-    users: {
-      userInfo: input.userInfo,
-      userPrivilegeCounts: input.userPrivilegeCounts
-    },
-    mysql: {
-      version: input.mySqlVersion,
-      tables: input.dbInfo.tables,
-      variables: input.mySqlVariablesRaw,
-      status: input.mySqlStatusRaw
-    },
-    nodejs: {
-      version: 'v0.0.0',
-      uptime: parseNodeUptimeString(input.nodeUptime),
-      os: {},
-      environment: {},
-      memory: input.nodeMemoryUsageInMb,
-      cpus: []
-    }
-  }
-  return norm
-
-  function parseNodeUptimeString(uptimeString) {
-    const values = uptimeString.match(/\d+/g)
-    return (parseInt(values[0]) * 86400) +
-      (parseInt(values[1]) * 3600) +
-      (parseInt(values[2]) * 60) +
-      parseInt(values[3])
+    return SM.AppInfo.transformPreviousSchemas(norm)
   }
 }
 
@@ -395,8 +457,8 @@ SM.AppInfo.Collections.OverviewGrid = Ext.extend(Ext.grid.GridPanel, {
       },
       'aclCounts',
       {
-        name: 'aclCountUsers',
-        convert: (v, r) => Object.keys(r.aclCounts.users).length || 0
+        name: 'aclCountGrantees',
+        convert: (v, r) => Object.keys(r.aclCounts.grantees).length || 0
       }
     ]
 
@@ -496,8 +558,8 @@ SM.AppInfo.Collections.OverviewGrid = Ext.extend(Ext.grid.GridPanel, {
         renderer: SM.AppInfo.numberRenderer
       },
       {
-        header: "User ACLs",
-        dataIndex: 'aclCountUsers',
+        header: "Grants",
+        dataIndex: 'aclCountGrantees',
         sortable: true,
         align: 'right',
         renderer: SM.AppInfo.numberRenderer
@@ -585,8 +647,8 @@ SM.AppInfo.Collections.FullGridLocked = Ext.extend(Ext.grid.GridPanel, {
       },
       'aclCounts',
       {
-        name: 'aclCountUsers',
-        convert: (v, r) => Object.keys(r.aclCounts.users).length || 0
+        name: 'aclCountGrantees',
+        convert: (v, r) => Object.keys(r.aclCounts.grantees).length || 0
       },
       {
         name: 'range00',
@@ -763,8 +825,8 @@ SM.AppInfo.Collections.FullGridLocked = Ext.extend(Ext.grid.GridPanel, {
         renderer: SM.AppInfo.numberRenderer
       },
       {
-        header: "User ACLs",
-        dataIndex: 'aclCountUsers',
+        header: "Grants",
+        dataIndex: 'aclCountGrantees',
         sortable: true,
         align: 'right',
         renderer: SM.AppInfo.numberRenderer
@@ -949,10 +1011,21 @@ SM.AppInfo.Collections.AclGrid = Ext.extend(Ext.grid.GridPanel, {
   initComponent: function () {
     const fields = [
       {
+        name: 'grantee',
+        mapping: 'grantee',
+        convert: (v, r) => r.granteeName
+      },
+      {
         name: 'userId',
+        mapping: 'grantee.userId',
+        type: 'int'
+
+      },
+      {
+        name: 'userGroupId', 
+        mapping: 'grantee.userGroupId',
         type: 'int'
       },
-      'username',
       'uniqueAssets',
       'uniqueAssetsDisabled',
       'uniqueStigs',
@@ -976,25 +1049,35 @@ SM.AppInfo.Collections.AclGrid = Ext.extend(Ext.grid.GridPanel, {
     const store = new Ext.data.JsonStore({
       fields,
       root: '',
-      idProperty: 'userId',
+      idProperty: 'grantId',  // Change to use grantId as unique identifier
       sortInfo: {
-        field: 'username',
+        field: 'grantee',
         direction: 'ASC'
       }
     })
 
     const columns = [
       {
-        header: "Id",
+        header: "userId",
         hidden: true,
         dataIndex: 'userId',
         sortable: true,
       },
       {
-        header: "Grantee",
-        dataIndex: 'username',
+        header: "userGroupId",
+        hidden: true,
+        dataIndex: 'userGroupId',
         sortable: true,
-        filter: { type: 'string' }
+      },      
+      {
+        header: "Grantee",
+        dataIndex: 'grantee',
+        sortable: true,
+        filter: { type: 'string' },
+        renderer: function (v, m, r) {
+          const icon = r.data.userId ? 'sm-user-icon' : 'sm-users-icon'
+          return `<div class="${icon} sm-cell-with-icon">${v}</div>`
+        }
       },
       {
         header: "Role",
@@ -1695,13 +1778,19 @@ SM.AppInfo.Collections.Container = Ext.extend(Ext.Container, {
     }
 
     function loadAce(sm, index, record) {
-      const data = record.data.aclCounts?.users
+      const data = record.data.aclCounts?.grantees
       const rows = []
-      for (const userId in data) {
-        rows.push({ userId, username: SM.AppInfo.usernameLookup[userId], ...data[userId] })
+      for (const grantId in data) {
+        const aclData = data[grantId]
+        rows.push({ 
+          grantId: aclData.grantId, // Use the unique grantId
+          granteeName: SM.AppInfo.usernameLookup[aclData.grantee.userId] || 
+          SM.AppInfo.groupNameLookup[aclData.grantee.userGroupId],
+          ...aclData 
+        })
       }
       aclGrid.store.loadData(rows)
-    }
+    }    
 
     function syncGridsOnRowSelect(sm, rowIndex, e) {
       const sourceRecord = sm.grid.store.getAt(rowIndex)
@@ -1716,7 +1805,6 @@ SM.AppInfo.Collections.Container = Ext.extend(Ext.Container, {
           peeredGrid.view.focusRow(destIndex)
         }
       }
-      // load restricted users grid, record in overviewGrid contains restrictedUsers field
       loadAce(null, null, overviewGrid.store.getById(sourceRecord.id))
     }
 
@@ -2439,7 +2527,7 @@ SM.AppInfo.Requests.Container = Ext.extend(Ext.Container, {
       const projections = []
       const data = record.data
       for (const userId in data.users) {
-        users.push({ key: SM.AppInfo.usernameLookup[userId] || 'unkown', value: data.users[userId] })
+        users.push({ key: SM.AppInfo.usernameLookup[userId] || 'unknown', value: data.users[userId] })
       }
       for (const client in data.clients) {
         clients.push({ key: client, value: data.clients[client] })
@@ -2647,7 +2735,7 @@ SM.AppInfo.Users.InfoGrid = Ext.extend(Ext.grid.GridPanel, {
         new SM.RowCountTextItem({
           store,
           noun: this.rowCountNoun ?? 'user',
-          iconCls: 'sm-users-icon'
+          iconCls: 'sm-user-icon'
         })
       ]
     })
@@ -2750,6 +2838,194 @@ SM.AppInfo.Users.Container = Ext.extend(Ext.Container, {
     this.superclass().initComponent.call(this)
   }
 })
+
+SM.AppInfo.Groups.InfoGrid = Ext.extend(Ext.grid.GridPanel, {
+  initComponent: function () {
+    const fields = [
+      {
+        name: 'userGroupId',
+        type: 'int'
+      },
+      'name',
+      'members',
+      'created',
+      {
+        name: 'restricted',
+        mapping: 'roles.restricted',
+        useNull: true,
+        type: 'int'
+      },
+      {
+        name: 'full',
+        mapping: 'roles.full',
+        useNull: true,
+        type: 'int'
+      },
+      {
+        name: 'manage',
+        mapping: 'roles.manage',
+        useNull: true,
+        type: 'int'
+      },
+      {
+        name: 'owner',
+        mapping: 'roles.owner',
+        useNull: true,
+        type: 'int'
+      }
+    ]
+
+    const store = new Ext.data.JsonStore({
+      fields,
+      root: '',
+      idProperty: 'userGroupId',
+      sortInfo: {
+        field: 'name',
+        direction: 'ASC'
+      }
+    })
+
+    const columns = [
+      {
+        header: 'Group Name',
+        dataIndex: 'name',
+        sortable: true,
+        filter: { type: 'string' }
+      },
+      {
+        header: 'Id',
+        dataIndex: 'userGroupId',
+        hidden: true,
+        sortable: true,
+      },
+      {
+        header: 'User Count',
+        dataIndex: 'members',
+        sortable: true,
+      },      
+      {
+        header: 'Owner',
+        dataIndex: 'owner',
+        sortable: true,
+        align: 'right',
+        renderer: SM.AppInfo.numberRenderer
+      },
+      {
+        header: 'Manage',
+        dataIndex: 'manage',
+        sortable: true,
+        align: 'right',
+        renderer: SM.AppInfo.numberRenderer
+      },
+      {
+        header: 'Full',
+        dataIndex: 'full',
+        sortable: true,
+        align: 'right',
+        renderer: SM.AppInfo.numberRenderer
+      },
+      {
+        header: 'Restricted',
+        dataIndex: 'restricted',
+        sortable: true,
+        align: 'right',
+        renderer: SM.AppInfo.numberRenderer
+      },
+      {
+        header: 'Created',
+        dataIndex: 'created',
+        sortable: true,
+        align: 'right'
+      }
+
+    ]
+
+    const sm = new Ext.grid.RowSelectionModel({
+      singleSelect: true
+    })
+
+    const view = new SM.ColumnFilters.GridView({
+      emptyText: this.emptyText || 'No records to display',
+      deferEmptyText: false,
+      forceFit: true,
+      markDirty: false,
+      listeners: {
+        filterschanged: function (view) {
+          store.filter(view.getFilterFns())
+        }
+      }
+    })
+
+    const bbar = new Ext.Toolbar({
+      items: [
+        {
+          xtype: 'exportbutton',
+          hasMenu: false,
+          grid: this,
+          gridBasename: this.exportName || this.title || 'groups',
+          iconCls: 'sm-export-icon',
+          text: 'CSV'
+        },
+        {
+          xtype: 'tbfill'
+        },
+        {
+          xtype: 'tbseparator'
+        },
+        new SM.RowCountTextItem({
+          store,
+          noun: this.rowCountNoun ?? 'group',
+          iconCls: 'sm-users-icon'
+        })
+      ]
+    })
+
+    const config = {
+      cls: this.cls ?? 'sm-round-panel',
+      store,
+      view,
+      sm,
+      columns,
+      bbar
+    }
+    Ext.apply(this, Ext.apply(this.initialConfig, config))
+    this.superclass().initComponent.call(this)
+  }
+})
+
+SM.AppInfo.Groups.Container = Ext.extend(Ext.Container, {
+  initComponent: function () {
+    // expects just the value of appinfo.users
+    function loadData(data) {
+      const rows = []
+      for (const key in data) {
+        rows.push({ userGroupId: key, ...data[key] })
+      }
+      infoGrid.store.loadData(rows)
+
+      // setup the groupName lookup object
+      SM.AppInfo.groupNameLookup = {}
+      for (const row of rows) {
+        SM.AppInfo.groupNameLookup[row.userGroupId] = row.name
+      }
+    }
+
+    const infoGrid = new SM.AppInfo.Groups.InfoGrid({
+      title: 'Group details',
+      border: false,
+      region: 'center'
+    })
+
+    const config = {
+      layout: 'border',
+      items: [infoGrid],
+      loadData,
+    }
+    Ext.apply(this, Ext.apply(this.initialConfig, config))
+    this.superclass().initComponent.call(this)
+  }
+})
+
 
 SM.AppInfo.Nodejs.CpusGrid = Ext.extend(Ext.grid.GridPanel, {
   initComponent: function () {
@@ -2942,8 +3218,13 @@ SM.AppInfo.TabPanel = Ext.extend(Ext.TabPanel, {
 
     const usersContainer = new SM.AppInfo.Users.Container({
       title: 'Users',
-      iconCls: 'sm-users-icon'
+      iconCls: 'sm-user-icon'
     })
+
+    const groupsContainer = new SM.AppInfo.Groups.Container({
+      title: 'Groups',
+      iconCls: 'sm-users-icon'
+    })    
 
     const requestsContainer = new SM.AppInfo.Requests.Container({
       title: 'Requests',
@@ -2970,14 +3251,16 @@ SM.AppInfo.TabPanel = Ext.extend(Ext.TabPanel, {
       requestsContainer,
       collectionsContainer,
       usersContainer,
+      groupsContainer,
       mysqlContainer,
       nodejsContainer,
       jsonPanel,
     ]
 
     function loadData(data) {
-      // users MUST be loaded first so the username lookup object is built
+      // users and groups MUST be loaded first so the name lookup objects are built
       usersContainer.loadData(data.users)
+      groupsContainer.loadData(data.groups)
       collectionsContainer.loadData(data.collections)
       requestsContainer.loadData(data.requests)
       mysqlContainer.loadData(data.mysql)
@@ -3002,9 +3285,9 @@ SM.AppInfo.ShareFile.OptionsFieldSet = Ext.extend(Ext.form.FieldSet, {
       prop: 'collectionName',
       boxLabel: 'Replace each Collection name with its ID'
     })
-    const usernames = new Ext.form.Checkbox({
-      prop: 'username',
-      boxLabel: 'Replace each User name with its ID'
+    const userAndGroupNames = new Ext.form.Checkbox({
+      prop: 'userAndGroupName',
+      boxLabel: 'Replace each User and Group name with its ID'
     })
     const clientIds = new Ext.form.Checkbox({
       prop: 'clientId',
@@ -3017,7 +3300,7 @@ SM.AppInfo.ShareFile.OptionsFieldSet = Ext.extend(Ext.form.FieldSet, {
 
     const items = [
       collectionNames,
-      usernames,
+      userAndGroupNames,
       clientIds,
       envvars
     ]
@@ -3196,18 +3479,22 @@ SM.AppInfo.fetchFromApi = async function () {
 
 SM.AppInfo.generateSharable = function (data, options) {
   const kloned = SM.Klona(data)
-  const { collections, requests, users, nodejs } = kloned
+  const { collections, requests, users, groups, nodejs } = kloned
   if (options.collectionName) {
     const padLength = Object.keys(collections).at(-1).length
     for (const id in collections) {
       collections[id].name = id.padStart(padLength, '0')
     }
   }
-  if (options.username) {
-    const padLength = Object.keys(users.userInfo).at(-1).length
+  if (options.userAndGroupName) {
+    const padLengthUsers = Object.keys(users.userInfo).at(-1).length
     for (const id in users.userInfo) {
-      users.userInfo[id].username = id.padStart(padLength, '0')
+      users.userInfo[id].username = id.padStart(padLengthUsers, '0')
     }
+    const padLengthGroups = Object.keys(groups).at(-1).length
+    for (const id in groups) {
+      groups[id].name = id.padStart(padLengthGroups, '0')
+    }    
   }
   if (options.clientId) {
     obfuscateClients(requests.operationIds)
