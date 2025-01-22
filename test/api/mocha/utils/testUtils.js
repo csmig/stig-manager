@@ -200,22 +200,6 @@ const deleteAsset = async assetId => {
   return res.json()
 }
 
-const createDisabledCollectionsandAssets = async ({context = 'full'} = {}) => {
-  // this also should create stig grants for a user, add reviews too .
-  const collection = await createTempCollection()
-  const asset = await createTempAsset()
-  if (context === 'meta') {
-    await setStigGrantsMeta(21, 85, asset.assetId)
-  }
-  else {
-    await setStigGrants(21, 85, asset.assetId)
-  }
-  await importReview(21, asset.assetId)
-  await deleteAsset(asset.assetId)
-  await deleteCollection(collection.collectionId)
-  return {collection: collection.data , asset: asset.data}
-}
-
 const importReview = async (collectionId, assetId, ruleId = "SV-106179r1_rule") => {
 
   const res = await fetch(`${baseUrl}/collections/${collectionId}/reviews/${assetId}`, {
@@ -232,60 +216,6 @@ const importReview = async (collectionId, assetId, ruleId = "SV-106179r1_rule") 
         "comment": "sure",
         "autoResult": false,
         "status": "submitted"
-      }
-    ])
-  })
-  if (!res.ok) { 
-    throw new Error(`HTTP error, Status: ${res.status}`)
-  }
-  return res.json()
-}
-
-const setStigGrants = async (collectionId, userId, assetId) => {
-
-  const res = await fetch(`${baseUrl}/collections/${collectionId}/grants/user/${userId}/access`, {
-    method: 'PUT',
-    headers: {
-      Authorization: `Bearer ${adminToken}`,
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify([
-      {
-          "benchmarkId": "VPN_SRG_TEST",
-          "assetId": `${assetId}`
-      },
-      {
-          "benchmarkId": "VPN_SRG_TEST",
-          "assetId": "42"
-      },
-      {
-          "benchmarkId": "VPN_SRG_TEST",
-          "assetId": "154"
-      }        
-    ])
-  })
-  if (!res.ok) { 
-    throw new Error(`HTTP error, Status: ${res.status}`)
-  }
-  return res.json()
-}
-
-const setStigGrantsMeta = async (collectionId, userId, assetId) => {
-
-  const res = await fetch(`${baseUrl}/collections/${collectionId}/grants/user/${userId}/access`, {
-    method: 'PUT',
-    headers: {
-      Authorization: `Bearer ${adminToken}`,
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify([
-      {
-          "benchmarkId": "VPN_SRG_TEST",
-          "assetId": `${assetId}`
-      },
-      {
-          "benchmarkId": "VPN_SRG_TEST",
-          "assetId": "42"
       }
     ])
   })
@@ -539,8 +469,6 @@ const putReviewByAssetRule = async (collectionId, assetId, ruleId, body) => {
   return res.json()
 }
 
-
-
 const resetTestAsset = async () => {
   const res = await putAsset("42", {
     name: "Collection_X_lvl1_asset-1",
@@ -731,7 +659,6 @@ export {
   putAsset,
   setDefaultRevision,
   createTempAsset,
-  createDisabledCollectionsandAssets,
   createTempCollection,
   getAsset,
   getAssetsByLabel,
