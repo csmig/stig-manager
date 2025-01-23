@@ -552,8 +552,9 @@ exports.getAppInfo = async function() {
   GROUP BY
     c.collectionId
   `  
-const sqlAclUserCountsByCollection = `
-    with ctePerGrantee as (select
+  const sqlGrantsByCollection = `
+  with ctePerGrantee as (
+    select
       cg.collectionId, 
       json_object(
         'grantId', cg.grantId,
@@ -581,21 +582,20 @@ const sqlAclUserCountsByCollection = `
           end
       ) as perGrantee
     from 
-      collection_grant_acl cga 
-      right join collection_grant cg ON cg.grantId = cga.grantId
+      collection_grant cg
+      left join collection_grant_acl cga ON cg.grantId = cga.grantId
       left join stig_asset_map sam on sam.assetId=cga.assetId and sam.benchmarkId=cga.benchmarkId
       left join asset a on a.assetId = sam.assetId
     group by
-      cg.collectionId, cg.grantId, cg.roleId)
-        select 
-          collectionId, 
-          json_arrayagg(perGrantee) as aclCounts
-        from 
-          ctePerGrantee
-        group by 
-          collectionId
-`
-  const sqlGrantCounts = `
+      cg.grantId)
+    select 
+      collectionId, 
+      json_arrayagg(perGrantee) as grants
+    from 
+      ctePerGrantee
+    group by 
+      collectionId`
+  const sqlRoleCountsByCollection = `
   SELECT 
     collectionId,
     SUM(CASE WHEN roleId = 1 THEN 1 ELSE 0 END) AS restricted,
@@ -740,8 +740,8 @@ const sqlAclUserCountsByCollection = `
     [assetStigByCollection],
     [countsByCollection],
     [labelCountsByCollection],
-    [aclUserCountsByCollection],
-    [grantCountsByCollection],
+    [grantsByCollection],
+    [roleCountsByCollection],
     [userInfo],
     [userGroupInfo],
     [mySqlVersion],
@@ -752,8 +752,8 @@ const sqlAclUserCountsByCollection = `
     dbUtils.pool.query(sqlCollectionAssetStigs),
     dbUtils.pool.query(sqlCountsByCollection),
     dbUtils.pool.query(sqlLabelCountsByCollection),
-    dbUtils.pool.query(sqlAclUserCountsByCollection),
-    dbUtils.pool.query(sqlGrantCounts),
+    dbUtils.pool.query(sqlGrantsByCollection),
+    dbUtils.pool.query(sqlRoleCountsByCollection),
     dbUtils.pool.query(sqlUserInfo),
     dbUtils.pool.query(sqlUserGroupInfo),
     dbUtils.pool.query(sqlMySqlVersion),
@@ -784,36 +784,33 @@ const sqlAclUserCountsByCollection = `
   countsByCollection = createObjectFromKeyValue(countsByCollection, "collectionId")
   labelCountsByCollection = createObjectFromKeyValue(labelCountsByCollection, "collectionId")
   assetStigByCollection = createObjectFromKeyValue(assetStigByCollection, "collectionId")
-  aclUserCountsByCollection = createObjectFromKeyValue(aclUserCountsByCollection, "collectionId")
-  grantCountsByCollection = createObjectFromKeyValue(grantCountsByCollection, "collectionId")
+  grantsByCollection = createObjectFromKeyValue(grantsByCollection, "collectionId")
+  roleCountsByCollection = createObjectFromKeyValue(roleCountsByCollection, "collectionId")
 
   // Bundle "byCollection" stats together by collectionId
   for(const collectionId in countsByCollection) {
     if (assetStigByCollection[collectionId]) {
       countsByCollection[collectionId].assetStigRanges = assetStigByCollection[collectionId]
     }
-    if (aclUserCountsByCollection[collectionId]) {
-      const aclCounts = {
-        grantees:{}
-      }
+    if (grantsByCollection[collectionId]) {
+      const grants = {}
       
       // For each ACL in the collection's array of ACLs
-      for (const acl of aclUserCountsByCollection[collectionId].aclCounts) {
-          aclCounts.grantees[acl.grantId] = acl
+      for (const grant of grantsByCollection[collectionId].grants) {
+          grants[grant.grantId] = grant
+          delete grant.grantId
       }
       
-      countsByCollection[collectionId].aclCounts = aclCounts
+      countsByCollection[collectionId].grants = grants
     }
     else {
-      countsByCollection[collectionId].aclCounts = {
-        grantee: {}
-      }
+      countsByCollection[collectionId].grants = {}
     }
-    if (grantCountsByCollection[collectionId]) {
-      countsByCollection[collectionId].grantCounts = grantCountsByCollection[collectionId]
+    if (roleCountsByCollection[collectionId]) {
+      countsByCollection[collectionId].roleCounts = roleCountsByCollection[collectionId]
     }
     else {
-      countsByCollection[collectionId].grantCounts = {
+      countsByCollection[collectionId].roleCounts = {
         restricted: 0,
         full: 0,
         manage: 0,

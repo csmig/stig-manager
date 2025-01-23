@@ -26,48 +26,47 @@ SM.AppInfo.uptimeString = function uptimeString(uptime) {
   return `${days}d ${hours}h ${minutes}m ${seconds}s`
 }
 
-SM.AppInfo.transformPreviousSchemas = function (input) {
+SM.AppInfo.transformPreviousSchemas = function transform (input) {
   if (input.schema === 'stig-manager-appinfo-v1.1') {
     return input
   }
-  //Before v1.1 (rbac-2), only "restricted" grants had ACLs, so the counts that get transformed here will not be directly comparable to v1.1 counts.
+  // Before v1.1 (rbac-2), only "restricted" grants were reported, so the counts that get transformed here will not be directly comparable to v1.1 counts.
   if (input.schema === 'stig-manager-appinfo-v1.0') {
-    return transformAppInfoToV1_1(input)
+    return transform(transformV1_0(input))
   }
   // first version of appInfo had "stigmanVersion" property instead of "version"  
   if (input.stigmanVersion){
-    // input.version = input.stigmanVersion
-    return SM.AppInfo.transformAppInfoToV1_0(input)
+    return transform(transformV0_0(input))
   }
   // if neither version nor stigmanVersion, not a supported file.
   else{
     return false
   }  
 
-  function transformAppInfoToV1_1(input) {
+  function transformV1_0(input) {
     const o = {}
-    // shifts aclCount.users to aclCount.grantees, creates grantId from userId and adds grantee object
+    // shifts aclCount.users to aclCount.grants, creates grantId from userId and adds grantee object
     function transformCountsByCollection(collections) {
       const o = {}
       for (const id in collections) {
-        const { 
-          aclCounts,
-          ...keep } = collections[id]
+        const { aclCounts, grantCounts, ...keep } = collections[id]
 
-          aclCounts.grantees = {}
-          for (const grantId in aclCounts.users) {
-            aclCounts.grantees[grantId] = {
-              grantId: grantId,
-              grantee: {
-                userId: grantId,
-                groupId: null,
-              },
-              ...aclCounts.users[grantId]
-            }
+          
+        const grants = {}
+        for (const grantId in aclCounts.users) {
+          grants[grantId] = {
+            grantId: grantId,
+            grantee: {
+              userId: grantId,
+              groupId: null,
+            },
+            ...aclCounts.users[grantId]
           }
+        }
 
         o[id] = {
-          aclCounts: aclCounts,
+          grants,
+          roleCounts: grantCounts,
           ...keep
         }
         
@@ -75,7 +74,7 @@ SM.AppInfo.transformPreviousSchemas = function (input) {
       return o
     }
 
-    const norm = {
+    const v1_1 = {
       date: input.date,
       schema: 'stig-manager-appinfo-v1.1',
       version: input.version,
@@ -87,11 +86,11 @@ SM.AppInfo.transformPreviousSchemas = function (input) {
       nodejs: input.nodejs
     }
 
-    return SM.AppInfo.transformPreviousSchemas(norm)
+    return v1_1
 
   }
 
-  function transformAppInfoToV1_0(input) {
+  function transformV0_0(input) {
     // renames properties "assetStigByCollection" and "restrictedGrantCountsByUser"
     function transformCountsByCollection(i) {
       const o = {}
@@ -250,7 +249,7 @@ SM.AppInfo.transformPreviousSchemas = function (input) {
         parseInt(values[3])
     }    
 
-    const norm = {
+    const v1_0 = {
       date: input.dateGenerated,
       schema: 'stig-manager-appinfo-v1.0',
       version: input.stigmanVersion,
@@ -279,7 +278,7 @@ SM.AppInfo.transformPreviousSchemas = function (input) {
       }
     }
 
-    return SM.AppInfo.transformPreviousSchemas(norm)
+    return v1_0
   }
 }
 
@@ -455,10 +454,10 @@ SM.AppInfo.Collections.OverviewGrid = Ext.extend(Ext.grid.GridPanel, {
         name: 'reviewsTotal',
         convert: (v, r) => r.reviews + r.reviewsDisabled
       },
-      'aclCounts',
+      'grants',
       {
-        name: 'aclCountGrantees',
-        convert: (v, r) => Object.keys(r.aclCounts.grantees).length || 0
+        name: 'aclCountGrants',
+        convert: (v, r) => Object.keys(r.grants).length || 0
       }
     ]
 
@@ -559,7 +558,7 @@ SM.AppInfo.Collections.OverviewGrid = Ext.extend(Ext.grid.GridPanel, {
       },
       {
         header: "Grants",
-        dataIndex: 'aclCountGrantees',
+        dataIndex: 'aclCountGrants',
         sortable: true,
         align: 'right',
         renderer: SM.AppInfo.numberRenderer
@@ -645,10 +644,10 @@ SM.AppInfo.Collections.FullGridLocked = Ext.extend(Ext.grid.GridPanel, {
         name: 'reviewsTotal',
         convert: (v, r) => r.reviews + r.reviewsDisabled
       },
-      'aclCounts',
+      'grants',
       {
-        name: 'aclCountGrantees',
-        convert: (v, r) => Object.keys(r.aclCounts.grantees).length || 0
+        name: 'aclCountGrants',
+        convert: (v, r) => Object.keys(r.grants).length || 0
       },
       {
         name: 'range00',
@@ -672,19 +671,19 @@ SM.AppInfo.Collections.FullGridLocked = Ext.extend(Ext.grid.GridPanel, {
       },
       {
         name: 'restricted',
-        mapping: 'grantCounts.restricted'
+        mapping: 'roleCounts.restricted'
       },
       {
         name: 'full',
-        mapping: 'grantCounts.full'
+        mapping: 'roleCounts.full'
       },
       {
         name: 'manage',
-        mapping: 'grantCounts.manage'
+        mapping: 'roleCounts.manage'
       },
       {
         name: 'owner',
-        mapping: 'grantCounts.owner'
+        mapping: 'roleCounts.owner'
       },
       {
         name: 'collectionLabels',
@@ -826,7 +825,7 @@ SM.AppInfo.Collections.FullGridLocked = Ext.extend(Ext.grid.GridPanel, {
       },
       {
         header: "Grants",
-        dataIndex: 'aclCountGrantees',
+        dataIndex: 'aclCountGrants',
         sortable: true,
         align: 'right',
         renderer: SM.AppInfo.numberRenderer
@@ -1007,7 +1006,7 @@ SM.AppInfo.Collections.FullGridLocked = Ext.extend(Ext.grid.GridPanel, {
   }
 })
 
-SM.AppInfo.Collections.AclGrid = Ext.extend(Ext.grid.GridPanel, {
+SM.AppInfo.Collections.GrantsGrid = Ext.extend(Ext.grid.GridPanel, {
   initComponent: function () {
     const fields = [
       {
@@ -1170,7 +1169,7 @@ SM.AppInfo.Collections.AclGrid = Ext.extend(Ext.grid.GridPanel, {
         },
         new SM.RowCountTextItem({
           store,
-          noun: 'ACL',
+          noun: 'Grant',
           iconCls: 'sm-collection-icon'
         })
       ]
@@ -1327,7 +1326,7 @@ SM.AppInfo.Collections.AssetStigGrid = Ext.extend(Ext.grid.GridPanel, {
   }
 })
 
-SM.AppInfo.Collections.GrantsGrid = Ext.extend(Ext.grid.GridPanel, {
+SM.AppInfo.Collections.RolesGrid = Ext.extend(Ext.grid.GridPanel, {
   initComponent: function () {
     const fields = [
       {
@@ -1752,23 +1751,23 @@ SM.AppInfo.Collections.Container = Ext.extend(Ext.Container, {
       // expects just the collections property of the full object
       const overview = []
       const assetStig = []
-      const grants = []
+      const roles = []
       const labels = []
       const settingRows = []
       for (const collectionId in data) {
-        const { settings, assetStigRanges, grantCounts, labelCounts, name, ...rest } = data[collectionId]
+        const { settings, assetStigRanges, roleCounts, labelCounts, name, ...rest } = data[collectionId]
         overview.push({ collectionId, name, ...rest })
         assetStig.push({ collectionId, name, ...assetStigRanges })
-        grants.push({ collectionId, name, ...grantCounts })
+        roles.push({ collectionId, name, ...roleCounts })
         labels.push({ collectionId, name, ...labelCounts })
         settingRows.push({ collectionId, name, ...settings })
       }
       overviewGrid.store.loadData(overview)
       assetStigGrid.store.loadData(assetStig)
-      grantsGrid.store.loadData(grants)
+      rolesGrid.store.loadData(roles)
       labelsGrid.store.loadData(labels)
       settingsGrid.store.loadData(settingRows)
-      aclGrid.store.removeAll()
+      grantsGrid.store.removeAll()
 
       const overviewLocked = []
       for (const collectionId in data) {
@@ -1777,8 +1776,8 @@ SM.AppInfo.Collections.Container = Ext.extend(Ext.Container, {
       fullGridLocked.store.loadData(overviewLocked)
     }
 
-    function loadAce(sm, index, record) {
-      const data = record.data.aclCounts?.grantees
+    function loadGrants(sm, index, record) {
+      const data = record.data.grants
       const rows = []
       for (const grantId in data) {
         const aclData = data[grantId]
@@ -1789,7 +1788,7 @@ SM.AppInfo.Collections.Container = Ext.extend(Ext.Container, {
           ...aclData 
         })
       }
-      aclGrid.store.loadData(rows)
+      grantsGrid.store.loadData(rows)
     }    
 
     function syncGridsOnRowSelect(sm, rowIndex, e) {
@@ -1805,7 +1804,7 @@ SM.AppInfo.Collections.Container = Ext.extend(Ext.Container, {
           peeredGrid.view.focusRow(destIndex)
         }
       }
-      loadAce(null, null, overviewGrid.store.getById(sourceRecord.id))
+      loadGrants(null, null, overviewGrid.store.getById(sourceRecord.id))
     }
 
     const overviewGrid = new SM.AppInfo.Collections.OverviewGrid({
@@ -1824,16 +1823,16 @@ SM.AppInfo.Collections.Container = Ext.extend(Ext.Container, {
       hideMode: 'offsets'
     })
 
-    const aclGrid = new SM.AppInfo.Collections.AclGrid({
-      title: 'Access Control Lists',
+    const grantsGrid = new SM.AppInfo.Collections.GrantsGrid({
+      title: 'Grants',
       border: false,
       collapsible: true,
       region: 'south',
       split: true,
       height: 240
     })
-    const grantsGrid = new SM.AppInfo.Collections.GrantsGrid({
-      title: 'Grants',
+    const rolesGrid = new SM.AppInfo.Collections.RolesGrid({
+      title: 'Roles',
       border: false,
       onRowSelect: syncGridsOnRowSelect,
       hideMode: 'offsets'
@@ -1856,7 +1855,7 @@ SM.AppInfo.Collections.Container = Ext.extend(Ext.Container, {
       onRowSelect: syncGridsOnRowSelect,
       hideMode: 'offsets'
     })
-    const peeredGrids = [overviewGrid, grantsGrid, labelsGrid, assetStigGrid, settingsGrid, fullGridLocked]
+    const peeredGrids = [fullGridLocked, overviewGrid, rolesGrid, labelsGrid, assetStigGrid, settingsGrid]
     const centerTp = new Ext.TabPanel({
       region: 'center',
       border: false,
@@ -1868,7 +1867,7 @@ SM.AppInfo.Collections.Container = Ext.extend(Ext.Container, {
       layout: 'border',
       items: [
         centerTp,
-        aclGrid
+        grantsGrid
       ],
       loadData
     }
