@@ -456,7 +456,7 @@ SM.AppInfo.Collections.OverviewGrid = Ext.extend(Ext.grid.GridPanel, {
       },
       'grants',
       {
-        name: 'aclCountGrants',
+        name: 'countOfGrants',
         convert: (v, r) => Object.keys(r.grants).length || 0
       }
     ]
@@ -558,7 +558,7 @@ SM.AppInfo.Collections.OverviewGrid = Ext.extend(Ext.grid.GridPanel, {
       },
       {
         header: "Grants",
-        dataIndex: 'aclCountGrants',
+        dataIndex: 'countOfGrants',
         sortable: true,
         align: 'right',
         renderer: SM.AppInfo.numberRenderer
@@ -646,7 +646,7 @@ SM.AppInfo.Collections.FullGridLocked = Ext.extend(Ext.grid.GridPanel, {
       },
       'grants',
       {
-        name: 'aclCountGrants',
+        name: 'countOfGrants',
         convert: (v, r) => Object.keys(r.grants).length || 0
       },
       {
@@ -825,7 +825,7 @@ SM.AppInfo.Collections.FullGridLocked = Ext.extend(Ext.grid.GridPanel, {
       },
       {
         header: "Grants",
-        dataIndex: 'aclCountGrants',
+        dataIndex: 'countOfGrants',
         sortable: true,
         align: 'right',
         renderer: SM.AppInfo.numberRenderer
@@ -1780,12 +1780,12 @@ SM.AppInfo.Collections.Container = Ext.extend(Ext.Container, {
       const data = record.data.grants
       const rows = []
       for (const grantId in data) {
-        const aclData = data[grantId]
+        const grantData = data[grantId]
         rows.push({ 
-          grantId: aclData.grantId, // Use the unique grantId
-          granteeName: SM.AppInfo.usernameLookup[aclData.grantee.userId] || 
-          SM.AppInfo.groupNameLookup[aclData.grantee.userGroupId],
-          ...aclData 
+          grantId: grantData.grantId, // Use the unique grantId
+          granteeName: SM.AppInfo.usernameLookup[grantData.grantee.userId] || 
+          SM.AppInfo.groupNameLookup[grantData.grantee.userGroupId],
+          ...grantData 
         })
       }
       grantsGrid.store.loadData(rows)
