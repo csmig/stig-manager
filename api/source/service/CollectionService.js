@@ -126,7 +126,9 @@ exports.queryCollection = async function ({collectionId, projections = [], eleva
       ud.username)),
     'roleId', cgs.roleId,
     'grantees', cgs.grantees))
-    from cteGrantees cgs left join user_data ud on cgs.userId = ud.userId) as users`)
+    from cteGrantees cgs left join user_data ud on cgs.userId = ud.userId
+    where ud.userId is not null
+    ) as users`)
   }
 
   if (projections.includes('labels')) {
