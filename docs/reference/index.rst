@@ -15,6 +15,12 @@ This is a glossary with definitions for terms like :term:`Asset`:
     ACL
         See :term:`Access Control List` 
 
+    Access Control Rule
+        An individual item describing varying levels of Access to the components of a Collection, such as specific Assets, STIGs, Labels, or the entire Collection. The overall Access Control List for a Grant is composed of these Access Control Rules. See :ref:`roles-and-access` for more information.
+
+    ACL
+        See :term:`Access Control List` 
+
     Asset
         An Asset is any component to which a STIG may be attached. Assets are created and changed in the Collection Configuration screen. To conform to the Navy RMF Process, an Asset must have a Name, IP Address, MAC Address, and Fully Qualified Domain Name unless it is designated "Non-Computing." The Asset Properties screen allows you to set all these properties, as well as attach STIGs.
 
@@ -72,7 +78,7 @@ This is a glossary with definitions for terms like :term:`Asset`:
         A Grant is a record of a User or User Group being given a Role in a Collection.  A User can have Grants in multiple Collections, and have different Roles in each Collection. Collection Owners or Managers can create/remove/modify Grants. :term:`Access Control List` rules can be applied to Grants to further refine the User's access to the Collection.  See :ref:`roles-and-access` for more information.
 
     Label
-        A Label is a user-defined tag that can be applied to Assets in a Collection. Labels can be used to filter Assets in the Collection Dashboard and other views, and can be used in Access Control Rules to restrict access to Assets based on their Labels.
+        A Label is a user-defined tag that can be applied to Assets in a Collection. Labels can be used to filter Assets in the Collection Dashboard and other views, and can be used in Access Control Rules to restrict or enable access to Assets based on their Labels.
 
     Review
         A Review is the result of an Evaluation of a STIG Requirement that a User or automated tool has performed. These Reviews are composed of Review Evaluation Content and Status properties.  Each of these pieces carry an "Attribution" that includes the User that set that Content or Status and a timestamp indicating when they did so.  

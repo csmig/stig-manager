@@ -92,7 +92,7 @@ SM.NavTree.LibraryNodesConfig = function (stigs) {
     children.unshift({
       id: 'library-diff-leaf',
       action: 'stig-diff',
-      text: 'Compare revisions<span class="sm-navtree-sprite">preview</span>',
+      text: 'Compare revisions',
       iconCls: 'sm-diff-icon',
       multiRevisionStigs,
       leaf: true

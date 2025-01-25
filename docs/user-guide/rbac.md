@@ -1,4 +1,4 @@
-# Role-Based Access Control (RBAC) components
+# Role-Based Access Control (RBAC) Details
 
 ## 1. Grant
 Grant = Collection + User/Group + Role  (formerly Access Level)

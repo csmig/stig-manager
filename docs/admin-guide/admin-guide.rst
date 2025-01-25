@@ -61,7 +61,7 @@ User Properties
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Double-click on a User, or select a user and click the "Modify User..." button to view that User's Grants and other information. 
-The pop-up will list the User's email address and other Info, as well a list of all the Collections that User has a grant to. The "Last Claims" box displays the OIDC access token information received the last time the User accessed the application. 
+The pop-up will list the User's email address and other Info, as well as the User's Group Membership and Grants. The Direct Grants tab lists the Grants that have been specifically applied to the User, and the "Effective Grants" panel includes Collection Grants for Groups the User is a member of. The "Last Claims" tab displays the OIDC access token information received the last time the User accessed the application. 
 
 .. thumbnail:: /assets/images/admin-user-properties.png
       :width: 50% 

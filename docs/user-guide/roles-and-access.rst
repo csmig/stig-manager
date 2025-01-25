@@ -62,6 +62,7 @@ Access Control Rules
 Access Controls Rules allow fine-grained management of what Assets and STIGs users can see and Evaluate in a Collection. They are particularly important for users with the Restricted role, as these users have no default access and rely entirely on Access Controls to perform their work.
 
 Access Controls can be defined based on any combination of the following elements:
+  - **Collection**: Add a rule that applies to all Assets and STIGs in the Collection.
   - **Assets**: Specific Assets in the Collection
   - **STIGs**: Security Technical Implementation Guides assigned to Assets
   - **Labels**: Tags that group Assets together
@@ -90,8 +91,10 @@ When multiple Access Controls apply to the same Asset or STIG, the following rul
   - In this case, if Asset-123 has the label "Windows Workstation", both rules are composed of two elements, and apply to the same STIG on Asset-123. The Read access rule is more restrictive, so the User would have Read access to the Windows-10-STIG on Asset-123, AND Read access for the Windows-10-STIG on all other Assets with the 'Windows Workstation' label. 
 
 **3. Direct Grants to Users take precedence over any Grant to a Group the User belongs to**
+  - If User1 is a member of Group1, and both User1 and Group1 have Grants in the Collection, only the Grant given directly to User1 will apply. The Grant given to Group1 will be ignored for User1.
 
 **4. When a user belongs to multiple Groups, the Grant with the highest priority Role is selected**
+  - If User1 is a member of Group1 and Group2, and Group1 has a "Manage" Role and Group2 has a "Full" Role in the Collection, User1 will have the "Manage" Role in the Collection.
 
 These controls allow Collection Owners and Managers to precisely define who can access what within their Collection.
 The Users tab in the Manage Collection interface provides a granular view of the effective access for each User in the Collection, based on their Grants and Access Controls.
@@ -106,26 +109,37 @@ For a granular breakdown of the RBAC model in STIG Manager, see the following de
 
 
 
-Examples?
+Examples
 --------------------------------------------------------
 
+All examples below can apply to individual User Grants or Group Grants. 
+These actions can be performed by the Collection Owner or Manager in the Manage Collection interface.
+To edit the Access Control list for Grant, click the "Edit ACL" button next to the User or Group.
+
+.. thumbnail:: /assets/images/collection-manage-grants-w-edit-acl-highlighted-trimmed.png
+      :width: 25% 
+      :show_caption: True
+      :title: Click the Edit ACL button to manage Access Controls for a Grant.
 
 
+**Grant a User or Group Read/Write on an entire Collection**
+  - Create a Grant for the User or Group with the Full Role
+  - No specific ACL required. Default access for the Full Role grants Read/Write access to Reviews for all Assets and STIGs in the Collection.
+  
+**Let a User change Reviews for all Assets and STIGs in a Collection, except for those with the "For Reference" label**
+  - Grant the User a Full, Manage, or Owner Role
+  - Select "For Reference" from the "Labels" node of the navigation tree, and "Add -> with Read Only" access. Save.
+  - By default, these roles have Read/Write access to all Assets and STIGs in the Collection. Adding this rule restricts access only to Assets with the "For Reference" label to "Read Only".
 
-.. list-table:: Effective Access Example
-    :widths: 40 40 40 40 40 40
-    :header-rows: 1
-    :class: tight-table
 
-    * - Asset 
-      - Label
-      - STIG
-      - Asset/STIG  
-      - Label/STIG
-      - Effective Access
-    * - Read Only
-      - Read/Write
-      - NA
-      - R
-      - None
-      - Read/Write for All Assets with label, Read Only for specified Asset, cannot see STIG X for Assets with Label Y
+**Make the entire Collection Read-only for a specific User or Group**
+  - Select the "Collection" item in the Navigation Tree.
+  - Click the "Add" button and select "with Read Only access." Save.
+  
+
+.. thumbnail:: /assets/images/collection-manage-acl-popup-collection-selected.png
+      :width: 25% 
+      :show_caption: True
+      :title: Select the Collection, and "Add with Read Only access."
+  
+

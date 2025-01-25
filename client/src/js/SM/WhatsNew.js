@@ -2,7 +2,7 @@ Ext.ns('SM.WhatsNew')
 
 SM.WhatsNew.Sources = [
   {
-    date: '2025-01-21',
+    date: '2025-01-31',
     header: `New Dynamic User Grants and User Groups Features`,
     body: `
     <p>The Collection Grants system has been significantly reworked to allow for more dynamic and flexible User Grant management. These new Grants also allow for restriction of Users to "Read Only" or "Read/Write" access to Collection Reviews.</p>
@@ -19,6 +19,20 @@ SM.WhatsNew.Sources = [
 
     `
   },
+
+  {
+    date: '2025-01-31',
+    header: `Collection Review Workspace Changes`,
+    body: `
+    <p>The Collection Review Workspace has been reworked to give more room to Checklist statistics columns and enable future expansion. The display should now be significantly less constrained, especially when viewing extra columns that are usually hidden by default. 
+    
+    <p>Review History and Attachments features are now accessible from the history <span class="sm-whats-new-no-border"><img src="img/clock.svg" width="14" height="14"/></span> and attachment <span class="sm-whats-new-no-border"><img src="img/attachment.svg" width="14" height="14"/></span> icons that appear when hovering over an Asset.</p>
+
+    <p><img src="img/whatsnew/2025-01-31-collection-review.png" width=750/></p>
+
+    `
+  },
+
   {
     date: '2024-10-09',
     header: `New Application Information Report for Application Managers`,
