@@ -44,7 +44,7 @@ describe('GET - Op', () => {
           expect(res.body).to.be.an('object')
           const rtc = reference.testCollection
           expect(res.body).to.nested.include({
-            schema: 'stig-manager-appinfo-v1.0',
+            schema: 'stig-manager-appinfo-v1.1',
             [`collections.${rtc.collectionId}.state`]: rtc.appinfo.state,
             [`collections.${rtc.collectionId}.assets`]: rtc.appinfo.assets,
             [`collections.${rtc.collectionId}.assetsDisabled`]: rtc.appinfo.assetsDisabled,

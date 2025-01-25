@@ -1394,11 +1394,12 @@ exports.getChecklistByAsset = async function(assetId, benchmarks, format) {
     }
 }
 
-exports.getAssetsByStig = async function({collectionId, benchmarkId, projections = [], labels, grant}) {
+exports.getAssetsByStig = async function({collectionId, benchmarkId, labels, grant}) {
   const ctes = []
   const columns = [
     'DISTINCT CAST(a.assetId as char) as assetId',
     'a.name',
+    'coalesce(any_value(cae.access), "rw") as access',
     `coalesce(
       (select
         json_arrayagg(BIN_TO_UUID(cl.uuid,1))
@@ -1416,10 +1417,8 @@ exports.getAssetsByStig = async function({collectionId, benchmarkId, projections
     'inner join asset a on c.collectionId = a.collectionId',
     'left join stig_asset_map sa on a.assetId = sa.assetId',
   ]
-  if (grant.roleId === 1) {
-    ctes.push(dbUtils.cteAclEffective({cgIds: grant.grantIds}))
-    joins.push('inner join cteAclEffective cae on sa.saId = cae.saId')
-  }
+  ctes.push(dbUtils.cteAclEffective({cgIds: grant.grantIds}))
+  joins.push(`${grant.roleId === 1 ? 'inner' : 'left'} join cteAclEffective cae on sa.saId = cae.saId`)
 
   // PREDICATES
   const predicates = {

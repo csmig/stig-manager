@@ -403,18 +403,6 @@ SM.Acl.AssignedRulesGrid = Ext.extend(Ext.grid.EditorGridPanel, {
     const bbar = new Ext.Toolbar({
       items: [
         {
-          xtype: 'tbbutton',
-          iconCls: 'icon-refresh',
-          tooltip: 'Reload this grid',
-          width: 20,
-          handler: function (btn) {
-            store.reload()
-          }
-        },
-        {
-          xtype: 'tbseparator'
-        },
-        {
           xtype: 'exportbutton',
           hasMenu: false,
           gridBasename: 'Collection ACL',

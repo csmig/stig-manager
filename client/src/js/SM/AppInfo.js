@@ -970,14 +970,14 @@ SM.AppInfo.Collections.FullGridLocked = Ext.extend(Ext.grid.GridPanel, {
 
     const bbar = new Ext.Toolbar({
       items: [
-        {
-          xtype: 'exportbutton',
-          hasMenu: false,
-          grid: this,
-          gridBasename: this.exportName || this.title || 'collections',
-          iconCls: 'sm-export-icon',
-          text: 'CSV'
-        },
+        // {
+        //   xtype: 'exportbutton',
+        //   hasMenu: false,
+        //   grid: this,
+        //   gridBasename: this.exportName || this.title || 'collections',
+        //   iconCls: 'sm-export-icon',
+        //   text: 'CSV'
+        // },
         {
           xtype: 'tbfill'
         },
