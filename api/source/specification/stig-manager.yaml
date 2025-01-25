@@ -2932,13 +2932,13 @@ paths:
       operationId: getEffectiveAclByCollectionUser
       responses:
         '200':
-          description: EffectiveAclContextCollectionUser array response
+          description: EffectiveAcl array response
           content:
             application/json:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/EffectiveAclContextCollectionUser'
+                  $ref: '#/components/schemas/EffectiveAcl'
         '403':
           $ref: '#/components/responses/Forbidden'
         default:
@@ -4622,6 +4622,8 @@ components:
           $ref: '#/components/schemas/CollectionId'
         name:
           $ref: '#/components/schemas/AssetName'
+        access:
+          $ref: '#/components/schemas/AclRuleAccess'
       required:
         - assetId
         - name
@@ -6060,7 +6062,7 @@ components:
           $ref: '#/components/schemas/StringDateTimeNullable'
     DisplayName:
       $ref: '#/components/schemas/String255Nullable'
-    EffectiveAclContextCollectionUser:
+    EffectiveAcl:
       additionalProperties: false
       type: object
       properties:
@@ -7765,8 +7767,6 @@ components:
           $ref: '#/components/schemas/UserId'
         username:
           $ref: '#/components/schemas/Username'
-        roleId:
-          $ref: '#/components/schemas/RoleId'
       required:
         - userId
         - username
@@ -7852,8 +7852,6 @@ components:
           $ref: '#/components/schemas/UserGroupId'
         name:
           $ref: '#/components/schemas/String255'
-        roleId: 
-          $ref: '#/components/schemas/RoleId'
     UserGroupGrant:
       type: object
       required:

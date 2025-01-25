@@ -453,6 +453,7 @@ SM.Grant.GrantGrid = Ext.extend(Ext.grid.EditorGridPanel, {
     this.superclass().initComponent.call(this)
   }
 })
+Ext.reg('sm-grant-grantgrid', SM.Grant.GrantGrid)
 
 SM.Grant.RoleMenuPanel = Ext.extend(Ext.Panel, {
   initComponent: function () {

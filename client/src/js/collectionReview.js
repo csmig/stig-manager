@@ -6,7 +6,7 @@ $Id: collectionReview.js 885 2018-02-20 16:26:08Z bmassey $
 async function addCollectionReview ( params ) {
 	const { leaf, selectedRule, selectedAsset, treePath } = params
 	try {
-		const idAppend = '-' + leaf.collectionId + '-' + leaf.benchmarkId.replace(/[. ]/g,'_')
+		const idAppend = '-creview-' + leaf.collectionId + '-' + leaf.benchmarkId.replace(/[. ]/g,'_')
 		const tab = Ext.getCmp('main-tab-panel').getItem('collection-review-tab' + idAppend)
 		if (tab) {
 			tab.show()
@@ -33,6 +33,7 @@ async function addCollectionReview ( params ) {
 			assetId: colAsset.assetId,
 			assetName: colAsset.name,
 			assetLabelIds: colAsset.assetLabelIds,
+			access: colAsset.access,
 			result: null,
 			detail: null,
 			comment: null,
@@ -770,7 +771,7 @@ async function addCollectionReview ( params ) {
 				type: 'string'
 			},
 	    'resultEngine',
-		'touchTs',
+			'touchTs',
 			{
 				name: 'engineResult',
 				convert: engineResultConverter
@@ -795,11 +796,7 @@ async function addCollectionReview ( params ) {
 				name:'username',
 				type:'string'
 			},
-			{
-				name:'ts',
-				type:'date',
-				dateFormat: 'Y-m-d H:i:s'
-			},
+			'ts',
 			{
 				name:'status',
 				type:'string',
@@ -892,7 +889,7 @@ async function addCollectionReview ( params ) {
 					return record.data.access === 'rw'
 				},
 				selectionchange: function (sm) {
-					if (sm.getCount() == 1) { //single row selected
+					if (sm.getCount() <= 1) { // single or no row selected
 						batchEditBtn.disable()
 					} else {
 						batchEditBtn.enable()
@@ -1111,8 +1108,8 @@ async function addCollectionReview ( params ) {
 					fixed: true,
 					sortable: false,
 					renderer: function (v, m, r) {
-						return `
-							<div class="sm-grid-cell-with-toolbar-2">
+						return r.data.ts ? 
+						`<div class="sm-grid-cell-with-toolbar-2">
 								<div class="sm-dynamic-width">
 									<div class="sm-info">         
 										&nbsp;
@@ -1122,7 +1119,7 @@ async function addCollectionReview ( params ) {
 									<span class="sm-grid-cell-tool" style="padding-right:4px"><img data-action="showHistory" ext:qtip="History" src="img/clock.svg" width="14" height="14"></span>                
 									<span class="sm-grid-cell-tool" style="padding-right:4px"><img data-action="showAttachments" ext:qtip="Attachments" src="img/attachment.svg" width="14" height="14"></span>                
 								</div>
-							</div>`
+							</div>` : ''
 					}
 	
 				}
@@ -1245,7 +1242,7 @@ async function addCollectionReview ( params ) {
 		}
 
     function cellclick(grid, rowIndex, columnIndex, e) {
-      if (e.target.tagName === "IMG") {
+      if (e.target.tagName === "IMG" && e.target.dataset?.action) {
         const record = grid.getStore().getAt(rowIndex)
         toolHandlers[e.target.dataset.action](record.data, record)
       }
