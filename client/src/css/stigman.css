@@ -422,7 +422,7 @@
 .x-grid3-hd-checker-on .x-grid3-hd-checker,
 .x-grid3-row-checked .x-grid3-row-checker,
 .x-grid3-row-selected .x-grid3-row-checker {
-  background-position: -24px 2px
+  background-position: -24px 2px;
 }
 .x-grid3-hd-checker {
   background-position: 1px 1px
@@ -2367,14 +2367,13 @@ td.x-grid3-hd-over .x-grid3-hd-inner {
 	background-color: #976a6e;
 	color: #eee;
 }
-.sm-row-read {
-	/* opacity: 0.5; */
-}
 
-.sm-row-read .x-grid3-row-checker {
-	background-size: 16px;
-	/* visibility: hidden; */
-	background-image: url(../img/lock.svg);
+.sm-row-readonly-icon {
+	background-size: 14px;
+	background-repeat:no-repeat;
+	background-image: url(../img/read-only.svg);
+	background-position: 0px 2px;
+	height: 18px;
 }
 
 .sm-checklist-read, .sm-checklist-read-write {

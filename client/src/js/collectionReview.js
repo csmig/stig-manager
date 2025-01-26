@@ -852,7 +852,7 @@ async function addCollectionReview ( params ) {
 			singleSelect: false,
 			checkOnly: false,
 			renderer: function (v, p, record) {
-				return `<div class="x-grid3-row-checker"${record.data.access === 'r' ? ' ext:qtip="Read only"' : ''}>&#160;</div>`
+				return `<div class=${record.data.access === 'r' ? '"sm-row-readonly-icon" ext:qtip="Read only"' : '"x-grid3-row-checker"'}>&#160;</div>`
 			},
 			// override selectRow to suspend events when clearing existing selections > 1
 			selectRow: function (index, keepExisting, preventViewNotify) {
@@ -884,6 +884,32 @@ async function addCollectionReview ( params ) {
 					}
 				}
 			},
+			// override our override to set header state based on selectable record count
+			onMouseDown : function(e, t){
+        if(e.button === 0 && t.className == 'x-grid3-row-checker'){ // Only fire if left-click
+            e.stopEvent();
+            var row = e.getTarget('.x-grid3-row');
+            if(row){
+                var index = row.rowIndex;
+                if(this.isSelected(index)){
+                    this.deselectRow(index);
+                }else{
+                    this.selectRow(index, true);
+                    this.grid.getView().focusRow(index);
+                }
+            }
+            const hd = this.grid.view.innerHd.querySelector('.x-grid3-hd-row .x-grid3-td-checker .x-grid3-hd-checker')
+
+            if (hd) {
+                const hdState = this.selections.length === 0 ? null : this.grid.store.getSelectableCount() === this.selections.length ? 'on' : 'ind'
+                hd.classList.remove('x-grid3-hd-checker-on')
+                hd.classList.remove('x-grid3-hd-checker-ind')
+                if (hdState) {
+                    hd.classList.add(`x-grid3-hd-checker-${hdState}`)
+                }
+            }
+        }
+    	},
 			listeners: {
 				beforerowselect: function (sm, rowIndex, keepExisting, record) {
 					return record.data.access === 'rw'
@@ -1120,10 +1146,15 @@ async function addCollectionReview ( params ) {
 									<span class="sm-grid-cell-tool" style="padding-right:4px"><img data-action="showAttachments" ext:qtip="Attachments" src="img/attachment.svg" width="14" height="14"></span>                
 								</div>
 							</div>` : ''
+					},
+					listeners: {
+						mousedown: function (col, grid, index, e) {
+							if (e.target.dataset?.action) {
+								return false
+							}
+						}
 					}
-	
 				}
-			
 			],
 			isCellEditable: function(col, row) {
 				const record = reviewsStore.getAt(row)
@@ -1243,6 +1274,7 @@ async function addCollectionReview ( params ) {
 
     function cellclick(grid, rowIndex, columnIndex, e) {
       if (e.target.tagName === "IMG" && e.target.dataset?.action) {
+				e.stopEvent()
         const record = grid.getStore().getAt(rowIndex)
         toolHandlers[e.target.dataset.action](record.data, record)
       }
@@ -1463,9 +1495,9 @@ async function addCollectionReview ( params ) {
 						}					
 					}
 				},
-				getRowClass: function (record) {
-					return record.data.access === 'r' ? 'sm-row-read' : ''
-				}
+				// getRowClass: function (record) {
+				// 	return record.data.access === 'r' ? 'sm-row-read' : ''
+				// }
 			}),
 			// width: 300,
 			tbar: new Ext.Toolbar({

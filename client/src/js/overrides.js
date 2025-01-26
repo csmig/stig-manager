@@ -56,12 +56,12 @@ Ext.override(Ext.grid.CheckboxSelectionModel, {
     },
     onHdMouseDown : function(e, t) {
         if(t.className == 'x-grid3-hd-checker'){
-            e.stopEvent();
+            e.stopEvent()
             var hd = Ext.fly(t.parentNode);
-            var isChecked = hd.hasClass('x-grid3-hd-checker-on');
-            var isIndeterminate = hd.hasClass('x-grid3-hd-checker-ind');
+            var isChecked = hd.hasClass('x-grid3-hd-checker-on')
+            var isIndeterminate = hd.hasClass('x-grid3-hd-checker-ind')
             if (isChecked ) {
-                hd.removeClass('x-grid3-hd-checker-on');
+                hd.removeClass('x-grid3-hd-checker-on')
                 this.suspendEvents(false)
                 this.deselectRange(0, this.grid.store.getCount() - 1)
                 this.resumeEvents()
@@ -69,7 +69,8 @@ Ext.override(Ext.grid.CheckboxSelectionModel, {
 
             }
             else {
-                hd.addClass('x-grid3-hd-checker-on');
+                if (isIndeterminate) hd.removeClass('x-grid3-hd-checker-ind')
+                hd.addClass('x-grid3-hd-checker-on')
                 this.suspendEvents(false)
                 this.selectRange(0, this.grid.store.getCount() - 1)
                 this.resumeEvents()
