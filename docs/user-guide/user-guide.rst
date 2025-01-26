@@ -660,7 +660,7 @@ Select more than one Review with Shift-Click, Ctrl-Click, or the checkboxes, and
 
 |
 
-If a User has Read-Only access to Assets in this Collection, the checkboxes for those Assets will be replaced with a lock icon.
+If a User has Read-Only access to Assets in this Collection, the checkboxes for those Assets will be replaced with a read-only icon, and they will not be able to change those Reviews.
 
 .. thumbnail:: /assets/images/collection-review-read-only.png
       :width: 50% 
