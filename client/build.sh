@@ -132,6 +132,7 @@ uglifyjs \
 'SM/RowEditorToolbar.js' \
 'SM/BatchReview.js' \
 'SM/CollectionClone.js' \
+'SM/Grant.js' \
 'SM/Manage.js' \
 'SM/CollectionPanel.js' \
 'SM/MetaPanel.js' \
@@ -148,6 +149,8 @@ uglifyjs \
 'SM/StigRevision.js' \
 'SM/Inventory.js' \
 'SM/AssetSelection.js' \
+'SM/User.js' \
+'SM/UserGroup.js' \
 'SM/AppInfo.js' \
 'SM/AppData.js' \
 'library.js' \
