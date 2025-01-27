@@ -6,7 +6,7 @@ html {
 body, button, html, input, select, textarea {
     background-color: #181a1b;
     border-color: #736b5e;
-    color: hsl(36 10% 85% / 1)
+    color: hsl(0 0% 85% / 1);
 }
 
 a {
@@ -2296,6 +2296,10 @@ a.x-menu-item {
     /* background-color: transparent; */
     border-color: hsl(202 0% 25% / 1);
     color: gray;
+}
+
+.x-form-text:read-only.x-trigger-noedit {
+    color: #d9d9d9
 }
 
 .sm-home-title {

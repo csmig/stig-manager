@@ -1003,6 +1003,10 @@ textarea.x-form-field {
   color: gray;
 }
 
+.x-form-text:read-only.x-trigger-noedit {
+  color: #000000
+}
+
 .x-tab-panel-footer,
 .x-tab-panel-header {
   background-color: transparent
