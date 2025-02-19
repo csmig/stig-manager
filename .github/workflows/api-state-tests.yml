@@ -56,7 +56,7 @@ jobs:
         working-directory: ./api/source
         run: |
           expected=1
-          count=$(jq -s 'map(select(.type == "statechanged" and .data.currentState == "stop" and .data.previousState == "starting"))|length' /home/csmig/dev/stig-manager-csmig/log.json)
+          count=$(jq -s 'map(select(.type == "statechanged" and .data.currentState == "stop" and .data.previousState == "starting"))|length' api-log.json)
           if [ "$count" -eq $expected ]; then
             echo "State changed messages count is $expected"
           else
@@ -67,7 +67,7 @@ jobs:
         working-directory: ./api/source
         run: |
           expected='"Application stopped"'
-          last_message=$(jq -s '.[-1].data.message' log.json)
+          last_message=$(jq -s '.[-1].data.message' api-log.json)
           if [ "$last_message" == "$expected" ]; then
             echo "Last message is $expected"
           else
