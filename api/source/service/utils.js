@@ -8,6 +8,7 @@ const fs = require("fs")
 const semverLt = require('semver/functions/lt')
 const semverCoerce = require('semver/functions/coerce')
 const Importer = require('./migrations/lib/mysql-import.js')
+const state = require('../utils/state')
 const minMySqlVersion = '8.0.24'
 let _this = this
 let initAttempt = 0
@@ -74,10 +75,8 @@ function getPoolConfig() {
   }
   return poolConfig
 }
-/*
-* setDepStatus is a function that sets the status of a dependency
-*/
-module.exports.initializeDatabase = async function (setDepStatus) {
+
+module.exports.initializeDatabase = async function () {
   // Create the connection pool
   const poolConfig = getPoolConfig()
   logger.writeDebug('mysql', 'poolConfig', { ...poolConfig })
@@ -116,13 +115,14 @@ module.exports.initializeDatabase = async function (setDepStatus) {
   })
   if (semverLt(semverCoerce(detectedMySqlVersion), minMySqlVersion) ) {
     logger.writeError('mysql', 'preflight', { success: false, message: `MySQL release ${detectedMySqlVersion} is too old. Update to release ${minMySqlVersion} or later.` })
-    process.exit(1)
+    state.setDbStatus(false)
+    throw new Error('MySQL release is too old.')
   } 
   else {
     logger.writeInfo('mysql', 'preflight', { 
       success: true,
       version: detectedMySqlVersion
-      })
+    })
   }
 
   try {
@@ -163,13 +163,13 @@ module.exports.initializeDatabase = async function (setDepStatus) {
     else {
       logger.writeInfo('mysql', 'migration', { message: `MySQL schema is up to date` })
     }
-    setDepStatus('db', 'up')
+    state.setDbStatus(true)
     const migrated = await umzug.executed()
     config.lastMigration = parseInt(migrated[migrated.length -1].file.substring(0,4))
   }
   catch (error) {
     logger.writeError('mysql', 'initalization', { message: error.message })
-    setDepStatus('db', 'failed')
+    state.setDbStatus(false)
     throw new Error('Failed during database initialization or migration.')
   } 
 }

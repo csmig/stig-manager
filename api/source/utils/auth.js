@@ -7,6 +7,7 @@ const _ = require('lodash')
 const UserService = require(`../service/UserService`)
 const axios = require('axios')
 const SmError = require('./error')
+const state = require('./state')
 
 let client
 
@@ -158,7 +159,7 @@ let initAttempt = 0
 /*
 * setDepStatus is a function that sets the status of a dependency
 */
-async function initializeAuth(setDepStatus) {
+async function initializeAuth() {
     const retries = 24
     const metadataUri = `${config.oauth.authority}/.well-known/openid-configuration`
     let jwksUri
@@ -180,12 +181,13 @@ async function initializeAuth(setDepStatus) {
         minTimeout: 5 * 1000,
         maxTimeout: 5 * 1000,
         onRetry: (error) => {
+            state.setOidcStatus(false)
             logger.writeError('oidc', 'discovery', { success: false, metadataUri, message: error.message })
         }
     })
 
     logger.writeInfo('oidc', 'discovery', { success: true, metadataUri, jwksUri })
-    setDepStatus('auth', 'up')
+    state.setOidcStatus(true)
 }
 
 module.exports = {validateToken, setupUser, validateOauthSecurity, initializeAuth, privilegeGetter}
