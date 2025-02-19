@@ -1,0 +1,73 @@
+name: API State Tests
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - '.github/workflows/api-state-tests.yml'
+jobs:
+  test_bootstrap_1:
+    name: Both dependencies unavailable
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out the repo
+        uses: actions/checkout@v4
+      - name: Run API
+        working-directory: ./api/source
+        run: |
+          set +e
+          timeout 60 node index.js | tee api-log.json
+          exit_code=$?
+          if [ $exit_code -eq 124 ]; then
+            echo "Timeout"
+            exit 1
+          elif [ $exit_code -eq 1 ]; then
+            echo "Passed"
+            exit 0
+          else
+            echo "Failed with exit code $exit_code"
+            exit $exit_code
+          fi
+      - name: Check MySQL retries
+        working-directory: ./api/source
+        run: |
+          expected=24
+          count=$(jq -s 'map(select(.component == "mysql" and .type == "preflight" and .data.success == false)) | length' api-log.json)
+          if [ "$count" -eq $expected ]; then
+            echo "MySQL preflight failures count is $expected"
+          else
+            echo "MySQL preflight failures count is not $expected, it is $count"
+            exit 1
+          fi
+      - name: Check OIDC discovery failures
+        working-directory: ./api/source
+        run: |
+          expected=24
+          count=$(jq -s 'map(select(.component == "oidc" and .type == "discovery" and .data.success == false)) | length' api-log.json)
+          if [ "$count" -eq $expected ]; then
+            echo "OIDC discovery failures count is $expected"
+          else
+            echo "OIDC discovery failures count is not $expected, it is $count"
+            exit 1
+          fi
+      - name: Check statechanged messages
+        working-directory: ./api/source
+        run: |
+          expected=1
+          count=$(jq -s 'map(select(.type == "statechanged" and .data.currentState == "stop" and .data.previousState == "starting"))|length' /home/csmig/dev/stig-manager-csmig/log.json)
+          if [ "$count" -eq $expected ]; then
+            echo "State changed messages count is $expected"
+          else
+            echo "State changed messages count is not $expected, it is $count"
+            exit 1
+          fi
+      - name: Check last message
+        working-directory: ./api/source
+        run: |
+          expected='"Application stopped"'
+          last_message=$(jq -s '.[-1].data.message' log.json)
+          if [ "$last_message" == "$expected" ]; then
+            echo "Last message is $expected"
+          else
+            echo "Last message is not as expected, it is $last_message"
+            exit 1
+          fi
