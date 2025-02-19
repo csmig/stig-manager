@@ -11,6 +11,9 @@ jobs:
     steps:
       - name: Check out the repo
         uses: actions/checkout@v4
+      - name: Install api libraries
+        working-directory: ./api/source
+        run: npm ci
       - name: Run API
         working-directory: ./api/source
         run: |
