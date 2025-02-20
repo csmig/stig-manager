@@ -101,6 +101,7 @@ jobs:
         working-directory: ./api/source
         run: |
           set +e
+          export STIGMAN_DB_PASSWORD=stigman
           timeout 180 node index.js | tee api-log.json
           exit_code="${PIPESTATUS[0]}"
           if [ $exit_code -eq 124 ]; then
