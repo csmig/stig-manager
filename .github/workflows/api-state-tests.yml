@@ -6,7 +6,7 @@ on:
       - '.github/workflows/api-state-tests.yml'
 jobs:
   test_bootstrap_1:
-    name: Both dependencies unavailable
+    name: Bootstrap - MySQL and OIDC unavailable
     runs-on: ubuntu-latest
     steps:
       - name: Check out the repo
@@ -75,7 +75,7 @@ jobs:
             exit 1
           fi
   test_bootstrap_2:
-    name: MySQL available, OIDC unavailable
+    name: Bootstrap - MySQL available, OIDC unavailable
     runs-on: ubuntu-latest
     steps:
       - name: Check out the repo
@@ -165,7 +165,79 @@ jobs:
             echo "Last message is not as expected, it is $last_message"
             exit 1
           fi
+  test_bootstrap_3:
+    name: Bootstrap - MySQL uavailable, OIDC available
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out the repo
+        uses: actions/checkout@v4
+      - name: Run mock Keycloak
+        working-directory: ./test/api/mock-keycloak
+        run: |
+          python3 -m http.server 8080 &
+      - name: Install api libraries
+        working-directory: ./api/source
+        run: npm ci
+      - name: Run API
+        working-directory: ./api/source
+        run: |
+          set +e
+          export STIGMAN_DB_PASSWORD=stigman
+          timeout 180 node index.js | tee api-log.json
+          exit_code="${PIPESTATUS[0]}"
+          if [ $exit_code -eq 124 ]; then
+            echo "timeout timed out"
+            exit 1
+          elif [ $exit_code -eq 1 ]; then
+            echo "api exited with code 1"
+            exit 0
+          else
+            echo "api exited normally"
+            exit 1
+          fi
+      - name: Check MySQL preflight failures
+        working-directory: ./api/source
+        run: |
+          expected=24
+          count=$(jq -s 'map(select(.component == "mysql" and .type == "preflight" and .data.success == false)) | length' api-log.json)
+          if [ "$count" -eq $expected ]; then
+            echo "MySQL preflight failures count is $expected"
+          else
+            echo "MySQL preflight failures count is not $expected, it is $count"
+            exit 1
+          fi
+      - name: Check OIDC discovery failures
+        working-directory: ./api/source
+        run: |
+          expected=0
+          count=$(jq -s 'map(select(.component == "oidc" and .type == "discovery" and .data.success == false)) | length' api-log.json)
+          if [ "$count" -eq $expected ]; then
+            echo "OIDC discovery failures count is $expected"
+          else
+            echo "OIDC discovery failures count is not $expected, it is $count"
+            exit 1
+          fi
+      - name: Check statechanged messages
+        working-directory: ./api/source
+        run: |
+          expected=1
+          count=$(jq -s 'map(select(.type == "statechanged" and .data.currentState == "stop" and .data.previousState == "starting"))|length' api-log.json)
+          if [ "$count" -eq $expected ]; then
+            echo "State changed messages count is $expected"
+          else
+            echo "State changed messages count is not $expected, it is $count"
+            exit 1
+          fi
+      - name: Check last message
+        working-directory: ./api/source
+        run: |
+          expected='"Application stopped"'
+          last_message=$(jq -s '.[-1].data.message' api-log.json)
+          if [ "$last_message" == "$expected" ]; then
+            echo "Last message is $expected"
+          else
+            echo "Last message is not as expected, it is $last_message"
+            exit 1
+          fi
 
-          
-
-
+        
