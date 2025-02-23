@@ -95,7 +95,7 @@ jobs:
       - name: Wait for MySQL
         working-directory: ./api/source
         run: |
-          for i in {1..10}; do
+          for i in {1..20}; do
             echo "Waiting for MySQL to start"
             if docker exec stig-manager-db mysql -ustigman -pstigman -e "SELECT 1" stigman &> /dev/null; then
               echo "MySQL is up"
@@ -243,7 +243,7 @@ jobs:
             exit 1
           fi
   test_bootstrap_4:
-    name: Boot - with deps
+    name: Boot - with deps/SIGTERM
     runs-on: ubuntu-latest
     env:
       STIGMAN_DB_PASSWORD: stigman
@@ -268,7 +268,7 @@ jobs:
       - name: Wait for MySQL
         working-directory: ./api/source
         run: |
-          for i in {1..10}; do
+          for i in {1..20}; do
             echo "Waiting for MySQL to start"
             if docker exec stig-manager-db mysql -ustigman -pstigman -e "SELECT 1" stigman &> /dev/null; then
               echo "MySQL is up"
@@ -283,7 +283,7 @@ jobs:
         working-directory: ./api/source
         run: |
           set +e
-          timeout 30 node index.js | tee api-log.json
+          timeout -s SIGTERM 10 node index.js | tee api-log.json
           exit_code="${PIPESTATUS[0]}"
           if [ $exit_code -eq 124 ]; then
             echo "timeout timed out"
@@ -340,7 +340,7 @@ jobs:
         working-directory: ./api/source
         run: |
           expected=1
-          count=$(jq -s 'map(select(.type == "signal" and .data.signal == "SIGINT"))|length' api-log.json)
+          count=$(jq -s 'map(select(.type == "signal" and .data.signal == "SIGTERM"))|length' api-log.json)
           if [ "$count" -eq $expected ]; then
             echo "Signal messages count is $expected"
           else
