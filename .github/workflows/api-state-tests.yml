@@ -18,7 +18,7 @@ jobs:
   #       working-directory: ./api/source
   #       run: |
   #         set +e
-  #         timeout 180 node index.js | tee api-log.json
+  #         timeout 150 node index.js | tee api-log.json
   #         exit_code="${PIPESTATUS[0]}"
   #         if [ $exit_code -eq 124 ]; then
   #           echo "timeout timed out"
@@ -110,7 +110,7 @@ jobs:
   #       working-directory: ./api/source
   #       run: |
   #         set +e
-  #         timeout 180 node index.js | tee api-log.json
+  #         timeout 150 node index.js | tee api-log.json
   #         exit_code="${PIPESTATUS[0]}"
   #         if [ $exit_code -eq 124 ]; then
   #           echo "timeout timed out"
@@ -185,8 +185,7 @@ jobs:
   #       working-directory: ./api/source
   #       run: |
   #         set +e
-  #         export STIGMAN_DB_PASSWORD=stigman
-  #         timeout 180 node index.js | tee api-log.json
+  #         timeout 150 node index.js | tee api-log.json
   #         exit_code="${PIPESTATUS[0]}"
   #         if [ $exit_code -eq 124 ]; then
   #           echo "timeout timed out"
@@ -403,9 +402,12 @@ jobs:
           exit_code="${PIPESTATUS[0]}"
           if [ $exit_code -eq 124 ]; then
             echo "timeout timed out"
+            exit 1
+          elif [ $exit_code -eq 1 ]; then
+            echo "api exited with code 1"
             exit 0
           else
-            echo "api exited before timeout"
+            echo "api exited with code $exit_code"
             exit 1
           fi
       - name: Check MySQL preflight failures
