@@ -1,9 +1,9 @@
 const EventEmitter = require('events')
-const { set } = require('lodash')
+const logger = require('./logger')
 
 /**
  * Represents the state of the API.
- * @typedef {'starting' | 'operational' | 'unavailable' | 'stop'} StateType
+ * @typedef {'starting' | 'fail' | 'operational' | 'unavailable' | 'stop'} StateType
  */
 
 /**
@@ -27,7 +27,10 @@ class State extends EventEmitter {
   
   /** @type {DependencyStatus} */
   #dependencyStatus
-  
+
+  /** @type {Object} */
+  #dbPool
+
   /** @type {ModeType} */
   #mode
 
@@ -120,11 +123,41 @@ class State extends EventEmitter {
     return this.#mode
   }
 
-  /** @type {ModeType} */
+  /** @param {ModeType} */
   set currentMode(mode) {
     this.#setMode(mode)
   }
 
+  /** @param {Object} */
+  set dbPool(pool) {
+    this.#dbPool = pool
+  }
+
+  /** @type {Object} */
+  get dbPool() {
+    return this.#dbPool
+  }
 }
 
-module.exports = new State('starting')
+const state = new State('starting')
+state.on('statechanged', async (currentState, previousState, dependencyStatus) => {
+  logger.writeInfo('state','statechanged', {currentState, previousState, dependencyStatus})
+  switch (currentState) {
+    case 'fail':
+      logger.writeError('state','fail', {message:'Application failed'})
+      process.exit(1)
+      break
+    case 'stop':
+      logger.writeInfo('state','stop', {message:'Application stopped'})
+      try {
+        await state.dbPool?.end()
+      }
+      catch (err) {
+        logger.writeError('state','stop', {message:'Error closing database pool', error: serializeError(err)})
+      } 
+      process.exit(0)
+      break
+  }
+})
+
+module.exports = state

@@ -2,8 +2,9 @@
 const startTime = process.hrtime.bigint()
 const express = require('express')
 const logger = require('./utils/logger')
-const config = require('./utils/config')
 const state = require('./utils/state')
+const signals = require('./bootstrap/signals')
+const config = require('./utils/config')
 const { serializeError } = require('./utils/serializeError')
 const configureMiddleware  = require('./bootstrap/middlewares.js')
 const bootstrapUtils = require('./bootstrap/bootstrapUtils.js')
@@ -11,6 +12,7 @@ const client = require('./bootstrap/client.js')
 const docs = require('./bootstrap/docs.js')
 const startServer = require('./bootstrap/server')
 
+signals.setupSignalHandlers()
 bootstrapUtils.logAppConfig(config)
 
 //Catch unhandled errors. 
@@ -19,13 +21,6 @@ process.on('uncaughtException', (err, origin) => {
 })
 process.on('unhandledRejection', (reason, promise) => {
   logger.writeError('app','unhandled', {reason, promise})
-})
-state.on('statechanged', (currentState, previousState, dependencyStatus) => {
-  logger.writeInfo('app','statechanged', {currentState, previousState, dependencyStatus})
-  if (currentState === 'stop') {
-    logger.writeError('app','stop', {message:'Application stopped'})
-    process.exit(1)
-  }
 })
 
 const app = express()
@@ -41,7 +36,7 @@ function run() {
   }
   catch (err) {
     logger.writeError(err.message)
-    process.exit(1)
+    state.setState('fail')
   }
 }
 

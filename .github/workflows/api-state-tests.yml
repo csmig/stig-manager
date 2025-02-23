@@ -56,7 +56,7 @@ jobs:
         working-directory: ./api/source
         run: |
           expected=1
-          count=$(jq -s 'map(select(.type == "statechanged" and .data.currentState == "stop" and .data.previousState == "starting"))|length' api-log.json)
+          count=$(jq -s 'map(select(.type == "statechanged" and .data.currentState == "fail" and .data.previousState == "starting"))|length' api-log.json)
           if [ "$count" -eq $expected ]; then
             echo "State changed messages count is $expected"
           else
@@ -66,7 +66,7 @@ jobs:
       - name: Check last log record
         working-directory: ./api/source
         run: |
-          expected='"Application stopped"'
+          expected='"Application failed"'
           last_message=$(jq -s '.[-1].data.message' api-log.json)
           if [ "$last_message" == "$expected" ]; then
             echo "Last message is $expected"
@@ -148,7 +148,7 @@ jobs:
         working-directory: ./api/source
         run: |
           expected=1
-          count=$(jq -s 'map(select(.type == "statechanged" and .data.currentState == "stop" and .data.previousState == "starting"))|length' api-log.json)
+          count=$(jq -s 'map(select(.type == "statechanged" and .data.currentState == "fail" and .data.previousState == "starting"))|length' api-log.json)
           if [ "$count" -eq $expected ]; then
             echo "State changed messages count is $expected"
           else
@@ -158,7 +158,7 @@ jobs:
       - name: Check last log record
         working-directory: ./api/source
         run: |
-          expected='"Application stopped"'
+          expected='"Application failed"'
           last_message=$(jq -s '.[-1].data.message' api-log.json)
           if [ "$last_message" == "$expected" ]; then
             echo "Last message is $expected"
@@ -224,7 +224,7 @@ jobs:
         working-directory: ./api/source
         run: |
           expected=1
-          count=$(jq -s 'map(select(.type == "statechanged" and .data.currentState == "stop" and .data.previousState == "starting"))|length' api-log.json)
+          count=$(jq -s 'map(select(.type == "statechanged" and .data.currentState == "fail" and .data.previousState == "starting"))|length' api-log.json)
           if [ "$count" -eq $expected ]; then
             echo "State changed messages count is $expected"
           else
@@ -234,7 +234,7 @@ jobs:
       - name: Check last log record
         working-directory: ./api/source
         run: |
-          expected='"Application stopped"'
+          expected='"Application failed"'
           last_message=$(jq -s '.[-1].data.message' api-log.json)
           if [ "$last_message" == "$expected" ]; then
             echo "Last message is $expected"
@@ -314,7 +314,7 @@ jobs:
             echo "OIDC discovery failures count is not $expected, it is $count"
             exit 1
           fi
-      - name: Check statechanged messages
+      - name: Check statechanged operational
         working-directory: ./api/source
         run: |
           expected=1
@@ -325,16 +325,37 @@ jobs:
             echo "State changed messages count is not $expected, it is $count"
             exit 1
           fi
+      - name: Check statechanged stop
+        working-directory: ./api/source
+        run: |
+          expected=1
+          count=$(jq -s 'map(select(.type == "statechanged" and .data.currentState == "stop" and .data.previousState == "operational"))|length' api-log.json)
+          if [ "$count" -eq $expected ]; then
+            echo "State changed messages count is $expected"
+          else
+            echo "State changed messages count is not $expected, it is $count"
+            exit 1
+          fi
+      - name: Check signal
+        working-directory: ./api/source
+        run: |
+          expected=1
+          count=$(jq -s 'map(select(.type == "signal" and .data.signal == "SIGINT"))|length' api-log.json)
+          if [ "$count" -eq $expected ]; then
+            echo "Signal messages count is $expected"
+          else
+            echo "Signal messages count is not $expected, it is $count"
+            exit 1
+          fi
       - name: Check last log record
         working-directory: ./api/source
         run: |
-          expected='"started"'
-          last_message=$(jq -s '.[-1].type' api-log.json)
+          expected='"Application stopped"'
+          last_message=$(jq -s '.[-1].data.message' api-log.json)
           if [ "$last_message" == "$expected" ]; then
-            echo "Last type is $expected"
+            echo "Last message is $expected"
           else
-            echo "Last type is not $expected, it is $last_message"
+            echo "Last message is not $expected, it is $last_message"
             exit 1
           fi
   
-        

@@ -81,27 +81,11 @@ module.exports.initializeDatabase = async function () {
   const poolConfig = getPoolConfig()
   logger.writeDebug('mysql', 'poolConfig', { ...poolConfig })
   _this.pool = mysql.createPool(poolConfig)
+  state.dbPool = _this.pool
   // Set common session variables
   _this.pool.on('connection', function (connection) {
     connection.query('SET SESSION group_concat_max_len=10000000')
   })
-
-  // Call the pool destruction methods on SIGTERM and SEGINT
-  async function closePoolAndExit(signal) {
-    logger.writeInfo('app', 'shutdown', { signal })
-    try {
-      await _this.pool.end()
-      logger.writeInfo('mysql', 'close', { success: true })
-      process.exit(0)
-    } catch(err) {
-      logger.writeError('mysql', 'close', { success: false, message: err.message })
-      process.exit(1)
-    }
-  }   
-  process.on('SIGPIPE', closePoolAndExit)
-  process.on('SIGHUP', closePoolAndExit)
-  process.on('SIGTERM', closePoolAndExit)
-  process.on('SIGINT', closePoolAndExit)
 
   // Preflight the pool every 5 seconds
   const {detectedTables,detectedMySqlVersion} = await retry(_this.testConnection, {
@@ -152,7 +136,7 @@ module.exports.initializeDatabase = async function () {
         logger.writeInfo('mysql', 'migration', { message: 'MySQL schema has no migrations to revert' })
       }
       logger.writeInfo('mysql', 'migration', { message: 'MySQL revert migration has completed' })
-      process.exit(1)
+      state.setState('stop')
     }
     const migrations = await umzug.pending()
     if (migrations.length > 0) {
