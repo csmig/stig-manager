@@ -148,13 +148,13 @@ state.on('statechanged', async (currentState, previousState, dependencyStatus) =
       process.exit(1)
       break
     case 'stop':
-      logger.writeInfo('state','stop', {message:'Application stopped'})
       try {
         await state.dbPool?.end()
       }
       catch (err) {
         logger.writeError('state','stop', {message:'Error closing database pool', error: serializeError(err)})
       } 
+      logger.writeInfo('state','stop', {message:'Application stopped'})
       process.exit(0)
       break
   }
