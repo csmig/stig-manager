@@ -35,11 +35,14 @@ jobs:
         run: |
           set +e
           pid=$(cat /tmp/test.pid)
-          timeout 150 tail --pid=$pid -f api-log.json
+          timeout 150 tail --pid=$pid -f /dev/null
           if ps -p $pid > /dev/null; then
             echo "Process did not terminate within 150 seconds"
             exit 1
           fi
+      - name: Dump API log
+        working-directory: ./api/source
+        run: cat api-log.json
       - name: Check MySQL preflight failures
         working-directory: ./api/source
         run: |

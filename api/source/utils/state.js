@@ -142,10 +142,12 @@ class State extends EventEmitter {
 const state = new State('starting')
 state.on('statechanged', async (currentState, previousState, dependencyStatus) => {
   logger.writeInfo('state','statechanged', {currentState, previousState, dependencyStatus})
+  let exitCode = 0
   switch (currentState) {
     case 'fail':
+      exitCode = 1
       logger.writeError('state','fail', {message:'Application failed'})
-      process.exit(1)
+      process.exit(exitCode)
       break
     case 'stop':
       try {
@@ -155,7 +157,7 @@ state.on('statechanged', async (currentState, previousState, dependencyStatus) =
         logger.writeError('state','stop', {message:'Error closing database pool', error: serializeError(err)})
       } 
       logger.writeInfo('state','stop', {message:'Application stopped'})
-      process.exit(0)
+      process.exit(exitCode)
       break
   }
 })
