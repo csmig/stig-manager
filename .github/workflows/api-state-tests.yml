@@ -21,6 +21,7 @@ jobs:
       - name: Check 503 status message
         working-directory: ./api/source
         run: |
+          sleep 5
           expected='{"status":{"db":false,"oidc":false}}'
           status=$(curl http://localhost:54000)
           if [ "$status" == "$expected" ]; then
