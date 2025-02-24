@@ -23,7 +23,7 @@ jobs:
         run: |
           sleep 5
           expected='{"status":{"db":false,"oidc":false}}'
-          status=$(curl http://localhost:54000)
+          status=$(curl -s http://localhost:54000)
           if [ "$status" == "$expected" ]; then
             echo "Status is $expected"
           else

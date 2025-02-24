@@ -146,7 +146,7 @@ state.on('statechanged', async (currentState, previousState, dependencyStatus) =
   switch (currentState) {
     case 'fail':
       exitCode = 1
-      logger.writeError('state','fail', {message:'Application failed'})
+      logger.writeError('state','fail', {message:'Application failed', exitCode})
       process.exit(exitCode)
       break
     case 'stop':
@@ -156,7 +156,7 @@ state.on('statechanged', async (currentState, previousState, dependencyStatus) =
       catch (err) {
         logger.writeError('state','stop', {message:'Error closing database pool', error: serializeError(err)})
       } 
-      logger.writeInfo('state','stop', {message:'Application stopped'})
+      logger.writeInfo('state','stop', {message:'Application stopped', exitCode})
       process.exit(exitCode)
       break
   }
