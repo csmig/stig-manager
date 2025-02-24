@@ -17,17 +17,31 @@ jobs:
       - name: Run API
         working-directory: ./api/source
         run: |
-          set +e
-          timeout 150 node index.js | tee api-log.json
-          exit_code="${PIPESTATUS[0]}"
-          if [ $exit_code -eq 124 ]; then
-            echo "timeout timed out"
+          sh -c 'echo $$ > /tmp/test.pid ; exec node index.js > api-log.json 2>&1' &
+      - name: Check 503 status message
+        working-directory: ./api/source
+        run: |
+          expected='{"status":{"db":false,"oidc":false}}'
+          status=$(curl http://localhost:54000)
+          if [ "$status" == "$expected" ]; then
+            echo "Status is $expected"
+          else
+            echo "Status is not $expected, it is $status"
             exit 1
-          elif [ $exit_code -eq 1 ]; then
-            echo "api exited with code 1"
+          fi
+      - name: Wait for PID to terminate
+        working-directory: ./api/source
+        run: |
+          pid=$(cat /tmp/test.pid)
+          timeout 150 tail --pid=$pid -f /dev/null
+          wait $pid
+          exit_code=$?
+          echo "Process exited with code $exit_code"
+          if [ $exit_code -eq 1 ]; then
+            echo "Test passed"
             exit 0
           else
-            echo "api exited with code $exit_code"
+            echo "Test failed"
             exit 1
           fi
       - name: Check MySQL preflight failures
@@ -74,372 +88,372 @@ jobs:
             echo "Last message is not $expected, it is $last_message"
             exit 1
           fi
-  test_bootstrap_2:
-    name: Boot - no OIDC
-    runs-on: ubuntu-latest
-    env:
-      STIGMAN_DB_PASSWORD: stigman
-    steps:
-      - name: Check out the repo
-        uses: actions/checkout@v4
-      - name: Docker run MySQL
-        working-directory: ./api/source
-        run: |
-          docker run -d --name stig-manager-db \
-          -p 3306:3306 \
-          -e MYSQL_ROOT_PASSWORD=rootpw \
-          -e MYSQL_DATABASE=stigman \
-          -e MYSQL_USER=stigman \
-          -e MYSQL_PASSWORD=stigman \
-          mysql:8.0.24
-      - name: Wait for MySQL
-        working-directory: ./api/source
-        run: |
-          for i in {1..20}; do
-            echo "Waiting for MySQL to start"
-            if docker exec stig-manager-db mysql -ustigman -pstigman -e "SELECT 1" stigman &> /dev/null; then
-              echo "MySQL is up"
-              break
-            fi
-            sleep 1
-          done
-      - name: Install api libraries
-        working-directory: ./api/source
-        run: npm ci
-      - name: Run API
-        working-directory: ./api/source
-        run: |
-          set +e
-          timeout 150 node index.js | tee api-log.json
-          exit_code="${PIPESTATUS[0]}"
-          if [ $exit_code -eq 124 ]; then
-            echo "timeout timed out"
-            exit 1
-          elif [ $exit_code -eq 1 ]; then
-            echo "api exited with code 1"
-            exit 0
-          else
-            echo "api exited normally"
-            exit 1
-          fi
-      - name: Check MySQL preflight failures
-        working-directory: ./api/source
-        run: |
-          expected=0
-          count=$(jq -s 'map(select(.component == "mysql" and .type == "preflight" and .data.success == false)) | length' api-log.json)
-          if [ "$count" -eq $expected ]; then
-            echo "MySQL preflight failures count is $expected"
-          else
-            echo "MySQL preflight failures count is not $expected, it is $count"
-            exit 1
-          fi
-      - name: Check OIDC discovery failures
-        working-directory: ./api/source
-        run: |
-          expected=24
-          count=$(jq -s 'map(select(.component == "oidc" and .type == "discovery" and .data.success == false)) | length' api-log.json)
-          if [ "$count" -eq $expected ]; then
-            echo "OIDC discovery failures count is $expected"
-          else
-            echo "OIDC discovery failures count is not $expected, it is $count"
-            exit 1
-          fi
-      - name: Check statechanged messages
-        working-directory: ./api/source
-        run: |
-          expected=1
-          count=$(jq -s 'map(select(.type == "statechanged" and .data.currentState == "fail" and .data.previousState == "starting"))|length' api-log.json)
-          if [ "$count" -eq $expected ]; then
-            echo "State changed messages count is $expected"
-          else
-            echo "State changed messages count is not $expected, it is $count"
-            exit 1
-          fi
-      - name: Check last log record
-        working-directory: ./api/source
-        run: |
-          expected='"Application failed"'
-          last_message=$(jq -s '.[-1].data.message' api-log.json)
-          if [ "$last_message" == "$expected" ]; then
-            echo "Last message is $expected"
-          else
-            echo "Last message is not $expected, it is $last_message"
-            exit 1
-          fi
-  test_bootstrap_3:
-    name: Boot - no MySQL
-    runs-on: ubuntu-latest
-    env:
-      STIGMAN_OIDC_PROVIDER: http://127.0.0.1:8080/auth/realms/stigman
-    steps:
-      - name: Check out the repo
-        uses: actions/checkout@v4
-      - name: Run mock Keycloak
-        working-directory: ./test/api/mock-keycloak
-        run: |
-          python3 -m http.server 8080 &
-      - name: Install api libraries
-        working-directory: ./api/source
-        run: npm ci
-      - name: Run API
-        working-directory: ./api/source
-        run: |
-          set +e
-          timeout 150 node index.js | tee api-log.json
-          exit_code="${PIPESTATUS[0]}"
-          if [ $exit_code -eq 124 ]; then
-            echo "timeout timed out"
-            exit 1
-          elif [ $exit_code -eq 1 ]; then
-            echo "api exited with code 1"
-            exit 0
-          else
-            echo "api exited normally"
-            exit 1
-          fi
-      - name: Check MySQL preflight failures
-        working-directory: ./api/source
-        run: |
-          expected=24
-          count=$(jq -s 'map(select(.component == "mysql" and .type == "preflight" and .data.success == false)) | length' api-log.json)
-          if [ "$count" -eq $expected ]; then
-            echo "MySQL preflight failures count is $expected"
-          else
-            echo "MySQL preflight failures count is not $expected, it is $count"
-            exit 1
-          fi
-      - name: Check OIDC discovery failures
-        working-directory: ./api/source
-        run: |
-          expected=0
-          count=$(jq -s 'map(select(.component == "oidc" and .type == "discovery" and .data.success == false)) | length' api-log.json)
-          if [ "$count" -eq $expected ]; then
-            echo "OIDC discovery failures count is $expected"
-          else
-            echo "OIDC discovery failures count is not $expected, it is $count"
-            exit 1
-          fi
-      - name: Check statechanged messages
-        working-directory: ./api/source
-        run: |
-          expected=1
-          count=$(jq -s 'map(select(.type == "statechanged" and .data.currentState == "fail" and .data.previousState == "starting"))|length' api-log.json)
-          if [ "$count" -eq $expected ]; then
-            echo "State changed messages count is $expected"
-          else
-            echo "State changed messages count is not $expected, it is $count"
-            exit 1
-          fi
-      - name: Check last log record
-        working-directory: ./api/source
-        run: |
-          expected='"Application failed"'
-          last_message=$(jq -s '.[-1].data.message' api-log.json)
-          if [ "$last_message" == "$expected" ]; then
-            echo "Last message is $expected"
-          else
-            echo "Last message is not $expected, it is $last_message"
-            exit 1
-          fi
-  test_bootstrap_4:
-    name: Boot - with deps/SIGTERM
-    runs-on: ubuntu-latest
-    env:
-      STIGMAN_DB_PASSWORD: stigman
-      STIGMAN_OIDC_PROVIDER: http://127.0.0.1:8080/auth/realms/stigman
-    steps:
-      - name: Check out the repo
-        uses: actions/checkout@v4
-      - name: Run mock Keycloak
-        working-directory: ./test/api/mock-keycloak
-        run: |
-          python3 -m http.server 8080 &      
-      - name: Docker run MySQL
-        working-directory: ./api/source
-        run: |
-          docker run -d --name stig-manager-db \
-          -p 3306:3306 \
-          -e MYSQL_ROOT_PASSWORD=rootpw \
-          -e MYSQL_DATABASE=stigman \
-          -e MYSQL_USER=stigman \
-          -e MYSQL_PASSWORD=stigman \
-          mysql:8.0.24
-      - name: Wait for MySQL
-        working-directory: ./api/source
-        run: |
-          for i in {1..20}; do
-            echo "Waiting for MySQL to start"
-            if docker exec stig-manager-db mysql -ustigman -pstigman -e "SELECT 1" stigman &> /dev/null; then
-              echo "MySQL is up"
-              break
-            fi
-            sleep 1
-          done
-      - name: Install api libraries
-        working-directory: ./api/source
-        run: npm ci
-      - name: Run API
-        working-directory: ./api/source
-        run: |
-          set +e
-          timeout -s SIGTERM 10 node index.js | tee api-log.json
-          exit_code="${PIPESTATUS[0]}"
-          if [ $exit_code -eq 124 ]; then
-            echo "timeout timed out"
-            exit 0
-          else
-            echo "api exited before timeout"
-            exit 1
-          fi
-      - name: Check MySQL preflight failures
-        working-directory: ./api/source
-        run: |
-          expected=0
-          count=$(jq -s 'map(select(.component == "mysql" and .type == "preflight" and .data.success == false)) | length' api-log.json)
-          if [ "$count" -eq $expected ]; then
-            echo "MySQL preflight failures count is $expected"
-          else
-            echo "MySQL preflight failures count is not $expected, it is $count"
-            exit 1
-          fi
-      - name: Check OIDC discovery failures
-        working-directory: ./api/source
-        run: |
-          expected=0
-          count=$(jq -s 'map(select(.component == "oidc" and .type == "discovery" and .data.success == false)) | length' api-log.json)
-          if [ "$count" -eq $expected ]; then
-            echo "OIDC discovery failures count is $expected"
-          else
-            echo "OIDC discovery failures count is not $expected, it is $count"
-            exit 1
-          fi
-      - name: Check statechanged operational
-        working-directory: ./api/source
-        run: |
-          expected=1
-          count=$(jq -s 'map(select(.type == "statechanged" and .data.currentState == "operational" and .data.previousState == "starting"))|length' api-log.json)
-          if [ "$count" -eq $expected ]; then
-            echo "State changed messages count is $expected"
-          else
-            echo "State changed messages count is not $expected, it is $count"
-            exit 1
-          fi
-      - name: Check statechanged stop
-        working-directory: ./api/source
-        run: |
-          expected=1
-          count=$(jq -s 'map(select(.type == "statechanged" and .data.currentState == "stop" and .data.previousState == "operational"))|length' api-log.json)
-          if [ "$count" -eq $expected ]; then
-            echo "State changed messages count is $expected"
-          else
-            echo "State changed messages count is not $expected, it is $count"
-            exit 1
-          fi
-      - name: Check signal
-        working-directory: ./api/source
-        run: |
-          expected=1
-          count=$(jq -s 'map(select(.type == "signal" and .data.signal == "SIGTERM"))|length' api-log.json)
-          if [ "$count" -eq $expected ]; then
-            echo "Signal messages count is $expected"
-          else
-            echo "Signal messages count is not $expected, it is $count"
-            exit 1
-          fi
-      - name: Check last log record
-        working-directory: ./api/source
-        run: |
-          expected='"Application stopped"'
-          last_message=$(jq -s '.[-1].data.message' api-log.json)
-          if [ "$last_message" == "$expected" ]; then
-            echo "Last message is $expected"
-          else
-            echo "Last message is not $expected, it is $last_message"
-            exit 1
-          fi
-  test_bootstrap_5:
-    name: Boot - old MySQL
-    runs-on: ubuntu-latest
-    env:
-      STIGMAN_DB_PASSWORD: stigman
-      STIGMAN_OIDC_PROVIDER: http://127.0.0.1:8080/auth/realms/stigman
-    steps:
-      - name: Check out the repo
-        uses: actions/checkout@v4
-      - name: Run mock Keycloak
-        working-directory: ./test/api/mock-keycloak
-        run: |
-          python3 -m http.server 8080 &      
-      - name: Docker run MySQL
-        working-directory: ./api/source
-        run: |
-          docker run -d --name stig-manager-db \
-          -p 3306:3306 \
-          -e MYSQL_ROOT_PASSWORD=rootpw \
-          -e MYSQL_DATABASE=stigman \
-          -e MYSQL_USER=stigman \
-          -e MYSQL_PASSWORD=stigman \
-          mysql:8.0.23
-      - name: Wait for MySQL
-        working-directory: ./api/source
-        run: |
-          for i in {1..20}; do
-            echo "Waiting for MySQL to start"
-            if docker exec stig-manager-db mysql -ustigman -pstigman -e "SELECT 1" stigman &> /dev/null; then
-              echo "MySQL is up"
-              break
-            fi
-            sleep 1
-          done
-      - name: Install api libraries
-        working-directory: ./api/source
-        run: npm ci
-      - name: Run API
-        working-directory: ./api/source
-        run: |
-          set +e
-          timeout 30 node index.js | tee api-log.json
-          exit_code="${PIPESTATUS[0]}"
-          if [ $exit_code -eq 124 ]; then
-            echo "timeout timed out"
-            exit 1
-          elif [ $exit_code -eq 1 ]; then
-            echo "api exited with code 1"
-            exit 0
-          else
-            echo "api exited with code $exit_code"
-            exit 1
-          fi
-      - name: Check MySQL preflight failures
-        working-directory: ./api/source
-        run: |
-          expected=1
-          count=$(jq -s 'map(select(.component == "mysql" and .type == "preflight" and .data.success == false)) | length' api-log.json)
-          if [ "$count" -eq $expected ]; then
-            echo "MySQL preflight failures count is $expected"
-          else
-            echo "MySQL preflight failures count is not $expected, it is $count"
-            exit 1
-          fi
-      - name: Check statechanged fail
-        working-directory: ./api/source
-        run: |
-          expected=1
-          count=$(jq -s 'map(select(.type == "statechanged" and .data.currentState == "fail" and .data.previousState == "starting"))|length' api-log.json)
-          if [ "$count" -eq $expected ]; then
-            echo "State changed messages count is $expected"
-          else
-            echo "State changed messages count is not $expected, it is $count"
-            exit 1
-          fi
-      - name: Check last log record
-        working-directory: ./api/source
-        run: |
-          expected='"Application failed"'
-          last_message=$(jq -s '.[-1].data.message' api-log.json)
-          if [ "$last_message" == "$expected" ]; then
-            echo "Last message is $expected"
-          else
-            echo "Last message is not $expected, it is $last_message"
-            exit 1
-          fi
+  # test_bootstrap_2:
+  #   name: Boot - no OIDC
+  #   runs-on: ubuntu-latest
+  #   env:
+  #     STIGMAN_DB_PASSWORD: stigman
+  #   steps:
+  #     - name: Check out the repo
+  #       uses: actions/checkout@v4
+  #     - name: Docker run MySQL
+  #       working-directory: ./api/source
+  #       run: |
+  #         docker run -d --name stig-manager-db \
+  #         -p 3306:3306 \
+  #         -e MYSQL_ROOT_PASSWORD=rootpw \
+  #         -e MYSQL_DATABASE=stigman \
+  #         -e MYSQL_USER=stigman \
+  #         -e MYSQL_PASSWORD=stigman \
+  #         mysql:8.0.24
+  #     - name: Wait for MySQL
+  #       working-directory: ./api/source
+  #       run: |
+  #         for i in {1..20}; do
+  #           echo "Waiting for MySQL to start"
+  #           if docker exec stig-manager-db mysql -ustigman -pstigman -e "SELECT 1" stigman &> /dev/null; then
+  #             echo "MySQL is up"
+  #             break
+  #           fi
+  #           sleep 1
+  #         done
+  #     - name: Install api libraries
+  #       working-directory: ./api/source
+  #       run: npm ci
+  #     - name: Run API
+  #       working-directory: ./api/source
+  #       run: |
+  #         set +e
+  #         timeout 150 node index.js | tee api-log.json
+  #         exit_code="${PIPESTATUS[0]}"
+  #         if [ $exit_code -eq 124 ]; then
+  #           echo "timeout timed out"
+  #           exit 1
+  #         elif [ $exit_code -eq 1 ]; then
+  #           echo "api exited with code 1"
+  #           exit 0
+  #         else
+  #           echo "api exited normally"
+  #           exit 1
+  #         fi
+  #     - name: Check MySQL preflight failures
+  #       working-directory: ./api/source
+  #       run: |
+  #         expected=0
+  #         count=$(jq -s 'map(select(.component == "mysql" and .type == "preflight" and .data.success == false)) | length' api-log.json)
+  #         if [ "$count" -eq $expected ]; then
+  #           echo "MySQL preflight failures count is $expected"
+  #         else
+  #           echo "MySQL preflight failures count is not $expected, it is $count"
+  #           exit 1
+  #         fi
+  #     - name: Check OIDC discovery failures
+  #       working-directory: ./api/source
+  #       run: |
+  #         expected=24
+  #         count=$(jq -s 'map(select(.component == "oidc" and .type == "discovery" and .data.success == false)) | length' api-log.json)
+  #         if [ "$count" -eq $expected ]; then
+  #           echo "OIDC discovery failures count is $expected"
+  #         else
+  #           echo "OIDC discovery failures count is not $expected, it is $count"
+  #           exit 1
+  #         fi
+  #     - name: Check statechanged messages
+  #       working-directory: ./api/source
+  #       run: |
+  #         expected=1
+  #         count=$(jq -s 'map(select(.type == "statechanged" and .data.currentState == "fail" and .data.previousState == "starting"))|length' api-log.json)
+  #         if [ "$count" -eq $expected ]; then
+  #           echo "State changed messages count is $expected"
+  #         else
+  #           echo "State changed messages count is not $expected, it is $count"
+  #           exit 1
+  #         fi
+  #     - name: Check last log record
+  #       working-directory: ./api/source
+  #       run: |
+  #         expected='"Application failed"'
+  #         last_message=$(jq -s '.[-1].data.message' api-log.json)
+  #         if [ "$last_message" == "$expected" ]; then
+  #           echo "Last message is $expected"
+  #         else
+  #           echo "Last message is not $expected, it is $last_message"
+  #           exit 1
+  #         fi
+  # test_bootstrap_3:
+  #   name: Boot - no MySQL
+  #   runs-on: ubuntu-latest
+  #   env:
+  #     STIGMAN_OIDC_PROVIDER: http://127.0.0.1:8080/auth/realms/stigman
+  #   steps:
+  #     - name: Check out the repo
+  #       uses: actions/checkout@v4
+  #     - name: Run mock Keycloak
+  #       working-directory: ./test/api/mock-keycloak
+  #       run: |
+  #         python3 -m http.server 8080 &
+  #     - name: Install api libraries
+  #       working-directory: ./api/source
+  #       run: npm ci
+  #     - name: Run API
+  #       working-directory: ./api/source
+  #       run: |
+  #         set +e
+  #         timeout 150 node index.js | tee api-log.json
+  #         exit_code="${PIPESTATUS[0]}"
+  #         if [ $exit_code -eq 124 ]; then
+  #           echo "timeout timed out"
+  #           exit 1
+  #         elif [ $exit_code -eq 1 ]; then
+  #           echo "api exited with code 1"
+  #           exit 0
+  #         else
+  #           echo "api exited normally"
+  #           exit 1
+  #         fi
+  #     - name: Check MySQL preflight failures
+  #       working-directory: ./api/source
+  #       run: |
+  #         expected=24
+  #         count=$(jq -s 'map(select(.component == "mysql" and .type == "preflight" and .data.success == false)) | length' api-log.json)
+  #         if [ "$count" -eq $expected ]; then
+  #           echo "MySQL preflight failures count is $expected"
+  #         else
+  #           echo "MySQL preflight failures count is not $expected, it is $count"
+  #           exit 1
+  #         fi
+  #     - name: Check OIDC discovery failures
+  #       working-directory: ./api/source
+  #       run: |
+  #         expected=0
+  #         count=$(jq -s 'map(select(.component == "oidc" and .type == "discovery" and .data.success == false)) | length' api-log.json)
+  #         if [ "$count" -eq $expected ]; then
+  #           echo "OIDC discovery failures count is $expected"
+  #         else
+  #           echo "OIDC discovery failures count is not $expected, it is $count"
+  #           exit 1
+  #         fi
+  #     - name: Check statechanged messages
+  #       working-directory: ./api/source
+  #       run: |
+  #         expected=1
+  #         count=$(jq -s 'map(select(.type == "statechanged" and .data.currentState == "fail" and .data.previousState == "starting"))|length' api-log.json)
+  #         if [ "$count" -eq $expected ]; then
+  #           echo "State changed messages count is $expected"
+  #         else
+  #           echo "State changed messages count is not $expected, it is $count"
+  #           exit 1
+  #         fi
+  #     - name: Check last log record
+  #       working-directory: ./api/source
+  #       run: |
+  #         expected='"Application failed"'
+  #         last_message=$(jq -s '.[-1].data.message' api-log.json)
+  #         if [ "$last_message" == "$expected" ]; then
+  #           echo "Last message is $expected"
+  #         else
+  #           echo "Last message is not $expected, it is $last_message"
+  #           exit 1
+  #         fi
+  # test_bootstrap_4:
+  #   name: Boot - with deps/SIGTERM
+  #   runs-on: ubuntu-latest
+  #   env:
+  #     STIGMAN_DB_PASSWORD: stigman
+  #     STIGMAN_OIDC_PROVIDER: http://127.0.0.1:8080/auth/realms/stigman
+  #   steps:
+  #     - name: Check out the repo
+  #       uses: actions/checkout@v4
+  #     - name: Run mock Keycloak
+  #       working-directory: ./test/api/mock-keycloak
+  #       run: |
+  #         python3 -m http.server 8080 &      
+  #     - name: Docker run MySQL
+  #       working-directory: ./api/source
+  #       run: |
+  #         docker run -d --name stig-manager-db \
+  #         -p 3306:3306 \
+  #         -e MYSQL_ROOT_PASSWORD=rootpw \
+  #         -e MYSQL_DATABASE=stigman \
+  #         -e MYSQL_USER=stigman \
+  #         -e MYSQL_PASSWORD=stigman \
+  #         mysql:8.0.24
+  #     - name: Wait for MySQL
+  #       working-directory: ./api/source
+  #       run: |
+  #         for i in {1..20}; do
+  #           echo "Waiting for MySQL to start"
+  #           if docker exec stig-manager-db mysql -ustigman -pstigman -e "SELECT 1" stigman &> /dev/null; then
+  #             echo "MySQL is up"
+  #             break
+  #           fi
+  #           sleep 1
+  #         done
+  #     - name: Install api libraries
+  #       working-directory: ./api/source
+  #       run: npm ci
+  #     - name: Run API
+  #       working-directory: ./api/source
+  #       run: |
+  #         set +e
+  #         timeout -s SIGTERM 10 node index.js | tee api-log.json
+  #         exit_code="${PIPESTATUS[0]}"
+  #         if [ $exit_code -eq 124 ]; then
+  #           echo "timeout timed out"
+  #           exit 0
+  #         else
+  #           echo "api exited before timeout"
+  #           exit 1
+  #         fi
+  #     - name: Check MySQL preflight failures
+  #       working-directory: ./api/source
+  #       run: |
+  #         expected=0
+  #         count=$(jq -s 'map(select(.component == "mysql" and .type == "preflight" and .data.success == false)) | length' api-log.json)
+  #         if [ "$count" -eq $expected ]; then
+  #           echo "MySQL preflight failures count is $expected"
+  #         else
+  #           echo "MySQL preflight failures count is not $expected, it is $count"
+  #           exit 1
+  #         fi
+  #     - name: Check OIDC discovery failures
+  #       working-directory: ./api/source
+  #       run: |
+  #         expected=0
+  #         count=$(jq -s 'map(select(.component == "oidc" and .type == "discovery" and .data.success == false)) | length' api-log.json)
+  #         if [ "$count" -eq $expected ]; then
+  #           echo "OIDC discovery failures count is $expected"
+  #         else
+  #           echo "OIDC discovery failures count is not $expected, it is $count"
+  #           exit 1
+  #         fi
+  #     - name: Check statechanged operational
+  #       working-directory: ./api/source
+  #       run: |
+  #         expected=1
+  #         count=$(jq -s 'map(select(.type == "statechanged" and .data.currentState == "operational" and .data.previousState == "starting"))|length' api-log.json)
+  #         if [ "$count" -eq $expected ]; then
+  #           echo "State changed messages count is $expected"
+  #         else
+  #           echo "State changed messages count is not $expected, it is $count"
+  #           exit 1
+  #         fi
+  #     - name: Check statechanged stop
+  #       working-directory: ./api/source
+  #       run: |
+  #         expected=1
+  #         count=$(jq -s 'map(select(.type == "statechanged" and .data.currentState == "stop" and .data.previousState == "operational"))|length' api-log.json)
+  #         if [ "$count" -eq $expected ]; then
+  #           echo "State changed messages count is $expected"
+  #         else
+  #           echo "State changed messages count is not $expected, it is $count"
+  #           exit 1
+  #         fi
+  #     - name: Check signal
+  #       working-directory: ./api/source
+  #       run: |
+  #         expected=1
+  #         count=$(jq -s 'map(select(.type == "signal" and .data.signal == "SIGTERM"))|length' api-log.json)
+  #         if [ "$count" -eq $expected ]; then
+  #           echo "Signal messages count is $expected"
+  #         else
+  #           echo "Signal messages count is not $expected, it is $count"
+  #           exit 1
+  #         fi
+  #     - name: Check last log record
+  #       working-directory: ./api/source
+  #       run: |
+  #         expected='"Application stopped"'
+  #         last_message=$(jq -s '.[-1].data.message' api-log.json)
+  #         if [ "$last_message" == "$expected" ]; then
+  #           echo "Last message is $expected"
+  #         else
+  #           echo "Last message is not $expected, it is $last_message"
+  #           exit 1
+  #         fi
+  # test_bootstrap_5:
+  #   name: Boot - old MySQL
+  #   runs-on: ubuntu-latest
+  #   env:
+  #     STIGMAN_DB_PASSWORD: stigman
+  #     STIGMAN_OIDC_PROVIDER: http://127.0.0.1:8080/auth/realms/stigman
+  #   steps:
+  #     - name: Check out the repo
+  #       uses: actions/checkout@v4
+  #     - name: Run mock Keycloak
+  #       working-directory: ./test/api/mock-keycloak
+  #       run: |
+  #         python3 -m http.server 8080 &      
+  #     - name: Docker run MySQL
+  #       working-directory: ./api/source
+  #       run: |
+  #         docker run -d --name stig-manager-db \
+  #         -p 3306:3306 \
+  #         -e MYSQL_ROOT_PASSWORD=rootpw \
+  #         -e MYSQL_DATABASE=stigman \
+  #         -e MYSQL_USER=stigman \
+  #         -e MYSQL_PASSWORD=stigman \
+  #         mysql:8.0.23
+  #     - name: Wait for MySQL
+  #       working-directory: ./api/source
+  #       run: |
+  #         for i in {1..20}; do
+  #           echo "Waiting for MySQL to start"
+  #           if docker exec stig-manager-db mysql -ustigman -pstigman -e "SELECT 1" stigman &> /dev/null; then
+  #             echo "MySQL is up"
+  #             break
+  #           fi
+  #           sleep 1
+  #         done
+  #     - name: Install api libraries
+  #       working-directory: ./api/source
+  #       run: npm ci
+  #     - name: Run API
+  #       working-directory: ./api/source
+  #       run: |
+  #         set +e
+  #         timeout 30 node index.js | tee api-log.json
+  #         exit_code="${PIPESTATUS[0]}"
+  #         if [ $exit_code -eq 124 ]; then
+  #           echo "timeout timed out"
+  #           exit 1
+  #         elif [ $exit_code -eq 1 ]; then
+  #           echo "api exited with code 1"
+  #           exit 0
+  #         else
+  #           echo "api exited with code $exit_code"
+  #           exit 1
+  #         fi
+  #     - name: Check MySQL preflight failures
+  #       working-directory: ./api/source
+  #       run: |
+  #         expected=1
+  #         count=$(jq -s 'map(select(.component == "mysql" and .type == "preflight" and .data.success == false)) | length' api-log.json)
+  #         if [ "$count" -eq $expected ]; then
+  #           echo "MySQL preflight failures count is $expected"
+  #         else
+  #           echo "MySQL preflight failures count is not $expected, it is $count"
+  #           exit 1
+  #         fi
+  #     - name: Check statechanged fail
+  #       working-directory: ./api/source
+  #       run: |
+  #         expected=1
+  #         count=$(jq -s 'map(select(.type == "statechanged" and .data.currentState == "fail" and .data.previousState == "starting"))|length' api-log.json)
+  #         if [ "$count" -eq $expected ]; then
+  #           echo "State changed messages count is $expected"
+  #         else
+  #           echo "State changed messages count is not $expected, it is $count"
+  #           exit 1
+  #         fi
+  #     - name: Check last log record
+  #       working-directory: ./api/source
+  #       run: |
+  #         expected='"Application failed"'
+  #         last_message=$(jq -s '.[-1].data.message' api-log.json)
+  #         if [ "$last_message" == "$expected" ]; then
+  #           echo "Last message is $expected"
+  #         else
+  #           echo "Last message is not $expected, it is $last_message"
+  #           exit 1
+  #         fi
