@@ -34,16 +34,17 @@ jobs:
         working-directory: ./api/source
         run: |
           sleep 5
+          response=$(curl -s http://localhost:54000/op/state)
           expected='starting'
-          state=$(curl -s http://localhost:54000/op/state | jq -r .state)
+          state=$(jq -rc .state <<< "$response")
           if [ "$state" == "$expected" ]; then
             echo "State is $state"
           else
             echo "State is not $expected, it is $state"
             exit 1
           fi
-          expected='{ "db": false, "oidc": false }'
-          dependencies=$(curl -s http://localhost:54000/op/state | jq -r .dependencies)
+          expected='{"db":false,"oidc":false}'
+          dependencies=$(jq -rc .dependencies <<< "$response")
           if [ "$dependencies" == "$expected" ]; then
             echo "Dependencies is $dependencies"
           else
