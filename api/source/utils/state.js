@@ -34,9 +34,13 @@ class State extends EventEmitter {
   /** @type {ModeType} */
   #mode
 
+  /** @type {Date} */
+  #stateDate
+
   constructor(initialState, initialMode = 'normal') {
     super()
     this.#currentState = initialState
+    this.#stateDate = new Date()
     this.#mode = initialMode
     this.#dependencyStatus = {
       db: false,
@@ -75,6 +79,7 @@ class State extends EventEmitter {
     if (this.#currentState === state) return
     this.#previousState = this.#currentState
     this.#currentState = state
+    this.#stateDate = new Date()
     this.#emitStateChangedEvent()
   }
 
@@ -136,6 +141,16 @@ class State extends EventEmitter {
   /** @type {Object} */
   get dbPool() {
     return this.#dbPool
+  }
+
+  /** @type {Object} */
+  get apiState() {
+    return {
+      state: this.#currentState,
+      stateDate: this.#stateDate,
+      mode: this.#mode,
+      dependencies: this.#dependencyStatus
+    }
   }
 }
 

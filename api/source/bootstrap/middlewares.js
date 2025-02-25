@@ -70,11 +70,11 @@ function configureCompression(app) {
 function configureServiceCheck(app) {
     app.use((req, res, next) => {
       try {
-          if ((state.dependencyStatus.db && state.dependencyStatus.oidc) || req.url.startsWith('/api/op/definition')) {
+          if ((state.dependencyStatus.db && state.dependencyStatus.oidc) || req.url.startsWith('/api/op/state')) {
               next()
           }
           else {
-              res.status(503).json({status: state.dependencyStatus})
+              res.status(503).json(state.apiState)
           }
       }
       catch(e) {

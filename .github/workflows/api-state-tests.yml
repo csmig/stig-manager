@@ -18,16 +18,36 @@ jobs:
         working-directory: ./api/source
         run: |
           sh -c 'echo $$ > /tmp/test.pid ; exec node index.js > api-log.json 2>&1' &
-      - name: Check 503 status message
+      - name: Check for 503 response
         working-directory: ./api/source
         run: |
           sleep 5
-          expected='{"status":{"db":false,"oidc":false}}'
-          status=$(curl -s http://localhost:54000)
-          if [ "$status" == "$expected" ]; then
-            echo "Status is $expected"
+          expected='503'
+          code=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:54000)
+          if [ "$code" == "$expected" ]; then
+            echo "Code is $expected"
           else
-            echo "Status is not $expected, it is $status"
+            echo "Code is not $expected, it is $code"
+            exit 1
+          fi
+      - name: Check /op/state response
+        working-directory: ./api/source
+        run: |
+          sleep 5
+          expected='starting'
+          state=$(curl -s http://localhost:54000/op/state | jq -r .state)
+          if [ "$state" == "$expected" ]; then
+            echo "State is $state"
+          else
+            echo "State is not $expected, it is $state"
+            exit 1
+          fi
+          expected='{ "db": false, "oidc": false }'
+          dependencies=$(curl -s http://localhost:54000/op/state | jq -r .dependencies)
+          if [ "$dependencies" == "$expected" ]; then
+            echo "Dependencies is $dependencies"
+          else
+            echo "Dependencies is not $expected, it is $dependencies"
             exit 1
           fi
       - name: Wait for API to terminate
