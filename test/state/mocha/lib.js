@@ -3,9 +3,11 @@ import * as readline from 'node:readline'
 import { dirname } from 'path'
 import { fileURLToPath } from 'url'
 const __dirname = dirname(fileURLToPath(import.meta.url))
+
 const nodePath = '/usr/local/bin/node'
 const pythonPath = '/usr/bin/python3'
 const dockerPath = '/usr/bin/docker'
+
 export async function spawnApiWait (env) {
   return new Promise((resolve, reject) => {
     const api = spawn(nodePath, [`${__dirname}/../../../api/source/index.js`], {env})
@@ -40,7 +42,6 @@ export async function spawnApiWait (env) {
 
 export async function spawnApi (env) {
   return new Promise((resolve, reject) => {
-    console.log(JSON.stringify(process.env))
     const api = spawn(nodePath, [`${__dirname}/../../../api/source/index.js`], {env})
     
     api.on('error', (err) => {

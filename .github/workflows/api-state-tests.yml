@@ -17,10 +17,6 @@ jobs:
       - name: Install Test dependencies
         working-directory: ./test/state
         run: npm ci
-      - name: Print environment variables
-        run: env
-      - name: Print PATHs
-        run: which node; which docker; which python3
       - name: Run tests
         working-directory: ./test/state
         run: npm test
