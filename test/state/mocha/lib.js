@@ -4,15 +4,16 @@ import { dirname } from 'path'
 import { fileURLToPath } from 'url'
 const __dirname = dirname(fileURLToPath(import.meta.url))
 
-const nodeCmd = 'node'
-const pythonCmd = 'python3'
-const dockerCmd = 'docker'
+// workqround PATH envvar not being used by spawn in github actions
+const nodeCmd = process.env.GITHUB_RUN_ID ? '/usr/local/bin/node':'node'
+const pythonCmd = process.env.GITHUB_RUN_ID ? '/usr/bin/python3':'python3'
+const dockerCmd = process.env.GITHUB_RUN_ID ? '/usr/bin/docker':'docker'
 
 // console.log(JSON.stringify(process.env, null, 2))
 
 export async function spawnApiWait (env) {
   return new Promise((resolve, reject) => {
-    const api = spawn(nodeCmd, [`${__dirname}/../../../api/source/index.js`], {env, shell:true})
+    const api = spawn(nodeCmd, [`${__dirname}/../../../api/source/index.js`], {env})
     
     api.on('error', (err) => {
       reject(err)
@@ -116,7 +117,7 @@ export function spawnMySQL (tag = '8.0.41', port = '3306') {
       '-e', 'MYSQL_USER=stigman',
       '-e', 'MYSQL_PASSWORD=stigman',
       `mysql:${tag}`
-    ], {shell:true})
+    ])
     child.on('exit', (code) => {
       if (code !== 0) {
         reject(new Error(`EXIT: Command failed with code ${code}`))
@@ -150,7 +151,7 @@ export function spawnMySQL (tag = '8.0.41', port = '3306') {
 }
 
 export function spawnMockKeycloak (port = '8080') {
-  const child =  spawn(pythonCmd, ['-m', 'http.server', port], {cwd: `${__dirname}/../../api/mock-keycloak`, shell:true})
+  const child =  spawn(pythonCmd, ['-m', 'http.server', port], {cwd: `${__dirname}/../../api/mock-keycloak`})
   // child.on('exit', (code) => {
   //   console.log(`EXIT: Mock Keycloak server exited with code ${code}`);
   // })
