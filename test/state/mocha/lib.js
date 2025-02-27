@@ -8,6 +8,8 @@ const nodeCmd = 'node'
 const pythonCmd = 'python3'
 const dockerCmd = 'docker'
 
+console.log(JSON.stringify(process.env, null, 2))
+
 export async function spawnApiWait (env) {
   return new Promise((resolve, reject) => {
     const api = spawn(nodeCmd, [`${__dirname}/../../../api/source/index.js`], {env})
