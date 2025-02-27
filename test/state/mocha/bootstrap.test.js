@@ -19,7 +19,7 @@ describe('no dependencies', () => {
       expect(res.body.dependencies).to.eql({db: false, oidc: false})
     })
     it('should return 503 when dependencies are not available', async () => {
-      const res = await simpleRequest('http://localhost:54000')
+      const res = await simpleRequest('http://localhost:54000/api/op/configuration')
       expect(res.status).to.equal(503)
       expect(res.body.state).to.equal('starting')
       expect(res.body.dependencies).to.eql({db: false, oidc: false})
@@ -102,7 +102,7 @@ describe('both dependencies', () => {
       expect(res.body.dependencies).to.eql({db: true, oidc: true})
     })
     it('should return 200 when dependencies are available', async () => {
-      const res = await simpleRequest('http://localhost:54000/')
+      const res = await simpleRequest('http://localhost:54000/api/op/configuration')
       expect(res.status).to.equal(200)
     })
   })
