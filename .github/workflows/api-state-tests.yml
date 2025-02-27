@@ -23,7 +23,7 @@ jobs:
         run: which node; which docker; which python3
       - name: Run tests
         working-directory: ./test/state
-        run: PATH=/usr/local/bin:/usr/bin npm test
+        run: ./node_modules/mocha/bin/mocha.js --reporter mochawesome --showFailed --exit './mocha/**/*.test.js'
       - name: Upload mocha test report
         id: artifact-upload-mocha
         uses: actions/upload-artifact@v4
