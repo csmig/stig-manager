@@ -3,10 +3,12 @@ import * as readline from 'node:readline'
 import { dirname } from 'path'
 import { fileURLToPath } from 'url'
 const __dirname = dirname(fileURLToPath(import.meta.url))
-
+const nodePath = '/usr/local/bin/node'
+const pythonPath = '/usr/bin/python3'
+const dockerPath = '/usr/bin/docker'
 export async function spawnApiWait (env) {
   return new Promise((resolve, reject) => {
-    const api = spawn('node', [`${__dirname}/../../../api/source/index.js`], {env})
+    const api = spawn(nodePath, [`${__dirname}/../../../api/source/index.js`], {env})
     
     api.on('error', (err) => {
       reject(err)
@@ -39,7 +41,7 @@ export async function spawnApiWait (env) {
 export async function spawnApi (env) {
   return new Promise((resolve, reject) => {
     console.log(JSON.stringify(process.env))
-    const api = spawn('node', [`${__dirname}/../../../api/source/index.js`], {env})
+    const api = spawn(nodePath, [`${__dirname}/../../../api/source/index.js`], {env})
     
     api.on('error', (err) => {
       reject(err)
@@ -102,7 +104,7 @@ export async function simpleRequest(url, method) {
 export function spawnMySQL (tag = '8.0.41', port = '3306') {
   let readyCount = 0
   return new Promise((resolve, reject) => {
-    const child = spawn('docker', [
+    const child = spawn(dockerPath, [
       'run', '--rm',
       // '--name', 'test-mysql',
       '-p', `${port}:3306`,
@@ -145,7 +147,7 @@ export function spawnMySQL (tag = '8.0.41', port = '3306') {
 }
 
 export function spawnMockKeycloak (port = '8080') {
-  const child =  spawn('python3', ['-m', 'http.server', port], {cwd: `${__dirname}/../../api/mock-keycloak`})
+  const child =  spawn(pythonPath, ['-m', 'http.server', port], {cwd: `${__dirname}/../../api/mock-keycloak`})
   // child.on('exit', (code) => {
   //   console.log(`EXIT: Mock Keycloak server exited with code ${code}`);
   // })
