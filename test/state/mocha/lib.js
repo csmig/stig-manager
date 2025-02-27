@@ -39,7 +39,7 @@ export async function spawnApiWait (env) {
 export async function spawnApi (env) {
   return new Promise((resolve, reject) => {
     console.log(JSON.stringify(process.env))
-    const api = spawn('node', [`${__dirname}/../../../api/source/index.js`], {env})
+    const api = spawn('/usr/local/bin/node', [`${__dirname}/../../../api/source/index.js`], {env})
     
     api.on('error', (err) => {
       reject(err)
