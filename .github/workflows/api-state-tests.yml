@@ -27,7 +27,7 @@ jobs:
       - name: Run tests
         working-directory: ./test/state
         run: |
-          echo "/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin" >>> $GITHUB_PATH
+          echo "/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin" >> $GITHUB_PATH
           npm test
       - name: Upload mocha test report
         id: artifact-upload-mocha
