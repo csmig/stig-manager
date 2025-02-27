@@ -102,7 +102,7 @@ describe('both dependencies', () => {
       expect(res.body.dependencies).to.eql({db: true, oidc: true})
     })
     it('should return 200 when dependencies are available', async () => {
-      const res = await simpleRequest('http://localhost:54000')
+      const res = await simpleRequest('http://localhost:54000/')
       expect(res.status).to.equal(200)
     })
   })
