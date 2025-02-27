@@ -160,7 +160,7 @@ let initAttempt = 0
 * setDepStatus is a function that sets the status of a dependency
 */
 async function initializeAuth() {
-    const retries = 24
+    const retries = config.settings.dependencyRetries
     const metadataUri = `${config.oauth.authority}/.well-known/openid-configuration`
     let jwksUri
     async function getJwks() {
