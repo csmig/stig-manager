@@ -13,11 +13,14 @@ const logger = require('./logger')
 
 /**
  * @typedef {Object} DependencyStatus
- * @property {boolean} db
- * @property {boolean} oidc
+ * @property {boolean} db - The status of the database dependency.
+ * @property {boolean} oidc - The status of the OIDC dependency.
  */
 
-
+/**
+ * Class representing the state of the API.
+ * @extends EventEmitter
+ */
 class State extends EventEmitter {
   /** @type {StateType} */
   #currentState
@@ -37,7 +40,13 @@ class State extends EventEmitter {
   /** @type {Date} */
   #stateDate
 
-  constructor(initialState, initialMode = 'normal') {
+  /**
+   * Creates an instance of State.
+   * @param {Object} options - Options for initializing the state.
+   * @param {StateType} [options.initialState='starting'] - The initial state of the API.
+   * @param {ModeType} [options.initialMode='normal'] - The initial mode of the API.
+   */
+  constructor({ initialState = 'starting', initialMode = 'normal' } = {}) {
     super()
     this.#currentState = initialState
     this.#stateDate = new Date()
@@ -49,19 +58,25 @@ class State extends EventEmitter {
   }
 
   /**
-   * Emits 'statechanged', passing the previous and current state and dependency status
+   * Emits 'statechanged', passing the previous and current state and dependency status.
+   * @private
    */
   #emitStateChangedEvent() {
     this.emit('statechanged', this.#currentState, this.#previousState, this.#dependencyStatus)
   }
 
   /**
-   * Emits 'modechanged', passing the current mode
+   * Emits 'modechanged', passing the current mode.
+   * @private
    */
   #emitModeChangedEvent() {
     this.emit('modechanged', this.#mode)
   }
 
+  /**
+   * Sets the state based on the dependency status.
+   * @private
+   */
   #setStateFromDependencyStatus() {
     if (this.#dependencyStatus.db && this.#dependencyStatus.oidc) {
       this.setState('operational')
@@ -72,8 +87,8 @@ class State extends EventEmitter {
   }
 
   /**
-   * Sets the state to the provided state and emits statechanged event
-   * @param {StateType} state 
+   * Sets the state to the provided state and emits statechanged event.
+   * @param {StateType} state - The new state.
    */
   setState(state) {
     if (this.#currentState === state) return
@@ -84,8 +99,9 @@ class State extends EventEmitter {
   }
 
   /**
-   * Sets the mode to the provided mode and emits modechanged event
-   * @param {ModeType} mode 
+   * Sets the mode to the provided mode and emits modechanged event.
+   * @param {ModeType} mode - The new mode.
+   * @private
    */
   #setMode(mode) {
     if (this.#mode === mode) return
@@ -94,8 +110,8 @@ class State extends EventEmitter {
   }
 
   /**
-   * Sets the status of the database dependency
-   * @param {boolean} status 
+   * Sets the status of the database dependency.
+   * @param {boolean} status - The new status of the database dependency.
    */
   setDbStatus(status) {
     if (this.#dependencyStatus.db === status) return
@@ -104,8 +120,8 @@ class State extends EventEmitter {
   }
 
   /**
-   * Sets the status of the OIDC dependency
-   * @param {boolean} status 
+   * Sets the status of the OIDC dependency.
+   * @param {boolean} status - The new status of the OIDC dependency.
    */
   setOidcStatus(status) {
     if (this.#dependencyStatus.oidc === status) return
@@ -113,37 +129,63 @@ class State extends EventEmitter {
     this.#setStateFromDependencyStatus()
   }
 
-  /** @type {StateType} */
+  /**
+   * Gets the current state.
+   * @type {StateType}
+   * @readonly
+   */
   get currentState() {
     return this.#currentState
   }
 
-  /** @type {DependencyStatus} */
+  /**
+   * Gets the dependency status.
+   * @type {DependencyStatus}
+   * @readonly
+   */
   get dependencyStatus() {
     return {...this.#dependencyStatus}
   }
 
-  /** @type {ModeType} */
+  /**
+   * Gets the current mode.
+   * @type {ModeType}
+   * @readonly
+   */
   get currentMode() {
     return this.#mode
   }
 
-  /** @param {ModeType} */
+  /**
+   * Sets the current mode.
+   * @param {ModeType} mode - The new mode.
+   */
   set currentMode(mode) {
     this.#setMode(mode)
   }
 
-  /** @param {Object} */
+  /**
+   * Sets the database pool.
+   * @param {Object} pool - The new database pool.
+   */
   set dbPool(pool) {
     this.#dbPool = pool
   }
 
-  /** @type {Object} */
+  /**
+   * Gets the database pool.
+   * @type {Object}
+   * @readonly
+   */
   get dbPool() {
     return this.#dbPool
   }
 
-  /** @type {Object} */
+  /**
+   * Gets the API state.
+   * @type {Object}
+   * @readonly
+   */
   get apiState() {
     return {
       state: this.#currentState,
@@ -154,7 +196,7 @@ class State extends EventEmitter {
   }
 }
 
-const state = new State('starting')
+const state = new State()
 state.on('statechanged', async (currentState, previousState, dependencyStatus) => {
   logger.writeInfo('state','statechanged', {currentState, previousState, dependencyStatus})
   let exitCode = 0

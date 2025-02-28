@@ -25,7 +25,7 @@ export function spawnApiPromise ({
   resolveOnClose = true,
   apiPath = `${__dirname}/../../../api/source/index.js`,
   env
-}) {
+} = {}) {
   return new Promise((resolve, reject) => {
     const api = spawn(nodeCmd, [apiPath], {env})
     
@@ -59,12 +59,17 @@ export function spawnApiPromise ({
 
 /**
  * Spawns the API as a node process.
- * @param {Object} [env] - Environment variables for the API process.
+ * @param {Object} [options] - Options for spawning the API.
+ * @param {string} [options.apiPath=`${__dirname}/../../../api/source/index.js`] - The path to the API script.
+ * @param {Object} [options.env] - Environment variables for the API process.
  * @returns {Object|null} The API process and log records, or null if an error occurred.
  */
-export function spawnApi (env) {
+export function spawnApi ({
+  apiPath = `${__dirname}/../../../api/source/index.js`,
+  env
+} = {}) {
   try {
-    const api = spawn(nodeCmd, [`${__dirname}/../../../api/source/index.js`], {env})
+    const api = spawn(nodeCmd, [apiPath], {env})
   }
   catch (err) {
     console.error(err)
@@ -141,7 +146,7 @@ export function spawnMySQL ({
   tag = '8.0.24', 
   port = '3306',
   readyCount = 2
-}) {
+} = {}) {
   let readySeen = 0
   return new Promise((resolve, reject) => {
     const child = spawn(dockerCmd, [
@@ -188,7 +193,7 @@ export function spawnMySQL ({
 export function spawnHttpServer ({
   port = '8080',
   cwd = `${__dirname}/../../api/mock-keycloak`
-}) {
+} = {}) {
   const child =  spawn(pythonCmd, ['-m', 'http.server', port], {cwd})
   return child
 }
