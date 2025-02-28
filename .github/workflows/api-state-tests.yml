@@ -1,4 +1,4 @@
-name: API State Tests
+name: API state tests
 on:
   workflow_dispatch:
   push:
