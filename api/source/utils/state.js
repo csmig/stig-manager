@@ -3,7 +3,7 @@ const logger = require('./logger')
 
 /**
  * Represents the state of the API.
- * @typedef {'starting' | 'fail' | 'operational' | 'unavailable' | 'stop'} StateType
+ * @typedef {'starting' | 'fail' | 'available' | 'unavailable' | 'stop'} StateType
  */
 
 /**
@@ -79,7 +79,7 @@ class State extends EventEmitter {
    */
   #setStateFromDependencyStatus() {
     if (this.#dependencyStatus.db && this.#dependencyStatus.oidc) {
-      this.setState('operational')
+      this.setState('available')
     }
     else {
       this.setState(this.#currentState === 'starting' ? 'starting' : 'unavailable')

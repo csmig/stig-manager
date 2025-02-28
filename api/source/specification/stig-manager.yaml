@@ -7602,7 +7602,7 @@ components:
       type: string
       enum:
         - starting
-        - operational
+        - available
         - unavailable
         - fail
         - stop

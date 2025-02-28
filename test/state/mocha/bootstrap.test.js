@@ -108,10 +108,10 @@ describe('Both dependencies', function () {
   })
 
   describe('GET /op/state', function () {
-    it('should return state "operational"', async function () {
+    it('should return state "available"', async function () {
       const res = await simpleRequest('http://localhost:54000/api/op/state')
       expect(res.status).to.equal(200)
-      expect(res.body.state).to.equal('operational')
+      expect(res.body.state).to.equal('available')
       expect(res.body.dependencies).to.eql({db: true, oidc: true})
     })
   })
@@ -146,10 +146,10 @@ describe('Both dependencies', function () {
   })
 
   describe('statechanged message', function () {
-    it('currentState = "operational"', function () {
+    it('currentState = "available"', function () {
       const stateChanged = api.logRecords.filter(r => r.type === 'statechanged')
       expect(stateChanged).to.have.lengthOf(1)
-      expect(stateChanged[0].data).to.eql({currentState: 'operational', previousState: 'starting', dependencyStatus: {db: true, oidc: true}})
+      expect(stateChanged[0].data).to.eql({currentState: 'available', previousState: 'starting', dependencyStatus: {db: true, oidc: true}})
     })
   })
 })
