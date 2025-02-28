@@ -6,7 +6,7 @@ describe('No dependencies', function () {
   let api
   const STIGMAN_DEPENDENCY_RETRIES = 2
   
-  before('starting api', async function () {
+  before(async function () {
     this.timeout(60000)
     api = await spawnApiPromise({
       resolveOnType: 'listening',
@@ -14,6 +14,11 @@ describe('No dependencies', function () {
         STIGMAN_DEPENDENCY_RETRIES
       }
     })
+  })
+
+  after(function () {
+    api.process.kill()
+    addContext(this, {title: 'api-log', value: api.logRecords})
   })
 
   describe('GET /op/state', function () {
@@ -73,12 +78,6 @@ describe('No dependencies', function () {
       expect(stateChanged[0].data).to.eql({currentState: 'fail', previousState: 'starting', dependencyStatus: {db: false, oidc: false}})
     })
   })
-
-  describe('api log', function () {
-    it('addContext', function () {
-      addContext(this, {title: 'api-log', value: api.logRecords})
-    })
-  })
 })
 
 describe('Both dependencies', function () {
@@ -105,6 +104,7 @@ describe('Both dependencies', function () {
     api.process.kill()
     mysql.kill()
     kc.kill()
+    addContext(this, {title: 'api-log', value: api.logRecords})
   })
 
   describe('GET /op/state', function () {
@@ -152,12 +152,6 @@ describe('Both dependencies', function () {
       expect(stateChanged[0].data).to.eql({currentState: 'operational', previousState: 'starting', dependencyStatus: {db: true, oidc: true}})
     })
   })
-
-  describe('api log', function () {
-    it('addContext', function () {
-      addContext(this, {title: 'api-log', value: api.logRecords})
-    })
-  })
 })
 
 describe('Old mysql', function () {
@@ -184,6 +178,7 @@ describe('Old mysql', function () {
     api.process.kill()
     mysql.kill()
     kc.kill()
+    addContext(this, {title: 'api-log', value: api.logRecords})
   })
 
   describe('exit code', function () {
@@ -220,12 +215,6 @@ describe('Old mysql', function () {
       const stateChanged = api.logRecords.filter(r => r.type === 'statechanged')
       expect(stateChanged).to.have.lengthOf(1)
       expect(stateChanged[0].data).to.eql({currentState: 'fail', previousState: 'starting', dependencyStatus: {db: false, oidc: true}})
-    })
-  })
-
-  describe('api log', function () {
-    it('addContext', function () {
-      addContext(this, {title: 'api-log', value: api.logRecords})
     })
   })
 })
