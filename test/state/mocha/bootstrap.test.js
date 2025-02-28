@@ -2,7 +2,7 @@ import { expect } from 'chai'
 import { spawnApiPromise, spawnHttpServer, spawnMySQL, simpleRequest, waitChildClose } from './lib.js'
 import addContext from 'mochawesome/addContext.js'
 
-describe('With no dependencies', function () {
+describe('Boot with no dependencies', function () {
   let api
   const STIGMAN_DEPENDENCY_RETRIES = 2
   
@@ -80,7 +80,7 @@ describe('With no dependencies', function () {
   })
 })
 
-describe('With both dependencies', function () {
+describe('Boot with both dependencies', function () {
   let api
   let mysql
   let kc
@@ -154,7 +154,7 @@ describe('With both dependencies', function () {
   })
 })
 
-describe('With old mysql', function () {
+describe('Boot with old mysql', function () {
   let api
   let mysql
   let kc
