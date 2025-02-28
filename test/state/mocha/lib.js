@@ -4,78 +4,95 @@ import { dirname } from 'path'
 import { fileURLToPath } from 'url'
 const __dirname = dirname(fileURLToPath(import.meta.url))
 
-// workqround PATH envvar not being used by spawn in github actions
+// workaround PATH envvar not being honored by spawn within github actions
 const nodeCmd = process.env.GITHUB_RUN_ID ? '/usr/local/bin/node':'node'
 const pythonCmd = process.env.GITHUB_RUN_ID ? '/usr/bin/python3':'python3'
 const dockerCmd = process.env.GITHUB_RUN_ID ? '/usr/bin/docker':'docker'
 
-// console.log(JSON.stringify(process.env, null, 2))
-
-export async function spawnApiWait (env) {
+/**
+ * Spawns the API as a node process.
+ * Returns a promise that resolves when the API emits a log record 
+ * of the specified type (default 'started') or when the API process closes.
+ * @param {Object} options - Options for spawning the API.
+ * @param {string} [options.resolveOnType='started'] - The log record type to resolve the promise.
+ * @param {boolean} [options.resolveOnClose=true] - Whether to resolve the promise when the API process closes.
+ * @param {string} [options.apiPath=`${__dirname}/../../../api/source/index.js`] - The path to the API script.
+ * @param {Object} [options.env] - Environment variables for the API process.
+ * @returns {Promise<Object>} A promise that resolves with the API process and log records.
+ */
+export function spawnApiPromise ({
+  resolveOnType = 'started',
+  resolveOnClose = true,
+  apiPath = `${__dirname}/../../../api/source/index.js`,
+  env
+}) {
   return new Promise((resolve, reject) => {
-    const api = spawn(nodeCmd, [`${__dirname}/../../../api/source/index.js`], {env})
+    const api = spawn(nodeCmd, [apiPath], {env})
     
     api.on('error', (err) => {
       reject(err)
     })
 
-    const rValue = {
+    const resolution = {
       process: api,
       logRecords: []
     }
 
-    const rl = readline.createInterface({
+    readline.createInterface({
       input: api.stdout,
       crlfDelay: Infinity
-    })
-
-    rl.on('line', (line) => {
+    }).on('line', (line) => {
       const json = JSON.parse(line)
-      rValue.logRecords.push(json)
-      if (json.type === 'started') {
-        resolve(rValue)
+      resolution.logRecords.push(json)
+      if (json.type === resolveOnType) {
+        resolve(resolution)
       }
     })
 
     api.on('close', () => {
-      resolve(rValue)
+      if (resolveOnClose) {
+        resolve(resolution)
+      }
     })
   })
 }
 
-export async function spawnApi (env) {
-  return new Promise((resolve, reject) => {
+/**
+ * Spawns the API as a node process.
+ * @param {Object} [env] - Environment variables for the API process.
+ * @returns {Object|null} The API process and log records, or null if an error occurred.
+ */
+export function spawnApi (env) {
+  try {
     const api = spawn(nodeCmd, [`${__dirname}/../../../api/source/index.js`], {env})
-    
-    api.on('error', (err) => {
-      reject(err)
-    })
+  }
+  catch (err) {
+    console.error(err)
+    return null
+  }
 
-    const rValue = {
-      process: api,
-      logRecords: []
-    }
+  const value = {
+    process: api,
+    logRecords: []
+  }
 
-    const rl = readline.createInterface({
-      input: api.stdout,
-      crlfDelay: Infinity
-    })
-
-    rl.on('line', (line) => {
-      const json = JSON.parse(line)
-      rValue.logRecords.push(json)
-      if (json.type === 'listening') {
-        resolve(rValue)
-      }
-    })
-
-    api.on('close', () => {
-      resolve(rValue)
-    })
+  readline.createInterface({
+    input: api.stdout,
+    crlfDelay: Infinity
+  }).on('line', (line) => {
+    const json = JSON.parse(line)
+    value.logRecords.push(json)
   })
+
+  return value
 }
 
-export async function waitChildClose (child) {
+/**
+ * Waits for a child process to close.
+ * @param {ChildProcess} child - The child process to wait for.
+ * @returns {Promise<number>} A promise that resolves with the exit code of the child process.
+ */
+export function waitChildClose (child) {
   return new Promise((resolve, reject) => {
     if (child.exitCode) {
       resolve(child.exitCode)
@@ -89,6 +106,12 @@ export async function waitChildClose (child) {
   })
 }
 
+/**
+ * Makes a simple, non-authenticated request to a URL.
+ * @param {string} url - The URL to request.
+ * @param {string} method - The HTTP method to use.
+ * @returns {Promise<Object>} A promise that resolves with the response status, headers, and body.
+ */
 export async function simpleRequest(url, method) {
   const options = {
     method
@@ -105,12 +128,24 @@ export async function simpleRequest(url, method) {
   }
 }
 
-export function spawnMySQL (tag = '8.0.41', port = '3306') {
-  let readyCount = 0
+/**
+ * Spawns a MySQL container.
+ * Returns a promise that resolves when the MySQL container is ready for connections.
+ * @param {Object} options - Options for spawning the MySQL container.
+ * @param {string} [options.tag='8.0.24'] - The MySQL image tag to use.
+ * @param {string} [options.port='3306'] - The port to map to the MySQL container.
+ * @param {number} [options.readyCount=2] - The number of "ready for connections" messages to wait for.
+ * @returns {Promise<ChildProcess>} A promise that resolves with the MySQL container process.
+ */
+export function spawnMySQL ({
+  tag = '8.0.24', 
+  port = '3306',
+  readyCount = 2
+}) {
+  let readySeen = 0
   return new Promise((resolve, reject) => {
     const child = spawn(dockerCmd, [
       'run', '--rm',
-      // '--name', 'test-mysql',
       '-p', `${port}:3306`,
       '-e', 'MYSQL_ROOT_PASSWORD=rootpw',
       '-e', 'MYSQL_DATABASE=stigman',
@@ -124,25 +159,18 @@ export function spawnMySQL (tag = '8.0.41', port = '3306') {
       }
     })
 
-    // child.on('close', (code) => {
-    //   console.log(`CLOSE: child process exited with code ${code}`)
-    // });
-
-    
     child.on('error', (err) => {
-      console.error('ERROR: Failed to start the command:', err);
+      console.error('ERROR: Failed to start the command:', err)
       reject(err)
-    });
-    
+    })
 
-    const rl = readline.createInterface({
+   readline.createInterface({
       input: child.stderr,
       crlfDelay: Infinity
-    })
-    rl.on('line', (line) => {
+    }).on('line', (line) => {
       if (line.includes('mysqld: ready for connections')) {
-        readyCount++
-        if (readyCount === 2) {
+        readySeen++
+        if (readySeen === readyCount) {
           resolve(child)
         } 
       }
@@ -150,37 +178,17 @@ export function spawnMySQL (tag = '8.0.41', port = '3306') {
   })
 }
 
-export function spawnMockKeycloak (port = '8080') {
-  const child =  spawn(pythonCmd, ['-m', 'http.server', port], {cwd: `${__dirname}/../../api/mock-keycloak`})
-  // child.on('exit', (code) => {
-  //   console.log(`EXIT: Mock Keycloak server exited with code ${code}`);
-  // })
-
-  // child.on('close', (code) => {
-  //   console.log(`CLOSE: Mock Keycloak server closed with code ${code}`)
-  // });
-
-  
-  // child.on('error', (err) => {
-  //   console.log('ERROR: Mock Keycloak server error:', err);
-  // });
-
-  // child.stdout.on('data', (data) => {
-  //   console.log(`stdout: ${data}`)
-  // })
-  // child.stderr.on('data', (data) => {
-  //   console.log(`stderr: ${data}`)
-  // })
-
-
-  // const rl = readline.createInterface({
-  //   input: child.stdout,
-  //   crlfDelay: Infinity
-  // })
-  // rl.on('line', (line) => {
-  //   if (line.includes('Serving HTTP')) {
-  //     resolve(child)
-  //   }
-  // })
+/**
+ * Spawns a Python HTTP server, by default serving from the mock-keycloak directory.
+ * @param {Object} options - Options for spawning the HTTP server.
+ * @param {string} [options.port='8080'] - The port to serve the HTTP server on.
+ * @param {string} [options.cwd=`${__dirname}/../../api/mock-keycloak`] - The working directory to serve files from.
+ * @returns {ChildProcess} The HTTP server process.
+ */
+export function spawnHttpServer ({
+  port = '8080',
+  cwd = `${__dirname}/../../api/mock-keycloak`
+}) {
+  const child =  spawn(pythonCmd, ['-m', 'http.server', port], {cwd})
   return child
 }
