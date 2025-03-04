@@ -1,4 +1,5 @@
 import { spawn } from 'node:child_process'
+import EventEmitter from 'node:events'
 import * as readline from 'node:readline'
 import { dirname } from 'path'
 import { fileURLToPath } from 'url'
@@ -35,7 +36,8 @@ export function spawnApiPromise ({
 
     const resolution = {
       process: api,
-      logRecords: []
+      logRecords: [],
+      logEvents: new EventEmitter()
     }
 
     readline.createInterface({
@@ -44,6 +46,7 @@ export function spawnApiPromise ({
     }).on('line', (line) => {
       const json = JSON.parse(line)
       resolution.logRecords.push(json)
+      resolution.logEvents.emit(json.type, json)
       if (json.type === resolveOnType) {
         resolve(resolution)
       }
@@ -70,26 +73,26 @@ export function spawnApi ({
 } = {}) {
   try {
     const api = spawn(nodeCmd, [apiPath], {env})
+
+    const value = {
+      process: api,
+      logRecords: []
+    }
+
+    readline.createInterface({
+      input: api.stdout,
+      crlfDelay: Infinity
+    }).on('line', (line) => {
+      const json = JSON.parse(line)
+      value.logRecords.push(json)
+    })
+
+    return value
   }
   catch (err) {
     console.error(err)
     return null
   }
-
-  const value = {
-    process: api,
-    logRecords: []
-  }
-
-  readline.createInterface({
-    input: api.stdout,
-    crlfDelay: Infinity
-  }).on('line', (line) => {
-    const json = JSON.parse(line)
-    value.logRecords.push(json)
-  })
-
-  return value
 }
 
 /**
