@@ -12,6 +12,8 @@ const state = require('../utils/state')
 const minMySqlVersion = '8.0.24'
 let _this = this
 let initAttempt = 0
+const NetKeepAlive = require('net-keepalive')
+const PoolMonitor = require('../utils/PoolMonitor.js')
 
 module.exports.testConnection = async function () {
   logger.writeDebug('mysql', 'preflight', { attempt: ++initAttempt })
@@ -49,6 +51,7 @@ function getPoolConfig() {
     database: config.database.schema,
     decimalNumbers: true,
     charset: 'utf8mb4_0900_ai_ci',
+    keepAliveInitialDelay: 10000,
     typeCast: function (field, next) {
       if ((field.type === "BIT") && (field.length === 1)) {
         let bytes = field.buffer() || [0]
@@ -82,10 +85,20 @@ module.exports.initializeDatabase = async function () {
   logger.writeDebug('mysql', 'poolConfig', { ...poolConfig })
   _this.pool = mysql.createPool(poolConfig)
   state.dbPool = _this.pool
+
+  _this.pool.on('remove', function (connection) {
+    logger.writeInfo('mysql', 'poolEvent', { event: 'remove', remaining: _this.pool.pool._allConnections.toArray().length, authorized: connection.authorized })
+  })  
+
+  new PoolMonitor({pool: _this.pool, state, retryInterval: 20000})
+
   // Set common session variables
   _this.pool.on('connection', function (connection) {
+    logger.writeInfo('mysql', 'poolEvent', { event: 'connection'})
+    NetKeepAlive.setUserTimeout(connection.stream, 20000)
     connection.query('SET SESSION group_concat_max_len=10000000')
   })
+
 
   // Preflight the pool every 5 seconds
   const {detectedTables,detectedMySqlVersion} = await retry(_this.testConnection, {
@@ -108,6 +121,8 @@ module.exports.initializeDatabase = async function () {
       version: detectedMySqlVersion
     })
   }
+
+  stubRemoveConnection(_this.pool)
 
   try {
     if (detectedTables === 0) {
@@ -156,6 +171,15 @@ module.exports.initializeDatabase = async function () {
     state.setDbStatus(false)
     throw new Error('Failed during database initialization or migration.')
   } 
+}
+
+let originalRemoveConnection
+function stubRemoveConnection(promisePool) {
+  originalRemoveConnection = promisePool.pool._removeConnection
+  promisePool.pool._removeConnection = function (connection) {
+    originalRemoveConnection.call(promisePool.pool, connection)
+    promisePool.emit('remove', connection)
+  }
 }
 
 module.exports.parseRevisionStr = function (revisionStr) {
