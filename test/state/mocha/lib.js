@@ -152,6 +152,7 @@ export function spawnMySQL ({
 } = {}) {
   let readySeen = 0
   return new Promise((resolve, reject) => {
+    let resolved = false
     const child = spawn(dockerCmd, [
       'run', '--rm',
       '-p', `${port}:3306`,
@@ -159,17 +160,13 @@ export function spawnMySQL ({
       '-e', 'MYSQL_DATABASE=stigman',
       '-e', 'MYSQL_USER=stigman',
       '-e', 'MYSQL_PASSWORD=stigman',
+      '-v', `${__dirname}/../mysql-data:/var/lib/mysql`,
       `mysql:${tag}`
     ])
-    child.on('exit', (code) => {
-      if (code !== 0) {
-        reject(new Error(`EXIT: Command failed with code ${code}`))
-      }
-    })
 
     child.on('error', (err) => {
-      console.error('ERROR: Failed to start the command:', err)
-      reject(err)
+      console.error('ERROR', err)
+      if (!resolved) reject(err)
     })
 
    readline.createInterface({
@@ -179,6 +176,7 @@ export function spawnMySQL ({
       if (line.includes('mysqld: ready for connections')) {
         readySeen++
         if (readySeen === readyCount) {
+          resolved = true
           resolve(child)
         } 
       }
