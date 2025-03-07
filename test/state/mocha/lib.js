@@ -160,7 +160,6 @@ export function spawnMySQL ({
       '-e', 'MYSQL_DATABASE=stigman',
       '-e', 'MYSQL_USER=stigman',
       '-e', 'MYSQL_PASSWORD=stigman',
-      '-v', `${__dirname}/../mysql-data:/var/lib/mysql`,
       `mysql:${tag}`
     ])
 

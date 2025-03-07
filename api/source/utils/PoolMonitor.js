@@ -9,15 +9,17 @@ class PoolMonitor {
    * @param {Object} options.pool - The mysql2 PromisePool object.
    * @param {Object} options.state - The API state object.
    * @param {number} [options.retryInterval=40000] - The interval at which to retry creating a new connection (in milliseconds).
+   * @param {Function} [options.retryFn=async ()=>{})] - The retry function.
    * @throws {Error} Throws an error if pool or state is not provided.
    */
-  constructor({ pool, state, retryInterval = 40000 }) {
+  constructor({ pool, state, retryInterval = 40000, retryFn = async () => {} }) {
     if (!pool || !state) {
       throw new Error('PoolMonitor requires a pool and state object.')
     }
     this.pool = pool
     this.state = state
     this.retryInterval = retryInterval
+    this.retryFn = retryFn
     this.retries = 0
     this.pool.on('remove', this.onRemove.bind(this))
   }
@@ -31,12 +33,7 @@ class PoolMonitor {
     if (poolEmpty && this.state.dependencyStatus.db) {
       this.state.setDbStatus(false)
       this.retries = 0
-      this.intervalId = setInterval(this.retryConnection.bind(this), this.retryInterval)
-      return
-    }
-    if (!poolEmpty && !this.state.dependencyStatus.db) {
-      this.state.setDbStatus(true)
-      clearInterval(this.intervalId)
+      this.timeoutId = setTimeout(this.callRetryFn.bind(this), this.retryInterval)
     }
   }
 
@@ -45,16 +42,16 @@ class PoolMonitor {
    * If successful, sets the database status to true and clears the retry interval.
    * If unsuccessful, increments the retry count.
    */
-  async retryConnection() {
+  async callRetryFn() {
     try {
-      await this.pool.getConnection()
+      await this.retryFn()
       console.log('Pool connection restored.')
       this.state.setDbStatus(true)
-      clearInterval(this.intervalId)
     } 
     catch (error) {
       console.log(`Error retrying connection: ${error.message}`)
       this.retries++
+      this.timeoutId = setTimeout(this.callRetryFn.bind(this), this.retryInterval)
     }
   }
 }

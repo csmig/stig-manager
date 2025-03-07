@@ -37,6 +37,7 @@ describe('DB outage: shutdown', function () {
   after(function () {
     api.process.kill()
     mysql.kill()
+    console.log('MYSQL KILLED')
     kc.kill()
     addContext(this, {title: 'api-log', value: api.logRecords})
   })

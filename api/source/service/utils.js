@@ -5,7 +5,7 @@ const retry = require('async-retry')
 const Umzug = require('umzug')
 const path = require('path')
 const fs = require("fs")
-const semverLt = require('semver/functions/lt')
+const semverGte = require('semver/functions/gte')
 const semverCoerce = require('semver/functions/coerce')
 const Importer = require('./migrations/lib/mysql-import.js')
 const state = require('../utils/state')
@@ -15,30 +15,86 @@ let initAttempt = 0
 const NetKeepAlive = require('net-keepalive')
 const PoolMonitor = require('../utils/PoolMonitor.js')
 
-module.exports.testConnection = async function () {
+async function getVersionAndTableCount () {
   logger.writeDebug('mysql', 'preflight', { attempt: ++initAttempt })
   let [result] = await _this.pool.query('SELECT VERSION() as version')
   let [tables] = await _this.pool.query('SHOW TABLES')
   return {
-    detectedMySqlVersion: result[0].version,
-    detectedTables: tables.length 
+    version: result[0].version,
+    numTables: tables.length 
   }
 }
 
-async function setupInitialDatabase(pool){
-  const importer = new Importer(pool)
+function isOkVersion(version) {
+  return semverGte(semverCoerce(version), semverCoerce(minMySqlVersion))
+}
+
+async function doMigrations() {
+    // Perform migrations
+    const umzug = new Umzug({
+      migrations: {
+        path: path.join(__dirname, './migrations'),
+        params: [_this.pool]
+      },
+      storage: path.join(__dirname, './migrations/lib/umzug-mysql-storage'),
+      storageOptions: {
+        pool: _this.pool
+      }
+    })
+
+    if (config.database.revert) {
+      const migrations = await umzug.executed()
+      if (migrations.length) {
+        logger.writeInfo('mysql', 'migration', { message: 'MySQL schema will revert the last migration and terminate' })
+        await umzug.down()
+      } else {
+        logger.writeInfo('mysql', 'migration', { message: 'MySQL schema has no migrations to revert' })
+      }
+      logger.writeInfo('mysql', 'migration', { message: 'MySQL revert migration has completed' })
+      state.setState('stop')
+    }
+    const migrations = await umzug.pending()
+    if (migrations.length > 0) {
+      logger.writeInfo('mysql', 'migration', { message: `MySQL schema requires ${migrations.length} update${migrations.length > 1 ? 's' : ''}` })
+      await umzug.up()
+      logger.writeInfo('mysql', 'migration', { message: `All migrations performed successfully` })
+    }
+    else {
+      logger.writeInfo('mysql', 'migration', { message: `MySQL schema is up to date` })
+    }
+    return umzug.executed()
+}
+
+async function setupInitialSchema(){
+  logger.writeInfo('mysql', 'schema', { message: 'setting up new schema.' })
+  const importer = new Importer(_this.pool)
   const dir = path.join(__dirname, 'migrations', 'sql', 'current')
   const files = await fs.promises.readdir(dir)
   try {
     for (const file of files) {
-        logger.writeInfo('mysql', 'initalizing', {status: 'running', name: file })
+        logger.writeInfo('mysql', 'schema', {status: 'running', name: file })
         await importer.import(path.join(dir, file))
     }    
   }
   catch (e) {
-    logger.writeError('mysql', 'initialize', {status: 'error', files: files, message: e.message })
-    throw new Error(`Failed to initialize database with file ${e.message}`)
+    logger.writeError('mysql', 'schema', {status: 'error', files, message: e.message })
+    throw new Error(`failed to setup initial schema, ${e.message}`)
   }
+  logger.writeInfo('mysql', 'schema', { message: 'schema setup complete.' })
+}
+
+async function setupSchema(needsScaffold) {
+  try {
+    if (needsScaffold) {
+      await setupInitialSchema()
+    }
+    const migrated = await doMigrations()
+    config.lastMigration = parseInt(migrated[migrated.length -1].file.substring(0,4))
+  }
+  catch (error) {
+    logger.writeError('mysql', 'initalization', { message: error.message })
+    throw new Error('Failed during database initialization or migration.')
+  } 
 }
 
 function getPoolConfig() {
@@ -79,29 +135,32 @@ function getPoolConfig() {
   return poolConfig
 }
 
-module.exports.initializeDatabase = async function () {
-  // Create the connection pool
-  const poolConfig = getPoolConfig()
-  logger.writeDebug('mysql', 'poolConfig', { ...poolConfig })
-  _this.pool = mysql.createPool(poolConfig)
-  state.dbPool = _this.pool
+// Patch the pool to emit a 'remove' event when a connection is removed
+function patchRemoveConnection(promisePool) {
+  const originalRemoveConnection = promisePool.pool._removeConnection
+  promisePool.pool._removeConnection = function (connection) {
+    originalRemoveConnection.call(promisePool.pool, connection)
+    promisePool.emit('remove', connection)
+  }
+}
 
-  _this.pool.on('remove', function (connection) {
-    logger.writeInfo('mysql', 'poolEvent', { event: 'remove', remaining: _this.pool.pool._allConnections.toArray().length, authorized: connection.authorized })
-  })  
+async function poolMonitorRetryFn () {
+  const {numTables,version} = await getVersionAndTableCount()
+  if (!isOkVersion(version)) {
+    logger.writeError('mysql', 'preflight', { success: false, message: `MySQL release ${version} is too old. Update to release ${minMySqlVersion} or later.` })
+    throw new Error('MySQL release is too old.')
+  } 
+  else {
+    logger.writeInfo('mysql', 'preflight', { 
+      success: true,
+      version
+    })
+    await setupSchema(numTables === 0)
+  }
+}
 
-  new PoolMonitor({pool: _this.pool, state, retryInterval: 20000})
-
-  // Set common session variables
-  _this.pool.on('connection', function (connection) {
-    logger.writeInfo('mysql', 'poolEvent', { event: 'connection'})
-    NetKeepAlive.setUserTimeout(connection.stream, 20000)
-    connection.query('SET SESSION group_concat_max_len=10000000')
-  })
-
-
-  // Preflight the pool every 5 seconds
-  const {detectedTables,detectedMySqlVersion} = await retry(_this.testConnection, {
+async function bootstrapRetryFn (fn) {
+  return retry(fn, {
     retries: config.settings.dependencyRetries,
     factor: 1,
     minTimeout: 5 * 1000,
@@ -110,77 +169,52 @@ module.exports.initializeDatabase = async function () {
       logger.writeError('mysql', 'preflight', { success: false, message: error.message })
     }
   })
-  if (semverLt(semverCoerce(detectedMySqlVersion), minMySqlVersion) ) {
-    logger.writeError('mysql', 'preflight', { success: false, message: `MySQL release ${detectedMySqlVersion} is too old. Update to release ${minMySqlVersion} or later.` })
-    state.setDbStatus(false)
-    throw new Error('MySQL release is too old.')
-  } 
-  else {
-    logger.writeInfo('mysql', 'preflight', { 
-      success: true,
-      version: detectedMySqlVersion
-    })
-  }
+}
 
-  stubRemoveConnection(_this.pool)
+function attachPoolEventHandlers(pool) {
+  pool.on('connection', function (connection) {
+    logger.writeInfo('mysql', 'poolEvent', { event: 'connection'})
+    NetKeepAlive.setUserTimeout(connection.stream, 20000)
+    connection.query('SET SESSION group_concat_max_len=10000000')
+  })
+  pool.on('remove', function (connection) {
+    logger.writeInfo('mysql', 'poolEvent', { event: 'remove', remaining: pool.pool._allConnections.toArray().length, authorized: connection.authorized })
+  })  
+}
 
+module.exports.initializeDatabase = async function () {
   try {
-    if (detectedTables === 0) {
-      logger.writeInfo('mysql', 'setup', { message: 'No existing tables detected. Setting up new database.' })
-      await setupInitialDatabase(_this.pool)
-      logger.writeInfo('mysql', 'setup', { message: 'Database setup complete.' })
-    }
-    // Perform migrations
-    const umzug = new Umzug({
-      migrations: {
-        path: path.join(__dirname, './migrations'),
-        params: [_this.pool]
-      },
-      storage: path.join(__dirname, './migrations/lib/umzug-mysql-storage'),
-      storageOptions: {
-        pool: _this.pool
-      }
-    })
+    // Create the connection pool
+    const poolConfig = getPoolConfig()
+    logger.writeDebug('mysql', 'poolConfig', { ...poolConfig })
 
-    if (config.database.revert) {
-      const migrations = await umzug.executed()
-      if (migrations.length) {
-        logger.writeInfo('mysql', 'migration', { message: 'MySQL schema will revert the last migration and terminate' })
-        await umzug.down()
-      } else {
-        logger.writeInfo('mysql', 'migration', { message: 'MySQL schema has no migrations to revert' })
-      }
-      logger.writeInfo('mysql', 'migration', { message: 'MySQL revert migration has completed' })
-      state.setState('stop')
-    }
-    const migrations = await umzug.pending()
-    if (migrations.length > 0) {
-      logger.writeInfo('mysql', 'migration', { message: `MySQL schema requires ${migrations.length} update${migrations.length > 1 ? 's' : ''}` })
-      await umzug.up()
-      logger.writeInfo('mysql', 'migration', { message: `All migrations performed successfully` })
-    }
+    _this.pool = mysql.createPool(poolConfig)
+    attachPoolEventHandlers(_this.pool)
+
+    new PoolMonitor({pool: _this.pool, state, retryInterval: 20000, retryFn: poolMonitorRetryFn})
+    state.dbPool = _this.pool
+
+    // Try to create a pool connection, retry every 5 seconds
+    const {numTables,version} = await bootstrapRetryFn(getVersionAndTableCount)
+
+    if (!isOkVersion(version)) {
+      logger.writeError('mysql', 'preflight', { success: false, message: `MySQL release ${version} is too old. Update to release ${minMySqlVersion} or later.` })
+      throw new Error('MySQL release is too old.')
+    } 
     else {
-      logger.writeInfo('mysql', 'migration', { message: `MySQL schema is up to date` })
+      logger.writeInfo('mysql', 'preflight', {success: true, version })
     }
+
+    patchRemoveConnection(_this.pool)
+    await setupSchema(numTables === 0)
     state.setDbStatus(true)
-    const migrated = await umzug.executed()
-    config.lastMigration = parseInt(migrated[migrated.length -1].file.substring(0,4))
   }
-  catch (error) {
-    logger.writeError('mysql', 'initalization', { message: error.message })
+  catch (err) {
     state.setDbStatus(false)
-    throw new Error('Failed during database initialization or migration.')
-  } 
+    throw err
+  }
 }
 
-let originalRemoveConnection
-function stubRemoveConnection(promisePool) {
-  originalRemoveConnection = promisePool.pool._removeConnection
-  promisePool.pool._removeConnection = function (connection) {
-    originalRemoveConnection.call(promisePool.pool, connection)
-    promisePool.emit('remove', connection)
-  }
-}
 
 module.exports.parseRevisionStr = function (revisionStr) {
   const ro = {}
