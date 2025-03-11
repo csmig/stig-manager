@@ -45,11 +45,9 @@ class PoolMonitor {
   async callRetryFn() {
     try {
       await this.retryFn()
-      console.log('Pool connection restored.')
       this.state.setDbStatus(true)
     } 
     catch (error) {
-      console.log(`Error retrying connection: ${error.message}`)
       this.retries++
       this.timeoutId = setTimeout(this.callRetryFn.bind(this), this.retryInterval)
     }

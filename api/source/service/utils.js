@@ -15,15 +15,22 @@ let initAttempt = 0
 const NetKeepAlive = require('net-keepalive')
 const PoolMonitor = require('../utils/PoolMonitor.js')
 
-async function getVersionAndTableCount () {
+async function preflightConnection () {
   logger.writeDebug('mysql', 'preflight', { attempt: ++initAttempt })
-  let [result] = await _this.pool.query('SELECT VERSION() as version')
-  let [tables] = await _this.pool.query('SHOW TABLES')
-  return {
-    version: result[0].version,
-    numTables: tables.length 
-  }
+  const connection = await _this.pool.getConnection()
+  await connection.release()
 }
+
+async function getMySqlVersion () {
+  let [result] = await _this.pool.query('SELECT VERSION() as version')
+  return result[0].version
+}
+
+async function getTableCount () {
+  let [tables] = await _this.pool.query('SHOW TABLES')
+  return tables.length
+}
+
 
 function isOkVersion(version) {
   return semverGte(semverCoerce(version), semverCoerce(minMySqlVersion))
@@ -83,9 +90,12 @@ async function setupInitialSchema(){
   logger.writeInfo('mysql', 'schema', { message: 'schema setup complete.' })
 }
 
-async function setupSchema(needsScaffold) {
+async function setupSchema() {
   try {
-    if (needsScaffold) {
+    // Check the number of tables in the database
+    const numTables = await getTableCount()
+
+    if (numTables === 0) {
       await setupInitialSchema()
     }
     const migrated = await doMigrations()
@@ -108,6 +118,9 @@ function getPoolConfig() {
     decimalNumbers: true,
     charset: 'utf8mb4_0900_ai_ci',
     keepAliveInitialDelay: 10000,
+    connectAttributes: {
+      program_name: 'stig-manager'
+    },
     typeCast: function (field, next) {
       if ((field.type === "BIT") && (field.length === 1)) {
         let bytes = field.buffer() || [0]
@@ -145,17 +158,24 @@ function patchRemoveConnection(promisePool) {
 }
 
 async function poolMonitorRetryFn () {
-  const {numTables,version} = await getVersionAndTableCount()
-  if (!isOkVersion(version)) {
-    logger.writeError('mysql', 'preflight', { success: false, message: `MySQL release ${version} is too old. Update to release ${minMySqlVersion} or later.` })
-    throw new Error('MySQL release is too old.')
-  } 
-  else {
-    logger.writeInfo('mysql', 'preflight', { 
-      success: true,
-      version
-    })
-    await setupSchema(numTables === 0)
+  try {
+    logger.writeInfo('mysql', 'restore', { message: 'attempting to restore pool connection' })
+    await preflightConnection()
+    logger.writeInfo('mysql', 'restore', { message: `connection suceeded` })
+    const version = await getMySqlVersion()
+    if (!isOkVersion(version)) {
+      const connection = await _this.pool.getConnection()
+      connection.connection.destroy()
+      throw new Error(`MySQL release ${version} is too old. Update to release ${minMySqlVersion} or later.`)
+    } 
+    else {
+      await setupSchema()
+      logger.writeInfo('mysql', 'restore', { success: true, version, message: 'pool connection restored' })
+    } 
+  }
+  catch (e) {
+    logger.writeError('mysql', 'restore', { success: false, message: e.message })
+    throw e
   }
 }
 
@@ -173,12 +193,15 @@ async function bootstrapRetryFn (fn) {
 
 function attachPoolEventHandlers(pool) {
   pool.on('connection', function (connection) {
-    logger.writeInfo('mysql', 'poolEvent', { event: 'connection'})
+    connection.on('error', function (error) {
+      logger.writeError('mysql', 'connectionEvent', { event: 'error', message: error.message })
+    })
+    logger.writeDebug('mysql', 'poolEvent', { event: 'connection'})
     NetKeepAlive.setUserTimeout(connection.stream, 20000)
     connection.query('SET SESSION group_concat_max_len=10000000')
   })
   pool.on('remove', function (connection) {
-    logger.writeInfo('mysql', 'poolEvent', { event: 'remove', remaining: pool.pool._allConnections.toArray().length, authorized: connection.authorized })
+    logger.writeDebug('mysql', 'poolEvent', { event: 'remove', remaining: pool.pool._allConnections.toArray().length, authorized: connection.authorized })
   })  
 }
 
@@ -194,9 +217,11 @@ module.exports.initializeDatabase = async function () {
     new PoolMonitor({pool: _this.pool, state, retryInterval: 20000, retryFn: poolMonitorRetryFn})
     state.dbPool = _this.pool
 
-    // Try to create a pool connection, retry every 5 seconds
-    const {numTables,version} = await bootstrapRetryFn(getVersionAndTableCount)
+    // Try to create a pool connection, will retry every 5 seconds
+    await bootstrapRetryFn(preflightConnection)
 
+    // Check the MySQL version
+    const version = await getMySqlVersion()
     if (!isOkVersion(version)) {
       logger.writeError('mysql', 'preflight', { success: false, message: `MySQL release ${version} is too old. Update to release ${minMySqlVersion} or later.` })
       throw new Error('MySQL release is too old.')
@@ -205,8 +230,12 @@ module.exports.initializeDatabase = async function () {
       logger.writeInfo('mysql', 'preflight', {success: true, version })
     }
 
+    // Patch the pool to emit a 'remove' event when a connection is removed
     patchRemoveConnection(_this.pool)
-    await setupSchema(numTables === 0)
+
+    // Setup the schema, will scaffold if necessary and run migrations
+    await setupSchema()
+
     state.setDbStatus(true)
   }
   catch (err) {
@@ -214,7 +243,6 @@ module.exports.initializeDatabase = async function () {
     throw err
   }
 }
-
 
 module.exports.parseRevisionStr = function (revisionStr) {
   const ro = {}
