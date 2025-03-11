@@ -81,6 +81,7 @@ coverage() {
   export STIGMAN_API_AUTHORITY=${STIGMAN_API_AUTHORITY:-"http://127.0.0.1:8080/realms/stigman"}
   export STIGMAN_EXPERIMENTAL_APPDATA=${STIGMAN_EXPERIMENTAL_APPDATA:-true}
   export STIGMAN_DEV_RESPONSE_VALIDATION="logOnly"
+  export STIGMAN_DEV_ALLOW_INSECURE_TOKENS="true"
   export NODE_V8_COVERAGE="$COVERAGE_DIR"
 
   mkdir -p "$NODE_V8_COVERAGE"
@@ -103,7 +104,7 @@ coverage() {
     // Wait for the API to start
     setTimeout(() => {
       console.log('Running Mocha tests...')
-      const tests = spawn('mocha', ['*/**/*.test.js', '--no-timeouts', '--ignore', '*/**/node_modules/**/*', '--recursive', '--ignore', './node_modules/**'], { stdio: 'inherit'})
+      const tests = spawn('mocha', ['./test/api/mocha/**/*.test.js', '--no-timeouts', '--ignore', '*/**/node_modules/**/*', '--recursive', '--ignore', './node_modules/**'], { stdio: 'inherit'})
 
       tests.on('close', (code) => {
         console.log('Tests finished. Stopping server...')
