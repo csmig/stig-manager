@@ -21,14 +21,22 @@ jobs:
       - name: Install Test dependencies
         working-directory: ./test/state
         run: npm ci
-      - name: Run tests
+      - name: Run bootstrap tests
         working-directory: ./test/state
-        run: sudo -E npm test
+        run: npx mocha --reporter mochawesome --showFailed --exit './mocha/bootstrap.test.js'
       - name: Upload mocha test report
-        id: artifact-upload-mocha
         uses: actions/upload-artifact@v4
         if: ${{ always() }}
         with:
-          name: mocha-report
+          name: mocha-report-bootstrap
           path: ./test/state/mochawesome-report
-
+      - name: Run outage tests
+        working-directory: ./test/state
+        run: sudo -E npx mocha --reporter mochawesome --showFailed --exit './mocha/outage.test.js'
+      - name: Upload mocha test report
+        uses: actions/upload-artifact@v4
+        if: ${{ always() }}
+        with:
+          name: mocha-report-outage
+          path: ./test/state/mochawesome-report
+  
