@@ -29,8 +29,8 @@ class PoolMonitor {
    * Sets the database status based on the pool's connection status.
    */
   onRemove() {
-    const poolEmpty = this.pool.pool._allConnections.length === 0
-    if (poolEmpty && this.state.dependencyStatus.db) {
+    const poolIsEmpty = this.pool.pool._allConnections.length === 0
+    if (poolIsEmpty && this.state.dependencyStatus.db) {
       this.state.setDbStatus(false)
       this.retries = 0
       this.timeoutId = setTimeout(this.callRetryFn.bind(this), this.retryInterval)
