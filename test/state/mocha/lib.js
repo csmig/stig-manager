@@ -1,4 +1,4 @@
-import { spawn, execFileSync } from 'node:child_process'
+import { spawn, execSync } from 'node:child_process'
 import EventEmitter from 'node:events'
 import * as readline from 'node:readline'
 import { dirname } from 'path'
@@ -9,7 +9,7 @@ const __dirname = dirname(fileURLToPath(import.meta.url))
 const nodeCmd = process.env.GITHUB_RUN_ID ? '/usr/local/bin/node':'node'
 const pythonCmd = process.env.GITHUB_RUN_ID ? '/usr/bin/python3':'python3'
 const dockerCmd = process.env.GITHUB_RUN_ID ? '/usr/bin/docker':'docker'
-const iptablesCmd = process.env.GITHUB_RUN_ID ? '/usr/sbin/iptables':'iptables'
+const iptablesCmd = process.env.GITHUB_RUN_ID ? 'sudo /usr/sbin/iptables':'sudo iptables'
 
 /**
  * Spawns the API as a node process.
@@ -200,5 +200,5 @@ export function spawnHttpServer ({
 }
 
 export function execIpTables (args) {
-  return execFileSync(iptablesCmd, args)
+  return execSync(`${iptablesCmd} ${args}`)
 }

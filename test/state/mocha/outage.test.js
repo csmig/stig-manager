@@ -168,7 +168,7 @@ describe('DB outage: network/host down', function () {
 
   describe('Network/host down', function () {
     before(async function () {
-      execIpTables(['-A', 'OUTPUT', '-p', 'tcp', '--dport', '3307', '-j', 'DROP'])
+      execIpTables('-A OUTPUT -p tcp --dport 3307 -j DROP')
       console.log('      iptables dropping packets')
     })
     it('should return state "unavailable"', async function () {
@@ -194,7 +194,7 @@ describe('DB outage: network/host down', function () {
   describe('Network/host up', function() {
     before( async function() {
       this.timeout(30000)
-      execIpTables(['-D', 'OUTPUT', '-p', 'tcp', '--dport', '3307', '-j', 'DROP'])
+      execIpTables('-D OUTPUT -p tcp --dport 3307 -j DROP')
       console.log('      iptables accepting packets')
     })
 
