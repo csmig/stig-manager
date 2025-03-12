@@ -22,4 +22,4 @@ jobs:
         working-directory: ./test/state
         run: npm ci
       - name: dump environment
-        run: sudo env
+        run: sudo -E env
