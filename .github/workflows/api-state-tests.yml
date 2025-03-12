@@ -21,8 +21,6 @@ jobs:
       - name: Install Test dependencies
         working-directory: ./test/state
         run: npm ci
-      # - name: dump environment
-      #   run: sudo env
       - name: Run tests
         working-directory: ./test/state
         run: sudo -E npm test
