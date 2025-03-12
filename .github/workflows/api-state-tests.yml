@@ -23,14 +23,3 @@ jobs:
         run: npm ci
       - name: dump environment
         run: sudo env
-      # - name: Run tests
-      #   working-directory: ./test/state
-      #   run: sudo npm test
-      # - name: Upload mocha test report
-      #   id: artifact-upload-mocha
-      #   uses: actions/upload-artifact@v4
-      #   if: ${{ always() }}
-      #   with:
-      #     name: mocha-report
-      #     path: ./test/state/mochawesome-report
-
