@@ -196,10 +196,10 @@ function formatSocket(socket) {
 
 function attachPoolEventHandlers(pool) {
   pool.on('connection', function (connection) {
-    connection.on('error', function (error) {
-      logger.writeError('mysql', 'connectionEvent', { event: 'error', message: error.message })
-    })
     const socket = formatSocket(connection.stream)
+    connection.on('error', function (error) {
+      logger.writeError('mysql', 'connectionEvent', { event: 'error', socket, message: error.message })
+    })
     logger.writeInfo('mysql', 'poolEvent', { event: 'connection', socket })
     NetKeepAlive.setUserTimeout(connection.stream, 20000)
     connection.query('SET SESSION group_concat_max_len=10000000')
