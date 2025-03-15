@@ -31,7 +31,6 @@ async function getTableCount () {
   return tables.length
 }
 
-
 function isOkVersion(version) {
   return semverGte(semverCoerce(version), semverCoerce(minMySqlVersion))
 }
@@ -191,17 +190,23 @@ async function bootstrapRetryFn (fn) {
   })
 }
 
+function formatSocket(socket) {
+  return socket.localAddress ? `${socket.localAddress}:${socket.localPort} -> ${socket.remoteAddress}:${socket.remotePort}` : undefined
+}
+
 function attachPoolEventHandlers(pool) {
   pool.on('connection', function (connection) {
     connection.on('error', function (error) {
       logger.writeError('mysql', 'connectionEvent', { event: 'error', message: error.message })
     })
-    logger.writeDebug('mysql', 'poolEvent', { event: 'connection'})
+    const socket = formatSocket(connection.stream)
+    logger.writeInfo('mysql', 'poolEvent', { event: 'connection', socket })
     NetKeepAlive.setUserTimeout(connection.stream, 20000)
     connection.query('SET SESSION group_concat_max_len=10000000')
   })
   pool.on('remove', function (connection) {
-    logger.writeDebug('mysql', 'poolEvent', { event: 'remove', remaining: pool.pool._allConnections.toArray().length, authorized: connection.authorized })
+    const socket = formatSocket(connection.stream)
+    logger.writeInfo('mysql', 'poolEvent', { event: 'remove', socket, remaining: pool.pool._allConnections.toArray().length, authorized: connection.authorized })
   })  
 }
 
