@@ -44,7 +44,7 @@ async function start () {
 		if (curUser.username !== undefined) {
 			loadApp();
 		} else {
-			el.innerHTML += `<br/>No account for ${window.oidcProvider.token}`
+			el.innerHTML += `<br/>No account for ${window.oidcClient.token}`
 		}
 	}
 	catch (e) {

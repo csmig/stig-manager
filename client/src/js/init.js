@@ -1,8 +1,17 @@
 import { stylesheets, scripts, isMinimizedSource } from './resources.js'
-import * as OP from './modules/oidcProvider.js'
+import OIDCClient from './modules/oidc-client.js'
 
 const statusEl = document.getElementById("loading-text")
-window.oidcProvider = OP
+const RP = new OIDCClient({
+  oidcProvider: STIGMAN.Env.oauth.authority,
+  clientId: STIGMAN.Env.oauth.clientId,
+  autoRefresh: true,
+  scope: getScopeStr(),
+  responseMode: STIGMAN.Env.oauth.responseMode,
+})
+window.oidcClient = RP
+await RP.getOpenIdConfiguration()
+
 
 function appendStatus(html) {
   statusEl.innerHTML += `${statusEl.innerHTML ? '<br/><br/>' : ''}${html}`
@@ -55,12 +64,7 @@ async function loadResources() {
 
 async function authorizeOidc() {
   try {
-    const tokens = await OP.authorize({
-      oidcProvider: STIGMAN.Env.oauth.authority,
-      clientId: STIGMAN.Env.oauth.clientId,
-      autoRefresh: true,
-      scope: getScopeStr()
-    })
+    const tokens = await RP.authorize()
     if (tokens) {
       appendStatus(`Loading App ${STIGMAN?.Env?.version}`)
       loadResources()

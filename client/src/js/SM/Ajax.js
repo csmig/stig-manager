@@ -190,11 +190,11 @@ Ext.lib.Ajax = function() {
         var o = getConnectionObject() || null;
         if (o) {
             // Keycloak token handling, carl.a.smigielski@saic.com
-            window.oidcProvider.updateToken(10).then(function (refreshed) {
+            window.oidcClient.updateToken(10).then(function (refreshed) {
                 // console.info("updateToken() returned successfully, refreshed: " + refreshed)
                 o.conn.open(method, uri, true);
-                if (window.oidcProvider.token) {
-                    initHeader('Authorization', 'Bearer ' + window.oidcProvider.token)
+                if (window.oidcClient.token) {
+                    initHeader('Authorization', 'Bearer ' + window.oidcClient.token)
                 }
     
                 if (pub.useDefaultXhrHeader) {

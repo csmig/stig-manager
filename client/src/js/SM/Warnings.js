@@ -1,11 +1,11 @@
 Ext.ns('SM')
 
-window.oidcProvider.onRefreshExpWarn = function (expTs) {
+window.oidcClient.onRefreshExpWarn = function (expTs) {
     let expiresIn = Math.round(expTs - (new Date().getTime() / 1000))
     let action = 'refresh' 
     Ext.Msg.alert('Session Timeout', `Your session will expire in ${expiresIn} seconds. Click OK to coontinue session`, function() {
         if (action === 'refresh') {
-            window.oidcProvider.updateToken(-1)
+            window.oidcClient.updateToken(-1)
         }
         else if (action === 'reload') {
             window.location.reload()
