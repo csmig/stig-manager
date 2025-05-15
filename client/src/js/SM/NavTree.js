@@ -194,7 +194,7 @@ SM.NavTree.TreePanel = Ext.extend(Ext.tree.TreePanel, {
           {
             id: 'logout',
             qtip: 'Logout session',
-            handler: window.oidcClient.logout
+            handler: window.oidcClient.logout.bind(window.oidcClient),
           },
         ],
         title: `${curUser.displayName === 'USER' ? SM.he(curUser.username) : SM.he(curUser.displayName)}`,

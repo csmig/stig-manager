@@ -119,11 +119,7 @@ class OIDCClient {
   }
 
   clearTokens() {
-    this.token = null
-    this.refreshToken = null
-    this.tokenParsed = null
-    this.refreshTokenParsed = null
-    this.#timeSkew = 0
+    this.#tokens = {}
   }
 
   async updateToken(minValidity = 5) {
@@ -131,8 +127,10 @@ class OIDCClient {
       if (!this.refreshToken) {
         if (this.isTokenExpired(minValidity)) {
           this.clearTokens()
+          reject(new Error('Token expired'))
+          return
         }
-        resolve(false)
+        resolve(this.token)
         return
       }
 
@@ -145,7 +143,7 @@ class OIDCClient {
         console.log('[OIDC_CLIENT] Refreshing token: token expired')
       }
       if (!willRefresh) {
-        resolve(false)
+        resolve(this.token)
         return
       }
 
@@ -160,7 +158,7 @@ class OIDCClient {
             this.setTokens(tokens, clientTime)
             console.log('[OIDC_CLIENT] Estimated time difference between browser and server is ' + this.#timeSkew + ' seconds')
             for (let p = this.#refreshQueue.pop(); p != null; p = this.#refreshQueue.pop()) {
-              p.resolve(true)
+              p.resolve(this.token)
             }
           })
           .catch((e) => {

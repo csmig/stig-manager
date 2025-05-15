@@ -2,16 +2,24 @@ import { stylesheets, scripts, isMinimizedSource } from './resources.js'
 import OIDCClient from './modules/oidc-client.js'
 
 const statusEl = document.getElementById("loading-text")
-const RP = new OIDCClient({
+window.oidcClient = new OIDCClient({
   oidcProvider: STIGMAN.Env.oauth.authority,
   clientId: STIGMAN.Env.oauth.clientId,
   autoRefresh: true,
   scope: getScopeStr(),
   responseMode: STIGMAN.Env.oauth.responseMode,
 })
-window.oidcClient = RP
-await RP.getOpenIdConfiguration()
+const RP = window.oidcClient
 
+if (window.isSecureContext) {
+  appendStatus(`Authorizing`)
+  authorizeOidc()
+} else {
+  appendStatus(`SECURE CONTEXT REQUIRED<br><br>
+    The App is not executing in a <a href=https://developer.mozilla.org/en-US/docs/Web/Security/Secure_Contexts target="_blank">secure context</a> and cannot continue.
+    <br><br>To be considered secure, resources that are not local must be served over https:// URLs and the security 
+    properties of the network channel used to deliver the resource must not be considered deprecated.`)
+}
 
 function appendStatus(html) {
   statusEl.innerHTML += `${statusEl.innerHTML ? '<br/><br/>' : ''}${html}`
@@ -64,6 +72,12 @@ async function loadResources() {
 
 async function authorizeOidc() {
   try {
+    await RP.getOpenIdConfiguration()
+  } catch (e) {
+    appendStatus(e.message)
+    return
+  }
+  try {
     const tokens = await RP.authorize()
     if (tokens) {
       appendStatus(`Loading App ${STIGMAN?.Env?.version}`)
@@ -75,14 +89,4 @@ async function authorizeOidc() {
   }
 }
 
-if (window.isSecureContext) {
-  appendStatus(`Authorizing`)
-  authorizeOidc()
-}
-else {
-  appendStatus(`SECURE CONTEXT REQUIRED<br><br>
-    The App is not executing in a <a href=https://developer.mozilla.org/en-US/docs/Web/Security/Secure_Contexts target="_blank">secure context</a> and cannot continue.
-    <br><br>To be considered secure, resources that are not local must be served over https:// URLs and the security 
-    properties of the network channel used to deliver the resource must not be considered deprecated.`)
-}
 
