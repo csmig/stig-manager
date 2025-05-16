@@ -30,9 +30,6 @@ async function start () {
 	const el = Ext.get('loading-text').dom
 
 	try {
-		if ('serviceWorker' in navigator) {
-			await navigator.serviceWorker.register('serviceWorker.js')
-		}
 		el.innerHTML += "<br/><br/>Fetching user data"
 		try {
 			await SM.GetUserObject()

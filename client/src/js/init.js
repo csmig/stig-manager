@@ -12,6 +12,11 @@ window.oidcClient = new OIDCClient({
 const RP = window.oidcClient
 
 if (window.isSecureContext) {
+  if ('serviceWorker' in navigator) {
+    appendStatus(`Registering Service Worker`)
+    await navigator.serviceWorker.register('serviceWorker.js')
+  }
+
   appendStatus(`Authorizing`)
   authorizeOidc()
 } else {

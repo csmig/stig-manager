@@ -1,4 +1,18 @@
-class OIDCClient {
+class OIDCClient extends EventTarget {
+
+  static OIDCError = class extends Error {
+    constructor(message) {
+      super(message)
+      this.name = 'OIDCError'
+    }
+  }
+
+  static TokenExpiredError = class extends OIDCClient.OIDCError {
+    constructor() {
+      super('Token has expired')
+      this.name = 'TokenExpiredError'
+    }
+  }
 
   #responseSeparator = '?'
   #tokens = {}
@@ -8,6 +22,7 @@ class OIDCClient {
   #refreshQueue = []
 
   constructor({oidcProvider, clientId, scope, autoRefresh, responseMode}) {
+    super()
     this.clientId = clientId
     this.oidcProvider = oidcProvider
     this.scope = scope
@@ -40,7 +55,7 @@ class OIDCClient {
       return null
     } else {
       // Exchange authorization_code for token
-      const lastOidc = JSON.parse(sessionStorage.getItem('last-oidc') ?? '{}')
+      const lastOidc = JSON.parse(localStorage.getItem('last-oidc') ?? '{}')
       lastOidc.redirectHref = window.location.href
       const [redirectUrl, paramStr] = window.location.href.split(this.#responseSeparator)
       const params = this.processRedirectParams(paramStr)
@@ -127,7 +142,9 @@ class OIDCClient {
       if (!this.refreshToken) {
         if (this.isTokenExpired(minValidity)) {
           this.clearTokens()
-          reject(new Error('Token expired'))
+          // reject(new OIDCClient.TokenExpiredError())
+          this.dispatchEvent(new Event('token_expired'))
+          resolve(null)
           return
         }
         resolve(this.token)
@@ -162,8 +179,10 @@ class OIDCClient {
             }
           })
           .catch((e) => {
+            this.dispatchEvent(new Event('refresh_failed'))
             for (let p = this.#refreshQueue.pop(); p != null; p = this.#refreshQueue.pop()) {
-              p.reject(e)
+              // p.reject(e)
+              p.reolve(null)
             }
           })
       }
@@ -254,7 +273,7 @@ class OIDCClient {
     const authEndpoint = this.oidcConfiguration.authorization_endpoint
     const authRequest = `${authEndpoint}?${params.toString()}`
 
-    sessionStorage.setItem(
+    localStorage.setItem(
       'last-oidc',
       JSON.stringify({
         state: oidcState,

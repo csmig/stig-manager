@@ -190,11 +190,14 @@ Ext.lib.Ajax = function() {
         var o = getConnectionObject() || null;
         if (o) {
             // Keycloak token handling, carl.a.smigielski@saic.com
-            window.oidcClient.updateToken(10).then(function (refreshed) {
-                // console.info("updateToken() returned successfully, refreshed: " + refreshed)
+            window.oidcClient.updateToken(10).then(function (token) {
+                if (!token) {
+                    pub.abort(o, callback, false)
+                    return
+                }
                 o.conn.open(method, uri, true);
                 if (window.oidcClient.token) {
-                    initHeader('Authorization', 'Bearer ' + window.oidcClient.token)
+                    initHeader('Authorization', 'Bearer ' + token)
                 }
     
                 if (pub.useDefaultXhrHeader) {
@@ -213,6 +216,15 @@ Ext.lib.Ajax = function() {
                 o.conn.send(postData || null);   
             }).catch(function(e) {
                 console.info(`In Ext.lib.Ajax.asyncRequest - updateToken() error: ${e}`)
+                const responseObject = createExceptionObject(o.tId, callback.argument, false, true);
+                if (callback.failure) {
+                    if (!callback.scope) {
+                        callback.failure(responseObject);
+                    }
+                    else {
+                        callback.failure.apply(callback.scope, [responseObject]);
+                    }
+                }
                 pub.abort(o, callback, false);
             })
         }
