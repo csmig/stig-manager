@@ -57,11 +57,30 @@ function getClientEnv(){
     return envJS
 }
 
+function getOauthJson() {
+    const oauthJSON = {
+        authority:  config.client.authority,
+        clientId: config.client.clientId,
+        refreshToken: {
+            disabled: config.client.refreshToken.disabled
+        },
+        extraScopes: config.client.extraScopes ?? '',
+        scopePrefix: config.client.scopePrefix ?? '',
+        responseMode: config.client.responseMode
+    }
+    return JSON.stringify(oauthJSON)
+}
+
 function serveClientEnv(app){
     const envJS = getClientEnv()
+    const oauthJSON = getOauthJson()
     app.get('/js/Env.js', function (req, res) {
         req.component = 'static'
         writer.writeWithContentType(res, { payload: envJS, contentType: "application/javascript" })
+    })
+    app.get('/js/Oauth.json', function (req, res) {
+        req.component = 'static'
+        writer.writeWithContentType(res, { payload: oauthJSON, contentType: "application/json" })
     })
 }
 

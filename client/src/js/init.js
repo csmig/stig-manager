@@ -1,24 +1,122 @@
 import { stylesheets, scripts, isMinimizedSource } from './resources.js'
-import OIDCClient from './modules/oidc-client.js'
+// import OIDCClient from './modules/oidc-client.js'
+
 
 const statusEl = document.getElementById("loading-text")
-window.oidcClient = new OIDCClient({
-  oidcProvider: STIGMAN.Env.oauth.authority,
-  clientId: STIGMAN.Env.oauth.clientId,
-  autoRefresh: true,
-  scope: getScopeStr(),
-  responseMode: STIGMAN.Env.oauth.responseMode,
-})
-const RP = window.oidcClient
+// window.oidcClient = new OIDCClient({
+//   oidcProvider: STIGMAN.Env.oauth.authority,
+//   clientId: STIGMAN.Env.oauth.clientId,
+//   autoRefresh: true,
+//   scope: getScopeStr(),
+//   responseMode: STIGMAN.Env.oauth.responseMode,
+// })
+// const RP = window.oidcClient
+let OW
+
+function sendWorkerRequest(request) {
+  const requestId = crypto.randomUUID()
+  OW.port.postMessage({ ...request, requestId })
+  return new Promise((resolve) => {
+    function handler(event) {
+      if (event.data.requestId === requestId) {
+        OW.port.removeEventListener('message', handler)
+        resolve(event.data.response)
+      }
+    }
+    OW.port.addEventListener('message', handler)
+  })
+}
+
+window.oidcClient = {
+  updateToken: async function () {
+    const response = await sendWorkerRequest({ request: 'getAccessToken' })
+    if (response.accessToken) {
+      this.token = response.accessToken
+      this.tokenParsed = response.accessTokenDecoded
+      return response.accessToken
+    }
+  },
+  logout: async function () {
+    const response = await sendWorkerRequest({ request: 'logout' })
+    if (response.success) {
+      this.token = null
+      window.location.href = response.redirect
+    }
+  }
+}
+
+function processRedirectParams(paramStr) {
+  const params = {}
+  const usp = new URLSearchParams(paramStr)
+  for (const [key, value] of usp) {
+    params[key] = value
+  }
+  return params
+}
+
+
 
 if (window.isSecureContext) {
-  if ('serviceWorker' in navigator) {
-    appendStatus(`Registering Service Worker`)
-    await navigator.serviceWorker.register('serviceWorker.js')
-  }
-
+  window.oidcWorker = new SharedWorker("js/oidc-worker.js", { name: 'stigman-oidc-worker', type: "module" })
+  OW = window.oidcWorker
+  OW.port.start()
+  await sendWorkerRequest({request:'initialize', redirectUri: window.location.href.replace(/\?.*$/, '')})
   appendStatus(`Authorizing`)
-  authorizeOidc()
+  
+  const responseSeparator = STIGMAN.Env.oauth.responseMode === 'fragment' ? '#' : '?'
+  const paramIndex = window.location.href.indexOf(responseSeparator)
+  if (paramIndex !== -1) {
+    const [redirectUri, paramStr] = window.location.href.split(responseSeparator)
+    const params = processRedirectParams(paramStr)
+    const response = await sendWorkerRequest({
+      request: 'exchangeCodeForToken',
+      code: params.code,
+      codeVerifier: sessionStorage.getItem('codeVerifier'),
+      clientId: STIGMAN.Env.oauth.clientId,
+      redirectUri
+    })
+    if (response.accessToken) {
+      window.oidcClient.token = response.accessToken
+      window.oidcClient.tokenParsed = response.accessTokenDecoded
+      appendStatus(`exchangeCodeForToken`)
+      window.history.replaceState(window.history.state, '', redirectUri)
+      sessionStorage.removeItem('codeVerifier')
+      loadResources()
+    } 
+  }
+  else {
+    const response = await sendWorkerRequest({request:'getAccessToken'})
+    if (response.accessToken) {
+      window.oidcClient.token = response.accessToken
+      window.oidcClient.tokenParsed = response.accessTokenDecoded
+      appendStatus(`getAccessToken`)
+      loadResources()
+    } else if (response.redirect) {
+      sessionStorage.setItem('codeVerifier', response.codeVerifier)
+      appendStatus(`<button id="sign-in-btn">Sign In</button>`)
+      document.getElementById('sign-in-btn').onclick = async function() {
+        const response = await sendWorkerRequest({request:'getAccessToken'})
+        if (response.accessToken) {
+          window.oidcClient.token = response.accessToken
+          window.oidcClient.tokenParsed = response.accessTokenDecoded
+          appendStatus(`getAccessToken`)
+          loadResources()
+        } else {
+          window.location.href = response.redirect
+          // const width = 700
+          // const height = 700
+          // const left = window.screenX + (window.outerWidth - width) / 2
+          // const top = window.screenY + (window.outerHeight - height) / 2
+
+          // window.open(
+          //   response.redirect,
+          //   '_blank',
+          //   `popup=yes,width=${width},height=${height},left=${left},top=${top}`
+          // )
+        }
+      }
+    }
+  }
 } else {
   appendStatus(`SECURE CONTEXT REQUIRED<br><br>
     The App is not executing in a <a href=https://developer.mozilla.org/en-US/docs/Web/Security/Secure_Contexts target="_blank">secure context</a> and cannot continue.

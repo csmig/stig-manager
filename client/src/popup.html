@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>STIGMan OIDC Popup</title>
+  <style>
+  body {
+    background: #000;
+    color: #ccc;
+    font-family: sans-serif;
+  }
+  #status {
+    margin-top: 1em;
+  }
+</style>
+</head>
+<body>
+  <h2>Signing In...</h2>
+  <div id="status"></div>
+  <script type="module">
+    // This script is executed in the context of the popup.html page
+    // It can be used to manipulate the DOM or handle events specific to the popup
+    function sendWorkerRequest(request) {
+      const requestId = crypto.randomUUID()
+      OW.port.postMessage({ ...request, requestId })
+      return new Promise((resolve) => {
+        function handler(event) {
+          if (event.data.requestId === requestId) {
+            OW.port.removeEventListener('message', handler)
+            resolve(event.data.response)
+          }
+        }
+        OW.port.addEventListener('message', handler)
+      })
+    }
+
+    function processRedirectParams(paramStr) {
+      const params = {}
+      const usp = new URLSearchParams(paramStr)
+      for (const [key, value] of usp) {
+        params[key] = value
+      }
+      return params
+    }
+
+    const OW = new SharedWorker("js/oidc-worker.js", { name: 'stigman-oidc-worker', type: "module" })
+    OW.port.start()
+    const [redirectUri, paramStr] = window.location.href.split('?')
+    // if (paramStr === undefined) {
+    //   document.getElementById('status').innerText = 'No parameters found in the URL.'
+    //   return
+    // }
+    const params = processRedirectParams(paramStr)
+    const response = await sendWorkerRequest({
+      request: 'exchangeCodeForToken',
+      code: params.code,
+      codeVerifier: sessionStorage.getItem('codeVerifier'),
+      clientId: 'stig-manager',
+      redirectUri
+    })
+    if (response.accessToken) {
+      window.close()
+    }
+  </script>
+</body>
+</html>

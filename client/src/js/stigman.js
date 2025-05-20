@@ -30,6 +30,9 @@ async function start () {
 	const el = Ext.get('loading-text').dom
 
 	try {
+		if ('serviceWorker' in navigator) {
+			await navigator.serviceWorker.register('serviceWorker.js')
+		}
 		el.innerHTML += "<br/><br/>Fetching user data"
 		try {
 			await SM.GetUserObject()
@@ -65,6 +68,26 @@ async function loadApp () {
 		Ext.data.DataProxy.on('exception', function(proxy, type, action, e) {
 			SM.Error.handleError(new SM.Error.ExtDataProxyError(e))
 		})
+
+		const bc = new BroadcastChannel('stigman-oidc-worker')
+		bc.onmessage = (event) => {
+			console.log('Received from worker:', event.type, event.data)
+			if (event.data.type === 'noToken') {
+				Ext.Msg.alert('Sign In', 'We need you to sign in again', function() {
+				// window.location.href = event.data.redirect
+					const width = 700
+					const height = 700
+					const left = window.screenX + (window.outerWidth - width) / 2
+					const top = window.screenY + (window.outerHeight - height) / 2
+
+					window.open(
+						event.data.redirect,
+						'_blank',
+						`popup=yes,width=${width},height=${height},left=${left},top=${top}`
+					)
+				})
+			}
+		}
 
 		const opRequests = [
 			Ext.Ajax.requestPromise({
