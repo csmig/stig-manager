@@ -188,48 +188,75 @@ Ext.lib.Ajax = function() {
     // private
     function asyncRequest(method, uri, callback, postData) {
         var o = getConnectionObject() || null;
-        if (o) {
-            // Keycloak token handling, carl.a.smigielski@saic.com
-            window.oidcClient.updateToken(10).then(function (token) {
-                if (!token) {
-                    pub.abort(o, callback, false)
-                    return
-                }
-                o.conn.open(method, uri, true);
-                if (window.oidcClient.token) {
-                    initHeader('Authorization', 'Bearer ' + token)
-                }
-    
-                if (pub.useDefaultXhrHeader) {
-                    initHeader('X-Requested-With', pub.defaultXhrHeader);
-                }
-    
-                if(postData && pub.useDefaultHeader && (!pub.headers || !pub.headers[CONTENTTYPE])){
-                    initHeader(CONTENTTYPE, pub.defaultPostHeader);
-                }
-    
-                if (pub.defaultHeaders || pub.headers) {
-                    setHeader(o);
-                }
-    
-                handleReadyState(o, callback);
-                o.conn.send(postData || null);   
-            }).catch(function(e) {
-                console.info(`In Ext.lib.Ajax.asyncRequest - updateToken() error: ${e}`)
-                const responseObject = createExceptionObject(o.tId, callback.argument, false, true);
-                if (callback.failure) {
-                    if (!callback.scope) {
-                        callback.failure(responseObject);
-                    }
-                    else {
-                        callback.failure.apply(callback.scope, [responseObject]);
-                    }
-                }
-                pub.abort(o, callback, false);
-            })
+
+        if (o && window.oidcWorker.token) {
+            o.conn.open(method, uri, true);
+
+            initHeader('Authorization', 'Bearer ' + window.oidcWorker.token)
+
+            if (pub.useDefaultXhrHeader) {
+                initHeader('X-Requested-With', pub.defaultXhrHeader);
+            }
+
+            if(postData && pub.useDefaultHeader && (!pub.headers || !pub.headers[CONTENTTYPE])){
+                initHeader(CONTENTTYPE, pub.defaultPostHeader);
+            }
+
+            if (pub.defaultHeaders || pub.headers) {
+                setHeader(o);
+            }
+
+            handleReadyState(o, callback);
+            o.conn.send(postData || null);
         }
         return o;
     }
+
+
+    // function asyncRequest(method, uri, callback, postData) {
+    //     var o = getConnectionObject() || null;
+    //     if (o) {
+    //         // Keycloak token handling, carl.a.smigielski@saic.com
+    //         window.oidcWorker.updateToken(10).then(function (token) {
+    //             if (!token) {
+    //                 pub.abort(o, callback, false)
+    //                 return
+    //             }
+    //             o.conn.open(method, uri, true);
+    //             if (window.oidcWorker.token) {
+    //                 initHeader('Authorization', 'Bearer ' + token)
+    //             }
+    
+    //             if (pub.useDefaultXhrHeader) {
+    //                 initHeader('X-Requested-With', pub.defaultXhrHeader);
+    //             }
+    
+    //             if(postData && pub.useDefaultHeader && (!pub.headers || !pub.headers[CONTENTTYPE])){
+    //                 initHeader(CONTENTTYPE, pub.defaultPostHeader);
+    //             }
+    
+    //             if (pub.defaultHeaders || pub.headers) {
+    //                 setHeader(o);
+    //             }
+    
+    //             handleReadyState(o, callback);
+    //             o.conn.send(postData || null);   
+    //         }).catch(function(e) {
+    //             console.info(`In Ext.lib.Ajax.asyncRequest - updateToken() error: ${e}`)
+    //             const responseObject = createExceptionObject(o.tId, callback.argument, false, true);
+    //             if (callback.failure) {
+    //                 if (!callback.scope) {
+    //                     callback.failure(responseObject);
+    //                 }
+    //                 else {
+    //                     callback.failure.apply(callback.scope, [responseObject]);
+    //                 }
+    //             }
+    //             pub.abort(o, callback, false);
+    //         })
+    //     }
+    //     return o;
+    // }
 
     // private
     function getConnectionObject() {

@@ -1,6 +1,8 @@
 Ext.Ajax.timeout = 30000000
 Ext.Msg.minWidth = 300
 Ext.USE_NATIVE_JSON = true
+Ext.Ajax.disableCaching = false
+start()
 
 function GetXmlHttpObject() {
 	if (window.XMLHttpRequest)
@@ -24,7 +26,6 @@ function myContextMenu (e,t,eOpts) {
 	}
 }
 
-Ext.Ajax.disableCaching = false
 
 async function start () {
 	const el = Ext.get('loading-text').dom
@@ -44,7 +45,7 @@ async function start () {
 		if (curUser.username !== undefined) {
 			loadApp();
 		} else {
-			el.innerHTML += `<br/>No account for ${window.oidcClient.token}`
+			el.innerHTML += `<br/>No account for ${window.oidcWorker.token}`
 		}
 	}
 	catch (e) {
@@ -70,24 +71,7 @@ async function loadApp () {
 		})
 
 		const bc = new BroadcastChannel('stigman-oidc-worker')
-		bc.onmessage = (event) => {
-			console.log('Received from worker:', event.type, event.data)
-			if (event.data.type === 'noToken') {
-				Ext.Msg.alert('Sign In', 'We need you to sign in again', function() {
-				// window.location.href = event.data.redirect
-					const width = 700
-					const height = 700
-					const left = window.screenX + (window.outerWidth - width) / 2
-					const top = window.screenY + (window.outerHeight - height) / 2
-
-					window.open(
-						event.data.redirect,
-						'_blank',
-						`popup=yes,width=${width},height=${height},left=${left},top=${top}`
-					)
-				})
-			}
-		}
+		bc.onmessage = broadcastHandler
 
 		const opRequests = [
 			Ext.Ajax.requestPromise({
@@ -257,4 +241,103 @@ async function loadApp () {
 
 } //end loadApp()
 
-start()
+let signInAlert, signInWindow, signInPopup, signInTab
+function broadcastHandler (event)  {
+	console.log('[stigman] Received from worker:', event.type, event.data)
+	if (event.data.type === 'noToken') {
+
+		signInAlert?.close()
+		signInAlert = null
+		signInWindow?.close()
+		signInWindow = null
+		signInTab?.close()
+		signInTab = null
+		signInPopup?.close()
+		signInPopup = null
+
+		const signInBtnMenuItems = [
+      {text: 'Inline Frame', style: 'iframe', handler: signInHandler},
+      {text: 'Popup Window', style: 'popup', handler: signInHandler},
+      {text: 'Browser Tab',  style: 'tab', handler: signInHandler}
+    ]
+		const signInButton = new Ext.Button({
+			text: 'Sign In',
+			iconCls: 'sm-login-icon',
+			menu: {
+				items: signInBtnMenuItems,
+			}
+		})
+
+		function signInHandler (menuItem) {
+			// if (signInWindow) {
+			// 	signInWindow.show()
+			// 	return
+			// }
+			const width = 600
+			const height = 740
+			const left = window.screenX + (window.outerWidth - width) / 2
+			const top = window.screenY + (window.outerHeight - height) / 2
+			
+			localStorage.setItem('codeVerifier', event.data.codeVerifier)
+			const style = menuItem.initialConfig.style
+			if (style === 'popup') {
+				if (!signInPopup) {
+					signInPopup = window.open(
+						event.data.redirect,
+						'_blank',
+						`popup=yes,scrollbars=false,location=false,width=${width},height=${height},left=${left},top=${top}`
+					)
+				}	
+				else {
+					signInPopup.focus()
+				}
+			}
+			else if (style === 'iframe') {
+				if (!signInWindow) {
+					signInWindow = new Ext.Window({
+						header: false,
+						layout: 'fit',
+						title: 'Inline Frame Sign In',
+						width,
+						height,
+						modal: false,
+						closeAction: 'hide',
+						html: `<iframe src="${event.data.redirect}" width="100%" height="100%" frameborder="0"></iframe>`,
+					})
+				}
+				signInWindow.show()
+			}
+			else if (style === 'tab') {
+				if (!signInTab) {
+					signInTab = window.open(
+						event.data.redirect,
+						'_blank'
+					)
+				}	
+				else {
+					signInTab.focus()
+				}
+			}
+		}
+
+		signInAlert = new Ext.Window({
+			title: '<div class="sm-alert-icon" style="padding-left:20px">Credentials Expired</div>',
+			width: 400,
+			height: 110,
+			modal: true,
+			html: `<div style="padding: 10px">Your credentials have expired and we need you to sign in again.</div>`,
+			closable: false,
+			buttons: [signInButton]
+		})
+		signInAlert.show()
+	}
+	else if (event.data.type === 'accessToken') {
+		signInAlert?.close()
+		signInWindow?.close()
+		signInWindow = null
+		signInTab?.close()
+		signInTab = null
+		signInPopup?.close()
+		signInPopup = null
+	}
+}

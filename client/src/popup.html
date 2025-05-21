@@ -18,8 +18,6 @@
   <h2>Signing In...</h2>
   <div id="status"></div>
   <script type="module">
-    // This script is executed in the context of the popup.html page
-    // It can be used to manipulate the DOM or handle events specific to the popup
     function sendWorkerRequest(request) {
       const requestId = crypto.randomUUID()
       OW.port.postMessage({ ...request, requestId })
@@ -54,7 +52,7 @@
     const response = await sendWorkerRequest({
       request: 'exchangeCodeForToken',
       code: params.code,
-      codeVerifier: sessionStorage.getItem('codeVerifier'),
+      codeVerifier: localStorage.getItem('codeVerifier'),
       clientId: 'stig-manager',
       redirectUri
     })

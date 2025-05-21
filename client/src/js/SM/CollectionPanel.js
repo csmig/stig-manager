@@ -1136,11 +1136,11 @@ SM.CollectionPanel.ExportPanel = Ext.extend(Ext.Panel, {
         const url = `${STIGMAN.Env.apiBase}/collections/${collectionId}/metrics/${style}${agg === 'unagg' ? '' : `/${agg}`}?${queryParamsStr}`
 
         const attachment = SM.Global.filenameEscaped(`${SM.Cache.CollectionMap.get(_this.collectionId)?.name}-${agg}-${style}_${SM.Global.filenameComponentFromDate()}.${format}`)
-        await window.oidcClient.updateToken(10)
+        await window.oidcWorker.updateToken(10)
         const fetchInit = {
           method: 'GET',
           headers: {
-            'Authorization': `Bearer ${window.oidcClient.token}`,
+            'Authorization': `Bearer ${window.oidcWorker.token}`,
             'Accept': `${format === 'csv' ? 'text/csv' : 'application/json'}`
           },
           attachment
@@ -1603,10 +1603,10 @@ SM.CollectionPanel.AggLabelPanel = Ext.extend(Ext.Panel, {
           url.searchParams.append(key, value)
         }
       }
-      await window.oidcClient.updateToken(10)
+      await window.oidcWorker.updateToken(10)
       const fetchOptions = {
         method: 'GET',
-        headers: {'Authorization': `Bearer ${window.oidcClient.token}`}
+        headers: {'Authorization': `Bearer ${window.oidcWorker.token}`}
       }
       let assets = await(await fetch(url, fetchOptions)).json()
       

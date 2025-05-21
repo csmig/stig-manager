@@ -1,74 +1,82 @@
 import { stylesheets, scripts, isMinimizedSource } from './resources.js'
-// import OIDCClient from './modules/oidc-client.js'
-
 
 const statusEl = document.getElementById("loading-text")
-// window.oidcClient = new OIDCClient({
-//   oidcProvider: STIGMAN.Env.oauth.authority,
-//   clientId: STIGMAN.Env.oauth.clientId,
-//   autoRefresh: true,
-//   scope: getScopeStr(),
-//   responseMode: STIGMAN.Env.oauth.responseMode,
-// })
-// const RP = window.oidcClient
 let OW
 
-function sendWorkerRequest(request) {
-  const requestId = crypto.randomUUID()
-  OW.port.postMessage({ ...request, requestId })
-  return new Promise((resolve) => {
-    function handler(event) {
-      if (event.data.requestId === requestId) {
-        OW.port.removeEventListener('message', handler)
-        resolve(event.data.response)
-      }
-    }
-    OW.port.addEventListener('message', handler)
-  })
-}
-
-window.oidcClient = {
+window.oidcWorker = {
   updateToken: async function () {
-    const response = await sendWorkerRequest({ request: 'getAccessToken' })
+    const response = await this.sendWorkerRequest({ request: 'getAccessToken' })
     if (response.accessToken) {
       this.token = response.accessToken
-      this.tokenParsed = response.accessTokenDecoded
+      this.tokenParsed = response.accessTokenPayload
       return response.accessToken
     }
   },
   logout: async function () {
-    const response = await sendWorkerRequest({ request: 'logout' })
+    const response = await this.sendWorkerRequest({ request: 'logout' })
     if (response.success) {
       this.token = null
+      this.tokenParsed = null
       window.location.href = response.redirect
     }
+  },
+  sendWorkerRequest: function (request) {
+    const requestId = crypto.randomUUID()
+    const port  = this.worker.port
+    port.postMessage({ ...request, requestId })
+    return new Promise((resolve) => {
+      function handler(event) {
+        if (event.data.requestId === requestId) {
+          port.removeEventListener('message', handler)
+          resolve(event.data.response)
+        }
+      }
+      port.addEventListener('message', handler)
+    })
+  },
+  worker: new SharedWorker("js/oidc-worker.js", { name: 'stigman-oidc-worker', type: "module" }),
+  processRedirectParams: function (paramStr) {
+    const params = {}
+    const usp = new URLSearchParams(paramStr)
+    for (const [key, value] of usp) {
+      params[key] = value
+    }
+    return params
   }
 }
 
-function processRedirectParams(paramStr) {
-  const params = {}
-  const usp = new URLSearchParams(paramStr)
-  for (const [key, value] of usp) {
-    params[key] = value
+const bc = new BroadcastChannel('stigman-oidc-worker')
+bc.onmessage = (event) => {
+  if (event.data.type === 'accessToken') {
+    console.log('{init] Received from worker:', event.type, event.data)
+    OW.token = event.data.accessToken
+    OW.tokenParsed = event.data.accessTokenPayload
   }
-  return params
+  else if (event.data.type === 'noToken') {
+    console.log('{init] Received from worker:', event.type, event.data)
+    OW.token = null
+    OW.tokenParsed = null
+  }
 }
 
-
-
-if (window.isSecureContext) {
-  window.oidcWorker = new SharedWorker("js/oidc-worker.js", { name: 'stigman-oidc-worker', type: "module" })
+if (!window.isSecureContext) {
+  appendStatus(`SECURE CONTEXT REQUIRED<br><br>
+    The App is not executing in a <a href=https://developer.mozilla.org/en-US/docs/Web/Security/Secure_Contexts target="_blank">secure context</a> and cannot continue.
+    <br><br>To be considered secure, resources that are not local must be served over https:// URLs and the security 
+    properties of the network channel used to deliver the resource must not be considered deprecated.`)
+} else {
   OW = window.oidcWorker
-  OW.port.start()
-  await sendWorkerRequest({request:'initialize', redirectUri: window.location.href.replace(/\?.*$/, '')})
+  OW.worker.port.start()
+
+  const responseSeparator = STIGMAN.Env.oauth.responseMode === 'fragment' ? '#' : '?'
+  const [redirectUri, paramStr] = window.location.href.split(responseSeparator)
+
+  await OW.sendWorkerRequest({request:'initialize', redirectUri})
   appendStatus(`Authorizing`)
   
-  const responseSeparator = STIGMAN.Env.oauth.responseMode === 'fragment' ? '#' : '?'
-  const paramIndex = window.location.href.indexOf(responseSeparator)
-  if (paramIndex !== -1) {
-    const [redirectUri, paramStr] = window.location.href.split(responseSeparator)
-    const params = processRedirectParams(paramStr)
-    const response = await sendWorkerRequest({
+  if (paramStr) {
+    const params = OW.processRedirectParams(paramStr)
+    const response = await OW.sendWorkerRequest({
       request: 'exchangeCodeForToken',
       code: params.code,
       codeVerifier: sessionStorage.getItem('codeVerifier'),
@@ -76,8 +84,8 @@ if (window.isSecureContext) {
       redirectUri
     })
     if (response.accessToken) {
-      window.oidcClient.token = response.accessToken
-      window.oidcClient.tokenParsed = response.accessTokenDecoded
+      OW.token = response.accessToken
+      OW.tokenParsed = response.accessTokenPayload
       appendStatus(`exchangeCodeForToken`)
       window.history.replaceState(window.history.state, '', redirectUri)
       sessionStorage.removeItem('codeVerifier')
@@ -85,63 +93,32 @@ if (window.isSecureContext) {
     } 
   }
   else {
-    const response = await sendWorkerRequest({request:'getAccessToken'})
+    const response = await OW.sendWorkerRequest({request:'getAccessToken'})
     if (response.accessToken) {
-      window.oidcClient.token = response.accessToken
-      window.oidcClient.tokenParsed = response.accessTokenDecoded
+      OW.token = response.accessToken
+      OW.tokenParsed = response.accessTokenPayload
       appendStatus(`getAccessToken`)
       loadResources()
     } else if (response.redirect) {
       sessionStorage.setItem('codeVerifier', response.codeVerifier)
       appendStatus(`<button id="sign-in-btn">Sign In</button>`)
       document.getElementById('sign-in-btn').onclick = async function() {
-        const response = await sendWorkerRequest({request:'getAccessToken'})
+        const response = await OW.sendWorkerRequest({request:'getAccessToken'})
         if (response.accessToken) {
-          window.oidcClient.token = response.accessToken
-          window.oidcClient.tokenParsed = response.accessTokenDecoded
+          OW.token = response.accessToken
+          OW.tokenParsed = response.accessTokenPayload
           appendStatus(`getAccessToken`)
           loadResources()
         } else {
           window.location.href = response.redirect
-          // const width = 700
-          // const height = 700
-          // const left = window.screenX + (window.outerWidth - width) / 2
-          // const top = window.screenY + (window.outerHeight - height) / 2
-
-          // window.open(
-          //   response.redirect,
-          //   '_blank',
-          //   `popup=yes,width=${width},height=${height},left=${left},top=${top}`
-          // )
         }
       }
     }
   }
-} else {
-  appendStatus(`SECURE CONTEXT REQUIRED<br><br>
-    The App is not executing in a <a href=https://developer.mozilla.org/en-US/docs/Web/Security/Secure_Contexts target="_blank">secure context</a> and cannot continue.
-    <br><br>To be considered secure, resources that are not local must be served over https:// URLs and the security 
-    properties of the network channel used to deliver the resource must not be considered deprecated.`)
-}
+} 
 
 function appendStatus(html) {
   statusEl.innerHTML += `${statusEl.innerHTML ? '<br/><br/>' : ''}${html}`
-}
-
-function getScopeStr() {
-  const scopePrefix = STIGMAN.Env.oauth.scopePrefix
-  let scopes = [
-    `${scopePrefix}stig-manager:stig`,
-    `${scopePrefix}stig-manager:stig:read`,
-    `${scopePrefix}stig-manager:collection`,
-    `${scopePrefix}stig-manager:user`,
-    `${scopePrefix}stig-manager:user:read`,
-    `${scopePrefix}stig-manager:op`
-  ]
-  if (STIGMAN.Env.oauth.extraScopes) {
-    scopes.push(...STIGMAN.Env.oauth.extraScopes.split(" "))
-  }
-  return scopes.join(" ")
 }
 
 async function loadResources() {
@@ -172,24 +149,4 @@ async function loadResources() {
   
   STIGMAN.isMinimizedSource = isMinimizedSource
 }
-
-async function authorizeOidc() {
-  try {
-    await RP.getOpenIdConfiguration()
-  } catch (e) {
-    appendStatus(e.message)
-    return
-  }
-  try {
-    const tokens = await RP.authorize()
-    if (tokens) {
-      appendStatus(`Loading App ${STIGMAN?.Env?.version}`)
-      loadResources()
-    }
-  }
-  catch (e) {
-    appendStatus(e.message)
-  }
-}
-
 

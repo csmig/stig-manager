@@ -942,11 +942,11 @@ SM.MetaPanel.ExportPanel = Ext.extend(Ext.Panel, {
 
         const attachment = SM.Global.filenameEscaped(`Meta-${agg}-${style}_${SM.Global.filenameComponentFromDate()}.${format}`)
 
-        await window.oidcClient.updateToken(10)
+        await window.oidcWorker.updateToken(10)
         const fetchInit = {
           method: 'GET',
           headers: {
-            'Authorization': `Bearer ${window.oidcClient.token}`,
+            'Authorization': `Bearer ${window.oidcWorker.token}`,
             'Accept': `${format === 'csv' ? 'text/csv' : 'application/json'}`
           },
           attachment

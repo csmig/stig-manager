@@ -1,15 +1,16 @@
+const logPrefix = '[OIDCWorker]:'
 class OIDCWorker {
   constructor() {
     this.tokens = {
       accessToken: null,
-      idToken: null,
       refreshToken: null
     }
     this.ENV = null
     this.oidcProvider = null
     this.oidcConfiguration = null
     this.initialized = false
-    this.authorization = null
+    this.authorization = {}
+    this.timeoutBufferS = 10
     this.bc = new BroadcastChannel('stigman-oidc-worker')
   }
 
@@ -19,7 +20,7 @@ class OIDCWorker {
       this.redirectUri = options.redirectUri
       const resp = await fetch('Oauth.json')
       this.ENV = await resp.json()
-      
+
       this.oidcProvider = this.ENV.authority
       this.clientId = this.ENV.clientId
       this.autoRefresh = this.ENV.autoRefresh
@@ -27,12 +28,13 @@ class OIDCWorker {
       this.responseMode = this.ENV.responseMode
       this.oidcConfiguration = await this.getOpenIdConfiguration()
     }
-    return {success: true}
+    return { success: true }
   }
 
   getScopeStr() {
     const scopePrefix = this.ENV.scopePrefix
     let scopes = [
+      `openid`,
       `${scopePrefix}stig-manager:stig`,
       `${scopePrefix}stig-manager:stig:read`,
       `${scopePrefix}stig-manager:collection`,
@@ -59,13 +61,13 @@ class OIDCWorker {
     return this.oidcConfiguration
   }
 
-  async getAuthorizationUrl() {
-    if (this.authorization) return this.authorization
+  async getAuthorizationUrl(redirectUri = this.redirectUri) {
+    if (this.authorization[redirectUri]) return this.authorization[redirectUri]
     const pkce = await this.getPkce()
     const oidcState = crypto.randomUUID()
     const params = new URLSearchParams()
     params.append('client_id', this.clientId)
-    params.append('redirect_uri', this.redirectUri)
+    params.append('redirect_uri', redirectUri)
     params.append('state', oidcState)
     params.append('response_mode', this.responseMode)
     params.append('response_type', 'code')
@@ -73,11 +75,12 @@ class OIDCWorker {
     params.append('nonce', crypto.randomUUID())
     params.append('code_challenge', pkce.codeChallenge)
     params.append('code_challenge_method', 'S256')
+    params.append('display', 'popup')
 
     const authEndpoint = this.oidcConfiguration.authorization_endpoint
     const redirect = `${authEndpoint}?${params.toString()}`
-    this.authorization = {redirect, codeVerifier: pkce.codeVerifier}
-    return this.authorization
+    this.authorization[redirectUri] = { redirect, codeVerifier: pkce.codeVerifier }
+    return this.authorization[redirectUri]
   }
 
   async getPkce() {
@@ -120,14 +123,14 @@ class OIDCWorker {
 
   getAccessToken() {
     if (!this.tokens.accessToken) {
-      console.log('[OIDCWORKER] No access token, redirecting to authorization')
+      console.log(logPrefix, 'getAccessToken, redirecting to authorization')
       return this.getAuthorizationUrl()
     }
-    console.log('[OIDCWORKER] Access token', this.tokens.accessToken)
+    // console.log(logPrefix, 'getAccessToken', this.tokens.accessToken)
     return {
       accessToken: this.tokens.accessToken,
       access_token: this.tokens.accessToken,
-      accessTokenDecoded: this.decodeToken(this.tokens.accessToken)
+      accessTokenPayload: this.decodeToken(this.tokens.accessToken)
     }
   }
 
@@ -150,58 +153,139 @@ class OIDCWorker {
     }
   }
 
-  setAccessTokenExpiration(expiration) {
-    const now = Math.floor(Date.now() / 1000)
-    const expiresIn = expiration - now
-    if (expiresIn > 0) {
-      clearTimeout(this.accessTimeoutId)
-      console.log('[OIDCWORKER] Access token expires in', expiresIn, 'seconds')
-      this.accessTimeoutId = setTimeout(async () => {
-        this.tokens.accessToken = null
-        console.log('[OIDCWORKER] Access token expired, attempting refresh')
-        await this.refreshAccessToken()
-      }, expiresIn * 1000)
-    }
-  }
-
   async broadcastNoToken() {
-    const orginalRedirectUri = this.redirectUri
-    this.redirectUri = `${this.redirectUri}popup.html`
-    const redirect = await this.getAuthorizationUrl()
-    this.redirectUri = orginalRedirectUri
+    console.log(logPrefix, 'Broadcasting no token')
+    const redirect = await this.getAuthorizationUrl(`${this.redirectUri}popup.html`)
     this.bc.postMessage({ type: 'noToken', ...redirect })
   }
 
-  setRefreshTokenExpiration(expiration) {
-    const now = Math.floor(Date.now() / 1000)
-    const expiresIn = expiration - now
-    if (expiresIn > 0) {
-        clearTimeout(this.refreshTimeoutId)
-        console.log('[OIDCWORKER] Refresh token expires in', expiresIn, 'seconds')
-        this.refreshTimeoutId = setTimeout(async () => {
-          this.tokens.refreshToken = null
-          await this.broadcastNoToken()
-        }, expiresIn * 1000)
+  setAccessTokenTimer(delayMs) {
+    this.accessTimeoutId = setTimeout(async () => {
+      if (this.tokens.accessToken) {
+        this.clearAccessToken()
+        console.log(logPrefix, 'Access token timeout handler is attempting refresh')
+        await this.refreshAccessToken()
+      }
+    }, delayMs)
+  }
+
+  setRefreshTokenTimer(delayMs) {
+    this.accessTimeoutId = setTimeout(async () => {
+      if (this.tokens.refreshToken) {
+        console.log(logPrefix, 'Refresh token timeout handler is broadcasting no token')
+        this.clearTokens(true) // broadcast no token
+      }
+    }, delayMs)
+  }
+
+  getTokenTimes(token) {
+    const expS = this.decodeToken(token)?.exp
+    if (!expS) {
+      console.log(logPrefix, 'No access token expiration claim')
+      return null
+    }
+    const nowMs = Date.now()
+    const nowS = Math.floor(nowMs / 1000)
+    const expiresDate = new Date(expS * 1000)
+    const expiresDateISO = expiresDate.toISOString()
+    const expiresInS = expS - nowS
+    const expiresInMs = expiresInS * 1000
+    const timeoutInS = expiresInS - this.timeoutBufferS
+    const timeoutInMs = timeoutInS * 1000
+    const timeoutDate = new Date((nowS + timeoutInS) * 1000)
+    const timeoutDateISO = timeoutDate.toISOString()
+
+    return {
+      expS,
+      expiresDate,
+      expiresDateISO,
+      expiresInS,
+      expiresInMs,
+      timeoutDate,
+      timeoutDateISO,
+      timeoutInS,
+      timeoutInMs
     }
   }
 
-  setTokens(tokensResponse) {
+  setTokensAccessOnly(tokensResponse) {
+    const accessTimes = this.getTokenTimes(tokensResponse.access_token)
+    if (!accessTimes || accessTimes.timeoutInS <= 0) {
+      this.broadcastNoToken()
+      return
+    }
     this.tokens.accessToken = tokensResponse.access_token
-    this.tokens.idToken = tokensResponse.id_token
-    this.tokens.refreshToken = tokensResponse.refresh_token
-    this.bc.postMessage({ type: 'accessToken', accessToken: this.tokens.accessToken })
-    const accessTokenDecoded = this.decodeToken(this.tokens.accessToken)
-    this.setAccessTokenExpiration(accessTokenDecoded.exp)
-    const refreshTokenDecoded = this.decodeToken(this.tokens.refreshToken)
-    this.setRefreshTokenExpiration(refreshTokenDecoded.exp)
+    this.bc.postMessage({
+      type: 'accessToken',
+      accessToken: this.tokens.accessToken,
+      accessTokenPayload: this.decodeToken(this.tokens.accessToken)
+    })
+    console.log(logPrefix, 'Access token expires: ', accessTimes.expiresDateISO, ' timeout: ', accessTimes.timeoutDateISO)
+    this.setAccessTokenTimer(accessTimes.timeoutInMs)
   }
 
-  clearAccessToken() {
-    this.tokens.accessToken = null
-    this.tokens.idToken = null
-    // this.tokens.refreshToken = null
-    this.broadcastNoToken()
+  setTokensWithRefresh(tokensResponse) {
+    const accessTimes = this.getTokenTimes(tokensResponse.access_token)
+    const refreshTimes = this.getTokenTimes(tokensResponse.refresh_token)
 
+    if (!accessTimes || accessTimes.timeoutInS <= 0) {
+      this.broadcastNoToken()
+      return
+    }
+    else {
+      this.tokens.accessToken = tokensResponse.access_token
+      this.bc.postMessage({
+        type: 'accessToken',
+        accessToken: this.tokens.accessToken,
+        accessTokenPayload: this.decodeToken(this.tokens.accessToken)
+      })
+    }
+    if (refreshTimes.timeoutInS > 0) {
+      this.tokens.refreshToken = tokensResponse.refresh_token
+      console.log(logPrefix, 'Refresh token expires: ', refreshTimes.expiresDateISO, ' timeout: ', refreshTimes.expiresDateISO)
+      this.setRefreshTokenTimer(refreshTimes.expiresInMs)
+    }
+    else {
+      console.log(logPrefix, 'Refresh has expired, Access token expires: ', accessTimes.expiresDateISO, ' timeout: ', accessTimes.timeoutDateISO)
+      this.setAccessTokenTimer(accessTimes.timeoutInMs)
+    }
+    if (accessTimes.expiresInS < refreshTimes.expiresInS) {
+      console.log(logPrefix, 'Access token expires: ', accessTimes.expiresDateISO, ' timeout: ', accessTimes.timeoutDateISO)
+      this.setAccessTokenTimer(accessTimes.timeoutInMs)
+    }
+    else {
+      console.log(logPrefix, 'Access token expires: ', accessTimes.expiresDateISO, ' timeout disabled')
+    }
+  }
+
+  processTokenResponse(tokensResponse) {
+    console.log(logPrefix, 'Token response', tokensResponse)
+    this.clearTokens()
+    if (tokensResponse.access_token && tokensResponse.refresh_token) {
+      this.setTokensWithRefresh(tokensResponse)
+    }
+    else if (tokensResponse.access_token) {
+      this.setTokensAccessOnly(tokensResponse)
+    }
+    else {
+      console.log(logPrefix, 'No access token')
+      this.clearAccessToken(true) // broadcast no token
+      return
+    }
+  }
+
+  clearAccessToken(sendBroadcast = false) {
+    this.tokens.accessToken = null
+    clearTimeout(this.accessTimeoutId)
+    if (sendBroadcast) this.broadcastNoToken()
+  }
+
+  clearTokens(sendBroadcast = false) {
+    this.tokens.accessToken = null
+    this.tokens.refreshToken = null
+    clearTimeout(this.accessTimeoutId)
+    clearTimeout(this.refreshTimeoutId)
+    if (sendBroadcast) this.broadcastNoToken()
   }
 
   async refreshAccessToken() {
@@ -222,27 +306,28 @@ class OIDCWorker {
       })
       const tokensResponse = await response.json()
       if (!response.ok) {
-        console.log('Refresh token failed', tokensResponse)
-        clearAccessToken()
+        console.log(logPrefix, 'Token refresh NOT OK response', tokensResponse)
+        this.clearTokens()
       }
       else {
-        this.setTokens(tokensResponse)
+        this.processTokenResponse(tokensResponse)
       }
     }
     catch {
-      clearAccessToken()
+      console.log(logPrefix, 'Refresh token catch', tokensResponse)
+      this.clearAccessToken()
     }
     return this.getAccessToken()
   }
 
   async exchangeCodeForToken({ code, codeVerifier, clientId = 'stig-manager', redirectUri }) {
-    if (this.authorization?.codeVerifier === codeVerifier) this.authorization = null
-    console.log('[OIDCWORKER] Exchange code for token', code, codeVerifier)
+    if (this.authorization[redirectUri]?.codeVerifier === codeVerifier) this.authorization[redirectUri] = null
+    console.log(logPrefix, 'Exchange code for token', code, codeVerifier)
     const params = new URLSearchParams()
     params.append('grant_type', 'authorization_code')
     params.append('client_id', clientId)
     params.append('redirect_uri', redirectUri)
-    params.append('code', code) 
+    params.append('code', code)
     params.append('code_verifier', codeVerifier)
 
     let tokensResponse
@@ -253,11 +338,15 @@ class OIDCWorker {
         body: params
       })
       tokensResponse = await response.json()
-      if (!response.ok) throw new Error(tokensResponse.error_description || 'Token exchange failed')
-      this.setTokens(tokensResponse)
+      if (!response.ok) {
+        console.log(logPrefix, 'Exchange code for token failed', tokensResponse)
+        return
+      }
+      this.processTokenResponse(tokensResponse)
     }
-    catch {
-      clearAccessToken()
+    catch (e) {
+      console.log(logPrefix, 'Exchange code for token failed', e)
+      this.clearAccessToken()
     }
     return this.getAccessToken()
   }
@@ -272,7 +361,7 @@ class OIDCWorker {
   async onMessage(e) {
     const port = e.target
     const { requestId, request, ...options } = e.data
-    const handler = this.requestHandlers[request]?.bind(this)
+    const handler = this.messageHandlers[request]?.bind(this)
     if (handler) {
       try {
         const response = await handler(options)
@@ -281,11 +370,11 @@ class OIDCWorker {
         port.postMessage({ requestId, error: error.message })
       }
     } else {
-      port.postMessage({ requestId, error: 'Unknown type' })
+      port.postMessage({ requestId, error: 'Unknown request' })
     }
   }
 
-  get requestHandlers() {
+  get messageHandlers() {
     return {
       getAccessToken: this.getAccessToken,
       exchangeCodeForToken: this.exchangeCodeForToken,
