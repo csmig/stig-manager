@@ -28,7 +28,7 @@ class OIDCWorker {
       this.responseMode = this.ENV.responseMode
       this.oidcConfiguration = await this.getOpenIdConfiguration()
     }
-    return { success: true }
+    return { success: true, env: this.ENV }
   }
 
   getScopeStr() {
@@ -129,7 +129,6 @@ class OIDCWorker {
     // console.log(logPrefix, 'getAccessToken', this.tokens.accessToken)
     return {
       accessToken: this.tokens.accessToken,
-      access_token: this.tokens.accessToken,
       accessTokenPayload: this.decodeToken(this.tokens.accessToken)
     }
   }
@@ -339,16 +338,22 @@ class OIDCWorker {
       })
       tokensResponse = await response.json()
       if (!response.ok) {
-        console.log(logPrefix, 'Exchange code for token failed', tokensResponse)
-        return
+        return {success: false, error: tokensResponse.error_description}
       }
       this.processTokenResponse(tokensResponse)
     }
     catch (e) {
-      console.log(logPrefix, 'Exchange code for token failed', e)
       this.clearAccessToken()
+      return {
+        success: false,
+        error: e.message
+      }
     }
-    return this.getAccessToken()
+    return {
+      success: true, 
+      accessToken: this.tokens.accessToken, 
+      accessTokenPayload: this.decodeToken(this.tokens.accessToken)
+    }
   }
 
   logout() {

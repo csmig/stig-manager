@@ -18,6 +18,7 @@
   <h2>Signing In...</h2>
   <div id="status"></div>
   <script type="module">
+    let OW
     function sendWorkerRequest(request) {
       const requestId = crypto.randomUUID()
       OW.port.postMessage({ ...request, requestId })
@@ -41,24 +42,37 @@
       return params
     }
 
-    const OW = new SharedWorker("js/oidc-worker.js", { name: 'stigman-oidc-worker', type: "module" })
-    OW.port.start()
-    const [redirectUri, paramStr] = window.location.href.split('?')
-    // if (paramStr === undefined) {
-    //   document.getElementById('status').innerText = 'No parameters found in the URL.'
-    //   return
-    // }
-    const params = processRedirectParams(paramStr)
-    const response = await sendWorkerRequest({
-      request: 'exchangeCodeForToken',
-      code: params.code,
-      codeVerifier: localStorage.getItem('codeVerifier'),
-      clientId: 'stig-manager',
-      redirectUri
-    })
-    if (response.accessToken) {
-      window.close()
+    async function run() {
+      OW = new SharedWorker("js/oidc-worker.js", { name: 'stigman-oidc-worker', type: "module" })
+      OW.port.start()
+      const init = await sendWorkerRequest({ request: 'initialize' })
+      const responseSeparator = init.env.responseMode === 'fragment' ? '#' : '?'
+      const [redirectUri, paramStr] = window.location.href.split(responseSeparator)
+      if (paramStr === undefined) {
+        document.getElementById('status').innerText = 'No parameters found in the URL.'
+        return
+      }
+      const params = processRedirectParams(paramStr)
+      if (!params.code) {
+        document.getElementById('status').innerText = 'No code found in the URL.'
+        return
+      }
+      const response = await sendWorkerRequest({
+        request: 'exchangeCodeForToken',
+        code: params.code,
+        codeVerifier: localStorage.getItem('codeVerifier'),
+        clientId: 'stig-manager',
+        redirectUri
+      })
+      if (response.success) {
+        window.close()
+      } else {
+        document.getElementById('status').innerText = 'Error exchanging code for token: ' + response.error
+      }
     }
+
+    await run()
+
   </script>
 </body>
 </html>
