@@ -18,15 +18,26 @@ class OIDCWorker {
     if (!this.initialized) {
       this.initialized = true
       this.redirectUri = options.redirectUri
-      const resp = await fetch('Oauth.json')
-      this.ENV = await resp.json()
+      try {
+        this.ENV = await (await fetch('Oauth.json')).json()
+      }
+      catch (e) {
+        console.error(logPrefix, 'Failed to fetch env', e)
+        return { success: false, error: 'Failed to fetch env' }
+      }
 
       this.oidcProvider = this.ENV.authority
       this.clientId = this.ENV.clientId
       this.autoRefresh = this.ENV.autoRefresh
       this.scope = this.getScopeStr()
       this.responseMode = this.ENV.responseMode
-      this.oidcConfiguration = await this.getOpenIdConfiguration()
+      try {
+        this.oidcConfiguration = await this.fetchOpenIdConfiguration()
+      }
+      catch (e) {
+        console.error(logPrefix, 'Failed to fetch OIDC configuration', e)
+        return { success: false, error: 'Cannot connect to the Sign-in Service.' }
+      }
     }
     return { success: true, env: this.ENV }
   }
@@ -48,7 +59,7 @@ class OIDCWorker {
     return scopes.join(" ")
   }
 
-  async getOpenIdConfiguration() {
+  async fetchOpenIdConfiguration() {
     if (this.oidcConfiguration) {
       return this.oidcConfiguration
     }
@@ -154,11 +165,19 @@ class OIDCWorker {
 
   async broadcastNoToken() {
     console.log(logPrefix, 'Broadcasting no token')
-    const redirect = await this.getAuthorizationUrl(`${this.redirectUri}popup.html`)
+    let baseRedirectUri = this.redirectUri?.endsWith('index.html')
+    ? this.redirectUri.slice(0, -'index.html'.length)
+    : this.redirectUri
+
+    const redirect = await this.getAuthorizationUrl(`${baseRedirectUri}reauth.html`)
     this.bc.postMessage({ type: 'noToken', ...redirect })
   }
 
   setAccessTokenTimer(delayMs) {
+    if (this.accessTimeoutId) {
+      clearTimeout(this.accessTimeoutId)
+      this.accessTimeoutId = null
+    }
     this.accessTimeoutId = setTimeout(async () => {
       if (this.tokens.accessToken) {
         this.clearAccessToken()
@@ -169,7 +188,11 @@ class OIDCWorker {
   }
 
   setRefreshTokenTimer(delayMs) {
-    this.accessTimeoutId = setTimeout(async () => {
+    if (this.refreshTimeoutId) {
+      clearTimeout(this.refreshTimeoutId)
+      this.refreshTimeoutId = null
+    } 
+    this.refreshTimeoutId = setTimeout(async () => {
       if (this.tokens.refreshToken) {
         console.log(logPrefix, 'Refresh token timeout handler is broadcasting no token')
         this.clearTokens(true) // broadcast no token
@@ -257,20 +280,20 @@ class OIDCWorker {
     }
   }
 
-  processTokenResponse(tokensResponse) {
+  processTokenResponseAndSetTokens(tokensResponse) {
     console.log(logPrefix, 'Token response', tokensResponse)
     this.clearTokens()
     if (tokensResponse.access_token && tokensResponse.refresh_token) {
       this.setTokensWithRefresh(tokensResponse)
+      return true
     }
-    else if (tokensResponse.access_token) {
+    if (tokensResponse.access_token) {
       this.setTokensAccessOnly(tokensResponse)
+      return true
     }
-    else {
-      console.log(logPrefix, 'No access token')
-      this.clearAccessToken(true) // broadcast no token
-      return
-    }
+    console.error(logPrefix, 'No access_token in tokensResponse:', tokensResponse)
+    this.clearAccessToken(true) // broadcast no token
+    return false
   }
 
   clearAccessToken(sendBroadcast = false) {
@@ -306,10 +329,10 @@ class OIDCWorker {
       const tokensResponse = await response.json()
       if (!response.ok) {
         console.log(logPrefix, 'Token refresh NOT OK response', tokensResponse)
-        this.clearTokens()
+        this.clearTokens(true)
       }
       else {
-        this.processTokenResponse(tokensResponse)
+        this.processTokenResponseAndSetTokens(tokensResponse)
       }
     }
     catch {
@@ -320,8 +343,15 @@ class OIDCWorker {
   }
 
   async exchangeCodeForToken({ code, codeVerifier, clientId = 'stig-manager', redirectUri }) {
-    if (this.authorization[redirectUri]?.codeVerifier === codeVerifier) this.authorization[redirectUri] = null
+    if (this.authorization[redirectUri] && this.authorization[redirectUri].codeVerifier !== codeVerifier) {
+      // verifier does not match the saved redirectUri
+      console.error(logPrefix, 'Code verifier does not match the saved redirectUri', redirectUri, this.authorization[redirectUri])
+      return { success: false, error: 'Code verifier does not match the saved redirectUri' }
+    }
+     
     console.log(logPrefix, 'Exchange code for token', code, codeVerifier)
+    
+    delete this.authorization[redirectUri]
     const params = new URLSearchParams()
     params.append('grant_type', 'authorization_code')
     params.append('client_id', clientId)
@@ -340,19 +370,26 @@ class OIDCWorker {
       if (!response.ok) {
         return {success: false, error: tokensResponse.error_description}
       }
-      this.processTokenResponse(tokensResponse)
+      if (this.processTokenResponseAndSetTokens(tokensResponse)) {
+        return {
+          success: true, 
+          accessToken: this.tokens.accessToken, 
+          accessTokenPayload: this.decodeToken(this.tokens.accessToken)
+        }
+      } else {
+        console.error(logPrefix, 'Failed to process token response', tokensResponse)
+        return {
+          success: false,
+          error: 'Failed to process token response'
+        }
+      }
     }
     catch (e) {
-      this.clearAccessToken()
+      console.error(logPrefix, 'Failed to process token response', tokensResponse)
       return {
         success: false,
         error: e.message
       }
-    }
-    return {
-      success: true, 
-      accessToken: this.tokens.accessToken, 
-      accessTokenPayload: this.decodeToken(this.tokens.accessToken)
     }
   }
 
