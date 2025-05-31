@@ -18,13 +18,7 @@ class OIDCWorker {
     if (!this.initialized) {
       this.initialized = true
       this.redirectUri = options.redirectUri
-      try {
-        this.ENV = await (await fetch('Oauth.json')).json()
-      }
-      catch (e) {
-        console.error(logPrefix, 'Failed to fetch env', e)
-        return { success: false, error: 'Failed to fetch env' }
-      }
+      this.ENV = options.env || null
 
       this.oidcProvider = this.ENV.authority
       this.clientId = this.ENV.clientId
@@ -292,7 +286,7 @@ class OIDCWorker {
       return true
     }
     console.error(logPrefix, 'No access_token in tokensResponse:', tokensResponse)
-    this.clearAccessToken(true) // broadcast no token
+    this.clearTokens(true) // broadcast no token
     return false
   }
 
@@ -320,26 +314,46 @@ class OIDCWorker {
     params.append('client_id', this.clientId)
     params.append('refresh_token', this.tokens.refreshToken)
 
+    let response
+    let tokensResponse
     try {
-      const response = await fetch(this.oidcConfiguration.token_endpoint, {
+      response = await fetch(this.oidcConfiguration.token_endpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
         body: params
       })
-      const tokensResponse = await response.json()
-      if (!response.ok) {
-        console.log(logPrefix, 'Token refresh NOT OK response', tokensResponse)
-        this.clearTokens(true)
-      }
-      else {
-        this.processTokenResponseAndSetTokens(tokensResponse)
+    }
+    catch (e) {
+      console.error(logPrefix, 'Refresh token fetch error', e)
+      this.clearTokens(true) // clear the access token and broadcast no token
+      return {
+        success: false,
+        error: 'Failed to fetch from token endpoint'
       }
     }
-    catch {
-      console.log(logPrefix, 'Refresh token catch', tokensResponse)
-      this.clearAccessToken()
+    try {
+      tokensResponse = await response.json()
     }
-    return this.getAccessToken()
+    catch (e) {
+      console.error(logPrefix, 'Refresh token response parse error', e)
+      this.clearTokens(true) // clear the access token and broadcast no token
+      return {
+        success: false,
+        error: 'Failed to parse response from token endpoint'
+      }
+    }
+    if (!response.ok) {
+      console.error(logPrefix, 'Token refresh error response', tokensResponse)
+      this.clearTokens(true) // clear access/refresh tokens and broadcast no token
+    }
+    else {
+      this.processTokenResponseAndSetTokens(tokensResponse)
+      return {
+        success: true,
+        accessToken: this.tokens.accessToken,
+        accessTokenPayload: this.decodeToken(this.tokens.accessToken) 
+      }
+    }
   }
 
   async exchangeCodeForToken({ code, codeVerifier, clientId = 'stig-manager', redirectUri }) {
@@ -360,36 +374,36 @@ class OIDCWorker {
     params.append('code_verifier', codeVerifier)
 
     let tokensResponse
+    let response
     try {
-      const response = await fetch(this.oidcConfiguration.token_endpoint, {
+      response = await fetch(this.oidcConfiguration.token_endpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
         body: params
       })
-      tokensResponse = await response.json()
-      if (!response.ok) {
-        return {success: false, error: tokensResponse.error_description}
-      }
-      if (this.processTokenResponseAndSetTokens(tokensResponse)) {
-        return {
-          success: true, 
-          accessToken: this.tokens.accessToken, 
-          accessTokenPayload: this.decodeToken(this.tokens.accessToken)
-        }
-      } else {
-        console.error(logPrefix, 'Failed to process token response', tokensResponse)
-        return {
-          success: false,
-          error: 'Failed to process token response'
-        }
-      }
     }
     catch (e) {
+      console.error(logPrefix, 'Exchange code fetch error', e)
+      return { success: false, error: 'Failed to fetch from token endpoint' }
+    }
+    
+    try {
+      tokensResponse = await response.json()
+    }
+    catch (e) {
+      console.error(logPrefix, 'Exchange code response parse error', e)
+      return { success: false, error: 'Failed to parse response from token endpoint' }
+    }
+    
+    if (!response.ok) {
+      return { success: false, error: tokensResponse.error_description}
+    }
+    if (!this.processTokenResponseAndSetTokens(tokensResponse)) {
       console.error(logPrefix, 'Failed to process token response', tokensResponse)
-      return {
-        success: false,
-        error: e.message
-      }
+      return { success: false, error: 'Failed to process token response' }
+    } 
+    else {
+      return { success: true, accessToken: this.tokens.accessToken, accessTokenPayload: this.decodeToken(this.tokens.accessToken)}
     }
   }
 

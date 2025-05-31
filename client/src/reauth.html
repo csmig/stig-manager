@@ -60,7 +60,7 @@
       const response = await sendWorkerRequest({
         request: 'exchangeCodeForToken',
         code: params.code,
-        codeVerifier: localStorage.getItem('codeVerifier'),
+        codeVerifier: localStorage.getItem('codeVerifier'), // saved by main thread's noToken handler
         clientId: 'stig-manager',
         redirectUri
       })

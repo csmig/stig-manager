@@ -1,7 +1,7 @@
 import { stylesheets, scripts, isMinimizedSource } from './resources.js'
 
 const statusEl = document.getElementById("loading-text")
-
+let OW
 if (window.isSecureContext) {
   await setupOidcWorker()
   await bootstrap()
@@ -13,45 +13,38 @@ if (window.isSecureContext) {
 }
 
 async function bootstrap() {
-  const OW = window.oidcWorker
+  
+  const url = new URL(window.location.href)
+  const redirectUri = `${url.origin}${url.pathname}`
 
-  const responseSeparator = STIGMAN.Env.oauth.responseMode === 'fragment' ? '#' : '?'
-  const [redirectUri, paramStr] = window.location.href.split(responseSeparator)
-
-  const response = await OW.sendWorkerRequest({ request: 'initialize', redirectUri })
+  const response = await OW.sendWorkerRequest({ request: 'initialize', redirectUri, env: STIGMAN.Env.oauth })
   if (response.error) {
     appendError(response.error)
     return
   }
   appendStatus(`Authorizing`)
 
+  const paramStr = extractParamString(url)
   if (paramStr) {
-    const params = OW.processRedirectParams(paramStr)
-    appendStatus(`exchangeCodeForToken`)
-    const response = await OW.sendWorkerRequest({
-      request: 'exchangeCodeForToken',
-      code: params.code,
-      codeVerifier: sessionStorage.getItem('codeVerifier'),
-      clientId: STIGMAN.Env.oauth.clientId,
-      redirectUri
-    })
-    if (response.success) {
-      OW.token = response.accessToken
-      OW.tokenParsed = response.accessTokenPayload
-      window.history.replaceState(window.history.state, '', redirectUri)
-      sessionStorage.removeItem('codeVerifier')
-      loadResources()
-    }
-    else {
-      appendError(response.error || 'Failed to exchange code for token')
-    }
+    return handleRedirectAndParameters(redirectUri, paramStr)
   }
   else {
+    return handleNoParameters()
+  }
+}
+
+function extractParamString(url) {
+  if (url.hash) return url.hash.substring(1) // Remove the leading '#'
+  if (url.search) return url.search.substring(1) // Remove the leading '?'
+  return ''
+}
+
+async function handleNoParameters() {
     const response = await OW.sendWorkerRequest({ request: 'getAccessToken' })
     if (response.accessToken) {
       OW.token = response.accessToken
       OW.tokenParsed = response.accessTokenPayload
-      appendStatus(`getAccessToken`)
+      // appendStatus(`getAccessToken`)
       loadResources()
     } else if (response.redirect) {
       sessionStorage.setItem('codeVerifier', response.codeVerifier)
@@ -75,7 +68,29 @@ async function bootstrap() {
       //   }
       // }
     }
-  }
+
+}
+
+async function handleRedirectAndParameters(redirectUri, paramStr) {
+    const params = OW.processRedirectParams(paramStr)
+    // appendStatus(`exchangeCodeForToken`)
+    const response = await OW.sendWorkerRequest({
+      request: 'exchangeCodeForToken',
+      code: params.code,
+      codeVerifier: sessionStorage.getItem('codeVerifier'),
+      clientId: STIGMAN.Env.oauth.clientId,
+      redirectUri
+    })
+    if (response.success) {
+      OW.token = response.accessToken
+      OW.tokenParsed = response.accessTokenPayload
+      window.history.replaceState(window.history.state, '', redirectUri)
+      sessionStorage.removeItem('codeVerifier')
+      loadResources()
+    }
+    else {
+      appendError(response.error || 'Failed to exchange code for token')
+    }
 }
 
 function appendStatus(html) {
@@ -160,7 +175,7 @@ async function setupOidcWorker() {
     }
   }
 
-  const OW = window.oidcWorker
+  OW = window.oidcWorker
   OW.worker.port.start()
 
   const bc = new BroadcastChannel('stigman-oidc-worker')

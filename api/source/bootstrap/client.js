@@ -4,6 +4,8 @@ const writer = require('../utils/writer')
 const logger = require('../utils/logger')
 const config = require('../utils/config')
 
+const prefix = ''
+
 function serveClient(app) {
 
     if (config.client.disabled) {
@@ -57,30 +59,11 @@ function getClientEnv(){
     return envJS
 }
 
-function getOauthJson() {
-    const oauthJSON = {
-        authority:  config.client.authority,
-        clientId: config.client.clientId,
-        refreshToken: {
-            disabled: config.client.refreshToken.disabled
-        },
-        extraScopes: config.client.extraScopes ?? '',
-        scopePrefix: config.client.scopePrefix ?? '',
-        responseMode: config.client.responseMode
-    }
-    return JSON.stringify(oauthJSON)
-}
-
 function serveClientEnv(app){
     const envJS = getClientEnv()
-    const oauthJSON = getOauthJson()
-    app.get('/js/Env.js', function (req, res) {
+    app.get(`${prefix}/js/Env.js`, function (req, res) {
         req.component = 'static'
         writer.writeWithContentType(res, { payload: envJS, contentType: "application/javascript" })
-    })
-    app.get('/js/Oauth.json', function (req, res) {
-        req.component = 'static'
-        writer.writeWithContentType(res, { payload: oauthJSON, contentType: "application/json" })
     })
 }
 
@@ -89,7 +72,7 @@ function serveStaticFiles(app){
     logger.writeDebug('serveStaticFiles', 'client', {client_static: staticPath})
     const expressStatic = express.static(staticPath)
 
-    app.use('/', (req, res, next) => {
+    app.use(`${prefix}/`, (req, res, next) => {
         req.component = 'static'
         expressStatic(req, res, next)
     })

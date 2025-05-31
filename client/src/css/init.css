@@ -5,7 +5,7 @@
   width: 100%;
   height: 100%;
   z-index: 20000;
-  background-color: #586574;
+  background-color: #2a3037;
 }
 
 #loading {
@@ -24,7 +24,7 @@
   background-position: center top;
   background-size: 50px;
   color: #d0cec5;
-  font: bold 32px helvetica, sans-serif;
+  font: bold 42px helvetica, sans-serif;
   padding: 50px 0px;
   margin: 0;
   text-align: center;
@@ -41,4 +41,40 @@
   background: url("../img/external-link.svg") no-repeat 100% 0;
   background-size: 12px 12px;
   padding-right: 16px;
+}
+
+.dark-large-btn {
+  background: #222;
+  color: #fff;
+  font-size: 1.5em;
+  padding: 0.75em 2em;
+  border: none;
+  border-radius: 0.5em;
+  display: flex;
+  align-items: center;
+  gap: 0.75em;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+  margin-top: 1em;
+  transition: background 0.2s;
+  margin-left: auto;
+  margin-right: auto;
+  opacity: 0;
+  animation: fadeInBtn 0.6s ease forwards;
+
+}
+@keyframes fadeInBtn {
+  to {
+    opacity: 1;
+  }
+}
+.dark-large-btn:hover,
+.dark-large-btn:focus {
+  background: #333;
+  outline: none;
+}
+.dark-large-btn img {
+  width: 1.5em;
+  height: 1.5em;
+  vertical-align: middle;
 }

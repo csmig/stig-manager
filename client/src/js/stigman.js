@@ -34,7 +34,7 @@ async function start () {
 		if ('serviceWorker' in navigator) {
 			await navigator.serviceWorker.register('serviceWorker.js')
 		}
-		el.innerHTML += "<br/><br/>Fetching user data"
+		// el.innerHTML += "<br/><br/>Fetching user data"
 		try {
 			await SM.GetUserObject()
 		}
@@ -49,7 +49,7 @@ async function start () {
 		}
 	}
 	catch (e) {
-		el.innerHTML += `<br/></br/><textarea wrap="off" rows=12 cols=80 style="font-size: 10px" readonly>${JSON.stringify(STIGMAN.serializeError(e), null, 2)}</textarea>`
+		el.innerHTML += `<br/></br/><textarea class="sm-bootstrap-error" wrap="off" rows=24 cols=80 style="font-size: 10px" readonly>${JSON.stringify(STIGMAN.serializeError(e), null, 2)}</textarea>`
 	}
 }
 
