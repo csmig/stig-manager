@@ -34,7 +34,7 @@ async function start () {
 		if ('serviceWorker' in navigator) {
 			await navigator.serviceWorker.register('serviceWorker.js')
 		}
-		// el.innerHTML += "<br/><br/>Fetching user data"
+		el.innerHTML += "<br/><br/>Fetching user data"
 		try {
 			await SM.GetUserObject()
 		}
@@ -241,103 +241,105 @@ async function loadApp () {
 
 } //end loadApp()
 
-let signInAlert, signInWindow, signInPopup, signInTab
+let reauthAlert, reauthWindow, reauthPopup, reauthTab
 function broadcastHandler (event)  {
 	console.log('[stigman] Received from worker:', event.type, event.data)
 	if (event.data.type === 'noToken') {
-
-		signInAlert?.close()
-		signInAlert = null
-		signInWindow?.close()
-		signInWindow = null
-		signInTab?.close()
-		signInTab = null
-		signInPopup?.close()
-		signInPopup = null
-
-		const signInBtnMenuItems = [
-      {text: 'Inline Frame', style: 'iframe', handler: signInHandler},
-      {text: 'Popup Window', style: 'popup', handler: signInHandler},
-      {text: 'Browser Tab',  style: 'tab', handler: signInHandler}
-    ]
-		const signInButton = new Ext.Button({
-			text: 'Sign In',
-			iconCls: 'sm-login-icon',
-			menu: {
-				items: signInBtnMenuItems,
-			}
-		})
-
-		function signInHandler (menuItem) {
-			// if (signInWindow) {
-			// 	signInWindow.show()
-			// 	return
-			// }
-			const width = 600
-			const height = 740
-			const left = window.screenX + (window.outerWidth - width) / 2
-			const top = window.screenY + (window.outerHeight - height) / 2
-			
-			localStorage.setItem('codeVerifier', event.data.codeVerifier)
-			const style = menuItem.initialConfig.style
-			if (style === 'popup') {
-				if (!signInPopup) {
-					signInPopup = window.open(
-						event.data.redirect,
-						'_blank',
-						`popup=yes,scrollbars=false,location=false,width=${width},height=${height},left=${left},top=${top}`
-					)
-				}	
-				else {
-					signInPopup.focus()
-				}
-			}
-			else if (style === 'iframe') {
-				if (!signInWindow) {
-					signInWindow = new Ext.Window({
-						header: false,
-						layout: 'fit',
-						title: 'Inline Frame Sign In',
-						width,
-						height,
-						modal: false,
-						closeAction: 'hide',
-						html: `<iframe src="${event.data.redirect}" width="100%" height="100%" frameborder="0"></iframe>`,
-					})
-				}
-				signInWindow.show()
-			}
-			else if (style === 'tab') {
-				if (!signInTab) {
-					signInTab = window.open(
-						event.data.redirect,
-						'_blank'
-					)
-				}	
-				else {
-					signInTab.focus()
-				}
-			}
-		}
-
-		signInAlert = new Ext.Window({
-			title: '<div class="sm-alert-icon" style="padding-left:20px">Credentials Expired</div>',
-			width: 400,
-			height: 110,
-			modal: true,
-			html: `<div style="padding: 10px">Your credentials have expired and we need you to sign in again.</div>`,
-			closable: false,
-			buttons: [signInButton]
-		})
-		signInAlert.show()
+		reauthenticate(event.data)
 	}
 	else if (event.data.type === 'accessToken') {
-		signInAlert?.close()
-		signInWindow?.close()
-		signInWindow = null
-		signInTab?.close()
-		signInTab = null
-		signInPopup?.close()
-		signInPopup = null
+		reauthAlert?.close()
+		reauthWindow?.close()
+		reauthWindow = null
+		reauthTab?.close()
+		reauthTab = null
+		reauthPopup?.close()
+		reauthPopup = null
 	}
+}
+
+function reauthenticate({ codeVerifier, redirect }) {
+	reauthAlert?.close()
+	reauthAlert = null
+	reauthWindow?.close()
+	reauthWindow = null
+	reauthTab?.close()
+	reauthTab = null
+	reauthPopup?.close()
+	reauthPopup = null
+
+	const reauthText = STIGMAN.Env.oauth.reauthAction === 'reload' ? 'reload the app' : 'sign in again'
+	const reauthBtnText = STIGMAN.Env.oauth.reauthAction === 'reload' ? 'Reload' : 'Sign In'
+	const reauthBtnIcon = STIGMAN.Env.oauth.reauthAction === 'reload' ? 'icon-refresh' : 'sm-login-icon'
+	
+	const reauthButton = new Ext.Button({
+		text: reauthBtnText,
+		iconCls: reauthBtnIcon,
+		handler: reauthHandler,
+	})
+
+	function reauthHandler () {
+		const width = 600
+		const height = 740
+		const left = window.screenX + (window.outerWidth - width) / 2
+		const top = window.screenY + (window.outerHeight - height) / 2
+		
+		
+		const action = STIGMAN.Env.oauth.reauthAction || 'popup'
+		if (action !== 'reload') localStorage.setItem('codeVerifier', codeVerifier)
+		if (action === 'popup') {
+			if (!reauthPopup) {
+				reauthPopup = window.open(
+					redirect,
+					'_blank',
+					`popup=yes,width=${width},height=${height},left=${left},top=${top}`
+				)
+			}	
+			else {
+				reauthPopup.focus()
+			}
+		}
+		else if (action === 'iframe') {
+			if (!reauthWindow) {
+				reauthWindow = new Ext.Window({
+					header: false,
+					layout: 'fit',
+					title: 'STIG Manager Sign In',
+					width,
+					height,
+					modal: false,
+					closeAction: 'hide',
+					html: `<iframe src="${redirect}" width="100%" height="100%" frameborder="0"></iframe>`,
+				})
+			}
+			reauthWindow.show()
+		}
+		else if (action === 'tab') {
+			if (!reauthTab) {
+				reauthTab = window.open(
+					redirect,
+					'_blank'
+				)
+			}	
+			else {
+				reauthTab.focus()
+			}
+		}
+		else if (action === 'reload') {
+			window.location.reload()
+		}	
+	}
+
+
+	reauthAlert = new Ext.Window({
+		title: '<div class="sm-alert-icon" style="padding-left:20px">Credentials Expired</div>',
+		width: 400,
+		height: 110,
+		modal: true,
+		html: `<div style="padding: 10px">Your credentials have expired and we need you to ${reauthText}.</div>`,
+		closable: false,
+		buttons: [reauthButton]
+	})
+	reauthAlert.show()
+
 }
