@@ -1900,10 +1900,25 @@ SM.CollectionPanel.showCollectionTab = async function (options) {
       }
     })
 
+    const bc = new BroadcastChannel('stigman-oidc-worker')
+    bc.onmessage = (event) => {
+      if (collectionTab.hidden) {
+        return
+      }
+      if (event.data.type === 'noToken') {
+		    cancelTimers()
+      } else if (event.data.type === 'accessToken') {
+        if (!gState.updateDataTimerId && !gState.refreshViewTimerId) {
+          updateData({event: 'updatedata'})
+        }
+      }
+	  }
+
     SM.Dispatcher.addListener('labelfilter', onLabelFilter)
     collectionTab.on('beforedestroy', () => {
       SM.Dispatcher.removeListener('labelfilter', onLabelFilter)
       cancelTimers()
+      bc.close()
     })
 
     SM.AddPanelToMainTab(collectionTab, 'permanent')

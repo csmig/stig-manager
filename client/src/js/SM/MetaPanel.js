@@ -1575,10 +1575,26 @@ SM.MetaPanel.showMetaTab = async function (options) {
       }
     })
 
+    const bc = new BroadcastChannel('stigman-oidc-worker')
+    bc.onmessage = (event) => {
+      if (metaTab.hidden) {
+        return
+      }
+      if (event.data.type === 'noToken') {
+		    cancelTimers()
+      } else if (event.data.type === 'accessToken') {
+        if (!gState.updateDataTimerId && !gState.refreshViewTimerId) {
+          updateData({event: 'updatedata'})
+        }
+      }
+	  }
+
+
     SM.Dispatcher.addListener('collectionfilter', onCollectionFilter)
     metaTab.on('beforedestroy', () => {
       SM.Dispatcher.removeListener('collectionfilter', onCollectionFilter)
       cancelTimers()
+      bc.close()
     })
 
     SM.AddPanelToMainTab(metaTab, 'permanent')
