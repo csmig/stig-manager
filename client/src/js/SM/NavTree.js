@@ -276,7 +276,14 @@ SM.NavTree.TreePanel = Ext.extend(Ext.tree.TreePanel, {
                   text: 'Application Info',
                   leaf: true,
                   iconCls: 'sm-info-circle-icon'
+                },
+                                {
+                  id: 'logstream-admin',
+                  text: 'Log Stream',
+                  leaf: true,
+                  iconCls: 'sm-logs-icon'
                 }
+
               ]
               if (STIGMAN.Env.experimental.appData === 'true') {
                 children.push({
@@ -461,6 +468,9 @@ SM.NavTree.TreePanel = Ext.extend(Ext.tree.TreePanel, {
             break
           case 'appinfo-admin':
             SM.AppInfo.showAppInfoTab({treePath: n.getPath()})
+            break
+          case 'logstream-admin':
+            SM.LogStream.showLogTab({ treePath })
             break
           case 'appdata-admin':
             SM.AppData.showAppDataTab({ treePath })

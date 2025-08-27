@@ -75,6 +75,8 @@ const scripts = [
   'js/jszip.min.js',
   'js/FileSaver.js',
   'js/jsonview.bundle.js',
+  'js/SM/AppInfo.js',
+  'js/SM/LogStream.js',
   'js/stigman.js'
 ]
 

@@ -1,7 +1,11 @@
+
 const uuid = require('uuid')
 const onFinished = require('on-finished')
 const onHeaders = require('on-headers')
 const config = require('./config')
+const EventEmitter = require('node:events')
+
+const loggerEvents = new EventEmitter()
 
 
 // Ensure no other code will write to the console
@@ -43,11 +47,15 @@ const requestStats = {
 async function write (level, component, type, data) {
   try {
     const date = new Date().toISOString()
-    _log(JSON.stringify({date, level, component, type, data}))  
+    const logObj = {date, level, component, type, data}
+    _log(JSON.stringify(logObj))
+    loggerEvents.emit('log', logObj)
   }
   catch (e) {
     const date = new Date().toISOString()
-    _log(JSON.stringify({date, level:1, component:'logger', type:'error', data: { message: e.message, stack: e.stack}}))  
+    const errorObj = {date, level:1, component:'logger', type:'error', data: { message: e.message, stack: e.stack}}
+    _log(JSON.stringify(errorObj))
+    loggerEvents.emit('log', errorObj)
   }
 }
 
@@ -331,5 +339,6 @@ module.exports = {
   writeWarn, 
   writeInfo, 
   writeDebug,
-  requestStats
+  requestStats,
+  loggerEvents
 }
