@@ -49,7 +49,7 @@
 
         ws.onmessage = event => {
             // Display shell output in a designated area (e.g., a pre tag)
-            messagesDiv.innerHTML += event.data;
+            messagesDiv.innerHTML += event.data + '\n';
             messagesDiv.scrollTop = messagesDiv.scrollHeight;
         };
 

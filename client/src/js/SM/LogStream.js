@@ -38,11 +38,23 @@ SM.LogStream.showLogTab = function ({ treePath }) {
         const logTextNode = document.createTextNode('');
         panel.body.dom.appendChild(logTextNode);
 
-        ws.onmessage = function (event) {
-          const logEntry = event.data;
-          // Append the new log entry to the body
-          logTextNode.nodeValue = logEntry + '\n';
+        const maxLines = 1000;
+        const logLines = [];
+        let needsUpdate = false;
+
+        function updateLogNode() {
+          logTextNode.nodeValue = logLines.join('\n');
           panel.body.dom.scrollTop = panel.body.dom.scrollHeight;
+          needsUpdate = false;
+        }
+
+        ws.onmessage = function(event) {
+          logLines.push(event.data);
+          if (logLines.length > maxLines) logLines.shift();
+          if (!needsUpdate) {
+            needsUpdate = true;
+            requestAnimationFrame(updateLogNode);
+          }
         };
       },
       destroy: function () {
