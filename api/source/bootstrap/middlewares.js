@@ -20,7 +20,7 @@ function configureMiddleware(app) {
       configureExpress,
       configureCors,
       configureLogging,
-      configureCompression,
+      // configureCompression,
       configureServiceCheck,
       configureAuth,
       configureOpenApi,
