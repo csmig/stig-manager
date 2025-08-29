@@ -5,10 +5,6 @@ const OperationSvc = require(`../service/OperationService`)
 const { serializeError } = require('../utils/serializeError')
 const config = require('../utils/config')
 const { initializeDependencies } = require('./dependencies')
-const WebSocket = require('ws')
-const { Writable } = require('stream');
-
-
 
 async function startServer(app, startTime) {
 
@@ -20,26 +16,7 @@ async function startServer(app, startTime) {
   }
   server.on('error', onListenError)
 
-  const wss = new WebSocket.Server({ server, path: '/ws' })
-
-  wss.on('connection', (ws) => {
-    console.log('Client connected')
-
-    const loggerEventHandler = (logObj) => {
-      ws.send(JSON.stringify(logObj))
-    }
-
-    logger.loggerEvents.on('log', loggerEventHandler)
-
-    ws.on('message', (message) => { 
-      console.log(`Received: ${message}`)
-    })
-
-    ws.on('close', () => {
-      logger.loggerEvents.off('log', loggerEventHandler)
-      console.log('Client disconnected')
-    })
-  })
+  logger.setupLogSocket(server)
 
   server.listen(config.http.port, async function () {
     server.removeListener('error', onListenError)

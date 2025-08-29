@@ -32,7 +32,7 @@ SM.LogStream.TransactionGrid = Ext.extend(Ext.grid.GridPanel, {
 SM.LogStream.showLogTab = function ({ treePath }) {
   const locationUrl = new URL(window.location);
   const wsProtocol = locationUrl.protocol === 'https:' ? 'wss:' : 'ws:';
-  const wsUrl = wsProtocol + '//' + locationUrl.host + locationUrl.pathname + 'ws';
+  const wsUrl = wsProtocol + '//' + locationUrl.host + locationUrl.pathname + 'log-socket';
 
   let ws
   const rawLogPanel = new SM.LogStream.RawLogPanel({
