@@ -1,5 +1,6 @@
 const http = require('node:http')
 const logger = require('../utils/logger')
+const logSocket = require('../utils/logSocket')
 const state = require('../utils/state')
 const OperationSvc = require(`../service/OperationService`)
 const { serializeError } = require('../utils/serializeError')
@@ -16,7 +17,7 @@ async function startServer(app, startTime) {
   }
   server.on('error', onListenError)
 
-  logger.setupLogSocket(server)
+  logSocket.setupLogSocket(server)
 
   server.listen(config.http.port, async function () {
     server.removeListener('error', onListenError)

@@ -4,7 +4,6 @@ const onFinished = require('on-finished')
 const onHeaders = require('on-headers')
 const config = require('./config')
 const EventEmitter = require('node:events')
-const WebSocket = require('ws')
 
 const loggerEvents = new EventEmitter()
 
@@ -326,29 +325,6 @@ function trackOperationStats(operationId, durationMs, res) {
   }
 }
 
-function setupLogSocket(server) {
-  const wss = new WebSocket.Server({ server, path: '/log-socket' })
-
-  wss.on('connection', (ws) => {
-    console.log('Client connected')
-
-    const loggerEventHandler = (logObj) => {
-      ws.send(JSON.stringify(logObj))
-    }
-
-    loggerEvents.on('log', loggerEventHandler)
-
-    ws.on('message', (message) => {
-      console.log(`Received: ${message}`)
-    })
-
-    ws.on('close', () => {
-      logger.loggerEvents.off('log', loggerEventHandler)
-      console.log('Client disconnected')
-    })
-  })
-}
-
 module.exports = { 
   requestLogger, 
   sanitizeHeaders, 
@@ -360,5 +336,4 @@ module.exports = {
   writeDebug,
   requestStats,
   loggerEvents,
-  setupLogSocket,
 }
