@@ -2,7 +2,8 @@ const locationUrl = new URL(window.location);
 const wsProtocol = locationUrl.protocol === 'https:' ? 'wss:' : 'ws:';
 const wsUrl = wsProtocol + '//' + locationUrl.host + locationUrl.pathname + '../log-socket';
 const ws = new WebSocket(wsUrl);
-const contentDiv = document.getElementById('content');
+const contentDiv = document.getElementById('wrapper');
+const detailDiv = document.getElementById('detail');
 
 ws.onopen = () => {
   console.log('Connected to WebSocket server');
@@ -17,18 +18,15 @@ let logLines = [];
 let needsUpdate = false;
 let shouldAutoScroll = true;
 
-function isAtBottom() {
-  // Allow a small threshold for float rounding
-  return contentDiv.scrollHeight - contentDiv.scrollTop - contentDiv.clientHeight < 5;
-}
 
-function updateLogNode() {
+// content div updater
+function updateContentDiv() {
   for (const logLine of logLines) {
     const json = JSON.parse(logLine);
-    const logTextSpan = document.createElement('span')
-    logTextSpan.textContent = logLine + '\n';
-    logTextSpan.className = `log-line level-${json.level} component-${json.component} type-${json.type}`;
-    contentDiv.appendChild(logTextSpan);
+    const logTextEl = document.createElement('div');
+    logTextEl.textContent = logLine + '\n';
+    logTextEl.className = `log-line level-${json.level} component-${json.component} type-${json.type}`;
+    contentDiv.appendChild(logTextEl);
   }
   logLines = [];
   if (shouldAutoScroll) {
@@ -37,10 +35,16 @@ function updateLogNode() {
   needsUpdate = false;
 }
 
+// content div scroll handling
+function isAtBottom() {
+  // Allow a small threshold for float rounding
+  return contentDiv.scrollHeight - contentDiv.scrollTop - contentDiv.clientHeight < 5;
+}
 contentDiv.addEventListener('scroll', () => {
   shouldAutoScroll = isAtBottom();
 });
 
+// div click handler
 let selectedLogLineEl = null;
 contentDiv.addEventListener('click', (event) => {
   if (event.target.classList.contains('log-line')) {
@@ -51,8 +55,10 @@ contentDiv.addEventListener('click', (event) => {
     logLine.classList.add('selected');
     selectedLogLineEl = logLine;
   }
+  // detailDiv.textContent = event.target.textContent;
 });
 
+// websocket message handler
 ws.onmessage = function (event) {
   const message = JSON.parse(event.data);
   if (message.type === 'log') {
@@ -61,7 +67,7 @@ ws.onmessage = function (event) {
     if (logLines.length > maxLines) logLines.shift();
     if (!needsUpdate) {
       needsUpdate = true;
-      requestAnimationFrame(updateLogNode);
+      requestAnimationFrame(updateContentDiv);
     }
     // if (logObj.type === 'transaction' && logObj.component === 'rest') {
     //   const record = {
@@ -85,6 +91,12 @@ ws.onmessage = function (event) {
 
 };
 
+// websocket close handler
+ws.onclose = function () {
+  bc.removeEventListener('message', tokenBroadcastHandler)
+}
+
+// broadcast channel handling
 const bc = new BroadcastChannel('stigman-oidc-worker')
 function tokenBroadcastHandler(event) {
   if (event.data.type === 'accessToken') {
@@ -95,9 +107,7 @@ function tokenBroadcastHandler(event) {
   }
 }
 bc.addEventListener('message', tokenBroadcastHandler)
-ws.onclose = function () {
-  bc.removeEventListener('message', tokenBroadcastHandler)
-}
+
 
 function promptReauth(data) {
   console.log('Prompting reauthorization:', data);

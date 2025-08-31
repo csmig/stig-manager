@@ -16,12 +16,18 @@ body {
   overflow: auto;
   white-space: pre;
   font-family: monospace;
-
 }
 
+ #wrapper{
+    min-width: 100%; 
+    overflow: visible;
+    display: inline-block;
+  }
+
 .log-line {
-  display: block;
+  width: 100%;
   padding: 0.2em 0;
+  border-top: 1px solid #4b4b4b;
 }
 
 .log-line.type-transaction {
@@ -43,8 +49,9 @@ body {
   background-color: #505050;
 }
 .log-line.component-logSocket {
-  color: #a05ee7;
+  color: #c48eff;
 }
 .log-line.component-jwksCache {
   color: #e7a15e;
 }
+
