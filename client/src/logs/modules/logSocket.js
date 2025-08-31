@@ -8,12 +8,12 @@ ws.onopen = () => {
   console.log('Connected to WebSocket server');
 };
 
-const logTextNode = document.createTextNode('');
-contentDiv.appendChild(logTextNode);
+// const logTextNode = document.createTextNode('');
+// contentDiv.appendChild(logTextNode);
 
 
 const maxLines = 500;
-const logLines = [];
+let logLines = [];
 let needsUpdate = false;
 let shouldAutoScroll = true;
 
@@ -23,7 +23,14 @@ function isAtBottom() {
 }
 
 function updateLogNode() {
-  logTextNode.nodeValue = logLines.join('\n');
+  for (const logLine of logLines) {
+    const json = JSON.parse(logLine);
+    const logTextSpan = document.createElement('span')
+    logTextSpan.textContent = logLine + '\n';
+    logTextSpan.className = `log-line level-${json.level} component-${json.component} type-${json.type}`;
+    contentDiv.appendChild(logTextSpan);
+  }
+  logLines = [];
   if (shouldAutoScroll) {
     contentDiv.scrollTop = contentDiv.scrollHeight;
   }
@@ -32,6 +39,18 @@ function updateLogNode() {
 
 contentDiv.addEventListener('scroll', () => {
   shouldAutoScroll = isAtBottom();
+});
+
+let selectedLogLineEl = null;
+contentDiv.addEventListener('click', (event) => {
+  if (event.target.classList.contains('log-line')) {
+    const logLine = event.target;
+    if (selectedLogLineEl) {
+      selectedLogLineEl.classList.remove('selected');
+    }
+    logLine.classList.add('selected');
+    selectedLogLineEl = logLine;
+  }
 });
 
 ws.onmessage = function (event) {

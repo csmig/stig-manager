@@ -18,3 +18,33 @@ body {
   font-family: monospace;
 
 }
+
+.log-line {
+  display: block;
+  padding: 0.2em 0;
+}
+
+.log-line.type-transaction {
+  color: #5ee75e;
+}
+
+.log-line.level-1 {
+  color: red;
+}
+
+.log-line.warning {
+  color: orange;
+}
+.log-line:hover {
+  background-color: #303030
+}
+
+.log-line.selected {
+  background-color: #505050;
+}
+.log-line.component-logSocket {
+  color: #a05ee7;
+}
+.log-line.component-jwksCache {
+  color: #e7a15e;
+}
