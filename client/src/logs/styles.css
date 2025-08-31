@@ -42,11 +42,11 @@ body {
   color: orange;
 }
 .log-line:hover {
-  background-color: #303030
+  background-color: color-mix(in srgb, currentColor 15%, transparent);
 }
 
 .log-line.selected {
-  background-color: #505050;
+  background-color: color-mix(in srgb, currentColor 40%, transparent);
 }
 .log-line.component-logSocket {
   color: #c48eff;

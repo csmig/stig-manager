@@ -2,38 +2,18 @@ const locationUrl = new URL(window.location);
 const wsProtocol = locationUrl.protocol === 'https:' ? 'wss:' : 'ws:';
 const wsUrl = wsProtocol + '//' + locationUrl.host + locationUrl.pathname + '../log-socket';
 const ws = new WebSocket(wsUrl);
-const contentDiv = document.getElementById('wrapper');
+const contentDiv = document.getElementById('content');
+const wrapperDiv = document.getElementById('wrapper');
 const detailDiv = document.getElementById('detail');
 
 ws.onopen = () => {
   console.log('Connected to WebSocket server');
 };
 
-// const logTextNode = document.createTextNode('');
-// contentDiv.appendChild(logTextNode);
-
-
-const maxLines = 500;
+const maxLines = 50;
 let logLines = [];
 let needsUpdate = false;
 let shouldAutoScroll = true;
-
-
-// content div updater
-function updateContentDiv() {
-  for (const logLine of logLines) {
-    const json = JSON.parse(logLine);
-    const logTextEl = document.createElement('div');
-    logTextEl.textContent = logLine + '\n';
-    logTextEl.className = `log-line level-${json.level} component-${json.component} type-${json.type}`;
-    contentDiv.appendChild(logTextEl);
-  }
-  logLines = [];
-  if (shouldAutoScroll) {
-    contentDiv.scrollTop = contentDiv.scrollHeight;
-  }
-  needsUpdate = false;
-}
 
 // content div scroll handling
 function isAtBottom() {
@@ -58,10 +38,29 @@ contentDiv.addEventListener('click', (event) => {
   // detailDiv.textContent = event.target.textContent;
 });
 
+// content div updater
+function updateContentDiv() {
+  for (const logLine of logLines) {
+    const json = JSON.parse(logLine);
+    const logTextEl = document.createElement('div');
+    logTextEl.textContent = logLine + '\n';
+    logTextEl.className = `log-line level-${json.level} component-${json.component} type-${json.type}`;
+    wrapperDiv.appendChild(logTextEl);
+    if (wrapperDiv.childElementCount > maxLines) {
+      wrapperDiv.removeChild(wrapperDiv.firstChild);
+    }
+  }
+  logLines = [];
+  if (shouldAutoScroll) {
+    contentDiv.scrollTop = contentDiv.scrollHeight;
+  }
+  needsUpdate = false;
+}
 // websocket message handler
 ws.onmessage = function (event) {
   const message = JSON.parse(event.data);
   if (message.type === 'log') {
+    // prepare for content div
     const logObj = message.data;
     logLines.push(JSON.stringify(logObj));
     if (logLines.length > maxLines) logLines.shift();
@@ -69,6 +68,7 @@ ws.onmessage = function (event) {
       needsUpdate = true;
       requestAnimationFrame(updateContentDiv);
     }
+    // prepare for table
     // if (logObj.type === 'transaction' && logObj.component === 'rest') {
     //   const record = {
     //     timestamp: logObj.date,
