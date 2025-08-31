@@ -1,0 +1,20 @@
+html {
+  color-scheme: dark;
+}
+
+body {
+  margin: 0;
+  background-color: #202326;
+  color: #e0e0e0;
+}
+.fade-out {
+  opacity: 0;
+  transition: opacity 0.5s ease-out;
+}
+#content {
+  height: 90vh;
+  overflow: auto;
+  white-space: pre;
+  font-family: monospace;
+
+}

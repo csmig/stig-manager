@@ -182,6 +182,7 @@ import { stylesheets, scripts, isMinimizedSource } from './resources.js'
         OW.tokenParsed = null
       }
     }
+    OW.bc = bc
   }
 
   function hideSpinner() {

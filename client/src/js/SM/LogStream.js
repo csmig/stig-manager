@@ -59,45 +59,58 @@ SM.LogStream.showLogTab = function ({ treePath }) {
         }
 
         ws.onmessage = function (event) {
-          logLines.push(event.data);
-          if (logLines.length > maxLines) logLines.shift();
-          if (!needsUpdate) {
-            needsUpdate = true;
-            requestAnimationFrame(updateLogNode);
+          const message = JSON.parse(event.data);
+          if (message.type === 'log') {
+            const logObj = message.data;
+            logLines.push(JSON.stringify(logObj));
+            if (logLines.length > maxLines) logLines.shift();
+            if (!needsUpdate) {
+              needsUpdate = true;
+              requestAnimationFrame(updateLogNode);
+            }
+            if (logObj.type === 'transaction' && logObj.component === 'rest') {
+              const record = {
+                timestamp: logObj.date,
+                source: logObj.data.request.source,
+                user: logObj.data.request.headers?.accessToken?.preferred_username,
+                browser: SM.LogStream.GetBrowser(logObj.data.request.headers['user-agent']),
+                action: `${logObj.data.request.method} ${logObj.data.request.url}`,
+                status: logObj.data.response.status,
+                length: logObj.data.response.headers?.['content-length']
+              };
+              const store = transactionGrid.getStore();
+              store.loadData([record], true);
+              const view = transactionGrid.getView();
+              view.scroller.dom.scrollTop = view.scroller.dom.scrollHeight;
+            }
+          }
+          else if (message.type === 'authorize') {
+            ws.send(JSON.stringify({ type: 'authorize', data: { token: window.oidcWorker.token } }));
           }
 
-          // {"date":"2025-08-28T01:48:33.668Z","level":3,"component":"rest","type":"transaction","data":{"request":{"date":"2025-08-28T01:48:33.656Z","source":"::1","method":"GET","url":"/api/collections?elevate=true&projection=owners&projection=statistics","headers":{"host":"localhost:64001","connection":"keep-alive","pragma":"no-cache","cache-control":"no-cache","sec-ch-ua-platform":"\"Linux\"","x-requested-with":"XMLHttpRequest","user-agent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36","sec-ch-ua":"\"Not;A=Brand\";v=\"99\", \"Google Chrome\";v=\"139\", \"Chromium\";v=\"139\"","sec-ch-ua-mobile":"?0","accept":"*/*","sec-fetch-site":"same-origin","sec-fetch-mode":"cors","sec-fetch-dest":"empty","referer":"http://localhost:64001/","accept-encoding":"gzip, deflate, br, zstd","accept-language":"en-US,en;q=0.9","cookie":"CSRF-Token-2O3FN=4tNxPRj4cxfnfmTaUjJfzcDvKxSCzzuA; CSRF-Token-XJHSP=2ovyxyRR6uv7VZ3JUQ275dwUFtWtbjLj; CSRF-Token-ZJ5UIGU=QR7NpwCgG9TpfbQSbdA63qJ4dUdrSSGM; Squeezebox-expanded-RADIO=0; Squeezebox-expanded-PLUGINS=0; Squeezebox-expanded-MY_MUSIC=1; Squeezebox-expanded-PLUGIN_MY_APPS_MODULE_NAME=1; Squeezebox-expanded-activePlugins=1; Squeezebox-expanded-inactivePlugins=1; Squeezebox-expanded-otherPlugins0=1; Squeezebox-expandPlayerControl=true; Squeezebox-noPlaylistCover=0; Squeezebox-albumView=; Squeezebox-expanded-FAVORITES=1; stigmanId=B30AF92E-AA9C-11EF-8E43-CF3C9BB8B135; requestedURI=../../carbon/admin/index.jsp; accepts-cookies=true; commonAuthId=f3404079-88b1-4d46-bd17-091b42a7d177; opbs=63d96fd5-2b38-4334-8022-b5debcaea723-v2; atbv=5d16fe2f-6003-4936-81d7-ebee1de1d959; JSESSIONID=E4479BEE29FFEE33AD72BA5B38A05643; Squeezebox-advancedsettings=null; Squeezebox-playersettings=settings/player/audio.html%3F; Squeezebox-player=00%3A00%3A00%3A00%3A00%3A00; CSRF-Token-XJHSPYZ=eDiR7i9og2Xc3RWHYw54aQgfEuwHbFGFcceRP66HJpGy5UsNAX4ZQHKiAimdYMJx; Squeezebox-enableHiDPI=1.25; sid=780dcf8edd5b6d1e54f639857de8f6da","accessToken":{"jti":"d73241aff3f9747607f9320ed0bfcd3e","realm_access":{"roles":["create_collection","admin"]},"preferred_username":"admin","name":"admin","scope":"stig-manager","sid":"780dcf8edd5b6d1e54f639857de8f6da","auth_time":1756303426,"aud":"stig-manager","iat":1756318161,"exp":1756372161},"authorization":true},"body":{}},"response":{"date":"2025-08-28T01:48:33.667Z","status":200,"headers":{"x-powered-by":"Express","access-control-allow-origin":"*","content-type":"application/json; charset=utf-8","content-length":"700","etag":"W/\"2bc-YrBmfzTd6yUEbECzN5jvHVqiAZ4\"","vary":"Accept-Encoding"},"responseBody":"[{\"collectionId\":\"1\",\"name\":\"status-collection\",\"description\":\"\",\"settings\":{\"fields\":{\"detail\":{\"enabled\":\"always\",\"required\":\"always\"},\"comment\":{\"enabled\":\"findings\",\"required\":\"findings\"}},\"status\":{\"canAccept\":true,\"resetCriteria\":\"result\",\"minAcceptGrant\":3},\"history\":{\"maxReviews\":5},\"importOptions\":{\"autoStatus\":{\"fail\":\"submitted\",\"pass\":\"submitted\",\"notapplicable\":\"submitted\"},\"unreviewed\":\"commented\",\"allowCustom\":true,\"emptyDetail\":\"replace\",\"emptyComment\":\"ignore\",\"unreviewedCommented\":\"informational\"}},\"metadata\":{},\"owners\":[{\"userId\":\"1\",\"username\":\"admin\",\"displayName\":\"admin\"}],\"statistics\":{\"created\":\"2025-03-22T18:23:18Z\",\"userCount\":3,\"assetCount\":0,\"checklistCount\":0}}]"},"operationStats":{"operationId":"getCollections","durationMs":11}}}
-
-          const json = JSON.parse(event.data);
-          if (json.type === 'transaction' && json.component === 'rest') {
-            const record = {
-              timestamp: json.date,
-              source: json.data.request.source,
-              user: json.data.request.headers?.accessToken?.preferred_username,
-              browser: SM.LogStream.GetBrowser(json.data.request.headers['user-agent']),
-              action: `${json.data.request.method} ${json.data.request.url}`,
-              status: json.data.response.status,
-              length: json.data.response.headers['content-length']
-            };
-            const store = transactionGrid.getStore();
-            store.loadData([record], true);
-            const view = transactionGrid.getView();
-            view.scroller.dom.scrollTop = view.scroller.dom.scrollHeight;
-          }
         };
-      },
-      destroy: function () {
-        ws?.close();
+
+        const bc = new BroadcastChannel('stigman-oidc-worker')
+        function tokenBroadcastHandler(event) {
+          if (event.data.type === 'accessToken') {
+            console.log('{log-stream] Received from worker:', event.type, event.data)
+            ws.send(JSON.stringify({ type: 'authorize', data: { token: event.data.accessToken } }))
+          }
+        }
+        bc.addEventListener('message', tokenBroadcastHandler)
+        ws.onclose = function () {
+          bc.removeEventListener('message', tokenBroadcastHandler)
+        }
       }
     }
   });
 
   const transactionGrid = new SM.LogStream.TransactionGrid({
-    region: 'south',
+    region: 'north',
     cls: 'sm-round-panel',
     split: true,
     title: 'API Transactions',
-    height: 300,
+    height: '66%',
     border: false,
 
   });
