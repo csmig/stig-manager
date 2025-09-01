@@ -10,20 +10,6 @@ ws.onopen = () => {
   console.log('Connected to WebSocket server');
 };
 
-const maxLines = 500;
-let logLines = [];
-let needsUpdate = false;
-let shouldAutoScroll = true;
-
-// content div scroll handling
-function isAtBottom() {
-  // Allow a small threshold for float rounding
-  return contentDiv.scrollHeight - contentDiv.scrollTop - contentDiv.clientHeight < 5;
-}
-contentDiv.addEventListener('scroll', () => {
-  shouldAutoScroll = isAtBottom();
-});
-
 // div click handler
 let selectedLogLineEl = null;
 contentDiv.addEventListener('click', (event) => {
@@ -39,6 +25,22 @@ contentDiv.addEventListener('click', (event) => {
   detailDiv.innerHTML = `<pre>${stringified}</pre>`;
 });
 
+const maxLines = 500;
+let logLines = [];
+let logDivs = [];
+let needsUpdate = false;
+let shouldAutoScroll = true;
+
+// content div scroll handling
+function isAtBottom() {
+  // Allow a small threshold for float rounding
+  return contentDiv.scrollHeight - contentDiv.scrollTop - contentDiv.clientHeight < 5;
+}
+contentDiv.addEventListener('scroll', () => {
+  shouldAutoScroll = isAtBottom();
+});
+
+
 // content div updater
 function updateContentDiv() {
   for (const logLine of logLines) {
@@ -48,11 +50,14 @@ function updateContentDiv() {
     logTextEl.className = `log-line`;
     logTextEl.dataset.level = json.level;
     logTextEl.dataset.component = json.component;
-    logTextEl.dataset.type = json.type; wrapperDiv.appendChild(logTextEl);
-    if (wrapperDiv.childElementCount > maxLines) {
-      wrapperDiv.removeChild(wrapperDiv.firstChild);
+    logTextEl.dataset.type = json.type; 
+    logDivs.push(logTextEl);
+    if (logDivs.length > maxLines) {
+      logDivs = logDivs.slice(logDivs.length - maxLines);
     }
   }
+  wrapperDiv.replaceChildren(...logDivs);
+
   logLines = [];
   if (shouldAutoScroll) {
     contentDiv.scrollTop = contentDiv.scrollHeight;

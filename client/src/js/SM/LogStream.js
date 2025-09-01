@@ -2,7 +2,6 @@ Ext.ns('SM.LogStream')
 
 SM.LogStream.RawLogPanel = Ext.extend(Ext.Panel, {
   initComponent: function () {
-    const _this = this
     const config = {
       html: '<div class="log-wrapper"></div>',
       bodyCssClass: 'log-panel',
@@ -11,6 +10,35 @@ SM.LogStream.RawLogPanel = Ext.extend(Ext.Panel, {
     this.superclass().initComponent.call(this);
   }
 });
+
+SM.LogStream.JsonTreePanel = Ext.extend(Ext.Panel, {
+  initComponent: function () {
+    let tree
+    function loadData(data) {
+      tree = JsonView.createTree(data)
+      tree.isExpanded = true
+      tree.children[4].isExpanded = true
+      if (this.body) {
+        this.body.dom.textContent = ''
+        JsonView.render(tree, this.body.dom)
+      }
+    }
+    function renderTree() {
+      if (tree) {
+        JsonView.render(tree, this.body.dom)
+      }
+    }
+
+    const config = {
+      bodyStyle: 'overflow-y:auto;',
+      loadData
+    }
+    Ext.apply(this, Ext.apply(this.initialConfig, config))
+    this.superclass().initComponent.call(this)
+    this.on('render', renderTree)
+  }
+})
+
 
 SM.LogStream.TransactionGrid = Ext.extend(Ext.grid.GridPanel, {
   initComponent: function () {
@@ -63,12 +91,13 @@ SM.LogStream.showLogTab = function ({ treePath }) {
     border: false,
     tbar: new Ext.Toolbar({
       items: [
-        { text: 'Wrap', enableToggle: true, toggleHandler: (btn, state) => { 
-          rawLogPanel.body.dom.style.textWrapMode = state ? 'wrap' : 'nowrap';
-         } },
+        {
+          text: 'Wrap', enableToggle: true, toggleHandler: (btn, state) => {
+            rawLogPanel.body.dom.style.textWrapMode = state ? 'wrap' : 'nowrap';
+          }
+        },
       ]
     }),
-
     listeners: {
       afterrender: async function (panel) {
         // WebSocket message handling
@@ -92,6 +121,7 @@ SM.LogStream.showLogTab = function ({ treePath }) {
         const wrapperDiv = contentDiv.querySelector('.log-wrapper');
         const maxLines = 1000;
         let logLines = [];
+        let logDivs = [];
         let needsUpdate = false;
         let shouldAutoScroll = true;
 
@@ -103,6 +133,23 @@ SM.LogStream.showLogTab = function ({ treePath }) {
         contentDiv.addEventListener('scroll', () => {
           shouldAutoScroll = isAtBottom();
         });
+        // div click handler
+        let selectedLogLineEl = null;
+        contentDiv.addEventListener('click', (event) => {
+          if (event.target.classList.contains('log-line')) {
+            const logLine = event.target;
+            if (selectedLogLineEl) {
+              selectedLogLineEl.classList.remove('selected');
+            }
+            logLine.classList.add('selected');
+            selectedLogLineEl = logLine;
+          }
+          // const stringified = JSON.stringify(JSON.parse(event.target.textContent), null, 2);
+          const data = JSON.parse(event.target.textContent);
+            // detailDiv.innerHTML = `<pre>${stringified}</pre>`;
+          jsonPanel.loadData(data);
+        });
+
 
         function updatePanelBody() {
           for (const logLine of logLines) {
@@ -113,11 +160,13 @@ SM.LogStream.showLogTab = function ({ treePath }) {
             logTextEl.dataset.level = json.level;
             logTextEl.dataset.component = json.component;
             logTextEl.dataset.type = json.type;
-            wrapperDiv.appendChild(logTextEl);
-            if (wrapperDiv.childElementCount > maxLines) {
-              wrapperDiv.removeChild(wrapperDiv.firstChild);
+            logDivs.push(logTextEl);
+            if (logDivs.length > maxLines) {
+              logDivs = logDivs.slice(logDivs.length - maxLines);
             }
           }
+          wrapperDiv.replaceChildren(...logDivs);
+
           logLines = [];
           if (shouldAutoScroll) {
             contentDiv.scrollTop = contentDiv.scrollHeight;
@@ -167,10 +216,34 @@ SM.LogStream.showLogTab = function ({ treePath }) {
         bc.addEventListener('message', tokenBroadcastHandler)
         ws.onclose = function () {
           bc.removeEventListener('message', tokenBroadcastHandler)
+          ws.onmessage = null
+        }
+      },
+      destroy: function () {
+        if (ws) {
+          ws.close();
         }
       }
     }
   });
+
+  const jsonPanel = new SM.LogStream.JsonTreePanel({
+    title: 'JSON Tree',
+    cls: 'sm-round-panel',
+    region: 'east',
+    border: false,
+    split: true,
+    iconCls: 'sm-json-icon',
+    width: 400
+  })
+
+  const logAndJsonPanel = new Ext.Panel({
+    margins: { top: SM.Margin.top, right: SM.Margin.edge, bottom: SM.Margin.adjacent, left: SM.Margin.edge },
+    region: 'center',
+    layout: 'border',
+    border: false,
+    items: [rawLogPanel, jsonPanel]
+  })
 
   const transactionGrid = new SM.LogStream.TransactionGrid({
     region: 'south',
@@ -189,7 +262,7 @@ SM.LogStream.showLogTab = function ({ treePath }) {
     title: 'Log Stream',
     closable: true,
     layout: 'border',
-    items: [rawLogPanel, transactionGrid]
+    items: [logAndJsonPanel, transactionGrid]
   })
   thisTab.show()
 
