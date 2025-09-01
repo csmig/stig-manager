@@ -45,8 +45,10 @@ function updateContentDiv() {
     const json = JSON.parse(logLine);
     const logTextEl = document.createElement('div');
     logTextEl.textContent = logLine + '\n';
-    logTextEl.className = `log-line level-${json.level} component-${json.component} type-${json.type}`;
-    wrapperDiv.appendChild(logTextEl);
+    logTextEl.className = `log-line`;
+    logTextEl.dataset.level = json.level;
+    logTextEl.dataset.component = json.component;
+    logTextEl.dataset.type = json.type; wrapperDiv.appendChild(logTextEl);
     if (wrapperDiv.childElementCount > maxLines) {
       wrapperDiv.removeChild(wrapperDiv.firstChild);
     }

@@ -39,15 +39,15 @@ body {
   border-bottom: 1px solid #4b4b4b;
 }
 
-.log-line.type-transaction {
+.log-line[data-type="transaction"] {
   color: #5ee75e;
 }
 
-.log-line.level-1 {
+.log-line[data-level="1"] {
   color: red;
 }
 
-.log-line.warning {
+.log-line[data-level="2"] {
   color: orange;
 }
 
@@ -59,15 +59,15 @@ body {
   background-color: color-mix(in srgb, currentColor 40%, transparent);
 }
 
-.log-line.component-logSocket {
+.log-line[data-component="logSocket"] {
   color: #c48eff;
 }
 
-.log-line.component-jwksCache {
+.log-line[data-component="jwksCache"] {
   color: #e7a15e;
 }
 
-.log-line.component-static {
+.log-line[data-component="static"] {
   color: #808080;
 }
 

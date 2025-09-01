@@ -279,7 +279,7 @@ SM.NavTree.TreePanel = Ext.extend(Ext.tree.TreePanel, {
                 },
                                 {
                   id: 'logstream-admin',
-                  text: 'Log Stream <span class="sm-navtree-sprite">experimental</span>',
+                  text: 'Log Stream <span class="sm-navtree-sprite">preview</span>',
                   leaf: true,
                   iconCls: 'sm-logs-icon'
                 }

@@ -1,8 +1,15 @@
 Ext.ns('SM.LogStream')
 
 SM.LogStream.RawLogPanel = Ext.extend(Ext.Panel, {
-  html: 'Log start<br>',
-  bodyStyle: 'white-space: pre; overflow: auto;'
+  initComponent: function () {
+    const _this = this
+    const config = {
+      html: '<div class="log-wrapper"></div>',
+      bodyCssClass: 'log-panel',
+    }
+    Ext.apply(this, Ext.apply(this.initialConfig, config))
+    this.superclass().initComponent.call(this);
+  }
 });
 
 SM.LogStream.TransactionGrid = Ext.extend(Ext.grid.GridPanel, {
@@ -29,34 +36,95 @@ SM.LogStream.TransactionGrid = Ext.extend(Ext.grid.GridPanel, {
   }
 });
 
-SM.LogStream.showLogTab = function ({ treePath }) {
-  const locationUrl = new URL(window.location);
-  const wsProtocol = locationUrl.protocol === 'https:' ? 'wss:' : 'ws:';
-  const wsUrl = wsProtocol + '//' + locationUrl.host + locationUrl.pathname + 'log-socket';
+SM.LogStream.setupSocket = async function () {
+  return new Promise((resolve, reject) => {
+    const locationUrl = new URL(window.location);
+    const wsProtocol = locationUrl.protocol === 'https:' ? 'wss:' : 'ws:';
+    const wsUrl = wsProtocol + '//' + locationUrl.host + locationUrl.pathname + 'log-socket';
 
+    const ws = new WebSocket(wsUrl);
+    ws.onopen = () => {
+      ws.onerror = null;
+      SM.LogStream.ws = ws;
+      resolve(ws);
+    };
+    ws.onerror = (event) => {
+      console.log('WebSocket error:', event);
+      reject(new Error(`Feature unavailable. Error establishing WebSocket connection to ${event.target.url}. `));
+    };
+  });
+};
+
+SM.LogStream.showLogTab = function ({ treePath }) {
   let ws
   const rawLogPanel = new SM.LogStream.RawLogPanel({
     region: 'center',
     cls: 'sm-round-panel',
-    title: 'Raw Log',
     border: false,
+    tbar: new Ext.Toolbar({
+      items: [
+        { text: 'Wrap', enableToggle: true, toggleHandler: (btn, state) => { 
+          rawLogPanel.body.dom.style.textWrapMode = state ? 'wrap' : 'nowrap';
+         } },
+      ]
+    }),
+
     listeners: {
-      afterrender: function (panel) {
+      afterrender: async function (panel) {
         // WebSocket message handling
-        ws = new WebSocket(wsUrl);
+        try {
+          ws = await SM.LogStream.setupSocket()
+        } catch (error) {
+          console.error('WebSocket setup error:', error);
+          panel.update(error.message);
+          return;
+        }
 
-        const logTextNode = document.createTextNode('');
-        panel.body.dom.appendChild(logTextNode);
+        ws.onerror = (error) => {
+          console.error('WebSocket error:', error);
+        };
 
+        // const logTextNode = document.createTextNode('');
+        // panel.body.dom.appendChild(logTextNode);
+
+
+        const contentDiv = panel.body.dom;
+        const wrapperDiv = contentDiv.querySelector('.log-wrapper');
         const maxLines = 1000;
-        const logLines = [];
+        let logLines = [];
         let needsUpdate = false;
+        let shouldAutoScroll = true;
 
-        function updateLogNode() {
-          logTextNode.nodeValue = logLines.join('\n');
-          panel.body.dom.scrollTop = panel.body.dom.scrollHeight;
+        // content div scroll handling
+        function isAtBottom() {
+          // Allow a small threshold for float rounding
+          return contentDiv.scrollHeight - contentDiv.scrollTop - contentDiv.clientHeight < 5;
+        }
+        contentDiv.addEventListener('scroll', () => {
+          shouldAutoScroll = isAtBottom();
+        });
+
+        function updatePanelBody() {
+          for (const logLine of logLines) {
+            const json = JSON.parse(logLine);
+            const logTextEl = document.createElement('div');
+            logTextEl.textContent = logLine + '\n';
+            logTextEl.className = `log-line`;
+            logTextEl.dataset.level = json.level;
+            logTextEl.dataset.component = json.component;
+            logTextEl.dataset.type = json.type;
+            wrapperDiv.appendChild(logTextEl);
+            if (wrapperDiv.childElementCount > maxLines) {
+              wrapperDiv.removeChild(wrapperDiv.firstChild);
+            }
+          }
+          logLines = [];
+          if (shouldAutoScroll) {
+            contentDiv.scrollTop = contentDiv.scrollHeight;
+          }
           needsUpdate = false;
         }
+
 
         ws.onmessage = function (event) {
           const message = JSON.parse(event.data);
@@ -66,7 +134,7 @@ SM.LogStream.showLogTab = function ({ treePath }) {
             if (logLines.length > maxLines) logLines.shift();
             if (!needsUpdate) {
               needsUpdate = true;
-              requestAnimationFrame(updateLogNode);
+              requestAnimationFrame(updatePanelBody);
             }
             if (logObj.type === 'transaction' && logObj.component === 'rest') {
               const record = {
@@ -83,9 +151,8 @@ SM.LogStream.showLogTab = function ({ treePath }) {
               const view = transactionGrid.getView();
               view.scroller.dom.scrollTop = view.scroller.dom.scrollHeight;
             }
-          }
-          else if (message.type === 'authorize') {
-            ws.send(JSON.stringify({ type: 'authorize', data: { token: window.oidcWorker.token } }));
+          } else if (message.type === 'authorize') {
+            ws?.send(JSON.stringify({ type: 'authorize', data: { token: window.oidcWorker.token } }));
           }
 
         };
@@ -94,7 +161,7 @@ SM.LogStream.showLogTab = function ({ treePath }) {
         function tokenBroadcastHandler(event) {
           if (event.data.type === 'accessToken') {
             console.log('{log-stream] Received from worker:', event.type, event.data)
-            ws.send(JSON.stringify({ type: 'authorize', data: { token: event.data.accessToken } }))
+            ws?.send(JSON.stringify({ type: 'authorize', data: { token: event.data.accessToken } }))
           }
         }
         bc.addEventListener('message', tokenBroadcastHandler)
@@ -106,7 +173,7 @@ SM.LogStream.showLogTab = function ({ treePath }) {
   });
 
   const transactionGrid = new SM.LogStream.TransactionGrid({
-    region: 'north',
+    region: 'south',
     cls: 'sm-round-panel',
     split: true,
     title: 'API Transactions',
