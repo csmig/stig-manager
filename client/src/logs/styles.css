@@ -6,6 +6,10 @@ body {
   margin: 0;
   background-color: #202326;
   color: #e0e0e0;
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+
 }
 
 .fade-out {
@@ -16,7 +20,7 @@ body {
 #content {
   cursor: pointer;
   overflow: auto;
-  text-wrap-mode: wrap;
+  text-wrap-mode: nowrap;
   font-family: monospace;
   border: 1px solid #4b4b4b;
   width: 400px;
@@ -32,7 +36,7 @@ body {
 .log-line {
   width: 100%;
   padding: 0.2em 0;
-  border-top: 1px solid #4b4b4b;
+  border-bottom: 1px solid #4b4b4b;
 }
 
 .log-line.type-transaction {
@@ -68,8 +72,9 @@ body {
 }
 
 .split-container {
+  flex: 1;
+  min-height: 0;
   display: flex;
-  height: 100vh;
   overflow: auto;
 }
 
@@ -88,4 +93,16 @@ body {
   flex: 1 1 auto;
   overflow: auto;
   border: 1px solid #4b4b4b;
+}
+
+#header {
+  /* Optional: set a fixed height or padding */
+  padding: 1em;
+  font-size: 1.2em;
+  /* background: #23233a54; */
+  /* border-bottom: 1px solid #444; */
+}
+
+#wrap-label {
+  cursor: pointer;
 }

@@ -176,3 +176,11 @@ function handleMouseUp() {
   document.removeEventListener('mouseup', handleMouseUp);
 }
 
+// wrap handler
+const wrapCheckbox = document.getElementById('checkbox-wrap');
+wrapCheckbox.addEventListener('change', (e) => {
+  const isChecked = e.target.checked;
+  console.log('Wrap lines:', isChecked);
+  contentDiv.style.textWrapMode = isChecked ? 'wrap' : 'nowrap';
+});
+
