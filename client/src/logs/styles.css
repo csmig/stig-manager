@@ -14,16 +14,18 @@ body {
 }
 
 #content {
-  /* height: 400px; */
+  cursor: pointer;
   overflow: auto;
-  text-wrap-mode: nowrap;
+  text-wrap-mode: wrap;
   font-family: monospace;
   border: 1px solid #4b4b4b;
+  width: 400px;
+  flex: 3 1 auto;
 }
 
 #wrapper {
   min-width: 100%;
-  overflow: auto;
+  /* overflow: visible; */
   display: table;
 }
 
@@ -61,6 +63,10 @@ body {
   color: #e7a15e;
 }
 
+.log-line.component-static {
+  color: #808080;
+}
+
 .split-container {
   display: flex;
   height: 100vh;
@@ -68,20 +74,18 @@ body {
 }
 
 .splitter {
-  width: 10px;
-  background-color: #4b4b4b;
+  width: 6px;
+  background-color: transparent;
   cursor: ew-resize;
 }
 .splitter:hover,
 .splitter.dragging {
-  background-color: blue;
+  background-color: #303054;
 }
 
 #detail {
-  /* width: 200px; */
+  width: 200px;
   flex: 1 1 auto;
-}
-#content {
-  width: 400px;
-  flex: 3 1 auto;
+  overflow: auto;
+  border: 1px solid #4b4b4b;
 }

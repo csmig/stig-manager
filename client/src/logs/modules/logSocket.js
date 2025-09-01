@@ -35,7 +35,8 @@ contentDiv.addEventListener('click', (event) => {
     logLine.classList.add('selected');
     selectedLogLineEl = logLine;
   }
-  // detailDiv.textContent = event.target.textContent;
+  const stringified = JSON.stringify(JSON.parse(event.target.textContent), null, 2);
+  detailDiv.innerHTML = `<pre>${stringified}</pre>`;
 });
 
 // content div updater
