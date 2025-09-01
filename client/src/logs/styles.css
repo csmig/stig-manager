@@ -7,22 +7,25 @@ body {
   background-color: #202326;
   color: #e0e0e0;
 }
+
 .fade-out {
   opacity: 0;
   transition: opacity 0.5s ease-out;
 }
+
 #content {
-  height: 90vh;
+  /* height: 400px; */
   overflow: auto;
-  white-space: pre;
+  text-wrap-mode: nowrap;
   font-family: monospace;
+  border: 1px solid #4b4b4b;
 }
 
- #wrapper{
-    min-width: 100%; 
-    overflow: visible;
-    display: inline-block;
-  }
+#wrapper {
+  min-width: 100%;
+  overflow: auto;
+  display: table;
+}
 
 .log-line {
   width: 100%;
@@ -41,6 +44,7 @@ body {
 .log-line.warning {
   color: orange;
 }
+
 .log-line:hover {
   background-color: color-mix(in srgb, currentColor 15%, transparent);
 }
@@ -48,10 +52,32 @@ body {
 .log-line.selected {
   background-color: color-mix(in srgb, currentColor 40%, transparent);
 }
+
 .log-line.component-logSocket {
   color: #c48eff;
 }
+
 .log-line.component-jwksCache {
   color: #e7a15e;
 }
 
+.split-container {
+  display: flex;
+  height: 100vh;
+  overflow: auto;
+}
+
+.splitter {
+  width: 5px;
+  background-color: #4b4b4b;
+  cursor: ew-resize;
+}
+
+#detail {
+  /* width: 200px; */
+  flex: 1 1 auto;
+}
+#content {
+  width: 400px;
+  flex: 3 1 auto;
+}

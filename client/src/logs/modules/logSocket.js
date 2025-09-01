@@ -10,7 +10,7 @@ ws.onopen = () => {
   console.log('Connected to WebSocket server');
 };
 
-const maxLines = 50;
+const maxLines = 500;
 let logLines = [];
 let needsUpdate = false;
 let shouldAutoScroll = true;
@@ -130,10 +130,33 @@ function showReauthModal(promptText = "Your session has expired. Please sign in 
   document.body.prepend(modal);
 }
 
-// ws.onmessage = event => {
-//   // Display shell output in a designated area (e.g., a pre tag)
-//   contentDiv.innerHTML += event.data + '\n';
-//   contentDiv.scrollTop = contentDiv.scrollHeight;
-// };
+// split panes
+const splitter = document.querySelector('.splitter');
+const leftPane = contentDiv;
+const rightPane = detailDiv;
 
+let isDragging = false;
+
+splitter.addEventListener('mousedown', (e) => {
+  isDragging = true;
+  document.addEventListener('mousemove', handleMouseMove);
+  document.addEventListener('mouseup', handleMouseUp);
+});
+
+function handleMouseMove(e) {
+  if (!isDragging) return;
+
+  const containerWidth = splitter.parentElement.offsetWidth;
+  const newLeftWidth = e.clientX - splitter.offsetLeft; // Adjust based on your layout
+  const newRightWidth = containerWidth - newLeftWidth - splitter.offsetWidth;
+
+  leftPane.style.flexBasis = `${newLeftWidth}px`;
+  rightPane.style.flexBasis = `${newRightWidth}px`;
+}
+
+function handleMouseUp() {
+  isDragging = false;
+  document.removeEventListener('mousemove', handleMouseMove);
+  document.removeEventListener('mouseup', handleMouseUp);
+}
 
