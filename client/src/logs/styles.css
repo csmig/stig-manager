@@ -68,9 +68,13 @@ body {
 }
 
 .splitter {
-  width: 5px;
+  width: 10px;
   background-color: #4b4b4b;
   cursor: ew-resize;
+}
+.splitter:hover,
+.splitter.dragging {
+  background-color: blue;
 }
 
 #detail {

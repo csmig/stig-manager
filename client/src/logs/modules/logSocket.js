@@ -139,16 +139,29 @@ let isDragging = false;
 
 splitter.addEventListener('mousedown', (e) => {
   isDragging = true;
+  splitter.classList.add('dragging');
+  document.body.style.userSelect = 'none';
   document.addEventListener('mousemove', handleMouseMove);
   document.addEventListener('mouseup', handleMouseUp);
 });
 
 function handleMouseMove(e) {
   if (!isDragging) return;
+  e.preventDefault();
 
-  const containerWidth = splitter.parentElement.offsetWidth;
-  const newLeftWidth = e.clientX - splitter.offsetLeft; // Adjust based on your layout
-  const newRightWidth = containerWidth - newLeftWidth - splitter.offsetWidth;
+  const containerRect = splitter.parentElement.getBoundingClientRect();
+  const minWidth = 100; // minimum width for panes
+
+  // Calculate new left width relative to the container
+  let newLeftWidth = e.clientX - containerRect.left;
+  let newRightWidth = containerRect.width - newLeftWidth - splitter.offsetWidth;
+
+  // Clamp to minimums
+  if (newLeftWidth < minWidth) newLeftWidth = minWidth;
+  if (newRightWidth < minWidth) {
+    newRightWidth = minWidth;
+    newLeftWidth = containerRect.width - minWidth - splitter.offsetWidth;
+  }
 
   leftPane.style.flexBasis = `${newLeftWidth}px`;
   rightPane.style.flexBasis = `${newRightWidth}px`;
@@ -156,6 +169,8 @@ function handleMouseMove(e) {
 
 function handleMouseUp() {
   isDragging = false;
+  splitter.classList.remove('dragging');
+  document.body.style.userSelect = '';
   document.removeEventListener('mousemove', handleMouseMove);
   document.removeEventListener('mouseup', handleMouseUp);
 }
