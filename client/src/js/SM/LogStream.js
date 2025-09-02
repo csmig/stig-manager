@@ -2,10 +2,22 @@ Ext.ns('SM.LogStream')
 
 SM.LogStream.RawLogPanel = Ext.extend(Ext.Panel, {
   initComponent: function () {
+    const wrapButton = new Ext.Button({
+      text: 'Wrap',
+      enableToggle: true,
+      toggleHandler: (btn, state) => {
+        this.body.dom.style.textWrapMode = state ? 'wrap' : 'nowrap';
+      }
+    });
+    const tbar = new Ext.Toolbar({
+      items: [wrapButton]
+    });
+
     const config = {
       html: '<div class="log-wrapper"></div>',
       bodyCssClass: 'log-panel',
-    }
+      tbar
+    };
     Ext.apply(this, Ext.apply(this.initialConfig, config))
     this.superclass().initComponent.call(this);
   }
@@ -17,7 +29,12 @@ SM.LogStream.JsonTreePanel = Ext.extend(Ext.Panel, {
     function loadData(data) {
       tree = JsonView.createTree(data)
       tree.isExpanded = true
-      tree.children[4].isExpanded = true
+      tree.children[4].isExpanded = true // 'data' property
+      if (tree.children[3].value === "transaction") {
+        for (const child of tree.children[4].children) {
+          child.isExpanded = true
+        }
+      }
       if (this.body) {
         this.body.dom.textContent = ''
         JsonView.render(tree, this.body.dom)
@@ -38,7 +55,6 @@ SM.LogStream.JsonTreePanel = Ext.extend(Ext.Panel, {
     this.on('render', renderTree)
   }
 })
-
 
 SM.LogStream.TransactionGrid = Ext.extend(Ext.grid.GridPanel, {
   initComponent: function () {
@@ -83,21 +99,49 @@ SM.LogStream.setupSocket = async function () {
   });
 };
 
-SM.LogStream.showLogTab = function ({ treePath }) {
+SM.LogStream.showLogTab = async function ({ treePath }) {
   let ws
+  let writableStream = null
+  // try {
+  //   await navigator.permissions.query({ name: 'file-system-write' });
+  // } catch (error) {
+  //   console.error('Error capturing file:', error);
+  //   return;
+  // }
   const rawLogPanel = new SM.LogStream.RawLogPanel({
     region: 'center',
     cls: 'sm-round-panel',
     border: false,
-    tbar: new Ext.Toolbar({
-      items: [
-        {
-          text: 'Wrap', enableToggle: true, toggleHandler: (btn, state) => {
-            rawLogPanel.body.dom.style.textWrapMode = state ? 'wrap' : 'nowrap';
-          }
-        },
-      ]
-    }),
+    // tbar: new Ext.Toolbar({
+    //   items: [
+    //     {
+    //       text: 'Wrap', enableToggle: true, toggleHandler: (btn, state) => {
+    //         rawLogPanel.body.dom.style.textWrapMode = state ? 'wrap' : 'nowrap';
+    //       }
+    //     },
+    //     {
+    //       text: 'File capture...', enableToggle: true, toggleHandler: async (btn, state) => {
+    //         if (state) {
+    //           try {
+    //             await navigator.permissions.query({ name: 'file-system-write' });
+    //             const newHandle = await window.showSaveFilePicker();
+    //             btn.setText(`Capturing to ${newHandle.name}`);
+    //             writableStream = await newHandle.createWritable();
+    //           } catch (error) {
+    //             console.error('Error capturing file:', error);
+    //             return;
+    //           }
+    //         } else {
+    //           btn.setText('File capture...');
+    //           if (writableStream) {
+    //             writableStream.close();
+    //             writableStream = null;
+    //           }
+    //         }
+    //       }
+    //     }
+    //   ]
+    // }),
     listeners: {
       afterrender: async function (panel) {
         // WebSocket message handling
@@ -180,6 +224,11 @@ SM.LogStream.showLogTab = function ({ treePath }) {
           if (message.type === 'log') {
             const logObj = message.data;
             logLines.push(JSON.stringify(logObj));
+            if (writableStream) {
+              writableStream.write(JSON.stringify(logObj) + '\n').catch((err) => {
+                console.error('Error writing to file:', err);
+              });
+            }
             if (logLines.length > maxLines) logLines.shift();
             if (!needsUpdate) {
               needsUpdate = true;
@@ -222,6 +271,9 @@ SM.LogStream.showLogTab = function ({ treePath }) {
       destroy: function () {
         if (ws) {
           ws.close();
+        }
+        if (writableStream) {
+          writableStream.close();
         }
       }
     }
