@@ -1,20 +1,45 @@
 Ext.ns('SM.LogStream')
 
-SM.LogStream.RawLogPanel = Ext.extend(Ext.Panel, {
+SM.LogStream.LogPanel = Ext.extend(Ext.Panel, {
   initComponent: function () {
-    const wrapButton = new Ext.Button({
+    const _this = this
+    this.writableStream = null
+    const wrapBtn = new Ext.Button({
       text: 'Wrap',
       enableToggle: true,
       toggleHandler: (btn, state) => {
         this.body.dom.style.textWrapMode = state ? 'wrap' : 'nowrap';
       }
     });
+    const captureBtn = new Ext.Button({
+      text: 'Capture...',
+      enableToggle: true,
+      toggleHandler: async (btn, state) => {
+        if (state) {
+          try {
+            const newHandle = await window.showSaveFilePicker();
+            btn.setText(`Capturing to ${newHandle.name}`);
+            _this.writableStream = await newHandle.createWritable();
+          } catch (error) {
+            console.error('Error capturing file:', error);
+            btn.toggle(false, true); //toggle off with event suppressed
+            return;
+          }
+        } else {
+          btn.setText('Capture...');
+          if (_this.writableStream) {
+            _this.writableStream.close();
+            _this.writableStream = null;
+          }
+        }
+      }
+    });
     const tbar = new Ext.Toolbar({
-      items: [wrapButton]
+      items: [wrapBtn, captureBtn]
     });
 
     const config = {
-      html: '<div class="log-wrapper"></div>',
+      html: '<div class="log-wrapper"></div>',    
       bodyCssClass: 'log-panel',
       tbar
     };
@@ -108,40 +133,10 @@ SM.LogStream.showLogTab = async function ({ treePath }) {
   //   console.error('Error capturing file:', error);
   //   return;
   // }
-  const rawLogPanel = new SM.LogStream.RawLogPanel({
+  const logPanel = new SM.LogStream.LogPanel({
     region: 'center',
     cls: 'sm-round-panel',
     border: false,
-    // tbar: new Ext.Toolbar({
-    //   items: [
-    //     {
-    //       text: 'Wrap', enableToggle: true, toggleHandler: (btn, state) => {
-    //         rawLogPanel.body.dom.style.textWrapMode = state ? 'wrap' : 'nowrap';
-    //       }
-    //     },
-    //     {
-    //       text: 'File capture...', enableToggle: true, toggleHandler: async (btn, state) => {
-    //         if (state) {
-    //           try {
-    //             await navigator.permissions.query({ name: 'file-system-write' });
-    //             const newHandle = await window.showSaveFilePicker();
-    //             btn.setText(`Capturing to ${newHandle.name}`);
-    //             writableStream = await newHandle.createWritable();
-    //           } catch (error) {
-    //             console.error('Error capturing file:', error);
-    //             return;
-    //           }
-    //         } else {
-    //           btn.setText('File capture...');
-    //           if (writableStream) {
-    //             writableStream.close();
-    //             writableStream = null;
-    //           }
-    //         }
-    //       }
-    //     }
-    //   ]
-    // }),
     listeners: {
       afterrender: async function (panel) {
         // WebSocket message handling
@@ -224,8 +219,8 @@ SM.LogStream.showLogTab = async function ({ treePath }) {
           if (message.type === 'log') {
             const logObj = message.data;
             logLines.push(JSON.stringify(logObj));
-            if (writableStream) {
-              writableStream.write(JSON.stringify(logObj) + '\n').catch((err) => {
+            if (logPanel.writableStream) {
+              logPanel.writableStream.write(JSON.stringify(logObj) + '\n').catch((err) => {
                 console.error('Error writing to file:', err);
               });
             }
@@ -272,8 +267,8 @@ SM.LogStream.showLogTab = async function ({ treePath }) {
         if (ws) {
           ws.close();
         }
-        if (writableStream) {
-          writableStream.close();
+        if (logPanel.writableStream) {
+          logPanel.writableStream.close();
         }
       }
     }
@@ -294,7 +289,7 @@ SM.LogStream.showLogTab = async function ({ treePath }) {
     region: 'center',
     layout: 'border',
     border: false,
-    items: [rawLogPanel, jsonPanel]
+    items: [logPanel, jsonPanel]
   })
 
   const transactionGrid = new SM.LogStream.TransactionGrid({
