@@ -61,16 +61,10 @@ class LogSession {
     let msgObj;
     try {
       msgObj = JSON.parse(message);
+      logger.writeInfo(component, 'message-receive', { sessionId: this.sessionId, ...msgObj });
     } catch {
       this.send({ type: 'error', data: 'Invalid JSON' });
-      logger.writeError(component, 'Invalid JSON received', { sessionId: this.sessionId, message });
       return;
-    }
-    if (msgObj.type === 'authorize' ) {
-      logger.writeInfo(component, 'message', { sessionId: this.sessionId, type: msgObj.type });
-    }
-    else {
-      logger.writeInfo(component, 'message', { sessionId: this.sessionId, ...msgObj });
     }
     switch (msgObj.type) {
       case 'authorize':
@@ -81,7 +75,6 @@ class LogSession {
         break;
       default:
         this.send({ type: 'error', data: 'Unexpected message type' });
-        logger.writeError(component, 'Unexpected message type', { sessionId: this.sessionId, type: msgObj.type });
     }
   }
 
@@ -92,6 +85,9 @@ class LogSession {
   send = (msg) => {
     try {
       this.ws.send(JSON.stringify(msg));
+      if (msg.type !== 'log') {
+        logger.writeInfo(component, 'message-send', { sessionId: this.sessionId, ...msg });
+      }
     } catch {
       // Ignore send errors
     }
@@ -105,9 +101,7 @@ class LogSession {
     }
     switch (commandData.command) {
       case 'stream-start':
-        if (commandData.filter) {
-          this.filter = commandData.filter;
-        }
+        this.filter = commandData.filter;
         this.enableLogForwarding();
         break;
       case 'stream-stop':
@@ -116,9 +110,7 @@ class LogSession {
       default:
         this.send({ type: 'error', data: 'Unknown command' });
     }
-    logger.writeInfo(component, 'command', { sessionId: this.sessionId, command: commandData.command });
-    // Execute command (placeholder)
-    this.send({ type: 'info', data: 'Command received (not implemented)' });
+    this.send({ type: 'info', data: { success: true, command: commandData } });
   }
 
   onAuthorize = (authData) => {
@@ -152,8 +144,6 @@ class LogSession {
     this.authorized = true;
     
     this.send({ type: 'info', data: 'Authorization successful' });
-    logger.writeInfo(component, 'auth', { sessionId: this.sessionId, msg: 'Authorization successful' });
-    // Start token expiration timer
     this.startTokenTimer();
   }
 
@@ -166,7 +156,6 @@ class LogSession {
       this.authorized = false;
       this.disableLogForwarding();
       this.send({ type: 'error', data: 'token expired' });
-      logger.writeInfo(component, 'auth', { msg: 'Token expired, waiting for refresh' });
     }, ms);
   }
 }

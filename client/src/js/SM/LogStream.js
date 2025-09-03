@@ -6,11 +6,27 @@ SM.LogStream.LogPanel = Ext.extend(Ext.Panel, {
     this.shouldAutoScroll = true
     this.writableStream = null
 
-    const streamBtn = new Ext.Button({
+    const filterPanel = new SM.LogStream.Filters.Panel({
+      onFilter: (values) => {
+        console.log('Filtering log stream with values:', values);
+        this.startStreaming(values);
+        streamBtn.toggle(true, true);
+
+      }
+    });
+    const filterMenu = new Ext.menu.Menu({
+      plain: true,
+      style: 'padding: 10px;',
+      items: [filterPanel]
+    });
+    filterPanel.menu = filterMenu;
+
+    const streamBtn = new Ext.SplitButton({
       text: 'Stream',
       enableToggle: true,
-      toggleHandler: (btn, state) => {
-        if (state) {
+      menu: filterMenu,
+      handler: (btn) => {
+        if (btn.pressed) {
           this.startStreaming();
         } else {
           this.stopStreaming();
@@ -56,25 +72,14 @@ SM.LogStream.LogPanel = Ext.extend(Ext.Panel, {
       }
     });
 
-    const filtersPanel = new SM.LogStream.Filters.Panel({
-      onFilter: (values) => {
-        console.log('Filtering log stream with values:', values);
-      }
-    });
-    const filtersMenu = new Ext.menu.Menu({
-      plain: true,
-      style: 'padding: 10px;',
-      items: [filtersPanel]
-    });
-    filtersPanel.menu = filtersMenu;
 
-    const filtersBtn = new Ext.Button({
-      text: 'Filter',
-      menu: filtersMenu
-    });
+    // const filterBtn = new Ext.Button({
+    //   text: 'Filter',
+    //   menu: filterMenu
+    // });
 
     const tbar = new Ext.Toolbar({
-      items: [streamBtn, captureBtn, '->', wrapBtn, filtersBtn, clearBtn]
+      items: [streamBtn, captureBtn, '->', wrapBtn, clearBtn]
     });
 
     const config = {
@@ -152,10 +157,19 @@ SM.LogStream.LogPanel = Ext.extend(Ext.Panel, {
     }
     this.needsUpdate = false;
   },
-  startStreaming: function () {
+  startStreaming: function (filter) {
     if (SM.LogStream.Socket) {
       this.clearPanel()
-      SM.LogStream.Socket.send(JSON.stringify({ type: 'command', data: { command: 'stream-start' } }));
+      const message = {
+        type: 'command',
+        data: {
+          command: 'stream-start',
+        }
+      }
+      if (filter) {
+        message.data.filter = filter;
+      }
+      SM.LogStream.Socket.send(JSON.stringify(message));
     }
   },
   stopStreaming: function () {
@@ -236,7 +250,7 @@ SM.LogStream.TransactionGrid = Ext.extend(Ext.grid.GridPanel, {
         new SM.RowCountTextItem({
           store,
           width: 100,
-          noun: 'requests',
+          noun: 'request',
           // iconCls: 'sm-logs-icon'
         })
       ]
@@ -326,7 +340,7 @@ SM.LogStream.GetBrowser = function (userAgent) {
   return 'Unknown/0';
 }
 
-SM.LogStream.Filters.LevelsFieldSet = Ext.extend(Ext.form.FieldSet, {
+SM.LogStream.Filters.LevelFieldSet = Ext.extend(Ext.form.FieldSet, {
   initComponent: function () {
     const level1 = new Ext.form.Checkbox({
       prop: 1,
@@ -342,20 +356,22 @@ SM.LogStream.Filters.LevelsFieldSet = Ext.extend(Ext.form.FieldSet, {
     })
 
     const items = [
-      level1,
+      level3,
       level2,
-      level3
+      level1
     ]
 
     function getValues() {
-      const values = {}
+      const values = []
       for (const item of items) {
-        values[item.prop] = item.getValue()
+        if (item.getValue()) {
+          values.push(item.prop)
+        }
       }
-      return values
+      return values.length < items.length ? values : undefined
     }
     const config = {
-      title: this.title || 'Levels',
+      title: this.title || 'Level',
       defaults: {
         hideLabel: true,
         checked: true
@@ -371,34 +387,27 @@ SM.LogStream.Filters.LevelsFieldSet = Ext.extend(Ext.form.FieldSet, {
 
 SM.LogStream.Filters.ComponentFieldSet = Ext.extend(Ext.form.FieldSet, {
   initComponent: function () {
-    const level1 = new Ext.form.Checkbox({
-      prop: 1,
-      boxLabel: 'Error'
-    })
-    const level2 = new Ext.form.Checkbox({
-      prop: 2,
-      boxLabel: 'Warning'
-    })
-    const level3 = new Ext.form.Checkbox({
-      prop: 3,
-      boxLabel: 'Info'
-    })
+    const items = []
 
-    const items = [
-      level1,
-      level2,
-      level3
-    ]
+    for (const item of ['rest', 'static', 'jwksCache', 'logSocket']) {
+      items.push(new Ext.form.Checkbox({
+        prop: item,
+        boxLabel: item
+      }))
+    } 
 
     function getValues() {
-      const values = {}
+      const values = []
       for (const item of items) {
-        values[item.prop] = item.getValue()
+        if (item.getValue()) {
+          values.push(item.prop)
+        }
       }
-      return values
+      return values.length < items.length ? values : undefined
     }
+
     const config = {
-      title: this.title || 'Levels',
+      title: this.title || 'Component',
       defaults: {
         hideLabel: true,
         checked: true
@@ -416,23 +425,39 @@ SM.LogStream.Filters.Panel = Ext.extend(Ext.Panel, {
   initComponent: function () {
     const filterFn = this.onFilter || Ext.emptyFn
     const _this = this
-    const fieldset = new SM.LogStream.Filters.LevelsFieldSet()
+    const levelFieldset = new SM.LogStream.Filters.LevelFieldSet({
+      width: 100
+    })
+    const componentFieldset = new SM.LogStream.Filters.ComponentFieldSet({
+      width: 100
+    })
     const button = new Ext.Button({
       style: 'float: right; margin-top: 6px;',
       cls: 'x-toolbar',
-      text: 'Filter',
+      text: 'Stream',
       iconCls: 'sm-share-icon',
       handler: () => {
-        const fieldsetValues = fieldset.getValues()
         if (_this.menu) _this.menu.hide()
-        filterFn(fieldsetValues)
+        const levelValues = levelFieldset.getValues()
+        const componentValues = componentFieldset.getValues()
+
+        let filter = null;
+        if (levelValues || componentValues) {
+          filter = {};
+          if (levelValues) filter.level = levelValues;
+          if (componentValues) filter.component = componentValues;
+        }
+
+        filterFn(filter);
       }
     })
     const config = {
+      layout: 'form',
       border: false,
       autoWidth: true,
       items: [
-        fieldset,
+        levelFieldset,
+        componentFieldset,
         button
       ]
     }
@@ -554,6 +579,7 @@ SM.LogStream.showLogTab = async function ({ treePath }) {
     }
     bc.addEventListener('message', tokenBroadcastHandler)
     ws.onclose = function () {
+      console.log('WebSocket closed');
       bc.removeEventListener('message', tokenBroadcastHandler)
       ws.onmessage = null
     }
