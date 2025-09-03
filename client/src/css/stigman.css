@@ -33,6 +33,10 @@
   --color-marking-secret: #c8102e;
   --color-marking-topsecret: #ff671f;
   --color-marking-sci: #f7ea48;
+  --color-http-status-200: #d4edda;
+  --color-http-status-300: #fff3cd;
+  --color-http-status-400: #f8d7da;
+  --color-http-status-500: #f5c6cb;
 }
 
 .x-tree-node-collapsed .x-tree-node-icon,
@@ -3260,4 +3264,25 @@ td.x-grid3-hd-over .x-grid3-hd-inner {
   min-width: 100%;
   /* overflow: visible; */
   display: table;
+}
+
+.sm-http-status-sprite {
+  font: 600 10px/14px Open Sans, helvetica, sans-serif;
+  top: 0;
+  padding: 0 5px;
+  border-radius: 3px;
+  margin-left: 3px;
+  white-space: nowrap
+}
+.sm-http-status-200 {
+  background-color: var(--color-http-status-200);
+}
+.sm-http-status-300 {
+  background-color: var(--color-http-status-300);
+}
+.sm-http-status-400 {
+  background-color: var(--color-http-status-400);
+}
+.sm-http-status-500 {
+  background-color: var(--color-http-status-500);
 }

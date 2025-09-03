@@ -7,6 +7,10 @@
   --color-risk-very-low:rgb(100 167 90);
   --color-scrollbar-idle: #333333;
   --color-scrollbar-hover:#505050;
+  --color-http-status-200: #006017;
+  --color-http-status-300: #003761;
+  --color-http-status-400: #984a00;
+  --color-http-status-500: #980000;
 
 }
 

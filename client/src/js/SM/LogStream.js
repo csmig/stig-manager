@@ -4,6 +4,7 @@ Ext.ns('SM.LogStream.Filters')
 SM.LogStream.LogPanel = Ext.extend(Ext.Panel, {
   initComponent: function () {
     const _this = this
+    this.shouldAutoScroll = true
     this.writableStream = null
     const wrapBtn = new Ext.Button({
       text: 'Wrap',
@@ -38,6 +39,7 @@ SM.LogStream.LogPanel = Ext.extend(Ext.Panel, {
     const clearBtn = new Ext.Button({
       text: 'Clear',
       handler: () => {
+        _this.logDivs = [];
         _this.body.dom.querySelector('.log-wrapper').textContent = '';
       }
     });
@@ -71,6 +73,77 @@ SM.LogStream.LogPanel = Ext.extend(Ext.Panel, {
     Ext.apply(this, Ext.apply(this.initialConfig, config))
     this.superclass().initComponent.call(this);
   },
+  afterRender: function () {
+    // setup element event handlers
+    const _this = this
+    this.superclass().afterRender.call(this);
+    const contentDiv = this.body.dom;
+
+    // content div scroll handling
+    function isAtBottom() {
+      // Allow a small threshold for float rounding
+      return contentDiv.scrollHeight - contentDiv.scrollTop - contentDiv.clientHeight < 5;
+    }
+    contentDiv.addEventListener('scroll', () => {
+      _this.shouldAutoScroll = isAtBottom();
+    });
+
+    // div click handler
+    let selectedLogLineEl = null;
+    contentDiv.addEventListener('click', (event) => {
+      if (event.target.classList.contains('log-line')) {
+        const logLineEl = event.target;
+        if (selectedLogLineEl) {
+          selectedLogLineEl.classList.remove('selected');
+        }
+        logLineEl.classList.add('selected');
+        selectedLogLineEl = logLineEl;
+        const data = JSON.parse(logLineEl.textContent);
+        _this.fireEvent('logLineSelected', data);
+        // jsonPanel.loadData(data);
+      }
+    });
+  },
+  logLines: [],
+  logDivs: [],
+  needsUpdate: false,
+  maxLines: 100,
+  addLogString(logLine) {
+    this.logLines.push(logLine);
+    if (this.writableStream) {
+      this.writableStream.write(logLine + '\n').catch((err) => {
+        console.error('Error writing to file:', err);
+      });
+    }
+    if (this.logLines.length > this.maxLines) this.logLines.shift();
+    if (!this.needsUpdate) {
+      this.needsUpdate = true;
+      requestAnimationFrame(this.updatePanelBody.bind(this));
+    }
+  },
+  updatePanelBody() {
+    const wrapperDiv = this.body.dom.querySelector('.log-wrapper');
+    for (const logLine of this.logLines) {
+      const json = JSON.parse(logLine);
+      const logTextEl = document.createElement('div');
+      logTextEl.textContent = logLine + '\n';
+      logTextEl.className = `log-line`;
+      logTextEl.dataset.level = json.level;
+      logTextEl.dataset.component = json.component;
+      logTextEl.dataset.type = json.type;
+      this.logDivs.push(logTextEl);
+      if (this.logDivs.length > this.maxLines) {
+        this.logDivs = this.logDivs.slice(this.logDivs.length - this.maxLines);
+      }
+    }
+    wrapperDiv.replaceChildren(...this.logDivs);
+
+    this.logLines = [];
+    if (this.shouldAutoScroll) {
+      this.body.dom.scrollTop = this.body.dom.scrollHeight;
+    }
+    this.needsUpdate = false;
+  }
 
 });
 
@@ -99,6 +172,7 @@ SM.LogStream.JsonTreePanel = Ext.extend(Ext.Panel, {
 
     const config = {
       bodyStyle: 'overflow-y:auto;',
+      html: '<div style="padding: 10px;color:#999">Select a log record</div>',
       loadData
     }
     Ext.apply(this, Ext.apply(this.initialConfig, config))
@@ -109,27 +183,89 @@ SM.LogStream.JsonTreePanel = Ext.extend(Ext.Panel, {
 
 SM.LogStream.TransactionGrid = Ext.extend(Ext.grid.GridPanel, {
   initComponent: function () {
+    const store = new Ext.data.JsonStore({
+      fields: ['timestamp', 'source', 'user', 'browser', 'url', 'status', 'length', 'duration', 'operationId'],
+    });
+    const bbar = new Ext.Toolbar({
+      items: [
+        {
+          xtype: 'tbfill'
+        },
+        {
+          xtype: 'tbseparator'
+        },
+        new SM.RowCountTextItem({
+          store,
+          noun: 'request',
+          iconCls: 'sm-browser-icon'
+        })
+      ]
+    })
+
     const config = {
+      store,  
       columns: [
         { header: 'Timestamp', dataIndex: 'timestamp', width: 150 },
-        { header: 'Source', dataIndex: 'source', width: 100 },
-        { header: 'User', dataIndex: 'user', width: 100 },
-        { header: 'Browser', dataIndex: 'browser', width: 100 },
-        { header: 'Action', dataIndex: 'action', width: 200 },
-        { header: 'Status', dataIndex: 'status', width: 100 },
-        { header: 'Length', dataIndex: 'length', width: 100, align: 'right' }
+        { header: 'Source', dataIndex: 'source', width: 100, filter: { type: 'values' } },
+        { header: 'User', dataIndex: 'user', width: 100, filter: { type: 'values' } },
+        { header: 'Browser', dataIndex: 'browser', width: 100, filter: { type: 'values' } },
+        { header: 'Operation ID', dataIndex: 'operationId', width: 100, filter: { type: 'values' } },
+        { header: 'URL', dataIndex: 'url', width: 200 },
+        { header: 'Status', dataIndex: 'status', width: 100, renderer: this.statusRenderer, align: 'center', filter: { type: 'values' } },
+        { header: 'Length (b)', dataIndex: 'length', width: 100, align: 'right' },
+        { header: 'Duration (ms)', dataIndex: 'duration', width: 100, align: 'right' },
       ],
-      store: new Ext.data.JsonStore({
-        fields: ['timestamp', 'source', 'user', 'browser', 'action', 'status', 'length'],
+      view: new SM.ColumnFilters.GridView({
+        forceFit: true,
+        emptyText: 'No Collections to display',
+        listeners: {
+          filterschanged: function (view) {
+            store.filter(view.getFilterFns())
+          }
+        }
       }),
-      view: new Ext.grid.GridView({
-        forceFit: true
-      })
+      bbar
     };
     Ext.apply(this, Ext.apply(this.initialConfig, config));
     this.superclass().initComponent.call(this);
+  },
+  addTransaction: function (logObj) {
+    const logData = logObj.data
+    const record = {
+      timestamp: logObj.date,
+      source: logData.request.source,
+      user: logData.request.headers?.accessToken?.preferred_username,
+      browser: SM.LogStream.GetBrowser(logData.request.headers['user-agent']),
+      url: `${logData.request.method} ${logData.request.url}`,
+      status: `${logData.response.status}`,
+      length: logData.response.headers?.['content-length'],
+      duration: logData.operationStats.durationMs,
+      operationId: logData.operationStats.operationId
+    };
+    const store = this.getStore();
+    if (store.data.length > 999) {
+      store.removeAt(0);
+    }
+    store.loadData([record], true);
+    const view = this.getView();
+    view.scroller.dom.scrollTop = view.scroller.dom.scrollHeight;
+  },
+  statusRenderer: function (value, metaData, record, rowIndex, colIndex, store) {
+    let css = ''
+    if (value >= 200 && value <= 299) {
+      css = 'sm-http-status-sprite sm-http-status-200';
+    } else if (value >= 300 && value <= 399) {
+      css = 'sm-http-status-sprite sm-http-status-300';
+    } else if (value >= 400 && value <= 499) {
+      css = 'sm-http-status-sprite sm-http-status-400';
+    } else if (value >= 500 && value <= 599) {
+      css = 'sm-http-status-sprite sm-http-status-500';
+    }
+    return `<span class="${css}">${value}</span>`;
   }
 });
+
+SM.LogStream.Socket = null
 
 SM.LogStream.setupSocket = async function () {
   return new Promise((resolve, reject) => {
@@ -140,7 +276,7 @@ SM.LogStream.setupSocket = async function () {
     const ws = new WebSocket(wsUrl);
     ws.onopen = () => {
       ws.onerror = null;
-      SM.LogStream.ws = ws;
+      SM.LogStream.Socket = ws;
       resolve(ws);
     };
     ws.onerror = (event) => {
@@ -161,127 +297,9 @@ SM.LogStream.showLogTab = async function ({ treePath }) {
   const logPanel = new SM.LogStream.LogPanel({
     region: 'center',
     cls: 'sm-round-panel',
+		margins: { top:0, right: SM.Margin.adjacent, bottom: 0, left: 0 },
     border: false,
     listeners: {
-      afterrender: async function (panel) {
-        // WebSocket message handling
-        try {
-          ws = await SM.LogStream.setupSocket()
-        } catch (error) {
-          console.error('WebSocket setup error:', error);
-          panel.update(error.message);
-          return;
-        }
-
-        ws.onerror = (error) => {
-          console.error('WebSocket error:', error);
-        };
-
-        const contentDiv = panel.body.dom;
-        const wrapperDiv = contentDiv.querySelector('.log-wrapper');
-        const maxLines = 1000;
-        let logLines = [];
-        let logDivs = [];
-        let needsUpdate = false;
-        let shouldAutoScroll = true;
-
-        // content div scroll handling
-        function isAtBottom() {
-          // Allow a small threshold for float rounding
-          return contentDiv.scrollHeight - contentDiv.scrollTop - contentDiv.clientHeight < 5;
-        }
-        contentDiv.addEventListener('scroll', () => {
-          shouldAutoScroll = isAtBottom();
-        });
-        // div click handler
-        let selectedLogLineEl = null;
-        contentDiv.addEventListener('click', (event) => {
-          if (event.target.classList.contains('log-line')) {
-            const logLine = event.target;
-            if (selectedLogLineEl) {
-              selectedLogLineEl.classList.remove('selected');
-            }
-            logLine.classList.add('selected');
-            selectedLogLineEl = logLine;
-            const data = JSON.parse(event.target.textContent);
-            jsonPanel.loadData(data);
-          }
-        });
-
-
-        function updatePanelBody() {
-          for (const logLine of logLines) {
-            const json = JSON.parse(logLine);
-            const logTextEl = document.createElement('div');
-            logTextEl.textContent = logLine + '\n';
-            logTextEl.className = `log-line`;
-            logTextEl.dataset.level = json.level;
-            logTextEl.dataset.component = json.component;
-            logTextEl.dataset.type = json.type;
-            logDivs.push(logTextEl);
-            if (logDivs.length > maxLines) {
-              logDivs = logDivs.slice(logDivs.length - maxLines);
-            }
-          }
-          wrapperDiv.replaceChildren(...logDivs);
-
-          logLines = [];
-          if (shouldAutoScroll) {
-            contentDiv.scrollTop = contentDiv.scrollHeight;
-          }
-          needsUpdate = false;
-        }
-
-
-        ws.onmessage = function (event) {
-          const message = JSON.parse(event.data);
-          if (message.type === 'log') {
-            const logObj = message.data;
-            logLines.push(JSON.stringify(logObj));
-            if (logPanel.writableStream) {
-              logPanel.writableStream.write(JSON.stringify(logObj) + '\n').catch((err) => {
-                console.error('Error writing to file:', err);
-              });
-            }
-            if (logLines.length > maxLines) logLines.shift();
-            if (!needsUpdate) {
-              needsUpdate = true;
-              requestAnimationFrame(updatePanelBody);
-            }
-            if (logObj.type === 'transaction' && logObj.component === 'rest') {
-              const record = {
-                timestamp: logObj.date,
-                source: logObj.data.request.source,
-                user: logObj.data.request.headers?.accessToken?.preferred_username,
-                browser: SM.LogStream.GetBrowser(logObj.data.request.headers['user-agent']),
-                action: `${logObj.data.request.method} ${logObj.data.request.url}`,
-                status: logObj.data.response.status,
-                length: logObj.data.response.headers?.['content-length']
-              };
-              const store = transactionGrid.getStore();
-              store.loadData([record], true);
-              const view = transactionGrid.getView();
-              view.scroller.dom.scrollTop = view.scroller.dom.scrollHeight;
-            }
-          } else if (message.type === 'authorize') {
-            ws?.send(JSON.stringify({ type: 'authorize', data: { token: window.oidcWorker.token } }));
-          }
-
-        };
-
-        const bc = new BroadcastChannel('stigman-oidc-worker')
-        function tokenBroadcastHandler(event) {
-          if (event.data.type === 'accessToken') {
-            console.log('{log-stream] Received from worker:', event.type, event.data)
-            ws?.send(JSON.stringify({ type: 'authorize', data: { token: event.data.accessToken } }))
-          }
-        }
-        bc.addEventListener('message', tokenBroadcastHandler)
-        ws.onclose = function () {
-          bc.removeEventListener('message', tokenBroadcastHandler)
-          ws.onmessage = null
-        }
-      },
       destroy: function () {
         if (ws) {
           ws.close();
@@ -289,6 +307,9 @@ SM.LogStream.showLogTab = async function ({ treePath }) {
         if (logPanel.writableStream) {
           logPanel.writableStream.close();
         }
+      },
+      logLineSelected: function (data) {
+        jsonPanel.loadData(data);
       }
     }
   });
@@ -296,6 +317,7 @@ SM.LogStream.showLogTab = async function ({ treePath }) {
   const jsonPanel = new SM.LogStream.JsonTreePanel({
     title: 'JSON Tree',
     cls: 'sm-round-panel',
+		margins: { top:0, left: SM.Margin.adjacent, bottom: 0, right: 0 },
     region: 'east',
     border: false,
     split: true,
@@ -316,9 +338,8 @@ SM.LogStream.showLogTab = async function ({ treePath }) {
     cls: 'sm-round-panel',
     split: true,
     title: 'API Transactions',
-    height: '66%',
+    height: 400,
     border: false,
-
   });
 
   const thisTab = Ext.getCmp('main-tab-panel').add({
@@ -331,6 +352,38 @@ SM.LogStream.showLogTab = async function ({ treePath }) {
     items: [logAndJsonPanel, transactionGrid]
   })
   thisTab.show()
+
+  try {
+    ws = await SM.LogStream.setupSocket()
+    ws.onmessage = function (event) {
+      const message = JSON.parse(event.data);
+      if (message.type === 'log') {
+        logPanel.addLogString(JSON.stringify(message.data));
+        const logObj = message.data;
+        if (logObj.type === 'transaction' && logObj.component === 'rest') {
+          transactionGrid.addTransaction(logObj);
+        }
+      } else if (message.type === 'authorize') {
+        ws?.send(JSON.stringify({ type: 'authorize', data: { token: window.oidcWorker.token } }));
+      }
+    };
+    const bc = new BroadcastChannel('stigman-oidc-worker')
+    function tokenBroadcastHandler(event) {
+      if (event.data.type === 'accessToken') {
+        console.log('{log-stream] Received from worker:', event.type, event.data)
+        ws?.send(JSON.stringify({ type: 'authorize', data: { token: event.data.accessToken } }))
+      }
+    }
+    bc.addEventListener('message', tokenBroadcastHandler)
+    ws.onclose = function () {
+      bc.removeEventListener('message', tokenBroadcastHandler)
+      ws.onmessage = null
+    }
+  } catch (error) {
+    logPanel.update(error.message);
+    return;
+  }
+
 }
 
 SM.LogStream.GetBrowser = function (userAgent) {
