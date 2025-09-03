@@ -3,9 +3,20 @@ Ext.ns('SM.LogStream.Filters')
 
 SM.LogStream.LogPanel = Ext.extend(Ext.Panel, {
   initComponent: function () {
-    const _this = this
     this.shouldAutoScroll = true
     this.writableStream = null
+
+    const streamBtn = new Ext.Button({
+      text: 'Stream',
+      enableToggle: true,
+      toggleHandler: (btn, state) => {
+        if (state) {
+          this.startStreaming();
+        } else {
+          this.stopStreaming();
+        }
+      }
+    });
     const wrapBtn = new Ext.Button({
       text: 'Wrap',
       enableToggle: true,
@@ -21,7 +32,7 @@ SM.LogStream.LogPanel = Ext.extend(Ext.Panel, {
           try {
             const newHandle = await window.showSaveFilePicker();
             btn.setText(`Capturing to ${newHandle.name}`);
-            _this.writableStream = await newHandle.createWritable();
+            this.writableStream = await newHandle.createWritable();
           } catch (error) {
             console.error('Error capturing file:', error);
             btn.toggle(false, true); //toggle off with event suppressed
@@ -29,9 +40,9 @@ SM.LogStream.LogPanel = Ext.extend(Ext.Panel, {
           }
         } else {
           btn.setText('Capture...');
-          if (_this.writableStream) {
-            _this.writableStream.close();
-            _this.writableStream = null;
+          if (this.writableStream) {
+            this.writableStream.close();
+            this.writableStream = null;
           }
         }
       }
@@ -39,8 +50,9 @@ SM.LogStream.LogPanel = Ext.extend(Ext.Panel, {
     const clearBtn = new Ext.Button({
       text: 'Clear',
       handler: () => {
-        _this.logDivs = [];
-        _this.body.dom.querySelector('.log-wrapper').textContent = '';
+        this.logDivs = [];
+        this.body.dom.querySelector('.log-wrapper').textContent = '';
+        this.fireEvent('logCleared');
       }
     });
 
@@ -62,7 +74,7 @@ SM.LogStream.LogPanel = Ext.extend(Ext.Panel, {
     });
 
     const tbar = new Ext.Toolbar({
-      items: [wrapBtn, captureBtn, clearBtn, filtersBtn]
+      items: [streamBtn, captureBtn, '->', wrapBtn, filtersBtn, clearBtn]
     });
 
     const config = {
@@ -78,6 +90,8 @@ SM.LogStream.LogPanel = Ext.extend(Ext.Panel, {
     const _this = this
     this.superclass().afterRender.call(this);
     const contentDiv = this.body.dom;
+    const wrapperDiv = contentDiv.querySelector('.log-wrapper');
+    wrapperDiv.innerHTML = '<div style="padding: 10px;color:#999">Log stream not running. Click above to start.</div>';
 
     // content div scroll handling
     function isAtBottom() {
@@ -104,11 +118,7 @@ SM.LogStream.LogPanel = Ext.extend(Ext.Panel, {
       }
     });
   },
-  logLines: [],
-  logDivs: [],
-  needsUpdate: false,
-  maxLines: 100,
-  addLogString(logLine) {
+  addLogString: function (logLine) {
     this.logLines.push(logLine);
     if (this.writableStream) {
       this.writableStream.write(logLine + '\n').catch((err) => {
@@ -121,7 +131,7 @@ SM.LogStream.LogPanel = Ext.extend(Ext.Panel, {
       requestAnimationFrame(this.updatePanelBody.bind(this));
     }
   },
-  updatePanelBody() {
+  updatePanelBody: function () {
     const wrapperDiv = this.body.dom.querySelector('.log-wrapper');
     for (const logLine of this.logLines) {
       const json = JSON.parse(logLine);
@@ -143,42 +153,61 @@ SM.LogStream.LogPanel = Ext.extend(Ext.Panel, {
       this.body.dom.scrollTop = this.body.dom.scrollHeight;
     }
     this.needsUpdate = false;
-  }
+  },
+  startStreaming: function () {
+    if (SM.LogStream.Socket) {
+      SM.LogStream.Socket.send(JSON.stringify({ type: 'command', data: { command: 'stream-start' } }));
+    }
+  },
+  stopStreaming: function () {
+    if (SM.LogStream.Socket) {
+      SM.LogStream.Socket.send(JSON.stringify({ type: 'command', data: { command: 'stream-stop' } }));
+    }
+  },
+  logLines: [],
+  logDivs: [],
+  needsUpdate: false,
+  maxLines: 100,
 
 });
 
 SM.LogStream.JsonTreePanel = Ext.extend(Ext.Panel, {
   initComponent: function () {
-    let tree
-    function loadData(data) {
-      tree = JsonView.createTree(data)
-      tree.isExpanded = true
-      tree.children[4].isExpanded = true // 'data' property
-      if (tree.children[3].value === "transaction") {
-        for (const child of tree.children[4].children) {
-          child.isExpanded = true
-        }
-      }
-      if (this.body) {
-        this.body.dom.textContent = ''
-        JsonView.render(tree, this.body.dom)
-      }
-    }
-    function renderTree() {
-      if (tree) {
-        JsonView.render(tree, this.body.dom)
-      }
-    }
-
     const config = {
       bodyStyle: 'overflow-y:auto;',
-      html: '<div style="padding: 10px;color:#999">Select a log record</div>',
-      loadData
+      html: this.emptyString,
     }
     Ext.apply(this, Ext.apply(this.initialConfig, config))
     this.superclass().initComponent.call(this)
-    this.on('render', renderTree)
+  },
+  tree: null,
+  emptyString: '<div style="padding: 10px;color:#999">Select a log record</div>',
+  loadData: function (data) {
+    this.tree = JsonView.createTree(data)
+    this.tree.isExpanded = true
+    this.tree.children[4].isExpanded = true // 'data' property
+    if (this.tree.children[3].value === "transaction") {
+      for (const child of this.tree.children[4].children) {
+        child.isExpanded = true
+      }
+    }
+    if (this.body) {
+      this.body.dom.textContent = ''
+      JsonView.render(this.tree, this.body.dom)
+    }
+  },
+  renderTree: function () {
+    if (this.tree) {
+      JsonView.render(this.tree, this.body.dom)
+    }
+  },
+  clearData: function () {
+    this.tree = null
+    if (this.body) {
+      this.update(this.emptyString)
+    }
   }
+
 })
 
 SM.LogStream.TransactionGrid = Ext.extend(Ext.grid.GridPanel, {
@@ -196,14 +225,15 @@ SM.LogStream.TransactionGrid = Ext.extend(Ext.grid.GridPanel, {
         },
         new SM.RowCountTextItem({
           store,
-          noun: 'request',
-          iconCls: 'sm-browser-icon'
+          width: 100,
+          noun: '',
+          iconCls: 'sm-logs-icon'
         })
       ]
     })
 
     const config = {
-      store,  
+      store,
       columns: [
         { header: 'Timestamp', dataIndex: 'timestamp', width: 150 },
         { header: 'Source', dataIndex: 'source', width: 100, filter: { type: 'values' } },
@@ -217,7 +247,7 @@ SM.LogStream.TransactionGrid = Ext.extend(Ext.grid.GridPanel, {
       ],
       view: new SM.ColumnFilters.GridView({
         forceFit: true,
-        emptyText: 'No Collections to display',
+        emptyText: 'No transactions to display',
         listeners: {
           filterschanged: function (view) {
             store.filter(view.getFilterFns())
@@ -266,125 +296,6 @@ SM.LogStream.TransactionGrid = Ext.extend(Ext.grid.GridPanel, {
 });
 
 SM.LogStream.Socket = null
-
-SM.LogStream.setupSocket = async function () {
-  return new Promise((resolve, reject) => {
-    const locationUrl = new URL(window.location);
-    const wsProtocol = locationUrl.protocol === 'https:' ? 'wss:' : 'ws:';
-    const wsUrl = wsProtocol + '//' + locationUrl.host + locationUrl.pathname + 'log-socket';
-
-    const ws = new WebSocket(wsUrl);
-    ws.onopen = () => {
-      ws.onerror = null;
-      SM.LogStream.Socket = ws;
-      resolve(ws);
-    };
-    ws.onerror = (event) => {
-      console.log('WebSocket error:', event);
-      reject(new Error(`Feature unavailable. Error establishing WebSocket connection to ${event.target.url}. `));
-    };
-  });
-};
-
-SM.LogStream.showLogTab = async function ({ treePath }) {
-  const tab = Ext.getCmp('main-tab-panel').getItem('logstream-admin-tab')
-  if (tab) {
-    tab.show()
-    return
-  }
-
-  let ws
-  const logPanel = new SM.LogStream.LogPanel({
-    region: 'center',
-    cls: 'sm-round-panel',
-		margins: { top:0, right: SM.Margin.adjacent, bottom: 0, left: 0 },
-    border: false,
-    listeners: {
-      destroy: function () {
-        if (ws) {
-          ws.close();
-        }
-        if (logPanel.writableStream) {
-          logPanel.writableStream.close();
-        }
-      },
-      logLineSelected: function (data) {
-        jsonPanel.loadData(data);
-      }
-    }
-  });
-
-  const jsonPanel = new SM.LogStream.JsonTreePanel({
-    title: 'JSON Tree',
-    cls: 'sm-round-panel',
-		margins: { top:0, left: SM.Margin.adjacent, bottom: 0, right: 0 },
-    region: 'east',
-    border: false,
-    split: true,
-    iconCls: 'sm-json-icon',
-    width: 400
-  })
-
-  const logAndJsonPanel = new Ext.Panel({
-    margins: { top: SM.Margin.top, right: SM.Margin.edge, bottom: SM.Margin.adjacent, left: SM.Margin.edge },
-    region: 'center',
-    layout: 'border',
-    border: false,
-    items: [logPanel, jsonPanel]
-  })
-
-  const transactionGrid = new SM.LogStream.TransactionGrid({
-    region: 'south',
-    cls: 'sm-round-panel',
-    split: true,
-    title: 'API Transactions',
-    height: 400,
-    border: false,
-  });
-
-  const thisTab = Ext.getCmp('main-tab-panel').add({
-    id: 'logstream-admin-tab',
-    sm_treePath: treePath,
-    iconCls: 'sm-logs-icon',
-    title: 'Log Stream',
-    closable: true,
-    layout: 'border',
-    items: [logAndJsonPanel, transactionGrid]
-  })
-  thisTab.show()
-
-  try {
-    ws = await SM.LogStream.setupSocket()
-    ws.onmessage = function (event) {
-      const message = JSON.parse(event.data);
-      if (message.type === 'log') {
-        logPanel.addLogString(JSON.stringify(message.data));
-        const logObj = message.data;
-        if (logObj.type === 'transaction' && logObj.component === 'rest') {
-          transactionGrid.addTransaction(logObj);
-        }
-      } else if (message.type === 'authorize') {
-        ws?.send(JSON.stringify({ type: 'authorize', data: { token: window.oidcWorker.token } }));
-      }
-    };
-    const bc = new BroadcastChannel('stigman-oidc-worker')
-    function tokenBroadcastHandler(event) {
-      if (event.data.type === 'accessToken') {
-        console.log('{log-stream] Received from worker:', event.type, event.data)
-        ws?.send(JSON.stringify({ type: 'authorize', data: { token: event.data.accessToken } }))
-      }
-    }
-    bc.addEventListener('message', tokenBroadcastHandler)
-    ws.onclose = function () {
-      bc.removeEventListener('message', tokenBroadcastHandler)
-      ws.onmessage = null
-    }
-  } catch (error) {
-    logPanel.update(error.message);
-    return;
-  }
-
-}
 
 SM.LogStream.GetBrowser = function (userAgent) {
   const browsers = [
@@ -491,7 +402,6 @@ SM.LogStream.Filters.ComponentFieldSet = Ext.extend(Ext.form.FieldSet, {
   }
 })
 
-
 SM.LogStream.Filters.Panel = Ext.extend(Ext.Panel, {
   initComponent: function () {
     const filterFn = this.onFilter || Ext.emptyFn
@@ -520,4 +430,127 @@ SM.LogStream.Filters.Panel = Ext.extend(Ext.Panel, {
     this.superclass().initComponent.call(this)
   }
 })
+
+SM.LogStream.setupSocket = async function () {
+  return new Promise((resolve, reject) => {
+    const locationUrl = new URL(window.location);
+    const wsProtocol = locationUrl.protocol === 'https:' ? 'wss:' : 'ws:';
+    const wsUrl = wsProtocol + '//' + locationUrl.host + locationUrl.pathname + 'log-socket';
+
+    const ws = new WebSocket(wsUrl);
+    ws.onopen = () => {
+      ws.onerror = null;
+      SM.LogStream.Socket = ws;
+      resolve(ws);
+    };
+    ws.onerror = (event) => {
+      console.log('WebSocket error:', event);
+      reject(new Error(`Feature unavailable. Error establishing WebSocket connection to ${event.target.url}. `));
+    };
+  });
+};
+
+SM.LogStream.showLogTab = async function ({ treePath }) {
+  const tab = Ext.getCmp('main-tab-panel').getItem('logstream-admin-tab')
+  if (tab) {
+    tab.show()
+    return
+  }
+
+  let ws
+  const logPanel = new SM.LogStream.LogPanel({
+    region: 'center',
+    cls: 'sm-round-panel',
+    margins: { top: 0, right: SM.Margin.adjacent, bottom: 0, left: 0 },
+    border: false,
+    listeners: {
+      destroy: function () {
+        if (ws) {
+          ws.close();
+        }
+        if (logPanel.writableStream) {
+          logPanel.writableStream.close();
+        }
+      },
+      logLineSelected: function (data) {
+        jsonPanel.loadData(data);
+      },
+      logCleared: function () {
+        jsonPanel.clearData();
+        transactionGrid.store.removeAll();
+      }
+    }
+  });
+
+  const jsonPanel = new SM.LogStream.JsonTreePanel({
+    title: 'JSON Tree',
+    cls: 'sm-round-panel',
+    margins: { top: 0, left: SM.Margin.adjacent, bottom: 0, right: 0 },
+    region: 'east',
+    border: false,
+    split: true,
+    iconCls: 'sm-json-icon',
+    width: 400
+  })
+
+  const logAndJsonPanel = new Ext.Panel({
+    margins: { top: SM.Margin.top, right: SM.Margin.edge, bottom: SM.Margin.adjacent, left: SM.Margin.edge },
+    region: 'center',
+    layout: 'border',
+    border: false,
+    items: [logPanel, jsonPanel]
+  })
+
+  const transactionGrid = new SM.LogStream.TransactionGrid({
+    region: 'south',
+    cls: 'sm-round-panel',
+    split: true,
+    title: 'API Transactions',
+    height: 400,
+    border: false,
+  });
+
+  const thisTab = Ext.getCmp('main-tab-panel').add({
+    id: 'logstream-admin-tab',
+    sm_treePath: treePath,
+    iconCls: 'sm-logs-icon',
+    title: 'Log Stream',
+    closable: true,
+    layout: 'border',
+    items: [logAndJsonPanel, transactionGrid]
+  })
+  thisTab.show()
+
+  try {
+    ws = await SM.LogStream.setupSocket()
+    ws.onmessage = function (event) {
+      const message = JSON.parse(event.data);
+      if (message.type === 'log') {
+        logPanel.addLogString(JSON.stringify(message.data));
+        const logObj = message.data;
+        if (logObj.type === 'transaction' && logObj.component === 'rest') {
+          transactionGrid.addTransaction(logObj);
+        }
+      } else if (message.type === 'authorize') {
+        ws?.send(JSON.stringify({ type: 'authorize', data: { token: window.oidcWorker.token } }));
+      }
+    };
+    const bc = new BroadcastChannel('stigman-oidc-worker')
+    function tokenBroadcastHandler(event) {
+      if (event.data.type === 'accessToken') {
+        console.log('{log-stream] Received from worker:', event.type, event.data)
+        ws?.send(JSON.stringify({ type: 'authorize', data: { token: event.data.accessToken } }))
+      }
+    }
+    bc.addEventListener('message', tokenBroadcastHandler)
+    ws.onclose = function () {
+      bc.removeEventListener('message', tokenBroadcastHandler)
+      ws.onmessage = null
+    }
+  } catch (error) {
+    logPanel.update(error.message);
+    return;
+  }
+
+}
 

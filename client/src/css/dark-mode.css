@@ -3131,6 +3131,10 @@ embed[type="application/pdf"] {
     background-color: var(--metrics-status-chart-submitted-dark);
 }
 
+.x-toolbar .x-btn-pressed.x-btn {
+    background-color: var(--metrics-status-chart-submitted-dark);
+}
+
 .sm-label-sprite.sm-sprite-read, .sm-label-sprite.sm-sprite-readwrite {
     color: #000000;
 }

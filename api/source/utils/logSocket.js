@@ -66,11 +66,10 @@ class LogSession {
     }
     switch (msgObj.type) {
       case 'authorize':
-        this.handleAuthorize(msgObj.data);
+        this.onAuthorize(msgObj.data);
         break;
       case 'command':
-        // Placeholder for command handling
-        this.send({ type: 'info', data: 'Command received (not implemented)' });
+        this.onCommand(msgObj.data);
         break;
       default:
         this.send({ type: 'error', data: 'Unexpected message type' });
@@ -90,9 +89,28 @@ class LogSession {
     }
   }
 
+  onCommand = (commandData) => {
+    // e.g. {command: 'stream', filter: {level: 1}}
+    if (!commandData || typeof commandData.command !== 'string') {
+      this.send({ type: 'error', data: 'Invalid command' });
+      return;
+    }
+    switch (commandData.command) {
+      case 'stream-start':
+        this.enableLogForwarding();
+        break;
+      case 'stream-stop':
+        this.disableLogForwarding();
+        break;
+      default:
+        this.send({ type: 'error', data: 'Unknown command' });
+    }
+    logger.writeInfo(component, 'command', { sessionId: this.sessionId, command: commandData.command });
+    // Execute command (placeholder)
+    this.send({ type: 'info', data: 'Command received (not implemented)' });
+  }
 
-
-  handleAuthorize = (authData) => {
+  onAuthorize = (authData) => {
     // Expect {token}
     if (!authData || typeof authData.token !== 'string') {
       this.send({ type: 'error', data: 'Authorization failed: missing token' });
@@ -121,7 +139,7 @@ class LogSession {
       return;
     }
     this.authorized = true;
-    this.enableLogForwarding();
+    
     this.send({ type: 'info', data: 'Authorization successful' });
     logger.writeInfo(component, 'auth', { sessionId: this.sessionId, msg: 'Authorization successful' });
     // Start token expiration timer
