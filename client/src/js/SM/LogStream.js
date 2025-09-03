@@ -51,7 +51,7 @@ SM.LogStream.LogPanel = Ext.extend(Ext.Panel, {
       text: 'Clear',
       handler: () => {
         this.logDivs = [];
-        this.body.dom.querySelector('.log-wrapper').textContent = '';
+        this.clearPanel();
         this.fireEvent('logCleared');
       }
     });
@@ -89,17 +89,15 @@ SM.LogStream.LogPanel = Ext.extend(Ext.Panel, {
     // setup element event handlers
     const _this = this
     this.superclass().afterRender.call(this);
+    this.applyEmptyString();
     const contentDiv = this.body.dom;
-    const wrapperDiv = contentDiv.querySelector('.log-wrapper');
-    wrapperDiv.innerHTML = '<div style="padding: 10px;color:#999">Log stream not running. Click above to start.</div>';
-
     // content div scroll handling
     function isAtBottom() {
       // Allow a small threshold for float rounding
       return contentDiv.scrollHeight - contentDiv.scrollTop - contentDiv.clientHeight < 5;
     }
     contentDiv.addEventListener('scroll', () => {
-      _this.shouldAutoScroll = isAtBottom();
+      this.shouldAutoScroll = isAtBottom();
     });
 
     // div click handler
@@ -156,6 +154,7 @@ SM.LogStream.LogPanel = Ext.extend(Ext.Panel, {
   },
   startStreaming: function () {
     if (SM.LogStream.Socket) {
+      this.clearPanel()
       SM.LogStream.Socket.send(JSON.stringify({ type: 'command', data: { command: 'stream-start' } }));
     }
   },
@@ -164,10 +163,21 @@ SM.LogStream.LogPanel = Ext.extend(Ext.Panel, {
       SM.LogStream.Socket.send(JSON.stringify({ type: 'command', data: { command: 'stream-stop' } }));
     }
   },
+  applyEmptyString: function () {
+    const contentDiv = this.body.dom;
+    const wrapperDiv = contentDiv.querySelector('.log-wrapper');
+    wrapperDiv.innerHTML = this.emptyString;
+  },
+  clearPanel: function () {
+    const contentDiv = this.body.dom;
+    const wrapperDiv = contentDiv.querySelector('.log-wrapper');
+    wrapperDiv.innerHTML = '';
+  },
   logLines: [],
   logDivs: [],
   needsUpdate: false,
   maxLines: 100,
+  emptyString: '<div style="padding: 10px;color:#999">Log stream not running. Click above to start.</div>'
 
 });
 
@@ -226,8 +236,8 @@ SM.LogStream.TransactionGrid = Ext.extend(Ext.grid.GridPanel, {
         new SM.RowCountTextItem({
           store,
           width: 100,
-          noun: '',
-          iconCls: 'sm-logs-icon'
+          noun: 'requests',
+          // iconCls: 'sm-logs-icon'
         })
       ]
     })
@@ -236,7 +246,7 @@ SM.LogStream.TransactionGrid = Ext.extend(Ext.grid.GridPanel, {
       store,
       columns: [
         { header: 'Timestamp', dataIndex: 'timestamp', width: 150 },
-        { header: 'Source', dataIndex: 'source', width: 100, filter: { type: 'values' } },
+        { header: 'Source', dataIndex: 'source', width: 100, filter: { type: 'string' } },
         { header: 'User', dataIndex: 'user', width: 100, filter: { type: 'values' } },
         { header: 'Browser', dataIndex: 'browser', width: 100, filter: { type: 'values' } },
         { header: 'Operation ID', dataIndex: 'operationId', width: 100, filter: { type: 'values' } },

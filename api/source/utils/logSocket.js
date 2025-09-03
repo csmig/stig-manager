@@ -11,6 +11,7 @@ class LogSession {
     this.tokenExp = null;
     this.logForwarding = false;
     this.sessionId = uuid.v1();
+    this.filter = null;
   }
 
   start = () => {
@@ -43,8 +44,15 @@ class LogSession {
     }
   }
 
+  includeLogRecord = (logObj) => {
+    if (!this.filter) return true;
+    return Object.entries(this.filter).every(([key, value]) => {
+      return logObj[key] && value.includes(logObj[key]);
+    });
+  }
+
   loggerEventHandler = (logObj) => {
-    if (this.authorized) {
+    if (this.authorized && this.includeLogRecord(logObj)) {
       this.send({ type: 'log', data: logObj });
     }
   }
@@ -97,6 +105,9 @@ class LogSession {
     }
     switch (commandData.command) {
       case 'stream-start':
+        if (commandData.filter) {
+          this.filter = commandData.filter;
+        }
         this.enableLogForwarding();
         break;
       case 'stream-stop':
