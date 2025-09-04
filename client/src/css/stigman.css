@@ -3242,7 +3242,7 @@ td.x-grid3-hd-over .x-grid3-hd-inner {
 
 .log-line {
   width: 100%;
-  padding: 0.2em 0;
+  padding: 0.2em 0.2em;
   border-bottom: 1px solid #4b4b4b;
 }
 
@@ -3282,8 +3282,8 @@ td.x-grid3-hd-over .x-grid3-hd-inner {
   cursor: pointer;
   overflow: auto;
   text-wrap-mode: nowrap;
-  font-family: monospace;
-  font-size: 10px;
+  /* font-family: monospace;
+  font-size: 10px; */
 }
 
 .log-wrapper {

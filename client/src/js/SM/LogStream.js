@@ -9,7 +9,7 @@ SM.LogStream.LogPanel = Ext.extend(Ext.Panel, {
     this.logDivs = []
     this.needsUpdate = false
     this.maxLines = 1000
-    this.emptyString = '<div id="log-empty" style="padding: 10px;color:#999">Log stream not running. Click above to start.</div>'
+    this.emptyString = '<div id="log-empty" style="padding: 10px;color:#999">Socket connected and ready to stream.</div>'
     this.preserveLog = true
 
     const filterPanel = new SM.LogStream.Filter.Panel({
@@ -112,7 +112,7 @@ SM.LogStream.LogPanel = Ext.extend(Ext.Panel, {
       }
     });
 
-    const toolbarItems = [streamBtn, '-', recordingBtn, '->', preserveCb, '-',wrapBtn, '-', clearBtn];
+    const toolbarItems = [streamBtn, '-', recordingBtn, '->', preserveCb, '-', wrapBtn, '-', clearBtn];
     if (!window.showSaveFilePicker) {
       toolbarItems.splice(1, 2); // Remove recording button
     }
@@ -283,6 +283,28 @@ SM.LogStream.TransactionGrid = Ext.extend(Ext.grid.GridPanel, {
   initComponent: function () {
     const store = new Ext.data.JsonStore({
       fields: ['timestamp', 'source', 'user', 'browser', 'url', 'status', 'length', 'duration', 'operationId'],
+      root: '',
+    });
+    const columns = [
+      { header: 'Timestamp', dataIndex: 'timestamp', width: 150, xtype: 'datecolumn', format: 'Y-m-d H:i:s T' },
+      { header: 'Source', dataIndex: 'source', width: 100, filter: { type: 'string' } },
+      { header: 'User', dataIndex: 'user', width: 100, filter: { type: 'string' } },
+      { header: 'Browser', dataIndex: 'browser', width: 100, filter: { type: 'string' } },
+      { header: 'Operation ID', dataIndex: 'operationId', width: 100, filter: { type: 'string' } },
+      { header: 'URL', dataIndex: 'url', width: 200 },
+      { header: 'Status', dataIndex: 'status', width: 100, renderer: this.statusRenderer, align: 'center', filter: { type: 'values' } },
+      { header: 'Length (b)', dataIndex: 'length', width: 100, align: 'right' },
+      { header: 'Duration (ms)', dataIndex: 'duration', width: 100, align: 'right' },
+    ];
+    const view = new SM.ColumnFilters.GridView({
+      forceFit: true,
+      emptyText: 'No transactions to display',
+      deferEmptyText: false,
+      listeners: {
+        filterschanged: function (view) {
+          store.filter(view.getFilterFns())
+        }
+      }
     });
     const bbar = new Ext.Toolbar({
       items: [
@@ -303,26 +325,8 @@ SM.LogStream.TransactionGrid = Ext.extend(Ext.grid.GridPanel, {
 
     const config = {
       store,
-      columns: [
-        { header: 'Timestamp', dataIndex: 'timestamp', width: 150, xtype: 'datecolumn', format: 'Y-m-d H:i:s T' },
-        { header: 'Source', dataIndex: 'source', width: 100, filter: { type: 'string' } },
-        { header: 'User', dataIndex: 'user', width: 100, filter: { type: 'string' } },
-        { header: 'Browser', dataIndex: 'browser', width: 100, filter: { type: 'string' } },
-        { header: 'Operation ID', dataIndex: 'operationId', width: 100, filter: { type: 'string' } },
-        { header: 'URL', dataIndex: 'url', width: 200 },
-        { header: 'Status', dataIndex: 'status', width: 100, renderer: this.statusRenderer, align: 'center', filter: { type: 'values' } },
-        { header: 'Length (b)', dataIndex: 'length', width: 100, align: 'right' },
-        { header: 'Duration (ms)', dataIndex: 'duration', width: 100, align: 'right' },
-      ],
-      view: new SM.ColumnFilters.GridView({
-        forceFit: true,
-        emptyText: 'No transactions to display',
-        listeners: {
-          filterschanged: function (view) {
-            store.filter(view.getFilterFns())
-          }
-        }
-      }),
+      columns,
+      view,
       bbar
     };
     Ext.apply(this, Ext.apply(this.initialConfig, config));
@@ -641,7 +645,7 @@ SM.LogStream.showLogTab = async function ({ treePath }) {
       ws.onmessage = null
     }
   } catch (error) {
-    logPanel.update(error.message);
+    logPanel.update(`<div id="log-empty" style="padding: 10px;color:#999">${error.message}</div>`);
     return;
   }
 
