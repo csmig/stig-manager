@@ -1,23 +1,36 @@
 Ext.ns('SM.LogStream')
-Ext.ns('SM.LogStream.Filters')
+Ext.ns('SM.LogStream.Filter')
 
 SM.LogStream.LogPanel = Ext.extend(Ext.Panel, {
   initComponent: function () {
     this.shouldAutoScroll = true
     this.writableStream = null
+    this.logLines = []
+    this.logDivs = []
+    this.needsUpdate = false
+    this.maxLines = 1000
+    this.emptyString = '<div id="log-empty" style="padding: 10px;color:#999">Log stream not running. Click above to start.</div>'
+    this.preserveLog = true
 
-    const filterPanel = new SM.LogStream.Filters.Panel({
+    const filterPanel = new SM.LogStream.Filter.Panel({
       onFilter: (values) => {
         console.log('Filtering log stream with values:', values);
         this.startStreaming(values);
         streamBtn.toggle(true, true);
-
+        streamBtn.setIconClass('sm-stream-icon')
       }
     });
     const filterMenu = new Ext.menu.Menu({
       plain: true,
       style: 'padding: 10px;',
-      items: [filterPanel]
+      items: [filterPanel],
+      listeners: {
+        hide: () => {
+          if (streamBtn.pressed) {
+            this.startStreaming(filterPanel.getValue());
+          }
+        }
+      }
     });
     filterPanel.menu = filterMenu;
 
@@ -28,21 +41,15 @@ SM.LogStream.LogPanel = Ext.extend(Ext.Panel, {
       menu: filterMenu,
       handler: (btn) => {
         if (btn.pressed) {
-          this.startStreaming();
+          const filter = filterPanel.getValue();
+          console.log('Starting log stream with filter:', filter);
+          this.startStreaming(filter);
           btn.setIconClass('sm-stream-icon')
         } else {
           this.stopStreaming();
           btn.setIconClass('sm-stream-stopped-icon')
 
         }
-      }
-    });
-    const wrapBtn = new Ext.Button({
-      text: 'Wrap',
-      enableToggle: true,
-      iconCls: 'sm-wrap-lines-icon',
-      toggleHandler: (btn, state) => {
-        this.body.dom.style.textWrapMode = state ? 'wrap' : 'nowrap';
       }
     });
     const recordingBtn = new Ext.Button({
@@ -52,7 +59,14 @@ SM.LogStream.LogPanel = Ext.extend(Ext.Panel, {
       toggleHandler: async (btn, state) => {
         if (state) {
           try {
-            const newHandle = await window.showSaveFilePicker();
+            const dateString = new Date().toISOString().replace(/\.\d{3}Z$/, 'Z').replace(/:/g, '-');
+            const newHandle = await window.showSaveFilePicker({
+              suggestedName: `log-${dateString}.jsonl`,
+              types: [{
+                description: 'JSONL Files',
+                accept: { 'application/jsonl': ['.jsonl'] },
+              }],
+            });
             this.writableStream = await newHandle.createWritable();
             btn.setText(`Recording to ${newHandle.name}`);
             btn.setIconClass('sm-recording-icon');
@@ -71,6 +85,23 @@ SM.LogStream.LogPanel = Ext.extend(Ext.Panel, {
         }
       }
     });
+    const preserveCb = new Ext.form.Checkbox({
+      boxLabel: 'Preserve Log',
+      checked: true,
+      listeners: {
+        change: (cb, checked) => {
+          this.preserveLog = checked;
+        }
+      }
+    });
+    const wrapBtn = new Ext.Button({
+      text: 'Wrap',
+      enableToggle: true,
+      iconCls: 'sm-wrap-lines-icon',
+      toggleHandler: (btn, state) => {
+        this.body.dom.style.textWrapMode = state ? 'wrap' : 'nowrap';
+      }
+    });
     const clearBtn = new Ext.Button({
       text: 'Clear',
       iconCls: 'sm-clear-icon',
@@ -81,8 +112,13 @@ SM.LogStream.LogPanel = Ext.extend(Ext.Panel, {
       }
     });
 
+    const toolbarItems = [streamBtn, '-', recordingBtn, '->', preserveCb, '-',wrapBtn, '-', clearBtn];
+    if (!window.showSaveFilePicker) {
+      toolbarItems.splice(1, 2); // Remove recording button
+    }
+
     const tbar = new Ext.Toolbar({
-      items: [streamBtn, '-', recordingBtn, '->', wrapBtn, '-', clearBtn]
+      items: toolbarItems
     });
 
     const config = {
@@ -162,7 +198,10 @@ SM.LogStream.LogPanel = Ext.extend(Ext.Panel, {
   },
   startStreaming: function (filter) {
     if (SM.LogStream.Socket) {
-      this.clearPanel()
+      this.clearEmptyString();
+      if (!this.preserveLog) {
+        this.clearPanel();
+      }
       const message = {
         type: 'command',
         data: {
@@ -185,17 +224,20 @@ SM.LogStream.LogPanel = Ext.extend(Ext.Panel, {
     const wrapperDiv = contentDiv.querySelector('.log-wrapper');
     wrapperDiv.innerHTML = this.emptyString;
   },
+  clearEmptyString: function () {
+    const contentDiv = this.body.dom;
+    const wrapperDiv = contentDiv.querySelector('.log-wrapper');
+    const emptyEl = wrapperDiv.querySelector('#log-empty');
+    if (emptyEl) {
+      wrapperDiv.removeChild(emptyEl);
+    }
+  },
   clearPanel: function () {
     const contentDiv = this.body.dom;
     const wrapperDiv = contentDiv.querySelector('.log-wrapper');
+    this.logDivs = [];
     wrapperDiv.innerHTML = '';
-  },
-  logLines: [],
-  logDivs: [],
-  needsUpdate: false,
-  maxLines: 100,
-  emptyString: '<div style="padding: 10px;color:#999">Log stream not running. Click above to start.</div>'
-
+  }
 });
 
 SM.LogStream.JsonTreePanel = Ext.extend(Ext.Panel, {
@@ -262,11 +304,11 @@ SM.LogStream.TransactionGrid = Ext.extend(Ext.grid.GridPanel, {
     const config = {
       store,
       columns: [
-        { header: 'Timestamp', dataIndex: 'timestamp', width: 150 },
+        { header: 'Timestamp', dataIndex: 'timestamp', width: 150, xtype: 'datecolumn', format: 'Y-m-d H:i:s T' },
         { header: 'Source', dataIndex: 'source', width: 100, filter: { type: 'string' } },
-        { header: 'User', dataIndex: 'user', width: 100, filter: { type: 'values' } },
-        { header: 'Browser', dataIndex: 'browser', width: 100, filter: { type: 'values' } },
-        { header: 'Operation ID', dataIndex: 'operationId', width: 100, filter: { type: 'values' } },
+        { header: 'User', dataIndex: 'user', width: 100, filter: { type: 'string' } },
+        { header: 'Browser', dataIndex: 'browser', width: 100, filter: { type: 'string' } },
+        { header: 'Operation ID', dataIndex: 'operationId', width: 100, filter: { type: 'string' } },
         { header: 'URL', dataIndex: 'url', width: 200 },
         { header: 'Status', dataIndex: 'status', width: 100, renderer: this.statusRenderer, align: 'center', filter: { type: 'values' } },
         { header: 'Length (b)', dataIndex: 'length', width: 100, align: 'right' },
@@ -343,7 +385,7 @@ SM.LogStream.GetBrowser = function (userAgent) {
   return 'Unknown/0';
 }
 
-SM.LogStream.Filters.LevelFieldSet = Ext.extend(Ext.form.FieldSet, {
+SM.LogStream.Filter.LevelFieldSet = Ext.extend(Ext.form.FieldSet, {
   initComponent: function () {
     const level1 = new Ext.form.Checkbox({
       prop: 1,
@@ -388,11 +430,11 @@ SM.LogStream.Filters.LevelFieldSet = Ext.extend(Ext.form.FieldSet, {
   }
 })
 
-SM.LogStream.Filters.ComponentFieldSet = Ext.extend(Ext.form.FieldSet, {
+SM.LogStream.Filter.ComponentFieldSet = Ext.extend(Ext.form.FieldSet, {
   initComponent: function () {
     const items = []
 
-    for (const item of ['rest', 'static', 'jwksCache', 'logSocket']) {
+    for (const item of ['jwksCache', 'logSocket', 'rest', 'static']) {
       items.push(new Ext.form.Checkbox({
         prop: item,
         boxLabel: item
@@ -424,21 +466,21 @@ SM.LogStream.Filters.ComponentFieldSet = Ext.extend(Ext.form.FieldSet, {
   }
 })
 
-SM.LogStream.Filters.Panel = Ext.extend(Ext.Panel, {
+SM.LogStream.Filter.Panel = Ext.extend(Ext.Panel, {
   initComponent: function () {
     const filterFn = this.onFilter || Ext.emptyFn
     const _this = this
-    const levelFieldset = new SM.LogStream.Filters.LevelFieldSet({
+    const levelFieldset = new SM.LogStream.Filter.LevelFieldSet({
       width: 100
     })
-    const componentFieldset = new SM.LogStream.Filters.ComponentFieldSet({
+    const componentFieldset = new SM.LogStream.Filter.ComponentFieldSet({
       width: 100
     })
     const button = new Ext.Button({
       style: 'float: right; margin-top: 6px;',
       cls: 'x-toolbar',
       text: 'Stream',
-      iconCls: 'sm-share-icon',
+      iconCls: 'sm-stream-stopped-icon',
       handler: () => {
         if (_this.menu) _this.menu.hide()
         const levelValues = levelFieldset.getValues()
@@ -450,18 +492,30 @@ SM.LogStream.Filters.Panel = Ext.extend(Ext.Panel, {
           if (levelValues) filter.level = levelValues;
           if (componentValues) filter.component = componentValues;
         }
-
         filterFn(filter);
       }
     })
+    function getValue() {
+      const levelValues = levelFieldset.getValues()
+      const componentValues = componentFieldset.getValues()
+
+      let filter = null;
+      if (levelValues || componentValues) {
+        filter = {};
+        if (levelValues) filter.level = levelValues;
+        if (componentValues) filter.component = componentValues;
+      }
+      return filter
+    }
     const config = {
+      getValue,
       layout: 'form',
       border: false,
       autoWidth: true,
       items: [
         levelFieldset,
         componentFieldset,
-        button
+        // button
       ]
     }
     Ext.apply(this, Ext.apply(this.initialConfig, config))
