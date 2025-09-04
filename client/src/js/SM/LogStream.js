@@ -24,38 +24,46 @@ SM.LogStream.LogPanel = Ext.extend(Ext.Panel, {
     const streamBtn = new Ext.SplitButton({
       text: 'Stream',
       enableToggle: true,
+      iconCls: 'sm-stream-stopped-icon',
       menu: filterMenu,
       handler: (btn) => {
         if (btn.pressed) {
           this.startStreaming();
+          btn.setIconClass('sm-stream-icon')
         } else {
           this.stopStreaming();
+          btn.setIconClass('sm-stream-stopped-icon')
+
         }
       }
     });
     const wrapBtn = new Ext.Button({
       text: 'Wrap',
       enableToggle: true,
+      iconCls: 'sm-wrap-lines-icon',
       toggleHandler: (btn, state) => {
         this.body.dom.style.textWrapMode = state ? 'wrap' : 'nowrap';
       }
     });
-    const captureBtn = new Ext.Button({
-      text: 'Capture...',
+    const recordingBtn = new Ext.Button({
+      text: 'Record...',
       enableToggle: true,
+      iconCls: 'sm-recording-stopped-icon',
       toggleHandler: async (btn, state) => {
         if (state) {
           try {
             const newHandle = await window.showSaveFilePicker();
-            btn.setText(`Capturing to ${newHandle.name}`);
             this.writableStream = await newHandle.createWritable();
+            btn.setText(`Recording to ${newHandle.name}`);
+            btn.setIconClass('sm-recording-icon');
           } catch (error) {
-            console.error('Error capturing file:', error);
+            console.error('Error recording file:', error);
             btn.toggle(false, true); //toggle off with event suppressed
             return;
           }
         } else {
-          btn.setText('Capture...');
+          btn.setText('Record...');
+          btn.setIconClass('sm-recording-stopped-icon');
           if (this.writableStream) {
             this.writableStream.close();
             this.writableStream = null;
@@ -65,6 +73,7 @@ SM.LogStream.LogPanel = Ext.extend(Ext.Panel, {
     });
     const clearBtn = new Ext.Button({
       text: 'Clear',
+      iconCls: 'sm-clear-icon',
       handler: () => {
         this.logDivs = [];
         this.clearPanel();
@@ -72,14 +81,8 @@ SM.LogStream.LogPanel = Ext.extend(Ext.Panel, {
       }
     });
 
-
-    // const filterBtn = new Ext.Button({
-    //   text: 'Filter',
-    //   menu: filterMenu
-    // });
-
     const tbar = new Ext.Toolbar({
-      items: [streamBtn, captureBtn, '->', wrapBtn, clearBtn]
+      items: [streamBtn, '-', recordingBtn, '->', wrapBtn, '-', clearBtn]
     });
 
     const config = {
@@ -394,7 +397,7 @@ SM.LogStream.Filters.ComponentFieldSet = Ext.extend(Ext.form.FieldSet, {
         prop: item,
         boxLabel: item
       }))
-    } 
+    }
 
     function getValues() {
       const values = []

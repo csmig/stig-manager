@@ -1779,6 +1779,32 @@ td.x-grid3-hd-over .x-grid3-hd-inner {
   background-size: 16px 16px
 }
 
+.sm-wrap-lines-icon {   
+  background-image: url(../img/wrap-lines.svg);
+  background-size: 16px 16px
+}
+.sm-clear-icon {
+  background-image: url(../img/clear.svg);
+  background-size: 16px 16px
+}
+.sm-stream-icon {
+  background-image: url(../img/stream.svg);
+  background-size: 16px 16px
+}
+.sm-stream-stopped-icon {
+  background-image: url(../img/stream-stopped.svg);
+  background-size: 16px 16px
+}
+.sm-recording-icon {
+  background-image: url(../img/recording.svg);
+  background-size: 16px 16px
+}
+.sm-recording-stopped-icon {
+  background-image: url(../img/recording-stopped.svg);
+  background-size: 16px 16px
+}
+
+
 .sm-alert-icon {
   background-image: url(../img/alert.svg);
   background-repeat: no-repeat;
