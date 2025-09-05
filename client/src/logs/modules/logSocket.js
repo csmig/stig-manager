@@ -13,7 +13,7 @@ ws.onopen = () => {
 // div click handler
 let selectedLogLineEl = null;
 contentDiv.addEventListener('click', (event) => {
-  if (event.target.classList.contains('log-line')) {
+  if (event.target.classList.contains('sm-log-line')) {
     const logLine = event.target;
     if (selectedLogLineEl) {
       selectedLogLineEl.classList.remove('selected');
@@ -47,7 +47,7 @@ function updateContentDiv() {
     const json = JSON.parse(logLine);
     const logTextEl = document.createElement('div');
     logTextEl.textContent = logLine + '\n';
-    logTextEl.className = `log-line`;
+    logTextEl.className = `sm-log-line`;
     logTextEl.dataset.level = json.level;
     logTextEl.dataset.component = json.component;
     logTextEl.dataset.type = json.type; 

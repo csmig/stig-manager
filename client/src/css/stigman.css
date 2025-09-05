@@ -3240,55 +3240,54 @@ td.x-grid3-hd-over .x-grid3-hd-inner {
   background-size: 16px 16px
 }
 
-.log-line {
+.sm-log-line {
   width: 100%;
-  padding: 0.2em 0.2em;
+  padding: 0.2em 0;
   border-bottom: 1px solid #4b4b4b;
+  font-family: monospace;
+  font-size: 10px;
 }
 
-.log-line[data-type="transaction"] {
+.sm-log-line[data-type="transaction"] {
   color: #5ee75e;
 }
 
-.log-line[data-level="1"] {
+.sm-log-line[data-level="1"] {
   color: red;
 }
 
-.log-line[data-level="2"] {
+.sm-log-line[data-level="2"] {
   color: orange;
 }
 
-.log-line:hover {
-  background-color: color-mix(in srgb, currentColor 15%, transparent);
+.sm-log-line:hover {
+  background-color: color-mix(in srgb, currentColor 10%, transparent);
 }
 
-.log-line.selected {
-  background-color: color-mix(in srgb, currentColor 40%, transparent);
+.sm-log-line.selected {
+  background-color: color-mix(in srgb, currentColor 20%, transparent);
 }
 
-.log-line[data-component="logSocket"] {
+.sm-log-line[data-component="logSocket"] {
   color: #c48eff;
 }
 
-.log-line[data-component="jwksCache"] {
+.sm-log-line[data-component="jwksCache"] {
   color: #e7a15e;
 }
 
-.log-line[data-component="static"] {
+.sm-log-line[data-component="static"] {
   color: #808080;
 }
 
-.log-panel {
+.sm-log-panel-body {
   cursor: pointer;
   overflow: auto;
   text-wrap-mode: nowrap;
-  /* font-family: monospace;
-  font-size: 10px; */
 }
 
-.log-wrapper {
-  min-width: 100%;
-  /* overflow: visible; */
+.sm-log-wrapper {
+  padding: 0 0.2em;
   display: table;
 }
 

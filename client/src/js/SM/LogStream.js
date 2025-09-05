@@ -9,7 +9,7 @@ SM.LogStream.LogPanel = Ext.extend(Ext.Panel, {
     this.logDivs = []
     this.needsUpdate = false
     this.maxLines = 1000
-    this.emptyString = '<div id="log-empty" style="padding: 10px;color:#999">Socket connected and ready to stream.</div>'
+    this.emptyString = '<div id="sm-log-empty" style="padding: 10px;color:#999">Socket connected and ready to stream.</div>'
     this.preserveLog = true
 
     const filterPanel = new SM.LogStream.Filter.Panel({
@@ -122,9 +122,9 @@ SM.LogStream.LogPanel = Ext.extend(Ext.Panel, {
     });
 
     const config = {
-      html: '<div class="log-wrapper"></div>',
-      cls: 'sm-log-panel',
-      bodyCssClass: 'log-panel',
+      html: '<div class="sm-log-wrapper"></div>',
+      cls: 'sm-round-panel sm-log-panel',
+      bodyCssClass: 'sm-log-panel-body',
       tbar
     };
     Ext.apply(this, Ext.apply(this.initialConfig, config))
@@ -132,10 +132,10 @@ SM.LogStream.LogPanel = Ext.extend(Ext.Panel, {
   },
   afterRender: function () {
     // setup element event handlers
-    const _this = this
+    const contentDiv = this.body.dom;
+    this.wrapperDiv = contentDiv.querySelector('.sm-log-wrapper');
     this.superclass().afterRender.call(this);
     this.applyEmptyString();
-    const contentDiv = this.body.dom;
     // content div scroll handling
     function isAtBottom() {
       // Allow a small threshold for float rounding
@@ -148,7 +148,7 @@ SM.LogStream.LogPanel = Ext.extend(Ext.Panel, {
     // div click handler
     let selectedLogLineEl = null;
     contentDiv.addEventListener('click', (event) => {
-      if (event.target.classList.contains('log-line')) {
+      if (event.target.classList.contains('sm-log-line')) {
         const logLineEl = event.target;
         if (selectedLogLineEl) {
           selectedLogLineEl.classList.remove('selected');
@@ -156,10 +156,10 @@ SM.LogStream.LogPanel = Ext.extend(Ext.Panel, {
         logLineEl.classList.add('selected');
         selectedLogLineEl = logLineEl;
         const data = JSON.parse(logLineEl.textContent);
-        _this.fireEvent('logLineSelected', data);
-        // jsonPanel.loadData(data);
+        this.fireEvent('logLineSelected', data);
       }
     });
+
   },
   addLogString: function (logLine) {
     this.logLines.push(logLine);
@@ -175,12 +175,11 @@ SM.LogStream.LogPanel = Ext.extend(Ext.Panel, {
     }
   },
   updatePanelBody: function () {
-    const wrapperDiv = this.body.dom.querySelector('.log-wrapper');
     for (const logLine of this.logLines) {
       const json = JSON.parse(logLine);
       const logTextEl = document.createElement('div');
       logTextEl.textContent = logLine + '\n';
-      logTextEl.className = `log-line`;
+      logTextEl.className = `sm-log-line`;
       logTextEl.dataset.level = json.level;
       logTextEl.dataset.component = json.component;
       logTextEl.dataset.type = json.type;
@@ -189,7 +188,7 @@ SM.LogStream.LogPanel = Ext.extend(Ext.Panel, {
         this.logDivs = this.logDivs.slice(this.logDivs.length - this.maxLines);
       }
     }
-    wrapperDiv.replaceChildren(...this.logDivs);
+    this.wrapperDiv.replaceChildren(...this.logDivs);
 
     this.logLines = [];
     if (this.shouldAutoScroll) {
@@ -221,23 +220,17 @@ SM.LogStream.LogPanel = Ext.extend(Ext.Panel, {
     }
   },
   applyEmptyString: function () {
-    const contentDiv = this.body.dom;
-    const wrapperDiv = contentDiv.querySelector('.log-wrapper');
-    wrapperDiv.innerHTML = this.emptyString;
+    this.wrapperDiv.innerHTML = this.emptyString;
   },
   clearEmptyString: function () {
-    const contentDiv = this.body.dom;
-    const wrapperDiv = contentDiv.querySelector('.log-wrapper');
-    const emptyEl = wrapperDiv.querySelector('#log-empty');
+    const emptyEl = this.wrapperDiv.querySelector('#sm-log-empty');
     if (emptyEl) {
-      wrapperDiv.removeChild(emptyEl);
+      this.wrapperDiv.removeChild(emptyEl);
     }
   },
   clearPanel: function () {
-    const contentDiv = this.body.dom;
-    const wrapperDiv = contentDiv.querySelector('.log-wrapper');
     this.logDivs = [];
-    wrapperDiv.innerHTML = '';
+    this.wrapperDiv.innerHTML = '';
   }
 });
 
@@ -646,7 +639,7 @@ SM.LogStream.showLogTab = async function ({ treePath }) {
       ws.onmessage = null
     }
   } catch (error) {
-    logPanel.update(`<div id="log-empty" style="padding: 10px;color:#999">${error.message}</div>`);
+    logPanel.update(`<div id="sm-log-empty" style="padding: 10px;color:#999">${error.message}</div>`);
     return;
   }
 

@@ -33,41 +33,41 @@ body {
   display: table;
 }
 
-.log-line {
+.sm-log-line {
   width: 100%;
   padding: 0.2em 0;
   border-bottom: 1px solid #4b4b4b;
 }
 
-.log-line[data-type="transaction"] {
+.sm-log-line[data-type="transaction"] {
   color: #5ee75e;
 }
 
-.log-line[data-level="1"] {
+.sm-log-line[data-level="1"] {
   color: red;
 }
 
-.log-line[data-level="2"] {
+.sm-log-line[data-level="2"] {
   color: orange;
 }
 
-.log-line:hover {
+.sm-log-line:hover {
   background-color: color-mix(in srgb, currentColor 15%, transparent);
 }
 
-.log-line.selected {
+.sm-log-line.selected {
   background-color: color-mix(in srgb, currentColor 40%, transparent);
 }
 
-.log-line[data-component="logSocket"] {
+.sm-log-line[data-component="logSocket"] {
   color: #c48eff;
 }
 
-.log-line[data-component="jwksCache"] {
+.sm-log-line[data-component="jwksCache"] {
   color: #e7a15e;
 }
 
-.log-line[data-component="static"] {
+.sm-log-line[data-component="static"] {
   color: #808080;
 }
 
