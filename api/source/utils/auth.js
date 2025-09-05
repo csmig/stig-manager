@@ -44,9 +44,8 @@ function checkInsecureKid(tokenObj) {
 }
 
 // Helper function to retrieve the signing key
-async function getSigningKey(tokenObj, req) {
+async function getSigningKey(tokenObj) {
     let signingKey = jwksCache.getKey(tokenObj.header.kid)
-    logger.writeDebug('auth', 'signingKey', { kid: tokenObj.header.kid, url: req.url })
 
     if (signingKey === null) {
         const result = await jwksCache.refreshCache(false) // Will not retry on failure
@@ -84,7 +83,7 @@ const validateToken = async function (req, res, next) {
         if (tokenJWT) {
             const tokenObj = decodeToken(tokenJWT)
             checkInsecureKid(tokenObj)
-            const signingKey = await getSigningKey(tokenObj, req)
+            const signingKey = await getSigningKey(tokenObj)
             verifyToken(tokenJWT, signingKey)
 
             req.access_token = tokenObj.payload
@@ -275,4 +274,14 @@ async function initializeAuth() {
     state.setOidcStatus(true)
 }
 
-module.exports = {validateToken, setupUser, validateOauthSecurity, initializeAuth, getClaimByPath}
+module.exports = {
+    validateToken, 
+    setupUser, 
+    validateOauthSecurity, 
+    initializeAuth, 
+    getClaimByPath,
+    checkInsecureKid,
+    decodeToken,
+    getSigningKey,
+    verifyToken
+}

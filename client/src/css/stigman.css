@@ -3316,3 +3316,7 @@ td.x-grid3-hd-over .x-grid3-hd-inner {
   margin-bottom: 4px;
   margin-right: 4px;
 }
+
+.sm-log-panel .x-toolbar-ct {
+  padding: 4px;
+}

@@ -25,8 +25,8 @@ SM.LogStream.LogPanel = Ext.extend(Ext.Panel, {
       style: 'padding: 10px;',
       items: [filterPanel],
       listeners: {
-        hide: () => {
-          if (streamBtn.pressed) {
+        beforehide: (menu) => {
+          if (streamBtn.pressed && !menu.hidden) {
             this.startStreaming(filterPanel.getValue());
           }
         }
@@ -123,6 +123,7 @@ SM.LogStream.LogPanel = Ext.extend(Ext.Panel, {
 
     const config = {
       html: '<div class="log-wrapper"></div>',
+      cls: 'sm-log-panel',
       bodyCssClass: 'log-panel',
       tbar
     };

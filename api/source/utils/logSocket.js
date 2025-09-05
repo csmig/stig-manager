@@ -19,7 +19,7 @@ class LogSession {
     this.ws.on('close', this.onSocketClose);
     // Initial handshake: send authorize request
     this.send({ type: 'authorize', data: null });
-    logger.writeInfo(component, 'session-start', { sessionId: this.sessionId, msg: 'Session started, sent authorize request' });
+    logger.writeInfo(component, 'session-start', { sessionId: this.sessionId, message: 'Session started, sent authorize request' });
   }
 
   stop = () => {
@@ -27,7 +27,7 @@ class LogSession {
     this.ws.off('message', this.onSocketMessage);
     this.ws.off('close', this.onSocketClose);
     if (this.tokenTimer) clearTimeout(this.tokenTimer);
-    logger.writeInfo(component, 'session-stop', { sessionId: this.sessionId, msg: 'Session stopped' });
+    logger.writeInfo(component, 'session-stop', { sessionId: this.sessionId, message: 'Session stopped' });
   }
 
   enableLogForwarding = () => {
@@ -61,9 +61,15 @@ class LogSession {
     let msgObj;
     try {
       msgObj = JSON.parse(message);
-      logger.writeInfo(component, 'message-receive', { sessionId: this.sessionId, ...msgObj });
+      if (msgObj.type === 'authorize' && (typeof msgObj.data?.token === 'string')) {
+        const loggedMessage = this.deepClone(msgObj);
+        loggedMessage.data.token = this.decodeToken(msgObj.data.token) || loggedMessage.data.token;
+        logger.writeInfo(component, 'message-receive', { sessionId: this.sessionId, ...loggedMessage });
+      } else {
+        logger.writeInfo(component, 'message-receive', { sessionId: this.sessionId, ...msgObj });
+      }
     } catch {
-      this.send({ type: 'error', data: 'Invalid JSON' });
+      this.send({ type: 'error', data: { message: 'Invalid JSON' }});
       return;
     }
     switch (msgObj.type) {
@@ -74,7 +80,7 @@ class LogSession {
         this.onCommand(msgObj.data);
         break;
       default:
-        this.send({ type: 'error', data: 'Unexpected message type' });
+        this.send({ type: 'error', data: { message: 'Unexpected message type' } });
     }
   }
 
@@ -82,11 +88,17 @@ class LogSession {
     this.stop();
   }
 
+  deepClone = (msg) => {
+    return JSON.parse(JSON.stringify(msg));
+  }
+
   send = (msg) => {
     try {
       this.ws.send(JSON.stringify(msg));
       if (msg.type !== 'log') {
         logger.writeInfo(component, 'message-send', { sessionId: this.sessionId, ...msg });
+      } else if (msg.type === 'error') {
+        logger.writeError(component, 'message-send', { sessionId: this.sessionId, ...msg });
       }
     } catch {
       // Ignore send errors
@@ -96,7 +108,7 @@ class LogSession {
   onCommand = (commandData) => {
     // e.g. {command: 'stream', filter: {level: 1}}
     if (!commandData || typeof commandData.command !== 'string') {
-      this.send({ type: 'error', data: 'Invalid command' });
+      this.send({ type: 'error', data: { message: 'Invalid command' } });
       return;
     }
     switch (commandData.command) {
@@ -108,43 +120,36 @@ class LogSession {
         this.disableLogForwarding();
         break;
       default:
-        this.send({ type: 'error', data: 'Unknown command' });
+        this.send({ type: 'error', data: { message: 'Unknown command' } });
     }
     this.send({ type: 'info', data: { success: true, command: commandData } });
   }
 
-  onAuthorize = (authData) => {
+  onAuthorize = async (authData) => {
     // Expect {token}
     if (!authData || typeof authData.token !== 'string') {
-      this.send({ type: 'error', data: 'Authorization failed: missing token' });
-      this.send({ type: 'close', data: 'Closing connection' });
+      this.send({ type: 'error', data: { message: 'Authorization failed: missing token' } });
+      this.send({ type: 'close', data: { message: 'Closing connection' } });
       this.stop();
-      logger.writeError(component, 'auth', { sessionId: this.sessionId, msg: 'Authorization failed: missing token' });
       return;
     }
     // Validate token (format and expiration)
-    let payload;
     try {
       // Accept JWTs: decode and check exp
-      const parts = authData.token.split('.');
-      if (parts.length !== 3) throw new Error('Invalid JWT format');
-      const decoded = JSON.parse(Buffer.from(parts[1], 'base64').toString('utf8'));
-      if (!decoded.exp || typeof decoded.exp !== 'number') throw new Error('Missing exp');
-      const now = Math.floor(Date.now() / 1000);
-      if (decoded.exp < now) throw new Error('Token expired');
-      payload = decoded;
-      this.tokenExp = decoded.exp;
+      const decoded = auth.decodeToken(authData.token);
+      auth.checkInsecureKid(decoded);
+      const signingKey = await auth.getSigningKey(decoded);
+      auth.verifyToken(authData.token, signingKey);
+      this.tokenExp = decoded.payload.exp;
+      this.startTokenTimer();
+      this.authorized = true;
+      this.send({ type: 'info', data: {message: 'Authorization successful'} });
     } catch (e) {
-      this.send({ type: 'error', data: 'Authorization failed: ' + e.message });
-      this.send({ type: 'close', data: 'Closing connection' });
-      this.stop();
-      logger.writeError(component, 'auth', { sessionId: this.sessionId, msg: 'Authorization failed', error: e.message });
+      this.authorized = false;
+      this.disableLogForwarding();
+      this.send({ type: 'error', data: { message: 'Authorization failed: ' + e.message } });
       return;
     }
-    this.authorized = true;
-    
-    this.send({ type: 'info', data: 'Authorization successful' });
-    this.startTokenTimer();
   }
 
   startTokenTimer = () => {
@@ -155,8 +160,20 @@ class LogSession {
     this.tokenTimer = setTimeout(() => {
       this.authorized = false;
       this.disableLogForwarding();
-      this.send({ type: 'error', data: 'token expired' });
+      this.send({ type: 'error', data: { message:'token expired' } });
     }, ms);
+  }
+
+  decodeToken = (token) => {
+    try {
+      const parts = token.split('.');
+      if (parts.length !== 3) throw new Error('Invalid JWT format');
+      const decoded = JSON.parse(Buffer.from(parts[1], 'base64').toString('utf8'));
+      return decoded;
+    } 
+    catch {
+      return null;
+    }
   }
 }
 
