@@ -182,7 +182,13 @@ SM.LogStream.LogPanel = Ext.extend(Ext.Panel, {
       logTextEl.className = `sm-log-line`;
       logTextEl.dataset.level = json.level;
       logTextEl.dataset.component = json.component;
-      logTextEl.dataset.type = json.type;
+      if (json.component === 'rest') {
+        if (json.type === 'request' || json.type === 'response') {
+          logTextEl.dataset.requestId = json.data.requestId;
+        } else if (json.type === 'transaction') {
+          logTextEl.dataset.requestId = json.data.request?.requestId;
+        }
+      }
       this.logDivs.push(logTextEl);
       if (this.logDivs.length > this.maxLines) {
         this.logDivs = this.logDivs.slice(this.logDivs.length - this.maxLines);

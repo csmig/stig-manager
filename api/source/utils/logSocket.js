@@ -12,11 +12,14 @@ class LogSession {
     this.logForwarding = false;
     this.sessionId = uuid.v1();
     this.filter = null;
+    this.pingIntervalId = null
   }
 
   start = () => {
     this.ws.on('message', this.onSocketMessage);
     this.ws.on('close', this.onSocketClose);
+    this.ws.on('pong', this.onSocketPong);
+    this.startHeartbeat();
     // Initial handshake: send authorize request
     this.send({ type: 'authorize', data: null });
     logger.writeInfo(component, 'session-start', { sessionId: this.sessionId, message: 'Session started, sent authorize request' });
@@ -26,6 +29,7 @@ class LogSession {
     this.disableLogForwarding();
     this.ws.off('message', this.onSocketMessage);
     this.ws.off('close', this.onSocketClose);
+    this.ws.off('pong', this.onSocketPong);
     if (this.tokenTimer) clearTimeout(this.tokenTimer);
     logger.writeInfo(component, 'session-stop', { sessionId: this.sessionId, message: 'Session stopped' });
   }
@@ -56,6 +60,31 @@ class LogSession {
       this.send({ type: 'log', data: logObj });
     }
   }
+  startHeartbeat = () => {
+    this.stopHeartbeat();
+    this.pingIntervalId = setInterval(this.sendPing, 10000);
+  }
+
+  stopHeartbeat = () => {
+    if (this.pingIntervalId) {
+      clearInterval(this.pingIntervalId);
+      this.pingIntervalId = null;
+    }
+  }
+
+  sendPing = () => {
+    try {
+      this.ws.ping();
+      logger.writeInfo(component, 'ping-sent', { sessionId: this.sessionId });
+    } catch {
+      // Ignore ping errors
+    }
+  }
+
+  onSocketPong = () => {
+    // Pong received, connection is alive
+    logger.writeInfo(component, 'pong-received', { sessionId: this.sessionId });
+  }
 
   onSocketMessage = (message) => {
     let msgObj;
@@ -85,6 +114,7 @@ class LogSession {
   }
 
   onSocketClose = () => {
+    this.stopHeartbeat();
     this.stop();
   }
 
@@ -180,6 +210,13 @@ class LogSession {
 function setupLogSocket (server) {
   const wss = new WebSocket.Server({ server, path: '/log-socket' })
   wss.on('connection', onConnection)
+  const originalShouldHandle = wss.shouldHandle
+  wss.shouldHandle = function (req) {
+    if (req.url !== '/log-socket') {
+      return false;
+    }
+    return originalShouldHandle.call(this, req);
+  }
 }
 
 

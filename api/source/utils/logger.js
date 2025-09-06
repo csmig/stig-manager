@@ -104,7 +104,8 @@ function requestLogger (req, res, next) {
   res._startAt = undefined
   res._startTime = undefined
   res.svcStatus = {}
-
+  req.requestId = uuid.v1()
+  
   // Response body length for appinfo and content for privileged requests
   let responseBody
   res.sm_responseLength = 0
@@ -125,7 +126,6 @@ function requestLogger (req, res, next) {
   recordStartTime.call(req)
 
   function logRequest () {
-    req.requestId = uuid.v1()
     if (req.originalUrl.startsWith('/api')) {
       req.component = 'rest'
     } else {
