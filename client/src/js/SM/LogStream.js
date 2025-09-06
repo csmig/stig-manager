@@ -275,12 +275,13 @@ SM.LogStream.JsonTreePanel = Ext.extend(Ext.Panel, {
 
 SM.LogStream.TransactionGrid = Ext.extend(Ext.grid.GridPanel, {
   initComponent: function () {
+    this.requestMap = new Map();
     const store = new Ext.data.JsonStore({
       fields: ['timestamp', 'source', 'user', 'browser', 'url', 'status', 'length', 'duration', 'operationId'],
       root: '',
     });
     const columns = [
-      { header: 'Timestamp', dataIndex: 'timestamp', width: 150, xtype: 'datecolumn', format: 'Y-m-d H:i:s T' },
+      { header: 'Timestamp', dataIndex: 'timestamp', width: 150, xtype: 'datecolumn', format: 'Y-m-d H:i:s.u T' },
       { header: 'Source', dataIndex: 'source', width: 100, filter: { type: 'string' } },
       { header: 'User', dataIndex: 'user', width: 100, filter: { type: 'string' } },
       { header: 'Browser', dataIndex: 'browser', width: 100, filter: { type: 'string' } },
@@ -347,6 +348,36 @@ SM.LogStream.TransactionGrid = Ext.extend(Ext.grid.GridPanel, {
     const view = this.getView();
     view.scroller.dom.scrollTop = view.scroller.dom.scrollHeight;
   },
+  addRequest: function (logObj) {
+    const logData = logObj.data
+    const record = {
+      requestId: logData.requestId,
+      timestamp: logObj.date,
+      source: logData.source,
+      user: logData.headers?.accessToken?.preferred_username,
+      browser: SM.LogStream.GetBrowser(logData.headers['user-agent']),
+      url: `${logData.method} ${logData.url}`,
+    };
+    this.requestMap.set(logData.requestId, record);
+  },
+  addResponse: function (logObj) {
+    const logData = logObj.data
+    const requestRecord = this.requestMap.get(logData.requestId);
+    if (requestRecord) {
+      requestRecord.status = `${logData.status}`;
+      requestRecord.length = logData.headers?.['content-length'];
+      requestRecord.duration = logData.operationStats.durationMs;
+      requestRecord.operationId = logData.operationStats.operationId;
+      const store = this.getStore();
+      if (store.data.length > 999) {
+        store.removeAt(0);
+      }
+      store.loadData([requestRecord], true);
+      const view = this.getView();
+      view.scroller.dom.scrollTop = view.scroller.dom.scrollHeight;
+      this.requestMap.delete(logData.requestId);
+    }
+  },
   statusRenderer: function (value, metaData, record, rowIndex, colIndex, store) {
     let css = ''
     if (value >= 200 && value <= 299) {
@@ -366,11 +397,10 @@ SM.LogStream.Socket = null
 
 SM.LogStream.GetBrowser = function (userAgent) {
   const browsers = [
-    { name: 'Chrome', regex: /Chrome\/([0-9.]+)/ },
-    { name: 'Firefox', regex: /Firefox\/([0-9.]+)/ },
+    { name: 'Chrome', regex: /Chrome\/([0-9.]+$)/ },
+    { name: 'Firefox', regex: /Firefox\/([0-9.]+$)/ },
     { name: 'Safari', regex: /Version\/([0-9.]+).*Safari/ },
-    { name: 'Edge', regex: /Edg\/([0-9.]+)/ },
-    { name: 'Internet Explorer', regex: /MSIE ([0-9.]+)/ }
+    { name: 'Edge', regex: /Edg\/([0-9.]+$)/ },
   ];
 
   for (const browser of browsers) {
@@ -620,6 +650,10 @@ SM.LogStream.showLogTab = async function ({ treePath }) {
         const logObj = message.data;
         if (logObj.type === 'transaction' && logObj.component === 'rest') {
           transactionGrid.addTransaction(logObj);
+        } else if (logObj.type === 'request' && logObj.component === 'rest') {
+          transactionGrid.addRequest(logObj);
+        } else if (logObj.type === 'response' && logObj.component === 'rest') {
+          transactionGrid.addResponse(logObj);
         }
       } else if (message.type === 'authorize') {
         ws?.send(JSON.stringify({ type: 'authorize', data: { token: window.oidcWorker.token } }));

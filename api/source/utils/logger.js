@@ -126,7 +126,12 @@ function requestLogger (req, res, next) {
 
   function logRequest () {
     req.requestId = uuid.v1()
-    writeInfo('rest', 'request', serializeRequest(req))
+    if (req.originalUrl.startsWith('/api')) {
+      req.component = 'rest'
+    } else {
+      req.component = 'static'
+    }
+    writeInfo(req.component, 'request', serializeRequest(req))
   }
 
   function logResponse () {

@@ -3248,18 +3248,6 @@ td.x-grid3-hd-over .x-grid3-hd-inner {
   font-size: 10px;
 }
 
-.sm-log-line[data-type="transaction"] {
-  color: #5ee75e;
-}
-
-.sm-log-line[data-level="1"] {
-  color: red;
-}
-
-.sm-log-line[data-level="2"] {
-  color: orange;
-}
-
 .sm-log-line:hover {
   background-color: color-mix(in srgb, currentColor 10%, transparent);
 }
@@ -3278,6 +3266,18 @@ td.x-grid3-hd-over .x-grid3-hd-inner {
 
 .sm-log-line[data-component="static"] {
   color: #808080;
+}
+
+.sm-log-line[data-component="rest"] {
+  color: #5ee75e;
+}
+
+.sm-log-line[data-level="1"] {
+  color: red;
+}
+
+.sm-log-line[data-level="2"] {
+  color: orange;
 }
 
 .sm-log-panel-body {

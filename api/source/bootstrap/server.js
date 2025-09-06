@@ -10,6 +10,13 @@ const { initializeDependencies } = require('./dependencies')
 async function startServer(app, startTime) {
 
   const server = http.createServer(app)
+  server.on('upgrade', (request) => {
+    logger.writeInfo('server', 'upgrade-request', { 
+      url: request.url,
+      headers: request.headers,
+      remoteAddress: request.socket.remoteAddress
+    })
+  })
 
   const onListenError = (e) => {
     logger.writeError('server', 'shutdown', { message: `Server failed establishing or while listening on port ${config.http.port}`, error: serializeError(e) })
