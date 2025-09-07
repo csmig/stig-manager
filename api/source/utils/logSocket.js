@@ -3,6 +3,7 @@ const WebSocket = require('ws')
 const component = 'logSocket'
 const auth = require('./auth')
 const uuid = require('uuid')
+const SmError = require('./error')
 
 class LogSession {
   constructor(ws) {
@@ -106,7 +107,9 @@ class LogSession {
         this.onAuthorize(msgObj.data);
         break;
       case 'command':
-        this.onCommand(msgObj.data);
+        if (this.authorized) {
+          this.onCommand(msgObj.data);
+        }
         break;
       default:
         this.send({ type: 'error', data: { message: 'Unexpected message type' } });
@@ -167,9 +170,17 @@ class LogSession {
     try {
       // Accept JWTs: decode and check exp
       const decoded = auth.decodeToken(authData.token);
+      
+      // Mock a bad token for testing
+      // decoded.header.kid = 'xxx-bad-kid-xxx';
+
       auth.checkInsecureKid(decoded);
       const signingKey = await auth.getSigningKey(decoded);
       auth.verifyToken(authData.token, signingKey);
+      const privileges = auth.getClaimByPath(decoded.payload);
+      if (!privileges.includes('admin')) {
+        throw new SmError.PrivilegeError();
+      }
       this.tokenExp = decoded.payload.exp;
       this.startTokenTimer();
       this.authorized = true;
@@ -177,6 +188,7 @@ class LogSession {
     } catch (e) {
       this.authorized = false;
       this.disableLogForwarding();
+      logger.writeWarn(component, 'authorize-failed', { sessionId: this.sessionId, message: e.message });
       this.send({ type: 'error', data: { message: 'Authorization failed: ' + e.message } });
       return;
     }

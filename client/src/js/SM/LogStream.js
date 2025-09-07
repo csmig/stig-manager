@@ -48,7 +48,6 @@ SM.LogStream.LogPanel = Ext.extend(Ext.Panel, {
         } else {
           this.stopStreaming();
           btn.setIconClass('sm-stream-stopped-icon')
-
         }
       }
     });
@@ -121,14 +120,35 @@ SM.LogStream.LogPanel = Ext.extend(Ext.Panel, {
       items: toolbarItems
     });
 
+    const disableUi = () => {
+      streamBtn.disable();
+      streamBtn.toggle(false, true);
+      streamBtn.setIconClass('sm-stream-stopped-icon');
+      recordingBtn.disable();
+      preserveCb.disable();
+      wrapBtn.disable();
+      clearBtn.disable();
+    };
+
+    const enableUi = () => {
+      streamBtn.enable();
+      recordingBtn.enable();
+      preserveCb.enable();
+      wrapBtn.enable();
+      clearBtn.enable();
+    };
+
     const config = {
       html: '<div class="sm-log-wrapper"></div>',
       cls: 'sm-round-panel sm-log-panel',
       bodyCssClass: 'sm-log-panel-body',
-      tbar
+      tbar,
+      disableUi,
+      enableUi
     };
     Ext.apply(this, Ext.apply(this.initialConfig, config))
     this.superclass().initComponent.call(this);
+    disableUi();
   },
   afterRender: function () {
     // setup element event handlers
@@ -225,8 +245,8 @@ SM.LogStream.LogPanel = Ext.extend(Ext.Panel, {
       SM.LogStream.Socket.send(JSON.stringify({ type: 'command', data: { command: 'stream-stop' } }));
     }
   },
-  applyEmptyString: function () {
-    this.wrapperDiv.innerHTML = this.emptyString;
+  applyEmptyString: function (string) {
+    this.wrapperDiv.innerHTML = string ?? this.emptyString;
   },
   clearEmptyString: function () {
     const emptyEl = this.wrapperDiv.querySelector('#sm-log-empty');
@@ -237,7 +257,7 @@ SM.LogStream.LogPanel = Ext.extend(Ext.Panel, {
   clearPanel: function () {
     this.logDivs = [];
     this.wrapperDiv.innerHTML = '';
-  }
+  },
 });
 
 SM.LogStream.JsonTreePanel = Ext.extend(Ext.Panel, {
@@ -563,16 +583,24 @@ SM.LogStream.setupSocket = async function () {
     const wsProtocol = locationUrl.protocol === 'https:' ? 'wss:' : 'ws:';
     const wsUrl = wsProtocol + '//' + locationUrl.host + locationUrl.pathname + 'log-socket';
 
-    const ws = new WebSocket(wsUrl);
-    ws.onopen = () => {
-      ws.onerror = null;
+    function openHandler(event) {
+      console.log('WebSocket opened:', event);
+      ws.removeEventListener('open', openHandler);
+      ws.removeEventListener('error', errorHandler);
       SM.LogStream.Socket = ws;
-      resolve(ws);
-    };
-    ws.onerror = (event) => {
+      resolve();
+    }
+
+    function errorHandler(event) {
       console.log('WebSocket error:', event);
+      ws.removeEventListener('open', openHandler);
+      ws.removeEventListener('error', errorHandler);
       reject(new Error(`Feature unavailable. Error establishing WebSocket connection to ${event.target.url}. `));
-    };
+    }
+
+    const ws = new WebSocket(wsUrl);
+    ws.addEventListener('open', openHandler);
+    ws.addEventListener('error', errorHandler);
   });
 };
 
@@ -583,7 +611,6 @@ SM.LogStream.showLogTab = async function ({ treePath }) {
     return
   }
 
-  let ws
   const logPanel = new SM.LogStream.LogPanel({
     region: 'center',
     cls: 'sm-round-panel',
@@ -591,8 +618,8 @@ SM.LogStream.showLogTab = async function ({ treePath }) {
     border: false,
     listeners: {
       destroy: function () {
-        if (ws) {
-          ws.close();
+        if (SM.LogStream.Socket) {
+          SM.LogStream.Socket.close();
         }
         if (logPanel.writableStream) {
           logPanel.writableStream.close();
@@ -636,6 +663,53 @@ SM.LogStream.showLogTab = async function ({ treePath }) {
     border: false,
   });
 
+  async function mainMessageHandler(event) {
+    const message = JSON.parse(event.data);
+    if (message.type === 'log') {
+      logPanel.addLogString(JSON.stringify(message.data));
+      const logObj = message.data;
+      if (logObj.type === 'transaction' && logObj.component === 'rest') {
+        transactionGrid.addTransaction(logObj);
+      } else if (logObj.type === 'request' && logObj.component === 'rest') {
+        transactionGrid.addRequest(logObj);
+      } else if (logObj.type === 'response' && logObj.component === 'rest') {
+        transactionGrid.addResponse(logObj);
+      }
+    } else if (message.type === 'authorize') {
+      try {
+        await authorizeWebSocket();
+        console.log('WebSocket authorized');
+        logPanel.applyEmptyString();
+      } catch (error) {
+        console.error('WebSocket authorization failed:', error);
+        // logPanel.applyEmptyString(`<div id="sm-log-empty" style="padding: 10px;color:#999">Socket closed.<br>${error.message}</div>`);
+        SM.LogStream.Socket.close(4001, error.message);
+      }
+    }
+  }
+
+  async function authorizeWebSocket() {
+    return new Promise((resolve, reject) => {
+      const timeout = setTimeout(() => {
+        reject(new Error('Authorization timeout after 1 second'));
+      }, 1000);
+      function messageHandler(event) {
+        const message = JSON.parse(event.data);
+        if (message.type === 'info' && message.data.message === 'Authorization successful') {
+          clearTimeout(timeout);
+          SM.LogStream.Socket.removeEventListener('message', messageHandler);
+          resolve(message);
+        } else if (message.type === 'error' && message.data.message.startsWith('Authorization failed')) {
+          clearTimeout(timeout);
+          SM.LogStream.Socket.removeEventListener('message', messageHandler);
+          reject(new Error(message.data.message));
+        }
+      }
+      SM.LogStream.Socket.addEventListener('message', messageHandler);
+      SM.LogStream.Socket.send(JSON.stringify({ type: 'authorize', data: { token: window.oidcWorker.token } }));
+    });
+  }
+
   const thisTab = Ext.getCmp('main-tab-panel').add({
     id: 'logstream-admin-tab',
     sm_treePath: treePath,
@@ -648,38 +722,63 @@ SM.LogStream.showLogTab = async function ({ treePath }) {
   thisTab.show()
 
   try {
-    ws = await SM.LogStream.setupSocket()
-    ws.onmessage = function (event) {
-      const message = JSON.parse(event.data);
-      if (message.type === 'log') {
-        logPanel.addLogString(JSON.stringify(message.data));
-        const logObj = message.data;
-        if (logObj.type === 'transaction' && logObj.component === 'rest') {
-          transactionGrid.addTransaction(logObj);
-        } else if (logObj.type === 'request' && logObj.component === 'rest') {
-          transactionGrid.addRequest(logObj);
-        } else if (logObj.type === 'response' && logObj.component === 'rest') {
-          transactionGrid.addResponse(logObj);
-        }
-      } else if (message.type === 'authorize') {
-        ws?.send(JSON.stringify({ type: 'authorize', data: { token: window.oidcWorker.token } }));
-      }
-    };
+    await SM.LogStream.setupSocket()
+    SM.LogStream.Socket.addEventListener('message', mainMessageHandler);
+    SM.LogStream.Socket.addEventListener('close', closeHandler);
+    logPanel.enableUi();
+
     const bc = new BroadcastChannel('stigman-oidc-worker')
     function tokenBroadcastHandler(event) {
       if (event.data.type === 'accessToken') {
         console.log('{log-stream] Received from worker:', event.type, event.data)
-        ws?.send(JSON.stringify({ type: 'authorize', data: { token: event.data.accessToken } }))
+        SM.LogStream.Socket?.send(JSON.stringify({ type: 'authorize', data: { token: event.data.accessToken } }))
       }
     }
     bc.addEventListener('message', tokenBroadcastHandler)
-    ws.onclose = function () {
-      console.log('WebSocket closed');
-      bc.removeEventListener('message', tokenBroadcastHandler)
-      ws.onmessage = null
+
+    const maxReconnectAttempts = 5;
+
+    function closeHandler(event) {
+      console.log('WebSocket closed with code:', event.code, 'reason:', event.reason);
+      bc.removeEventListener('message', tokenBroadcastHandler);
+      SM.LogStream.Socket.removeEventListener('message', mainMessageHandler);
+      logPanel.disableUi();
+
+      // Don't reconnect on authentication failures (custom codes) or manual closure
+      if (event.code === 1000 || event.code >= 4000) {
+        logPanel.applyEmptyString(`<div id="sm-log-empty" style="padding: 10px;color:#999">Connection closed: ${event.reason || 'Manual closure'}</div>`);
+        return;
+      }
+
+      retryHandler(1);
     }
+
+    function retryHandler(attempt) {
+      if (attempt > maxReconnectAttempts) {
+        logPanel.applyEmptyString(`<div id="sm-log-empty" style="padding: 10px;color:#999">Connection failed after ${maxReconnectAttempts} attempts.</div>`);
+        return;
+      }
+      const delay = Math.min(1000 * Math.pow(2, attempt - 1), 30000); // Cap at 30s
+      logPanel.applyEmptyString(`<div id="sm-log-empty" style="padding: 10px;color:#999">Connection lost. Reconnecting in ${delay / 1000}s... (${attempt}/${maxReconnectAttempts})</div>`);
+      setTimeout(async () => {
+        try {
+          console.log(`Reconnection attempt ${attempt}/${maxReconnectAttempts}`);
+          await SM.LogStream.setupSocket();
+          SM.LogStream.Socket.addEventListener('message', mainMessageHandler);
+          SM.LogStream.Socket.addEventListener('close', closeHandler);
+          bc.addEventListener('message', tokenBroadcastHandler);
+          logPanel.applyEmptyString();
+          logPanel.enableUi();
+        } catch (error) {
+          console.error('Reconnection failed:', error);
+          retryHandler(attempt + 1);
+        }
+      }, delay);
+    }
+
   } catch (error) {
     logPanel.update(`<div id="sm-log-empty" style="padding: 10px;color:#999">${error.message}</div>`);
+    logPanel.disableUi();
     return;
   }
 
