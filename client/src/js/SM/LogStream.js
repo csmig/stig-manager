@@ -595,7 +595,16 @@ SM.LogStream.setupSocket = async function () {
       console.log('WebSocket error:', event);
       ws.removeEventListener('open', openHandler);
       ws.removeEventListener('error', errorHandler);
-      reject(new Error(`Feature unavailable. Error establishing WebSocket connection to ${event.target.url}. `));
+      reject(new Error(`Feature unavailable. Error establishing WebSocket connection to ${event.target.url}.<br><br>
+        This is usually caused by a reverse proxy not handling HTTP Upgrade requests. For nginx and compatible proxies:<br><br>
+        <pre>
+        proxy_http_version      1.1;
+        proxy_set_header        Upgrade $http_upgrade;
+        proxy_set_header        Connection "upgrade";
+        proxy_set_header        Host $host;
+        proxy_read_timeout      3600s;
+        </pre>
+`));
     }
 
     const ws = new WebSocket(wsUrl);
