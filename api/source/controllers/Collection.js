@@ -708,7 +708,6 @@ module.exports.postXccdfArchiveByCollection = async function (req, res, next) {
 }
 
 async function postArchiveByCollection ({format = 'ckl-mono', req, res, parsedRequest}) {
-  req.noCompression = true
   const builder = new XMLBuilder({
     attributeNamePrefix : "@_",
     textNodeName : "#text",
@@ -1049,7 +1048,7 @@ module.exports.cloneCollection = async function (req, res, next) {
       }
 
       res.setHeader('Content-Type', 'application/x-ndjson; charset=utf-8');
-      req.noCompression = true
+      res.setHeader('X-Accel-Buffering', 'no'); // Disable buffering for nginx
 
       const cloned = await CollectionService.cloneCollection({
         collectionId, 
@@ -1095,7 +1094,7 @@ module.exports.exportToCollection = async function (req, res, next) {
     const parsedRequest = await processAssetStigRequests (req.body, srcCollectionId, 'multi', grant)
     
     res.setHeader('Content-Type', 'application/x-ndjson; charset=utf-8');
-    req.noCompression = true
+    res.setHeader('X-Accel-Buffering', 'no'); // Disable buffering for nginx
 
     await CollectionService.exportToCollection({
       srcCollectionId,
