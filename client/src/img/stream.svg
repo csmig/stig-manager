@@ -3,12 +3,23 @@
      xmlns="http://www.w3.org/2000/svg"
      stroke="#e0e0e0"
      stroke-width="1.8">
+     	<style>
+        .animate {
+            animation: flip 2s linear infinite;
+            transform-origin: center;
+        }
+        @keyframes flip {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+	</style>
+
     <g id="SVGRepo_bgCarrier"
        stroke-width="0" />
     <g id="SVGRepo_tracerCarrier"
        stroke-linecap="round"
        stroke-linejoin="round" />
-    <g id="SVGRepo_iconCarrier">
+    <g id="SVGRepo_iconCarrier" class="animate">
         <g id="Stream_On"
            data-name="Stream On">
             <g>
