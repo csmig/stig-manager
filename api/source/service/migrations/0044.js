@@ -4,12 +4,13 @@ const upMigration = [
   `DROP TABLE IF EXISTS job`,
   `CREATE TABLE job (
     jobId INT NOT NULL AUTO_INCREMENT,
-    name VARCHAR(255) NOT NULL,
-    userId INT NULL,
+    name VARCHAR(45) NOT NULL,
+    description VARCHAR(255) NULL,
+    createdBy INT NULL,
     created TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     updated TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3),
     PRIMARY KEY (jobId),
-    CONSTRAINT fk_job_userId FOREIGN KEY (userId) REFERENCES user_data(userId) ON DELETE RESTRICT
+    CONSTRAINT fk_job_createdBy FOREIGN KEY (createdBy) REFERENCES user_data(userId) ON DELETE RESTRICT
   )`,
 
   `DROP TABLE IF EXISTS job_task_map`,
