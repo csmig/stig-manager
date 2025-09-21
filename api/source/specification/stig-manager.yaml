@@ -3209,13 +3209,15 @@ paths:
       security:
         - oauth:
             - 'stig-manager:collection:read'
+  
   /jobs:
     get:
       summary: List jobs
       tags:
         - Job
-      operationId: listJobs
+      operationId: getJobs
       parameters:
+        - $ref: '#/components/parameters/ElevateQuery'
         - $ref: '#/components/parameters/JobProjectionQuery'
       responses:
         '200':
@@ -3226,14 +3228,23 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/Job'
+        'default':
+          description: error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
       security:
         - oauth:
             - stig-manager:op:read
+      x-elevation-required: true
     post:
       summary: Create a new job
       tags:
         - Job
-      operationId: createJob
+      operationId: postJob
+      parameters:
+        - $ref: '#/components/parameters/ElevateQuery'
       requestBody:
         required: true
         content:
@@ -3256,6 +3267,7 @@ paths:
       security:
         - oauth:
             - stig-manager:op
+      x-elevation-required: true
   /jobs/{jobId}:
     get:
       summary: Get job by ID
@@ -3263,6 +3275,7 @@ paths:
         - Job
       operationId: getJob
       parameters:
+        - $ref: '#/components/parameters/ElevateQuery'
         - $ref: '#/components/parameters/JobIdPath'
         - $ref: '#/components/parameters/JobProjectionQuery'
       responses:
@@ -3281,12 +3294,14 @@ paths:
       security:
         - oauth:
             - stig-manager:op:read
+      x-elevation-required: true
     delete:
       summary: Delete job by ID
       tags:
         - Job
       operationId: deleteJob
       parameters:
+        - $ref: '#/components/parameters/ElevateQuery'
         - $ref: '#/components/parameters/JobIdPath'
       responses:
         '204':
@@ -3300,12 +3315,14 @@ paths:
       security:
         - oauth:
             - stig-manager:op
+      x-elevation-required: true
     patch:
       summary: Update job by ID
       tags:
         - Job
-      operationId: updateJob
+      operationId: patchJob
       parameters:
+        - $ref: '#/components/parameters/ElevateQuery'
         - $ref: '#/components/parameters/JobIdPath'
       requestBody:
         required: true
@@ -3329,13 +3346,15 @@ paths:
       security:
         - oauth:
             - stig-manager:op
+      x-elevation-required: true
   /jobs/{jobId}/events:
     get:
       summary: List events for a job
       tags:
         - Job
-      operationId: listEventsByJob
+      operationId: getEventsByJob
       parameters:
+        - $ref: '#/components/parameters/ElevateQuery'
         - $ref: '#/components/parameters/JobIdPath'
       responses:
         '200':
@@ -3353,12 +3372,14 @@ paths:
       security:
         - oauth:
             - stig-manager:op:read
+      x-elevation-required: true
     post:
       summary: Add to the list of events for a job
       tags:
         - Job
-      operationId: postEventForJob
+      operationId: postEventByJob
       parameters:
+        - $ref: '#/components/parameters/ElevateQuery'
         - $ref: '#/components/parameters/JobIdPath'
       requestBody:
         required: true
@@ -3382,19 +3403,21 @@ paths:
       security:
         - oauth:
             - stig-manager:op
+      x-elevation-required: true
   /jobs/{jobId}/runs:
     get:
       summary: List the job runs
       tags:
         - Job
-      operationId: listRunsByJob
+      operationId: getRunsByJob
       parameters:
+        - $ref: '#/components/parameters/ElevateQuery'
         - $ref: '#/components/parameters/JobIdPath'
       responses:
         '200':
           description: List of job runs
           content:
-            application:
+            application/json:
               schema:
                 type: array
                 items:
@@ -3408,12 +3431,14 @@ paths:
       security:
         - oauth:
             - stig-manager:op:read
+      x-elevation-required: true
     post:
       summary: Start an immediate job run
       tags:
         - Job
       operationId: runImmediateJob
       parameters:
+        - $ref: '#/components/parameters/ElevateQuery'
         - $ref: '#/components/parameters/JobIdPath'
       responses:
         '201':
@@ -3431,6 +3456,7 @@ paths:
       security:
         - oauth:
             - stig-manager:op
+      x-elevation-required: true
   /jobs/{jobId}/runs/{runId}:
     get:
       summary: Get a job run by ID
@@ -3438,6 +3464,7 @@ paths:
         - Job
       operationId: getRunByJob
       parameters:
+        - $ref: '#/components/parameters/ElevateQuery'
         - $ref: '#/components/parameters/JobIdPath'
         - $ref: '#/components/parameters/JobRunIdPath'
       responses:
@@ -3456,12 +3483,14 @@ paths:
       security:
         - oauth:
             - stig-manager:op:read
+      x-elevation-required: true
     delete:
       summary: Delete a job run by ID
       tags:
         - Job
       operationId: deleteRunByJob
       parameters:
+        - $ref: '#/components/parameters/ElevateQuery'
         - $ref: '#/components/parameters/JobIdPath'
         - $ref: '#/components/parameters/JobRunIdPath'
       responses:
@@ -3476,6 +3505,7 @@ paths:
       security:
         - oauth:
             - stig-manager:op
+      x-elevation-required: true
   /jobs/{jobId}/runs/{runId}/output:
     get:
       summary: Get the output for a job run
@@ -3483,6 +3513,7 @@ paths:
         - Job
       operationId: getOutputByJobRun
       parameters:
+        - $ref: '#/components/parameters/ElevateQuery'
         - $ref: '#/components/parameters/JobIdPath'
         - $ref: '#/components/parameters/JobRunIdPath'
       responses:
@@ -3503,13 +3534,15 @@ paths:
       security:
         - oauth:
             - stig-manager:op:read
+      x-elevation-required: true
   /jobs/{jobId}/tasks:
     get:
       summary: List tasks for a job
       tags:
         - Job
-      operationId: listTasksByJob
+      operationId: getTasksByJob
       parameters:
+        - $ref: '#/components/parameters/ElevateQuery'
         - $ref: '#/components/parameters/JobIdPath'
       responses:
         '200':
@@ -3527,12 +3560,14 @@ paths:
       security:
         - oauth:
             - stig-manager:op:read
+      x-elevation-required: true
     put:
       summary: Set the list of tasks for a job
       tags:
         - Job
-      operationId: putTasksForJob
+      operationId: putTasksByJob
       parameters:
+        - $ref: '#/components/parameters/ElevateQuery'
         - $ref: '#/components/parameters/JobIdPath'
       requestBody:
         required: true
@@ -3556,6 +3591,7 @@ paths:
       security:
         - oauth:
             - stig-manager:op
+      x-elevation-required: true
   
 
   /op/appdata:
@@ -7378,16 +7414,18 @@ components:
         description:
           $ref: "#/components/schemas/String255Nullable"
         createdBy:
-          $ref: '#/components/schemas/StringIntIdNullable'
+          $ref: '#/components/schemas/UserBasic'
         created:
           $ref: '#/components/schemas/StringDateTime'
+        updatedBy:
+          $ref: '#/components/schemas/UserBasicNullable'
         updated:
-          $ref: '#/components/schemas/StringDateTime'
+          $ref: '#/components/schemas/StringDateTimeNullable'
         tasks:
           $ref: '#/components/schemas/JobTaskList'
         events:
           $ref: '#/components/schemas/JobEventList'
-      required: [jobId, name, created, updated]
+      required: [jobId, name, tasks, created, createdBy]
     JobCreate:
       additionalProperties: false
       type: object
@@ -7399,12 +7437,17 @@ components:
         tasks:
           $ref: '#/components/schemas/JobTaskList'
         events:
-          $ref: '#/components/schemas/JobEventList'
+          $ref: '#/components/schemas/JobEventCreateList'
       required: [name, tasks]
     JobEventCreate:
       oneOf:
         - $ref: '#/components/schemas/JobEventOnceCreate'
         - $ref: '#/components/schemas/JobEventRecurringCreate'
+    JobEventCreateList:
+      type: array
+      minItems: 0
+      items:
+        $ref: '#/components/schemas/JobEventCreate'
     JobEventList:
       type: array
       items:
@@ -7423,7 +7466,7 @@ components:
             - once
         runAt:
           $ref: '#/components/schemas/StringDateTime'
-      required: [eventId, enabled, runAt, type]
+      required: [eventId, runAt, type]
     JobEventOnceCreate:
       additionalProperties: false
       type: object
@@ -7434,7 +7477,7 @@ components:
             - once
         runAt:
           $ref: '#/components/schemas/StringDateTime'
-      required: [eventId, enabled, runAt, type]
+      required: [runAt, type]
     JobEventRecurring:
       additionalProperties: false
       type: object
@@ -7446,7 +7489,7 @@ components:
           enum:
             - recurring
         runEvery:
-          $ref: '#/components/schemas/JobInterval'
+          $ref: '#/components/schemas/String255'
         startsAt:
           $ref: '#/components/schemas/StringDateTimeNullable'
         endsAt:
@@ -7476,8 +7519,7 @@ components:
       type: object
       properties:
         value:
-          type: integer
-          minimum: 1
+          type: string
         field:
           type: string
           enum:
@@ -7503,7 +7545,7 @@ components:
           type: string
           enum:
             - running
-            - success
+            - completed
             - failed
       required: [runId, started, status]
     JobRunId:
@@ -7512,24 +7554,28 @@ components:
       additionalProperties: false
       type: object
       properties:
+        type:
+          type: string
         message:
           type: string
-        taskname:
-          $ref: "#/components/schemas/String45Nullable"
-        timestamp:
+        task:
+          $ref: "#/components/schemas/String45"
+        ts:
           $ref: '#/components/schemas/StringDateTime'
-      required: [message, taskname, timestamp]
+      required: [message, type, task, ts]
     JobTask:
-      additionalProperties: false
       type: object
+      additionalProperties: false
       properties:
-        name:
+        taskname:
           $ref: "#/components/schemas/String45"
         parameters:
           type: array
           items:
-            type: string
-      required: [taskId, parameters]
+            anyOf:
+              - type: string
+              - type: integer
+              - type: number
     JobTaskList:
       type: array
       minItems: 1
@@ -9199,6 +9245,20 @@ components:
       required:
         - userId
         - username
+    UserBasicNullable:
+      nullable: true
+      additionalProperties: false
+      type: object
+      properties:
+        userId:
+          $ref: '#/components/schemas/UserId'
+        username:
+          $ref: '#/components/schemas/Username'
+        roleId:
+          $ref: '#/components/schemas/RoleId'
+      required:
+        - userId
+        - username
     UserBasicWithDisplayName:
       additionalProperties: false
       type: object
@@ -9812,11 +9872,9 @@ components:
       schema:
         type: array
         uniqueItems: true
-        minItems: 1
         items:
           type: string
           enum:
-            - tasks
             - events
     JobRunIdPath:
       name: runId
