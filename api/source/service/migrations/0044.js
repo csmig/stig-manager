@@ -50,6 +50,22 @@ const upMigration = [
     PRIMARY KEY (seq)
   )`,
 
+  `DROP PROCEDURE IF EXISTS get_or_create_runId`,
+  `CREATE PROCEDURE get_or_create_runId(OUT out_runId BINARY(16))
+    BEGIN
+      DECLARE t_runId_exists INT DEFAULT 1;
+      BEGIN
+        DECLARE CONTINUE HANDLER FOR SQLEXCEPTION SET t_runId_exists = 0;
+        SET t_runId_exists = 1;
+        SELECT 1 FROM t_runId LIMIT 1;
+      END;
+      IF t_runId_exists = 1 THEN
+        SELECT runId INTO out_runId FROM t_runId LIMIT 1;
+      ELSE
+        SET out_runId = UUID_TO_BIN(UUID(),1);
+      END IF;
+    END`,
+
   `DROP procedure IF EXISTS run_job`,  
   `CREATE PROCEDURE run_job(
     IN in_jobId INT,
@@ -84,8 +100,8 @@ const upMigration = [
           SET v_runId = UUID_TO_BIN(UUID(), 1);
         END IF;
 
-        CALL task_output (v_runId, v_procname, 'info', concat('run started for jobId ', in_jobId));
         INSERT INTO job_run(jobId, runId, state) VALUES (in_jobId, v_runId, 'running');
+        CALL task_output (v_runId, v_procname, 'info', concat('run started for jobId ', in_jobId));
         CREATE TEMPORARY TABLE IF NOT EXISTS t_runId SELECT v_runId AS runId;
 
         -- Get the number of tasks for the job
@@ -161,16 +177,10 @@ const upMigration = [
       RESIGNAL;
     END;
 
-
     -- Set v_runId from t_runId if table exists, else generate a new UUID
-    IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = DATABASE() AND table_name = 't_runId') THEN
-      SET v_runId = (SELECT runId FROM t_runId LIMIT 1);
-    ELSE
-      SET v_runId = UUID_TO_BIN(UUID(),1);
-    END IF;
-
-
+    CALL get_or_create_runId(v_runId);
     CALL task_output (v_runId, v_taskname, 'info','task started');
+
     drop temporary table if exists t_collectionIds;
     create temporary table t_collectionIds (seq INT AUTO_INCREMENT PRIMARY KEY)
       select collectionId from collection where isEnabled is null;
@@ -274,11 +284,7 @@ const upMigration = [
       END;
 
       -- Set v_runId from t_runId if table exists, else generate a new UUID
-      IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = DATABASE() AND table_name = 't_runId') THEN
-        SET v_runId = (SELECT runId FROM t_runId LIMIT 1);
-      ELSE
-        SET v_runId = UUID_TO_BIN(UUID(),1);
-      END IF;
+      CALL get_or_create_runId(v_runId);
       CALL task_output (v_runId, v_taskname, 'info', 'task started');
 
       drop temporary table if exists t_reviewIds;

@@ -66,23 +66,51 @@ exports.postEventByJob = async (req, res, next) => {
 }
 
 exports.getRunsByJob = async (req, res, next) => {
-  res.end('Not implemented');
+  try {
+    const jobId = req.params.jobId
+    const runs = await JobService.getRunsByJob(jobId)
+    res.json(runs)
+  } catch (error) {
+    next(error)
+  }
 }
 
 exports.runImmediateJob = async (req, res, next) => {
-  res.end('Not implemented');
+  try {
+    const jobId = req.params.jobId
+    const uuid = await JobService.runImmediateJob(jobId)
+    res.json({runId: uuid})
+  } catch (error) {
+    next(error)
+  }
 }
 
-exports.getRunByJob = async (req, res, next) => {
-  res.end('Not implemented');
+exports.getRunById = async (req, res, next) => {
+  try {
+    const runId = req.params.runId
+    const run = await JobService.getRunById(runId)
+    if (!run) {
+      throw new SmError.NotFoundError(`Run with ID [${runId}] not found.`)
+    }
+    res.json(run)
+  } catch (error) {
+    next(error) 
+  }
 }
 
 exports.deleteRunByJob = async (req, res, next) => {
   res.end('Not implemented');
 }
 
-exports.getOutputByJobRun = async (req, res, next) => {
-  res.end('Not implemented');
+exports.getOutputByRun = async (req, res, next) => {
+  try {
+    const runId = req.params.runId
+    const afterSeq = req.query['after-seq']
+    const output = await JobService.getOutputByRun(runId, { filters: { afterSeq } })
+    res.json(output)
+  } catch (error) {
+    next(error)
+  } 
 }
 
 exports.getTasksByJob = async (req, res, next) => {

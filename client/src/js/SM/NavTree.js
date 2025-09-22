@@ -276,7 +276,14 @@ SM.NavTree.TreePanel = Ext.extend(Ext.tree.TreePanel, {
                   text: 'Application Info',
                   leaf: true,
                   iconCls: 'sm-info-circle-icon'
+                },
+                                {
+                  id: 'job-admin',
+                  text: 'Jobs',
+                  leaf: true,
+                  iconCls: 'sm-job-icon'
                 }
+
               ]
               if (STIGMAN.Env.experimental.appData === 'true') {
                 children.push({
@@ -456,8 +463,8 @@ SM.NavTree.TreePanel = Ext.extend(Ext.tree.TreePanel, {
           case 'stig-admin':
             addStigAdmin({ treePath })
             break
-          case 'appinfo-admin':
-            SM.AppInfo.showAppInfoTab({ treePath })
+          case 'job-admin':
+            SM.Job.showJobAdminTab({treePath: n.getPath()})
             break
           case 'appinfo-admin':
             SM.AppInfo.showAppInfoTab({treePath: n.getPath()})

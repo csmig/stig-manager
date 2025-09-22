@@ -2673,3 +2673,25 @@ td.x-grid3-hd-over .x-grid3-hd-inner {
 .x-menu-list-item:has(> .x-hide-display) {
 	padding: 0
 }
+.sm-job-icon {
+  background-image: url(../img/job.svg)!important;
+  background-repeat: no-repeat;
+  background-size: 16px 16px
+}
+
+.sm-job-run-icon {
+  background-image: url(../img/job-run.svg)!important;
+  background-repeat: no-repeat;
+  background-size: 16px 16px
+}
+.sm-job-task-icon {
+  background-image: url(../img/job-task.svg)!important;
+  background-repeat: no-repeat;
+  background-size: 16px 16px
+}
+
+.sm-job-event-icon {
+  background-image: url(../img/clock.svg)!important;
+  background-repeat: no-repeat;
+  background-size: 16px 16px
+}

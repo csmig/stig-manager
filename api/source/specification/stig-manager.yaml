@@ -3446,7 +3446,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/JobRun'
+                $ref: '#/components/schemas/JobRunCreated'
         'default':
           description: error
           content:
@@ -3456,84 +3456,6 @@ paths:
       security:
         - oauth:
             - stig-manager:op
-      x-elevation-required: true
-  /jobs/{jobId}/runs/{runId}:
-    get:
-      summary: Get a job run by ID
-      tags:
-        - Job
-      operationId: getRunByJob
-      parameters:
-        - $ref: '#/components/parameters/ElevateQuery'
-        - $ref: '#/components/parameters/JobIdPath'
-        - $ref: '#/components/parameters/JobRunIdPath'
-      responses:
-        '200':
-          description: Job run details
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/JobRun'
-        'default':
-          description: error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-      security:
-        - oauth:
-            - stig-manager:op:read
-      x-elevation-required: true
-    delete:
-      summary: Delete a job run by ID
-      tags:
-        - Job
-      operationId: deleteRunByJob
-      parameters:
-        - $ref: '#/components/parameters/ElevateQuery'
-        - $ref: '#/components/parameters/JobIdPath'
-        - $ref: '#/components/parameters/JobRunIdPath'
-      responses:
-        '204':
-          description: Job run deleted
-        'default':
-          description: error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-      security:
-        - oauth:
-            - stig-manager:op
-      x-elevation-required: true
-  /jobs/{jobId}/runs/{runId}/output:
-    get:
-      summary: Get the output for a job run
-      tags:
-        - Job
-      operationId: getOutputByJobRun
-      parameters:
-        - $ref: '#/components/parameters/ElevateQuery'
-        - $ref: '#/components/parameters/JobIdPath'
-        - $ref: '#/components/parameters/JobRunIdPath'
-      responses:
-        '200':
-          description: Job run output
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/JobRunOutput'
-        'default':
-          description: error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-      security:
-        - oauth:
-            - stig-manager:op:read
       x-elevation-required: true
   /jobs/{jobId}/tasks:
     get:
@@ -3591,6 +3513,83 @@ paths:
       security:
         - oauth:
             - stig-manager:op
+      x-elevation-required: true
+  /jobs/runs/{runId}:
+    get:
+      summary: Get a job run by ID
+      tags:
+        - Job
+      operationId: getRunById
+      parameters:
+        - $ref: '#/components/parameters/ElevateQuery'
+        - $ref: '#/components/parameters/JobRunIdPath'
+      responses:
+        '200':
+          description: Job run details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JobRun'
+        'default':
+          description: error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      security:
+        - oauth:
+            - stig-manager:op:read
+      x-elevation-required: true
+    delete:
+      summary: Delete a job run by ID
+      tags:
+        - Job
+      operationId: deleteRunByJob
+      parameters:
+        - $ref: '#/components/parameters/ElevateQuery'
+        - $ref: '#/components/parameters/JobIdPath'
+        - $ref: '#/components/parameters/JobRunIdPath'
+      responses:
+        '204':
+          description: Job run deleted
+        'default':
+          description: error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      security:
+        - oauth:
+            - stig-manager:op
+      x-elevation-required: true
+  /jobs/runs/{runId}/output:
+    get:
+      summary: Get the output for a job run
+      tags:
+        - Job
+      operationId: getOutputByRun
+      parameters:
+        - $ref: '#/components/parameters/ElevateQuery'
+        - $ref: '#/components/parameters/JobRunIdPath'
+        - $ref: '#/components/parameters/RunSequenceQuery'
+      responses:
+        '200':
+          description: Job run output
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/JobRunOutput'
+        'default':
+          description: error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      security:
+        - oauth:
+            - stig-manager:op:read
       x-elevation-required: true
   
 
@@ -7425,6 +7424,10 @@ components:
           $ref: '#/components/schemas/JobTaskList'
         events:
           $ref: '#/components/schemas/JobEventList'
+        runCount:
+          type: integer
+        lastRun:
+          $ref: '#/components/schemas/StringDateTimeNullable'
       required: [jobId, name, tasks, created, createdBy]
     JobCreate:
       additionalProperties: false
@@ -7537,9 +7540,9 @@ components:
       properties:
         runId:
           $ref: '#/components/schemas/JobRunId'
-        started:
+        created:
           $ref: '#/components/schemas/StringDateTime'
-        finished:
+        updated:
           $ref: '#/components/schemas/StringDateTimeNullable'
         status:
           type: string
@@ -7547,7 +7550,16 @@ components:
             - running
             - completed
             - failed
-      required: [runId, started, status]
+        jobId:
+          $ref: '#/components/schemas/JobId'
+      required: [runId, created, status]
+    JobRunCreated:
+      additionalProperties: false
+      type: object
+      properties:
+        runId:
+          $ref: '#/components/schemas/JobRunId'
+      required: [runId]
     JobRunId:
       $ref: '#/components/schemas/StringUuid'
     JobRunOutput:
@@ -9876,6 +9888,7 @@ components:
           type: string
           enum:
             - events
+            - runs
     JobRunIdPath:
       name: runId
       in: path
@@ -10138,6 +10151,13 @@ components:
         maxItems: 2
         items:
           $ref: '#/components/schemas/RuleSeverity'
+    RunSequenceQuery:
+      name: after-seq
+      in: query
+      description: The starting sequence number of the run output to retrieve. If not specified, all run output is returned.
+      schema:
+        type: integer
+        minimum: 0
     StartDateQuery:
       name: startDate
       in: query

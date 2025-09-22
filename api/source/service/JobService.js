@@ -17,7 +17,9 @@ exports.queryJobs = async function ({ projections = [], filters = {} } = {}) {
     'job.updated',
     `(select
       IF(COUNT(jt.taskname), json_arrayagg(json_object('taskname', jt.taskname, 'parameters', jt.parameters)), json_array())
-      from job_task_map jt where jt.jobId = job.jobId) AS tasks`
+      from job_task_map jt where jt.jobId = job.jobId) AS tasks`,
+    `(select ifnull(COUNT(*), 0) from job_run jr where jr.jobId = job.jobId) AS runCount`,
+    `(select max(jr.created) from job_run jr where jr.jobId = job.jobId) AS lastRun`
   ]
   const joins = new Set([
     'job',
@@ -174,12 +176,74 @@ exports.createEventByJob = async (jobId, eventData) => {
   throw new Error('Not implemented')
 }
 
+exports.getRunById = async (runId) => {
+  const columns = [
+    `BIN_TO_UUID(jr.runId, 1) AS runId`,
+    'jr.state',
+    'jr.created',
+    'jr.updated',
+    'jr.jobId'
+  ]
+  const joins = new Set(['job_run jr'])
+  const predicates = {
+    statements: ['jr.runId = ?'],
+    binds: [dbUtils.uuidToSqlString(runId)]
+  }
+  const sql = dbUtils.makeQueryString({ columns, joins, predicates, format: true })
+  let [rows] = await dbUtils.pool.query(sql, [runId])
+  return (rows)
+}
+
+
 exports.getRunsByJob = async (jobId) => {
-  throw new Error('Not implemented')
+  const columns = [
+    `BIN_TO_UUID(jr.runId, 1) AS runId`,
+    `jr.state`,
+    `jr.created`,
+    `jr.updated`,
+    `jr.jobId`
+  ]
+  const joins = new Set(['job_run jr'])
+  const predicates = {
+    statements: ['jr.jobId = ?'],
+    binds: [jobId]
+  }
+  const orderBy = ['jr.created DESC']
+
+  const sql = dbUtils.makeQueryString({ columns, joins, predicates, orderBy, format: true })
+  let [rows] = await dbUtils.pool.query(sql, [jobId])
+  return (rows)
 }
 
 exports.runImmediateJob = async (jobId) => {
-  const sql = 'CALL run_job(?)'
-  const [result] = await dbUtils.pool.query(sql, [jobId])
-  return result
+  const v1 = uuid.v1()
+  const sql = `CREATE EVENT IF NOT EXISTS ??
+  ON SCHEDULE AT CURRENT_TIMESTAMP
+  DO CALL run_job(?,?)`
+  await dbUtils.pool.query(sql, [`job-${jobId}-${v1}`, jobId, v1])
+  return v1
+}
+
+exports.getOutputByRun = async (runId, {filters}) => {
+  const columns = [
+    'seq',
+    'ts',
+    'task',
+    'type',
+    'message'
+  ]
+
+  const joins = new Set(['task_output'])
+  const predicates = {
+    statements: ['runId = UUID_TO_BIN(?, 1)'],
+    binds: [runId]
+  }
+  if (filters?.afterSeq) {
+    predicates.statements.push('seq > ?')
+    predicates.binds.push(filters.afterSeq)
+  }
+  const orderBy = ['seq DESC']
+  const sql = dbUtils.makeQueryString({ columns, joins, predicates, orderBy, format: true })
+  let [rows] = await dbUtils.pool.query(sql, predicates.binds)
+  return (rows)
 }
