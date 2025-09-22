@@ -1,12 +1,6 @@
 Ext.ns('SM.Job')
 
 SM.Job.JobsGrid = Ext.extend(Ext.grid.GridPanel, {
-  border: false,
-  loadMask: true,
-  viewConfig: {
-    forceFit: true,
-    emptyText: 'No jobs found'
-  },
   initComponent: function() {
     const _this = this
     const fields = ['jobId', 'name', 'description', 'created', 'createdBy', 'updated', 'updatedBy', 'tasks', 'events', 'runCount', 'lastRun']
@@ -79,6 +73,7 @@ SM.Job.JobsGrid = Ext.extend(Ext.grid.GridPanel, {
 
     const view = new SM.ColumnFilters.GridView({
       forceFit: true,
+      emptyText: 'No jobs found',
       listeners: {
         filterschanged: function (view) {
           store.filter(view.getFilterFns())
@@ -197,6 +192,255 @@ SM.Job.JobsGrid = Ext.extend(Ext.grid.GridPanel, {
   }
 })
 
+SM.Job.RunsGrid = Ext.extend(Ext.grid.GridPanel, {
+    initComponent: function() {
+    const _this = this
+    const fields = [
+      'runId', 
+      'state', 
+      'created', 
+      'updated',
+      {
+        name: 'duration', 
+        convert: function(v, record) {
+          if (record.state !== 'running') {
+            return new Date(record.updated) - new Date(record.created)
+          }
+          return null
+        }
+      }
+    ]
+    const columns = [
+      // {header: 'ID', dataIndex: 'runId', width: 50, sortable: true},
+      {header: 'Started', xtype: 'datecolumn', format: 'Y-m-d H:i:s.u T', dataIndex: 'created', width: 150, sortable: true},
+      {header: 'State', dataIndex: 'state', width: 150, sortable: true},
+      {header: 'Duration', dataIndex: 'duration', width: 150, sortable: true}
+    ]
+
+    const store = new Ext.data.JsonStore({
+      root: '',
+      fields,
+      idProperty: 'runId',
+      sortInfo: {
+        field: 'created',
+        direction: 'DESC'
+      },
+      listeners: {
+        load: function () {
+          _this.selModel.selectRow(0)
+        }
+      }
+    })
+    const totalTextCmp = new SM.RowCountTextItem({ store })
+
+    const sm = new Ext.grid.RowSelectionModel({ 
+      singleSelect: true,
+      listeners: {
+        rowselect: function (sm, rowIndex, record) {
+          // if (store.getAt(rowIndex).data.status === 'available') {
+          //   _this.modifyBtn.setDisabled(false)
+          //   _this.statusBtn.setText('Set Unavailable')
+          //   _this.statusBtn.setIconClass('sm-user-unavailable-icon')
+          // } 
+          // else {
+          //   _this.modifyBtn.setDisabled(true)
+          //   _this.statusBtn.setText('Set Available')
+          //   _this.statusBtn.setIconClass('sm-user-icon')
+          // } 
+        }
+      }
+    })
+
+    const view = new SM.ColumnFilters.GridView({
+      forceFit: true,
+      emptyText: 'No runs found',
+      listeners: {
+        // filterschanged: function (view) {
+        //   store.filter(view.getFilterFns())
+        // },
+        // // These listeners keep the grid in the same scroll position after the store is reloaded
+        // beforerefresh: function (v) {
+        //   v.scrollTop = v.scroller.dom.scrollTop;
+        //   v.scrollHeight = v.scroller.dom.scrollHeight;
+        // },
+        // refresh: function (v) {
+        //   setTimeout(function () {
+        //     v.scroller.dom.scrollTop = v.scrollTop + (v.scrollTop == 0 ? 0 : v.scroller.dom.scrollHeight - v.scrollHeight);
+        //   }, 100);
+        // }
+      },
+      deferEmptyText: false
+    })
+
+
+    const bbar = new Ext.Toolbar({
+      items: [
+        {
+          xtype: 'tbbutton',
+          iconCls: 'icon-refresh',
+          tooltip: 'Reload this grid',
+          width: 20,
+          handler: function (btn) {
+            store.reload()
+          }
+        },
+        {
+          xtype: 'tbseparator'
+        },
+        {
+          xtype: 'exportbutton',
+          hasMenu: false,
+          gridBasename: 'runs',
+          exportType: 'grid',
+          iconCls: 'sm-export-icon',
+          text: 'CSV',
+          grid: this     
+        },
+        {
+          xtype: 'tbfill'
+        }, {
+          xtype: 'tbseparator'
+        },
+        totalTextCmp
+      ]
+    })
+
+    const config = {
+      store,
+      columns,
+      sm,
+      view,
+      bbar, 
+    }
+
+    Ext.apply(this, Ext.apply(this.initialConfig, config))
+    this.superclass().initComponent.call(this)
+  }
+
+})
+
+SM.Job.RunOutputGrid = Ext.extend(Ext.grid.GridPanel, {
+  initComponent: function() {
+    const _this = this
+    const fields = ['seq', 'type', 'message', 'task', 'ts']
+    const columns = [
+      {header: 'Seq', dataIndex: 'seq', width: 50, sortable: true},
+      {header: 'Timestamp', xtype: 'datecolumn', format: 'Y-m-d H:i:s.u T', dataIndex: 'ts', width: 150, sortable: true},
+      {header: 'Task', dataIndex: 'task', width: 100, sortable: true},
+      {header: 'Type', dataIndex: 'type', width: 100, sortable: true},
+      {header: 'Message', dataIndex: 'message', width: 300, sortable: true},
+    ]
+    const store = new Ext.data.JsonStore({
+      root: '',
+      fields,
+      idProperty: 'seq',
+      sortInfo: {
+        field: 'seq',
+        direction: 'ASC' // or 'DESC' (case sensitive for local sorting)
+      },
+    })
+    const totalTextCmp = new SM.RowCountTextItem({ store })
+    const view = new SM.ColumnFilters.GridView({
+      forceFit: true,
+      emptyText: 'No output found',
+      listeners: {
+        filterschanged: function (view) {
+          store.filter(view.getFilterFns())
+        }
+      }
+    })
+
+    const bbar = new Ext.Toolbar({
+      items: [
+        {
+          xtype: 'tbbutton',
+          iconCls: 'icon-refresh',
+          tooltip: 'Reload this grid',
+          width: 20,
+          handler: function (btn) {
+            store.reload()
+          }
+        },
+        {
+          xtype: 'tbseparator'
+        },
+        {
+          xtype: 'exportbutton',
+          hasMenu: false,
+          gridBasename: 'Job-Run-Output',
+          exportType: 'grid',
+          iconCls: 'sm-export-icon',
+          text: 'CSV',
+          grid: this     
+        },
+        {
+          xtype: 'tbfill'
+        }, {
+          xtype: 'tbseparator'
+        },
+        totalTextCmp
+      ]
+    })
+
+    const config = {
+      store,
+      columns,
+      view,
+      bbar, 
+    }
+
+    Ext.apply(this, Ext.apply(this.initialConfig, config))
+    this.superclass().initComponent.call(this)
+  }
+})
+
+SM.Job.RunsPanel = Ext.extend(Ext.Panel, {
+  initComponent: function() {
+    const runsGrid = new SM.Job.RunsGrid({
+      region: 'west',
+      title: 'Runs',
+      width: '33%',
+      split: true,
+      minWidth: 200,
+      maxWidth: 600,
+      iconCls: 'sm-job-run-icon',
+      margins: { top: SM.Margin.top, right: SM.Margin.adjacent, bottom: SM.Margin.bottom, left: SM.Margin.edge },
+      cls: 'sm-round-panel',
+      border: true,
+      loadMask: true,
+    })
+
+    const outputGrid = new SM.Job.RunOutputGrid({
+      region: 'center',
+      margins: { top: SM.Margin.top, right: SM.Margin.edge, bottom: SM.Margin.bottom, left: SM.Margin.adjacent },
+      border: true,
+      loadMask: true,
+      iconCls: 'sm-job-output-icon',
+      title: 'Output',
+      cls: 'sm-round-panel',
+    })
+    runsGrid.getSelectionModel().on('rowselect', async function (sm, rowIndex, record) {
+      const response = await Ext.Ajax.requestPromise({
+        responseType: 'json',
+        url: `${STIGMAN.Env.apiBase}/jobs/runs/${record.data.runId}/output?elevate=${curUser.privileges.admin}`,
+        method: 'GET',
+      })
+      outputGrid.getStore().loadData(response)
+    })
+
+    const config = {
+      layout: 'border',
+      border: false,
+      items: [runsGrid, outputGrid],
+      runsGrid
+    }
+
+    Ext.apply(this, Ext.apply(this.initialConfig, config))
+    this.superclass().initComponent.call(this)
+  }
+})
+
+
 SM.Job.showJobAdminTab = function ({treePath}) {
 	const tab = Ext.getCmp('main-tab-panel').getItem('job-admin-tab')
 	if (tab) {
@@ -206,8 +450,26 @@ SM.Job.showJobAdminTab = function ({treePath}) {
 
   const jobsGrid = new SM.Job.JobsGrid({
     region: 'center',
+    border: false,
+    loadMask: true,
     margins: { top: SM.Margin.top, right: SM.Margin.edge, bottom: SM.Margin.adjacent, left: SM.Margin.edge },
     cls: 'sm-round-panel',
+  })
+
+  const runsPanel = new SM.Job.RunsPanel({
+    border: false,
+    iconCls: 'sm-job-run-icon',
+    title: 'Runs',
+    cls: 'sm-round-panel',
+  })
+
+  jobsGrid.getSelectionModel().on('rowselect', async function (sm, rowIndex, record) {
+    const response = await Ext.Ajax.requestPromise({
+      responseType: 'json',
+      url: `${STIGMAN.Env.apiBase}/jobs/${record.data.jobId}/runs?elevate=${curUser.privileges.admin}`,
+      method: 'GET',
+    })
+    runsPanel.runsGrid.getStore().loadData(response)
   })
 
   const jobTabPanel = new Ext.TabPanel({
@@ -221,6 +483,7 @@ SM.Job.showJobAdminTab = function ({treePath}) {
     activeTab: 0,
     deferredRender: false,
     items: [
+      runsPanel,
       {
         title: 'Tasks',
         iconCls: 'sm-job-task-icon',
@@ -229,10 +492,6 @@ SM.Job.showJobAdminTab = function ({treePath}) {
         title: 'Schedule',
         iconCls: 'sm-job-event-icon',
       },
-      {
-        title: 'Runs',
-        iconCls: 'sm-job-run-icon',
-      }
     ]
   })
 
