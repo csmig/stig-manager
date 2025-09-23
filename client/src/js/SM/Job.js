@@ -499,7 +499,7 @@ SM.Job.showJobAdminTab = function ({treePath}) {
 		id: 'job-admin-tab',
 		sm_treePath: treePath, 
 		iconCls: 'sm-job-icon',
-		title: 'Jobs',
+		title: 'Service Jobs',
 		closable:true,
 		layout: 'border',
 		border: false,

@@ -12,9 +12,37 @@ const upMigration = [
   )`,
   `INSERT INTO task (taskId, name, description, command, args) VALUES
     (1, 'WipeDeletedObjects', 'Wipe deleted collections and assets and their associated reviews', 'delete_disabled()', NULL),
-    (2, 'DeleteStaleSystem', 'Delete reviews that no longer match any rule in the system', 'delete_stale("system")', NULL),
-    (3, 'DeleteStaleAsset', 'Delete reviews that no longer match any asset''s assigned rules', 'delete_stale("asset")', NULL)
-  `,  
+    (2, 'DeleteStaleReviews', 'Delete reviews that no longer match any rule in the system', 'delete_stale("system")', NULL),
+    (3, 'DeleteStaleReviews/Asset', 'Delete reviews that no longer match an asset''s assigned rules', 'delete_stale("asset")', NULL)
+  `,
+  
+  `DROP TABLE IF EXISTS task_category`,
+  `CREATE TABLE task_category (
+    tcId INT NOT NULL AUTO_INCREMENT,
+    name VARCHAR(45) NOT NULL,
+    description VARCHAR(255) NULL,
+    PRIMARY KEY (tcId)
+  )`,
+  `INSERT INTO task_category (tcId, name, description) VALUES
+    (1, 'Category A', 'First category of tasks'),
+    (2, 'Category B', 'Second category of tasks')
+  `,
+  
+  `DROP TABLE IF EXISTS task_category_map`,
+  `CREATE TABLE task_category_map (
+    tcmId INT NOT NULL AUTO_INCREMENT,
+    taskId INT NOT NULL,
+    tcId INT NOT NULL,
+    PRIMARY KEY (tcmId),
+    CONSTRAINT fk_task_cat_taskId FOREIGN KEY (taskId) REFERENCES task(taskId) ON DELETE CASCADE,
+    CONSTRAINT fk_task_cat_tcId FOREIGN KEY (tcId) REFERENCES task_category(tcId) ON DELETE CASCADE
+  )`,
+  `INSERT INTO task_category_map (taskId, tcId) VALUES
+    (1, 1),
+    (2, 2),
+    (3, 2)
+  `,
+
   `DROP TABLE IF EXISTS job`,
   `CREATE TABLE job (
     jobId INT NOT NULL AUTO_INCREMENT,

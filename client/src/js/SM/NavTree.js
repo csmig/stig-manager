@@ -272,17 +272,17 @@ SM.NavTree.TreePanel = Ext.extend(Ext.tree.TreePanel, {
                   iconCls: 'sm-stig-icon'
                 },
                 {
+                  id: 'job-admin',
+                  text: 'Service Jobs',
+                  leaf: true,
+                  iconCls: 'sm-job-icon'
+                },
+                {
                   id: 'appinfo-admin',
                   text: 'Application Info',
                   leaf: true,
                   iconCls: 'sm-info-circle-icon'
                 },
-                                {
-                  id: 'job-admin',
-                  text: 'Jobs',
-                  leaf: true,
-                  iconCls: 'sm-job-icon'
-                }
 
               ]
               if (STIGMAN.Env.experimental.appData === 'true') {
