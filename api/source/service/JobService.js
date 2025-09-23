@@ -16,8 +16,8 @@ exports.queryJobs = async function ({ projections = [], filters = {} } = {}) {
       'username', ud_updater.username)) AS updatedBy`,
     'job.updated',
     `(select
-      IF(COUNT(jt.taskname), json_arrayagg(json_object('taskname', jt.taskname, 'parameters', jt.parameters)), json_array())
-      from job_task_map jt where jt.jobId = job.jobId) AS tasks`,
+      IF(COUNT(jt.taskId), json_arrayagg(json_object('taskId', CAST(jt.taskId as char), 'name', t.name)), json_array())
+      from job_task_map jt left join task t ON jt.taskId = t.taskId where jt.jobId = job.jobId) AS tasks`,
     `(select ifnull(COUNT(*), 0) from job_run jr where jr.jobId = job.jobId) AS runCount`,
     `(select max(jr.created) from job_run jr where jr.jobId = job.jobId) AS lastRun`
   ]
@@ -114,7 +114,6 @@ exports.deleteJob = async (jobId) => {
   return result.affectedRows > 0
 }
 
-// Placeholder for future implementation
 exports.createJob = async ({ jobData, userId, svcStatus } = {}) => {
   const { tasks, events, ...jobFields } = jobData
   async function transactionFn(connection) {
@@ -125,8 +124,8 @@ exports.createJob = async ({ jobData, userId, svcStatus } = {}) => {
     const result = await connection.query(sqlInsertJob, [values])
     const jobId = result[0].insertId
 
-    const sqlInsertTasks = `INSERT INTO job_task_map (jobId, taskname, parameters) VALUES ?`
-    const taskValues = tasks.map(t => [jobId, t.taskname, t.parameters ? JSON.stringify(t.parameters) : null])
+    const sqlInsertTasks = `INSERT INTO job_task_map (jobId, taskId) VALUES ?`
+    const taskValues = tasks.map(t => [jobId, t])
     if (taskValues.length) {
       await connection.query(sqlInsertTasks, [taskValues])
     }
@@ -226,14 +225,15 @@ exports.runImmediateJob = async (jobId) => {
 
 exports.getOutputByRun = async (runId, {filters}) => {
   const columns = [
-    'seq',
-    'ts',
-    'task',
-    'type',
-    'message'
+    'tout.seq',
+    'tout.ts',
+    'tout.taskId',
+    't.name as task',
+    'tout.type',
+    'tout.message'
   ]
 
-  const joins = new Set(['task_output'])
+  const joins = new Set(['task_output tout', 'left join task t ON tout.taskId = t.taskId'])
   const predicates = {
     statements: ['runId = UUID_TO_BIN(?, 1)'],
     binds: [runId]
@@ -246,4 +246,15 @@ exports.getOutputByRun = async (runId, {filters}) => {
   const sql = dbUtils.makeQueryString({ columns, joins, predicates, orderBy, format: true })
   let [rows] = await dbUtils.pool.query(sql, predicates.binds)
   return (rows)
+}
+
+exports.getAllTasks = async () => {
+  const sql = `SELECT taskId, name, description, command FROM task ORDER BY name`
+  let [rows] = await dbUtils.pool.query(sql)
+  return rows
+}
+
+// Placeholder for future implementation --- IGNORE ---
+exports.deleteRunByJob = async (jobId) => {
+  throw new Error('Not implemented')
 }

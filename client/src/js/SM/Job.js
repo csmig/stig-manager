@@ -14,7 +14,7 @@ SM.Job.JobsGrid = Ext.extend(Ext.grid.GridPanel, {
       // {header: 'UpdatedBy', dataIndex: 'updatedBy', width: 150, sortable: true},
       {header: 'Tasks', dataIndex: 'tasks', width: 200, sortable: false, renderer: function(v) {
         if (v?.length) {
-          return v.map(t => t.taskname).join('<br>')
+          return v.map(t => t.name).join('<br>')
         }
         return ''
       }},

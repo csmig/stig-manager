@@ -1,6 +1,20 @@
 const MigrationHandler = require('./lib/MigrationHandler')
 
 const upMigration = [
+  `DROP TABLE IF EXISTS task`,
+  `CREATE TABLE task (
+    taskId INT NOT NULL AUTO_INCREMENT,
+    name VARCHAR(45) NOT NULL,
+    description VARCHAR(255) NULL,
+    command VARCHAR(255) NOT NULL,
+    args JSON NULL DEFAULT ('[]'),
+    PRIMARY KEY (taskId)
+  )`,
+  `INSERT INTO task (taskId, name, description, command, args) VALUES
+    (1, 'WipeDeletedObjects', 'Wipe deleted collections and assets and their associated reviews', 'delete_disabled()', NULL),
+    (2, 'DeleteStaleSystem', 'Delete reviews that no longer match any rule in the system', 'delete_stale("system")', NULL),
+    (3, 'DeleteStaleAsset', 'Delete reviews that no longer match any asset''s assigned rules', 'delete_stale("asset")', NULL)
+  `,  
   `DROP TABLE IF EXISTS job`,
   `CREATE TABLE job (
     jobId INT NOT NULL AUTO_INCREMENT,
@@ -17,14 +31,13 @@ const upMigration = [
   `DROP TABLE IF EXISTS job_task_map`,
   `CREATE TABLE job_task_map (
     jtId INT NOT NULL AUTO_INCREMENT,
-
     jobId INT NOT NULL,
-    taskname VARCHAR(255) NOT NULL,
-    parameters JSON NULL DEFAULT ('[]'),
+    taskId INT NOT NULL,
     created TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     updated TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3),
     PRIMARY KEY (jtId),
-    CONSTRAINT fk_job_task_jobId FOREIGN KEY (jobId) REFERENCES job(jobId) ON DELETE CASCADE
+    CONSTRAINT fk_job_task_jobId FOREIGN KEY (jobId) REFERENCES job(jobId) ON DELETE CASCADE,
+    CONSTRAINT fk_job_task_taskId FOREIGN KEY (taskId) REFERENCES task(taskId) ON DELETE CASCADE
   )`,
 
   `DROP TABLE IF EXISTS job_run`,
@@ -44,25 +57,26 @@ const upMigration = [
     seq INT NOT NULL AUTO_INCREMENT,
     ts TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     runId BINARY(16) NOT NULL,
-    task VARCHAR(255) NOT NULL,
+    taskId INT NULL,
     type VARCHAR(45) NOT NULL,
     message VARCHAR(255) NOT NULL,
     PRIMARY KEY (seq)
   )`,
 
-  `DROP PROCEDURE IF EXISTS get_or_create_runId`,
-  `CREATE PROCEDURE get_or_create_runId(OUT out_runId BINARY(16))
+  `DROP PROCEDURE IF EXISTS get_runtime`,
+  `CREATE PROCEDURE get_runtime(OUT out_runId BINARY(16), OUT out_taskId INT)
     BEGIN
-      DECLARE t_runId_exists INT DEFAULT 1;
+      DECLARE v_table_exists INT DEFAULT 1;
       BEGIN
-        DECLARE CONTINUE HANDLER FOR SQLEXCEPTION SET t_runId_exists = 0;
-        SET t_runId_exists = 1;
-        SELECT 1 FROM t_runId LIMIT 1;
+        DECLARE CONTINUE HANDLER FOR SQLEXCEPTION SET v_table_exists = 0;
+        SET v_table_exists = 1;
+        SELECT 1 FROM t_runtime LIMIT 1;
       END;
-      IF t_runId_exists = 1 THEN
-        SELECT runId INTO out_runId FROM t_runId LIMIT 1;
+      IF v_table_exists = 1 THEN
+        SELECT runId, taskId INTO out_runId, out_taskId FROM t_runtime LIMIT 1;
       ELSE
         SET out_runId = UUID_TO_BIN(UUID(),1);
+        SET out_taskId = NULL;
       END IF;
     END`,
 
@@ -72,24 +86,34 @@ const upMigration = [
     IN in_runIdStr VARCHAR(36)
   )
     main:BEGIN
-        DECLARE v_procname VARCHAR(255) DEFAULT 'run_job';
+        DECLARE v_ourId INT DEFAULT NULL;
         DECLARE v_done INT DEFAULT FALSE;
-        DECLARE v_taskname VARCHAR(255);
-        DECLARE v_parameters JSON;
         DECLARE v_runId BINARY(16);
         DECLARE v_jrId INT;
         DECLARE v_numTasks INT;
-        DECLARE v_currentTask INT DEFAULT 0;
+        DECLARE v_currentTaskId INT;
+        DECLARE v_currentTaskName VARCHAR(255);
+        DECLARE v_currentCommand VARCHAR(255);
+        DECLARE v_currentTaskNum INT DEFAULT 0;
         DECLARE v_param_string TEXT;
         DECLARE cur CURSOR FOR
-          SELECT taskname, parameters FROM job_task_map WHERE jobId = in_jobId ORDER BY jtId ASC;
+          SELECT 
+            jt.taskId,
+            t.name,
+            t.command
+          FROM
+            job_task_map jt
+            inner join task t on (jt.taskId = t.taskId)
+          WHERE 
+            jobId = in_jobId 
+          ORDER BY jtId ASC;
         DECLARE CONTINUE HANDLER FOR NOT FOUND SET v_done = TRUE;
         DECLARE EXIT HANDLER FOR SQLEXCEPTION
         BEGIN
           DECLARE err_code INT;
           DECLARE err_msg TEXT;
           GET STACKED DIAGNOSTICS CONDITION 1 err_code = MYSQL_ERRNO, err_msg = MESSAGE_TEXT;
-          CALL task_output(v_runId, v_procname, 'error', concat('code: ', err_code, ' message: ', err_msg));
+          CALL task_output(v_runId, v_ourId, 'error', concat('code: ', err_code, ' message: ', err_msg));
           UPDATE job_run SET state = 'failed' WHERE jobId = in_jobId;
         END;
 
@@ -100,15 +124,15 @@ const upMigration = [
           SET v_runId = UUID_TO_BIN(UUID(), 1);
         END IF;
 
+        CREATE TEMPORARY TABLE IF NOT EXISTS t_runtime (runId BINARY(16) NOT NULL, taskId INT NULL) SELECT v_runId AS runId, NULL AS taskId;
         INSERT INTO job_run(jobId, runId, state) VALUES (in_jobId, v_runId, 'running');
-        CALL task_output (v_runId, v_procname, 'info', concat('run started for jobId ', in_jobId));
-        CREATE TEMPORARY TABLE IF NOT EXISTS t_runId SELECT v_runId AS runId;
+        CALL task_output (v_runId, v_ourId, 'info', concat('run started for jobId ', in_jobId));
 
         -- Get the number of tasks for the job
         SELECT COUNT(*) INTO v_numTasks FROM job_task_map WHERE jobId = in_jobId;
 
         IF v_numTasks = 0 THEN
-          CALL task_output (v_runId, v_procname, 'error', 'no tasks to run');
+          CALL task_output (v_runId, v_ourId, 'error', 'no tasks to run');
           UPDATE job_run SET state = 'failed' WHERE jobId = in_jobId AND state = 'running';
           LEAVE main; -- No tasks to run, exit the procedure
         END IF;
@@ -116,24 +140,16 @@ const upMigration = [
 
         OPEN cur;
         read_loop: LOOP
-          FETCH cur INTO v_taskname, v_parameters;
+          FETCH cur INTO v_currentTaskId, v_currentTaskName, v_currentCommand;
           IF v_done THEN
             LEAVE read_loop;
           END IF;
-          SET v_currentTask = v_currentTask + 1;
+          SET v_currentTaskNum = v_currentTaskNum + 1;
 
-          -- Build dynamic SQL call with parameters
-          IF JSON_LENGTH(v_parameters) > 0 THEN
-            -- Task has parameters - convert JSON array to SQL parameter format
-            -- Transform ["1", 2, "2025-09-21"] to ("1", 2, "2025-09-21")
-            SET v_param_string = REPLACE(REPLACE(CAST(v_parameters AS CHAR), '[', '('), ']', ')');
-            SET @sql = CONCAT('CALL ', v_taskname, v_param_string);
-          ELSE
-            -- Task has no parameters - call without parameters
-            SET @sql = CONCAT('CALL ', v_taskname, '()');
-          END IF;
+          SET @sql = CONCAT('CALL ', v_currentCommand);
           PREPARE stmt FROM @sql;
-          CALL task_output (v_runId, v_procname, 'info', concat('Starting task ', v_taskname, ' (', v_currentTask, '/', v_numTasks, ')'));
+          CALL task_output (v_runId, v_ourId, 'info', concat('Starting task ', v_currentTaskName, ' (', v_currentTaskNum, '/', v_numTasks, ')'));
+          UPDATE t_runtime SET taskId = v_currentTaskId WHERE runId = runId;
           EXECUTE stmt;
           DEALLOCATE PREPARE stmt;
         END LOOP;
@@ -141,19 +157,19 @@ const upMigration = [
 
         -- === Post-task-loop logic ===
         UPDATE job_run SET state = 'completed' WHERE jobId = in_jobId AND state = 'running';
-        CALL task_output (v_runId, v_procname, 'info', concat('run completed for jobId ', in_jobId));
+        CALL task_output (v_runId, v_ourId, 'info', concat('run completed for jobId ', in_jobId));
 
     END`,
 
   `DROP procedure IF EXISTS task_output`,
   `CREATE PROCEDURE task_output(
     IN in_runId BINARY(16),
-    IN in_taskname VARCHAR(255),
+    IN in_taskId INT,
     IN in_type VARCHAR(45),
     IN in_message VARCHAR(255)
   )
     BEGIN
-      insert into task_output (runId, task, type, message) values (in_runId, in_taskname, in_type, in_message);
+      insert into task_output (runId, taskId, type, message) values (in_runId, in_taskId, in_type, in_message);
     END`,
 
   `DROP PROCEDURE IF EXISTS delete_disabled`,
@@ -167,46 +183,46 @@ const upMigration = [
     DECLARE v_numReviewIds INT;
     DECLARE v_numHistoryIds INT;
     DECLARE v_runId BINARY(16);
-    DECLARE v_taskname VARCHAR(255) DEFAULT 'delete_disabled';
+    DECLARE v_taskId INT;
     DECLARE EXIT HANDLER FOR SQLEXCEPTION
     BEGIN
       DECLARE err_code INT;
       DECLARE err_msg TEXT;
       GET STACKED DIAGNOSTICS CONDITION 1 err_code = MYSQL_ERRNO, err_msg = MESSAGE_TEXT;
-      CALL task_output(v_runId, v_taskname, 'error', concat('code: ', err_code, ' message: ', err_msg));
+      CALL task_output(v_runId, v_taskId, 'error', concat('code: ', err_code, ' message: ', err_msg));
       RESIGNAL;
     END;
 
-    -- Set v_runId from t_runId if table exists, else generate a new UUID
-    CALL get_or_create_runId(v_runId);
-    CALL task_output (v_runId, v_taskname, 'info','task started');
+    -- Set v_runId from t_runtime if table exists, else generate a new UUID
+    CALL get_runtime(v_runId, v_taskId);
+    CALL task_output (v_runId, v_taskId, 'info','task started');
 
     drop temporary table if exists t_collectionIds;
     create temporary table t_collectionIds (seq INT AUTO_INCREMENT PRIMARY KEY)
       select collectionId from collection where isEnabled is null;
     select max(seq) into v_numCollectionIds from t_collectionIds;
-    CALL task_output (v_runId, v_taskname, 'info', concat('found ', ifnull(v_numCollectionIds, 0), ' collections to delete'));
+    CALL task_output (v_runId, v_taskId, 'info', concat('found ', ifnull(v_numCollectionIds, 0), ' collections to delete'));
 
     drop temporary table if exists t_assetIds;
     create temporary table t_assetIds (seq INT AUTO_INCREMENT PRIMARY KEY)
       select assetId from asset where isEnabled is null or collectionId in (select collectionId from t_collectionIds);
     select max(seq) into v_numAssetIds from t_assetIds;
-    CALL task_output (v_runId, v_taskname, 'info', concat('found ', ifnull(v_numAssetIds, 0), ' assets to delete'));
+    CALL task_output (v_runId, v_taskId, 'info', concat('found ', ifnull(v_numAssetIds, 0), ' assets to delete'));
 
     drop temporary table if exists t_reviewIds;
     create temporary table t_reviewIds (seq INT AUTO_INCREMENT PRIMARY KEY)
       select reviewId from review where assetId in (select assetId from t_assetIds);
     select max(seq) into v_numReviewIds from t_reviewIds;
-    CALL task_output (v_runId, v_taskname, 'info', concat('found ', ifnull(v_numReviewIds, 0), ' reviews to delete'));
+    CALL task_output (v_runId, v_taskId, 'info', concat('found ', ifnull(v_numReviewIds, 0), ' reviews to delete'));
 
     drop temporary table if exists t_historyIds;
     create temporary table t_historyIds (seq INT AUTO_INCREMENT PRIMARY KEY)
       select historyId from review_history where reviewId in (select reviewId from t_reviewIds);
     select max(seq) into v_numHistoryIds from t_historyIds;
-    CALL task_output (v_runId, v_taskname, 'info', concat('found ', ifnull(v_numHistoryIds, 0), ' history records to delete'));
+    CALL task_output (v_runId, v_taskId, 'info', concat('found ', ifnull(v_numHistoryIds, 0), ' history records to delete'));
 
     IF v_numHistoryIds > 0 THEN
-    CALL task_output (v_runId, v_taskname, 'info', concat('deleting ', v_numHistoryIds, ' history records'));
+    CALL task_output (v_runId, v_taskId, 'info', concat('deleting ', v_numHistoryIds, ' history records'));
     REPEAT
       delete from review_history where historyId IN (
           select historyId from t_historyIds where seq >= v_curMinId and seq < v_curMaxId
@@ -220,7 +236,7 @@ const upMigration = [
     SET v_curMinId = 1;
     SET v_curMaxId = v_curMinId + v_incrementValue;
     IF v_numReviewIds > 0 THEN
-      CALL task_output (v_runId, v_taskname, 'info', concat('deleting ', v_numReviewIds, ' reviews'));
+      CALL task_output (v_runId, v_taskId, 'info', concat('deleting ', v_numReviewIds, ' reviews'));
       REPEAT
         delete from review where reviewId IN (
             select reviewId from t_reviewIds where seq >= v_curMinId and seq < v_curMaxId
@@ -234,7 +250,7 @@ const upMigration = [
     SET v_curMinId = 1;
     SET v_curMaxId = v_curMinId + v_incrementValue;
     IF v_numAssetIds > 0 THEN
-      CALL task_output (v_runId, v_taskname, 'info', concat('deleting ', v_numAssetIds, ' assets'));
+      CALL task_output (v_runId, v_taskId, 'info', concat('deleting ', v_numAssetIds, ' assets'));
       REPEAT
         delete from asset where assetId IN (
             select assetId from t_assetIds where seq >= v_curMinId and seq < v_curMaxId
@@ -248,7 +264,7 @@ const upMigration = [
     SET v_curMinId = 1;
     SET v_curMaxId = v_curMinId + v_incrementValue;
     IF v_numCollectionIds > 0 THEN
-      CALL task_output (v_runId, v_taskname, 'info', concat('deleting ', v_numCollectionIds, ' collections'));
+      CALL task_output (v_runId, v_taskId, 'info', concat('deleting ', v_numCollectionIds, ' collections'));
       REPEAT
         delete from collection where collectionId IN (
             select collectionId from t_collectionIds where seq >= v_curMinId and seq < v_curMaxId
@@ -259,33 +275,33 @@ const upMigration = [
     END IF;
     drop temporary table if exists t_collectionIds;
 
-    CALL task_output (v_runId, v_taskname, 'info', 'task finished');
+    CALL task_output (v_runId, v_taskId, 'info', 'task finished');
     END`,
 
   `DROP PROCEDURE IF EXISTS delete_stale`,
   `CREATE PROCEDURE delete_stale(IN in_context VARCHAR(255))
     BEGIN
       DECLARE v_runId BINARY(16);
+      DECLARE v_taskId INT;
       DECLARE v_numReviewIds INT;
       DECLARE v_numHistoryIds INT;
       DECLARE v_incrementValue INT DEFAULT 10000;
       DECLARE v_curMinId BIGINT DEFAULT 1;
       DECLARE v_curMaxId BIGINT DEFAULT v_incrementValue + 1;
 
-      DECLARE v_taskname VARCHAR(255) DEFAULT 'delete_stale';
       DECLARE EXIT HANDLER FOR SQLEXCEPTION
       BEGIN
         DECLARE err_code INT;
         DECLARE err_msg TEXT;
         GET DIAGNOSTICS CONDITION 1
           err_code = MYSQL_ERRNO, err_msg = MESSAGE_TEXT;
-        CALL task_output(v_runId, v_taskname, 'error',concat('code: ', err_code, ' message: ', err_msg));
+        CALL task_output(v_runId, v_taskId, 'error',concat('code: ', err_code, ' message: ', err_msg));
         RESIGNAL;
       END;
 
-      -- Set v_runId from t_runId if table exists, else generate a new UUID
-      CALL get_or_create_runId(v_runId);
-      CALL task_output (v_runId, v_taskname, 'info', 'task started');
+      -- Set v_runId from t_runtime if table exists, else generate a new UUID
+      CALL get_runtime(v_runId, v_taskId);
+      CALL task_output (v_runId, v_taskId, 'info', 'task started');
 
       drop temporary table if exists t_reviewIds;
       create temporary table t_reviewIds (seq INT AUTO_INCREMENT PRIMARY KEY, reviewId INT);
@@ -311,16 +327,16 @@ const upMigration = [
       END IF;
 
       select max(seq) into v_numReviewIds from t_reviewIds;
-      CALL task_output (v_runId, v_taskname, 'info', concat('found ', ifnull(v_numReviewIds, 0), ' reviews to delete'));
+      CALL task_output (v_runId, v_taskId, 'info', concat('found ', ifnull(v_numReviewIds, 0), ' reviews to delete'));
 
       IF v_numReviewIds > 0 THEN
         drop temporary table if exists t_historyIds;
         create temporary table t_historyIds (seq INT AUTO_INCREMENT PRIMARY KEY)
           select historyId from review_history where reviewId in (select reviewId from t_reviewIds);
         select max(seq) into v_numHistoryIds from t_historyIds;
-        CALL task_output (v_runId, v_taskname, 'info', concat('found ', ifnull(v_numHistoryIds, 0), ' history records to delete'));
+        CALL task_output (v_runId, v_taskId, 'info', concat('found ', ifnull(v_numHistoryIds, 0), ' history records to delete'));
         IF v_numHistoryIds > 0 THEN
-          CALL task_output (v_runId, v_taskname, 'info', concat('deleting ', v_numHistoryIds, ' history records'));
+          CALL task_output (v_runId, v_taskId, 'info', concat('deleting ', v_numHistoryIds, ' history records'));
           SET v_curMinId = 1;
           SET v_curMaxId = v_curMinId + v_incrementValue;
           REPEAT
@@ -331,7 +347,7 @@ const upMigration = [
             SET v_curMaxId = v_curMaxId + v_incrementValue;
           UNTIL ROW_COUNT() = 0 END REPEAT;
         END IF;
-        CALL task_output (v_runId, v_taskname, 'info', concat('deleting ', v_numAssetIds, ' assets'));
+        CALL task_output (v_runId, v_taskId, 'info', concat('deleting ', v_numAssetIds, ' assets'));
         SET v_curMinId = 1;
         SET v_curMaxId = v_curMinId + v_incrementValue;
         REPEAT
@@ -342,7 +358,7 @@ const upMigration = [
           SET v_curMaxId = v_curMaxId + v_incrementValue;
         UNTIL ROW_COUNT() = 0 END REPEAT;
       END IF;
-      CALL task_output (v_runId, v_taskname, 'info', 'task finished');
+      CALL task_output (v_runId, v_taskId, 'info', 'task finished');
     END;`
 
 ]

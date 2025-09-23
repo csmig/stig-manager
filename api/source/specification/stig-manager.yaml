@@ -3591,7 +3591,33 @@ paths:
         - oauth:
             - stig-manager:op:read
       x-elevation-required: true
-  
+  /jobs/tasks:
+    get:
+      summary: List all tasks
+      tags:
+        - Job
+      operationId: getAllTasks
+      parameters:
+        - $ref: '#/components/parameters/ElevateQuery'
+      responses:
+        '200':
+          description: List of tasks
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/JobTask'
+        'default':
+          description: error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      security:
+        - oauth:
+            - stig-manager:op:read
+      x-elevation-required: true
 
   /op/appdata:
     get:
@@ -7438,7 +7464,7 @@ components:
         description:
           $ref: "#/components/schemas/String255Nullable"
         tasks:
-          $ref: '#/components/schemas/JobTaskList'
+          $ref: '#/components/schemas/JobTaskListCreate'
         events:
           $ref: '#/components/schemas/JobEventCreateList'
       required: [name, tasks]
@@ -7572,6 +7598,8 @@ components:
           type: string
         task:
           $ref: "#/components/schemas/String45"
+        taskId:
+          $ref: "#/components/schemas/JobTaskId"
         ts:
           $ref: '#/components/schemas/StringDateTime'
       required: [message, type, task, ts]
@@ -7579,20 +7607,31 @@ components:
       type: object
       additionalProperties: false
       properties:
-        taskname:
+        taskId:
+          $ref: '#/components/schemas/StringIntId'
+        name:
           $ref: "#/components/schemas/String45"
-        parameters:
+        description:
+          $ref: "#/components/schemas/String255Nullable"
+        command:
+          $ref: '#/components/schemas/String255'
+        args:
           type: array
           items:
-            anyOf:
-              - type: string
-              - type: integer
-              - type: number
+            $ref: '#/components/schemas/String255'
+      required: [taskId, name]
+    JobTaskId:
+      $ref: '#/components/schemas/StringIntId'
     JobTaskList:
       type: array
       minItems: 1
       items:
         $ref: '#/components/schemas/JobTask'
+    JobTaskListCreate:
+      type: array
+      minItems: 1
+      items:
+        $ref: '#/components/schemas/JobTaskId'
     JobUpdate:
       type: object
       additionalProperties: false
@@ -7608,6 +7647,7 @@ components:
             $ref: '#/components/schemas/JobTask'
         events:
           $ref: '#/components/schemas/JobEventList'
+
     Label:
       additionalProperties: false
       type: object

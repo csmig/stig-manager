@@ -121,3 +121,13 @@ exports.putTasksByJob = async (req, res, next) => {
   res.end('Not implemented');
 }
 
+exports.getAllTasks = async (req, res, next) => {
+  try {
+    const tasks = await JobService.getAllTasks()
+    res.json(tasks)
+  } catch (error) {
+    next(error)
+  }
+}
+
+
