@@ -54,15 +54,19 @@ exports.deleteJob = async (req, res, next) => {
 }
 
 exports.patchJob = async (req, res, next) => {
-  res.end('Not implemented');
-}
-
-exports.getEventsByJob = async (req, res, next) => {
-  res.end('Not implemented');
-}
-
-exports.postEventByJob = async (req, res, next) => {
-  res.end('Not implemented');
+  try {
+    const jobId = req.params.jobId
+    await JobService.patchJob({
+      jobId,
+      jobData: req.body, 
+      userId: req.userObject.userId, 
+      svcStatus: res.svcStatus
+    })
+    const patchedJob = await JobService.getJob(jobId)
+    res.status(200).json(patchedJob)
+  } catch (error) {
+    next(error)
+  }
 }
 
 exports.getRunsByJob = async (req, res, next) => {
@@ -111,14 +115,6 @@ exports.getOutputByRun = async (req, res, next) => {
   } catch (error) {
     next(error)
   } 
-}
-
-exports.getTasksByJob = async (req, res, next) => {
-  res.end('Not implemented');
-}
-
-exports.putTasksByJob = async (req, res, next) => {
-  res.end('Not implemented');
 }
 
 exports.getAllTasks = async (req, res, next) => {

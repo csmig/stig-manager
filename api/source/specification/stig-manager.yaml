@@ -3218,7 +3218,6 @@ paths:
       operationId: getJobs
       parameters:
         - $ref: '#/components/parameters/ElevateQuery'
-        - $ref: '#/components/parameters/JobProjectionQuery'
       responses:
         '200':
           description: List of jobs
@@ -3277,7 +3276,6 @@ paths:
       parameters:
         - $ref: '#/components/parameters/ElevateQuery'
         - $ref: '#/components/parameters/JobIdPath'
-        - $ref: '#/components/parameters/JobProjectionQuery'
       responses:
         '200':
           description: Job details
@@ -3347,63 +3345,6 @@ paths:
         - oauth:
             - stig-manager:op
       x-elevation-required: true
-  /jobs/{jobId}/events:
-    get:
-      summary: List events for a job
-      tags:
-        - Job
-      operationId: getEventsByJob
-      parameters:
-        - $ref: '#/components/parameters/ElevateQuery'
-        - $ref: '#/components/parameters/JobIdPath'
-      responses:
-        '200':
-          description: List of events
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/JobEventList'
-        'default':
-          description: error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-      security:
-        - oauth:
-            - stig-manager:op:read
-      x-elevation-required: true
-    post:
-      summary: Add to the list of events for a job
-      tags:
-        - Job
-      operationId: postEventByJob
-      parameters:
-        - $ref: '#/components/parameters/ElevateQuery'
-        - $ref: '#/components/parameters/JobIdPath'
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/JobEventCreate'
-      responses:
-        '200':
-          description: Events updated
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/JobEventList'
-        'default':
-          description: error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-      security:
-        - oauth:
-            - stig-manager:op
-      x-elevation-required: true
   /jobs/{jobId}/runs:
     get:
       summary: List the job runs
@@ -3447,63 +3388,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/JobRunCreated'
-        'default':
-          description: error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-      security:
-        - oauth:
-            - stig-manager:op
-      x-elevation-required: true
-  /jobs/{jobId}/tasks:
-    get:
-      summary: List tasks for a job
-      tags:
-        - Job
-      operationId: getTasksByJob
-      parameters:
-        - $ref: '#/components/parameters/ElevateQuery'
-        - $ref: '#/components/parameters/JobIdPath'
-      responses:
-        '200':
-          description: List of tasks
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/JobTaskList'
-        'default':
-          description: error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-      security:
-        - oauth:
-            - stig-manager:op:read
-      x-elevation-required: true
-    put:
-      summary: Set the list of tasks for a job
-      tags:
-        - Job
-      operationId: putTasksByJob
-      parameters:
-        - $ref: '#/components/parameters/ElevateQuery'
-        - $ref: '#/components/parameters/JobIdPath'
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/JobTaskList'
-      responses:
-        '200':
-          description: Tasks updated
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/JobTaskList'
         'default':
           description: error
           content:
@@ -7448,8 +7332,8 @@ components:
           $ref: '#/components/schemas/StringDateTimeNullable'
         tasks:
           $ref: '#/components/schemas/JobTaskList'
-        events:
-          $ref: '#/components/schemas/JobEventList'
+        event:
+          $ref: '#/components/schemas/JobEvent'
         runCount:
           type: integer
         lastRun:
@@ -7466,23 +7350,16 @@ components:
         tasks:
           $ref: '#/components/schemas/JobTaskListCreate'
         events:
-          $ref: '#/components/schemas/JobEventCreateList'
+          $ref: '#/components/schemas/JobEventCreate'
       required: [name, tasks]
+    JobEvent:
+      oneOf:
+        - $ref: '#/components/schemas/JobEventRecurring'
+        - $ref: '#/components/schemas/JobEventOnce'
     JobEventCreate:
       oneOf:
-        - $ref: '#/components/schemas/JobEventOnceCreate'
         - $ref: '#/components/schemas/JobEventRecurringCreate'
-    JobEventCreateList:
-      type: array
-      minItems: 0
-      items:
-        $ref: '#/components/schemas/JobEventCreate'
-    JobEventList:
-      type: array
-      items:
-        oneOf:
-          - $ref: '#/components/schemas/JobEventOnce'
-          - $ref: '#/components/schemas/JobEventRecurring'
+        - $ref: '#/components/schemas/JobEventOnceCreate'
     JobEventOnce:
       additionalProperties: false
       type: object
@@ -7493,9 +7370,12 @@ components:
           type: string
           enum:
             - once
-        runAt:
+        starts:
           $ref: '#/components/schemas/StringDateTime'
-      required: [eventId, runAt, type]
+        enabled:
+          type: boolean
+          default: true
+      required: [eventId, starts, type]
     JobEventOnceCreate:
       additionalProperties: false
       type: object
@@ -7504,9 +7384,12 @@ components:
           type: string
           enum:
             - once
-        runAt:
+        starts:
           $ref: '#/components/schemas/StringDateTime'
-      required: [runAt, type]
+        enabled:
+          type: boolean
+          default: true
+      required: [starts, type]
     JobEventRecurring:
       additionalProperties: false
       type: object
@@ -7517,17 +7400,16 @@ components:
           type: string
           enum:
             - recurring
-        runEvery:
-          $ref: '#/components/schemas/String255'
-        startsAt:
+        interval:
+          $ref: '#/components/schemas/JobInterval'
+        starts:
           $ref: '#/components/schemas/StringDateTimeNullable'
-        endsAt:
+        ends:
           $ref: '#/components/schemas/StringDateTimeNullable'
-        lastRun:
-          $ref: '#/components/schemas/StringDateTimeNullable'
-        nextRun:
-          $ref: '#/components/schemas/StringDateTimeNullable'
-      required: [eventId, type, runEvery]
+        enabled:
+          type: boolean
+          default: true
+      required: [eventId, type, interval]
     JobEventRecurringCreate:
       additionalProperties: false
       type: object
@@ -7536,13 +7418,16 @@ components:
           type: string
           enum:
             - recurring
-        runEvery:
+        interval:
           $ref: '#/components/schemas/JobInterval'
-        startsAt:
+        starts:
           $ref: '#/components/schemas/StringDateTimeNullable'
-        endsAt:
+        ends:
           $ref: '#/components/schemas/StringDateTimeNullable'
-      required: [type, runEvery]
+        enabled:
+          type: boolean
+          default: true
+      required: [type, interval]
     JobInterval:
       additionalProperties: false
       type: object
@@ -7642,11 +7527,9 @@ components:
         description:
           $ref: "#/components/schemas/String255Nullable"
         tasks:
-          type: array
-          items:
-            $ref: '#/components/schemas/JobTask'
-        events:
-          $ref: '#/components/schemas/JobEventList'
+          $ref: '#/components/schemas/JobTaskListCreate'
+        event:
+          $ref: '#/components/schemas/JobEventCreate'
 
     Label:
       additionalProperties: false
@@ -9915,20 +9798,6 @@ components:
       required: true
       schema:
         $ref: '#/components/schemas/JobId'
-    JobProjectionQuery:
-      name: projection
-      in: query
-      description: Additional properties to include in the response.
-      style: form
-      explode: true
-      schema:
-        type: array
-        uniqueItems: true
-        items:
-          type: string
-          enum:
-            - events
-            - runs
     JobRunIdPath:
       name: runId
       in: path

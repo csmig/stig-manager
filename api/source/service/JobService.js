@@ -30,52 +30,33 @@ exports.queryJobs = async function ({ projections = [], filters = {} } = {}) {
 
   const orderBy = ['job.jobId']
 
-  if (projections?.includes('events')) {
-    const arrayValues = `
-    IF(e.event_type = 'ONE TIME',
-      JSON_OBJECT(
-        'eventId', e.event_name,
-        'type', 'once',
-        'runAt', DATE_FORMAT(e.execute_at,'%Y-%m-%dT%H:%i:%sZ') 
-      ),
-      JSON_OBJECT(
-        'eventId', e.event_name,
-        'type', 'recurring',
-        'runEvery', CONCAT(e.interval_value, ' ', e.interval_field),
-        'startsAt', DATE_FORMAT(e.starts,'%Y-%m-%dT%H:%i:%sZ'),
-        'endsAt', DATE_FORMAT(e.ends,'%Y-%m-%dT%H:%i:%sZ'),
-        'lastRun', DATE_FORMAT(e.last_executed,'%Y-%m-%dT%H:%i:%sZ')
-      )
-    )`
-    columns.push(`(select
-      if (COUNT(e.event_name), json_arrayagg(${arrayValues}), JSON_ARRAY()) AS events
-    from
-      information_schema.events e
-    where
-      e.event_schema = database() 
-      AND e.event_name LIKE CONCAT("job-", job.jobId, "-%")
-    ) as events`)
+  const eventValues = `
+  IF(e.event_type = 'ONE TIME',
+    JSON_OBJECT(
+      'eventId', e.event_name,
+      'type', 'once',
+      'starts', DATE_FORMAT(e.execute_at,'%Y-%m-%dT%H:%i:%sZ'),
+      'enabled', e.status = 'ENABLED'
+    ),
+    JSON_OBJECT(
+      'eventId', e.event_name,
+      'type', 'recurring',
+      'interval', JSON_OBJECT('value', CAST(e.interval_value as char), 'field', LCASE(e.interval_field)),
+      'starts', DATE_FORMAT(e.starts,'%Y-%m-%dT%H:%i:%sZ'),
+      'ends', DATE_FORMAT(e.ends,'%Y-%m-%dT%H:%i:%sZ'),
+      'enabled', e.status = 'ENABLED'
+    )
+  )`
+  columns.push(`(select
+    ${eventValues} AS event
+  from
+    information_schema.events e
+  where
+    e.event_schema = database() 
+    AND e.event_name LIKE CONCAT("job-", job.jobId, "-%")
+    LIMIT 1
+  ) as event`)
 
-    // joins.add(`left join information_schema.events e ON
-    //   (e.event_schema = database() AND e.event_name LIKE CONCAT("job_", job.jobId, "_%"))`)
-    // const jsonArrayDistinct = dbUtils.jsonArrayAggDistinct(`
-    //   IF(e.event_type = 'ONE TIME',
-    //     JSON_OBJECT(
-    //       'eventId', e.event_name,
-    //       'type', 'once',
-    //       'runAt', DATE_FORMAT(e.execute_at,'%Y-%m-%dT%H:%i:%sZ') 
-    //     ),
-    //     JSON_OBJECT(
-    //       'eventId', e.event_name,
-    //       'type', 'recurring',
-    //       'runEvery', CONCAT(e.interval_value, ' ', e.interval_field),
-    //       'startsAt', DATE_FORMAT(e.starts,'%Y-%m-%dT%H:%i:%sZ'),
-    //       'endsAt', DATE_FORMAT(e.ends,'%Y-%m-%dT%H:%i:%sZ'),
-    //       'lastRun', DATE_FORMAT(e.last_executed,'%Y-%m-%dT%H:%i:%sZ')
-    //     )
-    //   )`)
-    // columns.push(`IF(COUNT(e.event_name), ${jsonArrayDistinct}, JSON_ARRAY()) AS events`)
-  }
 
   const predicates = {
     statements: [],
@@ -163,6 +144,79 @@ exports.createJob = async ({ jobData, userId, svcStatus } = {}) => {
   return jobId
 }
 
+exports.patchJob = async ({jobId, jobData, userId, svcStatus = {}}) => {
+  const { tasks, events, ...jobFields } = jobData
+  async function transactionFn(connection) {
+    const sets = []
+    const binds = []
+    if (jobFields.name !== undefined) {
+      sets.push('name = ?')
+      binds.push(jobFields.name)
+    }
+    if (jobFields.description !== undefined) {
+      sets.push('description = ?')
+      binds.push(jobFields.description)
+    }
+    if (sets.length) {
+      sets.push('updatedBy = ?')
+      binds.push(userId)
+      binds.push(jobId)
+      const sqlUpdateJob = `UPDATE job SET ${sets.join(', ')}, updated = CURRENT_TIMESTAMP WHERE jobId = ?`
+      await connection.query(sqlUpdateJob, binds)
+    }
+    if (Array.isArray(tasks)) {
+      const sqlDeleteTasks = `DELETE FROM job_task_map WHERE jobId = ?`
+      await connection.query(sqlDeleteTasks, [jobId])
+      const sqlInsertTasks = `INSERT INTO job_task_map (jobId, taskId) VALUES ?`
+      const taskValues = tasks.map(t => [jobId, t])
+      if (taskValues.length) {
+        await connection.query(sqlInsertTasks, [taskValues])
+      }
+    }
+    return jobId
+  }
+  const updatedJobId = await dbUtils.retryOnDeadlock2({
+    transactionFn,
+    statusObj: svcStatus
+  })
+  // Create events after committing the transaction
+  // if (Array.isArray(events)) {
+  //   const sql = 'select event_name from information_schema.events where event_schema = database() AND event_name LIKE CONCAT("job-", ?, "-%")'
+  //   const [existingEvents] = await dbUtils.pool.query(sql, [jobId])
+  //   if (existingEvents.length) {
+  //     const eventNames = existingEvents.map(r => r.EVENT_NAME)
+  //     for (const eventName of eventNames) {
+  //       const sqlDropEvent = `DROP EVENT IF EXISTS ??`
+  //       await dbUtils.pool.query(sqlDropEvent, [eventName])
+  //     }
+  //   }
+  //   if (events.length) {
+  //     for (const event of events) {
+  //       const eventName = `job-${jobId}-${uuid.v1()}`
+  //       if (event.type === 'once') {
+  //         const sqlCreateEvent = `
+  //           CREATE EVENT ?? 
+  //           ON SCHEDULE AT ? 
+  //           DO CALL run_job(?)
+  //         `
+  //         const params = [eventName, event.runAt, jobId]
+  //         await dbUtils.pool.query(sqlCreateEvent, params)
+  //       } else if (event.type === 'recurring') {
+  //         let endsAt = event.endsAt ? `ENDS '${event.endsAt}'` : ''
+  //         // Interpolate the interval unit as a bare word
+  //         const sqlCreateEvent = `
+  //           CREATE EVENT ?? 
+  //           ON SCHEDULE EVERY ? ${event.runEvery.field} STARTS ? ${endsAt}
+  //           DO CALL run_job(?)
+  //         `
+  //         const params = [eventName, event.runEvery.value, event.startsAt, jobId]
+  //         await dbUtils.pool.query(sqlCreateEvent, params)
+  //       }
+  //     }
+  //   }
+  // }
+  return updatedJobId
+}
 exports.updateJob = async (jobId, jobData) => {
   throw new Error('Not implemented')
 }
@@ -249,7 +303,7 @@ exports.getOutputByRun = async (runId, {filters}) => {
 }
 
 exports.getAllTasks = async () => {
-  const sql = `SELECT taskId, name, description, command FROM task ORDER BY name`
+  const sql = `SELECT CAST(taskId AS CHAR(36)) AS taskId, name, description, command FROM task ORDER BY name`
   let [rows] = await dbUtils.pool.query(sql)
   return rows
 }
