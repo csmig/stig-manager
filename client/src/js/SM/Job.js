@@ -124,7 +124,7 @@ SM.Job.JobsGrid = Ext.extend(Ext.grid.GridPanel, {
         handler: function () {
           let job = _this.getSelectionModel().getSelected();
           let buttons = { yes: 'Remove', no: 'Cancel' }
-          let confirmStr = `Remove job ${job.data.name}?<br><br>This action will remove the Job's scheduled events and run output.`;
+          let confirmStr = `Remove <b>${job.data.name}</b>?<br><br>This action will remove the Job's scheduled events and run output.`;
 
           Ext.Msg.show({
             title: 'Confirm remove action',
@@ -292,18 +292,6 @@ SM.Job.RunsGrid = Ext.extend(Ext.grid.GridPanel, {
 
     const bbar = new Ext.Toolbar({
       items: [
-        // {
-        //   xtype: 'tbbutton',
-        //   iconCls: 'icon-refresh',
-        //   tooltip: 'Reload this grid',
-        //   width: 20,
-        //   handler: function (btn) {
-        //     store.reload()
-        //   }
-        // },
-        // {
-        //   xtype: 'tbseparator'
-        // },
         {
           xtype: 'exportbutton',
           hasMenu: false,
@@ -338,7 +326,6 @@ SM.Job.RunsGrid = Ext.extend(Ext.grid.GridPanel, {
 
 SM.Job.RunOutputGrid = Ext.extend(Ext.grid.GridPanel, {
   initComponent: function () {
-    const _this = this
     const fields = ['seq', 'type', 'message', 'task', 'ts']
     const columns = [
       { header: 'Seq', dataIndex: 'seq', width: 50, sortable: true },
@@ -369,18 +356,6 @@ SM.Job.RunOutputGrid = Ext.extend(Ext.grid.GridPanel, {
 
     const bbar = new Ext.Toolbar({
       items: [
-        // {
-        //   xtype: 'tbbutton',
-        //   iconCls: 'icon-refresh',
-        //   tooltip: 'Reload this grid',
-        //   width: 20,
-        //   handler: function (btn) {
-        //     store.reload()
-        //   }
-        // },
-        // {
-        //   xtype: 'tbseparator'
-        // },
         {
           xtype: 'exportbutton',
           hasMenu: false,
@@ -1171,40 +1146,15 @@ SM.Job.showJobProps = async function (jobId) {
           Ext.getBody().unmask()
           return
         }
-        const apiJob = await Ext.Ajax.requestPromise({
+        await Ext.Ajax.requestPromise({
           responseType: 'json',
           url: `${STIGMAN.Env.apiBase}/jobs${jobId ? '/' + jobId : ''}`,
           method: jobId ? 'PATCH' : 'POST',
           jsonData: values,
           params: { elevate: curUser.privileges.admin }
         })
+        SM.Dispatcher.fireEvent('jobchanged')
         appwindow.close()
-
-        // const jobsGrid = Ext.getCmp('main-tab-panel').getItem('job-admin-tab').items.first().items.first()
-        // jobsGrid.getStore().reload()
-        // jobsGrid.getSelectionModel().selectRecords([apiJob])
-
-        // The code below is for event scheduling, which is not implemented yet
-
-        // if (values.frequency === 'none') {
-        //   values.event = null
-        // }
-        // else if (values.frequency === 'once') {
-        //   values.event = {
-        //     type: 'once',
-        //     startTime: new Date(values.dailyDate + ' ' + values.dailyTime).toISOString(),
-        //   }
-        // }
-        // else if (values.frequency === 'recurring') {
-        //   values.event = {
-        //     type: 'recurring',
-        //     interval: {
-        //       value: parseInt(values.intervalValue),
-        //       field: values.intervalField,
-        //     },
-        //     startTime: new Date(values.dailyDate + ' ' + values.dailyTime).toISOString(),
-        //   }
-        // }
       }
       catch (e) {
         SM.Error.handleError(e)
@@ -1288,11 +1238,41 @@ SM.Job.showJobAdminTab = function ({ treePath }) {
     loadMask: true,
   })
 
+  jobsGrid.getSelectionModel().on('rowselect', async function (sm, rowIndex, record) {
+    loadRuns(record.data.jobId) 
+  })
+  jobsGrid.getStore().on('load', function () {
+    const selection = jobsGrid.getSelectionModel().getSelected()
+    if (selection) {
+      loadRuns(selection.data.jobId)
+    }
+  })
+
+  SM.Dispatcher.addListener('jobchanged', onJobChanged)
+
+  const thisTab = Ext.getCmp('main-tab-panel').add({
+    id: 'job-admin-tab',
+    sm_treePath: treePath,
+    iconCls: 'sm-job-icon',
+    title: 'Service Jobs',
+    closable: true,
+    layout: 'border',
+    border: false,
+    items: [jobsGrid, runsPanel],
+    listeners: {
+      destroy: function () {
+        SM.Dispatcher.removeListener('jobchanged', onJobChanged)
+      }
+    }
+  })
+  thisTab.show()
+  jobsGrid.getStore().load()
+
   async function runNowFn() {
     const job = jobsGrid.getSelectionModel().getSelected();
     if (!job) return
     let buttons = { yes: 'Run Now', no: 'Cancel' }
-    let confirmStr = `Run job ${job.data.name} now?`
+    let confirmStr = `Run <b>${job.data.name}</b> now?`
 
     Ext.Msg.show({
       title: 'Confirm run action',
@@ -1332,27 +1312,9 @@ SM.Job.showJobAdminTab = function ({ treePath }) {
     runsPanel.outputGrid.getStore().removeAll()
     runsPanel.runsGrid.getStore().loadData(response)
   }
-  
-  jobsGrid.getSelectionModel().on('rowselect', async function (sm, rowIndex, record) {
-    loadRuns(record.data.jobId) 
-  })
-  jobsGrid.getStore().on('load', function (store) {
-    const selection = jobsGrid.getSelectionModel().getSelected()
-    if (selection) {
-      loadRuns(selection.data.jobId)
-    }
-  })
 
-  const thisTab = Ext.getCmp('main-tab-panel').add({
-    id: 'job-admin-tab',
-    sm_treePath: treePath,
-    iconCls: 'sm-job-icon',
-    title: 'Service Jobs',
-    closable: true,
-    layout: 'border',
-    border: false,
-    items: [jobsGrid, runsPanel],
-  })
-  thisTab.show()
-  jobsGrid.getStore().load()
+  function onJobChanged() {
+    jobsGrid.getStore().reload()
+  }
+
 }
