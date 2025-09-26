@@ -35,8 +35,7 @@ exports.queryJobs = async function ({ projections = [], filters = {} } = {}) {
     JSON_OBJECT(
       'eventId', e.event_name,
       'type', 'once',
-      'starts', DATE_FORMAT(e.execute_at,'%Y-%m-%dT%H:%i:%sZ'),
-      'enabled', e.status = 'ENABLED'
+      'starts', DATE_FORMAT(e.execute_at,'%Y-%m-%dT%H:%i:%sZ')
     ),
     JSON_OBJECT(
       'eventId', e.event_name,
@@ -53,7 +52,7 @@ exports.queryJobs = async function ({ projections = [], filters = {} } = {}) {
     information_schema.events e
   where
     e.event_schema = database() 
-    AND e.event_name LIKE CONCAT("job-", job.jobId, "-%")
+    AND e.event_name LIKE CONCAT("job-", job.jobId, "-stigman")
     LIMIT 1
   ) as event`)
 
@@ -95,8 +94,43 @@ exports.deleteJob = async (jobId) => {
   return result.affectedRows > 0
 }
 
+async function createEventByJob(jobId, eventData) {
+  const eventName = getEventNameByJob(jobId)
+  if (eventData.type === 'once') {
+    const sqlCreateEvent = `
+      CREATE EVENT ?? 
+      ON SCHEDULE AT ? 
+      DO CALL run_job(?, null)
+    `
+    const params = [eventName, eventData.starts, jobId]
+    await dbUtils.pool.query(sqlCreateEvent, params)
+  } else if (eventData.type === 'recurring') {
+    let endsAt = eventData.ends ? `ENDS '${eventData.ends}'` : ''
+    // Interpolate the interval unit as a bare word
+    const sqlCreateEvent = `
+      CREATE EVENT ?? 
+      ON SCHEDULE EVERY ? ${eventData.interval.field} STARTS ? ${endsAt}
+      ${eventData.enabled ? 'ENABLE' : 'DISABLE'}
+      DO CALL run_job(?, null)
+    `
+    const params = [eventName, eventData.interval.value, eventData.starts, jobId]
+    await dbUtils.pool.query(sqlCreateEvent, params)
+  }
+  return eventName
+}
+
+async function dropEventByJob(jobId) {
+  const eventName = getEventNameByJob(jobId)
+  const sqlDropEvent = `DROP EVENT IF EXISTS ??`
+  return dbUtils.pool.query(sqlDropEvent, [eventName])
+}
+
+function getEventNameByJob(jobId) {
+  return `job-${jobId}-stigman`
+}
+
 exports.createJob = async ({ jobData, userId, svcStatus } = {}) => {
-  const { tasks, events, ...jobFields } = jobData
+  const { tasks, event, ...jobFields } = jobData
   async function transactionFn(connection) {
     const sqlInsertJob = `INSERT into job (name, description, createdBy) VALUES ?`
     const values = [
@@ -116,36 +150,16 @@ exports.createJob = async ({ jobData, userId, svcStatus } = {}) => {
     transactionFn,
     statusObj: svcStatus
   })
+
   // Create events after committing the transaction
-  if (events?.length) {
-    for (const event of events) {
-      const eventName = `job-${jobId}-${uuid.v1()}`
-      if (event.type === 'once') {
-        const sqlCreateEvent = `
-          CREATE EVENT ?? 
-          ON SCHEDULE AT ? 
-          DO CALL run_job(?)
-        `
-        const params = [eventName, event.runAt, jobId]
-        await dbUtils.pool.query(sqlCreateEvent, params)
-      } else if (event.type === 'recurring') {
-        let endsAt = event.endsAt ? `ENDS '${event.endsAt}'` : ''
-        // Interpolate the interval unit as a bare word
-        const sqlCreateEvent = `
-          CREATE EVENT ?? 
-          ON SCHEDULE EVERY ? ${event.runEvery.field} STARTS ? ${endsAt}
-          DO CALL run_job(?)
-        `
-        const params = [eventName, event.runEvery.value, event.startsAt, jobId]
-        await dbUtils.pool.query(sqlCreateEvent, params)
-      }
-    }
+  if (event) {
+    await createEventByJob(jobId, event)
   }
   return jobId
 }
 
 exports.patchJob = async ({jobId, jobData, userId, svcStatus = {}}) => {
-  const { tasks, events, ...jobFields } = jobData
+  const { tasks, event, ...jobFields } = jobData
   async function transactionFn(connection) {
     const sets = []
     const binds = []
@@ -179,42 +193,13 @@ exports.patchJob = async ({jobId, jobData, userId, svcStatus = {}}) => {
     transactionFn,
     statusObj: svcStatus
   })
-  // Create events after committing the transaction
-  // if (Array.isArray(events)) {
-  //   const sql = 'select event_name from information_schema.events where event_schema = database() AND event_name LIKE CONCAT("job-", ?, "-%")'
-  //   const [existingEvents] = await dbUtils.pool.query(sql, [jobId])
-  //   if (existingEvents.length) {
-  //     const eventNames = existingEvents.map(r => r.EVENT_NAME)
-  //     for (const eventName of eventNames) {
-  //       const sqlDropEvent = `DROP EVENT IF EXISTS ??`
-  //       await dbUtils.pool.query(sqlDropEvent, [eventName])
-  //     }
-  //   }
-  //   if (events.length) {
-  //     for (const event of events) {
-  //       const eventName = `job-${jobId}-${uuid.v1()}`
-  //       if (event.type === 'once') {
-  //         const sqlCreateEvent = `
-  //           CREATE EVENT ?? 
-  //           ON SCHEDULE AT ? 
-  //           DO CALL run_job(?)
-  //         `
-  //         const params = [eventName, event.runAt, jobId]
-  //         await dbUtils.pool.query(sqlCreateEvent, params)
-  //       } else if (event.type === 'recurring') {
-  //         let endsAt = event.endsAt ? `ENDS '${event.endsAt}'` : ''
-  //         // Interpolate the interval unit as a bare word
-  //         const sqlCreateEvent = `
-  //           CREATE EVENT ?? 
-  //           ON SCHEDULE EVERY ? ${event.runEvery.field} STARTS ? ${endsAt}
-  //           DO CALL run_job(?)
-  //         `
-  //         const params = [eventName, event.runEvery.value, event.startsAt, jobId]
-  //         await dbUtils.pool.query(sqlCreateEvent, params)
-  //       }
-  //     }
-  //   }
-  // }
+
+  if (event === null) {
+    await dropEventByJob(jobId)
+  } else if (event) {
+    await dropEventByJob(jobId)
+    await createEventByJob(jobId, event)
+  }
   return updatedJobId
 }
 exports.updateJob = async (jobId, jobData) => {

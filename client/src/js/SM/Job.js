@@ -1,51 +1,55 @@
 Ext.ns('SM.Job')
 
 SM.Job.JobsGrid = Ext.extend(Ext.grid.GridPanel, {
-  initComponent: function() {
+  initComponent: function () {
     const _this = this
-    const runNowFn = this.runNowFn || async function() {}
+    const runNowFn = this.runNowFn || async function () { }
 
     const fields = ['jobId', 'name', 'description', 'created', 'updated', 'tasks', 'event', 'runCount', 'lastRun',
       {
         name: 'createdBy',
-        convert: function(v, record) { 
+        convert: function (v, record) {
           return record.createdBy?.username ?? ''
         }
       },
       {
         name: 'updatedBy',
-        convert: function(v, record) { 
+        convert: function (v, record) {
           return record.updatedBy?.username ?? ''
         }
       }
     ]
     const columns = [
-      {header: 'ID', dataIndex: 'jobId', width: 50, sortable: true},
-      {header: 'Name', dataIndex: 'name', width: 150, sortable: true},
-      {header: 'Description', dataIndex: 'description', hidden: true, width: 250, sortable: false},
-      {header: 'Tasks', dataIndex: 'tasks', width: 200, sortable: false, renderer: function(v) {
-        if (v?.length) {
-          return v.map(t => t.name).join('<br>')
-        }
-        return ''
-      }},
-      {header: 'Schedule', dataIndex: 'event', width: 200, sortable: false, renderer: function(v) {
-        if (v) {
-          if (v.type === 'recurring') {
-            return `Every ${v.interval.value} ${v.interval.field}(s)<br>Starting ${v.starts}`
+      { header: 'ID', dataIndex: 'jobId', width: 50, sortable: true },
+      { header: 'Name', dataIndex: 'name', width: 150, sortable: true },
+      { header: 'Description', dataIndex: 'description', hidden: true, width: 250, sortable: false },
+      {
+        header: 'Tasks', dataIndex: 'tasks', width: 200, sortable: false, renderer: function (v) {
+          if (v?.length) {
+            return v.map(t => t.name).join('<br>')
           }
-          else if (v.type === 'once') {
-            return `Once at ${v.starts}`
-          }
+          return ''
         }
-        return ''
-      }},
-      {header: 'Runs', dataIndex: 'runCount', width: 150, sortable: true},
-      {header: 'Last Run', xtype: 'datecolumn', format: 'Y-m-d H:i:s T', dataIndex: 'lastRun', width: 150, sortable: true},
-      {header: 'Created', dataIndex: 'created', hidden: true, width: 100, sortable: true},
-      {header: 'CreatedBy', dataIndex: 'createdBy', hidden: true, width: 100, sortable: true},
-      {header: 'Updated', dataIndex: 'updated', hidden: true, width: 150, sortable: true},
-      {header: 'UpdatedBy', dataIndex: 'updatedBy', hidden: true,width: 150, sortable: true},
+      },
+      {
+        header: 'Schedule', dataIndex: 'event', width: 200, sortable: false, renderer: function (v) {
+          if (v) {
+            if (v.type === 'recurring') {
+              return `Every ${v.interval.value} ${v.interval.field}(s)<br>Starting ${v.starts}${v.enabled ? '' : '<br>DISABLED'} `
+            }
+            else if (v.type === 'once') {
+              return `Once at ${v.starts}`
+            }
+          }
+          return ''
+        }
+      },
+      { header: 'Runs', dataIndex: 'runCount', width: 150, sortable: true },
+      { header: 'Last Run', xtype: 'datecolumn', format: 'Y-m-d H:i:s T', dataIndex: 'lastRun', width: 150, sortable: true },
+      { header: 'Created', dataIndex: 'created', hidden: true, width: 100, sortable: true },
+      { header: 'CreatedBy', dataIndex: 'createdBy', hidden: true, width: 100, sortable: true },
+      { header: 'Updated', dataIndex: 'updated', hidden: true, width: 150, sortable: true },
+      { header: 'UpdatedBy', dataIndex: 'updatedBy', hidden: true, width: 150, sortable: true },
     ]
 
     const store = new Ext.data.JsonStore({
@@ -71,22 +75,14 @@ SM.Job.JobsGrid = Ext.extend(Ext.grid.GridPanel, {
     })
     const totalTextCmp = new SM.RowCountTextItem({ store })
 
-    const sm = new Ext.grid.RowSelectionModel({ 
+    const sm = new Ext.grid.RowSelectionModel({
       singleSelect: true,
-      listeners: {
-        rowselect: function (sm, rowIndex, record) {
-          // if (store.getAt(rowIndex).data.status === 'available') {
-          //   _this.modifyBtn.setDisabled(false)
-          //   _this.statusBtn.setText('Set Unavailable')
-          //   _this.statusBtn.setIconClass('sm-user-unavailable-icon')
-          // } 
-          // else {
-          //   _this.modifyBtn.setDisabled(true)
-          //   _this.statusBtn.setText('Set Available')
-          //   _this.statusBtn.setIconClass('sm-user-icon')
-          // } 
-        }
-      }
+    })
+
+    sm.on('rowselect', function (sm, rowIndex, record) {
+      _this.modifyBtn.setDisabled(false)
+      _this.removeBtn.setDisabled(false)
+      _this.runNowBtn.setDisabled(false)
     })
 
     const view = new SM.ColumnFilters.GridView({
@@ -123,6 +119,7 @@ SM.Job.JobsGrid = Ext.extend(Ext.grid.GridPanel, {
       {
         ref: '../removeBtn',
         iconCls: 'icon-del',
+        disabled: true,
         text: 'Remove',
         handler: function () {
           let job = _this.getSelectionModel().getSelected();
@@ -139,8 +136,7 @@ SM.Job.JobsGrid = Ext.extend(Ext.grid.GridPanel, {
                 if (btn == 'yes') {
                   const apiJob = await Ext.Ajax.requestPromise({
                     responseType: 'json',
-                    url: `${STIGMAN.Env.apiBase}/jobs/${job.data.jobId}`,
-                    params: { elevate: curUser.privileges.admin },
+                    url: `${STIGMAN.Env.apiBase}/jobs/${job.data.jobId}?elevate=${curUser.privileges.admin}`,
                     method: 'DELETE',
                   })
                 }
@@ -157,6 +153,7 @@ SM.Job.JobsGrid = Ext.extend(Ext.grid.GridPanel, {
         ref: '../modifyBtn',
         iconCls: 'icon-edit',
         text: 'Modify',
+        disabled: true,
         handler: function () {
           const r = _this.getSelectionModel().getSelected();
           Ext.getBody().mask('Getting properties...');
@@ -165,9 +162,10 @@ SM.Job.JobsGrid = Ext.extend(Ext.grid.GridPanel, {
       },
       '-',
       {
-        ref: '../modifyBtn',
+        ref: '../runNowBtn',
         iconCls: 'sm-job-run-icon',
-        text: 'Run immediately',
+        text: 'Run now...',
+        disabled: true,
         handler: runNowFn
       }
     ]
@@ -193,7 +191,7 @@ SM.Job.JobsGrid = Ext.extend(Ext.grid.GridPanel, {
           exportType: 'grid',
           iconCls: 'sm-export-icon',
           text: 'CSV',
-          grid: this     
+          grid: this
         },
         {
           xtype: 'tbfill'
@@ -219,7 +217,7 @@ SM.Job.JobsGrid = Ext.extend(Ext.grid.GridPanel, {
       view,
       tbar,
       bbar,
-      listeners, 
+      listeners,
     }
 
     Ext.apply(this, Ext.apply(this.initialConfig, config))
@@ -228,16 +226,16 @@ SM.Job.JobsGrid = Ext.extend(Ext.grid.GridPanel, {
 })
 
 SM.Job.RunsGrid = Ext.extend(Ext.grid.GridPanel, {
-    initComponent: function() {
+  initComponent: function () {
     const _this = this
     const fields = [
-      'runId', 
-      'state', 
-      'created', 
+      'runId',
+      'state',
+      'created',
       'updated',
       {
-        name: 'duration', 
-        convert: function(v, record) {
+        name: 'duration',
+        convert: function (v, record) {
           if (record.state !== 'running') {
             return new Date(record.updated) - new Date(record.created)
           }
@@ -246,10 +244,9 @@ SM.Job.RunsGrid = Ext.extend(Ext.grid.GridPanel, {
       }
     ]
     const columns = [
-      // {header: 'ID', dataIndex: 'runId', width: 50, sortable: true},
-      {header: 'Started', xtype: 'datecolumn', format: 'Y-m-d H:i:s.u T', dataIndex: 'created', width: 150, sortable: true},
-      {header: 'State', dataIndex: 'state', width: 150, sortable: true},
-      {header: 'Duration', dataIndex: 'duration', width: 150, sortable: true}
+      { header: 'Started', xtype: 'datecolumn', format: 'Y-m-d H:i:s.u T', dataIndex: 'created', width: 200, sortable: true },
+      { header: 'State', dataIndex: 'state', width: 100, sortable: true },
+      { header: 'Duration', dataIndex: 'duration', width: 70, sortable: true }
     ]
 
     const store = new Ext.data.JsonStore({
@@ -268,22 +265,8 @@ SM.Job.RunsGrid = Ext.extend(Ext.grid.GridPanel, {
     })
     const totalTextCmp = new SM.RowCountTextItem({ store })
 
-    const sm = new Ext.grid.RowSelectionModel({ 
-      singleSelect: true,
-      listeners: {
-        rowselect: function (sm, rowIndex, record) {
-          // if (store.getAt(rowIndex).data.status === 'available') {
-          //   _this.modifyBtn.setDisabled(false)
-          //   _this.statusBtn.setText('Set Unavailable')
-          //   _this.statusBtn.setIconClass('sm-user-unavailable-icon')
-          // } 
-          // else {
-          //   _this.modifyBtn.setDisabled(true)
-          //   _this.statusBtn.setText('Set Available')
-          //   _this.statusBtn.setIconClass('sm-user-icon')
-          // } 
-        }
-      }
+    const sm = new Ext.grid.RowSelectionModel({
+      singleSelect: true
     })
 
     const view = new SM.ColumnFilters.GridView({
@@ -309,18 +292,18 @@ SM.Job.RunsGrid = Ext.extend(Ext.grid.GridPanel, {
 
     const bbar = new Ext.Toolbar({
       items: [
-        {
-          xtype: 'tbbutton',
-          iconCls: 'icon-refresh',
-          tooltip: 'Reload this grid',
-          width: 20,
-          handler: function (btn) {
-            store.reload()
-          }
-        },
-        {
-          xtype: 'tbseparator'
-        },
+        // {
+        //   xtype: 'tbbutton',
+        //   iconCls: 'icon-refresh',
+        //   tooltip: 'Reload this grid',
+        //   width: 20,
+        //   handler: function (btn) {
+        //     store.reload()
+        //   }
+        // },
+        // {
+        //   xtype: 'tbseparator'
+        // },
         {
           xtype: 'exportbutton',
           hasMenu: false,
@@ -328,7 +311,7 @@ SM.Job.RunsGrid = Ext.extend(Ext.grid.GridPanel, {
           exportType: 'grid',
           iconCls: 'sm-export-icon',
           text: 'CSV',
-          grid: this     
+          grid: this
         },
         {
           xtype: 'tbfill'
@@ -344,7 +327,7 @@ SM.Job.RunsGrid = Ext.extend(Ext.grid.GridPanel, {
       columns,
       sm,
       view,
-      bbar, 
+      bbar,
     }
 
     Ext.apply(this, Ext.apply(this.initialConfig, config))
@@ -354,15 +337,15 @@ SM.Job.RunsGrid = Ext.extend(Ext.grid.GridPanel, {
 })
 
 SM.Job.RunOutputGrid = Ext.extend(Ext.grid.GridPanel, {
-  initComponent: function() {
+  initComponent: function () {
     const _this = this
     const fields = ['seq', 'type', 'message', 'task', 'ts']
     const columns = [
-      {header: 'Seq', dataIndex: 'seq', width: 50, sortable: true},
-      {header: 'Timestamp', xtype: 'datecolumn', format: 'Y-m-d H:i:s.u T', dataIndex: 'ts', width: 150, sortable: true},
-      {header: 'Task', dataIndex: 'task', width: 100, sortable: true},
-      {header: 'Type', dataIndex: 'type', width: 100, sortable: true},
-      {header: 'Message', dataIndex: 'message', width: 300, sortable: true},
+      { header: 'Seq', dataIndex: 'seq', width: 50, sortable: true },
+      { header: 'Timestamp', xtype: 'datecolumn', format: 'Y-m-d H:i:s.u T', dataIndex: 'ts', width: 150, sortable: true },
+      { header: 'Task', dataIndex: 'task', width: 120, sortable: true },
+      { header: 'Type', dataIndex: 'type', width: 50, sortable: true },
+      { header: 'Message', dataIndex: 'message', width: 300, sortable: true },
     ]
     const store = new Ext.data.JsonStore({
       root: '',
@@ -386,18 +369,18 @@ SM.Job.RunOutputGrid = Ext.extend(Ext.grid.GridPanel, {
 
     const bbar = new Ext.Toolbar({
       items: [
-        {
-          xtype: 'tbbutton',
-          iconCls: 'icon-refresh',
-          tooltip: 'Reload this grid',
-          width: 20,
-          handler: function (btn) {
-            store.reload()
-          }
-        },
-        {
-          xtype: 'tbseparator'
-        },
+        // {
+        //   xtype: 'tbbutton',
+        //   iconCls: 'icon-refresh',
+        //   tooltip: 'Reload this grid',
+        //   width: 20,
+        //   handler: function (btn) {
+        //     store.reload()
+        //   }
+        // },
+        // {
+        //   xtype: 'tbseparator'
+        // },
         {
           xtype: 'exportbutton',
           hasMenu: false,
@@ -405,7 +388,7 @@ SM.Job.RunOutputGrid = Ext.extend(Ext.grid.GridPanel, {
           exportType: 'grid',
           iconCls: 'sm-export-icon',
           text: 'CSV',
-          grid: this     
+          grid: this
         },
         {
           xtype: 'tbfill'
@@ -420,7 +403,7 @@ SM.Job.RunOutputGrid = Ext.extend(Ext.grid.GridPanel, {
       store,
       columns,
       view,
-      bbar, 
+      bbar,
     }
 
     Ext.apply(this, Ext.apply(this.initialConfig, config))
@@ -429,26 +412,26 @@ SM.Job.RunOutputGrid = Ext.extend(Ext.grid.GridPanel, {
 })
 
 SM.Job.RunsPanel = Ext.extend(Ext.Panel, {
-  initComponent: function() {
+  initComponent: function () {
     const runsGrid = new SM.Job.RunsGrid({
       region: 'west',
       title: 'Recent Runs',
-      width: '33%',
+      border: false,
+      width: '25%',
       split: true,
       minWidth: 200,
       maxWidth: 600,
       iconCls: 'sm-job-run-icon',
       margins: { top: SM.Margin.top, right: SM.Margin.adjacent, bottom: SM.Margin.bottom, left: SM.Margin.edge },
       cls: 'sm-round-panel',
-      border: true,
       loadMask: true,
     })
 
     const outputGrid = new SM.Job.RunOutputGrid({
       region: 'center',
       title: 'Runtime Output',
+      border: false,
       margins: { top: SM.Margin.top, right: SM.Margin.edge, bottom: SM.Margin.bottom, left: SM.Margin.adjacent },
-      border: true,
       loadMask: true,
       iconCls: 'sm-run-output-icon',
       cls: 'sm-round-panel',
@@ -479,7 +462,7 @@ SM.Job.RunsPanel = Ext.extend(Ext.Panel, {
 })
 
 SM.Job.SchedulePanel = Ext.extend(Ext.Panel, {
-  initComponent: function() {
+  initComponent: function () {
     const intervalValue = new Ext.form.NumberField({
       fieldLabel: 'Value',
       name: 'intervalValue',
@@ -519,17 +502,17 @@ SM.Job.SchedulePanel = Ext.extend(Ext.Panel, {
       selectOnFocus: true,
       forceSelection: true,
       value: 'day',
-      width: 100,
+      width: 75,
       allowBlank: false,
     })
 
     const intervalComposite = new Ext.form.CompositeField({
-        fieldLabel: 'Repeat Every',
-        labelWidth: 120,
-        items: [
-            intervalValue,
-            intervalField
-        ]
+      fieldLabel: 'Repeat Every',
+      labelWidth: 120,
+      items: [
+        intervalValue,
+        intervalField
+      ]
     })
 
     const startTime = new Ext.form.TimeField({
@@ -544,7 +527,6 @@ SM.Job.SchedulePanel = Ext.extend(Ext.Panel, {
       fieldLabel: 'Start Date',
       name: 'dailyDate',
       value: new Date(),
-      minValue: new Date(),
       format: 'D Y-m-d',
       width: 110,
       editable: false,
@@ -573,20 +555,23 @@ SM.Job.SchedulePanel = Ext.extend(Ext.Panel, {
       selectOnFocus: true,
       forceSelection: true,
       value: 'recurring',
-      width: 100,
+      width: 110,
       listeners: {
         select: function (cb, record, index) {
           if (cb.getValue() === 'recurring') {
+            enabledCheckbox.show()
             intervalComposite.show()
             startDate.show()
             startTime.show()
           }
           else if (cb.getValue() === 'once') {
+            enabledCheckbox.hide()
             intervalComposite.hide()
             startDate.show()
             startTime.show()
           }
           else if (cb.getValue() === 'none') {
+            enabledCheckbox.hide()
             intervalComposite.hide()
             startDate.hide()
             startTime.hide()
@@ -595,19 +580,94 @@ SM.Job.SchedulePanel = Ext.extend(Ext.Panel, {
       }
     })
 
-    const initPanel = function(apiJob) {
+    const enabledCheckbox = new Ext.form.Checkbox({
+      boxLabel: 'Enabled',
+      name: 'enabled',
+      checked: true,
+    })
+
+    const initPanel = function (apiJob) {
+      const event = apiJob?.event
+      if (!event) {
+        frequencyCombo.setValue('none')
+        intervalComposite.hide()
+        enabledCheckbox.hide()
+        startDate.hide()
+        startTime.hide()
+        return
+      }
+      if (event.type === 'once') {
+        frequencyCombo.setValue('once')
+        intervalComposite.hide()
+        enabledCheckbox.hide()
+        startDate.setValue(new Date(event.starts))
+        startTime.setValue(new Date(event.starts))
+        return
+      }
+      if (event.type === 'recurring') {
+        frequencyCombo.setValue('recurring')
+        intervalValue.setValue(event.interval.value)
+        intervalField.setValue(event.interval.field)
+        enabledCheckbox.setValue(event.enabled)
+        startDate.setValue(new Date(event.starts))
+        startTime.setValue(new Date(event.starts))
+      }
+    }
+
+    const getValue = function () {
+      if (frequencyCombo.getValue() === 'none') {
+        return null
+      }
+      const dateValue = startDate.getValue()
+      const [hour, minute] = startTime.getValue().split(':')
+      const combinedValue = new Date(
+        dateValue.getFullYear(),
+        dateValue.getMonth(),
+        dateValue.getDate(),
+        hour,
+        minute,
+        0
+      )
+      const event = {
+        type: frequencyCombo.getValue(),
+        starts: combinedValue.toISOString()
+      }
+      if (event.type === 'recurring') {
+        event.interval = {
+          value: intervalValue.getValue().toString(),
+          field: intervalField.getValue(),
+        }
+        event.enabled = enabledCheckbox.getValue()
+      }
+      return event
     }
 
     const config = {
-      layout: 'form',
-      labelWidth: 120,
+      // layout: 'form',
       items: [
-        frequencyCombo,
-        intervalComposite,
-        startDate,
-        startTime,
+        {
+          layout: 'column',
+          border: false,
+          items: [
+            {
+              columnWidth: 0.5,
+              layout: 'form',
+              border: false,
+              labelWidth: 80,
+              items: [frequencyCombo, intervalComposite, enabledCheckbox]
+            },
+            {
+              columnWidth: 0.5,
+              layout: 'form',
+              border: false,
+              labelWidth: 80,
+              items: [startDate, startTime]
+            }
+          ]
+        }
       ],
-      initPanel
+      initPanel,
+      getValue,
     }
 
     Ext.apply(this, Ext.apply(this.initialConfig, config))
@@ -617,6 +677,7 @@ SM.Job.SchedulePanel = Ext.extend(Ext.Panel, {
 
 SM.Job.TaskSelectingGrid = Ext.extend(Ext.grid.GridPanel, {
   initComponent: function () {
+    const isSortable = this.isSortable || false
     const fields = [
       'taskId',
       'name',
@@ -637,21 +698,24 @@ SM.Job.TaskSelectingGrid = Ext.extend(Ext.grid.GridPanel, {
         header: "Task",
         width: 150,
         dataIndex: 'name',
-        sortable: true,
+        sortable: isSortable === true,
         renderer: function (v, m, r) {
           m.attr = 'style="white-space:normal;"'
-          return `<div exportValue="${r.data.name ?? ''}:${r.data.description ?? ''}"><span style="font-weight:700;">${r.data.name ?? ''}</span><br><i style="color: #808080;">${r.data.description ?? ''}</i></div>`
+          return `<div exportValue="${r.data.name ?? ''}:${r.data.description ?? ''}"><span style="font-weight:700;">${r.data.name ?? ''}</span><br>
+          <div class="sm-task-description">${r.data.description ?? ''}</div></div>`
         }
       },
     ]
     const store = new Ext.data.JsonStore({
       fields,
       idProperty: 'taskId',
-      sortInfo: {
+    })
+    if (isSortable === true) {
+      store.sortInfo = {
         field: 'name',
         direction: 'ASC'
-      },
-    })
+      }
+    }
     const totalTextCmp = new SM.RowCountTextItem({
       store,
       noun: 'task',
@@ -738,7 +802,7 @@ SM.Job.TaskSelectingPanel = Ext.extend(Ext.Panel, {
     }
     const availableGrid = new SM.Job.TaskSelectingGrid({
       title: 'Available Tasks',
-      // iconCls: 'sm-task-icon',
+      isSortable: true,
       headerCssClass: 'sm-available-panel-header',
       role: 'available',
       flex: 1,
@@ -759,8 +823,8 @@ SM.Job.TaskSelectingPanel = Ext.extend(Ext.Panel, {
       }
     })
     const selectionsGrid = new SM.Job.TaskSelectingGrid({
-      title: 'Job Tasks',
-      // iconCls: 'sm-task-icon',
+      title: 'Job Tasks (run in order shown)',
+      isSortable: false,
       headerCssClass: 'sm-selections-panel-header',
       role: 'selections',
       flex: 1,
@@ -824,7 +888,7 @@ SM.Job.TaskSelectingPanel = Ext.extend(Ext.Panel, {
             selectionsGrid.store.remove(record)
             selectionsGrid.store.insert(index - 1, record)
             sm.selectRow(index - 1)
-            fireSelectedChanged ()
+            fireSelectedChanged()
           }
         }
       }
@@ -842,7 +906,7 @@ SM.Job.TaskSelectingPanel = Ext.extend(Ext.Panel, {
             selectionsGrid.store.remove(record)
             selectionsGrid.store.insert(index + 1, record)
             sm.selectRow(index + 1)
-            fireSelectedChanged ()
+            fireSelectedChanged()
           }
         }
       }
@@ -908,23 +972,19 @@ SM.Job.TaskSelectingPanel = Ext.extend(Ext.Panel, {
         params: { elevate: curUser.privileges.admin }
       })
 
-      // const [apiAvailableUsers, apiUserGroup] = await Promise.all(promises)
-      const assignedTaskIds = apiJob?.tasks?.map(task => task.taskId) ?? []
-      _this.originalTaskIds = assignedTaskIds
-      const availableTasks = []
-      const assignedTasks = []
-      apiAvailableTasks.reduce((accumulator, task) => {
-        const property = assignedTaskIds.includes(task.taskId) ? 'assignedTasks' : 'availableTasks'
-        accumulator[property].push(task)
-        return accumulator
-      }, { availableTasks, assignedTasks })
-
+      const availableTaskMap = new Map(apiAvailableTasks.map(task => [task.taskId, task]));
+      const assignedTasks = (apiJob?.tasks ?? []).map(task => ({
+        ...task,
+        description: availableTaskMap.get(task.taskId)?.description ?? ''
+      }));
+      const assignedTaskIds = new Set(assignedTasks.map(task => task.taskId));
+      const availableTasks = apiAvailableTasks.filter(task => !assignedTaskIds.has(task.taskId));
       availableGrid.store.loadData(availableTasks)
       selectionsGrid.store.loadData(assignedTasks)
     }
 
-    function fireSelectedChanged () {
-      _this.fireEvent('selectedchanged', selectionsGrid.store.getRange().map( r => r.data.userId ))
+    function fireSelectedChanged() {
+      _this.fireEvent('selectedchanged', selectionsGrid.store.getRange().map(r => r.data.userId))
     }
 
     function changeSelected(srcGrid, records, dstGrid) {
@@ -932,8 +992,10 @@ SM.Job.TaskSelectingPanel = Ext.extend(Ext.Panel, {
       dstGrid.store.suspendEvents()
       srcGrid.store.remove(records)
       dstGrid.store.add(records)
-      const { field, direction } = dstGrid.store.getSortState()
-      dstGrid.store.sort(field, direction)
+      const sortState = dstGrid.store.getSortState();
+      if (sortState) {
+        dstGrid.store.sort(sortState.field, sortState.direction);
+      }
       dstGrid.getSelectionModel().selectRecords(records)
       srcGrid.store.resumeEvents()
       dstGrid.store.resumeEvents()
@@ -945,7 +1007,7 @@ SM.Job.TaskSelectingPanel = Ext.extend(Ext.Panel, {
       dstGrid.store.filter(dstGrid.getView().getFilterFns())
       dstGrid.getView().focusRow(dstGrid.store.indexOfId(records[0].data.assetId))
 
-      fireSelectedChanged ()
+      fireSelectedChanged()
     }
 
     function getValue() {
@@ -983,7 +1045,7 @@ SM.Job.TaskSelectingPanel = Ext.extend(Ext.Panel, {
 })
 
 SM.Job.PropertiesFormPanel = Ext.extend(Ext.FormPanel, {
-  initComponent: function() {
+  initComponent: function () {
 
     const nameField = new Ext.form.TextField({
       fieldLabel: 'Name',
@@ -1000,7 +1062,7 @@ SM.Job.PropertiesFormPanel = Ext.extend(Ext.FormPanel, {
       allowBlank: true,
       name: 'description'
     })
-    
+
     const jobFieldset = new Ext.form.FieldSet({
       title: '<b>Job information</b>',
       iconCls: 'sm-job-icon',
@@ -1027,7 +1089,7 @@ SM.Job.PropertiesFormPanel = Ext.extend(Ext.FormPanel, {
         },
       ]
     })
-    
+
     const taskSelectingPanel = new SM.Job.TaskSelectingPanel({
       border: false,
       anchor: '100%',
@@ -1057,16 +1119,17 @@ SM.Job.PropertiesFormPanel = Ext.extend(Ext.FormPanel, {
       ]
     })
 
-    const initPanel = async function(jobId) {
+    const initPanel = async function (jobId) {
       taskSelectingPanel.initPanel(jobId)
       schedulePanel.initPanel(jobId)
     }
 
-    const getValue = function() {
+    const getValue = function () {
       const values = {
         name: nameField.getValue(),
         description: descriptionField.getValue(),
         tasks: taskSelectingPanel.getValue(),
+        event: schedulePanel.getValue(),
       }
       return values
     }
@@ -1099,7 +1162,7 @@ SM.Job.PropertiesFormPanel = Ext.extend(Ext.FormPanel, {
 
 SM.Job.showJobProps = async function (jobId) {
   try {
-    const btnHandler = async function() {
+    const btnHandler = async function () {
       Ext.getBody().mask('Saving job...')
       try {
         const values = jobPropsFormPanel.getValue()
@@ -1160,10 +1223,11 @@ SM.Job.showJobProps = async function (jobId) {
       cls: 'sm-dialog-window sm-round-panel',
       title: jobId ? 'Job Properties, ID ' + jobId : 'Create new Job',
       modal: true,
-      resizable: true,
+      resizable: false,
+      draggable: false,
       hidden: true,
       width: 640,
-      height: 660,
+      height: 640,
       layout: 'fit',
       plain: true,
       bodyStyle: 'padding:5px;',
@@ -1196,25 +1260,25 @@ SM.Job.showJobProps = async function (jobId) {
   }
 }
 
-SM.Job.showJobAdminTab = function ({treePath}) {
-	const tab = Ext.getCmp('main-tab-panel').getItem('job-admin-tab')
-	if (tab) {
-		tab.show()
-		return
-	}
+SM.Job.showJobAdminTab = function ({ treePath }) {
+  const tab = Ext.getCmp('main-tab-panel').getItem('job-admin-tab')
+  if (tab) {
+    tab.show()
+    return
+  }
 
   const jobsGrid = new SM.Job.JobsGrid({
     region: 'center',
     border: false,
     loadMask: true,
-    margins: { top: SM.Margin.top, right: SM.Margin.edge, bottom: SM.Margin.adjacent, left: SM.Margin.edge },
+    margins: { top: SM.Margin.top, right: SM.Margin.edge, bottom: SM.Margin.edge, left: SM.Margin.edge },
     cls: 'sm-round-panel',
     runNowFn,
   })
 
   const runsPanel = new SM.Job.RunsPanel({
     region: 'south',
-    margins: { top: SM.Margin.adjacent, right: SM.Margin.edge, bottom: SM.Margin.bottom, left: SM.Margin.edge },
+    margins: { top: SM.Margin.edge, right: SM.Margin.edge, bottom: SM.Margin.bottom, left: SM.Margin.edge },
     border: false,
     iconCls: 'sm-job-run-icon',
     cls: 'sm-round-panel',
@@ -1258,42 +1322,37 @@ SM.Job.showJobAdminTab = function ({treePath}) {
     })
   }
 
-  // const schedulePanel = new SM.Job.SchedulePanel({
-  //   border: false,
-  //   iconCls: 'sm-job-event-icon',
-  //   title: 'Schedule',
-  //   cls: 'sm-round-panel',
-  // })
-
-  // const tasksPanel = new SM.Job.TaskSelectingPanel({
-  //   border: false,
-  //   iconCls: 'sm-job-task-icon',
-  //   title: 'Tasks',
-  //   cls: 'sm-round-panel',
-  // })
-  // tasksPanel.initPanel()
-
-  jobsGrid.getSelectionModel().on('rowselect', async function (sm, rowIndex, record) {
+  async function loadRuns(jobId) {
     const response = await Ext.Ajax.requestPromise({
       responseType: 'json',
-      url: `${STIGMAN.Env.apiBase}/jobs/${record.data.jobId}/runs`,
+      url: `${STIGMAN.Env.apiBase}/jobs/${jobId}/runs`,
       params: { elevate: curUser.privileges.admin },
       method: 'GET',
     })
     runsPanel.outputGrid.getStore().removeAll()
     runsPanel.runsGrid.getStore().loadData(response)
+  }
+  
+  jobsGrid.getSelectionModel().on('rowselect', async function (sm, rowIndex, record) {
+    loadRuns(record.data.jobId) 
+  })
+  jobsGrid.getStore().on('load', function (store) {
+    const selection = jobsGrid.getSelectionModel().getSelected()
+    if (selection) {
+      loadRuns(selection.data.jobId)
+    }
   })
 
   const thisTab = Ext.getCmp('main-tab-panel').add({
-		id: 'job-admin-tab',
-		sm_treePath: treePath, 
-		iconCls: 'sm-job-icon',
-		title: 'Service Jobs',
-		closable:true,
-		layout: 'border',
-		border: false,
-		items: [jobsGrid, runsPanel],
-	})
-	thisTab.show()
-	jobsGrid.getStore().load()
+    id: 'job-admin-tab',
+    sm_treePath: treePath,
+    iconCls: 'sm-job-icon',
+    title: 'Service Jobs',
+    closable: true,
+    layout: 'border',
+    border: false,
+    items: [jobsGrid, runsPanel],
+  })
+  thisTab.show()
+  jobsGrid.getStore().load()
 }

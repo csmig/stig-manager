@@ -7349,7 +7349,7 @@ components:
           $ref: "#/components/schemas/String255Nullable"
         tasks:
           $ref: '#/components/schemas/JobTaskListCreate'
-        events:
+        event:
           $ref: '#/components/schemas/JobEventCreate'
       required: [name, tasks]
     JobEvent:
@@ -7358,6 +7358,8 @@ components:
         - $ref: '#/components/schemas/JobEventOnce'
     JobEventCreate:
       oneOf:
+        - type: integer
+          nullable: true
         - $ref: '#/components/schemas/JobEventRecurringCreate'
         - $ref: '#/components/schemas/JobEventOnceCreate'
     JobEventOnce:
@@ -7386,9 +7388,6 @@ components:
             - once
         starts:
           $ref: '#/components/schemas/StringDateTime'
-        enabled:
-          type: boolean
-          default: true
       required: [starts, type]
     JobEventRecurring:
       additionalProperties: false

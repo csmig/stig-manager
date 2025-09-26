@@ -413,6 +413,7 @@ SM.NavTree.TreePanel = Ext.extend(Ext.tree.TreePanel, {
         if (!n.leaf) {
           return
         }
+        SM.Global.mainNavTree.ownerCt.layout.west.slideIn()
         const treePath = n.getPath()
 
         if (n.attributes.action === 'stig-diff') {

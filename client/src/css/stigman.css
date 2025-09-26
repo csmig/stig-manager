@@ -2712,3 +2712,10 @@ td.x-grid3-hd-over .x-grid3-hd-inner {
   background-repeat: no-repeat;
   background-size: 18px
 }
+.sm-task-description {
+  font-size: smaller;
+  font-style: italic;
+  color: #808080;
+  line-height: 12px;
+  padding-left: 6px;
+}
