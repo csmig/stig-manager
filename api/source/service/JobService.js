@@ -19,7 +19,12 @@ exports.queryJobs = async function ({ projections = [], filters = {} } = {}) {
       IF(COUNT(jt.taskId), json_arrayagg(json_object('taskId', CAST(jt.taskId as char), 'name', t.name)), json_array())
       from job_task_map jt left join task t ON jt.taskId = t.taskId where jt.jobId = job.jobId) AS tasks`,
     `(select ifnull(COUNT(*), 0) from job_run jr where jr.jobId = job.jobId) AS runCount`,
-    `(select max(jr.created) from job_run jr where jr.jobId = job.jobId) AS lastRun`
+    `(SELECT ifnull(JSON_OBJECT(
+      'runId', BIN_TO_UUID(jr.runId, 1),
+      'created', DATE_FORMAT(jr.created,'%Y-%m-%dT%H:%i:%sZ'),
+      'updated', IF(jr.updated IS NULL, NULL, DATE_FORMAT(jr.updated,'%Y-%m-%dT%H:%i:%sZ')),
+      'state', jr.state
+    ), null) FROM job_run jr WHERE jr.jobId = job.jobId ORDER BY jr.jrId DESC LIMIT 1) AS lastRun`,
   ]
   const joins = new Set([
     'job',
@@ -263,26 +268,41 @@ exports.runImmediateJob = async (jobId) => {
 }
 
 exports.getOutputByRun = async (runId, {filters}) => {
+  const ctes = [
+    `Output AS (
+    SELECT
+      ROW_NUMBER() OVER (ORDER BY tout.seq ASC) as seq,
+      tout.ts,
+      tout.taskId,
+      t.name as task,
+      tout.type,
+      tout.message
+    FROM
+      task_output tout
+      left join task t ON tout.taskId = t.taskId
+    WHERE
+      runId = UUID_TO_BIN(?, 1))`
+  ]
   const columns = [
-    'tout.seq',
-    'tout.ts',
-    'tout.taskId',
-    't.name as task',
-    'tout.type',
-    'tout.message'
+    'Output.seq',
+    'Output.ts',
+    'Output.taskId',
+    'Output.task',
+    'Output.type',
+    'Output.message'
   ]
 
-  const joins = new Set(['task_output tout', 'left join task t ON tout.taskId = t.taskId'])
+  const joins = new Set(['Output'])
   const predicates = {
-    statements: ['runId = UUID_TO_BIN(?, 1)'],
+    statements: [],
     binds: [runId]
   }
   if (filters?.afterSeq) {
-    predicates.statements.push('seq > ?')
+    predicates.statements.push('Output.seq > ?')
     predicates.binds.push(filters.afterSeq)
   }
-  const orderBy = ['seq DESC']
-  const sql = dbUtils.makeQueryString({ columns, joins, predicates, orderBy, format: true })
+  const orderBy = ['Output.seq DESC']
+  const sql = dbUtils.makeQueryString({ ctes, columns, joins, predicates, orderBy, format: true })
   let [rows] = await dbUtils.pool.query(sql, predicates.binds)
   return (rows)
 }

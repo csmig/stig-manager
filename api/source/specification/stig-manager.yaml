@@ -7337,7 +7337,7 @@ components:
         runCount:
           type: integer
         lastRun:
-          $ref: '#/components/schemas/StringDateTimeNullable'
+          $ref: '#/components/schemas/JobRun'
       required: [jobId, name, tasks, created, createdBy]
     JobCreate:
       additionalProperties: false
@@ -7354,6 +7354,8 @@ components:
       required: [name, tasks]
     JobEvent:
       oneOf:
+        - type: integer
+          nullable: true
         - $ref: '#/components/schemas/JobEventRecurring'
         - $ref: '#/components/schemas/JobEventOnce'
     JobEventCreate:
@@ -7446,6 +7448,7 @@ components:
       $ref: '#/components/schemas/StringIntId'
     JobRun:
       additionalProperties: false
+      nullable: true
       type: object
       properties:
         runId:
@@ -7454,15 +7457,11 @@ components:
           $ref: '#/components/schemas/StringDateTime'
         updated:
           $ref: '#/components/schemas/StringDateTimeNullable'
-        status:
-          type: string
-          enum:
-            - running
-            - completed
-            - failed
+        state:
+          $ref: '#/components/schemas/JobRunState'
         jobId:
           $ref: '#/components/schemas/JobId'
-      required: [runId, created, status]
+      required: [runId, created, state]
     JobRunCreated:
       additionalProperties: false
       type: object
@@ -7487,6 +7486,13 @@ components:
         ts:
           $ref: '#/components/schemas/StringDateTime'
       required: [message, type, task, ts]
+    JobRunState:
+      type: string
+      nullable: true
+      enum:
+        - running
+        - completed
+        - failed
     JobTask:
       type: object
       additionalProperties: false

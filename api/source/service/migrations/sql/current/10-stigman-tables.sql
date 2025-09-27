@@ -339,32 +339,52 @@ CREATE TABLE `fix_text` (
 
 DROP TABLE IF EXISTS `job`;
 CREATE TABLE `job` (
-  `id` int NOT NULL AUTO_INCREMENT,
-  `jobId` binary(16) NOT NULL,
-  `name` varchar(255) NOT NULL,
-  `status` varchar(45) NOT NULL,
-  `userId` int DEFAULT NULL,
+  `jobId` int NOT NULL AUTO_INCREMENT,
+  `name` varchar(45) NOT NULL,
+  `description` varchar(255) DEFAULT NULL,
+  `createdBy` int DEFAULT NULL,
+  `updatedBy` int DEFAULT NULL,
   `created` timestamp(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
-  `updated` timestamp(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3),
-  PRIMARY KEY (`id`),
-  UNIQUE KEY `jobId_UNIQUE` (`jobId`),
-  KEY `fk_job_user` (`userId`),
-  CONSTRAINT `fk_job_user` FOREIGN KEY (`userId`) REFERENCES `user_data` (`userId`) ON DELETE RESTRICT
+  `updated` timestamp(3) NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP(3),
+  PRIMARY KEY (`jobId`),
+  KEY `fk_job_createdBy` (`createdBy`),
+  CONSTRAINT `fk_job_createdBy` FOREIGN KEY (`createdBy`) REFERENCES `user_data` (`userId`) ON DELETE RESTRICT
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 --
--- Table structure for table `job_output`
+-- Table structure for table `job_run`
 --
 
-DROP TABLE IF EXISTS `job_output`;
-CREATE TABLE `job_output` (
-  `id` int NOT NULL AUTO_INCREMENT,
-  `jobId` binary(16) NOT NULL,
-  `ts` timestamp(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
-  `data` json DEFAULT NULL,
-  PRIMARY KEY (`id`),
-  KEY `fk_joboutput_job` (`jobId`),
-  CONSTRAINT `fk_joboutput_job` FOREIGN KEY (`jobId`) REFERENCES `job` (`jobId`) ON DELETE CASCADE
+DROP TABLE IF EXISTS `job_run`;
+CREATE TABLE `job_run` (
+  `jrId` int NOT NULL AUTO_INCREMENT,
+  `jobId` int NOT NULL,
+  `runId` binary(16) NOT NULL,
+  `state` varchar(255) DEFAULT NULL,
+  `created` timestamp(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+  `updated` timestamp(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3),
+  PRIMARY KEY (`jrId`),
+  KEY `idx_job_run_runId` (`runId`),
+  KEY `fk_job_run_jobId` (`jobId`),
+  CONSTRAINT `fk_job_run_jobId` FOREIGN KEY (`jobId`) REFERENCES `job` (`jobId`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+--
+-- Table structure for table `job_task_map`
+--
+
+DROP TABLE IF EXISTS `job_task_map`;
+CREATE TABLE `job_task_map` (
+  `jtId` int NOT NULL AUTO_INCREMENT,
+  `jobId` int NOT NULL,
+  `taskId` int NOT NULL,
+  `created` timestamp(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+  `updated` timestamp(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3),
+  PRIMARY KEY (`jtId`),
+  KEY `fk_job_task_jobId` (`jobId`),
+  KEY `fk_job_task_taskId` (`taskId`),
+  CONSTRAINT `fk_job_task_jobId` FOREIGN KEY (`jobId`) REFERENCES `job` (`jobId`) ON DELETE CASCADE,
+  CONSTRAINT `fk_job_task_taskId` FOREIGN KEY (`taskId`) REFERENCES `task` (`taskId`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 --
@@ -643,6 +663,39 @@ CREATE TABLE `stig_asset_map` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 --
+-- Table structure for table `task`
+--
+
+DROP TABLE IF EXISTS `task`;
+CREATE TABLE `task` (
+  `taskId` int NOT NULL AUTO_INCREMENT,
+  `name` varchar(45) NOT NULL,
+  `description` varchar(255) DEFAULT NULL,
+  `command` varchar(255) NOT NULL,
+  `args` json DEFAULT (_utf8mb4'[]'),
+  PRIMARY KEY (`taskId`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+--
+-- Table structure for table `task_output`
+--
+
+DROP TABLE IF EXISTS `task_output`;
+CREATE TABLE `task_output` (
+  `seq` int NOT NULL AUTO_INCREMENT,
+  `ts` timestamp(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+  `runId` binary(16) NOT NULL,
+  `taskId` int DEFAULT NULL,
+  `type` varchar(45) NOT NULL,
+  `message` varchar(255) NOT NULL,
+  PRIMARY KEY (`seq`),
+  KEY `fk_task_output_runId` (`runId`),
+  KEY `fk_task_output_taskId` (`taskId`),
+  CONSTRAINT `fk_task_output_runId` FOREIGN KEY (`runId`) REFERENCES `job_run` (`runId`) ON DELETE CASCADE,
+  CONSTRAINT `fk_task_output_taskId` FOREIGN KEY (`taskId`) REFERENCES `task` (`taskId`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+--
 -- Table structure for table `user_data`
 --
 
@@ -751,191 +804,335 @@ DROP TABLE IF EXISTS `v_latest_rev`;
 --
 -- Dumping routines for database 'stigman'
 --
-/*!50003 DROP PROCEDURE IF EXISTS `delete_disabled_objects` */;
+/*!50003 DROP PROCEDURE IF EXISTS `delete_disabled` */;
 /*!50003 SET @saved_col_connection = @@collation_connection */ ;
 /*!50003 SET collation_connection  = utf8mb4_0900_ai_ci */ ;
 /*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
 /*!50003 SET sql_mode              = 'IGNORE_SPACE,ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION' */ ;
 DELIMITER $
-CREATE PROCEDURE `delete_disabled_objects`(
-      IN jobIdStr VARCHAR(36),
-      IN userId INT
-    )
+CREATE PROCEDURE `delete_disabled`()
 BEGIN
-    DECLARE incrementValue INT DEFAULT 10000;
-    DECLARE curMinId BIGINT DEFAULT 1;
-    DECLARE curMaxId BIGINT DEFAULT incrementValue + 1;
-    DECLARE numCollectionIds INT;
-    DECLARE numAssetIds INT;
-    DECLARE numReviewIds INT;
-    DECLARE numHistoryIds INT;
-    DECLARE jobId BINARY(16);
+    DECLARE v_incrementValue INT DEFAULT 10000;
+    DECLARE v_curMinId BIGINT DEFAULT 1;
+    DECLARE v_curMaxId BIGINT DEFAULT v_incrementValue + 1;
+    DECLARE v_numCollectionIds INT;
+    DECLARE v_numAssetIds INT;
+    DECLARE v_numReviewIds INT;
+    DECLARE v_numHistoryIds INT;
+    DECLARE v_runId BINARY(16);
+    DECLARE v_taskId INT;
     DECLARE EXIT HANDLER FOR SQLEXCEPTION
     BEGIN
       DECLARE err_code INT;
       DECLARE err_msg TEXT;
-      GET DIAGNOSTICS CONDITION 1
-        err_code = MYSQL_ERRNO, err_msg = MESSAGE_TEXT;
-      CALL job_output(jobId, JSON_OBJECT('message', 'error', 'error_code', err_code, 'error_message', err_msg));
-      CALL job_failed (jobId);
+      GET STACKED DIAGNOSTICS CONDITION 1 err_code = MYSQL_ERRNO, err_msg = MESSAGE_TEXT;
+      CALL task_output(v_runId, v_taskId, 'error', concat('code: ', err_code, ' message: ', err_msg));
+      RESIGNAL;
     END;
 
-    IF jobIdStr IS NOT NULL AND jobIdStr REGEXP '^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$' THEN
-      SET jobId = UUID_TO_BIN(jobIdStr);
-    ELSE
-      SET jobId = UUID_TO_BIN(UUID());
-    END IF;
+    -- Set v_runId from t_runtime if table exists, else generate a new UUID
+    CALL get_runtime(v_runId, v_taskId);
+    CALL task_output (v_runId, v_taskId, 'info','task started');
 
-    IF userId IS NULL OR userId <= 0 THEN
-      SET userId = NULL;
-    END IF;
-
-    CALL job_start (jobId, userId, 'delete_disabled_objects');
-
-    CALL job_output (jobId, JSON_OBJECT('message', 'Job started'));
     drop temporary table if exists t_collectionIds;
     create temporary table t_collectionIds (seq INT AUTO_INCREMENT PRIMARY KEY)
       select collectionId from collection where isEnabled is null;
-    select max(seq) into numCollectionIds from t_collectionIds;
-    CALL job_output (jobId, JSON_OBJECT('message', 'created table', 'table', 't_collectionIds', 'count', numCollectionIds));
+    select max(seq) into v_numCollectionIds from t_collectionIds;
+    CALL task_output (v_runId, v_taskId, 'info', concat('found ', ifnull(v_numCollectionIds, 0), ' collections to delete'));
 
     drop temporary table if exists t_assetIds;
     create temporary table t_assetIds (seq INT AUTO_INCREMENT PRIMARY KEY)
       select assetId from asset where isEnabled is null or collectionId in (select collectionId from t_collectionIds);
-    select max(seq) into numAssetIds from t_assetIds;
-    CALL job_output (jobId, JSON_OBJECT('message', 'created table', 'table', 't_assetIds', 'count', numAssetIds));
+    select max(seq) into v_numAssetIds from t_assetIds;
+    CALL task_output (v_runId, v_taskId, 'info', concat('found ', ifnull(v_numAssetIds, 0), ' assets to delete'));
 
     drop temporary table if exists t_reviewIds;
     create temporary table t_reviewIds (seq INT AUTO_INCREMENT PRIMARY KEY)
       select reviewId from review where assetId in (select assetId from t_assetIds);
-    select max(seq) into numReviewIds from t_reviewIds;
-    CALL job_output (jobId, JSON_OBJECT('message', 'created table', 'table', 't_reviewIds', 'count', numReviewIds));
+    select max(seq) into v_numReviewIds from t_reviewIds;
+    CALL task_output (v_runId, v_taskId, 'info', concat('found ', ifnull(v_numReviewIds, 0), ' reviews to delete'));
 
     drop temporary table if exists t_historyIds;
     create temporary table t_historyIds (seq INT AUTO_INCREMENT PRIMARY KEY)
       select historyId from review_history where reviewId in (select reviewId from t_reviewIds);
-    select max(seq) into numHistoryIds from t_historyIds;
-    CALL job_output (jobId, JSON_OBJECT('message', 'created table', 'table', 't_historyIds', 'count', numHistoryIds));
+    select max(seq) into v_numHistoryIds from t_historyIds;
+    CALL task_output (v_runId, v_taskId, 'info', concat('found ', ifnull(v_numHistoryIds, 0), ' history records to delete'));
 
-    IF numHistoryIds > 0 THEN
+    IF v_numHistoryIds > 0 THEN
+    CALL task_output (v_runId, v_taskId, 'info', concat('deleting ', v_numHistoryIds, ' history records'));
     REPEAT
-      CALL job_output (jobId, JSON_OBJECT('message', 'delete range', 'table', 'review_history', 'range_start', curMinId, 'range_end', curMaxId, 'range_size', numHistoryIds));
       delete from review_history where historyId IN (
-          select historyId from t_historyIds where seq >= curMinId and seq < curMaxId 
+          select historyId from t_historyIds where seq >= v_curMinId and seq < v_curMaxId
         );
-      SET curMinId = curMinId + incrementValue;
-      SET curMaxId = curMaxId + incrementValue;
+      SET v_curMinId = v_curMinId + v_incrementValue;
+      SET v_curMaxId = v_curMaxId + v_incrementValue;
     UNTIL ROW_COUNT() = 0 END REPEAT;
     END IF;
     drop temporary table if exists t_historyIds;
 
-    SET curMinId = 1;
-    SET curMaxId = curMinId + incrementValue;
-    IF numReviewIds > 0 THEN
+    SET v_curMinId = 1;
+    SET v_curMaxId = v_curMinId + v_incrementValue;
+    IF v_numReviewIds > 0 THEN
+      CALL task_output (v_runId, v_taskId, 'info', concat('deleting ', v_numReviewIds, ' reviews'));
       REPEAT
-        CALL job_output (jobId, JSON_OBJECT('message', 'delete range', 'table', 'review', 'range_start', curMinId, 'range_end', curMaxId, 'range_size', numReviewIds));
         delete from review where reviewId IN (
-            select reviewId from t_reviewIds where seq >= curMinId and seq < curMaxId 
+            select reviewId from t_reviewIds where seq >= v_curMinId and seq < v_curMaxId
           );
-        SET curMinId = curMinId + incrementValue;
-        SET curMaxId = curMaxId + incrementValue;
+        SET v_curMinId = v_curMinId + v_incrementValue;
+        SET v_curMaxId = v_curMaxId + v_incrementValue;
       UNTIL ROW_COUNT() = 0 END REPEAT;
     END IF;
     drop temporary table if exists t_reviewIds;
 
-    SET curMinId = 1;
-    SET curMaxId = curMinId + incrementValue;
-    IF numAssetIds > 0 THEN
+    SET v_curMinId = 1;
+    SET v_curMaxId = v_curMinId + v_incrementValue;
+    IF v_numAssetIds > 0 THEN
+      CALL task_output (v_runId, v_taskId, 'info', concat('deleting ', v_numAssetIds, ' assets'));
       REPEAT
-        CALL job_output (jobId, JSON_OBJECT('message', 'delete range', 'table', 'asset', 'range_start', curMinId, 'range_end', curMaxId, 'range_size', numAssetIds));
         delete from asset where assetId IN (
-            select assetId from t_assetIds where seq >= curMinId and seq < curMaxId 
+            select assetId from t_assetIds where seq >= v_curMinId and seq < v_curMaxId
           );
-        SET curMinId = curMinId + incrementValue;
-        SET curMaxId = curMaxId + incrementValue;
+        SET v_curMinId = v_curMinId + v_incrementValue;
+        SET v_curMaxId = v_curMaxId + v_incrementValue;
     UNTIL ROW_COUNT() = 0 END REPEAT;
     END IF;
     drop temporary table if exists t_assetIds;
 
-    SET curMinId = 1;
-    SET curMaxId = curMinId + incrementValue;
-    IF numCollectionIds > 0 THEN
+    SET v_curMinId = 1;
+    SET v_curMaxId = v_curMinId + v_incrementValue;
+    IF v_numCollectionIds > 0 THEN
+      CALL task_output (v_runId, v_taskId, 'info', concat('deleting ', v_numCollectionIds, ' collections'));
       REPEAT
-        CALL job_output (jobId, JSON_OBJECT('message', 'delete range', 'table', 'collection', 'range_start', curMinId, 'range_end', curMaxId, 'range_size', numCollectionIds));
         delete from collection where collectionId IN (
-            select collectionId from t_collectionIds where seq >= curMinId and seq < curMaxId 
+            select collectionId from t_collectionIds where seq >= v_curMinId and seq < v_curMaxId
           );
-        SET curMinId = curMinId + incrementValue;
-        SET curMaxId = curMaxId + incrementValue;
+        SET v_curMinId = v_curMinId + v_incrementValue;
+        SET v_curMaxId = v_curMaxId + v_incrementValue;
       UNTIL ROW_COUNT() = 0 END REPEAT;
     END IF;
     drop temporary table if exists t_collectionIds;
 
-    CALL job_output (jobId, JSON_OBJECT('message', 'Job finished'));
-    CALL job_finished (jobId);
+    CALL task_output (v_runId, v_taskId, 'info', 'task finished');
     END $
 DELIMITER ;
 /*!50003 SET sql_mode              = @saved_sql_mode */ ;
 /*!50003 SET collation_connection  = @saved_col_connection */ ;
-/*!50003 DROP PROCEDURE IF EXISTS `job_failed` */;
+/*!50003 DROP PROCEDURE IF EXISTS `delete_stale` */;
 /*!50003 SET @saved_col_connection = @@collation_connection */ ;
 /*!50003 SET collation_connection  = utf8mb4_0900_ai_ci */ ;
 /*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
 /*!50003 SET sql_mode              = 'IGNORE_SPACE,ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION' */ ;
 DELIMITER $
-CREATE PROCEDURE `job_failed`(
-    IN jobId BINARY(16)
-  )
+CREATE PROCEDURE `delete_stale`(IN in_context VARCHAR(255))
 BEGIN
-    update job set status = 'failed' where job.jobId = jobId;
-  END $
-DELIMITER ;
-/*!50003 SET sql_mode              = @saved_sql_mode */ ;
-/*!50003 SET collation_connection  = @saved_col_connection */ ;
-/*!50003 DROP PROCEDURE IF EXISTS `job_finished` */;
-/*!50003 SET @saved_col_connection = @@collation_connection */ ;
-/*!50003 SET collation_connection  = utf8mb4_0900_ai_ci */ ;
-/*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
-/*!50003 SET sql_mode              = 'IGNORE_SPACE,ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION' */ ;
-DELIMITER $
-CREATE PROCEDURE `job_finished`(
-    IN jobId BINARY(16)
-  )
-BEGIN
-    update job set status = 'finished' where job.jobId = jobId;
-  END $
-DELIMITER ;
-/*!50003 SET sql_mode              = @saved_sql_mode */ ;
-/*!50003 SET collation_connection  = @saved_col_connection */ ;
-/*!50003 DROP PROCEDURE IF EXISTS `job_output` */;
-/*!50003 SET @saved_col_connection = @@collation_connection */ ;
-/*!50003 SET collation_connection  = utf8mb4_0900_ai_ci */ ;
-/*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
-/*!50003 SET sql_mode              = 'IGNORE_SPACE,ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION' */ ;
-DELIMITER $
-CREATE PROCEDURE `job_output`(
-    IN jobId BINARY(16),
-    IN data JSON
-    )
-BEGIN
-      insert into job_output (jobId, data) values (jobId, data);
+      DECLARE v_runId BINARY(16);
+      DECLARE v_taskId INT;
+      DECLARE v_numReviewIds INT;
+      DECLARE v_numHistoryIds INT;
+      DECLARE v_incrementValue INT DEFAULT 10000;
+      DECLARE v_curMinId BIGINT DEFAULT 1;
+      DECLARE v_curMaxId BIGINT DEFAULT v_incrementValue + 1;
+
+      DECLARE EXIT HANDLER FOR SQLEXCEPTION
+      BEGIN
+        DECLARE err_code INT;
+        DECLARE err_msg TEXT;
+        GET DIAGNOSTICS CONDITION 1
+          err_code = MYSQL_ERRNO, err_msg = MESSAGE_TEXT;
+        CALL task_output(v_runId, v_taskId, 'error',concat('code: ', err_code, ' message: ', err_msg));
+        RESIGNAL;
+      END;
+
+      -- Set v_runId from t_runtime if table exists, else generate a new UUID
+      CALL get_runtime(v_runId, v_taskId);
+      CALL task_output (v_runId, v_taskId, 'info', 'task started');
+
+      drop temporary table if exists t_reviewIds;
+      create temporary table t_reviewIds (seq INT AUTO_INCREMENT PRIMARY KEY, reviewId INT);
+      -- Context-specific logic
+      IF in_context = 'system' THEN
+        INSERT into t_reviewIds (reviewId)
+        select r.reviewId from review r
+        left join rev_group_rule_map rgr on (r.version = rgr.version and r.checkDigest = rgr.checkDigest)
+        where rgr.rgrId is null;
+      ELSEIF in_context = 'asset' THEN
+        INSERT into t_reviewIds (reviewId)
+        select
+          r.reviewId
+        from
+          review r
+          left join rev_group_rule_map rgr on (r.version = rgr.version and r.checkDigest = rgr.checkDigest)
+          left join revision on (rgr.revId = revision.revId)
+          left join stig_asset_map sa on (r.assetId = sa.assetId and revision.benchmarkId = sa.benchmarkId)
+        group by
+          r.reviewId
+        having
+          count(sa.saId) = 0;
+      END IF;
+
+      select max(seq) into v_numReviewIds from t_reviewIds;
+      CALL task_output (v_runId, v_taskId, 'info', concat('found ', ifnull(v_numReviewIds, 0), ' reviews to delete'));
+
+      IF v_numReviewIds > 0 THEN
+        drop temporary table if exists t_historyIds;
+        create temporary table t_historyIds (seq INT AUTO_INCREMENT PRIMARY KEY)
+          select historyId from review_history where reviewId in (select reviewId from t_reviewIds);
+        select max(seq) into v_numHistoryIds from t_historyIds;
+        CALL task_output (v_runId, v_taskId, 'info', concat('found ', ifnull(v_numHistoryIds, 0), ' history records to delete'));
+        IF v_numHistoryIds > 0 THEN
+          CALL task_output (v_runId, v_taskId, 'info', concat('deleting ', v_numHistoryIds, ' history records'));
+          SET v_curMinId = 1;
+          SET v_curMaxId = v_curMinId + v_incrementValue;
+          REPEAT
+            delete from review_history where historyId IN (
+                select historyId from t_historyIds where seq >= v_curMinId and seq < v_curMaxId
+              );
+            SET v_curMinId = v_curMinId + v_incrementValue;
+            SET v_curMaxId = v_curMaxId + v_incrementValue;
+          UNTIL ROW_COUNT() = 0 END REPEAT;
+        END IF;
+        CALL task_output (v_runId, v_taskId, 'info', concat('deleting ', v_numAssetIds, ' assets'));
+        SET v_curMinId = 1;
+        SET v_curMaxId = v_curMinId + v_incrementValue;
+        REPEAT
+          delete from review where reviewId IN (
+              select reviewId from t_reviewIds where seq >= v_curMinId and seq < v_curMaxId
+            );
+          SET v_curMinId = v_curMinId + v_incrementValue;
+          SET v_curMaxId = v_curMaxId + v_incrementValue;
+        UNTIL ROW_COUNT() = 0 END REPEAT;
+      END IF;
+      CALL task_output (v_runId, v_taskId, 'info', 'task finished');
     END $
 DELIMITER ;
 /*!50003 SET sql_mode              = @saved_sql_mode */ ;
 /*!50003 SET collation_connection  = @saved_col_connection */ ;
-/*!50003 DROP PROCEDURE IF EXISTS `job_start` */;
+/*!50003 DROP PROCEDURE IF EXISTS `get_runtime` */;
 /*!50003 SET @saved_col_connection = @@collation_connection */ ;
 /*!50003 SET collation_connection  = utf8mb4_0900_ai_ci */ ;
 /*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
 /*!50003 SET sql_mode              = 'IGNORE_SPACE,ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION' */ ;
 DELIMITER $
-CREATE PROCEDURE `job_start`(
-      IN jobId BINARY(16),
-      IN userId INT,
-      IN name VARCHAR(255)
-    )
+CREATE PROCEDURE `get_runtime`(OUT out_runId BINARY(16), OUT out_taskId INT)
 BEGIN
-      insert into job(jobId, name, userId, status) values (jobId, name, userId, 'started');
+      DECLARE v_table_exists INT DEFAULT 1;
+      BEGIN
+        DECLARE CONTINUE HANDLER FOR SQLEXCEPTION SET v_table_exists = 0;
+        SET v_table_exists = 1;
+        SELECT 1 FROM t_runtime LIMIT 1;
+      END;
+      IF v_table_exists = 1 THEN
+        SELECT runId, taskId INTO out_runId, out_taskId FROM t_runtime LIMIT 1;
+      ELSE
+        SET out_runId = UUID_TO_BIN(UUID(),1);
+        SET out_taskId = NULL;
+      END IF;
+    END $
+DELIMITER ;
+/*!50003 SET sql_mode              = @saved_sql_mode */ ;
+/*!50003 SET collation_connection  = @saved_col_connection */ ;
+/*!50003 DROP PROCEDURE IF EXISTS `run_job` */;
+/*!50003 SET @saved_col_connection = @@collation_connection */ ;
+/*!50003 SET collation_connection  = utf8mb4_0900_ai_ci */ ;
+/*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
+/*!50003 SET sql_mode              = 'IGNORE_SPACE,ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION' */ ;
+DELIMITER $
+CREATE PROCEDURE `run_job`(
+    IN in_jobId INT,
+    IN in_runIdStr VARCHAR(36)
+  )
+main:BEGIN
+        DECLARE v_ourId INT DEFAULT NULL;
+        DECLARE v_done INT DEFAULT FALSE;
+        DECLARE v_runId BINARY(16);
+        DECLARE v_jrId INT;
+        DECLARE v_numTasks INT;
+        DECLARE v_currentTaskId INT;
+        DECLARE v_currentTaskName VARCHAR(255);
+        DECLARE v_currentCommand VARCHAR(255);
+        DECLARE v_currentTaskNum INT DEFAULT 0;
+        DECLARE v_param_string TEXT;
+        DECLARE cur CURSOR FOR
+          SELECT 
+            jt.taskId,
+            t.name,
+            t.command
+          FROM
+            job_task_map jt
+            inner join task t on (jt.taskId = t.taskId)
+          WHERE 
+            jobId = in_jobId 
+          ORDER BY jtId ASC;
+        DECLARE CONTINUE HANDLER FOR NOT FOUND SET v_done = TRUE;
+        DECLARE EXIT HANDLER FOR SQLEXCEPTION
+        BEGIN
+          DECLARE err_code INT;
+          DECLARE err_msg TEXT;
+          GET STACKED DIAGNOSTICS CONDITION 1 err_code = MYSQL_ERRNO, err_msg = MESSAGE_TEXT;
+          CALL task_output(v_runId, v_ourId, 'error', concat('code: ', err_code, ' message: ', err_msg));
+          UPDATE job_run SET state = 'failed' WHERE jobId = in_jobId;
+        END;
+
+        -- === Pre-task-loop logic ===
+        IF in_runIdStr IS NOT NULL AND in_runIdStr REGEXP '^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$' THEN
+          SET v_runId = UUID_TO_BIN(in_runIdStr, 1);
+        ELSE
+          SET v_runId = UUID_TO_BIN(UUID(), 1);
+        END IF;
+
+        CREATE TEMPORARY TABLE IF NOT EXISTS t_runtime (runId BINARY(16) NOT NULL, taskId INT NULL) SELECT v_runId AS runId, NULL AS taskId;
+        INSERT INTO job_run(jobId, runId, state) VALUES (in_jobId, v_runId, 'running');
+        CALL task_output (v_runId, v_ourId, 'info', concat('run started for jobId ', in_jobId));
+
+        -- Get the number of tasks for the job
+        SELECT COUNT(*) INTO v_numTasks FROM job_task_map WHERE jobId = in_jobId;
+
+        IF v_numTasks = 0 THEN
+          CALL task_output (v_runId, v_ourId, 'error', 'no tasks to run');
+          UPDATE job_run SET state = 'failed' WHERE jobId = in_jobId AND state = 'running';
+          LEAVE main; -- No tasks to run, exit the procedure
+        END IF;
+
+
+        OPEN cur;
+        read_loop: LOOP
+          FETCH cur INTO v_currentTaskId, v_currentTaskName, v_currentCommand;
+          IF v_done THEN
+            LEAVE read_loop;
+          END IF;
+          SET v_currentTaskNum = v_currentTaskNum + 1;
+
+          SET @sql = CONCAT('CALL ', v_currentCommand);
+          PREPARE stmt FROM @sql;
+          CALL task_output (v_runId, v_ourId, 'info', concat('Starting task ', v_currentTaskName, ' (', v_currentTaskNum, '/', v_numTasks, ')'));
+          UPDATE t_runtime SET taskId = v_currentTaskId WHERE runId = runId;
+          EXECUTE stmt;
+          DEALLOCATE PREPARE stmt;
+        END LOOP;
+        CLOSE cur;
+
+        -- === Post-task-loop logic ===
+        UPDATE job_run SET state = 'completed' WHERE jobId = in_jobId AND state = 'running';
+        CALL task_output (v_runId, v_ourId, 'info', concat('run completed for jobId ', in_jobId));
+
+    END $
+DELIMITER ;
+/*!50003 SET sql_mode              = @saved_sql_mode */ ;
+/*!50003 SET collation_connection  = @saved_col_connection */ ;
+/*!50003 DROP PROCEDURE IF EXISTS `task_output` */;
+/*!50003 SET @saved_col_connection = @@collation_connection */ ;
+/*!50003 SET collation_connection  = utf8mb4_0900_ai_ci */ ;
+/*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
+/*!50003 SET sql_mode              = 'IGNORE_SPACE,ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION' */ ;
+DELIMITER $
+CREATE PROCEDURE `task_output`(
+    IN in_runId BINARY(16),
+    IN in_taskId INT,
+    IN in_type VARCHAR(45),
+    IN in_message VARCHAR(255)
+  )
+BEGIN
+      insert into task_output (runId, taskId, type, message) values (in_runId, in_taskId, in_type, in_message);
     END $
 DELIMITER ;
 /*!50003 SET sql_mode              = @saved_sql_mode */ ;
@@ -1003,4 +1200,4 @@ DELIMITER ;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2025-09-10 17:33:44
+-- Dump completed on 2025-09-27  0:10:23

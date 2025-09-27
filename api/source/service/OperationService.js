@@ -149,7 +149,7 @@ exports.getAppData = async function (res, format) {
           return (bytes[0] === 1)
         }
          // Designated fields returned as original MySQL strings
-        if (field.type === 'JSON' || field.type === 'DATETIME' || field.type === 'DATE') {
+        if (field.type === 'JSON' || field.type === 'DATETIME' || field.type === 'DATE' || field.type === 'TIMESTAMP' || field.type === 'TIME' || field.type === 'YEAR') {
           return (field.string("utf8"))
         }
         return next()

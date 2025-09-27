@@ -21,7 +21,11 @@ SM.Job.JobsGrid = Ext.extend(Ext.grid.GridPanel, {
     ]
     const columns = [
       { header: 'ID', dataIndex: 'jobId', width: 50, sortable: true },
-      { header: 'Name', dataIndex: 'name', width: 150, sortable: true },
+      {
+        header: 'Name', dataIndex: 'name', width: 150, sortable: true, renderer: function (v, m, r) {
+          return `<span class="sm-job-sprite sm-job-run-state-${r.data.lastRun?.state ?? 'missing'}">${v}</span>`
+        }
+      },
       { header: 'Description', dataIndex: 'description', hidden: true, width: 250, sortable: false },
       {
         header: 'Tasks', dataIndex: 'tasks', width: 200, sortable: false, renderer: function (v) {
@@ -35,17 +39,21 @@ SM.Job.JobsGrid = Ext.extend(Ext.grid.GridPanel, {
         header: 'Schedule', dataIndex: 'event', width: 200, sortable: false, renderer: function (v) {
           if (v) {
             if (v.type === 'recurring') {
-              return `Every ${v.interval.value} ${v.interval.field}(s)<br>Starting ${v.starts}${v.enabled ? '' : '<br>DISABLED'} `
+              return `Every ${v.interval.value} ${v.interval.field}(s)<br>Starting ${Ext.util.Format.date(v.starts, 'Y-m-d H:i:s T')}${v.enabled ? '' : '<br>DISABLED'} `
             }
             else if (v.type === 'once') {
-              return `Once at ${v.starts}`
+              return `Once at ${Ext.util.Format.date(v.starts, 'Y-m-d H:i:s T')}`
             }
           }
           return ''
         }
       },
       { header: 'Runs', dataIndex: 'runCount', width: 150, sortable: true },
-      { header: 'Last Run', xtype: 'datecolumn', format: 'Y-m-d H:i:s T', dataIndex: 'lastRun', width: 150, sortable: true },
+      {
+        header: 'Last Run', dataIndex: 'lastRun', width: 150, sortable: true, renderer: function (v) {
+          return v ? `<span class="sm-job-sprite sm-job-run-state-${v.state}">${v.state}</span><br>${Ext.util.Format.date(v.created || v.updated, 'Y-m-d H:i:s T')}<br>` : '-';
+        },
+      },
       { header: 'Created', dataIndex: 'created', hidden: true, width: 100, sortable: true },
       { header: 'CreatedBy', dataIndex: 'createdBy', hidden: true, width: 100, sortable: true },
       { header: 'Updated', dataIndex: 'updated', hidden: true, width: 150, sortable: true },
@@ -103,7 +111,12 @@ SM.Job.JobsGrid = Ext.extend(Ext.grid.GridPanel, {
           }, 100);
         }
       },
-      deferEmptyText: false
+      deferEmptyText: false,
+      getRowClass: function (record) {
+        if (record.data.lastRun?.state == 'failed') {
+          return 'sm-grid3-row-error';
+        }
+      }
     })
 
     const tbar = [
@@ -245,7 +258,11 @@ SM.Job.RunsGrid = Ext.extend(Ext.grid.GridPanel, {
     ]
     const columns = [
       { header: 'Started', xtype: 'datecolumn', format: 'Y-m-d H:i:s.u T', dataIndex: 'created', width: 200, sortable: true },
-      { header: 'State', dataIndex: 'state', width: 100, sortable: true },
+      {
+        header: 'State', dataIndex: 'state', width: 100, sortable: true, renderer: function (v) {
+          return `<span class="sm-job-sprite sm-job-run-state-${v}">${v}</span>`
+        }
+      },
       { header: 'Duration', dataIndex: 'duration', width: 70, sortable: true }
     ]
 
@@ -331,7 +348,11 @@ SM.Job.RunOutputGrid = Ext.extend(Ext.grid.GridPanel, {
       { header: 'Seq', dataIndex: 'seq', width: 50, sortable: true },
       { header: 'Timestamp', xtype: 'datecolumn', format: 'Y-m-d H:i:s.u T', dataIndex: 'ts', width: 150, sortable: true },
       { header: 'Task', dataIndex: 'task', width: 120, sortable: true },
-      { header: 'Type', dataIndex: 'type', width: 50, sortable: true },
+      {
+        header: 'Type', dataIndex: 'type', width: 50, sortable: true, renderer: function (v) {
+          return v === 'error' ? '<span style="color: red;">' + v + '</span>' : v;
+        }
+      },
       { header: 'Message', dataIndex: 'message', width: 300, sortable: true },
     ]
     const store = new Ext.data.JsonStore({
@@ -1239,7 +1260,7 @@ SM.Job.showJobAdminTab = function ({ treePath }) {
   })
 
   jobsGrid.getSelectionModel().on('rowselect', async function (sm, rowIndex, record) {
-    loadRuns(record.data.jobId) 
+    loadRuns(record.data.jobId)
   })
   jobsGrid.getStore().on('load', function () {
     const selection = jobsGrid.getSelectionModel().getSelected()

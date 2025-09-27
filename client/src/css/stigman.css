@@ -33,6 +33,10 @@
   --color-marking-secret:#c8102e;
   --color-marking-topsecret:#ff671f;
   --color-marking-sci:#f7ea48;
+  --color-job-run-state-completed: hsl(121 84% 50% / 1);	
+  --color-job-run-state-running: hsl(222, 84%, 50%);
+  --color-job-run-state-failed: hsl(1deg 74.55% 52.35%);
+  --color-job-run-state-missing: hsl(0 0% 73% / 1);
 }
 
 .x-tree-node-collapsed .x-tree-node-icon, .x-tree-node-expanded .x-tree-node-icon, .x-tree-node-leaf .x-tree-node-icon {
@@ -1443,7 +1447,7 @@ td.x-grid3-hd-over .x-grid3-hd-inner {
 }
 .sm-grid3-row-error td,
 .sm-grid3-row-italic td {
-  color: #ff4747!important
+  background-color: #ffdede !important;
 }
 .x-grid3-row-over {
   border-color: #ddd;
@@ -2719,3 +2723,32 @@ td.x-grid3-hd-over .x-grid3-hd-inner {
   line-height: 12px;
   padding-left: 6px;
 }
+
+.sm-job-sprite {
+  font: 600 10px/14px Open Sans,helvetica,sans-serif;
+  top: 0;
+  padding: 0 5px;
+  border-radius: 3px;
+  margin-left: 3px;
+  white-space: nowrap;
+  line-height: 16px;	
+}
+.sm-job-sprite.sm-job-scheduled {
+  background-color: var(--color-job-scheduled)
+}
+.sm-job-sprite.sm-job-unscheduled {
+  background-color: var(--color-job-unscheduled)
+}
+.sm-job-sprite.sm-job-run-state-completed {
+  background-color: var(--color-job-run-state-completed);
+}
+.sm-job-sprite.sm-job-run-state-running {
+  background-color: var(--color-job-run-state-running);
+}
+.sm-job-sprite.sm-job-run-state-failed {
+  background-color: var(--color-job-run-state-failed);
+}
+.sm-job-sprite.sm-job-run-state-missing {
+  background-color: var(--color-job-run-state-missing);
+}
+
