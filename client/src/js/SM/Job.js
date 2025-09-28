@@ -353,7 +353,10 @@ SM.Job.RunOutputGrid = Ext.extend(Ext.grid.GridPanel, {
           return v === 'error' ? '<span style="color: red;">' + v + '</span>' : v;
         }
       },
-      { header: 'Message', dataIndex: 'message', width: 300, sortable: true },
+      { header: 'Message', dataIndex: 'message', width: 300, sortable: true, renderer: function (v, m, r) {
+        m.attr = 'style="white-space:normal;"'
+        return v ? `<div exportValue="${v}">${Ext.util.Format.htmlEncode(v)}</div>` : '';
+      }},
     ]
     const store = new Ext.data.JsonStore({
       root: '',

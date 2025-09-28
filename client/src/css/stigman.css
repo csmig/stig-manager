@@ -2736,22 +2736,26 @@ td.x-grid3-hd-over .x-grid3-hd-inner {
 .sm-job-sprite.sm-job-scheduled {
   background-color: var(--color-job-scheduled)
 }
+
 .sm-job-sprite.sm-job-unscheduled {
   background-color: var(--color-job-unscheduled)
 }
+
 .sm-job-sprite.sm-job-run-state-completed {
   background-color: var(--color-job-run-state-completed);
 }
+
 .sm-job-sprite.sm-job-run-state-running {
   background-color: var(--color-job-run-state-running);
 }
+
 .sm-job-sprite.sm-job-run-state-failed {
   background-color: var(--color-job-run-state-failed);
 }
+
 .sm-job-sprite.sm-job-run-state-missing {
   background-color: var(--color-job-run-state-missing);
 }
-
 
 .sm-round-panel.sm-offline-modal {
 	background-color: hsl(0 61% 64% / 1);

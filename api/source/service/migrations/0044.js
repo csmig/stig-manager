@@ -13,8 +13,8 @@ const upMigration = [
   `INSERT INTO task (taskId, name, description, command, args) VALUES
     (1, 'WipeDeletedObjects', 'Wipe deleted collections and assets and their associated reviews', 'delete_disabled()', NULL),
     (2, 'DeleteStaleReviews', 'Delete reviews that no longer match any rule in the system', 'delete_stale("system")', NULL),
-    (3, 'DeleteStaleReviews/Asset', 'Delete reviews that no longer match an asset''s assigned rules', 'delete_stale("asset")', NULL),
-    (4, 'OptimizeTables', 'Optimize database tables for performance', 'optimize_tables()', NULL)
+    (3, 'DeleteStaleAssetReviews', 'Delete reviews that no longer match an asset''s assigned rules', 'delete_stale("asset")', NULL),
+    (4, 'AnalyzeReviewTables', 'Analyze database tables for performance', 'analyze_tables(JSON_ARRAY("reviews", "review_history"))', NULL)
   `,
   
   `DROP TABLE IF EXISTS job`,
@@ -59,7 +59,7 @@ const upMigration = [
   `CREATE TABLE task_output (
     seq INT NOT NULL AUTO_INCREMENT,
     ts TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
-    runId BINARY(16) NOT NULL,
+    runId BINARY(16) NULL,
     taskId INT NULL,
     type VARCHAR(45) NOT NULL,
     message VARCHAR(255) NOT NULL,
@@ -80,7 +80,7 @@ const upMigration = [
       IF v_table_exists = 1 THEN
         SELECT runId, taskId INTO out_runId, out_taskId FROM t_runtime LIMIT 1;
       ELSE
-        SET out_runId = UUID_TO_BIN(UUID(),1);
+        SET out_runId = NULL;
         SET out_taskId = NULL;
       END IF;
     END`,
@@ -152,11 +152,11 @@ const upMigration = [
           SET v_currentTaskNum = v_currentTaskNum + 1;
 
           SET @sql = CONCAT('CALL ', v_currentCommand);
-          PREPARE stmt FROM @sql;
+          PREPARE stmt_run_job FROM @sql;
           CALL task_output (v_runId, v_ourId, 'info', concat('Starting task ', v_currentTaskName, ' (', v_currentTaskNum, '/', v_numTasks, ')'));
           UPDATE t_runtime SET taskId = v_currentTaskId WHERE runId = runId;
-          EXECUTE stmt;
-          DEALLOCATE PREPARE stmt;
+          EXECUTE stmt_run_job;
+          DEALLOCATE PREPARE stmt_run_job;
         END LOOP;
         CLOSE cur;
 
@@ -174,6 +174,7 @@ const upMigration = [
     IN in_message VARCHAR(255)
   )
     BEGIN
+      IF in_message IS NULL THEN SET in_message = ''; END IF;
       insert into task_output (runId, taskId, type, message) values (in_runId, in_taskId, in_type, in_message);
     END`,
 
@@ -298,7 +299,7 @@ const upMigration = [
       BEGIN
         DECLARE err_code INT;
         DECLARE err_msg TEXT;
-        GET DIAGNOSTICS CONDITION 1
+        GET STACKED DIAGNOSTICS CONDITION 1
           err_code = MYSQL_ERRNO, err_msg = MESSAGE_TEXT;
         CALL task_output(v_runId, v_taskId, 'error',concat('code: ', err_code, ' message: ', err_msg));
         RESIGNAL;
@@ -364,7 +365,46 @@ const upMigration = [
         UNTIL ROW_COUNT() = 0 END REPEAT;
       END IF;
       CALL task_output (v_runId, v_taskId, 'info', 'task finished');
-    END;`
+    END;`,
+
+  `DROP PROCEDURE IF EXISTS analyze_tables`,
+  `CREATE PROCEDURE analyze_tables (IN in_tables JSON)
+    BEGIN
+          DECLARE v_runId BINARY(16) DEFAULT NULL;
+          DECLARE v_taskId INT DEFAULT NULL;
+          DECLARE v_itemCount INT;
+          DECLARE v_currentCount INT;
+          DECLARE v_table VARCHAR(255);
+
+          DECLARE EXIT HANDLER FOR SQLEXCEPTION
+          BEGIN
+            DECLARE err_code INT;
+            DECLARE err_msg TEXT;
+            GET STACKED DIAGNOSTICS CONDITION 1
+              err_code = MYSQL_ERRNO, err_msg = MESSAGE_TEXT;
+              IF err_msg = NULL THEN 
+          SET err_msg = '';
+              END IF;
+            CALL task_output(v_runId, v_taskId, 'error',concat('code: ', err_code, ' message: ', err_msg));
+            RESIGNAL;
+          END;
+          
+          CALL get_runtime(v_runId, v_taskId);
+        CALL task_output (v_runId, v_taskId, 'info', 'task started');
+
+        select JSON_LENGTH(in_tables) INTO v_itemCount;
+            SET v_currentCount = 0;
+            WHILE v_currentCount < v_itemCount DO
+          SET v_table = json_unquote(json_extract(in_tables, concat('$[', v_currentCount, ']')));
+              CALL task_output (v_runId, v_taskId, 'info', concat('analyze table: ', v_table));
+              SET @sql = CONCAT('ANALYZE TABLE ', v_table);
+              PREPARE stmt_analyze_tables FROM @sql;
+              EXECUTE stmt_analyze_tables;
+              DEALLOCATE PREPARE stmt_analyze_tables;
+              SET v_currentCount = v_currentCount + 1;
+            END WHILE;
+
+    END`,
 
 ]
 
