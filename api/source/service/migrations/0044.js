@@ -7,14 +7,13 @@ const upMigration = [
     name VARCHAR(45) NOT NULL,
     description VARCHAR(255) NULL,
     command VARCHAR(255) NOT NULL,
-    args JSON NULL DEFAULT ('[]'),
     PRIMARY KEY (taskId)
   )`,
   `INSERT INTO task (taskId, name, description, command, args) VALUES
-    (1, 'WipeDeletedObjects', 'Wipe deleted collections and assets and their associated reviews', 'delete_disabled()', NULL),
-    (2, 'DeleteStaleReviews', 'Delete reviews that no longer match any rule in the system', 'delete_stale("system")', NULL),
-    (3, 'DeleteStaleAssetReviews', 'Delete reviews that no longer match an asset''s assigned rules', 'delete_stale("asset")', NULL),
-    (4, 'AnalyzeReviewTables', 'Analyze database tables for performance', 'analyze_tables(JSON_ARRAY("reviews", "review_history"))', NULL)
+    (1, 'WipeDeletedObjects', 'Wipe deleted collections and assets and their associated reviews', 'delete_disabled()'),
+    (2, 'DeleteStaleReviews', 'Delete reviews that no longer match any rule in the system', 'delete_stale("system")'),
+    (3, 'DeleteStaleAssetReviews', 'Delete reviews that no longer match an asset''s assigned rules', 'delete_stale("asset")'),
+    (4, 'AnalyzeReviewTables', 'Analyze database tables for performance', 'analyze_tables(JSON_ARRAY("reviews", "review_history"))')
   `,
   
   `DROP TABLE IF EXISTS job`,
@@ -393,16 +392,17 @@ const upMigration = [
         CALL task_output (v_runId, v_taskId, 'info', 'task started');
 
         select JSON_LENGTH(in_tables) INTO v_itemCount;
-            SET v_currentCount = 0;
-            WHILE v_currentCount < v_itemCount DO
+        SET v_currentCount = 0;
+        WHILE v_currentCount < v_itemCount DO
           SET v_table = json_unquote(json_extract(in_tables, concat('$[', v_currentCount, ']')));
-              CALL task_output (v_runId, v_taskId, 'info', concat('analyze table: ', v_table));
-              SET @sql = CONCAT('ANALYZE TABLE ', v_table);
-              PREPARE stmt_analyze_tables FROM @sql;
-              EXECUTE stmt_analyze_tables;
-              DEALLOCATE PREPARE stmt_analyze_tables;
-              SET v_currentCount = v_currentCount + 1;
-            END WHILE;
+          CALL task_output (v_runId, v_taskId, 'info', concat('analyze table: ', v_table));
+          SET @sql = CONCAT('ANALYZE TABLE ', v_table);
+          PREPARE stmt_analyze_tables FROM @sql;
+          EXECUTE stmt_analyze_tables;
+          DEALLOCATE PREPARE stmt_analyze_tables;
+          SET v_currentCount = v_currentCount + 1;
+        END WHILE;
+        CALL task_output (v_runId, v_taskId, 'info', 'task finished');
 
     END`,
 
