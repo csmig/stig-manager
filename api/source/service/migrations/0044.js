@@ -9,7 +9,7 @@ const upMigration = [
     command VARCHAR(255) NOT NULL,
     PRIMARY KEY (taskId)
   )`,
-  `INSERT INTO task (taskId, name, description, command, args) VALUES
+  `INSERT INTO task (taskId, name, description, command) VALUES
     (1, 'WipeDeletedObjects', 'Wipe deleted collections and assets and their associated reviews', 'delete_disabled()'),
     (2, 'DeleteStaleReviews', 'Delete reviews that no longer match any rule in the system', 'delete_stale("system")'),
     (3, 'DeleteStaleAssetReviews', 'Delete reviews that no longer match an asset''s assigned rules', 'delete_stale("asset")'),
