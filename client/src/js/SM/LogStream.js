@@ -195,6 +195,22 @@ SM.LogStream.LogPanel = Ext.extend(Ext.Panel, {
     }
   },
   updatePanelBody: function () {
+    // Anchor scroll position if not auto-scrolling
+    let anchorId = null;
+    let anchorOffset = 0;
+    if (!this.shouldAutoScroll && this.logDivs.length) {
+      // Find the first visible log line
+      const wrapper = this.wrapperDiv;
+      const scrollTop = this.body.dom.scrollTop;
+      for (const el of wrapper.children) {
+        if (el.offsetTop + el.offsetHeight > scrollTop) {
+          anchorId = el.textContent;
+          anchorOffset = el.offsetTop - scrollTop;
+          break;
+        }
+      }
+    }
+
     for (const logLine of this.logLines) {
       const json = JSON.parse(logLine);
       const logTextEl = document.createElement('div');
@@ -203,6 +219,7 @@ SM.LogStream.LogPanel = Ext.extend(Ext.Panel, {
       logTextEl.dataset.level = json.level;
       logTextEl.dataset.component = json.component;
       if (json.component === 'rest') {
+        logTextEl.dataset.type = json.type;
         if (json.type === 'request' || json.type === 'response') {
           logTextEl.dataset.requestId = json.data.requestId;
         } else if (json.type === 'transaction') {
@@ -219,6 +236,14 @@ SM.LogStream.LogPanel = Ext.extend(Ext.Panel, {
     this.logLines = [];
     if (this.shouldAutoScroll) {
       this.body.dom.scrollTop = this.body.dom.scrollHeight;
+    } else if (anchorId) {
+      // Restore scroll position to keep the same log line at the same offset
+      for (const el of this.wrapperDiv.children) {
+        if (el.textContent === anchorId) {
+          this.body.dom.scrollTop = el.offsetTop - anchorOffset;
+          break;
+        }
+      }
     }
     this.needsUpdate = false;
   },
@@ -303,8 +328,9 @@ SM.LogStream.TransactionGrid = Ext.extend(Ext.grid.GridPanel, {
   initComponent: function () {
     this.requestMap = new Map();
     const store = new Ext.data.JsonStore({
-      fields: ['timestamp', 'source', 'user', 'browser', 'url', 'status', 'length', 'duration', 'operationId'],
+      fields: ['requestId', 'timestamp', 'source', 'user', 'browser', 'url', 'status', 'length', 'duration', 'operationId'],
       root: '',
+      idProperty: 'requestId',
     });
     const columns = [
       { header: 'Timestamp', dataIndex: 'timestamp', width: 150, xtype: 'datecolumn', format: 'Y-m-d H:i:s.u T' },
@@ -348,7 +374,7 @@ SM.LogStream.TransactionGrid = Ext.extend(Ext.grid.GridPanel, {
       store,
       columns,
       view,
-      bbar
+      bbar,
     };
     Ext.apply(this, Ext.apply(this.initialConfig, config));
     this.superclass().initComponent.call(this);
@@ -356,6 +382,7 @@ SM.LogStream.TransactionGrid = Ext.extend(Ext.grid.GridPanel, {
   addTransaction: function (logObj) {
     const logData = logObj.data
     const record = {
+      requestId: logData.request.requestId,
       timestamp: logObj.date,
       source: logData.request.source,
       user: logData.request.headers?.accessToken?.preferred_username,
@@ -488,7 +515,7 @@ SM.LogStream.Filter.ComponentFieldSet = Ext.extend(Ext.form.FieldSet, {
   initComponent: function () {
     const items = []
 
-    for (const item of ['jwksCache', 'logSocket', 'rest', 'static']) {
+    for (const item of ['jwksCache', 'mysql', 'logSocket', 'rest', 'static']) {
       items.push(new Ext.form.Checkbox({
         prop: item,
         boxLabel: item
@@ -623,11 +650,14 @@ SM.LogStream.showLogTab = async function ({ treePath }) {
   const logPanel = new SM.LogStream.LogPanel({
     region: 'center',
     cls: 'sm-round-panel',
-    margins: { top: 0, right: SM.Margin.adjacent, bottom: 0, left: 0 },
+    margins: { top: SM.Margin.top, right: SM.Margin.adjacent, bottom: SM.Margin.adjacent, left: SM.Margin.edge },
     border: false,
     listeners: {
       destroy: function () {
         if (SM.LogStream.Socket) {
+          SM.LogStream.Socket.removeEventListener('message', mainMessageHandler);
+          SM.LogStream.Socket.removeEventListener('close', closeHandler);
+
           SM.LogStream.Socket.close();
         }
         if (logPanel.writableStream) {
@@ -636,6 +666,20 @@ SM.LogStream.showLogTab = async function ({ treePath }) {
       },
       logLineSelected: function (data) {
         jsonPanel.loadData(data);
+        const requestId = data.data?.requestId || data.data?.request?.requestId;
+        if (requestId) {
+          const transactionRecord = transactionGrid.getStore().getById(requestId);
+          if (transactionRecord) {
+            const rowIndex = transactionGrid.getStore().indexOf(transactionRecord);
+            transactionGrid.getSelectionModel().selectRow(rowIndex);
+            transactionGrid.getView().focusRow(rowIndex);
+          } else {
+            transactionGrid.getSelectionModel().clearSelections();
+          }
+        } else {
+          transactionGrid.getSelectionModel().clearSelections();
+        }
+
       },
       logCleared: function () {
         jsonPanel.clearData();
@@ -647,7 +691,7 @@ SM.LogStream.showLogTab = async function ({ treePath }) {
   const jsonPanel = new SM.LogStream.JsonTreePanel({
     title: 'JSON Tree',
     cls: 'sm-round-panel',
-    margins: { top: 0, left: SM.Margin.adjacent, bottom: 0, right: 0 },
+    margins: { top: SM.Margin.top, right: SM.Margin.edge, bottom: SM.Margin.adjacent, left: SM.Margin.adjacent },
     region: 'east',
     border: false,
     split: true,
@@ -665,11 +709,44 @@ SM.LogStream.showLogTab = async function ({ treePath }) {
 
   const transactionGrid = new SM.LogStream.TransactionGrid({
     region: 'south',
+    margins: { top: SM.Margin.adjacent, right: SM.Margin.edge, bottom: SM.Margin.bottom, left: SM.Margin.edge },
     cls: 'sm-round-panel',
     split: true,
     title: 'API Transactions',
     height: 400,
     border: false,
+    listeners: {
+      rowclick: function (grid, rowIndex, e) {
+        const record = grid.getStore().getAt(rowIndex);
+        const requestId = record.get('requestId');
+        if (requestId) {
+          const logLineEl = logPanel.wrapperDiv.querySelector(
+            `.sm-log-line[data-request-id="${requestId}"]:is([data-type="request"], [data-type="transaction"])`
+          );
+          if (logLineEl) {
+            logLineEl.click();
+            // Scroll to the log line
+            const contentDiv = logPanel.body.dom;
+            const logLineOffset = logLineEl.offsetTop;
+            contentDiv.scrollTop = logLineOffset - contentDiv.clientHeight / 2;
+          }
+        }
+      },
+      rowdblclick: function (grid, rowIndex, e) {
+        const record = grid.getStore().getAt(rowIndex);
+        const requestId = record.get('requestId');
+        if (requestId) {
+          const logLineEl = logPanel.wrapperDiv.querySelector(`.sm-log-line[data-request-id="${requestId}"][data-type="response"]`);
+          if (logLineEl) {
+            logLineEl.click();
+            // Scroll to the log line
+            const contentDiv = logPanel.body.dom;
+            const logLineOffset = logLineEl.offsetTop;
+            contentDiv.scrollTop = logLineOffset - contentDiv.clientHeight / 2;
+          }
+        }
+      }
+    }
   });
 
   async function mainMessageHandler(event) {
@@ -751,6 +828,7 @@ SM.LogStream.showLogTab = async function ({ treePath }) {
       console.log('WebSocket closed with code:', event.code, 'reason:', event.reason);
       bc.removeEventListener('message', tokenBroadcastHandler);
       SM.LogStream.Socket.removeEventListener('message', mainMessageHandler);
+      SM.LogStream.Socket.removeEventListener('close', closeHandler);
       logPanel.disableUi();
 
       // Don't reconnect on authentication failures (custom codes) or manual closure
