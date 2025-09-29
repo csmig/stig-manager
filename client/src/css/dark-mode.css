@@ -3167,3 +3167,27 @@ embed[type="application/pdf"] {
 .x-btn-pressed {
     box-shadow: inset 0px 0px 0px 1px hsl(0 0% 50% / 1);
 }
+
+.sm-log-line[data-component="logSocket"] {
+  color: #c48eff;
+}
+
+.sm-log-line[data-component="jwksCache"] {
+  color: #e7a15e;
+}
+
+.sm-log-line[data-component="static"] {
+  color: #808080;
+}
+
+.sm-log-line[data-component="rest"] {
+  color: #5ee75e;
+}
+
+.sm-log-line[data-level="1"] {
+  color: red;
+}
+
+.sm-log-line[data-level="2"] {
+  color: orange;
+}

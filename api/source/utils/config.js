@@ -109,7 +109,8 @@ const config = {
         optStats: process.env.STIGMAN_DEV_LOG_OPT_STATS === "true"
     },
     experimental: {
-        appData: process.env.STIGMAN_EXPERIMENTAL_APPDATA === "true"
+        appData: process.env.STIGMAN_EXPERIMENTAL_APPDATA === "true",
+        logStream: process.env.STIGMAN_EXPERIMENTAL_LOGSTREAM !== "false"
     }
 }
 

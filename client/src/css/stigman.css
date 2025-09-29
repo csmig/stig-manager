@@ -33,10 +33,10 @@
   --color-marking-secret: #c8102e;
   --color-marking-topsecret: #ff671f;
   --color-marking-sci: #f7ea48;
-  --color-http-status-200: #d4edda;
-  --color-http-status-300: #fff3cd;
-  --color-http-status-400: #f8d7da;
-  --color-http-status-500: #f5c6cb;
+  --color-http-status-200: #7dd491;
+  --color-http-status-300: #99c2ff;
+  --color-http-status-400: #ffc099;
+  --color-http-status-500: #ff9999;
 }
 
 .x-tree-node-collapsed .x-tree-node-icon,
@@ -3257,11 +3257,11 @@ td.x-grid3-hd-over .x-grid3-hd-inner {
 }
 
 .sm-log-line[data-component="logSocket"] {
-  color: #c48eff;
+  color: #8b1fff;
 }
 
 .sm-log-line[data-component="jwksCache"] {
-  color: #e7a15e;
+  color: #ad611a;
 }
 
 .sm-log-line[data-component="static"] {
@@ -3269,7 +3269,7 @@ td.x-grid3-hd-over .x-grid3-hd-inner {
 }
 
 .sm-log-line[data-component="rest"] {
-  color: #5ee75e;
+  color: #00a900;
 }
 
 .sm-log-line[data-level="1"] {

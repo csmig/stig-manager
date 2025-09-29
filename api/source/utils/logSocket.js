@@ -63,7 +63,7 @@ class LogSession {
   }
   startHeartbeat = () => {
     this.stopHeartbeat();
-    this.pingIntervalId = setInterval(this.sendPing, 10000);
+    this.pingIntervalId = setInterval(this.sendPing, 30000);
   }
 
   stopHeartbeat = () => {
