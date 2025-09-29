@@ -118,7 +118,7 @@ const upMigration = [
           DECLARE err_msg TEXT;
           GET STACKED DIAGNOSTICS CONDITION 1 err_code = MYSQL_ERRNO, err_msg = MESSAGE_TEXT;
           CALL task_output(v_runId, v_ourId, 'error', concat('code: ', err_code, ' message: ', err_msg));
-          UPDATE job_run SET state = 'failed' WHERE jobId = in_jobId;
+          UPDATE job_run SET state = 'failed' WHERE runId = v_runId;
         END;
 
         -- === Pre-task-loop logic ===
@@ -137,7 +137,7 @@ const upMigration = [
 
         IF v_numTasks = 0 THEN
           CALL task_output (v_runId, v_ourId, 'error', 'no tasks to run');
-          UPDATE job_run SET state = 'failed' WHERE jobId = in_jobId AND state = 'running';
+          UPDATE job_run SET state = 'failed' WHERE runId = v_runId AND state = 'running';
           LEAVE main; -- No tasks to run, exit the procedure
         END IF;
 
@@ -160,7 +160,7 @@ const upMigration = [
         CLOSE cur;
 
         -- === Post-task-loop logic ===
-        UPDATE job_run SET state = 'completed' WHERE jobId = in_jobId AND state = 'running';
+        UPDATE job_run SET state = 'completed' WHERE runId = v_runId AND state = 'running';
         CALL task_output (v_runId, v_ourId, 'info', concat('run completed for jobId ', in_jobId));
 
     END`,

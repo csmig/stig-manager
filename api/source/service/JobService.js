@@ -23,8 +23,8 @@ exports.queryJobs = async function ({ projections = [], filters = {} } = {}) {
       'runId', BIN_TO_UUID(jr.runId, 1),
       'created', DATE_FORMAT(jr.created,'%Y-%m-%dT%H:%i:%sZ'),
       'updated', IF(jr.updated IS NULL, NULL, DATE_FORMAT(jr.updated,'%Y-%m-%dT%H:%i:%sZ')),
-      'state', jr.state
-    ), null) FROM job_run jr WHERE jr.jobId = job.jobId ORDER BY jr.jrId DESC LIMIT 1) AS lastRun`,
+      'state', CASE WHEN jr.state = 'running' AND jr.created < CURRENT_TIMESTAMP - INTERVAL gs.VARIABLE_VALUE SECOND THEN 'shutdown' ELSE jr.state END
+    ), null) FROM job_run jr left join performance_schema.global_status gs ON gs.VARIABLE_NAME = "Uptime" WHERE jr.jobId = job.jobId ORDER BY jr.jrId DESC LIMIT 1) AS lastRun`,
   ]
   const joins = new Set([
     'job',
@@ -222,12 +222,15 @@ exports.createEventByJob = async (jobId, eventData) => {
 exports.getRunById = async (runId) => {
   const columns = [
     `BIN_TO_UUID(jr.runId, 1) AS runId`,
-    'jr.state',
+    `CASE WHEN jr.state = 'running' AND jr.created < CURRENT_TIMESTAMP - INTERVAL gs.VARIABLE_VALUE SECOND THEN 'shutdown' ELSE jr.state END AS state`,
     'jr.created',
     'jr.updated',
     'jr.jobId'
   ]
-  const joins = new Set(['job_run jr'])
+  const joins = new Set([
+    'job_run jr',
+    'left join performance_schema.global_status gs ON gs.VARIABLE_NAME = "Uptime"'
+  ])
   const predicates = {
     statements: ['jr.runId = ?'],
     binds: [dbUtils.uuidToSqlString(runId)]
@@ -241,12 +244,15 @@ exports.getRunById = async (runId) => {
 exports.getRunsByJob = async (jobId) => {
   const columns = [
     `BIN_TO_UUID(jr.runId, 1) AS runId`,
-    `jr.state`,
+    `CASE WHEN jr.state = 'running' AND jr.created < CURRENT_TIMESTAMP - INTERVAL gs.VARIABLE_VALUE SECOND THEN 'shutdown' ELSE jr.state END AS state`,
     `jr.created`,
     `jr.updated`,
     `jr.jobId`
   ]
-  const joins = new Set(['job_run jr'])
+  const joins = new Set([
+    'job_run jr',
+    'left join performance_schema.global_status gs ON gs.VARIABLE_NAME = "Uptime"'
+  ])
   const predicates = {
     statements: ['jr.jobId = ?'],
     binds: [jobId]
