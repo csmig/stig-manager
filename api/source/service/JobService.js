@@ -225,7 +225,7 @@ exports.getRunById = async (runId) => {
     `CASE WHEN jr.state = 'running' AND jr.created < CURRENT_TIMESTAMP - INTERVAL gs.VARIABLE_VALUE SECOND THEN 'shutdown' ELSE jr.state END AS state`,
     'jr.created',
     'jr.updated',
-    'jr.jobId'
+    'CAST(jr.jobId AS CHAR) AS jobId'
   ]
   const joins = new Set([
     'job_run jr',
@@ -237,9 +237,8 @@ exports.getRunById = async (runId) => {
   }
   const sql = dbUtils.makeQueryString({ columns, joins, predicates, format: true })
   let [rows] = await dbUtils.pool.query(sql, [runId])
-  return (rows)
+  return (rows[0])
 }
-
 
 exports.getRunsByJob = async (jobId) => {
   const columns = [
@@ -247,7 +246,7 @@ exports.getRunsByJob = async (jobId) => {
     `CASE WHEN jr.state = 'running' AND jr.created < CURRENT_TIMESTAMP - INTERVAL gs.VARIABLE_VALUE SECOND THEN 'shutdown' ELSE jr.state END AS state`,
     `jr.created`,
     `jr.updated`,
-    `jr.jobId`
+    `CAST(jr.jobId AS CHAR) AS jobId`
   ]
   const joins = new Set([
     'job_run jr',

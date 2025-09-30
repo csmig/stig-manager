@@ -1,6 +1,5 @@
 import { config } from '../testConfig.js'
 import * as utils from '../utils/testUtils.js'
-import reference from '../referenceData.js'
 import { expect } from 'chai'
 
 const user = {
@@ -16,6 +15,16 @@ describe('GET - getAllTasks - /jobs/tasks', function () {
     await utils.loadAppData()
   })
 
+  after(async function () {
+    // Clean up any jobs created during tests
+    const res = await utils.executeRequest(`${config.baseUrl}/jobs?elevate=true`, 'GET', user.token)
+    for (let job of res.body) {
+      if (job.name.startsWith('Test Job')) {
+        await utils.executeRequest(`${config.baseUrl}/jobs/${job.jobId}?elevate=true`, 'DELETE', user.token)
+      }
+    }
+  })
+
   it('should get all tasks', async function () {
     const res = await utils.executeRequest(`${config.baseUrl}/jobs/tasks?elevate=true`, 'GET', user.token)
     expect(res.status).to.eql(200)
@@ -24,96 +33,228 @@ describe('GET - getAllTasks - /jobs/tasks', function () {
   })
 })
 
-describe('POST - createJob - /jobs', function () {
+describe('Job endpoint tests', function () {
+  describe('POST - createJob - /jobs', function () {
+
+    before(async function () {
+      await utils.loadAppData()
+    })
+
+    after(deleteTestJobs)
+
+    it('should create a job without event', async function () {
+      const res = await utils.executeRequest(`${config.baseUrl}/jobs?elevate=true`, 'POST', user.token, {
+        name: "Test Job With No Event",
+        tasks: ["1"],
+      })
+      expect(res.status).to.eql(201)
+      expect(res.body).to.be.an('object')
+      expect(res.body).to.have.property('jobId')
+      expect(res.body).to.have.property('name', 'Test Job With No Event')
+      expect(res.body).to.have.property('tasks').that.is.an('array').with.length(1)
+    })
+
+    it('should create a job with one-time event', async function () {
+      const res = await utils.executeRequest(`${config.baseUrl}/jobs?elevate=true`, 'POST', user.token, {
+        name: "Test Job with Once Event",
+        tasks: ["1"],
+        event: {
+          type: "once",
+          starts: '2099-01-01T00:00:00Z',
+        }
+      })
+      expect(res.status).to.eql(201)
+      expect(res.body).to.be.an('object')
+      expect(res.body).to.have.property('jobId')
+      expect(res.body).to.have.property('name', 'Test Job with Once Event')
+      expect(res.body).to.have.property('tasks').that.is.an('array').with.length(1)
+      expect(res.body).to.have.property('event').that.is.an('object')
+      expect(res.body.event).to.have.property('type', 'once')
+      expect(res.body.event).to.have.property('starts')
+    })
+
+    it('should create a job with recurring event enabled', async function () {
+
+      const res = await utils.executeRequest(`${config.baseUrl}/jobs?elevate=true`, 'POST', user.token, {
+        name: "Test Job with Recurring Event",
+        tasks: ["1"],
+        event: {
+          type: "recurring",
+          interval: {
+            value: "1",
+            field: "day"
+          },
+          starts: '2099-01-01T00:00:00Z',
+        }
+      })
+      expect(res.status).to.eql(201)
+      expect(res.body).to.be.an('object')
+      expect(res.body).to.have.property('jobId')
+      expect(res.body).to.have.property('name', 'Test Job with Recurring Event')
+      expect(res.body).to.have.property('tasks').that.is.an('array').with.length(1)
+      expect(res.body).to.have.property('event').that.is.an('object')
+      expect(res.body.event).to.have.property('type', 'recurring')
+      expect(res.body.event).to.have.property('interval').that.is.an('object')
+      expect(res.body.event.interval).to.have.property('value', '1')
+      expect(res.body.event.interval).to.have.property('field', 'day')
+      expect(res.body.event).to.have.property('starts')
+      expect(res.body.event).to.have.property('enabled', true)
+    })
+  })
+  describe('POST - runJob - /jobs/{jobId}/run', function () {
+
+    before(async function () {
+      await utils.loadAppData()
+    })
+
+    after(deleteTestJobs)
+
+    it('should run a job immediately', async function () {
+      const createJobRes = await utils.executeRequest(`${config.baseUrl}/jobs?elevate=true`, 'POST', user.token, {
+        name: "Test Job to Run",
+        tasks: ["1"],
+      })
+      expect(createJobRes.status).to.eql(201)
+      const jobId = createJobRes.body.jobId
+
+      const runRes = await utils.executeRequest(`${config.baseUrl}/jobs/${jobId}/runs?elevate=true`, 'POST', user.token)
+      expect(runRes.status).to.eql(200)
+      expect(runRes.body).to.have.property('runId')
+    })
+  })
+  describe('GET - getRunsByJob - /jobs/{jobId}/runs', function () {
+
+    before(async function () {
+      await utils.loadAppData()
+    })
+
+    after(deleteTestJobs)
+
+    it('should get runs for a job', async function () {
+      const createJobRes = await utils.executeRequest(`${config.baseUrl}/jobs?elevate=true`, 'POST', user.token, {
+        name: "Test Job to Get Runs",
+        tasks: ["1"],
+      })
+      expect(createJobRes.status).to.eql(201)
+      const jobId = createJobRes.body.jobId
+
+      // Run the job twice
+      await runImmediateJob(jobId)
+      await new Promise(resolve => setTimeout(resolve, 1000)) // wait 1 second between runs to ensure different timestamps
+      await runImmediateJob(jobId)
+
+      const runsRes = await utils.executeRequest(`${config.baseUrl}/jobs/${jobId}/runs?elevate=true`, 'GET', user.token)
+      expect(runsRes.status).to.eql(200)
+      expect(runsRes.body).to.be.an('array')
+      expect(runsRes.body.length).to.be.at.least(2)
+      for (let run of runsRes.body) {
+        expect(run).to.have.property('runId')
+        expect(run).to.have.property('state')
+        expect(run).to.have.property('created')
+        expect(run).to.have.property('jobId', jobId)
+      }
+    })
+  })
+  describe('GET - getRunById - /jobs/runs/{runId}', function () {
+
+    before(async function () {
+      await utils.loadAppData()
+    })
+
+    after(deleteTestJobs)
+
+    it('should get a specific run by ID', async function () {
+      const createJobRes = await utils.executeRequest(`${config.baseUrl}/jobs?elevate=true`, 'POST', user.token, {
+        name: "Test Job to Get Specific Run",
+        tasks: ["1"],
+      })
+      expect(createJobRes.status).to.eql(201)
+      const jobId = createJobRes.body.jobId
+
+      const runId = await runImmediateJob(jobId)
+
+      const runRes = await utils.executeRequest(`${config.baseUrl}/jobs/runs/${runId}?elevate=true`, 'GET', user.token)
+      expect(runRes.status).to.eql(200)
+      expect(runRes.body).to.be.an('object')
+      expect(runRes.body).to.have.property('runId', runId)
+      expect(runRes.body).to.have.property('state')
+      expect(runRes.body).to.have.property('created')
+      expect(runRes.body).to.have.property('jobId', jobId)
+    })
+  })
+})
+
+describe('Task - WipeDeletedObjects', function () {
 
   before(async function () {
     await utils.loadAppData()
   })
 
+  after(deleteTestJobs)
 
-  it('should create a job without event', async function () {
-    let jobId = null
-    after(async function () {
-      // Clean up job created during test
-      if (jobId) {
-        await utils.executeRequest(`${config.baseUrl}/jobs/${jobId}?elevate=true`, 'DELETE', user.token)
+  it('should wipe deleted objects', async function () {
+    const deleteRes = await utils.executeRequest(`${config.baseUrl}/assets/62`, 'DELETE', user.token)
+    expect(deleteRes.status).to.eql(200)
+    const appInfoRes = await utils.executeRequest(`${config.baseUrl}/op/appinfo?elevate=true`, 'GET', user.token)
+    expect(appInfoRes.status).to.eql(200)
+    expect(appInfoRes.body).to.have.nested.property('collections.21.assetsDisabled', 2)
+    expect(appInfoRes.body).to.have.nested.property('collections.21.reviewsDisabled', 4)
+    expect(appInfoRes.body).to.have.nested.property('collections.93.state', 'disabled')
+
+    const runId = await runImmediateTask("WipeDeletedObjects")
+    // Wait up to 30 seconds for the job to complete
+    let attempts = 0
+    while (attempts < 30) {
+      const runRes = await utils.executeRequest(`${config.baseUrl}/jobs/runs/${runId}?elevate=true`, 'GET', user.token)
+      expect(runRes.status).to.eql(200)
+      if (['completed', 'failed'].includes(runRes.body.state)) {
+        break
       }
-    })
-
-    const res = await utils.executeRequest(`${config.baseUrl}/jobs?elevate=true`, 'POST', user.token, {
-      name: "Test Job",
-      tasks: ["1"],
-    })
-    expect(res.status).to.eql(201)
-    expect(res.body).to.be.an('object')
-    expect(res.body).to.have.property('jobId')
-    jobId = res.body.jobId
-    expect(res.body).to.have.property('name', 'Test Job')
-    expect(res.body).to.have.property('tasks').that.is.an('array').with.length(1)
-  })
-
-  it('should create a job with one-time event', async function () {
-    let jobId = null
-    after(async function () {
-      // Clean up job created during test
-      if (jobId) {
-        await utils.executeRequest(`${config.baseUrl}/jobs/${jobId}?elevate=true`, 'DELETE', user.token)
-      }
-    })
-
-    const res = await utils.executeRequest(`${config.baseUrl}/jobs?elevate=true`, 'POST', user.token, {
-      name: "Test Job with Event",
-      tasks: ["1"],
-      event: {
-        type: "once",
-        starts: '2099-01-01T00:00:00Z',
-      }
-    })
-    expect(res.status).to.eql(201)
-    expect(res.body).to.be.an('object')
-    expect(res.body).to.have.property('jobId')
-    jobId = res.body.jobId
-    expect(res.body).to.have.property('name', 'Test Job with Event')
-    expect(res.body).to.have.property('tasks').that.is.an('array').with.length(1)
-    expect(res.body).to.have.property('event').that.is.an('object')
-    expect(res.body.event).to.have.property('type', 'once')
-    expect(res.body.event).to.have.property('starts')
-  })
-
-  it('should create a job with recurring event enabled', async function () {
-    let jobId = null
-    after(async function () {
-      // Clean up job created during test
-      if (jobId) {
-        await utils.executeRequest(`${config.baseUrl}/jobs/${jobId}?elevate=true`, 'DELETE', user.token)
-      }
-    })
-
-    const res = await utils.executeRequest(`${config.baseUrl}/jobs?elevate=true`, 'POST', user.token, {
-      name: "Test Job with Event",
-      tasks: ["1"],
-      event: {
-        type: "recurring",
-        interval: {
-          value: "1",
-          field: "day"
-        },
-        starts: '2099-01-01T00:00:00Z',
-      }
-    })
-    expect(res.status).to.eql(201)
-    expect(res.body).to.be.an('object')
-    expect(res.body).to.have.property('jobId')
-    jobId = res.body.jobId
-    expect(res.body).to.have.property('name', 'Test Job with Event')
-    expect(res.body).to.have.property('tasks').that.is.an('array').with.length(1)
-    expect(res.body).to.have.property('event').that.is.an('object')
-    expect(res.body.event).to.have.property('type', 'recurring')
-    expect(res.body.event).to.have.property('interval').that.is.an('object')
-    expect(res.body.event.interval).to.have.property('value', '1')
-    expect(res.body.event.interval).to.have.property('field', 'day')
-    expect(res.body.event).to.have.property('starts')
-    expect(res.body.event).to.have.property('enabled', true)
+      await new Promise(resolve => setTimeout(resolve, 1000)) // wait 1 second before checking again
+      attempts++
+    }
+    // Final check of run status
+    const runRes = await utils.executeRequest(`${config.baseUrl}/jobs/runs/${runId}?elevate=true`, 'GET', user.token)
+    expect(runRes.status).to.eql(200)
+    expect(runRes.body).to.have.property('state', 'completed')
+    const finalAppInfoRes = await utils.executeRequest(`${config.baseUrl}/op/appinfo?elevate=true`, 'GET', user.token)
+    expect(finalAppInfoRes.status).to.eql(200)
+    expect(finalAppInfoRes.body).to.have.nested.property('collections.21.assetsDisabled', 0)
+    expect(finalAppInfoRes.body).to.have.nested.property('collections.21.reviewsDisabled', 0)
+    expect(finalAppInfoRes.body).to.not.have.nested.property('collections.93')
   })
 
 })
+
+async function runImmediateJob(jobId) {
+  const runRes = await utils.executeRequest(`${config.baseUrl}/jobs/${jobId}/runs?elevate=true`, 'POST', user.token)
+  expect(runRes.status).to.eql(200)
+  expect(runRes.body).to.have.property('runId')
+  return runRes.body.runId
+}
+
+async function runImmediateTask(taskname) {
+  const taskRes = await utils.executeRequest(`${config.baseUrl}/jobs/tasks?elevate=true`, 'GET', user.token)
+  const task = taskRes.body.find(t => t.name === taskname)
+  expect(task).to.exist
+  const taskId = task.taskId
+  const createJobRes = await utils.executeRequest(`${config.baseUrl}/jobs?elevate=true`, 'POST', user.token, {
+    name: "Test Job to Run " + taskname,
+    tasks: [taskId]
+  })
+  const jobId = createJobRes.body.jobId
+
+  const runRes = await utils.executeRequest(`${config.baseUrl}/jobs/${jobId}/runs?elevate=true`, 'POST', user.token)
+  expect(runRes.status).to.eql(200)
+  expect(runRes.body).to.have.property('runId')
+  return runRes.body.runId
+}
+
+async function deleteTestJobs() {
+  const res = await utils.executeRequest(`${config.baseUrl}/jobs?elevate=true`, 'GET', user.token)
+  for (let job of res.body) {
+    if (job.name.startsWith('Test Job')) {
+      await utils.executeRequest(`${config.baseUrl}/jobs/${job.jobId}?elevate=true`, 'DELETE', user.token)
+    }
+  }
+}
