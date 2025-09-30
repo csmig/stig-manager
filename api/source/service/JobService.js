@@ -115,7 +115,7 @@ async function createEventByJob(jobId, eventData) {
     const sqlCreateEvent = `
       CREATE EVENT ?? 
       ON SCHEDULE EVERY ? ${eventData.interval.field} STARTS ? ${endsAt}
-      ${eventData.enabled ? 'ENABLE' : 'DISABLE'}
+      ${eventData.enabled === false ? 'DISABLE' : 'ENABLE'}
       DO CALL run_job(?, null)
     `
     const params = [eventName, eventData.interval.value, eventData.starts, jobId]

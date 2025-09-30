@@ -672,7 +672,6 @@ CREATE TABLE `task` (
   `name` varchar(45) NOT NULL,
   `description` varchar(255) DEFAULT NULL,
   `command` varchar(255) NOT NULL,
-  `args` json DEFAULT (_utf8mb4'[]'),
   PRIMARY KEY (`taskId`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
@@ -684,7 +683,7 @@ DROP TABLE IF EXISTS `task_output`;
 CREATE TABLE `task_output` (
   `seq` int NOT NULL AUTO_INCREMENT,
   `ts` timestamp(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
-  `runId` binary(16) NOT NULL,
+  `runId` binary(16) DEFAULT NULL,
   `taskId` int DEFAULT NULL,
   `type` varchar(45) NOT NULL,
   `message` varchar(255) NOT NULL,
@@ -804,6 +803,53 @@ DROP TABLE IF EXISTS `v_latest_rev`;
 --
 -- Dumping routines for database 'stigman'
 --
+/*!50003 DROP PROCEDURE IF EXISTS `analyze_tables` */;
+/*!50003 SET @saved_col_connection = @@collation_connection */ ;
+/*!50003 SET collation_connection  = utf8mb4_0900_ai_ci */ ;
+/*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
+/*!50003 SET sql_mode              = 'IGNORE_SPACE,ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION' */ ;
+DELIMITER $
+CREATE PROCEDURE `analyze_tables`(IN in_tables JSON)
+BEGIN
+          DECLARE v_runId BINARY(16) DEFAULT NULL;
+          DECLARE v_taskId INT DEFAULT NULL;
+          DECLARE v_itemCount INT;
+          DECLARE v_currentCount INT;
+          DECLARE v_table VARCHAR(255);
+
+          DECLARE EXIT HANDLER FOR SQLEXCEPTION
+          BEGIN
+            DECLARE err_code INT;
+            DECLARE err_msg TEXT;
+            GET STACKED DIAGNOSTICS CONDITION 1
+              err_code = MYSQL_ERRNO, err_msg = MESSAGE_TEXT;
+              IF err_msg = NULL THEN 
+          SET err_msg = '';
+              END IF;
+            CALL task_output(v_runId, v_taskId, 'error',concat('code: ', err_code, ' message: ', err_msg));
+            RESIGNAL;
+          END;
+          
+          CALL get_runtime(v_runId, v_taskId);
+        CALL task_output (v_runId, v_taskId, 'info', 'task started');
+
+        select JSON_LENGTH(in_tables) INTO v_itemCount;
+        SET v_currentCount = 0;
+        WHILE v_currentCount < v_itemCount DO
+          SET v_table = json_unquote(json_extract(in_tables, concat('$[', v_currentCount, ']')));
+          CALL task_output (v_runId, v_taskId, 'info', concat('analyze table: ', v_table));
+          SET @sql = CONCAT('ANALYZE TABLE ', v_table);
+          PREPARE stmt_analyze_tables FROM @sql;
+          EXECUTE stmt_analyze_tables;
+          DEALLOCATE PREPARE stmt_analyze_tables;
+          SET v_currentCount = v_currentCount + 1;
+        END WHILE;
+        CALL task_output (v_runId, v_taskId, 'info', 'task finished');
+
+    END $
+DELIMITER ;
+/*!50003 SET sql_mode              = @saved_sql_mode */ ;
+/*!50003 SET collation_connection  = @saved_col_connection */ ;
 /*!50003 DROP PROCEDURE IF EXISTS `delete_disabled` */;
 /*!50003 SET @saved_col_connection = @@collation_connection */ ;
 /*!50003 SET collation_connection  = utf8mb4_0900_ai_ci */ ;
@@ -937,7 +983,7 @@ BEGIN
       BEGIN
         DECLARE err_code INT;
         DECLARE err_msg TEXT;
-        GET DIAGNOSTICS CONDITION 1
+        GET STACKED DIAGNOSTICS CONDITION 1
           err_code = MYSQL_ERRNO, err_msg = MESSAGE_TEXT;
         CALL task_output(v_runId, v_taskId, 'error',concat('code: ', err_code, ' message: ', err_msg));
         RESIGNAL;
@@ -1024,7 +1070,7 @@ BEGIN
       IF v_table_exists = 1 THEN
         SELECT runId, taskId INTO out_runId, out_taskId FROM t_runtime LIMIT 1;
       ELSE
-        SET out_runId = UUID_TO_BIN(UUID(),1);
+        SET out_runId = NULL;
         SET out_taskId = NULL;
       END IF;
     END $
@@ -1070,7 +1116,7 @@ main:BEGIN
           DECLARE err_msg TEXT;
           GET STACKED DIAGNOSTICS CONDITION 1 err_code = MYSQL_ERRNO, err_msg = MESSAGE_TEXT;
           CALL task_output(v_runId, v_ourId, 'error', concat('code: ', err_code, ' message: ', err_msg));
-          UPDATE job_run SET state = 'failed' WHERE jobId = in_jobId;
+          UPDATE job_run SET state = 'failed' WHERE runId = v_runId;
         END;
 
         -- === Pre-task-loop logic ===
@@ -1089,7 +1135,7 @@ main:BEGIN
 
         IF v_numTasks = 0 THEN
           CALL task_output (v_runId, v_ourId, 'error', 'no tasks to run');
-          UPDATE job_run SET state = 'failed' WHERE jobId = in_jobId AND state = 'running';
+          UPDATE job_run SET state = 'failed' WHERE runId = v_runId AND state = 'running';
           LEAVE main; -- No tasks to run, exit the procedure
         END IF;
 
@@ -1103,16 +1149,16 @@ main:BEGIN
           SET v_currentTaskNum = v_currentTaskNum + 1;
 
           SET @sql = CONCAT('CALL ', v_currentCommand);
-          PREPARE stmt FROM @sql;
+          PREPARE stmt_run_job FROM @sql;
           CALL task_output (v_runId, v_ourId, 'info', concat('Starting task ', v_currentTaskName, ' (', v_currentTaskNum, '/', v_numTasks, ')'));
           UPDATE t_runtime SET taskId = v_currentTaskId WHERE runId = runId;
-          EXECUTE stmt;
-          DEALLOCATE PREPARE stmt;
+          EXECUTE stmt_run_job;
+          DEALLOCATE PREPARE stmt_run_job;
         END LOOP;
         CLOSE cur;
 
         -- === Post-task-loop logic ===
-        UPDATE job_run SET state = 'completed' WHERE jobId = in_jobId AND state = 'running';
+        UPDATE job_run SET state = 'completed' WHERE runId = v_runId AND state = 'running';
         CALL task_output (v_runId, v_ourId, 'info', concat('run completed for jobId ', in_jobId));
 
     END $
@@ -1132,6 +1178,7 @@ CREATE PROCEDURE `task_output`(
     IN in_message VARCHAR(255)
   )
 BEGIN
+      IF in_message IS NULL THEN SET in_message = ''; END IF;
       insert into task_output (runId, taskId, type, message) values (in_runId, in_taskId, in_type, in_message);
     END $
 DELIMITER ;
@@ -1200,4 +1247,4 @@ DELIMITER ;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2025-09-27  0:10:23
+-- Dump completed on 2025-09-30 14:43:35

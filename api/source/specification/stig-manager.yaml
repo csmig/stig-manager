@@ -7360,10 +7360,10 @@ components:
         - $ref: '#/components/schemas/JobEventOnce'
     JobEventCreate:
       oneOf:
-        - type: integer
-          nullable: true
         - $ref: '#/components/schemas/JobEventRecurringCreate'
         - $ref: '#/components/schemas/JobEventOnceCreate'
+        - type: integer
+          nullable: true
     JobEventOnce:
       additionalProperties: false
       type: object
