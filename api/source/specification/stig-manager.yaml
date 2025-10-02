@@ -9989,6 +9989,8 @@ components:
     ReviewRulesQuery:
       name: rules
       in: query
+      description: 
+        default - rules from the default revision of a STIG in the Collection.<br>mapped - rules from any version of a STIG assigned to the Asset
       schema:
         type: string
         default: default-mapped
@@ -9996,8 +9998,10 @@ components:
           - all
           - default
           - default-mapped
+          - mapped
           - not-default
           - not-default-mapped
+          - not-mapped
     ReviewStatusQuery:
       name: status
       in: query

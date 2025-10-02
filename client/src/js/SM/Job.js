@@ -20,12 +20,15 @@ SM.Job.JobsGrid = Ext.extend(Ext.grid.GridPanel, {
       }
     ]
     const columns = [
-      { header: 'ID', dataIndex: 'jobId', width: 50, sortable: true },
       {
         header: 'Name', dataIndex: 'name', width: 150, sortable: true, renderer: function (v, m, r) {
           return `<span class="sm-job-sprite sm-job-run-state-${r.data.lastRun?.state ?? 'missing'}">${v}</span>`
         }
       },
+      { header: 'CreatedBy', dataIndex: 'createdBy', width: 100, sortable: true, renderer: function(v) {
+          return v || `<span class = "sm-job-sprite sm-job-system">system</span>`
+        }
+    },
       { header: 'Description', dataIndex: 'description', hidden: true, width: 250, sortable: false },
       {
         header: 'Tasks', dataIndex: 'tasks', width: 200, sortable: false, renderer: function (v) {
@@ -55,7 +58,6 @@ SM.Job.JobsGrid = Ext.extend(Ext.grid.GridPanel, {
         },
       },
       { header: 'Created', dataIndex: 'created', hidden: true, width: 100, sortable: true },
-      { header: 'CreatedBy', dataIndex: 'createdBy', hidden: true, width: 100, sortable: true },
       { header: 'Updated', dataIndex: 'updated', hidden: true, width: 150, sortable: true },
       { header: 'UpdatedBy', dataIndex: 'updatedBy', hidden: true, width: 150, sortable: true },
     ]
@@ -89,7 +91,7 @@ SM.Job.JobsGrid = Ext.extend(Ext.grid.GridPanel, {
 
     sm.on('rowselect', function (sm, rowIndex, record) {
       _this.modifyBtn.setDisabled(false)
-      _this.removeBtn.setDisabled(false)
+      _this.removeBtn.setDisabled(!record.data.createdBy)
       _this.runNowBtn.setDisabled(false)
     })
 

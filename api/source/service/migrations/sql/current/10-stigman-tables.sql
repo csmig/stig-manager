@@ -801,6 +801,25 @@ DROP TABLE IF EXISTS `v_latest_rev`;
  1 AS `revisionStr`*/;
 
 --
+-- Dumping events for database 'stigman'
+--
+/*!50106 SET @save_time_zone= @@TIME_ZONE */ ;
+/*!50106 DROP EVENT IF EXISTS `job-1-stigman` */;
+DELIMITER $
+/*!50003 SET @saved_col_connection = @@collation_connection */ $
+/*!50003 SET collation_connection  = utf8mb4_0900_ai_ci */ $
+/*!50003 SET @saved_sql_mode       = @@sql_mode */ $
+/*!50003 SET sql_mode              = 'IGNORE_SPACE,ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION' */ $
+/*!50003 SET @saved_time_zone      = @@time_zone */ $
+/*!50003 SET time_zone             = 'SYSTEM' */ $
+/*!50106 CREATE*/ /*!50117 */ /*!50106 EVENT `job-1-stigman` ON SCHEDULE EVERY 1 DAY STARTS '2025-10-01 00:00:00' ON COMPLETION NOT PRESERVE DISABLE DO CALL run_job(1, NULL) */ $
+/*!50003 SET time_zone             = @saved_time_zone */ $
+/*!50003 SET sql_mode              = @saved_sql_mode */ $
+/*!50003 SET collation_connection  = @saved_col_connection */ $
+DELIMITER ;
+/*!50106 SET TIME_ZONE= @save_time_zone */ ;
+
+--
 -- Dumping routines for database 'stigman'
 --
 /*!50003 DROP PROCEDURE IF EXISTS `analyze_tables` */;
@@ -1037,7 +1056,7 @@ BEGIN
             SET v_curMaxId = v_curMaxId + v_incrementValue;
           UNTIL ROW_COUNT() = 0 END REPEAT;
         END IF;
-        CALL task_output (v_runId, v_taskId, 'info', concat('deleting ', v_numAssetIds, ' assets'));
+        CALL task_output (v_runId, v_taskId, 'info', concat('deleting ', v_numReviewIds, ' reviews'));
         SET v_curMinId = 1;
         SET v_curMaxId = v_curMinId + v_incrementValue;
         REPEAT
@@ -1247,4 +1266,4 @@ DELIMITER ;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2025-09-30 14:43:35
+-- Dump completed on 2025-10-02 15:43:59

@@ -722,6 +722,13 @@ exports.getReviews = async function ({projections = [], filter = {}, grant}) {
     case 'not-default':
       predicates.statements.push(`dr.revId IS NULL`)
       break
+    case 'not-mapped':
+      predicates.statements.push(`sa.saId IS NULL`)
+      break
+    case 'mapped':
+      predicates.statements.push(`sa.saId IS NOT NULL`)
+      break
+
   }
 
   if (filter.collectionId) {

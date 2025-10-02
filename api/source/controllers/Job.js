@@ -43,10 +43,14 @@ exports.getJob = async (req, res, next) => {
 exports.deleteJob = async (req, res, next) => {
   try {
     const jobId = req.params.jobId
-    const deleted = await JobService.deleteJob(jobId)
-    if (!deleted) {
+    const job = await JobService.getJob(jobId)
+    if (!job) {
       throw new SmError.NotFoundError(`Job with ID [${jobId}] not found.`)
     }
+    if (!job.createdBy.userId) {
+      throw new SmError.UnprocessableError(`Job with ID [${jobId}] is a system job and cannot be deleted.`)
+    }
+    await JobService.deleteJob(jobId)
     res.status(204).end()
   } catch (error) {
     next(error) 

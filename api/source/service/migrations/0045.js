@@ -28,6 +28,9 @@ const upMigration = [
     PRIMARY KEY (jobId),
     CONSTRAINT fk_job_createdBy FOREIGN KEY (createdBy) REFERENCES user_data(userId) ON DELETE RESTRICT
   )`,
+  `INSERT INTO job ( name, description, createdBy) VALUES
+    ('Cleanup Database', 'Wipe deleted collections and assets and their associated reviews', null)
+  `,
 
   `DROP TABLE IF EXISTS job_task_map`,
   `CREATE TABLE job_task_map (
@@ -40,6 +43,10 @@ const upMigration = [
     CONSTRAINT fk_job_task_jobId FOREIGN KEY (jobId) REFERENCES job(jobId) ON DELETE CASCADE,
     CONSTRAINT fk_job_task_taskId FOREIGN KEY (taskId) REFERENCES task(taskId) ON DELETE CASCADE
   )`,
+  `INSERT INTO job_task_map (jobId, taskId) VALUES
+    (1, 1),
+    (1, 4)
+  `,
 
   `DROP TABLE IF EXISTS job_run`,
   `CREATE TABLE job_run (
@@ -352,7 +359,7 @@ const upMigration = [
             SET v_curMaxId = v_curMaxId + v_incrementValue;
           UNTIL ROW_COUNT() = 0 END REPEAT;
         END IF;
-        CALL task_output (v_runId, v_taskId, 'info', concat('deleting ', v_numAssetIds, ' assets'));
+        CALL task_output (v_runId, v_taskId, 'info', concat('deleting ', v_numReviewIds, ' reviews'));
         SET v_curMinId = 1;
         SET v_curMaxId = v_curMinId + v_incrementValue;
         REPEAT
@@ -406,6 +413,17 @@ const upMigration = [
 
     END`,
 
+  `CREATE EVENT IF NOT EXISTS \`job-1-stigman\`
+    ON SCHEDULE EVERY 1 DAY
+    STARTS '2025-10-01 00:00:00'
+    DISABLE
+    DO
+      CALL run_job(1, NULL)`,
+
+  // `CREATE EVENT IF NOT EXISTS \`job-1-oneoff\`
+  //   ON SCHEDULE AT CURRENT_TIMESTAMP
+  //   DO
+  //     CALL run_job(1, NULL)`,
 ]
 
 const downMigration = [

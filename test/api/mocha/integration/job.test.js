@@ -34,14 +34,34 @@ describe('GET - getAllTasks - /jobs/tasks', function () {
 })
 
 describe('Job endpoint tests', function () {
-  describe('POST - createJob - /jobs', function () {
-
-    before(async function () {
+  beforeEach(async function () {
       await utils.loadAppData()
+  })
+  afterEach(deleteTestJobs)
+  describe('DELETE - deleteJob - /jobs/{jobId}', function () {
+    it('should delete a job', async function () {
+      const createJobRes = await utils.executeRequest(`${config.baseUrl}/jobs?elevate=true`, 'POST', user.token, {
+        name: "Test Job to Delete",
+        tasks: ["1"],
+      })
+      expect(createJobRes.status).to.eql(201)
+      const jobId = createJobRes.body.jobId
+
+      const deleteRes = await utils.executeRequest(`${config.baseUrl}/jobs/${jobId}?elevate=true`, 'DELETE', user.token)
+      expect(deleteRes.status).to.eql(204)
+
+      // Verify job is deleted
+      const getRes = await utils.executeRequest(`${config.baseUrl}/jobs/${jobId}?elevate=true`, 'GET', user.token)
+      expect(getRes.status).to.eql(404)
     })
-
-    after(deleteTestJobs)
-
+    it('should fail to delete a system job', async function () {
+      // Attempt to delete the system job with jobId 1
+      const deleteRes = await utils.executeRequest(`${config.baseUrl}/jobs/1?elevate=true`, 'DELETE', user.token)
+      expect(deleteRes.status).to.eql(422)
+      expect(deleteRes.body).to.have.property('error').that.includes('Cannot delete a system job')
+    })
+  })
+  describe('POST - createJob - /jobs', function () {
     it('should create a job without event', async function () {
       const res = await utils.executeRequest(`${config.baseUrl}/jobs?elevate=true`, 'POST', user.token, {
         name: "Test Job With No Event",
@@ -103,12 +123,6 @@ describe('Job endpoint tests', function () {
   })
   describe('POST - runJob - /jobs/{jobId}/run', function () {
 
-    before(async function () {
-      await utils.loadAppData()
-    })
-
-    after(deleteTestJobs)
-
     it('should run a job immediately', async function () {
       const createJobRes = await utils.executeRequest(`${config.baseUrl}/jobs?elevate=true`, 'POST', user.token, {
         name: "Test Job to Run",
@@ -123,13 +137,6 @@ describe('Job endpoint tests', function () {
     })
   })
   describe('GET - getRunsByJob - /jobs/{jobId}/runs', function () {
-
-    before(async function () {
-      await utils.loadAppData()
-    })
-
-    after(deleteTestJobs)
-
     it('should get runs for a job', async function () {
       const createJobRes = await utils.executeRequest(`${config.baseUrl}/jobs?elevate=true`, 'POST', user.token, {
         name: "Test Job to Get Runs",
@@ -156,13 +163,6 @@ describe('Job endpoint tests', function () {
     })
   })
   describe('GET - getRunById - /jobs/runs/{runId}', function () {
-
-    before(async function () {
-      await utils.loadAppData()
-    })
-
-    after(deleteTestJobs)
-
     it('should get a specific run by ID', async function () {
       const createJobRes = await utils.executeRequest(`${config.baseUrl}/jobs?elevate=true`, 'POST', user.token, {
         name: "Test Job to Get Specific Run",
@@ -184,46 +184,96 @@ describe('Job endpoint tests', function () {
   })
 })
 
-describe('Task - WipeDeletedObjects', function () {
+describe('Task tests', function () {
+  beforeEach(async function () {
+      await utils.loadAppData()
+  })
+  afterEach(deleteTestJobs)
+  describe('Task - WipeDeletedObjects', function () {
 
-  before(async function () {
-    await utils.loadAppData()
+    before(async function () {
+      await utils.loadAppData()
+    })
+
+    after(deleteTestJobs)
+
+    it('should wipe deleted objects', async function () {
+      const deleteRes = await utils.executeRequest(`${config.baseUrl}/assets/62`, 'DELETE', user.token)
+      expect(deleteRes.status).to.eql(200)
+      const appInfoRes = await utils.executeRequest(`${config.baseUrl}/op/appinfo?elevate=true`, 'GET', user.token)
+      expect(appInfoRes.status).to.eql(200)
+      expect(appInfoRes.body).to.have.nested.property('collections.21.assetsDisabled', 2)
+      expect(appInfoRes.body).to.have.nested.property('collections.21.reviewsDisabled', 4)
+      expect(appInfoRes.body).to.have.nested.property('collections.93.state', 'disabled')
+
+      const runId = await runImmediateTask("WipeDeletedObjects")
+      const state = await waitForRunFinish(runId, 30)
+      expect(state).to.eql('completed')
+
+      const finalAppInfoRes = await utils.executeRequest(`${config.baseUrl}/op/appinfo?elevate=true`, 'GET', user.token)
+      expect(finalAppInfoRes.status).to.eql(200)
+      expect(finalAppInfoRes.body).to.have.nested.property('collections.21.assetsDisabled', 0)
+      expect(finalAppInfoRes.body).to.have.nested.property('collections.21.reviewsDisabled', 0)
+      expect(finalAppInfoRes.body).to.not.have.nested.property('collections.93')
+    })
+
   })
 
-  after(deleteTestJobs)
+  describe('Task - DeleteStaleReviews', function () {
 
-  it('should wipe deleted objects', async function () {
-    const deleteRes = await utils.executeRequest(`${config.baseUrl}/assets/62`, 'DELETE', user.token)
-    expect(deleteRes.status).to.eql(200)
-    const appInfoRes = await utils.executeRequest(`${config.baseUrl}/op/appinfo?elevate=true`, 'GET', user.token)
-    expect(appInfoRes.status).to.eql(200)
-    expect(appInfoRes.body).to.have.nested.property('collections.21.assetsDisabled', 2)
-    expect(appInfoRes.body).to.have.nested.property('collections.21.reviewsDisabled', 4)
-    expect(appInfoRes.body).to.have.nested.property('collections.93.state', 'disabled')
+    before(async function () {
+      await utils.loadAppData()
+    })
 
-    const runId = await runImmediateTask("WipeDeletedObjects")
-    // Wait up to 30 seconds for the job to complete
-    let attempts = 0
-    while (attempts < 30) {
-      const runRes = await utils.executeRequest(`${config.baseUrl}/jobs/runs/${runId}?elevate=true`, 'GET', user.token)
-      expect(runRes.status).to.eql(200)
-      if (['completed', 'failed'].includes(runRes.body.state)) {
-        break
-      }
-      await new Promise(resolve => setTimeout(resolve, 1000)) // wait 1 second before checking again
-      attempts++
-    }
-    // Final check of run status
-    const runRes = await utils.executeRequest(`${config.baseUrl}/jobs/runs/${runId}?elevate=true`, 'GET', user.token)
-    expect(runRes.status).to.eql(200)
-    expect(runRes.body).to.have.property('state', 'completed')
-    const finalAppInfoRes = await utils.executeRequest(`${config.baseUrl}/op/appinfo?elevate=true`, 'GET', user.token)
-    expect(finalAppInfoRes.status).to.eql(200)
-    expect(finalAppInfoRes.body).to.have.nested.property('collections.21.assetsDisabled', 0)
-    expect(finalAppInfoRes.body).to.have.nested.property('collections.21.reviewsDisabled', 0)
-    expect(finalAppInfoRes.body).to.not.have.nested.property('collections.93')
+    after(deleteTestJobs)
+
+    it('should delete stale reviews', async function () {
+      const removeRes = await utils.executeRequest(`${config.baseUrl}/stigs/VPN_SRG_TEST?elevate=true&force=true`, 'DELETE', user.token)
+      expect(removeRes.status).to.eql(200)
+      const reviewsRes = await utils.executeRequest(`${config.baseUrl}/collections/21/reviews?rules=not-default-mapped`, 'GET', user.token)
+      expect(reviewsRes.status).to.eql(200)
+      expect(reviewsRes.body).to.be.an('array')
+      expect(reviewsRes.body.length).to.eql(14)
+
+      const runId = await runImmediateTask("DeleteStaleReviews")
+      const state = await waitForRunFinish(runId, 30)
+      expect(state).to.eql('completed')
+
+      const finalReviewsRes = await utils.executeRequest(`${config.baseUrl}/collections/21/reviews?rules=not-default-mapped`, 'GET', user.token)
+      expect(finalReviewsRes.status).to.eql(200)
+      expect(finalReviewsRes.body).to.be.an('array')
+      expect(finalReviewsRes.body.length).to.eql(0)
+    })
   })
 
+  describe('Task - DeleteStaleAssetReviews', function () {
+
+    before(async function () {
+      await utils.loadAppData()
+    })
+
+    after(deleteTestJobs)
+
+    it('should delete stale reviews', async function () {
+      const removeRes = await utils.executeRequest(`${config.baseUrl}/assets/62`, 'PATCH', user.token, {
+        stigs: []
+      })
+      expect(removeRes.status).to.eql(200)
+      const reviewsRes = await utils.executeRequest(`${config.baseUrl}/collections/21/reviews/62?rules=not-mapped`, 'GET', user.token)
+      expect(reviewsRes.status).to.eql(200)
+      expect(reviewsRes.body).to.be.an('array')
+      expect(reviewsRes.body.length).to.eql(3)
+
+      const runId = await runImmediateTask("DeleteStaleAssetReviews")
+      const state = await waitForRunFinish(runId, 30)
+      expect(state).to.eql('completed')
+
+      const finalReviewsRes = await utils.executeRequest(`${config.baseUrl}/collections/21/reviews/62?rules=not-mapped`, 'GET', user.token)
+      expect(finalReviewsRes.status).to.eql(200)
+      expect(finalReviewsRes.body).to.be.an('array')
+      expect(finalReviewsRes.body.length).to.eql(0)
+    })
+  })
 })
 
 async function runImmediateJob(jobId) {
@@ -257,4 +307,18 @@ async function deleteTestJobs() {
       await utils.executeRequest(`${config.baseUrl}/jobs/${job.jobId}?elevate=true`, 'DELETE', user.token)
     }
   }
+}
+
+async function waitForRunFinish(runId, timeoutSeconds = 30) {
+  let attempts = 0
+  while (attempts < timeoutSeconds) {
+    const runRes = await utils.executeRequest(`${config.baseUrl}/jobs/runs/${runId}?elevate=true`, 'GET', user.token)
+    expect(runRes.status).to.eql(200)
+    if (['completed', 'failed'].includes(runRes.body.state)) {
+      return runRes.body.state
+    }
+    await new Promise(resolve => setTimeout(resolve, 1000)) // wait 1 second before checking again
+    attempts++
+  }
+  return 'timeout'
 }
