@@ -179,7 +179,16 @@ Service Jobs
 
 The Service Jobs feature provides a framework for managing scheduled background operations in STIG Manager. This feature enables both system-defined and user-defined jobs that can run one or more predefined tasks either on a schedule or immediately on demand.
 
-The initial implementation provides database maintenance and cleanup tasks. However, Service Jobs will serve as the foundation for future capabilities, including Review aging operations and time-based snapshots and analysis *(planned)*
+The initial implementation provides database maintenance and cleanup tasks. However, Service Jobs will serve as the foundation for future capabilities, including Review aging operations and time-based snapshots and analysis.
+
+.. note::
+   Service Jobs require administrative privileges to access and manage. Regular users do not have visibility into the Service Jobs interface.
+
+.. note::
+   The database maintenance Jobs are not enabled by default. Administrators must enable the Jobs they wish to use. 
+
+.. warning::
+   Exercise caution when modifying or running database maintenance jobs, as these operations can affect system data. Always ensure you have appropriate backups before running destructive maintenance operations.
 
 .. rubric:: Accessing Service Jobs
 
@@ -246,12 +255,6 @@ The system provides various pre-defined tasks for common maintenance operations:
 * **DeleteUnmappedAssetReviews**: Removes unmapped reviews specific to individual assets
 
 Additional tasks may be available depending on your STIG Manager configuration and version.
-
-.. note::
-   Service Jobs require administrative privileges to access and manage. Regular users do not have visibility into the Service Jobs interface.
-
-.. warning::
-   Exercise caution when modifying or running database maintenance jobs, as these operations can affect system data. Always ensure you have appropriate backups before running destructive maintenance operations.
 
 .. _automated-imports:
 
