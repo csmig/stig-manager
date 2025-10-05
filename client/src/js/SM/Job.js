@@ -21,18 +21,18 @@ SM.Job.JobsGrid = Ext.extend(Ext.grid.GridPanel, {
     ]
     const columns = [
       {
-        header: 'Name', dataIndex: 'name', width: 150, sortable: true, renderer: function (v, m, r) {
+        header: '<span class="sm-job-icon sm-icon-column">Name</span>', dataIndex: 'name', width: 150, sortable: true, renderer: function (v, m, r) {
           return `<span class="sm-job-sprite sm-job-run-state-${r.data.lastRun?.state ?? 'missing'}">${v}</span>`
         }
       },
       {
-        header: 'CreatedBy', dataIndex: 'createdBy', width: 100, sortable: true, renderer: function (v) {
-          return v || 'system'
+        header: '<span class="sm-user-icon sm-icon-column">Created By</span>', dataIndex: 'createdBy', width: 100, sortable: true, renderer: function (v) {
+          return v || '<i>system</i>'
         }
       },
-      { header: 'Description', dataIndex: 'description', hidden: true, width: 250, sortable: false },
+      { header: '<span class="sm-job-icon sm-icon-column">Description</span>', dataIndex: 'description', hidden: true, width: 250, sortable: false },
       {
-        header: 'Tasks', dataIndex: 'tasks', width: 200, sortable: false, renderer: function (v) {
+        header: '<span class="sm-job-task-icon sm-icon-column">Tasks</span>', dataIndex: 'tasks', width: 200, sortable: false, renderer: function (v) {
           if (v?.length) {
             return v.map(t => t.name).join('<br>')
           }
@@ -40,27 +40,28 @@ SM.Job.JobsGrid = Ext.extend(Ext.grid.GridPanel, {
         }
       },
       {
-        header: 'Schedule', dataIndex: 'event', width: 200, sortable: false, renderer: function (v) {
+        header: '<span class="sm-job-event-icon sm-icon-column">Schedule</span>', dataIndex: 'event', width: 200, sortable: false, renderer: function (v) {
+          let html = ''
           if (v) {
             if (v.type === 'recurring') {
-              return `Every ${v.interval.value} ${v.interval.field}(s)<br>Starting ${Ext.util.Format.date(v.starts, 'Y-m-d H:i:s T')}${v.enabled ? '' : '<br>DISABLED'} `
+              html = `Every ${v.interval.value} ${v.interval.field}(s)<br>Starting ${Ext.util.Format.date(v.starts, 'Y-m-d H:i:s T')}${v.enabled ? '' : '<br>DISABLED'} `
             }
             else if (v.type === 'once') {
-              return `Once at ${Ext.util.Format.date(v.starts, 'Y-m-d H:i:s T')}`
+              html = `Once at ${Ext.util.Format.date(v.starts, 'Y-m-d H:i:s T')}`
             }
           }
-          return ''
+          return `<span class="${v?.enabled ? '' : 'sm-job-event-disabled'}">${html}</span>`
         }
       },
-      { header: 'Runs', dataIndex: 'runCount', width: 150, sortable: true },
+      { header: '<span class="sm-job-run-icon sm-icon-column">Runs</span>', dataIndex: 'runCount', width: 150, sortable: true },
       {
-        header: 'Last Run', dataIndex: 'lastRun', width: 150, sortable: true, renderer: function (v) {
+        header: '<span class="sm-job-run-icon sm-icon-column">Last Run</span>', dataIndex: 'lastRun', width: 150, sortable: true, renderer: function (v) {
           return v ? `<span class="sm-job-sprite sm-job-run-state-${v.state}">${v.state}</span><br>${Ext.util.Format.date(v.created || v.updated, 'Y-m-d H:i:s T')}<br>` : '-';
         },
       },
-      { header: 'Created', dataIndex: 'created', hidden: true, width: 100, sortable: true },
-      { header: 'Updated', dataIndex: 'updated', hidden: true, width: 150, sortable: true },
-      { header: 'UpdatedBy', dataIndex: 'updatedBy', hidden: true, width: 150, sortable: true },
+      { header: '<span class="sm-job-icon sm-icon-column">Created</span>', dataIndex: 'created', hidden: true, width: 100, sortable: true },
+      { header: '<span class="sm-job-icon sm-icon-column">Updated</span>', dataIndex: 'updated', hidden: true, width: 150, sortable: true },
+      { header: '<span class="sm-user-icon sm-icon-column">Updated By</span>', dataIndex: 'updatedBy', hidden: true, width: 150, sortable: true },
     ]
 
     const store = new Ext.data.JsonStore({

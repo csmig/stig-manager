@@ -426,7 +426,7 @@ const upMigration = [
 
   `CREATE EVENT IF NOT EXISTS \`job-1-stigman\`
     ON SCHEDULE EVERY 1 DAY
-    STARTS '2025-10-01 00:00:00'
+    STARTS '2025-10-01 05:00:00'
     DISABLE
     DO
       CALL run_job(1, NULL)`,
