@@ -7,15 +7,16 @@ const upMigration = [
     name VARCHAR(45) NOT NULL,
     description VARCHAR(255) NULL,
     command VARCHAR(255) NOT NULL,
-    PRIMARY KEY (taskId)
+    PRIMARY KEY (taskId),
+    UNIQUE INDEX idx_task_name (name)
   )`,
   `INSERT INTO task (taskId, name, description, command) VALUES
     (1, 'WipeDeletedObjects', 'Wipe deleted collections and assets and their associated reviews', 'delete_disabled()'),
-    (2, 'DeleteStaleReviews', 'Delete reviews that no longer match any rule in the system', 'delete_stale("system")'),
-    (3, 'DeleteStaleAssetReviews', 'Delete reviews that no longer match an asset''s assigned rules', 'delete_stale("asset")'),
+    (2, 'DeleteUnmappedReviews', 'Delete reviews that no longer match any rule in the system', 'delete_unmapped("system")'),
+    (3, 'DeleteUnmappedAssetReviews', 'Delete reviews that no longer match an asset''s assigned rules', 'delete_unmapped("asset")'),
     (4, 'AnalyzeReviewTables', 'Analyze database tables for performance', 'analyze_tables(JSON_ARRAY("reviews", "review_history"))')
   `,
-  
+
   `DROP TABLE IF EXISTS job`,
   `CREATE TABLE job (
     jobId INT NOT NULL AUTO_INCREMENT,
@@ -26,11 +27,16 @@ const upMigration = [
     created TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     updated TIMESTAMP(3) NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP(3),
     PRIMARY KEY (jobId),
+    UNIQUE INDEX idx_job_name (name),
+    CONSTRAINT fk_job_updatedBy FOREIGN KEY (updatedBy) REFERENCES user_data(userId) ON DELETE RESTRICT,
     CONSTRAINT fk_job_createdBy FOREIGN KEY (createdBy) REFERENCES user_data(userId) ON DELETE RESTRICT
   )`,
-  `INSERT INTO job ( name, description, createdBy) VALUES
-    ('Cleanup Database', 'Wipe deleted collections and assets and their associated reviews', null)
+  `INSERT INTO job ( jobId, name, description, createdBy) VALUES
+    (1, 'Cleanup Database', 'Wipe deleted collections and assets and their associated reviews', null),
+    (2, 'Delete Unmapped Reviews', 'Delete reviews that no longer match any rule in the system', null),
+    (3, 'Delete Unmapped Asset Reviews', 'Delete reviews that no longer match an asset''s assigned rules', null)
   `,
+  `ALTER TABLE job AUTO_INCREMENT = 100`,
 
   `DROP TABLE IF EXISTS job_task_map`,
   `CREATE TABLE job_task_map (
@@ -43,10 +49,15 @@ const upMigration = [
     CONSTRAINT fk_job_task_jobId FOREIGN KEY (jobId) REFERENCES job(jobId) ON DELETE CASCADE,
     CONSTRAINT fk_job_task_taskId FOREIGN KEY (taskId) REFERENCES task(taskId) ON DELETE CASCADE
   )`,
-  `INSERT INTO job_task_map (jobId, taskId) VALUES
-    (1, 1),
-    (1, 4)
+  `INSERT INTO job_task_map (jtId, jobId, taskId) VALUES
+    (1, 1, 1),
+    (2, 1, 4),
+    (3, 2, 2),
+    (4, 2, 4),
+    (5, 3, 3),
+    (6, 3, 4)
   `,
+  `ALTER TABLE job_task_map AUTO_INCREMENT = 1000`,
 
   `DROP TABLE IF EXISTS job_run`,
   `CREATE TABLE job_run (
@@ -91,7 +102,7 @@ const upMigration = [
       END IF;
     END`,
 
-  `DROP procedure IF EXISTS run_job`,  
+  `DROP procedure IF EXISTS run_job`,
   `CREATE PROCEDURE run_job(
     IN in_jobId INT,
     IN in_runIdStr VARCHAR(36)
@@ -290,8 +301,8 @@ const upMigration = [
     CALL task_output (v_runId, v_taskId, 'info', 'task finished');
     END`,
 
-  `DROP PROCEDURE IF EXISTS delete_stale`,
-  `CREATE PROCEDURE delete_stale(IN in_context VARCHAR(255))
+  `DROP PROCEDURE IF EXISTS delete_unmapped`,
+  `CREATE PROCEDURE delete_unmapped(IN in_context VARCHAR(255))
     BEGIN
       DECLARE v_runId BINARY(16);
       DECLARE v_taskId INT;

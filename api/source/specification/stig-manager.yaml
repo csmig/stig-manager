@@ -3428,10 +3428,9 @@ paths:
       summary: Delete a job run by ID
       tags:
         - Job
-      operationId: deleteRunByJob
+      operationId: deleteRunById
       parameters:
         - $ref: '#/components/parameters/ElevateQuery'
-        - $ref: '#/components/parameters/JobIdPath'
         - $ref: '#/components/parameters/JobRunIdPath'
       responses:
         '204':
@@ -7323,7 +7322,7 @@ components:
         description:
           $ref: "#/components/schemas/String255Nullable"
         createdBy:
-          $ref: '#/components/schemas/UserBasic'
+          $ref: '#/components/schemas/UserBasicNullable'
         created:
           $ref: '#/components/schemas/StringDateTime'
         updatedBy:
@@ -7505,10 +7504,6 @@ components:
           $ref: "#/components/schemas/String255Nullable"
         command:
           $ref: '#/components/schemas/String255'
-        args:
-          type: array
-          items:
-            $ref: '#/components/schemas/String255'
       required: [taskId, name]
     JobTaskId:
       $ref: '#/components/schemas/StringIntId'
@@ -9191,11 +9186,9 @@ components:
       type: object
       properties:
         userId:
-          $ref: '#/components/schemas/UserId'
+          $ref: '#/components/schemas/UserIdNullable'
         username:
-          $ref: '#/components/schemas/Username'
-        roleId:
-          $ref: '#/components/schemas/RoleId'
+          $ref: '#/components/schemas/UsernameNullable'
       required:
         - userId
         - username
@@ -9367,6 +9360,8 @@ components:
             $ref: '#/components/schemas/UserId'
     UserId:
       $ref: '#/components/schemas/StringIntId'
+    UserIdNullable:
+      $ref: '#/components/schemas/StringIntIdNullable'
     UserLastAccess:
       $ref: '#/components/schemas/IntegerMinimumZeroNullable'
     UserPatch:
@@ -9502,6 +9497,8 @@ components:
         - lastClaims
     Username:
       $ref: '#/components/schemas/String255'
+    UsernameNullable:
+      $ref: '#/components/schemas/String255Nullable'
     WebPreferences:
       type: object
       properties:

@@ -1,6 +1,7 @@
 const SmError = require('../utils/error');
 const JobService = require(`../service/JobService`)
 
+const userJobIdBase = 100
 
 exports.getJobs = async (req, res, next) => {
   try {
@@ -22,6 +23,11 @@ exports.postJob = async (req, res, next) => {
     const newJob = await JobService.getJob(jobId)
     res.status(201).json(newJob)
   } catch (error) {
+    if (error.code === 'ER_DUP_ENTRY') {
+      error = new SmError.UnprocessableError('Job name already exists')
+    } else if (error.code === 'ER_NO_REFERENCED_ROW_2') {
+      error = new SmError.UnprocessableError('Unknown taskId in list')
+    }
     next(error)
   }
 }
@@ -43,14 +49,14 @@ exports.getJob = async (req, res, next) => {
 exports.deleteJob = async (req, res, next) => {
   try {
     const jobId = req.params.jobId
-    const job = await JobService.getJob(jobId)
-    if (!job) {
+    if (parseInt(jobId) < userJobIdBase) {
+      throw new SmError.UnprocessableError(`Job is a system job and cannot be deleted.`)
+    }
+    // has desired side-effect of removing events named with the jobId, even if job does not exist
+    const wasDeleted = await JobService.deleteJob(jobId)
+    if (!wasDeleted) {
       throw new SmError.NotFoundError(`Job with ID [${jobId}] not found.`)
     }
-    if (!job.createdBy.userId) {
-      throw new SmError.UnprocessableError(`Job with ID [${jobId}] is a system job and cannot be deleted.`)
-    }
-    await JobService.deleteJob(jobId)
     res.status(204).end()
   } catch (error) {
     next(error) 
@@ -60,6 +66,16 @@ exports.deleteJob = async (req, res, next) => {
 exports.patchJob = async (req, res, next) => {
   try {
     const jobId = req.params.jobId
+    if (parseInt(jobId) < userJobIdBase) {
+      const bodyKeys = Object.keys(req.body)
+      if (!bodyKeys.every(key => key === 'event')) {
+        throw new SmError.UnprocessableError(`System jobs can only be modified with event properties.`)
+      }
+    }
+    const existingJob = await JobService.getJob(jobId)
+    if (!existingJob) {
+      throw new SmError.NotFoundError(`Job with ID [${jobId}] not found.`)
+    }
     await JobService.patchJob({
       jobId,
       jobData: req.body, 
@@ -69,6 +85,11 @@ exports.patchJob = async (req, res, next) => {
     const patchedJob = await JobService.getJob(jobId)
     res.status(200).json(patchedJob)
   } catch (error) {
+    if (error.code === 'ER_DUP_ENTRY') {
+      error = new SmError.UnprocessableError('Job name already exists')
+    } else if (error.code === 'ER_NO_REFERENCED_ROW_2') {
+      error = new SmError.UnprocessableError('Unknown taskId in list')
+    }
     next(error)
   }
 }
@@ -76,6 +97,10 @@ exports.patchJob = async (req, res, next) => {
 exports.getRunsByJob = async (req, res, next) => {
   try {
     const jobId = req.params.jobId
+    const job = await JobService.getJob(jobId)
+    if (!job) {
+      throw new SmError.NotFoundError(`Job with ID [${jobId}] not found.`)
+    }
     const runs = await JobService.getRunsByJob(jobId)
     res.json(runs)
   } catch (error) {
@@ -86,8 +111,12 @@ exports.getRunsByJob = async (req, res, next) => {
 exports.runImmediateJob = async (req, res, next) => {
   try {
     const jobId = req.params.jobId
-    const uuid = await JobService.runImmediateJob(jobId)
-    res.json({runId: uuid})
+    const job = await JobService.getJob(jobId)
+    if (!job) {
+      throw new SmError.NotFoundError(`Job with ID [${jobId}] not found.`)
+    }
+    const runId = await JobService.runImmediateJob(jobId)
+    res.json({runId})
   } catch (error) {
     next(error)
   }
@@ -106,8 +135,17 @@ exports.getRunById = async (req, res, next) => {
   }
 }
 
-exports.deleteRunByJob = async (req, res, next) => {
-  res.end('Not implemented');
+exports.deleteRunById = async (req, res, next) => {
+  try {
+    const runId = req.params.runId
+    const wasDeleted = await JobService.deleteRunById(runId)
+    if (!wasDeleted) {
+      throw new SmError.NotFoundError(`Run with ID [${runId}] not found.`)
+    }
+    res.status(204).end()
+  } catch (error) {
+    next(error)
+  }
 }
 
 exports.getOutputByRun = async (req, res, next) => {

@@ -56,7 +56,12 @@ exports.getAppData = async function (res, format) {
     'severity_cat_map', 
     'cci', 
     'cci_reference_map', 
-    'config'
+    'config',
+    'job',
+    'job_run',
+    'job_task_map',
+    'task',
+    'task_output'
   ]
 
   let sink

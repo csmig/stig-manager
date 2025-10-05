@@ -25,10 +25,11 @@ SM.Job.JobsGrid = Ext.extend(Ext.grid.GridPanel, {
           return `<span class="sm-job-sprite sm-job-run-state-${r.data.lastRun?.state ?? 'missing'}">${v}</span>`
         }
       },
-      { header: 'CreatedBy', dataIndex: 'createdBy', width: 100, sortable: true, renderer: function(v) {
-          return v || `<span class = "sm-job-sprite sm-job-system">system</span>`
+      {
+        header: 'CreatedBy', dataIndex: 'createdBy', width: 100, sortable: true, renderer: function (v) {
+          return v || 'system'
         }
-    },
+      },
       { header: 'Description', dataIndex: 'description', hidden: true, width: 250, sortable: false },
       {
         header: 'Tasks', dataIndex: 'tasks', width: 200, sortable: false, renderer: function (v) {
@@ -149,11 +150,12 @@ SM.Job.JobsGrid = Ext.extend(Ext.grid.GridPanel, {
             fn: async function (btn, text) {
               try {
                 if (btn == 'yes') {
-                  const apiJob = await Ext.Ajax.requestPromise({
+                  await Ext.Ajax.requestPromise({
                     responseType: 'json',
                     url: `${STIGMAN.Env.apiBase}/jobs/${job.data.jobId}?elevate=${curUser.privileges.admin}`,
                     method: 'DELETE',
                   })
+                  store.reload()
                 }
               }
               catch (e) {
@@ -355,10 +357,12 @@ SM.Job.RunOutputGrid = Ext.extend(Ext.grid.GridPanel, {
           return v === 'error' ? '<span style="color: red;">' + v + '</span>' : v;
         }
       },
-      { header: 'Message', dataIndex: 'message', width: 300, sortable: true, renderer: function (v, m, r) {
-        m.attr = 'style="white-space:normal;"'
-        return v ? `<div exportValue="${v}">${Ext.util.Format.htmlEncode(v)}</div>` : '';
-      }},
+      {
+        header: 'Message', dataIndex: 'message', width: 300, sortable: true, renderer: function (v, m, r) {
+          m.attr = 'style="white-space:normal;"'
+          return v ? `<div exportValue="${v}">${Ext.util.Format.htmlEncode(v)}</div>` : '';
+        }
+      },
     ]
     const store = new Ext.data.JsonStore({
       root: '',
@@ -684,7 +688,7 @@ SM.Job.TaskSelectingGrid = Ext.extend(Ext.grid.GridPanel, {
       'name',
       'description',
     ]
-    const sm = new Ext.grid.CheckboxSelectionModel({
+    const sm = this.isSystemJob ? new Ext.grid.RowSelectionModel() : new Ext.grid.CheckboxSelectionModel({
       singleSelect: false,
       checkOnly: false,
       listeners: {
@@ -694,7 +698,6 @@ SM.Job.TaskSelectingGrid = Ext.extend(Ext.grid.GridPanel, {
       }
     })
     const columns = [
-      sm,
       {
         header: "Task",
         width: 150,
@@ -707,6 +710,9 @@ SM.Job.TaskSelectingGrid = Ext.extend(Ext.grid.GridPanel, {
         }
       },
     ]
+    if (this.isSystemJob !== true) {
+      columns.unshift(sm)
+    }
     const store = new Ext.data.JsonStore({
       fields,
       idProperty: 'taskId',
@@ -722,6 +728,9 @@ SM.Job.TaskSelectingGrid = Ext.extend(Ext.grid.GridPanel, {
       noun: 'task',
       iconCls: 'sm-task-icon'
     })
+    const initPanel = function (apiJob) {
+      store.loadData(apiJob.tasks || [])
+    }
     const config = {
       store,
       columns,
@@ -735,7 +744,7 @@ SM.Job.TaskSelectingGrid = Ext.extend(Ext.grid.GridPanel, {
       stripeRows: true,
       view: new SM.ColumnFilters.GridView({
         forceFit: true,
-        emptyText: 'No Users to display',
+        emptyText: 'No Tasks to display',
         listeners: {
           filterschanged: function (view, item, value) {
             store.filter(view.getFilterFns())
@@ -761,7 +770,8 @@ SM.Job.TaskSelectingGrid = Ext.extend(Ext.grid.GridPanel, {
           },
           totalTextCmp
         ]
-      })
+      }),
+      initPanel
     }
     Ext.apply(this, Ext.apply(this.initialConfig, config))
     this.superclass().initComponent.call(this);
@@ -1036,7 +1046,7 @@ SM.Job.TaskSelectingPanel = Ext.extend(Ext.Panel, {
       setValue: () => { },
       markInvalid: function () { },
       clearInvalid: function () { },
-      isValid: () => true,
+      isValid: () => selectionsGrid.getSelectionModel().hasSelection(),
       getName: () => this.name,
       validate: () => true
     }
@@ -1047,13 +1057,14 @@ SM.Job.TaskSelectingPanel = Ext.extend(Ext.Panel, {
 
 SM.Job.PropertiesFormPanel = Ext.extend(Ext.FormPanel, {
   initComponent: function () {
-
+    const isSystemJob = this.isSystemJob || false
     const nameField = new Ext.form.TextField({
       fieldLabel: 'Name',
       anchor: '100%',
       emptyText: 'Enter a job name...',
       allowBlank: false,
-      name: 'name'
+      name: 'name',
+      disabled: isSystemJob,
     })
 
     const descriptionField = new Ext.form.TextField({
@@ -1061,7 +1072,8 @@ SM.Job.PropertiesFormPanel = Ext.extend(Ext.FormPanel, {
       anchor: '100%',
       emptyText: 'Enter a job description...',
       allowBlank: true,
-      name: 'description'
+      name: 'description',
+      disabled: isSystemJob,
     })
 
     const jobFieldset = new Ext.form.FieldSet({
@@ -1091,18 +1103,31 @@ SM.Job.PropertiesFormPanel = Ext.extend(Ext.FormPanel, {
       ]
     })
 
-    const taskSelectingPanel = new SM.Job.TaskSelectingPanel({
-      border: false,
-      anchor: '100%',
-      height: 300,
-    })
+    let taskPanel = null
+    if (isSystemJob) {
+      taskPanel = new SM.Job.TaskSelectingGrid({
+        title: 'Job Tasks (run in order shown)',
+        isSortable: false,
+        headerCssClass: 'sm-selections-panel-header',
+        border: false,
+        anchor: '100%',
+        height: 300,
+        isSystemJob: true,
+      })
+    } else {
+      taskPanel = new SM.Job.TaskSelectingPanel({
+        border: false,
+        anchor: '100%',
+        height: 300,
+      })
+    }
 
     const taskFieldset = new Ext.form.FieldSet({
       title: '<b>Tasks</b>',
       iconCls: 'sm-job-task-icon',
       layout: 'anchor',
       autoHeight: true,
-      items: [taskSelectingPanel]
+      items: [taskPanel]
     })
 
     const schedulePanel = new SM.Job.SchedulePanel({
@@ -1120,17 +1145,19 @@ SM.Job.PropertiesFormPanel = Ext.extend(Ext.FormPanel, {
       ]
     })
 
-    const initPanel = async function (jobId) {
-      taskSelectingPanel.initPanel(jobId)
-      schedulePanel.initPanel(jobId)
+    const initPanel = async function (apiJob) {
+      taskPanel.initPanel(apiJob)
+      schedulePanel.initPanel(apiJob)
     }
 
     const getValue = function () {
       const values = {
-        name: nameField.getValue(),
-        description: descriptionField.getValue(),
-        tasks: taskSelectingPanel.getValue(),
         event: schedulePanel.getValue(),
+      }
+      if (!isSystemJob) {
+        values.name = nameField.getValue()
+        values.description = descriptionField.getValue()
+        values.tasks = taskPanel.getValue()
       }
       return values
     }
@@ -1167,11 +1194,6 @@ SM.Job.showJobProps = async function (jobId) {
       Ext.getBody().mask('Saving job...')
       try {
         const values = jobPropsFormPanel.getValue()
-        if (values.tasks.length === 0) {
-          Ext.Msg.alert('Error', 'Please select at least one task for this job.')
-          Ext.getBody().unmask()
-          return
-        }
         await Ext.Ajax.requestPromise({
           responseType: 'json',
           url: `${STIGMAN.Env.apiBase}/jobs${jobId ? '/' + jobId : ''}`,
@@ -1191,6 +1213,7 @@ SM.Job.showJobProps = async function (jobId) {
     }
 
     const jobPropsFormPanel = new SM.Job.PropertiesFormPanel({
+      isSystemJob: jobId && jobId < 100,
       padding: '10px 15px 10px 15px',
       btnHandler
     })

@@ -16,7 +16,7 @@ exports.queryJobs = async function ({ projections = [], filters = {} } = {}) {
       'username', ud_updater.username)) AS updatedBy`,
     'job.updated',
     `(select
-      IF(COUNT(jt.taskId), json_arrayagg(json_object('taskId', CAST(jt.taskId as char), 'name', t.name)), json_array())
+      IF(COUNT(jt.taskId), json_arrayagg(json_object('taskId', CAST(jt.taskId as char), 'name', t.name, 'description', t.description)), json_array())
       from job_task_map jt left join task t ON jt.taskId = t.taskId where jt.jobId = job.jobId) AS tasks`,
     `(select ifnull(COUNT(*), 0) from job_run jr where jr.jobId = job.jobId) AS runCount`,
     `(SELECT ifnull(JSON_OBJECT(
@@ -207,9 +207,6 @@ exports.patchJob = async ({jobId, jobData, userId, svcStatus = {}}) => {
   }
   return updatedJobId
 }
-exports.updateJob = async (jobId, jobData) => {
-  throw new Error('Not implemented')
-}
 
 exports.getEventsByJob = async (jobId) => {
   throw new Error('Not implemented')
@@ -318,7 +315,7 @@ exports.getAllTasks = async () => {
   return rows
 }
 
-// Placeholder for future implementation --- IGNORE ---
-exports.deleteRunByJob = async (jobId) => {
-  throw new Error('Not implemented')
+exports.deleteRunById = async (runId) => {
+  const [result] = await dbUtils.pool.query('DELETE FROM job_run WHERE runId = UUID_TO_BIN(?,1)', [runId])
+  return result.affectedRows > 0
 }
