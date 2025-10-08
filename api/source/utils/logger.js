@@ -176,6 +176,7 @@ function requestLogger (req, res, next) {
         status: res.statusCode,
         headers: res.getHeaders(),
         errorBody: res.errorBody,
+        responseBody,
         operationStats
       })  
     }

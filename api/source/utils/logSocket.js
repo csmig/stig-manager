@@ -4,10 +4,16 @@ const component = 'logSocket'
 const auth = require('./auth')
 const uuid = require('uuid')
 const SmError = require('./error')
+const AsyncApiValidator = require('asyncapi-validator')
+
+let validator = null
+
+const socketPath = '/socket/log-socket'
 
 class LogSession {
-  constructor(ws) {
+  constructor(ws, validator) {
     this.ws = ws;
+    this.validator = validator;
     this.authorized = false;
     this.tokenExp = null;
     this.logForwarding = false;
@@ -63,7 +69,7 @@ class LogSession {
   }
   startHeartbeat = () => {
     this.stopHeartbeat();
-    this.pingIntervalId = setInterval(this.sendPing, 30000);
+    this.pingIntervalId = setInterval(this.sendPing, 10000);
   }
 
   stopHeartbeat = () => {
@@ -91,6 +97,17 @@ class LogSession {
     let msgObj;
     try {
       msgObj = JSON.parse(message);
+    } catch (e) {
+      this.send({ type: 'error', data: { message: 'Invalid JSON message' } });
+      return;
+    }
+    try {
+      this.validator.validate(msgObj.type, msgObj, 'logStream', 'receive');
+    }
+    catch (e) {
+      this.send({ type: 'error', data: { message: 'Message validation failed: ' + e.message } });
+      return;
+    }
       if (msgObj.type === 'authorize' && (typeof msgObj.data?.token === 'string')) {
         const loggedMessage = this.deepClone(msgObj);
         loggedMessage.data.token = this.decodeToken(msgObj.data.token) || loggedMessage.data.token;
@@ -98,10 +115,6 @@ class LogSession {
       } else {
         logger.writeInfo(component, 'message-receive', { sessionId: this.sessionId, ...msgObj });
       }
-    } catch {
-      this.send({ type: 'error', data: { message: 'Invalid JSON' }});
-      return;
-    }
     switch (msgObj.type) {
       case 'authorize':
         this.onAuthorize(msgObj.data);
@@ -127,14 +140,15 @@ class LogSession {
 
   send = (msg) => {
     try {
-      this.ws.send(JSON.stringify(msg));
-      if (msg.type !== 'log') {
-        logger.writeInfo(component, 'message-send', { sessionId: this.sessionId, ...msg });
-      } else if (msg.type === 'error') {
-        logger.writeError(component, 'message-send', { sessionId: this.sessionId, ...msg });
-      }
-    } catch {
-      // Ignore send errors
+      this.validator.validate(msg.type, msg, 'logStream', 'send');
+    } catch (e) {
+      logger.writeError(component, 'message-validation-failed', { sessionId: this.sessionId, message: msg, error: e.message });
+    }
+    this.ws.send(JSON.stringify(msg));
+    if (msg.type !== 'log') {
+      logger.writeInfo(component, 'message-send', { sessionId: this.sessionId, ...msg });
+    } else if (msg.type === 'error') {
+      logger.writeError(component, 'message-send', { sessionId: this.sessionId, ...msg });
     }
   }
 
@@ -163,7 +177,7 @@ class LogSession {
     if (!authData || typeof authData.token !== 'string') {
       this.send({ type: 'error', data: { message: 'Authorization failed: missing token' } });
       this.send({ type: 'close', data: { message: 'Closing connection' } });
-      this.stop();
+      this.onSocketClose();
       return;
     }
     // Validate token (format and expiration)
@@ -219,23 +233,17 @@ class LogSession {
   }
 }
 
-function setupLogSocket (server) {
-  const wss = new WebSocket.Server({ server, path: '/log-socket' })
+async function setupLogSocket (server, schemaPath) {
+  validator = await AsyncApiValidator.fromSource(schemaPath, {msgIdentifier: 'name'})
+  const wss = new WebSocket.Server({ server, path: socketPath })
   wss.on('connection', onConnection)
-  const originalShouldHandle = wss.shouldHandle
-  wss.shouldHandle = function (req) {
-    if (req.url !== '/log-socket') {
-      return false;
-    }
-    return originalShouldHandle.call(this, req);
-  }
 }
 
 
 function onConnection (ws) {
   const clientAddr = `${ws._socket.remoteAddress}:${ws._socket.remotePort}`;
   logger.writeInfo(component, 'connection', {source: clientAddr});
-  const logSession = new LogSession(ws);
+  const logSession = new LogSession(ws, validator);
   logSession.start();
 }
 

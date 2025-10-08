@@ -608,7 +608,7 @@ SM.LogStream.setupSocket = async function () {
   return new Promise((resolve, reject) => {
     const locationUrl = new URL(window.location);
     const wsProtocol = locationUrl.protocol === 'https:' ? 'wss:' : 'ws:';
-    const wsUrl = wsProtocol + '//' + locationUrl.host + locationUrl.pathname + 'log-socket';
+    const wsUrl = wsProtocol + '//' + locationUrl.host + locationUrl.pathname + 'socket/log-socket';
 
     function openHandler(event) {
       console.log('WebSocket opened:', event);

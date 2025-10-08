@@ -6,6 +6,7 @@ const OperationSvc = require(`../service/OperationService`)
 const { serializeError } = require('../utils/serializeError')
 const config = require('../utils/config')
 const { initializeDependencies } = require('./dependencies')
+const path = require('node:path')
 
 async function startServer(app, startTime) {
 
@@ -24,7 +25,7 @@ async function startServer(app, startTime) {
   }
   server.on('error', onListenError)
 
-  logSocket.setupLogSocket(server)
+  await logSocket.setupLogSocket(server, path.join(__dirname, '../specification/log-socket.yaml'))
 
   server.listen(config.http.port, async function () {
     server.removeListener('error', onListenError)

@@ -20,25 +20,25 @@ servers:
     host: localhost:64001
     protocol: ws
     description: Production log stream server
-    pathname: /log-socket
+    pathname: /socket/log-socket
 
 channels:
   logStream:
-    address: /log-socket
+    address: /socket/log-socket
     messages:
-      authorizeRequest:
+      AuthorizeRequest:
         $ref: '#/components/messages/AuthorizeRequest'
-      authorizeResponse:
+      AuthorizeResponse:
         $ref: '#/components/messages/AuthorizeResponse'
-      logMessage:
+      LogMessage:
         $ref: '#/components/messages/LogMessage'
-      errorMessage:
+      ErrorMessage:
         $ref: '#/components/messages/ErrorMessage'
-      infoMessage:
+      InfoMessage:
         $ref: '#/components/messages/InfoMessage'
-      closeMessage:
+      CloseMessage:
         $ref: '#/components/messages/CloseMessage'
-      commandMessage:
+      CommandMessage:
         $ref: '#/components/messages/CommandMessage'
 
 operations:
@@ -47,7 +47,7 @@ operations:
     channel:
       $ref: '#/channels/logStream'
     messages:
-      - $ref: '#/components/messages/AuthorizeResponse'
+      - $ref: '#/channels/logStream/messages/AuthorizeResponse'
     description: Server receives authorization tokens from clients
 
   sendAuthorizePrompt:
@@ -55,7 +55,7 @@ operations:
     channel:
       $ref: '#/channels/logStream'
     messages:
-      - $ref: '#/components/messages/AuthorizeRequest'
+      - $ref: '#/channels/logStream/messages/AuthorizeRequest'
     description: Server sends authorization prompts or token expiration notices
 
   sendLogs:
@@ -63,7 +63,7 @@ operations:
     channel:
       $ref: '#/channels/logStream'
     messages:
-      - $ref: '#/components/messages/LogMessage'
+      - $ref: '#/channels/logStream/messages/LogMessage'
     description: Server sends log messages to authorized clients after receiving stream-start command
 
   sendError:
@@ -71,7 +71,7 @@ operations:
     channel:
       $ref: '#/channels/logStream'
     messages:
-      - $ref: '#/components/messages/ErrorMessage'
+      - $ref: '#/channels/logStream/messages/ErrorMessage'
     description: Server sends error messages
 
   sendInfo:
@@ -79,7 +79,7 @@ operations:
     channel:
       $ref: '#/channels/logStream'
     messages:
-      - $ref: '#/components/messages/InfoMessage'
+      - $ref: '#/channels/logStream/messages/InfoMessage'
     description: Server sends informational messages
 
   sendClose:
@@ -87,7 +87,7 @@ operations:
     channel:
       $ref: '#/channels/logStream'
     messages:
-      - $ref: '#/components/messages/CloseMessage'
+      - $ref: '#/channels/logStream/messages/CloseMessage'
     description: Server sends close notification before terminating connection
 
   receiveCommand:
@@ -95,7 +95,7 @@ operations:
     channel:
       $ref: '#/channels/logStream'
     messages:
-      - $ref: '#/components/messages/CommandMessage'
+      - $ref: '#/channels/logStream/messages/CommandMessage'
     description: Server receives stream control commands from authorized clients (stream-start, stream-stop)
 
 components:
@@ -115,19 +115,6 @@ components:
           payload:
             type: authorize
             data: "token expired"
-
-    AuthorizeResponse:
-      name: authorize
-      title: Authorization Response
-      summary: Client sends JWT token for authorization
-      payload:
-        $ref: '#/components/schemas/AuthorizeResponsePayload'
-      examples:
-        - name: tokenAuth
-          payload:
-            type: authorize
-            data:
-              token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
 
     LogMessage:
       name: log
@@ -219,6 +206,20 @@ components:
             data:
               command: "stream-stop"
 
+    AuthorizeResponse:
+      name: authorize
+      title: Authorization Response
+      summary: Client sends JWT token for authorization
+      payload:
+        $ref: '#/components/schemas/AuthorizeResponsePayload'
+      examples:
+        - name: tokenAuth
+          payload:
+            type: authorize
+            data:
+              token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+
+
   schemas:
     BaseMessage:
       type: object
@@ -296,7 +297,7 @@ components:
             type:
               const: info
             data:
-              type: string
+              type: object
               description: Informational message
 
     CloseMessagePayload:
