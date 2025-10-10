@@ -16,10 +16,10 @@ info:
     name: MIT
 
 servers:
-  production:
+  development:
     host: localhost:64001
     protocol: ws
-    description: Production log stream server
+    description: Development log stream server
     pathname: /socket/log-socket
 
 channels:
@@ -42,7 +42,7 @@ channels:
         $ref: '#/components/messages/CommandMessage'
 
 operations:
-  receiveAuthorize:
+  receiveAuthorizeResponse:
     action: receive
     channel:
       $ref: '#/channels/logStream'
@@ -50,7 +50,7 @@ operations:
       - $ref: '#/channels/logStream/messages/AuthorizeResponse'
     description: Server receives authorization tokens from clients
 
-  sendAuthorizePrompt:
+  sendAuthorizeRequest:
     action: send
     channel:
       $ref: '#/channels/logStream'
@@ -58,7 +58,7 @@ operations:
       - $ref: '#/channels/logStream/messages/AuthorizeRequest'
     description: Server sends authorization prompts or token expiration notices
 
-  sendLogs:
+  sendLog:
     action: send
     channel:
       $ref: '#/channels/logStream'
@@ -221,107 +221,85 @@ components:
 
 
   schemas:
-    BaseMessage:
+    AuthorizeRequestPayload:
       type: object
-      required:
-        - type
-        - data
       properties:
         type:
-          type: string
-          description: Message type identifier
+          const: authorize
         data:
-          description: Message payload data
-      additionalProperties: false
-
-    AuthorizeRequestPayload:
-      allOf:
-        - $ref: '#/components/schemas/BaseMessage'
-        - type: object
-          properties:
-            type:
-              const: authorize
-            data:
-              oneOf:
-                - type: "null"
-                  description: Initial authorization request
-                - type: string
-                  enum: ["token expired"]
-                  description: Token expiration notice
+          oneOf:
+            - type: "null"
+              description: Initial authorization request
+            - type: string
+              enum: ["token expired"]
+              description: Token expiration notice
 
     AuthorizeResponsePayload:
-      allOf:
-        - $ref: '#/components/schemas/BaseMessage'
-        - type: object
+      type: object
+      properties:
+        type:
+          const: authorize
+        data:
+          type: object
+          required:
+            - token
           properties:
-            type:
-              const: authorize
-            data:
-              type: object
-              required:
-                - token
-              properties:
-                token:
-                  type: string
-                  description: JWT token for authentication
-              additionalProperties: false
+            token:
+              type: string
+              description: JWT token for authentication
+          additionalProperties: false
 
     LogMessagePayload:
-      allOf:
-        - $ref: '#/components/schemas/BaseMessage'
-        - type: object
-          properties:
-            type:
-              const: log
-            data:
-              type: object
-              description: Log entry object with timestamp, level, component, etc.
-              additionalProperties: true
+      type: object
+      properties:
+        type:
+          const: log
+        data:
+          type: object
+          description: Log entry object with timestamp, level, component, etc.
+          additionalProperties: true
 
     ErrorMessagePayload:
-      allOf:
-        - $ref: '#/components/schemas/BaseMessage'
-        - type: object
-          properties:
-            type:
-              const: error
-            data:
-              type: string
-              description: Error description
+      type: object
+      properties:
+        type:
+          const: error
+        data:
+          type: string
+          description: Error description
 
     InfoMessagePayload:
-      allOf:
-        - $ref: '#/components/schemas/BaseMessage'
-        - type: object
+      type: object
+      properties:
+        type:
+          const: info
+        data:
+          type: object
           properties:
-            type:
-              const: info
-            data:
-              type: object
-              description: Informational message
+            message:
+              type: string
+          required:
+            - message
+          description: Informational message
 
     CloseMessagePayload:
-      allOf:
-        - $ref: '#/components/schemas/BaseMessage'
-        - type: object
-          properties:
-            type:
-              const: close
-            data:
-              type: string
-              description: Close reason
+      type: object
+      properties:
+        type:
+          const: close
+        data:
+          type: string
+          description: Close reason
 
     CommandMessagePayload:
-      allOf:
-        - $ref: '#/components/schemas/BaseMessage'
-        - type: object
-          properties:
-            type:
-              const: command
-            data:
-              oneOf:
-                - $ref: '#/components/schemas/StreamStartCommandData'
-                - $ref: '#/components/schemas/StreamStopCommandData'
+      type: object
+      properties:
+        type:
+          const: command
+        data:
+          oneOf:
+            - $ref: '#/components/schemas/StreamStartCommandData'
+            - $ref: '#/components/schemas/StreamStopCommandData'
 
     StreamStartCommandData:
       type: object

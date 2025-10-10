@@ -97,7 +97,7 @@ class LogSession {
     let msgObj;
     try {
       msgObj = JSON.parse(message);
-    } catch (e) {
+    } catch {
       this.send({ type: 'error', data: { message: 'Invalid JSON message' } });
       return;
     }
