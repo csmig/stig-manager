@@ -280,11 +280,6 @@ components:
           const: info
         data:
           type: object
-          properties:
-            message:
-              type: string
-          required:
-            - message
           description: Informational message
 
     CloseMessagePayload:

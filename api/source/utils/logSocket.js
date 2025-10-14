@@ -5,6 +5,7 @@ const auth = require('./auth')
 const uuid = require('uuid')
 const SmError = require('./error')
 const AsyncApiValidator = require('asyncapi-validator')
+const { set } = require('lodash')
 
 let validator = null
 
@@ -20,11 +21,12 @@ class LogSession {
     this.sessionId = uuid.v1();
     this.filter = null;
     this.pingIntervalId = null
+    this.unauthorizedTimerId = null
   }
 
   start = () => {
     this.ws.on('message', this.onSocketMessage);
-    this.ws.on('close', this.onSocketClose);
+    this.ws.on('close', this.stop);
     this.ws.on('pong', this.onSocketPong);
     this.startHeartbeat();
     this.sendUnauthorized();
@@ -32,11 +34,21 @@ class LogSession {
   }
 
   stop = () => {
+    this.sendClose('Session ending');
     this.disableLogForwarding();
+    this.stopHeartbeat();
+
     this.ws.off('message', this.onSocketMessage);
-    this.ws.off('close', this.onSocketClose);
+    this.ws.off('close', this.stop);
     this.ws.off('pong', this.onSocketPong);
+
     if (this.tokenTimer) clearTimeout(this.tokenTimer);
+    if (this.unauthorizedTimerId) {
+      clearTimeout(this.unauthorizedTimerId);
+      this.unauthorizedTimerId = null;
+    }
+
+    this.ws.close();
     logger.writeInfo(component, 'session-stop', { sessionId: this.sessionId, message: 'Session stopped' });
   }
 
@@ -63,12 +75,12 @@ class LogSession {
 
   loggerEventHandler = (logObj) => {
     if (this.authorized && this.includeLogRecord(logObj)) {
-      this.send({ type: 'log', data: logObj });
+      this.sendLog(logObj);
     }
   }
   startHeartbeat = () => {
     this.stopHeartbeat();
-    this.pingIntervalId = setInterval(this.sendPing, 10000);
+    this.pingIntervalId = setInterval(this.sendPing, 30000);
   }
 
   stopHeartbeat = () => {
@@ -97,14 +109,14 @@ class LogSession {
     try {
       msgObj = JSON.parse(message);
     } catch {
-      this.send({ type: 'error', data: { message: 'Invalid JSON message' } });
+      this.sendError('Invalid JSON message');
       return;
     }
     try {
       this.validator.validate(msgObj.type, msgObj, 'logStream', 'receive');
     }
     catch (e) {
-      this.send({ type: 'error', data: { message: 'Message validation failed: ' + e.message } });
+      this.sendError('Message validation failed: ' + e.message);
       return;
     }
       if (msgObj.type === 'authorize' && (typeof msgObj.data?.token === 'string')) {
@@ -124,39 +136,16 @@ class LogSession {
         }
         break;
       default:
-        this.send({ type: 'error', data: { message: 'Unexpected message type' } });
+        this.sendError('Unexpected message type');
     }
-  }
-
-  onSocketClose = () => {
-    this.stopHeartbeat();
-    this.stop();
   }
 
   deepClone = (msg) => {
     return JSON.parse(JSON.stringify(msg));
   }
 
-  send = (msg) => {
-    try {
-      this.validator.validate(msg.type, msg, 'logStream', 'send');
-    } catch (e) {
-      logger.writeError(component, 'message-validation-failed', { sessionId: this.sessionId, message: msg, error: e.message });
-    }
-    this.ws.send(JSON.stringify(msg));
-    if (msg.type !== 'log') {
-      logger.writeInfo(component, 'message-send', { sessionId: this.sessionId, ...msg });
-    } else if (msg.type === 'error') {
-      logger.writeError(component, 'message-send', { sessionId: this.sessionId, ...msg });
-    }
-  }
 
   onCommand = (commandData) => {
-    // e.g. {command: 'stream', filter: {level: 1}}
-    if (!commandData || typeof commandData.command !== 'string') {
-      this.send({ type: 'error', data: { message: 'Invalid command' } });
-      return;
-    }
     switch (commandData.command) {
       case 'stream-start':
         this.filter = commandData.filter;
@@ -166,19 +155,12 @@ class LogSession {
         this.disableLogForwarding();
         break;
       default:
-        this.send({ type: 'error', data: { message: 'Unknown command' } });
+        this.sendError('Unknown command');
     }
-    this.send({ type: 'info', data: { success: true, command: commandData } });
+    this.sendInfo({ success: true, command: commandData });
   }
 
   onAuthorize = async (authData) => {
-    // Expect {token}
-    if (!authData || typeof authData.token !== 'string') {
-      this.send({ type: 'error', data: { message: 'Authorization failed: missing token' } });
-      this.send({ type: 'close', data: { message: 'Closing connection' } });
-      this.onSocketClose();
-      return;
-    }
     // Validate token (format and expiration)
     try {
       // Accept JWTs: decode and check exp
@@ -194,10 +176,16 @@ class LogSession {
       if (!privileges.includes('admin')) {
         throw new SmError.PrivilegeError();
       }
+
+      // successful authorization
+      clearTimeout(this.unauthorizedTimerId);
+      this.unauthorizedTimerId = null;
+
       this.tokenExp = decoded.payload.exp;
       this.startTokenTimer();
+
       this.authorized = true;
-      this.send({ type: 'authorize', data: { state: 'authorized' } });
+      this.sendAuthorized();
     } catch (e) {
       this.authorized = false;
       this.disableLogForwarding();
@@ -233,7 +221,46 @@ class LogSession {
   
   sendUnauthorized = (reason) => {
     this.send({ type: 'authorize', data: { state: 'unauthorized', reason } });
+    if (!this.unauthorizedTimerId) {
+      this.unauthorizedTimerId = setTimeout(() => {
+        this.stop();
+      }, 30000); // Set a maximum time to be unauthorized
+    }
   }
+
+  sendAuthorized = () => {
+    this.send({ type: 'authorize', data: { state: 'authorized' } });
+  }
+
+  sendClose = (message = 'Closing connection') => {
+    this.send({ type: 'close', data: message});
+  }
+
+  sendInfo = (info) => {
+    this.send({ type: 'info', data: info });
+  }
+
+  sendError = (error) => {
+    this.send({ type: 'error', data: { message: error } }); 
+  }
+
+  sendLog = (logObj) => {
+    this.send({ type: 'log', data: logObj });
+  }
+
+  send = (msg) => {
+    try {
+      this.validator.validate(msg.type, msg, 'logStream', 'send');
+    } catch (e) {
+      logger.writeError(component, 'message-validation-failed', { sessionId: this.sessionId, message: msg, error: e.message });
+    }
+    this.ws.send(JSON.stringify(msg));
+    if (msg.type !== 'log') {
+      const loggerFn = msg.type === 'error' ? logger.writeError : logger.writeInfo;
+      loggerFn(component, 'message-send', { sessionId: this.sessionId, ...msg });
+    }
+  }
+
 }
 
 async function setupLogSocket (server, schemaPath) {

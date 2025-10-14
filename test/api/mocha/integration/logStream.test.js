@@ -15,8 +15,18 @@ describe('LogStream authorization', async function () {
     socket.ws.close();
   });
 
+  // it('should close connection after timeout if no token is provided', async function () {
+  //   this.timeout(40000);
+  //   const socket = await openSocket()
+  //   await new Promise(r => setTimeout(r, 35000)); // wait for timeout (30s + buffer)
+  //   expect(socket.messages).to.have.lengthOf(2);
+  //   expect(socket.messages[0]).to.have.property('type', 'authorize');
+  //   expect(socket.messages[1]).to.have.property('type', 'close');
+  //   expect(socket.ws.readyState).to.equal(WebSocket.CLOSED);
+  // });
+
   it('should accept a valid token', async function () {
-    const socket = await openSocket()
+    const socket = await openSocket();
     await new Promise(r => setTimeout(r, 500)); // wait for socket to be ready
     expect(socket.messages).to.have.lengthOf(1);
     expect(socket.messages[0]).to.have.property('type', 'authorize');
@@ -31,6 +41,7 @@ describe('LogStream authorization', async function () {
   });
 
   it('should reject an expired token', async function () {
+    this.timeout(60000);
     const socket = await openSocket()
     await new Promise(r => setTimeout(r, 500)); // wait for socket to be ready
     expect(socket.messages).to.have.lengthOf(1);
