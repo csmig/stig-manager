@@ -25,8 +25,8 @@ describe('LogStream authorization', async function () {
     socket.ws.send(JSON.stringify({ type: 'authorize', data: { token } }));
     await new Promise(r => setTimeout(r, 500));
     expect(socket.messages).to.have.lengthOf(2);
-    expect(socket.messages[1]).to.have.property('type', 'info');
-    expect(socket.messages[1].data).to.have.property('message', 'Authorization successful');
+    expect(socket.messages[1]).to.have.property('type', 'authorize');
+    expect(socket.messages[1].data).to.have.property('state', 'authorized');
     socket.ws.close();
   });
 
@@ -40,8 +40,9 @@ describe('LogStream authorization', async function () {
     socket.ws.send(JSON.stringify({ type: 'authorize', data: { token } }));
     await new Promise(r => setTimeout(r, 500));
     expect(socket.messages).to.have.lengthOf(2);
-    expect(socket.messages[1]).to.have.property('type', 'error');
-    expect(socket.messages[1].data).to.have.property('message').that.includes('Authorization failed');
+    expect(socket.messages[1]).to.have.property('type', 'authorize');
+    expect(socket.messages[1].data).to.have.property('state', 'unauthorized');
+    expect(socket.messages[1].data).to.have.property('reason').that.includes('jwt expired');
     socket.ws.close();
   });
 
@@ -55,8 +56,9 @@ describe('LogStream authorization', async function () {
     socket.ws.send(JSON.stringify({ type: 'authorize', data: { token } }));
     await new Promise(r => setTimeout(r, 500));
     expect(socket.messages).to.have.lengthOf(2);
-    expect(socket.messages[1]).to.have.property('type', 'error');
-    expect(socket.messages[1].data).to.have.property('message').that.includes('Authorization failed');
+    expect(socket.messages[1]).to.have.property('type', 'authorize');
+    expect(socket.messages[1].data).to.have.property('state', 'unauthorized');
+    expect(socket.messages[1].data).to.have.property('reason').that.includes('Authorization failed');
     socket.ws.close();
   });
 
@@ -70,8 +72,9 @@ describe('LogStream authorization', async function () {
     socket.ws.send(JSON.stringify({ type: 'authorize', data: { token } }));
     await new Promise(r => setTimeout(r, 500));
     expect(socket.messages).to.have.lengthOf(2);
-    expect(socket.messages[1]).to.have.property('type', 'error');
-    expect(socket.messages[1].data).to.have.property('message').that.includes('Authorization failed');
+    expect(socket.messages[1]).to.have.property('type', 'authorize');
+    expect(socket.messages[1].data).to.have.property('state', 'unauthorized');
+    expect(socket.messages[1].data).to.have.property('reason').that.includes('Authorization failed');
     socket.ws.close();
   });
   
@@ -83,8 +86,9 @@ describe('LogStream authorization', async function () {
     socket.ws.send(JSON.stringify({ type: 'authorize', data: { token: '' } }));
     await new Promise(r => setTimeout(r, 500));
     expect(socket.messages).to.have.lengthOf(2);
-    expect(socket.messages[1]).to.have.property('type', 'error');
-    expect(socket.messages[1].data).to.have.property('message').to.match(/^Authorization failed/);
+    expect(socket.messages[1]).to.have.property('type', 'authorize');
+    expect(socket.messages[1].data).to.have.property('state', 'unauthorized');
+    expect(socket.messages[1].data).to.have.property('reason').that.includes('Authorization failed');
     socket.ws.close();
   });
 
@@ -111,13 +115,14 @@ describe('LogStream authorization', async function () {
     socket.ws.send(JSON.stringify({ type: 'authorize', data: { token } }));
     await new Promise(r => setTimeout(r, 500));
     expect(socket.messages).to.have.lengthOf(2);
-    expect(socket.messages[1]).to.have.property('type', 'info');
-    expect(socket.messages[1].data).to.have.property('message', 'Authorization successful');
+    expect(socket.messages[1]).to.have.property('type', 'authorize');
+    expect(socket.messages[1].data).to.have.property('state', 'authorized');
 
     await new Promise(r => setTimeout(r, 2000)); // wait for token to expire
     expect(socket.messages).to.have.lengthOf(3);
-    expect(socket.messages[2]).to.have.property('type', 'error');
-    expect(socket.messages[2].data).to.have.property('message', 'token expired');
+    expect(socket.messages[2]).to.have.property('type', 'authorize');
+    expect(socket.messages[2].data).to.have.property('state', 'unauthorized');
+    expect(socket.messages[2].data).to.have.property('reason', 'jwt expired');
     socket.ws.close();
   });
   

@@ -27,8 +27,7 @@ class LogSession {
     this.ws.on('close', this.onSocketClose);
     this.ws.on('pong', this.onSocketPong);
     this.startHeartbeat();
-    // Initial handshake: send authorize request
-    this.send({ type: 'authorize', data: null });
+    this.sendUnauthorized();
     logger.writeInfo(component, 'session-start', { sessionId: this.sessionId, message: 'Session started, sent authorize request' });
   }
 
@@ -198,12 +197,12 @@ class LogSession {
       this.tokenExp = decoded.payload.exp;
       this.startTokenTimer();
       this.authorized = true;
-      this.send({ type: 'info', data: {message: 'Authorization successful'} });
+      this.send({ type: 'authorize', data: { state: 'authorized' } });
     } catch (e) {
       this.authorized = false;
       this.disableLogForwarding();
       logger.writeWarn(component, 'authorize-failed', { sessionId: this.sessionId, message: e.message });
-      this.send({ type: 'error', data: { message: 'Authorization failed: ' + e.message } });
+      this.sendUnauthorized('Authorization failed: ' + e.detail || e.message);
       return;
     }
   }
@@ -216,7 +215,7 @@ class LogSession {
     this.tokenTimer = setTimeout(() => {
       this.authorized = false;
       this.disableLogForwarding();
-      this.send({ type: 'error', data: { message:'token expired' } });
+      this.sendUnauthorized('jwt expired');
     }, ms);
   }
 
@@ -230,6 +229,10 @@ class LogSession {
     catch {
       return null;
     }
+  }
+  
+  sendUnauthorized = (reason) => {
+    this.send({ type: 'authorize', data: { state: 'unauthorized', reason } });
   }
 }
 

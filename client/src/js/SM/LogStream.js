@@ -761,7 +761,7 @@ SM.LogStream.showLogTab = async function ({ treePath }) {
       } else if (logObj.type === 'response' && logObj.component === 'rest') {
         transactionGrid.addResponse(logObj);
       }
-    } else if (message.type === 'authorize') {
+    } else if (message.type === 'authorize' && message.data.state === 'unauthorized') {
       try {
         await authorizeWebSocket();
         console.log('WebSocket authorized');
@@ -777,21 +777,18 @@ SM.LogStream.showLogTab = async function ({ treePath }) {
   async function authorizeWebSocket() {
     return new Promise((resolve, reject) => {
       const timeout = setTimeout(() => {
-        reject(new Error('Authorization timeout after 1 second'));
-      }, 1000);
+        reject(new Error('Authorization timeout after 10 seconds'));
+      }, 10000);
       function messageHandler(event) {
+        clearTimeout(timeout);
         const message = JSON.parse(event.data);
-        if (message.type === 'info' && message.data.message === 'Authorization successful') {
-          clearTimeout(timeout);
-          SM.LogStream.Socket.removeEventListener('message', messageHandler);
+        if (message.type === 'authorize' && message.data.state === 'authorized') {
           resolve(message);
         } else if (message.type === 'error' && message.data.message.startsWith('Authorization failed')) {
-          clearTimeout(timeout);
-          SM.LogStream.Socket.removeEventListener('message', messageHandler);
           reject(new Error(message.data.message));
         }
       }
-      SM.LogStream.Socket.addEventListener('message', messageHandler);
+      SM.LogStream.Socket.addEventListener('message', messageHandler, {once: true});
       SM.LogStream.Socket.send(JSON.stringify({ type: 'authorize', data: { token: window.oidcWorker.token } }));
     });
   }

@@ -227,13 +227,18 @@ components:
         type:
           const: authorize
         data:
-          oneOf:
-            - type: "null"
-              description: Initial authorization request
-            - type: string
-              enum: ["token expired"]
-              description: Token expiration notice
-
+          type: object
+          description: Authorization state notice
+          properties:
+            state:
+              type: string
+              enum: ["unauthorized", "authorized"]
+            reason:
+              type: string
+              description: Optional reason for unauthorized state (e.g., "token expired")
+          required:
+            - state
+          additionalProperties: false
     AuthorizeResponsePayload:
       type: object
       properties:
