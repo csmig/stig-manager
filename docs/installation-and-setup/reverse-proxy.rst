@@ -39,21 +39,22 @@ https://github.com/NUWCDIVNPT/stigman-orchestration
 
 
 
-Proxy Configuration for Streaming and SSE Endpoints
+Proxy Configuration for Streaming, SSE and WebSocket Endpoints
 ############################################################
 
 .. important::
 
-   STIG Manager uses streaming responses and Server-Sent Events (SSE) for real-time operations. These require specific proxy configuration to function properly.
+   STIG Manager uses streaming responses, Server-Sent Events (SSE), and WebSocket connections for real-time operations. These require specific proxy configuration to function properly.
 
 Proxy Requirements
 --------------------------------------------------------------
 
-For proper operation of streaming and SSE endpoints, your proxy must:
+For proper operation of streaming, SSE, and WebSocket endpoints, your proxy must:
 
 1. **Disable response buffering** for streaming endpoints
 2. **Pass through streaming headers** without modification
-3. **Maintain persistent connections** for SSE endpoints
+3. **Maintain persistent connections** for SSE and WebSocket endpoints
+4. **Support HTTP connection upgrade** for WebSocket endpoints
 
 The application automatically sets the ``x-accel-buffering: no`` header which nginx honors by default to disable buffering. Other proxies may require explicit configuration.
 
@@ -78,13 +79,13 @@ The following endpoints require unbuffered, real-time response streaming:
 
     - Content-Type: ``application/x-ndjson``
     - Operation: Collection export with progress updates
-    - opId: ``exportToCollection``
+    - API operationId: ``exportToCollection``
 
   - ``POST /collections/{collectionId}/clone``
 
     - Content-Type: ``application/x-ndjson``
     - Operation: Collection cloning with progress updates
-    - opId: ``cloneCollection``
+    - API operationId: ``cloneCollection``
 
 **Server-Sent Events (SSE):**
 
@@ -92,7 +93,14 @@ The following endpoints require unbuffered, real-time response streaming:
 
     - Content-Type: ``text/event-stream``
     - Operation: Real-time operation state updates
-    - opId: ``streamStateSse``
+    - API operationId: ``streamStateSse``
+
+**WebSocket Connection:**
+
+  - ``GET <origin>/socket/log-socket``
+
+    - Requires HTTP connection upgrade to WebSocket protocol
+    - Operation: Real-time log streaming over WebSocket
 
 Proxy-Specific Configuration Examples
 --------------------------------------------------------------

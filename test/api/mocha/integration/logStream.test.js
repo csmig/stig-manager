@@ -1,6 +1,9 @@
+
 import MockOidc from '../../../utils/mockOidc.js'
 import WebSocket from 'ws';
 import { expect } from 'chai'
+import * as utils from '../utils/testUtils.js'
+import {config } from '../testConfig.js'
 
 const oidc = new MockOidc({ keyCount: 0, includeInsecureKid: true })
 
@@ -137,8 +140,60 @@ describe('LogStream authorization', async function () {
     socket.ws.close();
   });
   
-  // More tests can be added here for log forwarding once authorization is working
-  // e.g., send some logs and verify they are received over the socket
+  it.only('should stream log messages until token expires', async function () {
+    this.timeout(10000);
+    const socket = await openSocket();
+    await new Promise(r => setTimeout(r, 500));
+    expect(socket.messages).to.have.lengthOf(1);
+    expect(socket.messages[0]).to.have.property('type', 'authorize');
+
+    // Short-lived token (2s)
+    const token = oidc.getToken({ sub: 'test-user', privileges: ['admin'], expiresIn: 2 });
+    socket.ws.send(JSON.stringify({ type: 'authorize', data: { token } }));
+    await new Promise(r => setTimeout(r, 300));
+    expect(socket.messages).to.have.lengthOf(2);
+    expect(socket.messages[1]).to.have.property('type', 'authorize');
+    expect(socket.messages[1].data).to.have.property('state', 'authorized');
+
+    // Start log stream
+    socket.ws.send(JSON.stringify({ type: 'command', data: { command: 'stream-start' } }));
+    await new Promise(r => setTimeout(r, 200));
+
+    // Trigger a log event by sending a WebSocker ping
+    socket.ws.ping();
+    await new Promise(r => setTimeout(r, 200));
+
+    // Wait for log message to be received
+    let logReceived = false;
+    for (let i = 0; i < 10; i++) {
+      if (socket.messages.some(m => m.type === 'log' && m.data && m.data.test === true)) {
+        logReceived = true;
+        break;
+      }
+      await new Promise(r => setTimeout(r, 100));
+    }
+    expect(logReceived, 'Log message should be received').to.be.true;
+
+    // Wait for token to expire and unauthorized message
+    let unauthorizedReceived = false;
+    for (let i = 0; i < 20; i++) {
+      if (socket.messages.some(m => m.type === 'authorize' && m.data && m.data.state === 'unauthorized')) {
+        unauthorizedReceived = true;
+        break;
+      }
+      await new Promise(r => setTimeout(r, 200));
+    }
+    expect(unauthorizedReceived, 'Should receive unauthorized after token expires').to.be.true;
+
+    // After unauthorized, further logs should not be received
+    const logCountBefore = socket.messages.filter(m => m.type === 'log').length;
+    await utils.executeRequest(`${config.baseUrl}/op/configuration`, 'GET', token);
+    await new Promise(r => setTimeout(r, 500));
+    const logCountAfter = socket.messages.filter(m => m.type === 'log').length;
+    expect(logCountAfter).to.equal(logCountBefore);
+
+    socket.ws.close();
+  });
 });
 
 
