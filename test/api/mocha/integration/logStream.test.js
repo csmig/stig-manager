@@ -148,7 +148,7 @@ describe('LogStream authorization', async function () {
     expect(socket.messages[0]).to.have.property('type', 'authorize');
 
     // Short-lived token (2s)
-    const token = oidc.getToken({ sub: 'test-user', privileges: ['admin'], expiresIn: 2 });
+    const token = oidc.getToken({ sub: 'test-user', privileges: ['admin'], expiresIn: 5 });
     socket.ws.send(JSON.stringify({ type: 'authorize', data: { token } }));
     await new Promise(r => setTimeout(r, 300));
     expect(socket.messages).to.have.lengthOf(2);
