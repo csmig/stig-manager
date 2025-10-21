@@ -272,6 +272,12 @@ SM.NavTree.TreePanel = Ext.extend(Ext.tree.TreePanel, {
                   iconCls: 'sm-stig-icon'
                 },
                 {
+                  id: 'job-admin',
+                  text: 'Service Jobs',
+                  leaf: true,
+                  iconCls: 'sm-job-icon'
+                },
+                {
                   id: 'appinfo-admin',
                   text: 'Application Info',
                   leaf: true,
@@ -414,6 +420,7 @@ SM.NavTree.TreePanel = Ext.extend(Ext.tree.TreePanel, {
         if (!n.leaf) {
           return
         }
+        SM.Global.mainNavTree.ownerCt.layout.west.slideIn()
         const treePath = n.getPath()
 
         if (n.attributes.action === 'stig-diff') {
@@ -464,8 +471,8 @@ SM.NavTree.TreePanel = Ext.extend(Ext.tree.TreePanel, {
           case 'stig-admin':
             addStigAdmin({ treePath })
             break
-          case 'appinfo-admin':
-            SM.AppInfo.showAppInfoTab({ treePath })
+          case 'job-admin':
+            SM.Job.showJobAdminTab({treePath: n.getPath()})
             break
           case 'appinfo-admin':
             SM.AppInfo.showAppInfoTab({treePath: n.getPath()})

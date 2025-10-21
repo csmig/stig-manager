@@ -36,6 +36,20 @@ import { stylesheets, scripts, isMinimizedSource } from './resources.js'
       appendError(response.error)
       return
     }
+    OW.channelName = response.channelName
+    const bc = new BroadcastChannel(window.oidcWorker.channelName)
+    bc.onmessage = (event) => {
+      if (event.data.type === 'accessToken') {
+        console.log('{init] Received from worker:', event.type, event.data)
+        OW.token = event.data.accessToken
+        OW.tokenParsed = event.data.accessTokenPayload
+      }
+      else if (event.data.type === 'noToken') {
+        console.log('{init] Received from worker:', event.type, event.data)
+        OW.token = null
+        OW.tokenParsed = null
+      }
+    }
     appendStatus(`Authorizing`)
 
     const paramStr = extractParamString(url)
@@ -185,25 +199,92 @@ import { stylesheets, scripts, isMinimizedSource } from './resources.js'
       postContextActiveMessage: function () {
         this.worker.port.postMessage({ requestId: 'contextActive' })
       },
+      channelName: null,
+      token: null,
+      tokenParsed: null,
       worker: new SharedWorker("js/workers/oidc-worker.js", { name: 'stigman-oidc-worker', type: "module" })
     }
 
     OW = window.oidcWorker
     OW.worker.port.start()
+  }
 
-    const bc = new BroadcastChannel('stigman-oidc-worker')
-    bc.onmessage = (event) => {
-      if (event.data.type === 'accessToken') {
-        console.log('{init] Received from worker:', event.type, event.data)
-        OW.token = event.data.accessToken
-        OW.tokenParsed = event.data.accessTokenPayload
-      }
-      else if (event.data.type === 'noToken') {
-        console.log('{init] Received from worker:', event.type, event.data)
-        OW.token = null
-        OW.tokenParsed = null
+  async function setupStateWorker() {
+    window.stateWorker = {
+      worker: new SharedWorker("js/workers/state-worker.js", { name: 'stigman-state-worker', type: "module" }),
+      sendWorkerRequest: function (request) {
+        const requestId = crypto.randomUUID()
+        const port = this.worker.port
+        port.postMessage({ ...request, requestId })
+        return new Promise((resolve) => {
+          function handler(event) {
+            if (event.data.requestId === requestId) {
+              port.removeEventListener('message', handler)
+              resolve(event.data.response)
+            }
+          }
+          port.addEventListener('message', handler)
+        })
+      },
+      workerChannel: null,
+      state: null
+    }
+    const SW = window.stateWorker
+    SW.worker.port.start()
+    const response = await SW.sendWorkerRequest({ request: 'initialize', apiBase: new URL(STIGMAN.Env.apiBase, window.location.href).pathname })
+    if (response.error) {
+      console.error(`[init] Error initializing state worker:`, response.error)
+      throw new Error(response.error)
+    }
+    SW.state = JSON.parse(response.state)
+
+    // Set up the workerChannel before waiting for available state
+    SW.workerChannel = new BroadcastChannel(response.channelName)
+    SW.workerChannel.onmessage = (event) => {
+      console.log(`[init] [${SW.workerChannel.name}] Received message:`, event.data)
+      try {
+        SW.state = JSON.parse(event.data.data)
+      } catch (error) {
+        console.error(`[init] [${SW.workerChannel.name}] Error parsing state:`, error)
+        SW.state = null
       }
     }
+
+    // Wait for currentState == 'available'
+    function needsWait(state) {
+      if (!state) return true
+      const online = '<span style="color:green">ONLINE</span>'
+      const offline = '<span style="color:#ff5757">OFFLINE</span>'
+      if (state.currentState !== 'available') {
+        setStatus(`The API is currently ${state.currentState}.<br><br>
+          Database status: ${state.dependencies.db ? online : offline}<br>
+          OIDC status: ${state.dependencies.oidc ? online : offline}<br><br>
+          Last update: ${new Date().toISOString()}`)
+        return true
+      }
+      return false
+    }
+
+    if (needsWait(SW.state)) {
+      await new Promise((resolve) => {
+        function checkReady(event) {
+          let stateObj;
+          try {
+            stateObj = JSON.parse(event.data.data)
+          } catch {
+            return
+          }
+          if (!needsWait(stateObj)) {
+            SW.workerChannel.removeEventListener('message', checkReady)
+            SW.state = stateObj
+            resolve()
+          }
+        }
+        SW.workerChannel.addEventListener('message', checkReady)
+      })
+    }
+
+    return true
   }
 
   async function setupStateWorker() {
