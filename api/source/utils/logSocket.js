@@ -5,11 +5,9 @@ const auth = require('./auth')
 const uuid = require('uuid')
 const SmError = require('./error')
 const AsyncApiValidator = require('asyncapi-validator')
-const { set } = require('lodash')
-
-let validator = null
 
 const socketPath = '/socket/log-socket'
+const unauthorizedTimeoutMs = 10000
 
 class LogSession {
   constructor(ws, validator) {
@@ -25,12 +23,12 @@ class LogSession {
   }
 
   start = () => {
+    logger.writeInfo(component, 'session-start', { sessionId: this.sessionId, message: 'Session started' });
     this.ws.on('message', this.onSocketMessage);
     this.ws.on('close', this.stop);
     this.ws.on('pong', this.onSocketPong);
     this.startHeartbeat();
     this.sendUnauthorized();
-    logger.writeInfo(component, 'session-start', { sessionId: this.sessionId, message: 'Session started, sent authorize request' });
   }
 
   stop = () => {
@@ -224,7 +222,7 @@ class LogSession {
     if (!this.unauthorizedTimerId) {
       this.unauthorizedTimerId = setTimeout(() => {
         this.stop();
-      }, 30000); // Set a maximum time to be unauthorized
+      }, unauthorizedTimeoutMs); // Set a maximum time to be unauthorized
     }
   }
 
@@ -264,16 +262,16 @@ class LogSession {
 }
 
 async function setupLogSocket (server, schemaPath) {
-  validator = await AsyncApiValidator.fromSource(schemaPath, {msgIdentifier: 'name'})
+  const validator = await AsyncApiValidator.fromSource(schemaPath, {msgIdentifier: 'name'})
   const wss = new WebSocket.Server({ server, path: socketPath })
-  wss.on('connection', onConnection)
+  wss.on('connection', (ws) => onConnection(ws, validator))
 }
 
 
-function onConnection (ws) {
+function onConnection (ws, validator) {
   const clientAddr = `${ws._socket.remoteAddress}:${ws._socket.remotePort}`;
-  logger.writeInfo(component, 'connection', {source: clientAddr});
   const logSession = new LogSession(ws, validator);
+  logger.writeInfo(component, 'connection', {source: clientAddr, sessionId: logSession.sessionId, message: 'New log socket connection'});
   logSession.start();
 }
 

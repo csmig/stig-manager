@@ -810,7 +810,7 @@ SM.LogStream.showLogTab = async function ({ treePath }) {
     SM.LogStream.Socket.addEventListener('close', closeHandler);
     logPanel.enableUi();
 
-    const bc = new BroadcastChannel('stigman-oidc-worker')
+    const bc = new BroadcastChannel(window.oidcWorker.channelName);
     function tokenBroadcastHandler(event) {
       if (event.data.type === 'accessToken') {
         console.log('{log-stream] Received from worker:', event.type, event.data)
