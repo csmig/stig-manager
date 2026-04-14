@@ -1,3 +1,10 @@
+1.6.8
+-------
+
+Changes:
+
+  - (Security) Fix reflected XSS in OIDC error handling (init.js, reauth.html)
+
 1.6.7
 -------
 
